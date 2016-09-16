@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# mdatree2ascii   
+
+# Copyright (c) 2016 UChicago Argonne, LLC,
+#     as Operator of Argonne National Laboratory.
+# This file is distributed subject to a Software License Agreement
+# found in file LICENSE that is included with this distribution. 
+
+#  Written by Dohn A. Arms, Argonne National Laboratory
+#  Send comments to dohnarms@anl.gov
+
+# 1.3.0 -- February 2013
+#          Initial version
+# 1.3.1 -- February 2014
+# 1.4.0 -- July 2016
+# 1.4.1 -- August 2016
+
+
+VERBOSE=0;
+FOPT="-H";
+SOPT="-type f";
+EXT="mda";
+while [ 1 ]; do
+    case $1 in
+        -v) VERSION=1;;
+        -h) HELP=1;;
+        -d) VERBOSE=1;;
+        -f) FOPT="-L";;
+        -s) SOPT="-xtype f";;
+        -x) EXT=$2; shift;;
+        *) break;;
+    esac
+    shift;
+done
+
+if (( VERSION == 1 )) ; then
+    echo "mdatree2ascii 1.4.1 (August 2016)";
+    echo "";
+    echo "Copyright (c) 2016 UChicago Argonne, LLC,";
+    echo "as Operator of Argonne National Laboratory.";
+    echo "";
+    echo "Written by Dohn Arms, dohnarms@anl.gov.";
+    exit 0
+fi
+
+if (( HELP == 1 )) ; then
+    echo "Usage: mdatree2ascii [-h] [-v] [-d] [-f] [-s] [-x EXTENSION]";
+    echo "         SOURCE_DIR OUTPUT_DIR [MDA2ASCII_OPTIONS]";
+    echo "";
+    echo "This script will recursively search the source directory for MDA files, and";
+    echo "create a parallel output directory populated by mda2ascii translated files.";
+    echo "It will display the directory currently processing, and any errors that";
+    echo "'mda2ascii' encounters will be displayed, but the script will continue."
+    echo "Options for 'mda2ascii' can be specified, except for -d and -o.";
+    echo "";
+    echo "-h  This help text.";
+    echo "-v  Show version information."
+    echo "-d  Display the name of the current MDA file being converted.";
+    echo "-f  Follow symbolic links to directories while searching the tree.";
+    echo "-s  Convert MDA files that are actually symbolic links.";
+    echo "-x  Change extension for searching for MDA files to something other than \"mda\".";
+    echo "";
+    echo "It runs the copy of 'mda2ascii' found in the PATH, but an explicit location can";
+    echo "be used by setting the variable MDA2ASCII to the location of 'mda2ascii'.";
+    exit 0
+fi
+
+
+if [ ${#@} -lt 2 ]; then
+    echo "For help, type: mdatree2ascii -h"
+    exit 0
+fi
+
+
+if [ -z "$MDA2ASCII" ] ; then
+    MDA2ASCII="mda2ascii"
+fi
+MY_MDA2ASCII=$(type -P $MDA2ASCII)
+if (( $? != 0 )) ; then
+    echo "Can't find/execute command \"$MDA2ASCII\".";
+    exit;
+fi
+
+
+if [ ! -d "$1" ] ; then
+    echo "The argument in the source directory position is not a directory.";
+    exit 0;
+fi
+
+# force tilde expansion
+SRCDIR=`echo $1`
+DESTDIR=`echo $2`
+shift 2
+
+OLD_OUTDIR=""
+LEVEL=0
+SRCS=($( find $FOPT $SRCDIR -name "*.$EXT" $SOPT ))
+echo "Searching directory tree \"$SRCDIR\" for files."
+ALEN=${#SRCS[@]}
+for((i=0; i<${ALEN}; i++)); do 
+    OUT=$(echo ${SRCS[i]} | sed -e "s:$SRCDIR::" -e "s:^/::" -e "s:.$EXT::");
+    OUTDIR=${DESTDIR}/$(dirname ${OUT})
+    # if this is the first file for a directory, do this
+    if [ "$OUTDIR" != "$OLD_OUTDIR" ] ; then
+        mkdir -p $OUTDIR
+        if (( $? != 0 )) ; then
+            echo "Exiting!  Can't create directory \"$OUTDIR\".";
+            exit;
+        fi
+        OLD_OUTDIR=${OUTDIR}
+        PROC_DIR=$(dirname ${SRCS[i]});
+        echo "Processing: $PROC_DIR"
+    fi
+    if (( VERBOSE == 1 )) ; then
+        echo  ${SRCS[i]};
+    fi
+    $MY_MDA2ASCII ${@} -o ${DESTDIR}/${OUT} ${SRCS[i]}
+done

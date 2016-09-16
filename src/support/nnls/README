@@ -1,0 +1,77 @@
+The is the README file for the NNLS software
+
+
+If you use this software please include in your paper the following citation:
+
+[1] D. Kim, S. Sra, and I. Dhillon. A Non-monotonic method for large-scale
+    nonnegative least-squares problems. Optimization Methods and Software, 2012. 
+
+OR for your convenience, include the following data in your .bib file
+
+@Article{kiSrDh12,
+  author = 	 {D. Kim and S. Sra and I. S. Dhillon},
+  title = 	 {{A Non-monotonic method for large-scale nonnegative least-squares problems}},
+  journal =  {Optimization Methods and Software},
+  year = 	 2012,
+  month =	 {Jan},
+}
+
+
+******* BUILD INSTRUCTIONS *********
+
+1. type 'make' on the command line
+2. Ideally it should succeed, and build nnls out of the box
+
+3. If it complains about stuff related to CBLAS, BLAS, ATLAS, FORTRAN, etc.
+   edit the 'makefile', and comment out the line that says
+
+   USEBLAS = -D_HAVE_CBLAS
+
+   Additionally, set the variable to the blank value
+
+   LIBS = 
+
+   Now it should compile without problems.
+
+
+****** USAGE *******
+
+The distribution includes a driver program, nnlsDriver.cc (which is the file
+that is compiled by make to yield 'nnls'); this driver illustrates how to use
+libnnls to solve an nnls problem. This driver is very rudimentary, but serves
+the purpose.
+
+The NNLS driver has a very simple interface. Usage is:
+
+nnls [dDsS] A b maxit
+
+  d -- dense matrix A, text mode files A and b
+  D -- dense matrix A, binary mode files A and b
+  s -- sparse matrix A, text mode CCS files A_* and b
+  S -- sparse matrix A, binary mode files A and b
+
+the rhs vector 'b' is always stored as an m x 1 dense matrix. Sparse format
+for 'b' is not supported, and not really worth it.
+
+As an explicit example, imagine you have a dense matrix, stored in a text-file
+called 'A' (without the quotes of course) as follows
+
+m n
+a11 a12 ... a1n
+a21 a22 ... a2n
+..  ..  ... ..
+am1 am2 ... amn
+
+Further assume that you have a textfile called 'b' stored as
+m 1
+b1
+b2
+..
+bm
+
+Then invoke nnls as: ./nnls d A b 10
+
+In the util/ subdirectory, there are scripts saveMatlabMatrix.m and
+loadCmatrix.m that allow you to load and save matlab matrices as files that
+the NNLS driver can read and use (both dense and sparse matrices are
+supported). 

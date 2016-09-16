@@ -1,0 +1,76 @@
+.TH MDA-LS 1 "August 2016" "MDA Utilities" "MDA Utilities"
+
+.SH NAME
+mda-ls \- displays basic properties of EPICS MDA files in a directory
+
+.SH SYNOPSIS
+.B mda-ls
+.RB [ \-hvfs ]
+.RB [ \-p\c
+.IR "\ positioner" ]
+.RB [ \-d\c
+.IR "\ detector" ]
+.RB [ \-t\c
+.IR "\ trigger" ]
+.RI [ "directory" ]
+
+.SH DESCRIPTION
+.B mda-ls
+is a utility for displaying the basic properties of EPICS MDA files in
+a directory.  By default, the following are shown: name of the file,
+overall dimensionality of the file, and positioners with their
+dimensionalties shown.  If the file was not completed, the highest
+dimensionality is represented by the completed number of points,
+followed by the requested number in parentheses.  If the file
+generates an error while loading, its status will be shown as
+.I Invalid. 
+By default, the validity of the entire files will be checked, but
+minimal checking can be enabled to save time.  There is an option for
+showing the fuller
+.B mda-ls
+listing, which shows the time of the beginning of the scan; to see
+more information about a certain file, use
+.BR mda-info .
+It is possible to filter listing to those containing the PV for a
+certain positioner, detector, or trigger.
+.PP
+By default, 
+.B mda-ls
+displays the properties of files in the current directory, but a
+different directory can be specified.  It doesn't accept file names
+as arguments.
+
+.SH OPTIONS
+.TP 
+.B \-h
+Show the help screen.
+.TP 
+.B \-v
+Show the version information.
+.TP 
+.B \-f
+Show the fuller listing, which includes the time of the beginning of the
+scan.
+.TP 
+.B \-s
+Use the simpler error checking, instead of checking the entire 
+file.
+.TP
+.BI \-p \ positioner
+File are selected that use the specified
+.IR positioner .
+.TP
+.BI \-d \ detector
+File are selected that use the specified
+.IR detector .
+.TP
+.BI \-t \ trigger
+File are selected that use the specified
+.IR trigger .
+
+.SH AUTHOR
+Dohn A. Arms
+
+.SH "SEE ALSO"
+.BR mda2ascii (1), \ mda-dump (1), \ mda-info (1)
+

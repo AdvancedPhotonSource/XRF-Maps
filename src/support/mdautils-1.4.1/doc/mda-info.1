@@ -1,0 +1,48 @@
+.TH MDA-INFO 1 "August 2016" "MDA Utilities" "MDA Utilities"
+
+.SH NAME
+mda-info \- prints out information about a MDA file
+
+.SH SYNOPSIS
+.B mda-info
+.RB [ \-hvs ]
+.I "file"
+
+.SH DESCRIPTION
+.B mda-info
+is a utility for seeing certain information about MDA files, which are
+created by
+.BR saveData \ in
+.BR EPICS .
+Things such as scan time, dimensionality, positioners, detectors, and
+triggers are shown.  For each trigger, positioner, and detector there
+is both a number and, located in parentheses, the PV field number used
+in saveData.  Unless one of the options is used,
+.B mda-info 
+needs only
+.IR "file" ,
+the name of the MDA file.  If a file is irregular, it is stated as
+such and the actual overall scan size is shown, taken from the individual
+scans themselves.
+.PP
+The program by default will check the validity of the entire file, but
+minimal checking can be enabled to save time.
+
+.SH OPTIONS
+.TP 
+.B \-h
+Show the help screen.
+.TP 
+.B \-v
+Show the version information.
+.TP 
+.B \-s
+Use the simpler error checking, instead of checking the entire 
+file.
+
+.SH AUTHOR
+Dohn A. Arms
+
+.SH "SEE ALSO"
+.BR mda2ascii (1), \ mda-dump (1), \ mda-ls (1)
+

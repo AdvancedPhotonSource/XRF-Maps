@@ -1,0 +1,77 @@
+.TH MDATREE2ASCII 1 "August 2016" "MDA Utilities" "MDA Utilities"
+
+.SH NAME
+mdatree2ascii \- convert directories of EPICS MDA files to ASCII format
+
+.SH SYNOPSIS
+.B mdatree2ascii
+.RB [ \-h ]
+.RB [ \-v ]
+.RB [ \-d ]
+.RB [ \-f ]
+.RB [ \-s ]
+.RB [ \-x\c
+.IR "\ extension" ]
+.I "source" "destination"
+.RI [ "mda2ascii_options" ]
+
+.SH DESCRIPTION
+.B mdatree2ascii
+is a script utility for converting directory trees of binary MDA data
+files (which are created by
+.BR saveData \ in
+.BR EPICS )
+into newly created directory trees containing the ASCII output.  The
+source and destination trees share the same layout, except that
+directories in the source tree that contain no MDA files will not be
+created in the destination tree.  The program
+.B mda2ascii
+is run on each found file, using the options provided by the user.
+The program will show the directory that is currently being converted,
+and there is an option for showing the current file as well.  Any
+errors that
+.B mda2ascii
+generates will appear, but they will not stop the conversion process.
+.PP
+By default, the utility will ignore symbolic links, but there are
+switches for enabling following directory symbolic links and converting
+MDA file symbolic links.  There is also an option to change the extension
+that is searched, from the default "mda".
+.PP 
+While the utility will use the
+.I mda2ascii
+that is found in the
+.IR PATH ,
+explicit location for the executable can be used by setting the
+environment variable 
+.I MDA2ASCII
+to the location of 
+.IR mda2ascii .
+
+.SH OPTIONS
+.TP 
+.B \-h
+Show the help screen.
+.TP 
+.B \-v
+Show the version information.
+.TP
+.B \-d
+Display the name of the current MDA file being converted.
+.TP
+.B \-f
+Follow directory symbolic links while searching the tree.
+.TP
+.B \-s
+Convert MDA files that are actually symbolic links.
+.TP
+.BI \-x \ extension
+Change the extension used while searching for files, from the default
+"mda".
+
+.SH AUTHOR
+Dohn A. Arms
+
+.SH "SEE ALSO"
+.BR mda2ascii (1), \ mda-dump (1), \ mda-info (1), \ mda-ls (1)
+

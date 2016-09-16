@@ -1,0 +1,147 @@
+MDA Utilities Version Changelog
+
+
+From 1.4.0 to 1.4.1
+
+mda2ascii:
+    Changed way scan tree is traversed for multidimensional files.
+    Instead of trusting the header dimensions array for scan sizes,
+    use the sizes in the scans themselves.  Allows correct conversion
+    for irregular files, or files that have bad values in the
+    dimensions array (technically the file is damaged then).
+mda-info:
+    Simply state that a scan is irregular, as previous output was
+    misleading.
+
+
+From 1.3.1 to 1.4.0
+
+mda-load library: 
+    Added mda_check(), to have an easy way to check the validity of a
+    file. Added mda_update() function that will load an updated MDA
+    file, attempting to use the previously loaded and supplied MDA
+    data. Completed error handling, made sure to release all memory on
+    error.  Check for MDA file structural errors (like negative number
+    of positioners).
+mda-ls: 
+    Enabled entire file checking by default, allow this to be turned off
+    with -s switch.
+mda-info: 
+    Enabled entire file checking by default, allow this to be turned off
+    with -s switch.
+
+
+From 1.3.0 to 1.3.1
+
+mda-load library: 
+    Added another check for corrupted files.
+mda2ascii: 
+    When processing multiple files, the program will now skip an
+    invalid file instead of stopping execution.
+mda-ls: 
+    The program will no longer halt when it encounters an invalid
+    file.
+xdr_hack:
+    To help Windows users, added code for faking enough of the XDR
+    routines that are needed for decoding the MDA format (which
+    Windows lacks).  This code should NOT be used if there is native
+    support, and has to be manually enabled in the Makefile.  There is
+    support for both big- and little-endian systems.
+
+
+From 1.2.2 to 1.3.0
+
+mda-load library: 
+    Added another check for corrupted files.
+mda2ascii:
+    Refactored the code behind -f option to be more efficient.
+mdatree2ascii
+    Added new script utility for converting entire directory trees of
+    files into new corresponding trees containing the output.
+
+
+From 1.2.1 to 1.2.2
+
+mda-load library: 
+    Fixed a bug that would cause an MDA file to not load if there was
+    an Extra PV that was of the char type.  Also added preprocessor
+    commands to mda-load.h in order to make the library C++ compatible
+    (Michael Hu).
+
+
+From 1.2 to 1.2.1
+
+mda2ascii:
+    There was a bug when using the -f flag, which can cause a
+    positioner column to show a printf format instead of the data
+    (it's fairly obvious when this does happen). This only occurred
+    when the all the values for a positioner were integers.
+mda-ls, mda-info, and mda2ascii: 
+    Many instances of repetitive deep pointer dereferencing were
+    removed from the code. It makes the code slightly faster, and also
+    easier to understand.
+Makefile: 
+    Added DESTDIR variable for making distribution packages simpler
+    (J. Lewis Muir).
+Documentation: 
+    Added Changelog.txt file.  Fixed typos in various files (some from
+    J. Lewis Muir).
+
+
+From 1.1 to 1.2
+
+mda-load library: 
+    Changed from generic int types to fixed length int types, as it is
+    more portable in the long term, and fixes problems with MacOS
+    compiling.  Look for occasional over-allocations of memory for
+    strings (which tend to be severe, but don't cause failures) and
+    then reduce memory consumption.  Remove warning when building on
+    MacOS (J. Lewis Muir).
+mda-dump: 
+    Fixed the behavior of not releasing memory allocated for strings;
+    this is not a critical issue, it just lets the program run with an
+    even smaller memory footprint.
+Makefile:
+    Fixed the install option, especially regarding documentation
+    (J. Lewis Muir).  Added detection of MacOS X to work around
+    missing xdr function.
+
+
+From 1.0 to 1.1
+
+mda2ascii: 
+    Added option to print out all existing scans in a file, even if
+    they are incomplete due to an abort of the scan, and marks them.
+mda-dump: 
+    Shows the offset of scans as they are read, as well as the offset
+    of extra PV information.
+mda-info: 
+    Shows the saveData numbering in parentheses for detectors,
+    positioners, and triggers.
+mda-load library:
+    Added check for a certain type of corrupt MDA file, leading to
+    fewer crashes of the utilities.
+Makefile: 
+    Added install option.
+
+
+From 0.3 to 1.0:
+
+mda2ascii: 
+    New options created, such as create scan files for scan dimensions
+    higher than 1, output a friendlier representation of the data (at
+    the expense of a larger file), and put extra PV information in a
+    separate file.
+mda-dump: 
+    Rewritten to display data immediately as it is read to help track
+    file errors.
+mda-info: 
+    Now shows all the information on positioners, detectors, and
+    triggers.
+mda-ls: 
+    New utility that gives a brief description of the scans contained
+    in MDA files in a directory.
+mda-load library: 
+    Memory leaks fixed, functions added for loading parts of an MDA
+    file as needed.
+

@@ -1,0 +1,180 @@
+.TH MDA2ASCII 1 "August 2016" "MDA Utilities" "MDA Utilities"
+
+.SH NAME
+mda2ascii \- convert EPICS MDA files to ASCII format
+
+.SH SYNOPSIS
+.B mda2ascii
+.RB [ \-hvmtfe1a ]
+.RB [ \-x\c
+.IR "\ extension" ]
+.RB [ \-d\c
+.IR "\ directory" ]
+.RB [ \-o\c
+.IR "\ output" 
+.RB | \ \- ]
+.RB [ \-c\c
+.IR "\ commenter" ]
+.RB [ \-s\c
+.IR "\ separator" ]
+.RB [ \-i\ 
+.IR "dimension"
+.RB | \ \- ]
+.IR "\ mdafile\ " [ "..." ]
+
+.SH DESCRIPTION
+.B mda2ascii
+is a utility for converting the binary MDA data files (created by
+.BR saveData \ in
+.BR EPICS )
+into ASCII output.  It can handle arbitrary dimensional scans, and can
+split multi-dimensional scans into separate files for each
+dimensionalty.  Scan values for the dimensionalty being converted are
+put into column form, while the higher dimensional information is kept
+in a commented header.
+.PP
+By default, it writes the output for a one-dimensional MDA file to a
+single file, while for multi-dimensional scans it writes multiple
+files.  The files are put into the current directory.  The name of the
+written file(s) are determined from the input file name, where the
+extension is removed and replaced with "asc".  For multiple files, the
+higher-dimensional indices are added in order to the base file name.
+Each scan dimensionality that contains detectors is converted.  In
+addition,
+.B mda2ascii
+can process multiple files at a time.
+
+.SH OPTIONS
+.TP 
+.B \-h
+Show the help screen.
+.TP 
+.B \-v
+Show the version information.
+.TP 
+.B \-m
+Merge the higher dimensional data into the current dimensional scan
+values.  Each of the higher dimensional values takes the form of a
+column with that single value, and the higher dimensional values are
+removed from the header.  The higher dimensional scan indices are also
+added as columns, with the corresponding single values.
+.TP
+.B \-t
+Trim off all the commented header lines, leaving only values.
+.TP
+.B \-f
+Friendlier data presentation, with all the data columns having a
+uniform width, making manual browsing of values much easier.  An extra
+commented line at the beginning of scan data indicates the column
+numbers.
+.TP
+.B \-e
+Write "Extra PV" information into a separate file.  The name of this
+extra file is included in the scan file after the header.  This option
+is overriden by the
+.B
+\-t
+and
+.B
+\-1
+options.
+.TP
+.B \-1
+For a multi-dimensional scan file, all of the resulting output for
+each scan is merged into a single output file.  An overall header is
+added at the start of the file, the scans are all separated by
+dividers, and another divider is added before the first scan of every
+dimensionality.
+.TP
+.B \-a
+Write out all the scans, even those that are not considered truly
+finished.  This only really matters for a multidimensional data file,
+where the overall scan was aborted before finishing.  Technically,
+only those lower-dimensional scans under the completed
+highest-dimensional scans are considered complete.  However, there may
+be incomplete scans under the highest dimensional scan that was
+running, and this option outputs those scans.  Those scans tend to
+have bad values in the higher dimensional areas, so take care with these
+scans.
+.TP
+.BI \-x \ extension
+Change the extension used for automatically naming files.
+The default is "asc".
+.TP 
+.BI \-d \ directory
+Change the output directory when automatically naming files.
+The default is the current directory (or ".").
+.TP
+.BI \-o \ output "\ |\ \-"
+Specify the output file, limiting the number of input MDA files to
+one. Either the entire file name and path can be specified, or simply
+the name's base.  If using a base, an extension and directory will be
+appended to it, coming either from the
+.B \-x
+and 
+.B \-d
+options or their defaults).  Alternatively, if "\c
+.B \-\c
+" is specified, the output will be redirected to the standard output
+(the screen).
+.TP
+.BI \-c \ commenter
+Change the string used at the beginning of a comment line.  Normally,
+this is a single character, but it can be more. The default is "#".
+.TP
+.BI \-s \ separator
+Change the string used to separate the data values into columns.
+The default is " ".
+.TP
+.BI \-i \ dimension "\ |\ \-"
+Specify the scan dimensionality that is output.  The possible
+parameters are the scan dimensionality or "\c
+.B \-\c
+" for all scans. 
+The default is to use all scans that contain detectors.
+
+.SH EXAMPLES
+.LP
+To convert a directory full of MDA files, sending the output to the
+directory "asc_data", one would simply run
+.IP
+\fCmda2ascii -d asc_data *.mda\fP
+.LP
+Alternatively, you can go into the "asc_data" directory and run instead
+.IP
+\fCmda2ascii ../*.mda\fP
+.LP
+where all the ASCII files go into the current directory.
+.PP
+If your program needs "%" as the comment character and "," as data
+separators, you could convert the data this way, running
+.IP
+\fCmda2ascii -s "," -c "%" *.mda\fP
+.LP
+where the output goes into the original directory.
+.PP
+Suppose one wants all the resultant one-dimensional data from a
+multi-dimensional data file (say "data.mda") to come out in a
+multidimensional ASCII form, suitable for a matrix manipulating
+program.  This can be accomplished using
+.IP
+\fCmda2ascii -m1t -i 1 -o data-matrix.dat data.mda\fP
+.LP
+where the output is stored in a special file "data-matrix.dat".  This
+file will have the complete multi-dimensional data set ready to be
+read.  For a file with n dimensions, the first n columns will be the
+indices identifying the point. There is a caveat to all of this:
+.B "mda2ascii"
+does absolutely no checking to make sure that the parameters of the
+lower dimensional scans weren't altered while the top-most dimensional
+scan was running.  In theory, the one-dimensional scans could have
+different numbers of detectors, different number of scan points, etc.
+which would make the data nonsensical.  This is very unlikely, but it
+is theoretically possible.
+
+.SH AUTHOR
+Dohn A. Arms
+
+.SH "SEE ALSO"
+.BR mda-dump (1), \ mda-info (1), \ mda-ls (1)
+
