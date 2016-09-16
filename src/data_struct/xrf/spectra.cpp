@@ -266,7 +266,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 
 	for (size_t i = 0; i<background.size(); i++)
 	{
-		if (isnan(background[i]))
+		if (std::isnan(background[i]))
 		{
 			background[i] = 0.0;
 		}
