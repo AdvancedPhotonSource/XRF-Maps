@@ -331,7 +331,7 @@ elseif (UNIX)
 
   # Optimize for a small binary size
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-Os")
+    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-Os -fPIC")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
