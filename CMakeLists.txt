@@ -59,8 +59,9 @@ set(HDF5_SEARCH_DIR "" CACHE PATH "Aditional folder for searching HDF5 lib")
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-find_package (Threads)
-find_package(HDF5 REQUIRED)
+include_directories(GCC_INCLUDE_DIR)
+include_directories(HDF5_SEARCH_DIR)
+
 
 set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
 IF( NOT EIGEN3_INCLUDE_DIR )
@@ -73,7 +74,6 @@ find_package(NetCDF REQUIRED)
 
 set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
-include_directories(GCC_INCLUDE_DIR)
 
 find_package (Threads)
 find_package(HDF5 REQUIRED)
