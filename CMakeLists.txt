@@ -72,7 +72,7 @@ set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
 
 find_package (Threads)
-find_package(HDF5 REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS C)
 
 
 #find_package(VTK REQUIRED)
