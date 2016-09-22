@@ -53,16 +53,25 @@ project(XRF_Maps)
 # Add a CMake parameter for choosing a desired Python version
 #set(PYBIND11_PYTHON_VERSION "" CACHE STRING "Python version to use for compiling the XRF Maps application")
 
-set(GCC_INCLUDE "/usr/include" CACHE PATH "Aditional GCC include folder")
+set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
 
-set(EIGEN3_INCLUDE "" CACHE PATH "Eigen include folder")
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(NetCDF_INCLUDE "" CACHE PATH "NetCDF-C include folder")
-set(NetCDF_LIB_DIR "" CACHE PATH "NetCDF-C lib folder")
+find_package (Threads)
+find_package(HDF5 REQUIRED)
+
+set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
+IF( NOT EIGEN3_INCLUDE_DIR )
+    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
+ENDIF()
+
+#set(NetCDF_INCLUDE "" CACHE PATH "NetCDF-C include folder")
+#set(NetCDF_LIB_DIR "" CACHE PATH "NetCDF-C lib folder")
+find_package(NetCDF REQUIRED)
 
 set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
-include_directories(GCC_INCLUDE)
+include_directories(GCC_INCLUDE_DIR)
 
 find_package (Threads)
 find_package(HDF5 REQUIRED)
@@ -128,7 +137,7 @@ endif()
 include_directories(${HDF5_INCLUDE_DIRS})
 
 # Include Eigen 
-include_directories(${EIGEN3_INCLUDE})
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Include NetCDF 
 include_directories(${NETCDF_INCLUDE})
