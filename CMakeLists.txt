@@ -55,13 +55,9 @@ project(XRF_Maps)
 
 set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
 
-set(HDF5_SEARCH_DIR "" CACHE PATH "Aditional folder for searching HDF5 lib")
-
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
 include_directories(GCC_INCLUDE_DIR)
-include_directories(HDF5_SEARCH_DIR)
-
 
 set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
 IF( NOT EIGEN3_INCLUDE_DIR )
