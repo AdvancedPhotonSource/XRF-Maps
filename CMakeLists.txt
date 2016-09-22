@@ -55,6 +55,8 @@ project(XRF_Maps)
 
 set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
 
+set(HDF5_SEARCH_DIR "" CACHE PATH "Aditional folder for searching HDF5 lib")
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package (Threads)
