@@ -53,15 +53,19 @@ project(XRF_Maps)
 # Add a CMake parameter for choosing a desired Python version
 #set(PYBIND11_PYTHON_VERSION "" CACHE STRING "Python version to use for compiling the XRF Maps application")
 
-find_package (Threads)
-find_package(HDF5 REQUIRED)
+set(GCC_INCLUDE "/usr/include" CACHE PATH "Aditional GCC include folder")
 
-set(EIGEN_INCLUDE "" CACHE PATH "Eigen include folder")
+set(EIGEN3_INCLUDE "" CACHE PATH "Eigen include folder")
 
 set(NetCDF_INCLUDE "" CACHE PATH "NetCDF-C include folder")
 set(NetCDF_LIB_DIR "" CACHE PATH "NetCDF-C lib folder")
 
 set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
+
+include_directories(GCC_INCLUDE)
+
+find_package (Threads)
+find_package(HDF5 REQUIRED)
 
 
 #find_package(VTK REQUIRED)
@@ -124,7 +128,7 @@ endif()
 include_directories(${HDF5_INCLUDE_DIRS})
 
 # Include Eigen 
-include_directories(${EIGEN_INCLUDE})
+include_directories(${EIGEN3_INCLUDE})
 
 # Include NetCDF 
 include_directories(${NETCDF_INCLUDE})
