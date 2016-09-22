@@ -99,6 +99,7 @@ include(CheckCXXCompilerFlag)
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D_REAL_DOUBLE -shared -fPIC")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D_REAL_DOUBLE -shared -fPIC")
 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
@@ -299,7 +300,7 @@ if (WIN32)
     set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "/Os /GL /MP /bigobj /DDYNAMIC_LIB")
     set_target_properties(libxrf_fit PROPERTIES LINK_FLAGS "/LTCG")
 	
-	set(NETCDF_LIB netcdf.lib)
+	set(NETCDF_LIBRARIES netcdf.lib)
 	set(SZIP_LIB szip.lib)
 	# Link against shared libraries
 #    target_link_libraries(libxrf_fit  )
@@ -323,7 +324,7 @@ elseif (UNIX)
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
 
-  set(NETCDF_LIB netcdf)
+  #set(NETCDF_LIB netcdf)
   set(SZIP_LIB sz)
 
 #  target_link_libraries(libxrf_fit optimized hdf5 optimized netcdf_c )
@@ -331,7 +332,7 @@ elseif (UNIX)
 
   # Optimize for a small binary size
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-Os -fPIC")
+    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-Os")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
@@ -361,4 +362,4 @@ endif()
 #    install(FILES ${PYBIND11_HEADERS} DESTINATION include/pybind11)
 #endif()
 
-target_link_libraries (xrf_maps LINK_PUBLIC libxrf_fit optimized ${NETCDF_LIB} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
