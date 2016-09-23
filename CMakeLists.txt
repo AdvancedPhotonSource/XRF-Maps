@@ -139,7 +139,7 @@ include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Include NetCDF 
-include_directories(${NETCDF_INCLUDE})
+include_directories(${NETCDF_INCLUDES})
 
 # Include libxrf header files
 include_directories(src/support/minpack)
