@@ -362,4 +362,5 @@ endif()
 #    install(FILES ${PYBIND11_HEADERS} DESTINATION include/pybind11)
 #endif()
 
-target_link_libraries (xrf_maps LINK_PUBLIC libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps_d LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
