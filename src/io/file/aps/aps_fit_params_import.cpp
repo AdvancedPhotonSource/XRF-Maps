@@ -1,51 +1,27 @@
 /***
-Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
-Copyright 2016. UChicago Argonne, LLC. This software was produced
-under U.S. Government contract DE-AC02-06CH11357 for Argonne National
-Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-U.S. Department of Energy. The U.S. Government has rights to use,
-reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
-UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
-modified to produce derivative works, such modified software should
-be clearly marked, so as not to confuse it with the version available
-from ANL.
+Copyright (c) 2016 Arthur Glowacki
 
-Additionally, redistribution and use in source and binary forms, with
-or without modification, are permitted provided that the following
-conditions are met:
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    * Neither the name of UChicago Argonne, LLC, Argonne National
-      Laboratory, ANL, the U.S. Government, nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
-Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   3. This notice may not be removed or altered from any source
+   distribution.
+
 ***/
-
-/// Initial Author <2016>: Arthur Glowacki
-
-
 
 #include "aps_fit_params_import.h"
 
@@ -124,7 +100,8 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 bool APS_Fit_Params_Import::load(std::string path,
                                  data_struct::xrf::Element_Info_Map *element_info_map,
                                  data_struct::xrf::Fit_Parameters* out_fit_params,
-                                 std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit)
+                                 std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
+                                 std::unordered_map<std::string, std::string>* out_values)
 {
 
     std::ifstream paramFileStream(path);
@@ -225,7 +202,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         (*out_fit_params)[tag_name].value = fvalue;
                     }
                 }
-                else if (tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
+                else if ( tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
                 {
                     unsigned int cnt = 0;
 
@@ -278,6 +255,18 @@ bool APS_Fit_Params_Import::load(std::string path,
                 {
                     std::cout<<"break "<<std::endl;
                 }
+                else
+                {
+                    if (tag.length() > 0 && tag[0] != ' ')
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        (*out_values)[tag] = value;
+                    }
+                }
                 //todo
                 //FIT_SNIP_WIDTH = use
                 //DETECTOR_MATERIAL =  0= Germanium, 1 = Si
@@ -290,6 +279,10 @@ bool APS_Fit_Params_Import::load(std::string path,
                 //TAIL_WIDTH_ADJUST_SI
                 //SI_ESCAPE_ENABLE = use and batch
                 //GE_ESCAPE_ENABLE = use and batch
+                //ELT1 = dxpXMAP2xfm3:mca4.ELTM
+                //ERT1 = dxpXMAP2xfm3:mca4.ERTM
+                //ICR1 = dxpXMAP2xfm3:dxp1:InputCountRate
+                //OCR1 = dxpXMAP2xfm3:dxp1:OutputCountRate
             }
         }
         catch(std::exception e)

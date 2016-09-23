@@ -1,49 +1,27 @@
 /***
-Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
-Copyright 2016. UChicago Argonne, LLC. This software was produced
-under U.S. Government contract DE-AC02-06CH11357 for Argonne National
-Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-U.S. Department of Energy. The U.S. Government has rights to use,
-reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
-UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
-modified to produce derivative works, such modified software should
-be clearly marked, so as not to confuse it with the version available
-from ANL.
+Copyright (c) 2016 Arthur Glowacki
 
-Additionally, redistribution and use in source and binary forms, with
-or without modification, are permitted provided that the following
-conditions are met:
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    * Neither the name of UChicago Argonne, LLC, Argonne National
-      Laboratory, ANL, the U.S. Government, nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
-Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   3. This notice may not be removed or altered from any source
+   distribution.
+
 ***/
-
-/// Initial Author <2016>: Arthur Glowacki
 
 //#include <QCoreApplication>
 
@@ -103,7 +81,11 @@ enum Processing_Types { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
 // ----------------------------------------------------------------------------
 
-bool load_spectra_volume(std::string dataset_directory, std::string dataset_file, data_struct::xrf::Spectra_Volume *spectra_volume, size_t detector_num);
+bool load_spectra_volume(std::string dataset_directory,
+                         std::string dataset_file,
+                         data_struct::xrf::Spectra_Volume *spectra_volume,
+                         size_t detector_num,
+                         std::unordered_map< std::string, std::string > *extra_override_values);
 
 // ----------------------------------------------------------------------------
 
@@ -258,7 +240,8 @@ bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::xrf::Fit_Parameters *fit_params,
                           data_struct::xrf::Calibration_Standard *calibration,
-                          data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit)
+                          data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
+                          std::unordered_map< std::string, std::string > *extra_override_values)
 {
     //Importer for APS datasets
     io::file::aps::APS_Fit_Params_Import fit_param_importer;
@@ -270,7 +253,8 @@ bool load_override_params(std::string dataset_directory,
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
                                         data_struct::xrf::Element_Info_Map::inst(),
                                         fit_params,
-                                        elements_to_fit))
+                                        elements_to_fit,
+                                        extra_override_values))
     {
         std::cout<<"Error loading fit param override file: "<<std::endl;
         return false;
@@ -299,16 +283,11 @@ bool load_override_params(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-
-bool load_spectra_volume_meta_data(std::string dataset_directory, std::string dataset_file, data_struct::xrf::Spectra_Volume *spectra_volume, size_t detector_num)
-{
-    io::file::MDA_IO mda_io;
-    return false;
-}
-
-// ----------------------------------------------------------------------------
-
-bool load_spectra_volume(std::string dataset_directory, std::string dataset_file, data_struct::xrf::Spectra_Volume *spectra_volume, size_t detector_num)
+bool load_spectra_volume(std::string dataset_directory,
+                         std::string dataset_file,
+                         data_struct::xrf::Spectra_Volume *spectra_volume,
+                         size_t detector_num,
+                         std::unordered_map< std::string, std::string > *extra_override_values)
 {
 
     //Dataset importer
@@ -319,7 +298,7 @@ bool load_spectra_volume(std::string dataset_directory, std::string dataset_file
 
     std::cout<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &detector, spectra_volume) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &detector, spectra_volume, extra_override_values) )
     {
         std::cout<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
         return false;
@@ -385,11 +364,13 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
     fitting::models::Range energy_range;
     energy_range.min = 0;
 
+    std::unordered_map< std::string, std::string > extra_override_values;
+
     //load override parameters
-    load_override_params(dataset_directory, 0, &override_fit_params, &calibration, &elements_to_fit);
+    load_override_params(dataset_directory, 0, &override_fit_params, &calibration, &elements_to_fit, &extra_override_values);
 
     //load spectra volume
-    if (false == load_spectra_volume(dataset_directory, dataset_file, &spectra_volume, 0) )
+    if (false == load_spectra_volume(dataset_directory, dataset_file, &spectra_volume, 0, nullptr) ) // todo pass in extra override dict
     {
         return;
     }
@@ -532,11 +513,13 @@ void process_dataset_file(std::string dataset_directory,
         //File job queue
         std::queue<std::future<bool> >* file_job_queue = new std::queue<std::future<bool> >();
 
+        std::unordered_map< std::string, std::string > extra_override_values;
+        extra_override_values.clear();
         //load override parameters
-        load_override_params(dataset_directory, detector_num, &override_fit_params, &calibration, &elements_to_fit);
+        load_override_params(dataset_directory, detector_num, &override_fit_params, &calibration, &elements_to_fit, &extra_override_values);
 
         //load spectra volume
-        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num) )
+        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values) )
         {
             std::cout<<"Skipping detector "<<detector_num<<std::endl;
             continue;
@@ -606,8 +589,8 @@ void process_dataset_file(std::string dataset_directory,
                 }
             }
 
-            file_job_queue->emplace( tp->enqueue( save_results, full_save_path, save_loc, element_fit_count_dict, fit_job_queue) );
-            //save_results( full_save_path, save_loc, &elements_to_fit);
+            //file_job_queue->emplace( tp->enqueue( save_results, full_save_path, save_loc, element_fit_count_dict, fit_job_queue) );
+            save_results( full_save_path, save_loc, element_fit_count_dict, fit_job_queue );
 
         }
 
@@ -660,16 +643,18 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
 void help()
 {
     std::cout<<"Help: "<<std::endl;
-    std::cout<<"Usage: xrf_mapper [multiple fit models] --dir [dataset] \n"<<std::endl;
-    std::cout<<"Dataset: "<<std::endl;
-    std::cout<<"--dir : Dataset directory "<<std::endl;
-    std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
+    std::cout<<"Usage: xrf_mapper [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
+    std::cout<<"Options: "<<std::endl;
+    std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) \n"<<std::endl;
     std::cout<<"Fitting models: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
-    std::cout<<"--nnls : Non-Negative Least Squares \n"<<std::endl;
+    std::cout<<"--nnls : Non-Negative Least Squares"<<std::endl;
     std::cout<<"--tails : Fit with multiple parameters "<<std::endl;
     std::cout<<"--matrix : Fit with locked parameters \n"<<std::endl;
+    std::cout<<"Dataset: "<<std::endl;
+    std::cout<<"--dir : Dataset directory "<<std::endl;
+    std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
     std::cout<<"Examples: "<<std::endl;
     std::cout<<"xrf_mapper --roi --matrix --dir /data/dataset1 "<<std::endl;
 }
@@ -684,7 +669,6 @@ int main(int argc, char *argv[])
     std::vector<std::string> dataset_files;
     std::vector<Processing_Types> proc_types;
 
-    ThreadPool tp(std::thread::hardware_concurrency());
     //ThreadPool tp(1);
 
     //Performance measure
@@ -702,6 +686,15 @@ int main(int argc, char *argv[])
        help();
        return 0;
     }
+
+
+    size_t num_threads = std::thread::hardware_concurrency();
+    if ( clp.option_exists("--nthreads") )
+    {
+        num_threads = std::stoi(clp.get_option("--nthreads"));
+    }
+
+    ThreadPool tp(num_threads);
 
 
     if ( clp.option_exists("--tails") )

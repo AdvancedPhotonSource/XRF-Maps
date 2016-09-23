@@ -98,7 +98,7 @@ include(CheckCXXCompilerFlag)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D_REAL_DOUBLE -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D_REAL_DOUBLE -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D_REAL_DOUBLE -fPIC")
 
   # Enable link time optimization and set the default symbol

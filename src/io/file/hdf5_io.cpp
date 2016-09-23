@@ -1,51 +1,27 @@
 /***
-Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
-Copyright 2016. UChicago Argonne, LLC. This software was produced
-under U.S. Government contract DE-AC02-06CH11357 for Argonne National
-Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-U.S. Department of Energy. The U.S. Government has rights to use,
-reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
-UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
-modified to produce derivative works, such modified software should
-be clearly marked, so as not to confuse it with the version available
-from ANL.
+Copyright (c) 2016 Arthur Glowacki
 
-Additionally, redistribution and use in source and binary forms, with
-or without modification, are permitted provided that the following
-conditions are met:
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    * Neither the name of UChicago Argonne, LLC, Argonne National
-      Laboratory, ANL, the U.S. Government, nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
-Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   3. This notice may not be removed or altered from any source
+   distribution.
+
 ***/
-
-/// Initial Author <2016>: Arthur Glowacki
-
-
 
 #include "hdf5_io.h"
 
@@ -462,6 +438,8 @@ bool HDF5_IO::save_spectra_volume(const std::string filename,
                                   size_t col_idx_start,
                                   int col_idx_end)
 {
+    std::unique_lock<std::mutex> lock(_mutex);
+
     hid_t    file_id, dset_id, dataspace_id, memoryspace, filespace, status, maps_grp_id, dcpl_id;
     herr_t   error;
 
@@ -553,6 +531,8 @@ bool HDF5_IO::save_element_fits(std::string filename,
                                 int col_idx_end)
 {
 
+    std::unique_lock<std::mutex> lock(_mutex);
+
     hid_t    file_id, dset_id, memoryspace, filespace, dataspace_id, filetype, dataspace_ch_id, dataspace_ch_off_id, memtype, status, maps_grp_id, dset_ch_id, dcpl_id;
     herr_t   error;
 
@@ -567,6 +547,11 @@ bool HDF5_IO::save_element_fits(std::string filename,
 
     if (file_id < 1)
         file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    if(file_id < 0)
+    {
+        std::cout<<"Error opening file "<<filename<<std::endl;
+        return false;
+    }
 
     //get one element
     data_struct::xrf::Fit_Counts_Array element;
@@ -607,20 +592,34 @@ bool HDF5_IO::save_element_fits(std::string filename,
     maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
         maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(maps_grp_id < 0)
+    {
+        std::cout<<"Error creating group 'MAPS'"<<std::endl;
+        return false;
+    }
 
     //dset_id = H5Dopen (maps_grp_id, path.c_str(), H5P_DEFAULT);
     if(dset_id < 0)
         dset_id = H5Dcreate (maps_grp_id, path.c_str(), H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
-
+    if(dset_id < 0)
+    {
+        std::cout<<"Error creating dataset "<<path<<std::endl;
+        return false;
+    }
 
     filetype = H5Tcopy (H5T_FORTRAN_S1);
     H5Tset_size (filetype, 255);
     memtype = H5Tcopy (H5T_C_S1);
     status = H5Tset_size (memtype, 256);
 
-    //dset_ch_id = H5Dopen (maps_grp_id, "channel_names", H5P_DEFAULT);
+    dset_ch_id = H5Dopen (maps_grp_id, "channel_names", H5P_DEFAULT);
     if(dset_ch_id < 0)
         dset_ch_id = H5Dcreate (maps_grp_id, "channel_names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(dset_ch_id < 0)
+    {
+        std::cout<<"Error creating 'channel_names' dataset"<<std::endl;
+        return false;
+    }
 
 /*
    if (row_idx_end < row_idx_start || row_idx_end > spectra_volume->rows() -1)
