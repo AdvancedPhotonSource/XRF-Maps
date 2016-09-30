@@ -154,12 +154,15 @@ bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::xrf::Detector* detector,
                                  data_struct::xrf::Spectra_Volume* vol,
+                                 bool hasNetCDF,
                                  std::unordered_map< std::string, std::string > *extra_override_values)
 {
     int elt_idx = -1;
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
+
+    bool single_row_scan = false;
 
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
@@ -187,8 +190,27 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     if (header->data_rank == 2)
     {
-        vol->resize(header->dimensions[0], header->dimensions[1], 2048);
-        return true;
+        if(hasNetCDF)
+        {
+            vol->resize(header->dimensions[0], header->dimensions[1], 2048);
+            return true;
+        }
+        else
+        {
+            if(header->dimensions[1] == 2000)
+            {
+                cols = 1;
+                rows = header->dimensions[0];
+                spectra = header->dimensions[1];
+                vol->resize(cols, rows, spectra);
+                single_row_scan = true;
+            }
+            else
+            {
+                //if not then we don't know what is dataset is.
+                 return false;
+            }
+        }
     }
     else if (header->data_rank == 3)
     {
@@ -261,9 +283,19 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 (*vol)[i][j].recalc_elapsed_lifetime();
             }
 
-            for(size_t k=0; k<spectra; k++)
+            if (single_row_scan)
             {
-                (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                for(size_t k=0; k<spectra; k++)
+                {
+                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->detectors_data[detector_num][k]);
+                }
+            }
+            else
+            {
+                for(size_t k=0; k<spectra; k++)
+                {
+                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                }
             }
         }
     }

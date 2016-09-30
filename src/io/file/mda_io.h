@@ -72,6 +72,7 @@ public:
                                      size_t detector_num,
                                      data_struct::xrf::Detector *detector,
                                      data_struct::xrf::Spectra_Volume* vol,
+                                     bool hasNetCDF,
                                      std::unordered_map< std::string, std::string > *extra_override_values);
 
 private:

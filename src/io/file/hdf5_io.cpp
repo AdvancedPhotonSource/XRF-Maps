@@ -32,6 +32,8 @@ freely, subject to the following restrictions:
 #include <ctime>
 #include <thread>
 
+#include "element_info.h"
+
 namespace io
 {
 namespace file
@@ -631,15 +633,38 @@ bool HDF5_IO::save_element_fits(std::string filename,
         col_idx_end = spectra_volume->cols();
     }
 */
-    int i=0;
-    for(const auto& iter : *element_counts)
+
+    //create save ordered vector by element Z number with K , L, M lines
+    std::vector<std::string> element_lines;
+    for (std::string el_name : data_struct::xrf::Element_Symbols)
     {
+        element_lines.push_back(el_name);
+    }
+    for (std::string el_name : data_struct::xrf::Element_Symbols)
+    {
+        element_lines.push_back(el_name+"_L");
+    }
+    for (std::string el_name : data_struct::xrf::Element_Symbols)
+    {
+        element_lines.push_back(el_name+"_M");
+    }
+
+
+    int i=0;
+    //save by element Z order
+    //for(const auto& iter : *element_counts)
+    for (std::string el_name : element_lines)
+    {
+        if(element_counts->count(el_name) < 1 )
+        {
+            continue;
+        }
         offset[0] = i;
-        element = iter.second;
+        element = element_counts->at(el_name);
 
         H5Sselect_hyperslab (dataspace_ch_id, H5S_SELECT_SET, offset, NULL, count, NULL);
         H5Sselect_hyperslab (dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], NULL, count, NULL);
-        status = H5Dwrite (dset_ch_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)(iter.first.c_str()));
+        status = H5Dwrite (dset_ch_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)(el_name.c_str()));
 
         for(size_t row = 0; row < element.rows(); row++)
         {

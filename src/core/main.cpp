@@ -295,10 +295,19 @@ bool load_spectra_volume(std::string dataset_directory,
     io::file::HDF5_IO hdf5_io;
     io::file::NetCDF_IO netcdf_io;
     data_struct::xrf::Detector detector;
+    std::string tmp_dataset_file = dataset_file;
 
     std::cout<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+
+    //check if we have a netcdf file associated with this dataset.
+    tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
+    std::ifstream file_io_0(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
+    bool hasNetcdf = file_io_0.is_open();
+    if(hasNetcdf)
+        file_io_0.close();
+
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &detector, spectra_volume, extra_override_values) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &detector, spectra_volume, hasNetcdf, extra_override_values) )
     {
         std::cout<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
         return false;
@@ -645,7 +654,7 @@ void help()
     std::cout<<"Help: "<<std::endl;
     std::cout<<"Usage: xrf_mapper [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
     std::cout<<"Options: "<<std::endl;
-    std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) \n"<<std::endl;
+    std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"Fitting models: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
