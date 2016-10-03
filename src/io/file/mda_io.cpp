@@ -199,10 +199,10 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             if(header->dimensions[1] == 2000)
             {
-                cols = 1;
-                rows = header->dimensions[0];
+                rows = 1;
+                cols = header->dimensions[0];
                 spectra = header->dimensions[1];
-                vol->resize(cols, rows, spectra);
+                vol->resize(rows, cols, spectra);
                 single_row_scan = true;
             }
             else
@@ -214,8 +214,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     else if (header->data_rank == 3)
     {
-        cols = header->dimensions[0];
-        rows = header->dimensions[1];
+        rows = header->dimensions[0];
+        cols = header->dimensions[1];
         spectra = header->dimensions[2];
         vol->resize(header->dimensions[0], header->dimensions[1], header->dimensions[2]);
     }
@@ -253,9 +253,9 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     std::cout<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 
-    for(size_t i=0; i<cols; i++)
+    for(size_t i=0; i<rows; i++)
     {
-        for(size_t j=0; j<rows; j++)
+        for(size_t j=0; j<cols; j++)
         {
 
             if(elt_idx > -1)
@@ -287,7 +287,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
             {
                 for(size_t k=0; k<spectra; k++)
                 {
-                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->detectors_data[detector_num][k]);
+                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
                 }
             }
             else
