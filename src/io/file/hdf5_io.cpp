@@ -574,7 +574,8 @@ bool HDF5_IO::save_element_fits(std::string filename,
     count[1] = 1;
     count[2] = dims_out[2];
     chunk_dims[0] = 1;
-    chunk_dims[1] = dims_out[1];
+    //chunk_dims[1] = dims_out[1];
+    chunk_dims[1] = 1;
     chunk_dims[2] = dims_out[2];
 
     dcpl_id = H5Pcreate(H5P_DATASET_CREATE);

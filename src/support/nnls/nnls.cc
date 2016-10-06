@@ -38,8 +38,8 @@ int nnls::optimize()
   double step;
   double *px = x->getData();
 
-  fprintf(stderr, "Iter           Obj           ||g||\n");
-  fprintf(stderr, "----------------------------------\n");
+  //fprintf(stderr, "Iter           Obj           ||g||\n");
+  //fprintf(stderr, "----------------------------------\n");
   while (!term) {
     out.iter++;
     term = checkTermination();
@@ -60,11 +60,12 @@ int nnls::optimize()
     if (out.iter % M == 0) {
       checkDescentUpdateBeta();
     }
-    if (out.iter % 10 == 0)
-      showStatus();
+    //if (out.iter % 10 == 0)
+    //  showStatus();
   }
-  showStatus();
+  //showStatus();
   cleanUp();
+  fprintf(stderr, "-------------------  %d \n", out.iter);
   return 0;
 }
 
@@ -163,6 +164,9 @@ double nnls::computeBBStep()
 void nnls::checkDescentUpdateBeta()
 {
 
+   // if(out.iter == 0)
+   //     return;
+
   double d = 0;
   double* grad = g->getData();
   double* prx  = refx->getData();
@@ -173,7 +177,10 @@ void nnls::checkDescentUpdateBeta()
     d += grad[i]*(prx[i]-px[i]);
   d *= sigma;
   
-  d = out.obj->get(out.iter - M) - out.obj->get(out.iter) - d; 
+  if (out.iter >= M)
+    d = out.obj->get(out.iter - M) - out.obj->get(out.iter) - d;
+  else
+    d = out.obj->get(out.iter) - d;
 
   //fprintf(stderr, "Descent value: %g - %g - %g, beta=%f\n", out.obj->get(out.iter -M), out.obj->get(out.iter - 2), d, beta*decay);
 

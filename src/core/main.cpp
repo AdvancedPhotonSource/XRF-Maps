@@ -542,6 +542,12 @@ void process_dataset_file(std::string dataset_directory,
             std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
 
             data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = new data_struct::xrf::Fit_Count_Dict();
+
+            if (elements_to_fit.size() < 1)
+            {
+                std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+                return;
+            }
             //Allocate memeory to save fit counts
             for(auto& e_itr : elements_to_fit)
             {
