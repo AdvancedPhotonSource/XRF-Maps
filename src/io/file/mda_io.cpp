@@ -253,54 +253,87 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     std::cout<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 
-    for(size_t i=0; i<rows; i++)
+
+    try
     {
-        for(size_t j=0; j<cols; j++)
+        if( false == single_row_scan )
         {
+            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
+            {
+                rows = _mda_file->scan->last_point + 1;
+                //TODO: set a flag to return to tell that this is a bad scan
+            }
+        }
 
-            if(elt_idx > -1)
+        for(size_t i=0; i<rows; i++)
+        {
+            // update num rows if header is incorrect and not single row scan
+
+            if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
             {
-                //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
-                (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
-            }
-            if(ert_idx > -1)
-            {
-                //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
-                (*vol)[i][j].elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
-            }
-            if(incnt_idx > -1)
-            {
-                //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
-                (*vol)[i][j].input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
-            }
-            if(outcnt_idx > -1)
-            {
-                //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
-                (*vol)[i][j].output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
-            }
-            if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
-            {
-                (*vol)[i][j].recalc_elapsed_lifetime();
+                cols = _mda_file->scan->sub_scans[i]->last_point + 1;
+                //TODO: set a flag to return to tell that this is a bad scan
             }
 
-            if (single_row_scan)
+            for(size_t j=0; j<cols; j++)
             {
-                for(size_t k=0; k<spectra; k++)
+/* TODO: we might need to do the same check for spectra
+                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
                 {
-                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
+                    cols = _mda_file->scan->sub_scans[i]->last_point;
                 }
-            }
-            else
-            {
-                for(size_t k=0; k<spectra; k++)
+*/
+                if(elt_idx > -1)
                 {
-                    (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                    //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
+                    (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                }
+                if(ert_idx > -1)
+                {
+                    //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
+                    (*vol)[i][j].elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
+                }
+                if(incnt_idx > -1)
+                {
+                    //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
+                    (*vol)[i][j].input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
+                }
+                if(outcnt_idx > -1)
+                {
+                    //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
+                    (*vol)[i][j].output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
+                }
+                if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                {
+                    (*vol)[i][j].recalc_elapsed_lifetime();
+                }
+
+                if (single_row_scan)
+                {
+                    for(size_t k=0; k<spectra; k++)
+                    {
+
+                        (*vol)[i][j][k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
+                    }
+                }
+                else
+                {
+                    for(size_t k=0; k<spectra; k++)
+                    {
+                        (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                    }
                 }
             }
         }
+        std::fclose(fptr);
+    }
+    catch(std::exception& e)
+    {
+        std::cout<<"!!! Error Caught exception loading mda file."<<std::endl;
+        std::cerr << "Exception catched : " << e.what() << std::endl;
+        return false;
     }
 
-    std::fclose(fptr);
 
     return true;
 }

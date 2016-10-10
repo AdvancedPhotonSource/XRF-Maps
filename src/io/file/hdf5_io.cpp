@@ -442,6 +442,15 @@ bool HDF5_IO::save_spectra_volume(const std::string filename,
 {
     std::unique_lock<std::mutex> lock(_mutex);
 
+//herr_t (*old_func)(void*);
+//void *old_client_data;
+//hid_t error_stack = H5Eget_current_stack();
+//H5Eget_auto2(error_stack, &old_func, &old_client_data);
+
+//H5Eset_auto2(error_stack, NULL, NULL);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
     hid_t    file_id, dset_id, dataspace_id, memoryspace, filespace, status, maps_grp_id, dcpl_id;
     herr_t   error;
 
@@ -520,6 +529,11 @@ bool HDF5_IO::save_spectra_volume(const std::string filename,
     H5Gclose(maps_grp_id);
     H5Fclose(file_id);
 
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    std::cout << "\n\n save mca_arr elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
+
     return true;
 
 }
@@ -532,8 +546,13 @@ bool HDF5_IO::save_element_fits(std::string filename,
                                 size_t col_idx_start,
                                 int col_idx_end)
 {
-
     std::unique_lock<std::mutex> lock(_mutex);
+
+//hid_t error_stack = H5Eget_current_stack();
+//H5Eset_auto2(error_stack, NULL, NULL);
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
 
     hid_t    file_id, dset_id, memoryspace, filespace, dataspace_id, filetype, dataspace_ch_id, dataspace_ch_off_id, memtype, status, maps_grp_id, dset_ch_id, dcpl_id;
     herr_t   error;
@@ -574,7 +593,6 @@ bool HDF5_IO::save_element_fits(std::string filename,
     count[1] = 1;
     count[2] = dims_out[2];
     chunk_dims[0] = 1;
-    //chunk_dims[1] = dims_out[1];
     chunk_dims[1] = 1;
     chunk_dims[2] = dims_out[2];
 
@@ -689,16 +707,14 @@ bool HDF5_IO::save_element_fits(std::string filename,
     H5Sclose(dataspace_id);
     H5Gclose(maps_grp_id);
     H5Fclose(file_id);
-/*
+
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    std::cout << "finished computation at " << std::ctime(&end_time)
-              << "elapsed time: " << elapsed_seconds.count() << "s\n";
+    std::cout << "\n\n save channels elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
 
-    printf("wrote in \n");
-*/
+
+
     return true;
 
 }
