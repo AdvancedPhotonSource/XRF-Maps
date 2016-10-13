@@ -1,51 +1,27 @@
 /***
-Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
-Copyright 2016. UChicago Argonne, LLC. This software was produced
-under U.S. Government contract DE-AC02-06CH11357 for Argonne National
-Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-U.S. Department of Energy. The U.S. Government has rights to use,
-reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
-UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
-modified to produce derivative works, such modified software should
-be clearly marked, so as not to confuse it with the version available
-from ANL.
+Copyright (c) 2016 Arthur Glowacki
 
-Additionally, redistribution and use in source and binary forms, with
-or without modification, are permitted provided that the following
-conditions are met:
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    * Neither the name of UChicago Argonne, LLC, Argonne National
-      Laboratory, ANL, the U.S. Government, nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
-Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   3. This notice may not be removed or altered from any source
+   distribution.
+
 ***/
-
-/// Initial Author <2016>: Arthur Glowacki
-
-
 
 #include "base_model.h"
 #include <functional>
@@ -89,6 +65,7 @@ Base_Model::Base_Model()
 {
     _update_element_guess_value = true;
     _counts_log_10 = false;
+    _save_counts_per_sec = true;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -189,7 +166,19 @@ void Base_Model::_post_process(Fit_Parameters *fit_params,
         {
             value = std::pow(10.0, value);
         }
-        out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = value / spectra->elapsed_lifetime();
+        if(_save_counts_per_sec)
+        {
+            real_t counts_per_sec = value / spectra->elapsed_lifetime();
+            // if val is not nan then save it , otherwise leave it as 0.
+            if(false == std::isnan(counts_per_sec))
+            {
+                out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = counts_per_sec;
+            }
+        }
+        else
+        {
+            out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = value;
+        }
         //(*element)[row_idx][col_idx] = value / spectra->elapsed_lifetime();
     }
     //std::cout<<std::endl;
@@ -229,7 +218,7 @@ void Base_Model::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                         struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), calibration);
                         real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
                         sum /= energy_range.count();
-                        e_guess = std::max( sum * this_factor + (real_t)0.01, 1.0);
+                        e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
                         //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
                     }
                     e_guess = std::log10(e_guess);
@@ -274,7 +263,7 @@ void Base_Model::_update_elements_guess(Fit_Parameters *fit_params,
 
                 real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
                 sum /= energy_range.count();
-                e_guess = std::max( sum * this_factor + (real_t)0.01, 1.0);
+                e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
                 //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
                 e_guess = std::log10(e_guess);
 

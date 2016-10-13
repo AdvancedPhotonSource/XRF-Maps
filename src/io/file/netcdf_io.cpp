@@ -1,51 +1,27 @@
 /***
-Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
-Copyright 2016. UChicago Argonne, LLC. This software was produced
-under U.S. Government contract DE-AC02-06CH11357 for Argonne National
-Laboratory (ANL), which is operated by UChicago Argonne, LLC for the
-U.S. Department of Energy. The U.S. Government has rights to use,
-reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR
-UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
-ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is
-modified to produce derivative works, such modified software should
-be clearly marked, so as not to confuse it with the version available
-from ANL.
+Copyright (c) 2016 Arthur Glowacki
 
-Additionally, redistribution and use in source and binary forms, with
-or without modification, are permitted provided that the following
-conditions are met:
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
 
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the
-      distribution.
+   1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
 
-    * Neither the name of UChicago Argonne, LLC, Argonne National
-      Laboratory, ANL, the U.S. Government, nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
+   2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
 
-THIS SOFTWARE IS PROVIDED BY UChicago Argonne, LLC AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL UChicago
-Argonne, LLC OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+   3. This notice may not be removed or altered from any source
+   distribution.
+
 ***/
-
-/// Initial Author <2016>: Arthur Glowacki
-
-
 
 #include "netcdf_io.h"
 
@@ -158,13 +134,24 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         unsigned short i2 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)+1];
         unsigned int ii = i1 | i2<<16;
         elapsed_lifetime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
+        if(elapsed_lifetime == 0)
+        {
+            std::cout<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+            elapsed_lifetime = 1.0;
+        }
         (*spec_line)[j].elapsed_lifetime(elapsed_lifetime);
 
         i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)];
         i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
         elapsed_realtime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
+        if(elapsed_realtime == 0)
+        {
+            std::cout<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+            elapsed_realtime = 1.0;
+        }
         (*spec_line)[j].elapsed_realtime(elapsed_realtime);
+
 
         i1 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)+1];
