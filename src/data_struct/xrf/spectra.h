@@ -57,7 +57,17 @@ public:
 		_output_counts = 1.0;
 	}
 
-    void recalc_elapsed_lifetime() { _elapsed_lifetime = _elapsed_realtime * _output_counts / _input_counts; }
+    void recalc_elapsed_lifetime()
+    {
+        if(_input_counts == 0 || _output_counts == 0)
+        {
+            _elapsed_lifetime = _elapsed_realtime;
+        }
+        else
+        {
+            _elapsed_lifetime = _elapsed_realtime * _output_counts / _input_counts;
+        }
+    }
 
     void elapsed_lifetime(_T val) { _elapsed_lifetime = val; }
 
@@ -81,6 +91,7 @@ private:
     _T _elapsed_realtime;
     _T _input_counts;
     _T _output_counts;
+
 };
 
 
