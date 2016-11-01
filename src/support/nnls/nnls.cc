@@ -66,7 +66,7 @@ int nnls::optimize()
   //showStatus();
   cleanUp();
   fprintf(stderr, "-------------------  %d \n", out.iter);
-  return 0;
+  return out.iter;
 }
 
 int nnls::saveStats(const char* fn)

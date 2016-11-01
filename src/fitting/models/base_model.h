@@ -144,6 +144,12 @@ public:
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
+    /**
+     * @brief save_counts_per_sec : change if we want to save just counts or counts_per_sec
+     * @param val
+     */
+    void save_counts_per_sec(bool val) {_save_counts_per_sec = val;}
+
 protected:
 
     /**

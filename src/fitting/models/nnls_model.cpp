@@ -135,14 +135,14 @@ void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
 
     nsNNLS::nnls*   solver;
     nsNNLS::vector *result;
-    int flag;
+    int num_iter;
 
     nsNNLS::vector rhs(spectra->size(), (real_t*)&(*spectra)[0]);
 
     solver = new nsNNLS::nnls(_fitmatrix, &rhs, _max_iter);
 
-    flag = solver->optimize();
-    if (flag < 0)
+    num_iter = solver->optimize();
+    if (num_iter < 0)
     {
         std::cout<<"Error  NNLS_Model::_fit_spectra: in optimization routine"<<std::endl;
     }
@@ -155,6 +155,11 @@ void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
     {
         Fit_Param param = (*fit_params)[itr.first];
         (*fit_params)[itr.first].value = result_p[param.opt_array_index];
+    }
+
+    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    {
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = num_iter;
     }
 
     delete solver;

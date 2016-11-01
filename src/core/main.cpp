@@ -556,15 +556,19 @@ void process_dataset_file(std::string dataset_directory,
                 element_fit_count_dict->at(e_itr.first).resize(spectra_volume->rows(), spectra_volume->cols());
             }
 
+            //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
+            bool alloc_iter_count = true;
             switch(proc_type)
             {
             case Processing_Types::GAUSS_TAILS:
                 model = &gauss_tails_model;
                 save_loc = "XRF_tails_fits";
+                alloc_iter_count = true;
                 break;
             case Processing_Types::GAUSS_MATRIX:
                 model = &gauss_matrix_model;
                 save_loc = "XRF_fits";
+                alloc_iter_count = true;
                 break;
             case Processing_Types::ROI:
                 model = &roi_model;
@@ -577,6 +581,7 @@ void process_dataset_file(std::string dataset_directory,
             case Processing_Types::NNLS:
                 model = &nnls_model;
                 save_loc = "XRF_nnls";
+                alloc_iter_count = true;
                 break;
 
             }
@@ -585,6 +590,15 @@ void process_dataset_file(std::string dataset_directory,
             fit_params = model->get_fit_parameters();
             //Update fit parameters by override values
             fit_params.update_values(override_fit_params);
+
+            if (alloc_iter_count)
+            {
+                //Allocate memeory to save number of fit iterations
+                element_fit_count_dict->emplace(std::pair<std::string, data_struct::xrf::Fit_Counts_Array>(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Counts_Array()) );
+                element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
+                //add num iters as a fit param
+                fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Param(data_struct::xrf::STR_NUM_ITR, 0.0, std::numeric_limits<real_t>::max(), 0.0, 1.0, data_struct::xrf::FIXED));
+            }
 
             if ( proc_type == Processing_Types::GAUSS_MATRIX )
             {

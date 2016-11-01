@@ -668,6 +668,7 @@ bool HDF5_IO::save_element_fits(std::string filename,
         element_lines.push_back(el_name+"_M");
     }
 
+    element_lines.push_back(data_struct::xrf::STR_NUM_ITR);
 
     int i=0;
     //save by element Z order
