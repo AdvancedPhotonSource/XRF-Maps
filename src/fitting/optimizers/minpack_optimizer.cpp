@@ -57,8 +57,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 
-#include "general_function_task.h"
-
 using namespace data_struct::xrf;
 
 
