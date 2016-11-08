@@ -73,7 +73,7 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->spectra, ud->calibration, ud->elements, *(ud->energy_range));
+    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->spectra, ud->detector, ud->elements, *(ud->energy_range));
     //Calculate residuals
     std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
 
@@ -101,7 +101,7 @@ LMFit_Optimizer::~LMFit_Optimizer()
 
 void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Calibration_Standard * const calibration,
+                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                Base_Model* model)
 {
@@ -112,10 +112,10 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     // set spectra to fit
     ud.spectra = (Spectra*)spectra;
     ud.fit_parameters = fit_params;
-    ud.calibration = (Calibration_Standard*)calibration;
+    ud.detector = (Detector*)detector;
     ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
 
-    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), calibration);
+    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
     fitting::models::Range energy_range;
     energy_range.min = 0;
     energy_range.max = spectra->size()-1;

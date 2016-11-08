@@ -248,7 +248,10 @@ bool APS_Calibration_IO::_load_standards_txt(std::string path, data_struct::xrf:
 
 }
 
-bool APS_Calibration_IO::_load_mca(std::string path, int detector_num, data_struct::xrf::Calibration_Standard* calibration)
+bool APS_Calibration_IO::_load_mca(std::string path,
+                                   int detector_num,
+                                   data_struct::xrf::Detector* detector,
+                                   data_struct::xrf::Spectra* spectra)
 {
 
     std::ifstream paramFileStream(path);
@@ -259,7 +262,6 @@ bool APS_Calibration_IO::_load_mca(std::string path, int detector_num, data_stru
         //std::string line;
         std::string tag;
         size_t num_channels = 0;
-        data_struct::xrf::Spectra* spectra = calibration->spectra();
         std::string str_value;
 
         try
@@ -289,27 +291,27 @@ bool APS_Calibration_IO::_load_mca(std::string path, int detector_num, data_stru
                 else if (tag == "REAL_TIME")
                 {
                     std::getline(strstream, str_value, ':');
-                    calibration->real_time(std::stoi(str_value));
+                    spectra->real_time(std::stoi(str_value));
                 }
                 else if (tag == "LIVE_TIME")
                 {
                     std::getline(strstream, str_value, ':');
-                    calibration->live_time(std::stoi(str_value));
+                    spectra->live_time(std::stoi(str_value));
                 }
                 else if (tag == "CAL_OFFSET")
                 {
                     std::getline(strstream, str_value, ':');
-                    calibration->offset(std::stoi(str_value));
+                    detector->energy_offset(std::stoi(str_value));
                 }
                 else if (tag == "CAL_SLOPE")
                 {
                     std::getline(strstream, str_value, ':');
-                    calibration->slope(std::stoi(str_value));
+                    detector->energy_slope(std::stoi(str_value));
                 }
                 else if (tag == "CAL_QUAD")
                 {
                     std::getline(strstream, str_value, ':');
-                    calibration->quad(std::stoi(str_value));
+                    detector->energy_quadratic(std::stoi(str_value));
                 }
                 else if (tag == "ENVIRONMENT")
                 {

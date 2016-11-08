@@ -94,14 +94,14 @@ NNLS_Model::~NNLS_Model()
 // ----------------------------------------------------------------------------
 
 void NNLS_Model::initialize(Fit_Parameters *fit_params,
-                               const Calibration_Standard * const calibration,
+                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                const struct Range energy_range)
 {
 
-    Base_Model::initialize(fit_params, calibration, elements_to_fit, energy_range);
+    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
 
-    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, calibration, elements_to_fit, energy_range);
+    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
 
     _generate_fitmatrix(fit_params, &element_models, energy_range);
 
@@ -140,7 +140,7 @@ void NNLS_Model::_generate_fitmatrix(Fit_Parameters *fit_params,
 
 Spectra NNLS_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                       const Spectra * const spectra,
-                                      const Calibration_Standard * const calibration,
+                                      const Detector * const detector,
                                       const Fit_Element_Map_Dict * const elements_to_fit,
                                       const struct Range energy_range)
 {
@@ -152,7 +152,7 @@ Spectra NNLS_Model::model_spectrum(const Fit_Parameters * const fit_params,
 
 void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
                                  const Spectra * const spectra,
-                                 const Calibration_Standard * const calibration,
+                                 const Detector * const detector,
                                  const Fit_Element_Map_Dict * const elements_to_fit)
 {
 

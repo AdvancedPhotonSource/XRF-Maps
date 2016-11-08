@@ -90,7 +90,7 @@ Fit_Element_Map::~Fit_Element_Map()
 
 }
 
-void Fit_Element_Map::init_energy_ratio_for_detector_element(Element_Info* detector_element)
+void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info * const detector_element)
 {
 
     if(_element_info == nullptr)
@@ -141,7 +141,7 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(Element_Info* detec
 
 }
 
-void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, Element_Info* detector_element)
+void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element)
 {
     if(_element_info == nullptr)
     {

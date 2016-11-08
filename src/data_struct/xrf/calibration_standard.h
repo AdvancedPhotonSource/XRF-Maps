@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Calibration_Standard_H
-#define Calibration_Standard_H
+#ifndef Quantification_Standard_H
+#define Quantification_Standard_H
 
 #include "defines.h"
 #include <valarray>
@@ -77,47 +77,12 @@ public:
 
     void append_element_weight(std::string name, real_t weight) {_element_weights[name] = weight;}
 
-    void offset(real_t val) { _e_offset = val; }
-
-    const real_t& offset() const { return _e_offset; }
-
-    void slope(real_t val) { _e_slope = val; }
-
-    const real_t& slope() const { return _e_slope; }
-
-    void quad(real_t val) { _e_quad = val; }
-
-    const real_t& quad() const { return _e_quad; }
-
-    void live_time(real_t val) { _live_time = val; }
-
-    const real_t& live_time() const { return _live_time; }
-
-    void real_time(real_t val) { _real_time = val; }
-
-    const real_t& real_time() const { return _real_time; }
-
-    void current(real_t val) { _current = val; }
-
-    const real_t& current() const { return _current; }
-
-    data_struct::xrf::Spectra* spectra() { return &_spectra; }
-
     std::unordered_map<std::string, real_t>* element_weights() { return &_element_weights; }
 
-    real_t element_weight(std::string element_symb) { return _element_weights[element_symb]; }
+    const real_t& element_weight(std::string element_symb) const { return _element_weights.at(element_symb); }
 
 protected:
 
-    real_t _e_offset;
-
-    real_t _e_quad;
-
-    real_t _e_slope;
-
-    //date,
-    real_t _live_time;
-    real_t _real_time;
     real_t _current;
     real_t _IC_US;
     real_t _IC_DS;
@@ -126,8 +91,6 @@ protected:
 
     std::valarray<real_t> _us_amp;
     std::valarray<real_t> _ds_amp;
-
-    data_struct::xrf::Spectra _spectra;
 
 };
 

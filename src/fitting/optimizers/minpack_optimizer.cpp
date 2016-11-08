@@ -72,19 +72,13 @@ void residuals_minpack(void *usr_data, int params_size, real_t *params, real_t *
 {
     // get user passed data
     User_Data* ud = static_cast<User_Data*>(usr_data);
-    Base_Model* fit_model = ud->fit_model;
-    Spectra *spectra = ud->spectra;
-    std::valarray<real_t> *weights = ud->weights;
-    Fit_Parameters *fit_p = ud->fit_parameters;
-    Calibration_Standard* calibration = ud->calibration;
-    std::unordered_map<std::string, Fit_Element_Map*> *elements = ud->elements;
 
-    fit_p->from_array(params, params_size);
-    Spectra spectra_model = fit_model->model_spectrum(fit_p, spectra, calibration, elements, *(ud->energy_range));
+    ud->fit_parameters->from_array(params, params_size);
+    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->spectra, ud->detector, ud->elements, *(ud->energy_range));
 
-    std::valarray<real_t> err = ( (*spectra) - spectra_model ) * (*weights);
+    std::valarray<real_t> err = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
 
-    for(size_t i=0; i<spectra->size(); i++)
+    for(size_t i=0; i<ud->spectra->size(); i++)
     {
         fvec[i] = err[i];
     }
@@ -108,7 +102,7 @@ MinPack_Optimizer::~MinPack_Optimizer()
 
 void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
                                 const Spectra * const spectra,
-                                const Calibration_Standard * const calibration,
+                                const Detector * const detector,
                                 const Fit_Element_Map_Dict * const elements_to_fit,
                                  Base_Model* model)
 {
@@ -119,10 +113,10 @@ void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
     // set spectra to fit
     ud.spectra = (Spectra*)spectra;
     ud.fit_parameters = fit_params;
-    ud.calibration = (Calibration_Standard*)calibration;
+    ud.detector = (Detector*)detector;
     ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
 
-    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), calibration);
+    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
     fitting::models::Range energy_range;
     energy_range.min = 0;
     energy_range.max = spectra->size()-1;

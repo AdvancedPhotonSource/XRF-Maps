@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "spectra_volume.h"
 #include "fit_parameters.h"
 #include "fit_element_map.h"
-#include "calibration_standard.h"
+#include "detector.h"
 
 namespace fitting
 {
@@ -80,7 +80,7 @@ struct Range
  * @param calibration: energy calibration
  * @return Range structure with the min energy and max enegry of the spectra to fit.
  */
-DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Calibration_Standard * const  calibration);
+DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Detector * const detector);
 
 /**
  * @brief The Base_Model class: base class for modeling spectra and fitting elements
@@ -109,7 +109,7 @@ public:
      */
     Fit_Parameters fit_spectra(const Fit_Parameters fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit,
                               Fit_Count_Dict *out_counts_dic,
                               size_t row_idx=0,
@@ -128,7 +128,7 @@ public:
      */
     void fit_spectra_volume(const Fit_Parameters fit_params,
                             const Spectra_Volume * const spectra_volume,
-                            const Calibration_Standard * const calibration,
+                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             Fit_Count_Dict *out_counts_dic,
                             size_t row_idx,
@@ -151,7 +151,7 @@ public:
      */
     virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                    const Spectra * const spectra,
-                                   const Calibration_Standard * const calibration,
+                                   const Detector * const detector,
                                    const Fit_Element_Map_Dict * const elements_to_fit,
                                    const struct Range energy_range) = 0;
 
@@ -163,7 +163,7 @@ public:
      * @param energy_range
      */
     virtual void initialize(Fit_Parameters *fit_params,
-                            const Calibration_Standard * const calibration,
+                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
@@ -183,7 +183,7 @@ protected:
      */
     virtual void _pre_process(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit);
 
     /**
@@ -195,7 +195,7 @@ protected:
      */
     virtual void _fit_spectra(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit) = 0;
 
     /**
@@ -207,7 +207,7 @@ protected:
      */
     virtual void _post_process(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Calibration_Standard * const calibration,
+                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                Fit_Count_Dict *out_counts_dic,
                                size_t row_idx,
@@ -222,7 +222,7 @@ protected:
      */
     void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                          const Spectra * const spectra,
-                                         const Calibration_Standard * const calibration,
+                                         const Detector * const detector,
                                          const Fit_Element_Map_Dict * const elements_to_fit);
 
     /**
@@ -234,7 +234,7 @@ protected:
      */
     void _update_elements_guess(Fit_Parameters *fit_params,
                                 const Spectra * const spectra,
-                                const Calibration_Standard * const calibration,
+                                const Detector * const detector,
                                 const Fit_Element_Map_Dict * const elements_to_fit);
 
     /**

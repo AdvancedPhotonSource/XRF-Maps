@@ -59,10 +59,6 @@ namespace xrf
 Calibration_Standard::Calibration_Standard()
 {
 
-    _e_offset = 0.0;
-    _e_quad   = 0.0;
-    _e_slope  = 0.0;
-
     _IC_US = 1.0;
     _IC_DS = 1.0;
 

@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Optimizer_H
 
 #include "fit_parameters.h"
-#include "calibration_standard.h"
+#include "detector.h"
 #include "base_model.h"
 
 
@@ -76,7 +76,7 @@ struct User_Data
     Spectra *spectra;
     std::valarray<real_t> *weights;
     Fit_Parameters *fit_parameters;
-    Calibration_Standard *calibration;
+    Detector *detector;
     Fit_Element_Map_Dict *elements;
     Range *energy_range;
     //Fit_Counts_Array* counts_arr;
@@ -94,7 +94,7 @@ public:
 
     virtual void minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
-                          const Calibration_Standard * const calibration,
+                          const Detector * const detector,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           Base_Model* model) = 0;
 

@@ -70,7 +70,7 @@ public:
 
     virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                    const Spectra * const spectra,
-                                   const Calibration_Standard * const calibration,
+                                   const Detector * const detector,
                                    const Fit_Element_Map_Dict * const elements_to_fit,
                                    const struct Range energy_range);
 
@@ -78,7 +78,7 @@ protected:
 
     virtual void _fit_spectra(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit);
 
 

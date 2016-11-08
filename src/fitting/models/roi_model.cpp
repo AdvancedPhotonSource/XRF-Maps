@@ -83,7 +83,7 @@ Fit_Parameters ROI_Model::get_fit_parameters()
 
 Spectra ROI_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                   const Spectra * const spectra,
-                                  const Calibration_Standard * const calibration,
+                                  const Detector * const detector,
                                   const Fit_Element_Map_Dict * const elements_to_fit,
                                   const struct Range energy_range)
 {
@@ -95,7 +95,7 @@ Spectra ROI_Model::model_spectrum(const Fit_Parameters * const fit_params,
 
 void ROI_Model::_fit_spectra(Fit_Parameters *fit_params,
                              const Spectra * const spectra,
-                             const Calibration_Standard * const calibration,
+                             const Detector * const detector,
                              const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
@@ -105,8 +105,8 @@ void ROI_Model::_fit_spectra(Fit_Parameters *fit_params,
     {
         Fit_Element_Map* element = e_itr.second;
         // note: center position for peaks/rois is in keV, widths of ROIs is in eV
-        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - calibration->offset()) / calibration->slope());
-        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - calibration->offset()) / calibration->slope());
+        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
+        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
 
         if (right_roi >= n_mca_channels)
         {

@@ -121,8 +121,9 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 }
 
 bool APS_Fit_Params_Import::load(std::string path,
-                                 data_struct::xrf::Element_Info_Map *element_info_map,
-                                 data_struct::xrf::Fit_Parameters* out_fit_params,
+                                 data_struct::xrf::Element_Info_Map * element_info_map,
+                                 data_struct::xrf::Fit_Parameters * out_fit_params,
+                                 data_struct::xrf::Detector * detector,
                                  std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
                                  std::unordered_map<std::string, std::string>* out_values)
 {
@@ -278,6 +279,27 @@ bool APS_Fit_Params_Import::load(std::string path,
                 {
                     std::cout<<"break "<<std::endl;
                 }
+                else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+                    if(value == "0")
+                    {
+                        detector->set_element(element_info_map->get_element("Ge"));
+                    }
+                    else if(value == "1")
+                    {
+                        detector->set_element(element_info_map->get_element("Si"));
+                    }
+                    else
+                    {
+                        std::cout<<"Error: Unknown detector element enumeration : "<<value<<::std::endl;
+                    }
+                }
                 else
                 {
                     if (tag.length() > 0 && tag[0] != ' ')
@@ -290,9 +312,10 @@ bool APS_Fit_Params_Import::load(std::string path,
                         (*out_values)[tag] = value;
                     }
                 }
+
                 //todo
                 //FIT_SNIP_WIDTH = use
-                //DETECTOR_MATERIAL =  0= Germanium, 1 = Si
+
                 //BE_WINDOW_THICKNESS = general
                 //DET_CHIP_THICKNESS = general
                 //GE_DEAD_LAYER = general

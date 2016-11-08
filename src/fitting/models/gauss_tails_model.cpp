@@ -196,12 +196,12 @@ Gauss_Tails_Model::~Gauss_Tails_Model()
 
 void Gauss_Tails_Model::_pre_process(Fit_Parameters *fit_params,
                                      const Spectra * const spectra,
-                                     const Calibration_Standard * const calibration,
+                                     const Detector * const detector,
                                      const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
-    Base_Model::_pre_process(fit_params, spectra, calibration, elements_to_fit);
-    _calc_and_update_coherent_amplitude(fit_params, spectra, calibration);
+    Base_Model::_pre_process(fit_params, spectra, detector, elements_to_fit);
+    _calc_and_update_coherent_amplitude(fit_params, spectra, detector);
 
     if(_snip_background)
     {
@@ -216,7 +216,7 @@ void Gauss_Tails_Model::_pre_process(Fit_Parameters *fit_params,
         //zero out
         //_background_counts *= 0.0;
         real_t spectral_binning = 0.0;
-        //_background_counts = snip_background(spectra, calibration->offset(), calibration->slope(), calibration->quad(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+        //_background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
     }
 
 }
@@ -225,7 +225,7 @@ void Gauss_Tails_Model::_pre_process(Fit_Parameters *fit_params,
 
 void Gauss_Tails_Model::_fit_spectra(Fit_Parameters *fit_params,
                              const Spectra * const spectra,
-                             const Calibration_Standard * const calibration,
+                             const Detector * const detector,
                              const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
@@ -234,7 +234,7 @@ void Gauss_Tails_Model::_fit_spectra(Fit_Parameters *fit_params,
     // fitp.g.xmin = MIN_ENERGY_TO_FIT
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
     /*
-    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), calibration);
+    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
     */
 
     if(spectra->sum() == 0)
@@ -254,21 +254,21 @@ void Gauss_Tails_Model::_fit_spectra(Fit_Parameters *fit_params,
 
     if(_optimizer != nullptr)
     {
-        _optimizer->minimize(fit_params, spectra, calibration, elements_to_fit, this);
+        _optimizer->minimize(fit_params, spectra, detector, elements_to_fit, this);
     }
 
 }
 
 void Gauss_Tails_Model::_post_process(Fit_Parameters *fit_params,
                                       const Spectra * const spectra,
-                                      const Calibration_Standard * const calibration,
+                                      const Detector * const detector,
                                       const Fit_Element_Map_Dict * const elements_to_fit,
                                       Fit_Count_Dict *out_counts_dic,
                                       size_t row_idx,
                                       size_t col_idx)
 {
 
-    Base_Model::_post_process(fit_params, spectra, calibration, elements_to_fit, out_counts_dic, row_idx, col_idx);
+    Base_Model::_post_process(fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
     //Set back to true if someone wants to call model_spectra without fitting
     _snip_background = true;
 
@@ -285,14 +285,14 @@ void Gauss_Tails_Model::set_optimizer(Optimizer *optimizer)
 
 void Gauss_Tails_Model::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
                                                             const Spectra * const spectra,
-                                                            const Calibration_Standard * const calibration)
+                                                            const Detector * const detector)
 {
 	//STR_COHERENT_SCT_ENERGY
 	//STR_COHERENT_SCT_AMPLITUDE
     real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
     real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
     real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
-	fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), calibration);
+    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
     size_t e_size = (energy_range.max + 1) - energy_range.min;
     real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
     sum /= energy_range.count();
@@ -351,7 +351,7 @@ Fit_Parameters Gauss_Tails_Model::get_fit_parameters()
 
 Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                           const Spectra * const spectra,
-                                          const Calibration_Standard * const calibration,
+                                          const Detector * const detector,
                                           const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
                                           const struct Range energy_range)
 {
@@ -368,20 +368,20 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
         e_val += 1.0;
     }
 
-    real_t gain = calibration->slope();
-    std::valarray<real_t> ev = calibration->offset() + energy * calibration->slope() + std::pow(energy, (real_t)2.0) * calibration->quad();
+    real_t gain = detector->energy_slope();
+    std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
 
 
     if( _snip_background )
     {
         real_t spectral_binning = 0.0;
-        _background_counts = snip_background(spectra, calibration->offset(), calibration->slope(), calibration->quad(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
+        _background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
     }
 
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-        spectra_model = model_spectrum_element(fit_params, itr.second, calibration, energy);
+        spectra_model = model_spectrum_element(fit_params, itr.second, detector, energy);
         agr_spectra += spectra_model;
     }
 
@@ -446,13 +446,13 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
 
 // ----------------------------------------------------------------------------
 
-Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const Calibration_Standard * const calibration, std::valarray<real_t> energy)
+Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const Detector * const detector, std::valarray<real_t> energy)
 {
     Spectra spectra_model(energy.size());
     std::valarray<real_t> peak_counts(0.0, energy.size());
 
-    real_t gain = calibration->slope();
-    std::valarray<real_t> ev = calibration->offset() + energy * calibration->slope() + std::pow(energy, (real_t)2.0) * calibration->quad();
+    real_t gain = detector->energy_slope();
+    std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {

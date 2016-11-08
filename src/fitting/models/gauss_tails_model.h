@@ -138,13 +138,13 @@ public:
 
     virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                    const Spectra * const spectra,
-                                   const Calibration_Standard * const calibration,
+                                   const Detector * const detector,
                                    const Fit_Element_Map_Dict * const elements_to_fit,
                                    const struct Range energy_range);
 
     Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                    const Fit_Element_Map * const element_to_fit,
-                                   const Calibration_Standard * const calibration,
+                                   const Detector * const detector,
                                    valarray<real_t> energy);
 
     void set_optimizer(Optimizer *optimizer);
@@ -153,21 +153,21 @@ protected:
 
     void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
                                              const Spectra * const spectra,
-                                             const Calibration_Standard * const calibration);
+                                             const Detector * const detector);
 
     virtual void _pre_process(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit);
 
     virtual void _fit_spectra(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit);
 
     virtual void _post_process(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Calibration_Standard * const calibration,
+                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                Fit_Count_Dict *out_counts_dic,
                                size_t row_idx,

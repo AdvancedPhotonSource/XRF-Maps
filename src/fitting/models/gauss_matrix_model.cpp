@@ -81,7 +81,7 @@ Gauss_Matrix_Model::~Gauss_Matrix_Model()
 
 Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                            const Spectra * const spectra,
-                                           const Calibration_Standard * const calibration,
+                                           const Detector * const detector,
                                            const Fit_Element_Map_Dict * const elements_to_fit,
                                            const struct Range energy_range)
 {
@@ -95,13 +95,13 @@ Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_para
 //        e_val += 1.0;
 //    }
 
-//    real_t gain = calibration->slope();
-//    valarray<real_t> ev = calibration->offset() + energy * calibration->slope() + pow(energy, (real_t)2.0) * calibration->quad();
+//    real_t gain = detector->energy_slope();
+//    valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_energy_slope() + pow(energy, (real_t)2.0) * detector->energy_quad();
 /*
     if( _snip_background )
     {
         real_t spectral_binning = 0.0;
-        spectra->snip_background(_background_counts, calibration->offset(), calibration->slope(), calibration->quad(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
+        spectra->snip_background(_background_counts, detector->energy_offset(), detector->energy_slope(), detector->energy_quad(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
     }
 */
 /*
@@ -161,12 +161,12 @@ Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_para
 // ----------------------------------------------------------------------------
 
 void Gauss_Matrix_Model::initialize(Fit_Parameters *fit_params,
-                                    const Calibration_Standard * const calibration,
+                                    const Detector * const detector,
                                     const Fit_Element_Map_Dict * const elements_to_fit,
                                     const struct Range energy_range)
 {
 
-    Base_Model::initialize(fit_params, calibration, elements_to_fit, energy_range);
+    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
 
     if(_element_models == nullptr)// || _element_models->size() != elements_to_fit->size())
     {
@@ -178,14 +178,14 @@ void Gauss_Matrix_Model::initialize(Fit_Parameters *fit_params,
     }
 
     std::cout<<"-------- Generating element models ---------"<<std::endl;
-    *_element_models = _generate_element_models(fit_params, calibration, elements_to_fit, energy_range);
+    *_element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
 
 }
 
 // ----------------------------------------------------------------------------
 
 unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_Parameters *fit_params,
-                                                                            const Calibration_Standard * const calibration,
+                                                                            const Detector * const detector,
                                                                             const Fit_Element_Map_Dict * const elements_to_fit,
                                                                             struct Range energy_range)
 {
@@ -206,8 +206,8 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
         e_val += 1.0;
     }
 
-    real_t gain = calibration->slope();
-    valarray<real_t> ev = calibration->offset() + energy * calibration->slope() + pow(energy, (real_t)2.0) * calibration->quad();
+    real_t gain = detector->energy_slope();
+    valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + pow(energy, (real_t)2.0) * detector->energy_quadratic();
 
     int i = 0;
     for(const auto& itr : (*elements_to_fit))
@@ -223,7 +223,7 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model_spectrum_element(&fit_parameters, element, calibration, energy);
+        element_spectra[itr.first] = model_spectrum_element(&fit_parameters, element, detector, energy);
     }
 
     //i = elements_to_fit->size();

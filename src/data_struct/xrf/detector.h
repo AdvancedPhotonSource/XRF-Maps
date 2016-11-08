@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Detector_H
 
 #include "defines.h"
-#include <valarray>
+#include "element_info.h"
 
 namespace data_struct
 {
@@ -71,10 +71,33 @@ public:
 
     ~Detector();
 
+    void energy_offset(real_t val) { _calib_energy_offset = val; }
+
+    const real_t& energy_offset() const { return _calib_energy_offset; }
+
+    void energy_slope(real_t val) { _calib_energy_slope = val; }
+
+    const real_t& energy_slope() const { return _calib_energy_slope; }
+
+    void energy_quadratic(real_t val) { _calib_energy_quad = val; }
+
+    const real_t& energy_quadratic() const { return _calib_energy_quad; }
+
+    void set_element(Element_Info* detector_element)  { _detector_element = detector_element; }
+
+    const Element_Info * const get_element() const { return _detector_element; }
 
 protected:
 
+    real_t _calib_energy_offset;
 
+    real_t _calib_energy_slope;
+
+    real_t _calib_energy_quad;
+
+    real_t _chip_thickness;
+
+    Element_Info* _detector_element;
 
 };
 

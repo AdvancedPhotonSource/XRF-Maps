@@ -57,6 +57,15 @@ namespace xrf
 Detector::Detector()
 {
 
+    _calib_energy_offset = 0.0;
+
+    _calib_energy_slope = 1.0;
+
+    _calib_energy_quad = 0.0;
+
+    _chip_thickness = 0.0;
+
+    _detector_element = nullptr;
 
 }
 

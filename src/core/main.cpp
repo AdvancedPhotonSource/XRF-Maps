@@ -179,7 +179,7 @@ bool save_volume(std::string full_path,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 void fit_and_plot_volume(fitting::models::Base_Model *model,
                          data_struct::xrf::Fit_Parameters fit_params,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
@@ -189,7 +189,7 @@ void fit_and_plot_volume(fitting::models::Base_Model *model,
     fitting::models::Range energy_range;
     energy_range.min = 0;
     energy_range.max = spectra_volume->samples_size() - 1;
-/*
+
     for(size_t i=0; i<spectra_volume->rows(); i++)
     {
         for(size_t j=0; j<spectra_volume->cols(); j++)
@@ -208,11 +208,11 @@ void fit_and_plot_volume(fitting::models::Base_Model *model,
 
         }
     }
-    */
+
 }
-
+*/
 // ----------------------------------------------------------------------------
-
+/*
 bool fit_volume(fitting::models::Base_Model *model,
                 data_struct::xrf::Fit_Parameters fit_params,
                 data_struct::xrf::Spectra_Volume *spectra_volume,
@@ -220,7 +220,7 @@ bool fit_volume(fitting::models::Base_Model *model,
                 std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements_to_fit,
                 ThreadPool *tp)
 {
-/*
+
     std::queue<std::future<data_struct::xrf::Fit_Parameters> > res_q;
     for(size_t i=0; i<spectra_volume->rows(); i++)
     //for(size_t i=0; i<1; i++) //debug
@@ -237,32 +237,43 @@ bool fit_volume(fitting::models::Base_Model *model,
             //res_q.emplace( tp->enqueue(  bound_f ) );
         }
     }
-*/
+
     return true;
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 bool fit_single_spectra(fitting::models::Base_Model *model,
                         data_struct::xrf::Fit_Parameters fit_params,
                         const data_struct::xrf::Spectra * const spectra,
-                        const data_struct::xrf::Calibration_Standard * const calibration,
+                        const data_struct::xrf::Detector * const detector,
                         const data_struct::xrf::Fit_Element_Map_Dict * const elements_to_fit,
                         data_struct::xrf::Fit_Count_Dict * out_fit_counts,
                         size_t i,
                         size_t j)
 {
-    model->fit_spectra(fit_params, spectra, calibration, elements_to_fit, out_fit_counts, i, j);
+    model->fit_spectra(fit_params, spectra, detector, elements_to_fit, out_fit_counts, i, j);
     return true;
 }
 
-
+// ----------------------------------------------------------------------------
+/*
+bool load_calibration_standard(std::string dataset_directory,
+                              int detector_num,
+                              data_struct::xrf::Fit_Parameters *fit_params,
+                              data_struct::xrf::Detector *detector,
+                              data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
+                              std::unordered_map< std::string, std::string > *extra_override_values)
+{
+return false;
+}
+*/
 // ----------------------------------------------------------------------------
 
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::xrf::Fit_Parameters *fit_params,
-                          data_struct::xrf::Calibration_Standard *calibration,
+                          data_struct::xrf::Detector *detector,
                           data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
                           std::unordered_map< std::string, std::string > *extra_override_values)
 {
@@ -276,6 +287,7 @@ bool load_override_params(std::string dataset_directory,
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
                                         data_struct::xrf::Element_Info_Map::inst(),
                                         fit_params,
+                                        detector,
                                         elements_to_fit,
                                         extra_override_values))
     {
@@ -286,11 +298,11 @@ bool load_override_params(std::string dataset_directory,
     {
 
         if( fit_params->contains(data_struct::xrf::STR_E_OFFSET) )
-            calibration->offset((*fit_params)[data_struct::xrf::STR_E_OFFSET].value);
+            detector->energy_offset((*fit_params)[data_struct::xrf::STR_E_OFFSET].value);
         if( fit_params->contains(data_struct::xrf::STR_E_LINEAR) )
-            calibration->slope((*fit_params)[data_struct::xrf::STR_E_LINEAR].value);
+            detector->energy_slope((*fit_params)[data_struct::xrf::STR_E_LINEAR].value);
         if( fit_params->contains(data_struct::xrf::STR_E_QUADRATIC) )
-            calibration->quad((*fit_params)[data_struct::xrf::STR_E_QUADRATIC].value);
+            detector->energy_quadratic((*fit_params)[data_struct::xrf::STR_E_QUADRATIC].value);
 
         std::cout<<"Elements to fit: "<<std::endl;
         for (auto el_itr : *elements_to_fit)
@@ -377,8 +389,8 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
     data_struct::xrf::Fit_Parameters fit_params;
     data_struct::xrf::Fit_Parameters override_fit_params;
 
-    //Standard calibration and importer for APS datasets
-    data_struct::xrf::Calibration_Standard calibration;
+    //Element detector
+    data_struct::xrf::Detector detector;
 
     //Spectra volume data
     data_struct::xrf::Spectra_Volume spectra_volume;
@@ -399,7 +411,7 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
     std::unordered_map< std::string, std::string > extra_override_values;
 
     //load override parameters
-    load_override_params(dataset_directory, 0, &override_fit_params, &calibration, &elements_to_fit, &extra_override_values);
+    load_override_params(dataset_directory, 0, &override_fit_params, &detector, &elements_to_fit, &extra_override_values);
 
     //load spectra volume
     if (false == load_spectra_volume(dataset_directory, dataset_file, &spectra_volume, 0, nullptr) ) // todo pass in extra override dict
@@ -437,7 +449,7 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
     energy_range.max = spectra_volume.samples_size() - 1;
 
     //Initialize model
-    model->initialize(&fit_params, &calibration, &elements_to_fit, energy_range);
+    model->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
 
     //Allocate memeory to save fit counts
 //    for(auto& e_itr : elements_to_fit)
@@ -451,7 +463,7 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
 
     start = std::chrono::system_clock::now();
 
-    data_struct::xrf::Fit_Parameters result_fits = model->fit_spectra(fit_params, &integrated_spectra, &calibration, &elements_to_fit, 0, 0);
+    data_struct::xrf::Fit_Parameters result_fits = model->fit_spectra(fit_params, &integrated_spectra, &detector, &elements_to_fit, 0, 0);
 
     end = std::chrono::system_clock::now();
 
@@ -471,7 +483,7 @@ void process_integrated_dataset(std::string dataset_directory, std::string datas
         integrated_spectra = std::log10(integrated_spectra);
         integrated_spectra.set_min_zero();
 
-        data_struct::xrf::Spectra spectra_model = model->model_spectrum(&result_fits, &integrated_spectra, &calibration, &elements_to_fit, energy_range);
+        data_struct::xrf::Spectra spectra_model = model->model_spectrum(&result_fits, &integrated_spectra, &detector, &elements_to_fit, energy_range);
 
         spectra_model = std::log10(spectra_model);
         spectra_model.set_min_zero();
@@ -513,8 +525,8 @@ void process_dataset_file(std::string dataset_directory,
     //Fitting parameters
     data_struct::xrf::Fit_Parameters fit_params;
 
-    //Standard calibration and importer for APS datasets
-    data_struct::xrf::Calibration_Standard calibration;
+    //Element detector
+    data_struct::xrf::Detector detector;
 
     //Output of fits for elements specified
     std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
@@ -548,7 +560,7 @@ void process_dataset_file(std::string dataset_directory,
         std::unordered_map< std::string, std::string > extra_override_values;
         extra_override_values.clear();
         //load override parameters
-        load_override_params(dataset_directory, detector_num, &override_fit_params, &calibration, &elements_to_fit, &extra_override_values);
+        load_override_params(dataset_directory, detector_num, &override_fit_params, &detector, &elements_to_fit, &extra_override_values);
 
         //load spectra volume
         if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values) )
@@ -630,14 +642,14 @@ void process_dataset_file(std::string dataset_directory,
             }
 
             //Initialize model
-            model->initialize(&fit_params, &calibration, &elements_to_fit, energy_range);
+            model->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
 
             for(size_t i=0; i<spectra_volume->rows(); i++)
             {
                 for(size_t j=0; j<spectra_volume->cols(); j++)
                 {
                     //std::cout<< i<<" "<<j<<std::endl;
-                    fit_job_queue->emplace( tp->enqueue(fit_single_spectra, model, fit_params, &(*spectra_volume)[i][j], &calibration, &elements_to_fit, element_fit_count_dict, i, j) );
+                    fit_job_queue->emplace( tp->enqueue(fit_single_spectra, model, fit_params, &(*spectra_volume)[i][j], &detector, &elements_to_fit, element_fit_count_dict, i, j) );
                 }
             }
 

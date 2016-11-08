@@ -73,7 +73,7 @@ public:
 
     virtual void minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
-                          const Calibration_Standard * const calibration,
+                          const Detector * const detector,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           Base_Model* model);
 

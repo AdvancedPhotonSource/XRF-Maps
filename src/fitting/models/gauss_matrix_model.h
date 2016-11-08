@@ -73,19 +73,19 @@ public:
 
     virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                    const Spectra * const spectra,
-                                   const Calibration_Standard * const calibration,
+                                   const Detector * const detector,
                                    const Fit_Element_Map_Dict * const elements_to_fit,
                                    const struct Range energy_range);
 
     virtual void initialize(Fit_Parameters *fit_params,
-                            const Calibration_Standard * const calibration,
+                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
 protected:
 
     unordered_map<string, Spectra> _generate_element_models(Fit_Parameters *fit_params,
-                                                            const Calibration_Standard * const calibration,
+                                                            const Detector * const detector,
                                                             const Fit_Element_Map_Dict * const elements_to_fit,
                                                             struct Range energy_range);
 

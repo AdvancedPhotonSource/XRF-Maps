@@ -108,7 +108,7 @@ public:
 
     void set_custom_multiply_ratio(unsigned int idx, real_t multi);
 
-    void init_energy_ratio_for_detector_element(Element_Info* detector_element);
+    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element);
 
     const std::string full_name() const { return _full_name; }
 
@@ -118,7 +118,7 @@ public:
 
 protected:
 
-    void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, Element_Info* detector_element);
+    void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
 
     // reference to element information from Database
     Element_Info* _element_info;

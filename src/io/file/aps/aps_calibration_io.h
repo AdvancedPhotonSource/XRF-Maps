@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "calibration_standard.h"
+#include "detector.h"
 #include <string>
 
 namespace io
@@ -75,7 +76,7 @@ private:
 
     bool _load_standards_txt(std::string path, data_struct::xrf::Calibration_Standard* calibration);
 
-    bool _load_mca(std::string path, int detector_num, data_struct::xrf::Calibration_Standard* calibration);
+    bool _load_mca(std::string path, int detector_num, data_struct::xrf::Detector* detector, data_struct::xrf::Spectra* spectra);
 
     bool _load_mda(std::string path, data_struct::xrf::Calibration_Standard* calibration);
 

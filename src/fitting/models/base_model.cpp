@@ -57,7 +57,7 @@ namespace models
 {
 
 
-Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Calibration_Standard * const calibration)
+Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Detector * const detector)
 {
     //real_t MIN_ENERGY_TO_FIT = 1.0;
     //real_t MAX_ENERGY_TO_FIT = 11.0;
@@ -67,8 +67,8 @@ Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size
 
 
     struct Range energy_range;
-    energy_range.min = (int)ceil( (MIN_ENERGY_TO_FIT - calibration->offset()) / calibration->slope() );
-    energy_range.max = (int)ceil( (MAX_ENERGY_TO_FIT - calibration->offset()) / calibration->slope() );
+    energy_range.min = (int)ceil( (MIN_ENERGY_TO_FIT - detector->energy_offset()) / detector->energy_slope() );
+    energy_range.max = (int)ceil( (MAX_ENERGY_TO_FIT - detector->energy_offset()) / detector->energy_slope() );
     //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
     if ( (energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min) )
     {
@@ -102,7 +102,7 @@ Base_Model::~Base_Model()
 
 Fit_Parameters Base_Model::fit_spectra(const Fit_Parameters fit_params,
                                        const Spectra * const spectra,
-                                       const Calibration_Standard * const calibration,
+                                       const Detector * const detector,
                                        const Fit_Element_Map_Dict * const elements_to_fit,
                                        Fit_Count_Dict *out_counts_dic,
                                        size_t row_idx,
@@ -111,11 +111,11 @@ Fit_Parameters Base_Model::fit_spectra(const Fit_Parameters fit_params,
 
     Fit_Parameters local_fit_params = fit_params;
 
-    _pre_process(&local_fit_params, spectra, calibration, elements_to_fit);
+    _pre_process(&local_fit_params, spectra, detector, elements_to_fit);
 
-    _fit_spectra(&local_fit_params, spectra, calibration, elements_to_fit);
+    _fit_spectra(&local_fit_params, spectra, detector, elements_to_fit);
 
-    _post_process(&local_fit_params, spectra, calibration, elements_to_fit, out_counts_dic, row_idx, col_idx);
+    _post_process(&local_fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
 
     return local_fit_params;
 
@@ -125,7 +125,7 @@ Fit_Parameters Base_Model::fit_spectra(const Fit_Parameters fit_params,
 
 void Base_Model::fit_spectra_volume(const Fit_Parameters fit_params,
                                     const Spectra_Volume * const spectra_volume,
-                                    const Calibration_Standard * const calibration,
+                                    const Detector * const detector,
                                     const Fit_Element_Map_Dict * const elements_to_fit,
                                     Fit_Count_Dict *out_counts_dic,
                                     size_t row_idx,
@@ -134,23 +134,23 @@ void Base_Model::fit_spectra_volume(const Fit_Parameters fit_params,
 /*
     Fit_Parameters local_fit_params = fit_params;
 
-    _pre_process(&local_fit_params, spectra_volume, calibration, elements_to_fit, row_idx, col_idx);
+    _pre_process(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
 
-    _fit_spectra(&local_fit_params, spectra_volume, calibration, elements_to_fit, row_idx, col_idx);
+    _fit_spectra(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
 
-    _post_process(&local_fit_params, spectra_volume, calibration, elements_to_fit, row_idx, col_idx);
+    _post_process(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
 */
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
 void Base_Model::initialize(Fit_Parameters *fit_params,
-                            const Calibration_Standard * const calibration,
+                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range)
 {
 
-    _add_elements_to_fit_parameters(fit_params, nullptr, calibration, elements_to_fit);
+    _add_elements_to_fit_parameters(fit_params, nullptr, detector, elements_to_fit);
 
 }
 
@@ -158,13 +158,13 @@ void Base_Model::initialize(Fit_Parameters *fit_params,
 
 void Base_Model::_pre_process(Fit_Parameters *fit_params,
                               const Spectra * const spectra,
-                              const Calibration_Standard * const calibration,
+                              const Detector * const detector,
                               const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
     if (_update_element_guess_value)
     {
-        _update_elements_guess(fit_params, spectra, calibration, elements_to_fit);
+        _update_elements_guess(fit_params, spectra, detector, elements_to_fit);
     }
 
 }
@@ -173,7 +173,7 @@ void Base_Model::_pre_process(Fit_Parameters *fit_params,
 
 void Base_Model::_post_process(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Calibration_Standard * const calibration,
+                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                Fit_Count_Dict * out_counts_dic,
                                size_t row_idx,
@@ -219,7 +219,7 @@ void Base_Model::_post_process(Fit_Parameters *fit_params,
 
 void Base_Model::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                                  const Spectra * const spectra,
-                                                 const Calibration_Standard * const calibration,
+                                                 const Detector * const detector,
                                                  const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
@@ -231,8 +231,7 @@ void Base_Model::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
         if(false == fit_params->contains(el_itr.first))
         {
             data_struct::xrf::Fit_Element_Map *element = el_itr.second;
-            //Set Si detector
-            element->init_energy_ratio_for_detector_element( Element_Info_Map::inst()->get_element("Si") );
+            element->init_energy_ratio_for_detector_element( detector->get_element() );
             if(element->energy_ratios().size() > 0)
             {
                 std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
@@ -245,7 +244,7 @@ void Base_Model::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                         real_t min_e =  e_energy - (real_t)0.1;
                         real_t max_e =  e_energy + (real_t)0.1;
 
-                        struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), calibration);
+                        struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
                         real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
                         sum /= energy_range.count();
                         e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
@@ -268,7 +267,7 @@ void Base_Model::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
 
 void Base_Model::_update_elements_guess(Fit_Parameters *fit_params,
                                         const Spectra * const spectra,
-                                        const Calibration_Standard * const calibration,
+                                        const Detector * const detector,
                                         const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
@@ -289,7 +288,7 @@ void Base_Model::_update_elements_guess(Fit_Parameters *fit_params,
                 real_t min_e =  e_energy - (real_t)0.1;
                 real_t max_e =  e_energy + (real_t)0.1;
 
-                struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), calibration);
+                struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
 
                 real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
                 sum /= energy_range.count();
