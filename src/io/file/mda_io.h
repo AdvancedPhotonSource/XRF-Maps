@@ -102,6 +102,8 @@ private:
 
     int _find_2d_detector_index(std::string det_name);
 
+    void _load_detector_meta_data(data_struct::xrf::Detector * detector);
+
     /**
      * @brief _mda_file: mda helper structure
      */

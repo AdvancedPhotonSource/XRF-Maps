@@ -52,11 +52,22 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "element_info.h"
+#include <vector>
+#include <string>
 
 namespace data_struct
 {
 namespace xrf
 {
+
+struct detector_meta_struct
+{
+    short       number;
+    std::string name;
+    std::string description;
+    std::string unit;
+    real_t      value;
+};
 
 //-----------------------------------------------------------------------------
 
@@ -86,6 +97,8 @@ public:
     void set_element(Element_Info* detector_element)  { _detector_element = detector_element; }
 
     const Element_Info * const get_element() const { return _detector_element; }
+
+    std::vector<detector_meta_struct> meta_array;
 
 protected:
 

@@ -194,7 +194,7 @@ set(libxrf_fit_HEADERS
 	src/support/nnls/denseMatrix.h
 	src/data_struct/base_dataset.h
     #src/data_struct/ndarray.h
-	src/data_struct/xrf/calibration_standard.h
+	src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_info.h
     src/data_struct/xrf/fit_parameters.h
 	src/data_struct/xrf/fit_element_map.h
@@ -229,7 +229,7 @@ add_library(libxrf_fit SHARED
 	src/support/lmfit_6.1/lmcurve.c
 	src/support/nnls/nnls.cc
 	src/support/nnls/denseMatrix.cc
-	src/data_struct/xrf/calibration_standard.cpp
+	src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
 	src/data_struct/xrf/fit_element_map.cpp

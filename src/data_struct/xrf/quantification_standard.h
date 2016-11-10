@@ -65,15 +65,15 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 ///
-/// \brief The Calibration_Standard class: Class of resulting fit per element
+/// \brief The Quantification_Standard class: Class of resulting fit per element
 ///
-class DLL_EXPORT Calibration_Standard
+class DLL_EXPORT Quantification_Standard
 {
 
 public:
-    Calibration_Standard();
+    Quantification_Standard();
 
-    ~Calibration_Standard();
+    ~Quantification_Standard();
 
     void append_element_weight(std::string name, real_t weight) {_element_weights[name] = weight;}
 
@@ -101,4 +101,4 @@ protected:
 
 } //namespace data_struct
 
-#endif // Calibration_H
+#endif // Quantification_Standard_H

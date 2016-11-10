@@ -183,7 +183,7 @@ bool save_volume(std::string full_path,
 void fit_and_plot_volume(fitting::models::Base_Model *model,
                          data_struct::xrf::Fit_Parameters fit_params,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
-                         data_struct::xrf::Calibration_Standard* calibration,
+                         data_struct::xrf::Quantification_Standard* calibration,
                          std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements_to_fit)
 {
     fitting::models::Range energy_range;
@@ -216,7 +216,7 @@ void fit_and_plot_volume(fitting::models::Base_Model *model,
 bool fit_volume(fitting::models::Base_Model *model,
                 data_struct::xrf::Fit_Parameters fit_params,
                 data_struct::xrf::Spectra_Volume *spectra_volume,
-                data_struct::xrf::Calibration_Standard* calibration,
+                data_struct::xrf::Quantification_Standard* calibration,
                 std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements_to_fit,
                 ThreadPool *tp)
 {
@@ -231,7 +231,7 @@ bool fit_volume(fitting::models::Base_Model *model,
             std::cout<< i<<" "<<j<<std::endl;
             data_struct::xrf::Spectra *spectra = &(*spectra_volume)[i][j];
 
-            res_q.emplace( tp->enqueue([](fitting::models::Base_Model* model, data_struct::xrf::Fit_Parameters fit_params, data_struct::xrf::Spectra* spectra, data_struct::xrf::Calibration_Standard* calibration, std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements, size_t i, size_t j)
+            res_q.emplace( tp->enqueue([](fitting::models::Base_Model* model, data_struct::xrf::Fit_Parameters fit_params, data_struct::xrf::Spectra* spectra, data_struct::xrf::Quantification_Standard* calibration, std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements, size_t i, size_t j)
             {return model->fit_spectra(fit_params, spectra, calibration, elements, i, j);}, model, fit_params, spectra, calibration, elements_to_fit, i, j) );
             //std::function<void()> bound_f = std::bind(&fitting::models::Base_Model::fit_spectra, &model, fit_params, spectra, calibration, elements_to_fit, i, j);
             //res_q.emplace( tp->enqueue(  bound_f ) );
@@ -258,12 +258,12 @@ bool fit_single_spectra(fitting::models::Base_Model *model,
 
 // ----------------------------------------------------------------------------
 /*
-bool load_calibration_standard(std::string dataset_directory,
-                              int detector_num,
-                              data_struct::xrf::Fit_Parameters *fit_params,
-                              data_struct::xrf::Detector *detector,
-                              data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
-                              std::unordered_map< std::string, std::string > *extra_override_values)
+bool load_quantification_standard(std::string dataset_directory,
+                                  int detector_num,
+                                  data_struct::xrf::Fit_Parameters *fit_params,
+                                  data_struct::xrf::Detector *detector,
+                                  data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
+                                  std::unordered_map< std::string, std::string > *extra_override_values)
 {
 return false;
 }
@@ -543,7 +543,7 @@ void process_dataset_file(std::string dataset_directory,
     bool first_time = true;
 
 
-    for(size_t detector_num = detector_num_start; detector_num < detector_num_end; detector_num++)
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
 
         data_struct::xrf::Fit_Parameters override_fit_params;
@@ -710,6 +710,8 @@ void help()
     std::cout<<"Usage: xrf_mapper [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
     std::cout<<"Options: "<<std::endl;
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
+    std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
+    std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
     std::cout<<"Fitting models: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
@@ -720,7 +722,12 @@ void help()
     std::cout<<"--dir : Dataset directory "<<std::endl;
     std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
     std::cout<<"Examples: "<<std::endl;
+    std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
     std::cout<<"xrf_mapper --roi --matrix --dir /data/dataset1 "<<std::endl;
+    std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<std::endl;
+    std::cout<<"xrf_mapper --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
+    std::cout<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<std::endl;
+    std::cout<<"xrf_mapper --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
 }
 
 // ----------------------------------------------------------------------------
@@ -732,7 +739,11 @@ int main(int argc, char *argv[])
     std::string dataset_dir;
     std::vector<std::string> dataset_files;
     std::vector<Processing_Types> proc_types;
+    std::string quant_standard_filename = "";
 
+    //Default is to process detectors 0 through 3
+    size_t detector_num_start = 0;
+    size_t detector_num_end = 3;
     //ThreadPool tp(1);
 
     //Performance measure
@@ -782,6 +793,32 @@ int main(int argc, char *argv[])
         proc_types.push_back(Processing_Types::NNLS);
     }
 
+    if ( clp.option_exists("--quantify-with") )
+    {
+        quant_standard_filename = clp.get_option("--quantify-with");
+    }
+
+
+    if ( clp.option_exists("--detector-range") )
+    {
+        std::string detector_range_str = clp.get_option("--detector-range");
+        if (detector_range_str.find(':') != std::string::npos )
+        {
+            // if we found a comma, split the string to get list of dataset files
+            std::stringstream ss;
+            ss.str(detector_range_str);
+            std::string item;
+            std::getline(ss, item, ':');
+            detector_num_start = std::stoi(item);
+            std::getline(ss, item, ':');
+            detector_num_end = std::stoi(item);
+        }
+        else
+        {
+            detector_num_start = detector_num_end = std::stoi(detector_range_str);
+        }
+    }
+
     dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
     {
@@ -827,6 +864,7 @@ int main(int argc, char *argv[])
         dataset_files.push_back(dset_file);
     }
 
+    std::cout << "Processing detectors " << detector_num_start << " - "<< detector_num_end <<" \n";
 
     start = std::chrono::system_clock::now();
 
@@ -837,9 +875,14 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    if (quant_standard_filename.length() > 0)
+    {
+        //load_quantification_standard();
+    }
+
     for(std::string dataset_file : dataset_files)
     {
-        process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, 0, 4);
+        process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, detector_num_start, detector_num_end);
     }
 
     //process_integrated_dataset(dataset_dir, dataset_file, Processing_Types::GAUSS_TAILS);

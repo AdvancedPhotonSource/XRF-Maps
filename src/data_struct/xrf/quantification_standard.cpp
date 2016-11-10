@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "calibration_standard.h"
+#include "quantification_standard.h"
 
 #include <string>
 
@@ -56,7 +56,7 @@ namespace data_struct
 namespace xrf
 {
 
-Calibration_Standard::Calibration_Standard()
+Quantification_Standard::Quantification_Standard()
 {
 
     _IC_US = 1.0;
@@ -64,17 +64,17 @@ Calibration_Standard::Calibration_Standard()
 
 }
 
-Calibration_Standard::~Calibration_Standard()
+Quantification_Standard::~Quantification_Standard()
 {
 
 }
 /*
-void Calibration_Standard::append_element_name(std::string name)
+void Quantification_Standard::append_element_name(std::string name)
 {
     _elements_names.push_back(name);
 }
 
-void Calibration_Standard::append_element_weight(real_t weight)
+void Quantification_Standard::append_element_weight(real_t weight)
 {
 
     _element_weights.push_back(weight);

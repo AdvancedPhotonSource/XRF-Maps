@@ -173,6 +173,21 @@ int MDA_IO::_find_2d_detector_index(std::string det_name)
 
 }
 
+void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
+{
+    detector->meta_array.resize(_mda_file->scan->number_detectors);
+
+    for(int k=0; k<_mda_file->scan->number_detectors; k++)
+    {
+        detector->meta_array[k].name = std::string(_mda_file->scan->detectors[k]->name);
+        detector->meta_array[k].description = std::string(_mda_file->scan->detectors[k]->description);
+        detector->meta_array[k].unit = std::string(_mda_file->scan->detectors[k]->unit);
+        detector->meta_array[k].number = _mda_file->scan->detectors[k]->number;
+        detector->meta_array[k].value = (real_t)(_mda_file->scan->detectors_data[k][0]);
+    }
+
+}
+
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::xrf::Detector* detector,
@@ -180,10 +195,29 @@ bool MDA_IO::load_spectra_volume(std::string path,
                                  bool hasNetCDF,
                                  std::unordered_map< std::string, std::string > *extra_override_values)
 {
+    //index per row and col
     int elt_idx = -1;
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
+
+
+    int sr_current_idx = -1;
+    int us_ic_idx = -1;
+    int ds_ic_idx = -1;
+    int dpc1_ic_idx = -1;
+    int dpc2_ic_idx = -1;
+
+    int cfg1_idx = -1;
+    int cfg2_idx = -1;
+    int cfg3_idx = -1;
+    int cfg4_idx = -1;
+    int cfg5_idx = -1;
+    int cfg6_idx = -1;
+    int cfg7_idx = -1;
+    int cfg8_idx = -1;
+    int cfg9_idx = -1;
+
 
     bool single_row_scan = false;
 
@@ -254,6 +288,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
         return false;
     }
 
+    //_load_detector_meta_data(detector);
+
     if (extra_override_values != nullptr)
     {
         if (extra_override_values->count("ELT1") > 0)
@@ -272,7 +308,65 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             outcnt_idx = _find_2d_detector_index( extra_override_values->at("OCR1") );
         }
+/* not need for processing counts, but will be used later to save to hdf5
+        if (extra_override_values->count("SRCURRENT") > 0)
+        {
+            sr_current_idx = _find_2d_detector_index( extra_override_values->at("SRCURRENT") );
+        }
+        if (extra_override_values->count("US_IC") > 0)
+        {
+            us_ic_idx = _find_2d_detector_index( extra_override_values->at("US_IC") );
+        }
+        if (extra_override_values->count("DS_IC") > 0)
+        {
+            ds_ic_idx = _find_2d_detector_index( extra_override_values->at("DS_IC") );
+        }
+        if (extra_override_values->count("DPC1_IC") > 0)
+        {
+            dpc1_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC1_IC") );
+        }
+        if (extra_override_values->count("DPC2_IC") > 0)
+        {
+            dpc2_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC2_IC") );
+        }
 
+        if (extra_override_values->count("CFG_1") > 0)
+        {
+            cfg1_idx = _find_2d_detector_index( extra_override_values->at("CFG_1") );
+        }
+        if (extra_override_values->count("CFG_2") > 0)
+        {
+            cfg2_idx = _find_2d_detector_index( extra_override_values->at("CFG_2") );
+        }
+        if (extra_override_values->count("CFG_3") > 0)
+        {
+            cfg3_idx = _find_2d_detector_index( extra_override_values->at("CFG_3") );
+        }
+        if (extra_override_values->count("CFG_4") > 0)
+        {
+            cfg4_idx = _find_2d_detector_index( extra_override_values->at("CFG_4") );
+        }
+        if (extra_override_values->count("CFG_5") > 0)
+        {
+            cfg5_idx = _find_2d_detector_index( extra_override_values->at("CFG_5") );
+        }
+        if (extra_override_values->count("CFG_6") > 0)
+        {
+            cfg6_idx = _find_2d_detector_index( extra_override_values->at("CFG_6") );
+        }
+        if (extra_override_values->count("CFG_7") > 0)
+        {
+            cfg7_idx = _find_2d_detector_index( extra_override_values->at("CFG_7") );
+        }
+        if (extra_override_values->count("CFG_8") > 0)
+        {
+            cfg8_idx = _find_2d_detector_index( extra_override_values->at("CFG_8") );
+        }
+        if (extra_override_values->count("CFG_9") > 0)
+        {
+            cfg9_idx = _find_2d_detector_index( extra_override_values->at("CFG_9") );
+        }
+*/
     }
     std::cout<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 
