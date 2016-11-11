@@ -67,6 +67,8 @@ using namespace std;
  */
 struct Range
 {
+    Range() {min = 0; max = 0;}
+    Range(int rmin, int rmax) {min = rmin; max = rmax;}
     size_t count() const  {return (max - min) + 1;}
     int min;
     int max;

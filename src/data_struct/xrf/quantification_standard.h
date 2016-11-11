@@ -81,16 +81,22 @@ public:
 
     const real_t& element_weight(std::string element_symb) const { return _element_weights.at(element_symb); }
 
+    void standard_filename(std::string standard_filename) { _standard_filename = standard_filename; }
+
+    const std::string& standard_filename() { return _standard_filename; }
+
 protected:
 
-    real_t _current;
+    std::string _standard_filename;
+
+    real_t _sr_current;
     real_t _IC_US;
     real_t _IC_DS;
 
     std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
 
-    std::valarray<real_t> _us_amp;
-    std::valarray<real_t> _ds_amp;
+    //std::valarray<real_t> _us_amp;
+    //std::valarray<real_t> _ds_amp;
 
 };
 

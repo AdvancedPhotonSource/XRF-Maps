@@ -71,6 +71,8 @@ public:
 
     ~Gauss_Matrix_Model();
 
+    virtual Fit_Parameters get_fit_parameters();
+
     virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                    const Spectra * const spectra,
                                    const Detector * const detector,

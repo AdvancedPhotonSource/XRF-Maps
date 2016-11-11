@@ -77,6 +77,15 @@ Gauss_Matrix_Model::~Gauss_Matrix_Model()
 
 }
 
+// ----------------------------------------------------------------------------
+
+Fit_Parameters Gauss_Matrix_Model::get_fit_parameters()
+{
+    Fit_Parameters fitp = Gauss_Tails_Model::get_fit_parameters();
+    fitp.set_all(E_Bound_Type::FIXED);
+    return fitp;
+}
+
 // -----------------------------------------------------------------------------
 
 Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_params,

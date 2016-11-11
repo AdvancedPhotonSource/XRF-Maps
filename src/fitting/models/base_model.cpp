@@ -179,7 +179,7 @@ void Base_Model::_post_process(Fit_Parameters *fit_params,
                                size_t row_idx,
                                size_t col_idx)
 {
-
+    //Save the counts from fit parameters into fit count dict for each element
     for (auto el_itr : *elements_to_fit)
     {
         //data_struct::xrf::Fit_Element_Map *element = el_itr.second;

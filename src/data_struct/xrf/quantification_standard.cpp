@@ -59,6 +59,7 @@ namespace xrf
 Quantification_Standard::Quantification_Standard()
 {
 
+    _sr_current = 1.0;
     _IC_US = 1.0;
     _IC_DS = 1.0;
 
