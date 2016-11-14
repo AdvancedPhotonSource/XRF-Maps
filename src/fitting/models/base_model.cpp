@@ -123,27 +123,6 @@ Fit_Parameters Base_Model::fit_spectra(const Fit_Parameters fit_params,
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void Base_Model::fit_spectra_volume(const Fit_Parameters fit_params,
-                                    const Spectra_Volume * const spectra_volume,
-                                    const Detector * const detector,
-                                    const Fit_Element_Map_Dict * const elements_to_fit,
-                                    Fit_Count_Dict *out_counts_dic,
-                                    size_t row_idx,
-                                    size_t col_idx)
-{
-/*
-    Fit_Parameters local_fit_params = fit_params;
-
-    _pre_process(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
-
-    _fit_spectra(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
-
-    _post_process(&local_fit_params, spectra_volume, detector, elements_to_fit, row_idx, col_idx);
-*/
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
 void Base_Model::initialize(Fit_Parameters *fit_params,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
@@ -202,12 +181,9 @@ void Base_Model::_post_process(Fit_Parameters *fit_params,
         {
             out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = value;
         }
-        //(*element)[row_idx][col_idx] = value / spectra->elapsed_lifetime();
-
-        //check if we are saving the number of iterations and save if so
     }
-    //std::cout<<std::endl;
 
+    //check if we are saving the number of iterations and save if so
     if(fit_params->contains(data_struct::xrf::STR_NUM_ITR) && out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0)
     {
         out_counts_dic->at(data_struct::xrf::STR_NUM_ITR).counts[row_idx][col_idx] = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;

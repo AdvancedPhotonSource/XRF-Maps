@@ -49,7 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Base_Model_H
 #define Base_Model_H
 
-#include "spectra_volume.h"
+#include "spectra.h"
 #include "fit_parameters.h"
 #include "fit_element_map.h"
 #include "detector.h"
@@ -116,25 +116,6 @@ public:
                               Fit_Count_Dict *out_counts_dic,
                               size_t row_idx=0,
                               size_t col_idx=0);
-
-    /**
-     * @brief fit_spectra_volume : fit a row/col volume of spectra
-     * @param fit_params : Fitting parameters required by the routine: Also the last spectras fitted values
-     * @param spectra_volume : volume of spectra to be fitted
-     * @param calibration : Energy calibration
-     * @param elements_to_fit : List of elemetns to fit to the spectra. This is an out variable also. Must be allocated to saved fitted value to using row_idx and col_idx
-     * @param col_idx_start : Start index of the column we want to fit
-     * @param col_idx_end : End index of the column we want to fit
-     * @param row_idx_start : Start index of the rows we want to fit
-     * @param row_idx_end : End index of the rows we want to fit
-     */
-    void fit_spectra_volume(const Fit_Parameters fit_params,
-                            const Spectra_Volume * const spectra_volume,
-                            const Detector * const detector,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            Fit_Count_Dict *out_counts_dic,
-                            size_t row_idx,
-                            size_t col_idx);
 
     /**
      * @brief get_fit_parameters : returns Fit_Parameters class of the required fit parameters to run a fitting
@@ -241,7 +222,7 @@ protected:
 
     /**
      * @brief _update_element_guess_value : Protected variable used to determine if function _update_elements_guess is called for each spectra in
-     * fit_spectra_line or fit_spectra_volume
+     * fit_spectra_line
      */
     bool _update_element_guess_value;
 
