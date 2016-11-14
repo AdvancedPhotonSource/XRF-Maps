@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "svd_model.h"
+#include "svd_fit_routine.h"
 
 #include <Eigen/SVD>
 
@@ -56,44 +56,26 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
-SVD_Model::SVD_Model() : Gauss_Matrix_Model()
-{
-
-    _update_element_guess_value = false;
-    _counts_log_10 = false;
-    _snip_background = false;
-
-}
-
-// ----------------------------------------------------------------------------
-
-SVD_Model::~SVD_Model()
+SVD_Fit_Routine::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void SVD_Model::initialize(Fit_Parameters *fit_params,
-                               const Detector * const detector,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               const struct Range energy_range)
+SVD_Fit_Routine::~SVD_Fit_Routine()
 {
-
-    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
-
-    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
-
-    _generate_fitmatrix(fit_params, &element_models, energy_range);
 
 }
 
+
+
 // ----------------------------------------------------------------------------
 
-void SVD_Model::_generate_fitmatrix(Fit_Parameters *fit_params,
+void SVD_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
                                         const unordered_map<string, Spectra> * const element_models,
                                         struct Range energy_range)
 {
@@ -116,22 +98,13 @@ void SVD_Model::_generate_fitmatrix(Fit_Parameters *fit_params,
 
 // ----------------------------------------------------------------------------
 
-Spectra SVD_Model::model_spectrum(const Fit_Parameters * const fit_params,
-                                      const Spectra * const spectra,
-                                      const Detector * const detector,
-                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                      const struct Range energy_range)
-{
-    //dummy function
-    return *spectra;
-}
-
-// ----------------------------------------------------------------------------
-
-void SVD_Model::_fit_spectra(Fit_Parameters *fit_params,
-                                 const Spectra * const spectra,
-                                 const Detector * const detector,
-                                 const Fit_Element_Map_Dict * const elements_to_fit)
+void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                  const Spectra * const spectra,
+                                  const Detector * const detector,
+                                  const Fit_Element_Map_Dict * const elements_to_fit,
+                                  Fit_Count_Dict *out_counts_dic,
+                                  size_t row_idx,
+                                  size_t col_idx)
 {
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
@@ -149,11 +122,29 @@ void SVD_Model::_fit_spectra(Fit_Parameters *fit_params,
 
     for(const auto& itr : *elements_to_fit)
     {
-        Fit_Param param = (*fit_params)[itr.first];
-        (*fit_params)[itr.first].value = result[param.opt_array_index];
+        //[itr.first];
+        (*out_counts_dic)[itr.first][row_idx][col_idx] = result[param.opt_array_index];
     }
 
 }
 
-} //namespace models
+// ----------------------------------------------------------------------------
+
+void SVD_Fit_Routine::initialize(const models::Base_Model * const model,
+                        const Detector * const detector,
+                        const Fit_Element_Map_Dict * const elements_to_fit,
+                        const struct Range energy_range)
+{
+
+    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
+
+    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
+
+    _generate_fitmatrix(fit_params, &element_models, energy_range);
+
+}
+
+// ----------------------------------------------------------------------------
+
+} //namespace routines
 } //namespace fitting

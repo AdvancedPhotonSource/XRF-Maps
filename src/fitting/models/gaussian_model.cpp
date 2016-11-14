@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "gauss_tails_model.h"
+#include "gaussian_model.h"
 
 #include <iostream>
 #include <algorithm>
@@ -67,223 +67,27 @@ namespace models
 {
 
 
-std::valarray<real_t> gauss_peak(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy)
-{
-    // gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
-    return gain / ( sigma * SQRT_2xPI ) *  std::exp((real_t)-0.5 * std::pow((delta_energy / sigma), (real_t)2.0) );
-}
-
-// ----------------------------------------------------------------------------
-
-std::valarray<real_t> gauss_step(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t peak_E)
-{
-    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
-    for (unsigned int i=0; i<delta_energy.size(); i++)
-    {
-        counts[i] = gain / (real_t)2.0 /  peak_E * Faddeeva::erfc(delta_energy[i]/(M_SQRT2 * sigma));
-    }
-    return counts;
-}
-
-// ----------------------------------------------------------------------------
-
-std::valarray<real_t> gauss_tail(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t gamma)
-{
-    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
-
-    for (unsigned int i=0; i<delta_energy.size(); i++)
-    {
-        real_t temp_a = 1.0;
-        if (delta_energy[i] < 0.0)
-        {
-            temp_a = exp(delta_energy[i]/ (gamma * sigma));
-        }
-        counts[i] = gain / 2. / gamma / sigma / exp(-0.5/pow(gamma, 2.0)) * temp_a * Faddeeva::erfc( delta_energy[i]  /( M_SQRT2*sigma) + (1.0/(gamma*M_SQRT2) )  );
-    }
-    return counts;
-}
-
-// ----------------------------------------------------------------------------
-
-std::valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t gain)
-{
-    std::valarray<real_t> counts((real_t)0.0, ev.size());
-    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / 2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
-    if(std::isnan(sigma))
-    {
-        return counts;
-    }
-    std::valarray<real_t> delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
-
-
-    // elastic peak, gaussian
-    real_t fvalue = 1.0;
-
-    fvalue = fvalue * std::pow(10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
-
-    //std::valarray<real_t> value = fvalue * gauss_peak(gain, *sigma, delta_energy);
-    //counts = counts + value;
-    counts += ( fvalue * gauss_peak(gain, sigma, delta_energy) );
-
-    return counts;
-}
-
-// ----------------------------------------------------------------------------
-
-std::valarray<real_t> compton_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t  gain)
-{
-    std::valarray<real_t> counts((real_t)0.0, ev.size());
-
-    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / 511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
-
-    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/2.3548), 62.0) + compton_E * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
-    if(std::isnan(sigma))
-    {
-        return counts;
-    }
-    //real_t local_sigma = (*sigma) * p[14];
-
-    std::valarray<real_t> delta_energy = ev - compton_E;
-
-    // compton peak, gaussian
-    real_t faktor = 1.0 / (1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
-
-    faktor = faktor * std::pow( 10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
-
-    std::valarray<real_t> value = faktor * gauss_peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
-    counts = counts + value;
-
-    // compton peak, step
-    if ( fitp->at(STR_COMPTON_F_STEP).value > 0.0 )
-    {
-        real_t fvalue = faktor * fitp->at(STR_COMPTON_F_STEP).value;
-        value = fvalue * gauss_step(gain, sigma, delta_energy, compton_E);
-        counts = counts + value;
-    }
-    // compton peak, tail on the low side
-    real_t fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
-    value = fvalue * gauss_tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
-    counts = counts + value;
-
-    // compton peak, tail on the high side
-    fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
-    delta_energy *= -1.0;
-    value = ( fvalue * gauss_tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
-    counts = counts + value;
-
-    return counts;
-}
-
-// ============================================================================
-
-Gauss_Tails_Model::Gauss_Tails_Model() : Base_Model()
+Gaussian_Model::Gaussian_Model() : Base_Model()
 {
 
-    _snip_background = true;
     _optimizer = nullptr;
-    _counts_log_10 = true;
-
-}
-
-// ----------------------------------------------------------------------------
-
-Gauss_Tails_Model::~Gauss_Tails_Model()
-{
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Gauss_Tails_Model::_pre_process(Fit_Parameters *fit_params,
-                                     const Spectra * const spectra,
-                                     const Detector * const detector,
-                                     const Fit_Element_Map_Dict * const elements_to_fit)
-{
-
-    Base_Model::_pre_process(fit_params, spectra, detector, elements_to_fit);
-    _calc_and_update_coherent_amplitude(fit_params, spectra, detector);
-
-    if(_snip_background)
-    {
-        //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
-        _snip_background = false;
-/*
-        if(_background_counts.size() != spectra->size())
-        {
-            _background_counts.resize(spectra->size());
-        }
-        */
-        //zero out
-        //_background_counts *= 0.0;
-        real_t spectral_binning = 0.0;
-        //_background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
-    }
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Gauss_Tails_Model::_fit_spectra(Fit_Parameters *fit_params,
-                             const Spectra * const spectra,
-                             const Detector * const detector,
-                             const Fit_Element_Map_Dict * const elements_to_fit)
-{
-
-    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    // fitp.g.xmin = MIN_ENERGY_TO_FIT
-    // fitp.g.xmax = MAX_ENERGY_TO_FIT
-    /*
-    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
-    */
-
-    if(spectra->sum() == 0)
-    {
-
-        fit_params->set_all_value(-10.0, E_Bound_Type::FIT);
-
-        for (auto el_itr : *elements_to_fit)
-        {
-            if( fit_params->contains(el_itr.first) )
-            {
-                (*fit_params)[el_itr.first].value = -10.0;
-            }
-        }
-        return;
-    }
-
-    if(_optimizer != nullptr)
-    {
-        _optimizer->minimize(fit_params, spectra, detector, elements_to_fit, this);
-    }
-
-}
-
-void Gauss_Tails_Model::_post_process(Fit_Parameters *fit_params,
-                                      const Spectra * const spectra,
-                                      const Detector * const detector,
-                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                      Fit_Count_Dict *out_counts_dic,
-                                      size_t row_idx,
-                                      size_t col_idx)
-{
-
-    Base_Model::_post_process(fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
-    //Set back to true if someone wants to call model_spectra without fitting
     _snip_background = true;
 
+    _fit_parameters = _generate_default_fit_parameters();
+
+
 }
 
 // ----------------------------------------------------------------------------
 
-void Gauss_Tails_Model::set_optimizer(Optimizer *optimizer)
+Gaussian_Model::~Gaussian_Model()
 {
-    _optimizer = optimizer;
+
 }
 
 // ----------------------------------------------------------------------------
-
-void Gauss_Tails_Model::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
+/*
+void Gaussian_Model::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
                                                             const Spectra * const spectra,
                                                             const Detector * const detector)
 {
@@ -302,10 +106,16 @@ void Gauss_Tails_Model::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp
     (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
 
 }
+*/
+
+Fit_Parameters Gaussian_Model::get_fit_parameters()
+{
+    return _fit_parameters;
+}
 
 // ----------------------------------------------------------------------------
 
-Fit_Parameters Gauss_Tails_Model::get_fit_parameters()
+Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 {
 
     Fit_Parameters fit_params;
@@ -349,7 +159,7 @@ Fit_Parameters Gauss_Tails_Model::get_fit_parameters()
 
 // ----------------------------------------------------------------------------
 
-Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_params,
+Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                           const Spectra * const spectra,
                                           const Detector * const detector,
                                           const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
@@ -361,6 +171,7 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
 
 
     std::valarray<real_t> energy((real_t)0.0, energy_range.count());
+    std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
     real_t e_val = energy_range.min;
     for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
     {
@@ -375,7 +186,7 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
     if( _snip_background )
     {
         real_t spectral_binning = 0.0;
-        _background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
+        background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
     }
 
     for(const auto& itr : (*elements_to_fit))
@@ -388,7 +199,7 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
     agr_spectra += elastic_peak(fit_params, ev, gain);
     agr_spectra += compton_peak(fit_params, ev, gain);
 
-    agr_spectra += _background_counts;
+    agr_spectra += background_counts;
 /*
     // pileup
     //temp_element_pos = np.array(keywords.added_params[4:13]);
@@ -409,7 +220,7 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
         //repetition delta_energy = ev.copy() - (er_struct.energy);
         faktor = er_struct.ratio* (10.**pall[temp_element_pos[ii]]);
         // peak, gauss
-        value = faktor * gauss_peak(gain, sigma[i, j], delta_energy);
+        value = faktor * this->peak(gain, sigma[i, j], delta_energy);
         //fit_counts.pileup = fit_counts.pileup + value;
         *(agr_spectra.buffer()) += value;
     }
@@ -446,7 +257,7 @@ Spectra Gauss_Tails_Model::model_spectrum(const Fit_Parameters * const fit_param
 
 // ----------------------------------------------------------------------------
 
-Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const Detector * const detector, std::valarray<real_t> energy)
+Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const Detector * const detector, std::valarray<real_t> energy)
 {
     Spectra spectra_model(energy.size());
     std::valarray<real_t> peak_counts(0.0, energy.size());
@@ -492,11 +303,11 @@ Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const f
             faktor = faktor / ((real_t)1.0 + f_tail + f_step);
         }
         // peak, gauss
-        //value = faktor * gauss_peak(gain, sigma, delta_energy);
-        spectra_model += faktor * gauss_peak(gain, sigma, delta_energy);
+        //value = faktor * this->peak(gain, sigma, delta_energy);
+        spectra_model += faktor * this->peak(gain, sigma, delta_energy);
 
 /*      //separates counts into which lines they are
-        peak_counts = faktor * gauss_peak(gain, sigma, delta_energy);
+        peak_counts = faktor * this->peak(gain, sigma, delta_energy);
         switch(er_struct.ptype)
         {
             case Element_Param_Type::Ka_Line:
@@ -522,8 +333,8 @@ Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const f
         if (f_step > 0.0)
         {
             value = faktor * f_step;
-            //value = value * gauss_step(gain, sigma, delta_energy, er_struct.energy);
-            spectra_model += value * gauss_step(gain, sigma, delta_energy, er_struct.energy);
+            //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
+            spectra_model += value * this->step(gain, sigma, delta_energy, er_struct.energy);
             //counts_arr->step = fit_counts.step + value;
         }
         //  peak, tail;; use different tail for K beta vs K alpha lines
@@ -531,11 +342,119 @@ Spectra Gauss_Tails_Model::model_spectrum_element(const Fit_Parameters * const f
         {
             real_t gamma = std::abs( fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy) ) * element_to_fit->width_multi();
             value = faktor * kb_f_tail;
-            spectra_model += value * gauss_tail(gain, sigma, delta_energy, gamma);
+            spectra_model += value * this->tail(gain, sigma, delta_energy, gamma);
             //fit_counts.tail = fit_counts.tail + value;
         }
     }
     return spectra_model;
+}
+
+
+std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy)
+{
+    // gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
+    return gain / ( sigma * SQRT_2xPI ) *  std::exp((real_t)-0.5 * std::pow((delta_energy / sigma), (real_t)2.0) );
+}
+
+// ----------------------------------------------------------------------------
+
+std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t peak_E)
+{
+    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
+    for (unsigned int i=0; i<delta_energy.size(); i++)
+    {
+        counts[i] = gain / (real_t)2.0 /  peak_E * Faddeeva::erfc(delta_energy[i]/(M_SQRT2 * sigma));
+    }
+    return counts;
+}
+
+// ----------------------------------------------------------------------------
+
+std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t gamma)
+{
+    std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
+
+    for (unsigned int i=0; i<delta_energy.size(); i++)
+    {
+        real_t temp_a = 1.0;
+        if (delta_energy[i] < 0.0)
+        {
+            temp_a = exp(delta_energy[i]/ (gamma * sigma));
+        }
+        counts[i] = gain / 2. / gamma / sigma / exp(-0.5/pow(gamma, 2.0)) * temp_a * Faddeeva::erfc( delta_energy[i]  /( M_SQRT2*sigma) + (1.0/(gamma*M_SQRT2) )  );
+    }
+    return counts;
+}
+
+// ----------------------------------------------------------------------------
+
+std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t gain)
+{
+    std::valarray<real_t> counts((real_t)0.0, ev.size());
+    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / 2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
+    if(std::isnan(sigma))
+    {
+        return counts;
+    }
+    std::valarray<real_t> delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
+
+
+    // elastic peak, gaussian
+    real_t fvalue = 1.0;
+
+    fvalue = fvalue * std::pow(10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
+
+    //std::valarray<real_t> value = fvalue * this->peak(gain, *sigma, delta_energy);
+    //counts = counts + value;
+    counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
+
+    return counts;
+}
+
+// ----------------------------------------------------------------------------
+
+std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t  gain)
+{
+    std::valarray<real_t> counts((real_t)0.0, ev.size());
+
+    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / 511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
+
+    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/2.3548), 62.0) + compton_E * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
+    if(std::isnan(sigma))
+    {
+        return counts;
+    }
+    //real_t local_sigma = (*sigma) * p[14];
+
+    std::valarray<real_t> delta_energy = ev - compton_E;
+
+    // compton peak, gaussian
+    real_t faktor = 1.0 / (1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
+
+    faktor = faktor * std::pow( 10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
+
+    std::valarray<real_t> value = faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
+    counts = counts + value;
+
+    // compton peak, step
+    if ( fitp->at(STR_COMPTON_F_STEP).value > 0.0 )
+    {
+        real_t fvalue = faktor * fitp->at(STR_COMPTON_F_STEP).value;
+        value = fvalue * this->step(gain, sigma, delta_energy, compton_E);
+        counts = counts + value;
+    }
+    // compton peak, tail on the low side
+    real_t fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
+    value = fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
+    counts = counts + value;
+
+    // compton peak, tail on the high side
+    fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
+    delta_energy *= -1.0;
+    value = ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
+    counts = counts + value;
+
+    return counts;
 }
 
 } //namespace models

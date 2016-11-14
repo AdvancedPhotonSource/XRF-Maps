@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Gauss_Tails_Model_H
-#define Gauss_Tails_Model_H
+#ifndef Gaussian_Model_H
+#define Gaussian_Model_H
 
 #include "base_model.h"
 #include "optimizer.h"
@@ -99,40 +99,13 @@ const string STR_KB_F_TAIL_QUADRATIC    = "KB_F_TAIL_QUADRATIC";
 using namespace data_struct::xrf;
 using namespace fitting::optimizers;
 
-/**
- * @brief gauss_peak :  models a gaussian fluorescence peak, see also van espen, spectrum evaluation,
-                        in van grieken, handbook of x-ray spectrometry, 2nd ed, page 182 ff
-                        gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
- * @param gain
- * @param sigma
- * @param delta_energy
- * @return
- */
-DLL_EXPORT valarray<real_t> gauss_peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy);
 
-/**
- * @brief gauss_step : gain / 2.0 /  peak_E * Faddeeva::erfc(delta_energy/(M_SQRT2 * sigma));
- * @param gain
- * @param sigma
- * @param delta_energy
- * @param peak_E
- * @return
- */
-DLL_EXPORT valarray<real_t> gauss_step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E);
-
-DLL_EXPORT valarray<real_t> gauss_tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma);
-
-DLL_EXPORT valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
-
-DLL_EXPORT valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
-
-
-class DLL_EXPORT Gauss_Tails_Model: public Base_Model
+class DLL_EXPORT Gaussian_Model: public Base_Model
 {
 public:
-    Gauss_Tails_Model();
+    Gaussian_Model();
 
-    ~Gauss_Tails_Model();
+    ~Gaussian_Model();
 
     virtual Fit_Parameters get_fit_parameters();
 
@@ -147,37 +120,46 @@ public:
                                    const Detector * const detector,
                                    valarray<real_t> energy);
 
-    void set_optimizer(Optimizer *optimizer);
+    /**
+     * @brief gauss_peak :  models a gaussian fluorescence peak, see also van espen, spectrum evaluation,
+                            in van grieken, handbook of x-ray spectrometry, 2nd ed, page 182 ff
+                            gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
+     * @param gain
+     * @param sigma
+     * @param delta_energy
+     * @return
+     */
+    virtual valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy);
+
+    /**
+     * @brief gauss_step : gain / 2.0 /  peak_E * Faddeeva::erfc(delta_energy/(M_SQRT2 * sigma));
+     * @param gain
+     * @param sigma
+     * @param delta_energy
+     * @param peak_E
+     * @return
+     */
+    virtual valarray<real_t> step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E);
+
+    virtual valarray<real_t> tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma);
+
+    virtual valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
+
+    virtual valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
 
 protected:
 
-    void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
-                                             const Spectra * const spectra,
-                                             const Detector * const detector);
+//    void _calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
+//                                             const Spectra * const spectra,
+//                                             const Detector * const detector);
 
-    virtual void _pre_process(Fit_Parameters *fit_params,
-                              const Spectra * const spectra,
-                              const Detector * const detector,
-                              const Fit_Element_Map_Dict * const elements_to_fit);
+    Fit_Parameters _generate_default_fit_parameters();
 
-    virtual void _fit_spectra(Fit_Parameters *fit_params,
-                              const Spectra * const spectra,
-                              const Detector * const detector,
-                              const Fit_Element_Map_Dict * const elements_to_fit);
-
-    virtual void _post_process(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               const Detector * const detector,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               Fit_Count_Dict *out_counts_dic,
-                               size_t row_idx,
-                               size_t col_idx);
-
-    bool _snip_background;
-
-    valarray<real_t> _background_counts;
+    Fit_Parameters _fit_parameters;
 
 private:
+
+    bool _snip_background;
 
     Optimizer *_optimizer;
 
@@ -187,4 +169,4 @@ private:
 
 } //namespace fitting
 
-#endif // Gauss_Tails_Model_H
+#endif // Gaussian_Model_H

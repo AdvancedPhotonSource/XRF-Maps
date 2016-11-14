@@ -83,9 +83,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "aps_fit_params_import.h"
 
-#include "roi_model.h"
-#include "svd_model.h"
-#include "nnls_model.h"
+#include "roi_fit_routine.h"
+#include "svd_fit_routine.h"
+#include "nnls_fit_routine.h"
 
 #include "lmfit_optimizer.h"
 #include "mpfit_optimizer.h"
@@ -180,69 +180,6 @@ bool save_volume(std::string full_path,
     return true;
 }
 
-// ----------------------------------------------------------------------------
-/*
-void fit_and_plot_volume(fitting::models::Base_Model *model,
-                         data_struct::xrf::Fit_Parameters fit_params,
-                         data_struct::xrf::Spectra_Volume *spectra_volume,
-                         data_struct::xrf::Quantification_Standard* calibration,
-                         std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements_to_fit)
-{
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra_volume->samples_size() - 1;
-
-    for(size_t i=0; i<spectra_volume->rows(); i++)
-    {
-        for(size_t j=0; j<spectra_volume->cols(); j++)
-        {
-            std::cout<< i<<" "<<j<<std::endl;
-            data_struct::xrf::Spectra *spectra = &(*spectra_volume)[i][j];
-
-            data_struct::xrf::Fit_Parameters result_fits = model->fit_spectra(fit_params, spectra, calibration, elements_to_fit, i, j);
-
-            //fitp.print_non_fixed();
-            data_struct::xrf::Spectra spectra_model = model->model_spectrum(&result_fits, spectra, calibration, elements_to_fit, energy_range);
-//            spectra_model.log10();
-//            spectra_model.set_min_zero();
-//            spectra->log10();
-            //visual::PlotSpectras(*spectra, spectra_model);
-
-        }
-    }
-
-}
-*/
-// ----------------------------------------------------------------------------
-/*
-bool fit_volume(fitting::models::Base_Model *model,
-                data_struct::xrf::Fit_Parameters fit_params,
-                data_struct::xrf::Spectra_Volume *spectra_volume,
-                data_struct::xrf::Quantification_Standard* calibration,
-                std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements_to_fit,
-                ThreadPool *tp)
-{
-
-    std::queue<std::future<data_struct::xrf::Fit_Parameters> > res_q;
-    for(size_t i=0; i<spectra_volume->rows(); i++)
-    //for(size_t i=0; i<1; i++) //debug
-    {
-        for(size_t j=0; j<spectra_volume->cols(); j++)
-        //for(size_t j=0; j<1; j++) //debug
-        {
-            std::cout<< i<<" "<<j<<std::endl;
-            data_struct::xrf::Spectra *spectra = &(*spectra_volume)[i][j];
-
-            res_q.emplace( tp->enqueue([](fitting::models::Base_Model* model, data_struct::xrf::Fit_Parameters fit_params, data_struct::xrf::Spectra* spectra, data_struct::xrf::Quantification_Standard* calibration, std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> *elements, size_t i, size_t j)
-            {return model->fit_spectra(fit_params, spectra, calibration, elements, i, j);}, model, fit_params, spectra, calibration, elements_to_fit, i, j) );
-            //std::function<void()> bound_f = std::bind(&fitting::models::Base_Model::fit_spectra, &model, fit_params, spectra, calibration, elements_to_fit, i, j);
-            //res_q.emplace( tp->enqueue(  bound_f ) );
-        }
-    }
-
-    return true;
-}
-*/
 // ----------------------------------------------------------------------------
 
 data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit, size_t width, size_t height )
@@ -509,6 +446,8 @@ bool process_integrated_dataset(std::string dataset_directory,
     //Optimizers for fitting models
     fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
 
+    fitting::models::Base_Model * model = nullptr;
+
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
     energy_range.min = 0;
@@ -533,35 +472,39 @@ bool process_integrated_dataset(std::string dataset_directory,
 
         for(auto proc_type : proc_types)
         {
-            //Fitting models
-            fitting::models::Base_Model *model = nullptr;
+            //Fitting routines
+            fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
 
             //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
             bool alloc_iter_count = true;
             switch(proc_type)
             {
             case Processing_Types::GAUSS_TAILS:
-                model = new fitting::models::Gauss_Tails_Model();
-                ((fitting::models::Gauss_Tails_Model*)model)->set_optimizer(&lmfit_optimizer);
+                fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
+                ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
+                model = new fitting::models::Gaussian_Model();
                 //save_loc = "XRF_tails_fits";
                 alloc_iter_count = true;
                 break;
             case Processing_Types::GAUSS_MATRIX:
-                model = new fitting::models::Gauss_Matrix_Model();
-                ((fitting::models::Gauss_Matrix_Model*)model)->set_optimizer(&lmfit_optimizer);
+                fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
+                ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
+                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_fits";
                 alloc_iter_count = true;
                 break;
             case Processing_Types::ROI:
-                model = new fitting::models::ROI_Model();
+                fit_routine = new fitting::routines::ROI_Fit_Routine();
                 //save_loc = "XRF_roi";
                 break;
             case Processing_Types::SVD:
-                model = new fitting::models::SVD_Model();
+                fit_routine = new fitting::routines::SVD_Fit_Routine();
+                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_roi_plus";
                 break;
             case Processing_Types::NNLS:
-                model = new fitting::models::NNLS_Model();
+                fit_routine = new fitting::routines::NNLS_Fit_Routine();
+                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_nnls";
                 alloc_iter_count = true;
                 break;
@@ -576,20 +519,26 @@ bool process_integrated_dataset(std::string dataset_directory,
             //Update fit parameters by override values
             fit_params.update_values(override_fit_params);
 
-            model->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
+            fit_routine->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
 
-            data_struct::xrf::Fit_Parameters result_fits = model->fit_spectra(fit_params, &integrated_spectra, &detector, &elements_to_fit, element_fit_count_dict);
+            data_struct::xrf::Fit_Parameters result_fits = fit_routine->fit_spectra(fit_params, &integrated_spectra, &detector, &elements_to_fit, element_fit_count_dict);
 
             //get new detector energy offset, slope, and quadratic
 
             //hdf5_io.save_element_fits(full_path, save_loc, element_counts);
 
+            if (fit_routine != nullptr)
+            {
+                delete fit_routine;
+                fit_routine = nullptr;
+            }
 
             if (model != nullptr)
             {
                 delete model;
                 model = nullptr;
             }
+
         }
     }// end for
     return true;

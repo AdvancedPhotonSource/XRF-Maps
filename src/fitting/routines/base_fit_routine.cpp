@@ -46,96 +46,55 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
-
-#include "roi_model.h"
+#include "base_fit_routine.h"
+#include <functional>
+#include <numeric>
+#include <iostream>
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
-ROI_Model::ROI_Model() : Base_Model()
-{
 
-    _update_element_guess_value = false;
-    _counts_log_10 = false;
 
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-ROI_Model::~ROI_Model()
+Base_Fit_Routine::Base_Fit_Routine()
 {
 
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-Fit_Parameters ROI_Model::get_fit_parameters()
+Base_Fit_Routine::~Base_Fit_Routine()
 {
-
-    Fit_Parameters fitp;
-    return fitp;
 
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-
-Spectra ROI_Model::model_spectrum(const Fit_Parameters * const fit_params,
-                                  const Spectra * const spectra,
-                                  const Detector * const detector,
-                                  const Fit_Element_Map_Dict * const elements_to_fit,
-                                  const struct Range energy_range)
+/*
+Fit_Parameters Base_Fit_Routine::fit_spectra(const Fit_Parameters fit_params,
+                                       const Spectra * const spectra,
+                                       const Detector * const detector,
+                                       const Fit_Element_Map_Dict * const elements_to_fit,
+                                       Fit_Count_Dict *out_counts_dic,
+                                       size_t row_idx,
+                                       size_t col_idx)
 {
-    //dummy function
-    return *spectra;
-}
 
+    Fit_Parameters local_fit_params = fit_params;
+
+    _pre_process(&local_fit_params, spectra, detector, elements_to_fit);
+
+    _fit_spectra(&local_fit_params, spectra, detector, elements_to_fit);
+
+    _post_process(&local_fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+
+    return local_fit_params;
+
+}
+*/
 // --------------------------------------------------------------------------------------------------------------------
 
-void ROI_Model::_fit_spectra(Fit_Parameters *fit_params,
-                             const Spectra * const spectra,
-                             const Detector * const detector,
-                             const Fit_Element_Map_Dict * const elements_to_fit)
-{
 
-    unsigned int n_mca_channels = spectra->size();
-
-    for(const auto& e_itr : *elements_to_fit)
-    {
-        Fit_Element_Map* element = e_itr.second;
-        // note: center position for peaks/rois is in keV, widths of ROIs is in eV
-        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
-        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
-
-        if (right_roi >= n_mca_channels)
-        {
-            right_roi = n_mca_channels - 2;
-        }
-        if (left_roi > right_roi)
-        {
-            left_roi = right_roi - 1;
-        }
-        if (left_roi < 0)
-        {
-            left_roi = 1;
-        }
-        if (right_roi < 0)
-        {
-            right_roi = n_mca_channels - 2;
-        }
-
-        //element->left_roi = left_roi;
-        //element->right_roi = right_roi;
-
-        size_t spec_size = (right_roi + 1) - left_roi;
-        real_t counts = 0.0;
-        counts = (*spectra)[std::slice(left_roi, spec_size, 1)].sum();
-
-
-        (*fit_params)[e_itr.first].value = counts;
-    }
-}
-
-} //namespace models
+} //namespace routines
 } //namespace fitting

@@ -47,58 +47,56 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Gauss_Matrix_Model_H
-#define Gauss_Matrix_Model_H
+#ifndef SVD_Fit_Routine_H
+#define SVD_Fit_Routine_H
 
-#include "gauss_tails_model.h"
-#include "fit_parameters.h"
+#include "matrix_optimized_fit_routine.h"
+
+#include <Eigen/Core>
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
 using namespace data_struct::xrf;
-using namespace std;
 
-/**
- * @brief The Gauss_Matrix_Model class : Matrix fit model
- */
-class DLL_EXPORT Gauss_Matrix_Model: public Gauss_Tails_Model
+class DLL_EXPORT SVD_Fit_Routine: public Matrix_Optimized_Fit_Routine
 {
 public:
-    Gauss_Matrix_Model();
 
-    ~Gauss_Matrix_Model();
+    SVD_Fit_Routine();
 
-    virtual Fit_Parameters get_fit_parameters();
+    ~SVD_Fit_Routine();
 
-    virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                   const Spectra * const spectra,
-                                   const Detector * const detector,
-                                   const Fit_Element_Map_Dict * const elements_to_fit,
-                                   const struct Range energy_range);
+    virtual void fit_spectra(const models::Base_Model * const model,
+                             const Spectra * const spectra,
+                             const Detector * const detector,
+                             const Fit_Element_Map_Dict * const elements_to_fit,
+                             Fit_Count_Dict *out_counts_dic,
+                             size_t row_idx=0,
+                             size_t col_idx=0);
 
-    virtual void initialize(Fit_Parameters *fit_params,
+
+    virtual void initialize(const models::Base_Model * const model,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
 protected:
 
-    unordered_map<string, Spectra> _generate_element_models(Fit_Parameters *fit_params,
-                                                            const Detector * const detector,
-                                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                                            struct Range energy_range);
+    void _generate_fitmatrix(Fit_Parameters *fit_params,
+                             const unordered_map<string, Spectra> * const element_models,
+                             struct Range energy_range);
 
 private:
 
-    unordered_map<string, Spectra> *_element_models;
+    Eigen::MatrixXd _fitmatrix;
 
 };
 
-} //namespace models
+} //namespace routines
 
 } //namespace fitting
 
-#endif // Gauss_Matrix_Model_H
+#endif // SVD_Fit_Routine_H

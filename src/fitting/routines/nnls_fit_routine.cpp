@@ -46,22 +46,19 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
-#include "nnls_model.h"
+#include "nnls_fit_routine.h"
 
 //debug
 #include <iostream>
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
-NNLS_Model::NNLS_Model() : Gauss_Matrix_Model()
+NNLS_Fit_Routine::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 {
 
-    _update_element_guess_value = false;
-    _counts_log_10 = false;
-    _snip_background = false;
     _fitmatrix = nullptr;
     _max_iter = 100;
 
@@ -69,12 +66,9 @@ NNLS_Model::NNLS_Model() : Gauss_Matrix_Model()
 
 // ----------------------------------------------------------------------------
 
-NNLS_Model::NNLS_Model(size_t max_iter) : Gauss_Matrix_Model()
+NNLS_Fit_Routine::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routine()
 {
 
-    _update_element_guess_value = false;
-    _counts_log_10 = false;
-    _snip_background = false;
     _fitmatrix = nullptr;
     _max_iter = max_iter;
 
@@ -82,7 +76,7 @@ NNLS_Model::NNLS_Model(size_t max_iter) : Gauss_Matrix_Model()
 
 // ----------------------------------------------------------------------------
 
-NNLS_Model::~NNLS_Model()
+NNLS_Fit_Routine::~NNLS_Fit_Routine()
 {
     if(_fitmatrix != nullptr)
     {
@@ -93,23 +87,7 @@ NNLS_Model::~NNLS_Model()
 
 // ----------------------------------------------------------------------------
 
-void NNLS_Model::initialize(Fit_Parameters *fit_params,
-                               const Detector * const detector,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               const struct Range energy_range)
-{
-
-    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
-
-    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
-
-    _generate_fitmatrix(fit_params, &element_models, energy_range);
-
-}
-
-// ----------------------------------------------------------------------------
-
-void NNLS_Model::_generate_fitmatrix(Fit_Parameters *fit_params,
+void NNLS_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
                                         const unordered_map<string, Spectra> * const element_models,
                                         struct Range energy_range)
 {
@@ -138,26 +116,17 @@ void NNLS_Model::_generate_fitmatrix(Fit_Parameters *fit_params,
 
 // ----------------------------------------------------------------------------
 
-Spectra NNLS_Model::model_spectrum(const Fit_Parameters * const fit_params,
-                                      const Spectra * const spectra,
-                                      const Detector * const detector,
-                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                      const struct Range energy_range)
-{
-    //dummy function
-    return *spectra;
-}
-
-// ----------------------------------------------------------------------------
-
-void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
-                                 const Spectra * const spectra,
-                                 const Detector * const detector,
-                                 const Fit_Element_Map_Dict * const elements_to_fit)
+void NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                   const Spectra * const spectra,
+                                   const Detector * const detector,
+                                   const Fit_Element_Map_Dict * const elements_to_fit,
+                                   Fit_Count_Dict *out_counts_dic,
+                                   size_t row_idx,
+                                   size_t col_idx)
 {
 
-    nsNNLS::nnls*   solver;
-    nsNNLS::vector *result;
+    nsNNLS::nnls * solver;
+    nsNNLS::vector * result;
     int num_iter;
 
     nsNNLS::vector rhs(spectra->size(), (real_t*)&(*spectra)[0]);
@@ -167,7 +136,7 @@ void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
     num_iter = solver->optimize();
     if (num_iter < 0)
     {
-        std::cout<<"Error  NNLS_Model::_fit_spectra: in optimization routine"<<std::endl;
+        std::cout<<"Error  NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<std::endl;
     }
 
     result = solver->getSolution();
@@ -176,18 +145,36 @@ void NNLS_Model::_fit_spectra(Fit_Parameters *fit_params,
 
     for(const auto& itr : *elements_to_fit)
     {
-        Fit_Param param = (*fit_params)[itr.first];
-        (*fit_params)[itr.first].value = result_p[param.opt_array_index];
+        //Fit_Param param = (*fit_params)[itr.first];
+        (*out_counts_dic)[itr.first][row_idx][col_idx] = result_p[param.opt_array_index];
     }
 
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (out_counts_dic->contains(data_struct::xrf::STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = num_iter;
+        (*out_counts_dic)[data_struct::xrf::STR_NUM_ITR][row_idx][col_idx] = num_iter;
     }
 
     delete solver;
 
 }
 
-} //namespace models
+// ----------------------------------------------------------------------------
+
+void NNLS_Fit_Routine::initialize(const models::Base_Model * const model,
+                                  const Detector * const detector,
+                                  const Fit_Element_Map_Dict * const elements_to_fit,
+                                  const struct Range energy_range)
+{
+
+    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
+
+    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
+
+    _generate_fitmatrix(fit_params, &element_models, energy_range);
+
+}
+
+// ----------------------------------------------------------------------------
+
+} //namespace routines
 } //namespace fitting

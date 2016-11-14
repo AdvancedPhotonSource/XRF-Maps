@@ -47,46 +47,45 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef NNLS_Model_H
-#define NNLS_Model_H
+#ifndef NNLS_Fit_Routine_H
+#define NNLS_Fit_Routine_H
 
-#include "gauss_matrix_model.h"
+#include "matrix_optimized_fit_routine.h"
 
 #include "nnls.h"
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
 using namespace data_struct::xrf;
 
-class DLL_EXPORT NNLS_Model: public Gauss_Matrix_Model
+class DLL_EXPORT NNLS_Fit_Routine: public Matrix_Optimized_Fit_Routine
 {
 public:
 
-    NNLS_Model();
-    NNLS_Model(size_t max_iter);
+    NNLS_Fit_Routine();
 
-    ~NNLS_Model();
+    NNLS_Fit_Routine(size_t max_iter);
 
-    virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                   const Spectra * const spectra,
-                                   const Detector * const detector,
-                                   const Fit_Element_Map_Dict * const elements_to_fit,
-                                   const struct Range energy_range);
+    ~NNLS_Fit_Routine();
 
-    virtual void initialize(Fit_Parameters *fit_params,
+    virtual void fit_spectra(const models::Base_Model * const model,
+                             const Spectra * const spectra,
+                             const Detector * const detector,
+                             const Fit_Element_Map_Dict * const elements_to_fit,
+                             Fit_Count_Dict *out_counts_dic,
+                             size_t row_idx=0,
+                             size_t col_idx=0);
+
+
+    virtual void initialize(const models::Base_Model * const model,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
 protected:
-
-    virtual void _fit_spectra(Fit_Parameters *fit_params,
-                              const Spectra * const spectra,
-                              const Detector * const detector,
-                              const Fit_Element_Map_Dict * const elements_to_fit);
 
     void _generate_fitmatrix(Fit_Parameters *fit_params,
                              const unordered_map<string, Spectra> * const element_models,
@@ -99,8 +98,8 @@ private:
 
 };
 
-} //namespace models
+} //namespace routines
 
 } //namespace fitting
 
-#endif // NNLS_Model_H
+#endif // NNLS_Fit_Routine_H

@@ -47,47 +47,50 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef ROI_Model_H
-#define ROI_Model_H
+#ifndef ROI_Fit_Routine_H
+#define ROI_Fit_Routine_H
 
-#include "base_model.h"
+#include "base_fit_routine.h"
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
 using namespace data_struct::xrf;
 
-class DLL_EXPORT ROI_Model: public Base_Model
+class DLL_EXPORT ROI_Fit_Routine: public Base_Fit_Routine
 {
 public:
-    ROI_Model();
+    ROI_Fit_Routine();
 
-    ~ROI_Model();
+    ~ROI_Fit_Routine();
 
-    virtual Fit_Parameters get_fit_parameters();
+    virtual void fit_spectra(const models::Base_Model * const model,
+                             const Spectra * const spectra,
+                             const Detector * const detector,
+                             const Fit_Element_Map_Dict * const elements_to_fit,
+                             Fit_Count_Dict *out_counts_dic,
+                             size_t row_idx=0,
+                             size_t col_idx=0);
 
-    virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                   const Spectra * const spectra,
-                                   const Detector * const detector,
-                                   const Fit_Element_Map_Dict * const elements_to_fit,
-                                   const struct Range energy_range);
+
+    virtual void initialize(const models::Base_Model * const model,
+                            const Detector * const detector,
+                            const Fit_Element_Map_Dict * const elements_to_fit,
+                            const struct Range energy_range);
 
 protected:
 
-    virtual void _fit_spectra(Fit_Parameters *fit_params,
-                              const Spectra * const spectra,
-                              const Detector * const detector,
-                              const Fit_Element_Map_Dict * const elements_to_fit);
+
 
 
 private:
 
 };
 
-} //namespace models
+} //namespace routines
 
 } //namespace fitting
 
-#endif // ROI_Model_H
+#endif // ROI_Fit_Routine_H

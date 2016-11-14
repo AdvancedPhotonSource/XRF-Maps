@@ -54,11 +54,27 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "element_info.h"
 #include <vector>
 #include <string>
+#include <math.h>
 
 namespace data_struct
 {
 namespace xrf
 {
+
+
+
+/**
+ * @brief The Range struct to determine size of spectra we want to fit or model
+ */
+struct Range
+{
+    Range() {min = 0; max = 0;}
+    Range(int rmin, int rmax) {min = rmin; max = rmax;}
+    size_t count() const  {return (max - min) + 1;}
+    int min;
+    int max;
+};
+
 
 struct detector_meta_struct
 {
@@ -115,6 +131,16 @@ protected:
 };
 
 //-----------------------------------------------------------------------------
+
+/**
+ * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
+ * @param min_energy
+ * @param max_energy
+ * @param spectra_size
+ * @param calibration: energy calibration
+ * @return Range structure with the min energy and max enegry of the spectra to fit.
+ */
+DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Detector * const detector);
 
 
 } //namespace xrf

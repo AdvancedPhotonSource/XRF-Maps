@@ -46,60 +46,79 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
+#ifndef Base_Fit_Routine_H
+#define Base_Fit_Routine_H
 
+#include "spectra.h"
+#include "base_model.h"
+#include "fit_element_map.h"
 #include "detector.h"
 
-namespace data_struct
+namespace fitting
 {
-namespace xrf
-{
-
-
-Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Detector * const detector)
+namespace routines
 {
 
-    real_t MIN_ENERGY_TO_FIT = min_energy;
-    real_t MAX_ENERGY_TO_FIT = max_energy;
+using namespace data_struct::xrf;
+using namespace std;
 
 
-    struct Range energy_range;
-    energy_range.min = (int)ceil( (MIN_ENERGY_TO_FIT - detector->energy_offset()) / detector->energy_slope() );
-    energy_range.max = (int)ceil( (MAX_ENERGY_TO_FIT - detector->energy_offset()) / detector->energy_slope() );
-    //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
-    if ( (energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min) )
-    {
-        energy_range.max = spectra_size - 1;
-    }
-    if (energy_range.min < 0 || energy_range.min > energy_range.max)
-    {
-        energy_range.min = 0;
-    }
-    return energy_range;
-
-}
-
-//===============================================================================================
-
-Detector::Detector()
+/**
+ * @brief The Base_Fit_Routine class: base class for modeling spectra and fitting elements
+ */
+class DLL_EXPORT Base_Fit_Routine
 {
+public:
+    /**
+     * @brief Base_Fit_Routine : Constructor
+     */
+    Base_Fit_Routine();
 
-    _calib_energy_offset = 0.0;
+    /**
+     * @brief ~Base_Fit_Routine : Destructor
+     */
+    ~Base_Fit_Routine();
 
-    _calib_energy_slope = 1.0;
+    /**
+     * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
+     * @param fit_params : Fitting parameters required by the routine
+     * @param spectra : Pointer to the spectra we are fitting to
+     * @param calibration : Energy calibration
+     * @param elements_to_fit : List of elemetns to fit to the spectra. This is an out variable also. Must be allocated to saved fitted value to using row_idx and col_idx
+     * @param row_idx : row index used to save the fitted value back into elements_to_fit class
+     * @param col_idx : column index used to save the fitted value back into elements_to_fit class
+     */
+    virtual void fit_spectra(const models::Base_Model * const model,
+                             const Spectra * const spectra,
+                             const Detector * const detector,
+                             const Fit_Element_Map_Dict * const elements_to_fit,
+                             Fit_Count_Dict *out_counts_dic,
+                             size_t row_idx=0,
+                             size_t col_idx=0) = 0;
 
-    _calib_energy_quad = 0.0;
+    /**
+     * @brief initialize : Initialize the model
+     * @param fit_params
+     * @param calibration
+     * @param elements_to_fit
+     * @param energy_range
+     */
+    virtual void initialize(const models::Base_Model * const model,
+                            const Detector * const detector,
+                            const Fit_Element_Map_Dict * const elements_to_fit,
+                            const struct Range energy_range) = 0;
 
-    _chip_thickness = 0.0;
 
-    _detector_element = nullptr;
-
-}
-
-Detector::~Detector()
-{
-
-}
+protected:
 
 
-} //namespace xrf
-} //namespace data_struct
+private:
+
+
+};
+
+} //namespace routines
+
+} //namespace fitting
+
+#endif // Base_Fit_Routine_H

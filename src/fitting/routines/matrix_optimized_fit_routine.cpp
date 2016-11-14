@@ -46,53 +46,78 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
-#include "gauss_matrix_model.h"
+#include "matrix_optimized_fit_routine.h"
 
 //debug
 #include <iostream>
 
 namespace fitting
 {
-namespace models
+namespace routines
 {
 
+// ----------------------------------------------------------------------------
 
-Gauss_Matrix_Model::Gauss_Matrix_Model() : Gauss_Tails_Model()
+Matrix_Optimized_Fit_Routine::Matrix_Optimized_Fit_Routine() : Param_Optimized_Fit_Routine()
 {
-    //TODO: maybe not use pointer?
-    _element_models = nullptr;
-    _counts_log_10 = true;
-    _update_element_guess_value = true;
+
 }
 
 // ----------------------------------------------------------------------------
 
-Gauss_Matrix_Model::~Gauss_Matrix_Model()
+Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 {
 
     std::cout<<"******** destroy element models *******"<<std::endl;
-    if(_element_models != nullptr)
-        delete _element_models;
-    _element_models = nullptr;
+    _element_models.clear();
 
 }
 
 // ----------------------------------------------------------------------------
 
-Fit_Parameters Gauss_Matrix_Model::get_fit_parameters()
+void Matrix_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
+                                              const Detector * const detector,
+                                              const Fit_Element_Map_Dict * const elements_to_fit,
+                                              const struct Range energy_range)
 {
-    Fit_Parameters fitp = Gauss_Tails_Model::get_fit_parameters();
-    fitp.set_all(E_Bound_Type::FIXED);
-    return fitp;
+
+    Fit_Parameters fit_params = model->get_fit_parameters();
+    fit_params.set_all(E_Bound_Type::FIXED);
+
+    Param_Optimized_Fit_Routine::initialize(fit_params, detector, elements_to_fit, energy_range);
+
+    _element_models.clear();
+
+    std::cout<<"-------- Generating element models ---------"<<std::endl;
+    _element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
+
 }
 
-// -----------------------------------------------------------------------------
+void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
+                                                const Spectra * const spectra,
+                                                const Detector * const detector,
+                                                const Fit_Element_Map_Dict * const elements_to_fit,
+                                                Fit_Count_Dict *out_counts_dic,
+                                                size_t row_idx,
+                                                size_t col_idx)
+{
 
-Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_params,
-                                           const Spectra * const spectra,
-                                           const Detector * const detector,
-                                           const Fit_Element_Map_Dict * const elements_to_fit,
-                                           const struct Range energy_range)
+    _calc_and_update_coherent_amplitude(fit_params, spectra, detector);
+    _update_elements_guess(fit_params, spectra, detector, elements_to_fit);
+
+
+    //fit
+
+    _save_counts(fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
+                                              const Spectra * const spectra,
+                                              const Detector * const detector,
+                                              const Fit_Element_Map_Dict * const elements_to_fit,
+                                              const struct Range energy_range)
 {
     Spectra spectra_model(energy_range.count());
 
@@ -124,9 +149,10 @@ Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_para
         counts_background = keywords.background[energy];
     }
 */
-    if(_element_models != nullptr)
-    {
-        for(const auto& itr : *_element_models)
+
+    //if(_element_models != nullptr)
+    //{
+        for(const auto& itr : _element_models)
         {
             if(fit_params->contains(itr.first))
             {
@@ -135,7 +161,7 @@ Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_para
                 spectra_model += pow((real_t)10.0, param.value) * itr.second;
             }
         }
-    }
+    //}
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
@@ -169,34 +195,10 @@ Spectra Gauss_Matrix_Model::model_spectrum(const Fit_Parameters * const fit_para
 
 // ----------------------------------------------------------------------------
 
-void Gauss_Matrix_Model::initialize(Fit_Parameters *fit_params,
-                                    const Detector * const detector,
-                                    const Fit_Element_Map_Dict * const elements_to_fit,
-                                    const struct Range energy_range)
-{
-
-    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
-
-    if(_element_models == nullptr)// || _element_models->size() != elements_to_fit->size())
-    {
-        _element_models = new unordered_map<string, Spectra>();
-    }
-    else
-    {
-        _element_models->clear();
-    }
-
-    std::cout<<"-------- Generating element models ---------"<<std::endl;
-    *_element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
-
-}
-
-// ----------------------------------------------------------------------------
-
-unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_Parameters *fit_params,
-                                                                            const Detector * const detector,
-                                                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                                                            struct Range energy_range)
+unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_models(const models::Base_Model * const model,
+                                                                                      const Detector * const detector,
+                                                                                      const Fit_Element_Map_Dict * const elements_to_fit,
+                                                                                      struct Range energy_range)
 {
     //Eigen::MatrixXd fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
     unordered_map<string, Spectra> element_spectra;
@@ -205,7 +207,7 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
     //valarray<real_t> value(0.0, energy_range.count());
     valarray<real_t> counts(0.0, energy_range.count());
 
-    Fit_Parameters fit_parameters = *fit_params;
+    Fit_Parameters fit_parameters = model->get_fit_parameters();
 
     valarray<real_t> energy((real_t)0.0, energy_range.count());
     real_t e_val = energy_range.min;
@@ -232,7 +234,7 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model_spectrum_element(&fit_parameters, element, detector, energy);
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, detector, energy);
     }
 
     //i = elements_to_fit->size();
@@ -242,7 +244,7 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
     Spectra elastic_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COHERENT_SCT_AMPLITUDE].value = 0.0;
-    elastic_model += elastic_peak(&fit_parameters, ev, gain);
+    elastic_model += model->elastic_peak(&fit_parameters, ev, gain);
     element_spectra[STR_COHERENT_SCT_AMPLITUDE] = elastic_model;
     //Set it so we fit coherent amp in fit params
     (*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::xrf::E_Bound_Type::FIT;
@@ -252,7 +254,7 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
     Spectra compton_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COMPTON_AMPLITUDE].value = 0.0;
-    compton_model += compton_peak(&fit_parameters, ev, gain);
+    compton_model += model->compton_peak(&fit_parameters, ev, gain);
     element_spectra[STR_COMPTON_AMPLITUDE] = compton_model;
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
     (*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::xrf::FIT;
@@ -278,6 +280,8 @@ unordered_map<string, Spectra> Gauss_Matrix_Model::_generate_element_models(Fit_
 
 }
 
+// ----------------------------------------------------------------------------
 
-} //namespace models
+
+} //namespace routines
 } //namespace fitting
