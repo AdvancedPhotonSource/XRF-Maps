@@ -50,6 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Optimizer_H
 #define Optimizer_H
 
+#include <functional>
+
 #include "fit_parameters.h"
 #include "detector.h"
 #include "base_model.h"
@@ -82,6 +84,15 @@ struct User_Data
     //Fit_Counts_Array* counts_arr;
 };
 
+struct Gen_User_Data
+{
+    Spectra *spectra;
+    std::valarray<real_t> *weights;
+    Fit_Parameters *fit_parameters;
+    Range *energy_range;
+    std::function<const Spectra(Fit_Parameters*, Range*)> func;
+};
+
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
  */
@@ -98,6 +109,9 @@ public:
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model) = 0;
 
+    virtual void minimize_func(Fit_Parameters *fit_params,
+                               const Spectra * const spectra,
+                               std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func) = 0;
 private:
 
 

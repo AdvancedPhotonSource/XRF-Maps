@@ -165,12 +165,11 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
 // ----------------------------------------------------------------------------
 
 void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
-                                    const Spectra * const spectra,
-                               const Detector * const detector,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               Fit_Count_Dict * out_counts_dic,
-                               size_t row_idx,
-                               size_t col_idx)
+                                               const Spectra * const spectra,
+                                               const Fit_Element_Map_Dict * const elements_to_fit,
+                                               Fit_Count_Dict * out_counts_dic,
+                                               size_t row_idx,
+                                               size_t col_idx)
 {
     //Save the counts from fit parameters into fit count dict for each element
     for (auto el_itr : *elements_to_fit)
@@ -269,7 +268,7 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
     if(_optimizer != nullptr)
     {
         _optimizer->minimize(&fit_params, spectra, detector, elements_to_fit, model);
-        _save_counts(&fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+        _save_counts(&fit_params, spectra, elements_to_fit, out_counts_dic, row_idx, col_idx);
     }
 
 }

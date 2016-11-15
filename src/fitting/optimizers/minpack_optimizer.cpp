@@ -86,6 +86,23 @@ void residuals_minpack(void *usr_data, int params_size, real_t *params, real_t *
 }
 
 
+void gen_residuals_minpack(void *usr_data, int params_size, real_t *params, real_t *fvec, int *iflag )
+{
+    // get user passed data
+    Gen_User_Data* ud = static_cast<Gen_User_Data*>(usr_data);
+
+    ud->fit_parameters->from_array(params, params_size);
+    Spectra spectra_model = ud->func(ud->fit_parameters, ud->energy_range);
+
+    std::valarray<real_t> err = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
+
+    for(size_t i=0; i<ud->spectra->size(); i++)
+    {
+        fvec[i] = err[i];
+    }
+    //gen_residuals_count_minpack ++;
+}
+
 // =====================================================================================================================
 
 
@@ -170,6 +187,79 @@ void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
     std::cout<<"residuals count = "<<residuals_count_minpack<<std::endl;
     fit_params->from_array(fitp_arr);
 
+}
+
+void MinPack_Optimizer::minimize_func(Fit_Parameters *fit_params,
+                                      const Spectra * const spectra,
+                                      std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func)
+{
+    Gen_User_Data ud;
+
+    ud.func = gen_func;
+    // set spectra to fit
+    ud.spectra = (Spectra*)spectra;
+    ud.fit_parameters = fit_params;
+
+    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
+    fitting::models::Range energy_range;
+    energy_range.min = 0;
+    energy_range.max = spectra->size()-1;
+    ud.energy_range = &energy_range;
+
+    std::vector<real_t> fitp_arr = fit_params->to_array();
+    std::vector<real_t> fvec;
+    fvec.resize(spectra->size());
+    //std::vector<real_t> perror(fitp_arr.size());
+
+
+    real_t tol = 1.0e-10;
+     //n * ( 3 * n + 13 ) ) / 2
+    int lwa = fitp_arr.size() * ( 3 * fitp_arr.size() + 13) / 2 ;
+    real_t *wa = new real_t[lwa];
+    int info;
+
+    std::valarray<real_t> weights = (real_t)1.0 / ( (real_t)1.0 + (*spectra) );
+    weights = convolve1d(weights, 5);
+    weights = std::abs(weights);
+    weights /= weights.max();
+    ud.weights = &weights;
+
+    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
+    //ud.weights = &weights;
+    //      function, user data, fit parameters, result vec, tollerance
+    //gen_residuals_count_minpack = 0;
+    info = hybrd1(&gen_residuals_minpack, &ud, fitp_arr.size(), &fitp_arr[0], &fvec[0], tol, wa, lwa);
+    switch(info)
+    {
+        case OPTIMIZER_INFO::IMPROPER_INPUT:
+            std::cout<<"!> Improper input parameters."<<std::endl;
+        break;
+        case OPTIMIZER_INFO::MOST_TOL:
+            std::cout<<"> Algorithm estimates that the relative error in the sum of squares is at most tol. "<<std::endl;
+        break;
+        case OPTIMIZER_INFO::EXCEED_CALL:
+            std::cout<<"> Number of calls to fcn has reached or exceeded 200*(n+1)."<<std::endl;
+        break;
+        case OPTIMIZER_INFO::TOL_TOO_SMALL:
+            std::cout<<">> Tol is too small. no further improvement in the approximate solution x is possible. "<<std::endl;
+        break;
+        case OPTIMIZER_INFO::NO_PROGRESS:
+            std::cout<<"> Fiteration is not making good progress."<<std::endl;
+        break;
+        default:
+            std::cout<<"!> Unknown info status"<<std::endl;
+        break;
+    }
+
+    delete [] wa;
+    //std::cout<<"residuals count = "<<gen_residuals_count_minpack<<std::endl;
+    fit_params->from_array(fitp_arr);
+/*
+    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    {
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = gen_residuals_count_minpack;
+    }
+*/
 }
 
 

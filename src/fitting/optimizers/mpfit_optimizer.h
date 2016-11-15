@@ -75,6 +75,10 @@ public:
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model);
 
+    virtual void minimize_func(Fit_Parameters *fit_params,
+                               const Spectra * const spectra,
+                               std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func);
+
 private:
 
 

@@ -76,12 +76,9 @@ Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 // --------------------------------------------------------------------------------------------------------------------
 
 Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
-                                                     const Spectra * const spectra,
-                                                     const Detector * const detector,
-                                                     const Fit_Element_Map_Dict * const elements_to_fit,
-                                                     const struct Range energy_range)
+                                                     const struct Range * const energy_range)
 {
-    Spectra spectra_model(energy_range.count());
+    Spectra spectra_model(energy_range->count());
 
 //    valarray<real_t> energy((real_t)0.0, energy_range.count());
 //    real_t e_val = energy_range.min;
@@ -112,18 +109,15 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
     }
 */
 
-    //if(_element_models != nullptr)
-    //{
-        for(const auto& itr : _element_models)
+    for(const auto& itr : _element_models)
+    {
+        if(fit_params->contains(itr.first))
         {
-            if(fit_params->contains(itr.first))
-            {
-                Fit_Param param = fit_params->at(itr.first);
-                real_t va = pow(10.0, param.value);
-                spectra_model += pow((real_t)10.0, param.value) * itr.second;
-            }
+            Fit_Param param = fit_params->at(itr.first);
+            real_t va = pow(10.0, param.value);
+            spectra_model += pow((real_t)10.0, param.value) * itr.second;
         }
-    //}
+    }
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
@@ -270,13 +264,18 @@ void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const
 {
 
     Fit_Parameters fit_params = model->fit_parameters();
-    _add_elements_to_fit_parameters(&fit_params, nullptr, detector, elements_to_fit);
+    _add_elements_to_fit_parameters(&fit_params, spectra, detector, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
 
 
-    //fit
+    if(_optimizer != nullptr)
+    {
+        std::function<const Spectra(const Fit_Parameters * const, const  Range * const)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2);
+        _optimizer->minimize_func(&fit_params, spectra, gen_func);
+        _save_counts(&fit_params, spectra, elements_to_fit, out_counts_dic, row_idx, col_idx);
+    }
 
-    _save_counts(&fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+
 }
 
 // ----------------------------------------------------------------------------

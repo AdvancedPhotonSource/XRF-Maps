@@ -282,10 +282,9 @@ public:
 
     void pow10values();
 
-    std::unordered_map<std::string, Fit_Param> _params;
 private:
 
-
+    std::unordered_map<std::string, Fit_Param> _params;
 
 };
 

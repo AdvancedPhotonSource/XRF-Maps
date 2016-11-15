@@ -63,7 +63,6 @@ namespace optimizers
 {
 
 
-static real_t saved_sum = 0.0;
 
 void residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
 {
@@ -84,6 +83,25 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
 
 }
 
+
+void general_residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
+{
+
+    Gen_User_Data* ud = (Gen_User_Data*)(data);
+
+    //Update fit parameters from optimizer
+    ud->fit_parameters->from_array(par, m_dat);
+    //Model spectra based on new fit parameters
+    Spectra spectra_model = ud->func(ud->fit_parameters, ud->energy_range);
+    //Calculate residuals
+    std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
+
+    for (int i = 0; i < m_dat; i++ )
+    {
+        fvec[i] = residuals[i];
+    }
+
+}
 
 // =====================================================================================================================
 
@@ -199,6 +217,53 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 }
 
+
+void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
+                                    const Spectra * const spectra,
+                                    std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func)
+{
+
+    Gen_User_Data ud;
+
+    ud.func = gen_func;
+    // set spectra to fit
+    ud.spectra = (Spectra*)spectra;
+    ud.fit_parameters = fit_params;
+
+    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
+    fitting::models::Range energy_range;
+    energy_range.min = 0;
+    energy_range.max = spectra->size()-1;
+    ud.energy_range = &energy_range;
+
+    std::vector<real_t> fitp_arr = fit_params->to_array();
+    std::vector<real_t> perror(fitp_arr.size());
+
+    int info;
+
+    std::valarray<real_t> weights = (real_t)1.0 / ( (real_t)1.0 + (*spectra) );
+    weights = convolve1d(weights, 5);
+    weights = std::abs(weights);
+    weights /= weights.max();
+    ud.weights = &weights;
+
+    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
+    //ud.weights = &weights;
+
+
+    lm_status_struct status;
+    lm_control_struct control = lm_control_double;
+
+    lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, general_residuals_lmfit, &control, &status );
+    printf(".");
+    fit_params->from_array(fitp_arr);
+
+    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    {
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
+    }
+
+}
 
 } //namespace optimizers
 } //namespace fitting

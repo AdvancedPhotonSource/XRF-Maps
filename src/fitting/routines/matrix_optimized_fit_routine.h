@@ -85,10 +85,7 @@ public:
                             const struct Range energy_range);
 
     Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                           const Spectra * const spectra,
-                           const Detector * const detector,
-                           const Fit_Element_Map_Dict * const elements_to_fit,
-                           const struct Range energy_range);
+                           const struct Range * const energy_range);
 
 protected:
 

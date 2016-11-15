@@ -102,16 +102,15 @@ protected:
 
     virtual void _save_counts(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                Fit_Count_Dict *out_counts_dic,
                                size_t row_idx,
                                size_t col_idx);
 
+    Optimizer *_optimizer;
 
 private:
 
-    Optimizer *_optimizer;
 
 };
 
