@@ -66,6 +66,7 @@ namespace fitting
 namespace models
 {
 
+// ----------------------------------------------------------------------------
 
 Gaussian_Model::Gaussian_Model() : Base_Model()
 {
@@ -84,29 +85,6 @@ Gaussian_Model::~Gaussian_Model()
 {
 
 }
-
-// ----------------------------------------------------------------------------
-/*
-void Gaussian_Model::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-                                                            const Spectra * const spectra,
-                                                            const Detector * const detector)
-{
-	//STR_COHERENT_SCT_ENERGY
-	//STR_COHERENT_SCT_AMPLITUDE
-    real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
-    real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
-    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
-    size_t e_size = (energy_range.max + 1) - energy_range.min;
-    real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
-    sum /= energy_range.count();
-    real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
-    real_t logval = std::log10(e_guess);
-    (*fitp)[STR_COMPTON_AMPLITUDE].value = logval;
-    (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
-
-}
-*/
 
 // ----------------------------------------------------------------------------
 
@@ -344,6 +322,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
     return spectra_model;
 }
 
+// ----------------------------------------------------------------------------
 
 const std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy) const
 {

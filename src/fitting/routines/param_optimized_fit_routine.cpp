@@ -98,7 +98,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
         real_t e_guess = (real_t)1.0e-10;
         data_struct::xrf::Fit_Element_Map *element = el_itr.second;
 
-        element->init_energy_ratio_for_detector_element( detector->get_element() );
+        //element->init_energy_ratio_for_detector_element( detector->get_element() );
         std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
 
         //if element counts is not in fit params structure, add it
@@ -131,6 +131,13 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
         }
     }
 
+    if( false == fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    {
+        //add number of iteration it took
+        data_struct::xrf::Fit_Param fp(data_struct::xrf::STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIXED);
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR] = fp;
+    }
+    (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = 0.0;
 }
 
 // ----------------------------------------------------------------------------
@@ -220,7 +227,7 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
     */
 
     Fit_Parameters fit_params = model->fit_parameters();
-    _add_elements_to_fit_parameters(&fit_params, nullptr, detector, elements_to_fit);
+    _add_elements_to_fit_parameters(&fit_params, spectra, detector, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
 
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0

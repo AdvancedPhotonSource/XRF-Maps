@@ -153,10 +153,6 @@ public:
 
 protected:
 
-//    void _calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-//                                             const Spectra * const spectra,
-//                                             const Detector * const detector);
-
     Fit_Parameters _generate_default_fit_parameters();
 
     Fit_Parameters _fit_parameters;
