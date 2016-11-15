@@ -120,7 +120,7 @@ void ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void ROI_Fit_Routine::initialize(const models::Base_Model * const model,
+void ROI_Fit_Routine::initialize(models::Base_Model * const model,
                                  const Detector * const detector,
                                  const Fit_Element_Map_Dict * const elements_to_fit,
                                  const struct Range energy_range)

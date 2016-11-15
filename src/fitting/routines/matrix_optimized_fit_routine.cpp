@@ -157,7 +157,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
 
 // ----------------------------------------------------------------------------
 
-unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_models(const models::Base_Model * const model,
+unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_models(models::Base_Model * const model,
                                                                                       const Detector * const detector,
                                                                                       const Fit_Element_Map_Dict * const elements_to_fit,
                                                                                       struct Range energy_range)
@@ -246,7 +246,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 
 // ----------------------------------------------------------------------------
 
-void Matrix_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
+void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
                                               const Detector * const detector,
                                               const Fit_Element_Map_Dict * const elements_to_fit,
                                               const struct Range energy_range)

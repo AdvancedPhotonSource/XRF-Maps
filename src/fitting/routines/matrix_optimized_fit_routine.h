@@ -79,7 +79,7 @@ public:
                              size_t row_idx=0,
                              size_t col_idx=0);
 
-    virtual void initialize(const models::Base_Model * const model,
+    virtual void initialize(models::Base_Model * const model,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
@@ -92,7 +92,7 @@ public:
 
 protected:
 
-    unordered_map<string, Spectra> _generate_element_models(const models::Base_Model * const model,
+    unordered_map<string, Spectra> _generate_element_models(models::Base_Model * const model,
                                                             const Detector * const detector,
                                                             const Fit_Element_Map_Dict * const elements_to_fit,
                                                             struct Range energy_range);

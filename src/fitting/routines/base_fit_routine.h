@@ -103,7 +103,7 @@ public:
      * @param elements_to_fit
      * @param energy_range
      */
-    virtual void initialize(const models::Base_Model * const model,
+    virtual void initialize(models::Base_Model * const model,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range) = 0;

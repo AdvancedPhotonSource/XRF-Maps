@@ -95,27 +95,27 @@ public:
      * @param energy_range : Spectra model energy range. Basically the size of the spectra model returned;
      * @return
      */
-    virtual const Spectra& model_spectrum(const Fit_Parameters * const fit_params,
+    virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                           const Spectra * const spectra,
                                           const Detector * const detector,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           const struct Range energy_range) = 0;
 
 
-    virtual const Spectra& model_spectrum_element(const Fit_Parameters * const fitp,
+    virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                   const Fit_Element_Map * const element_to_fit,
                                                   const Detector * const detector,
-                                                  valarray<real_t> energy) const = 0;
+                                                  valarray<real_t> energy) = 0;
 
-    virtual const std::valarray<real_t>& peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const = 0;
+    virtual const std::valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const = 0;
 
-    virtual const std::valarray<real_t>& step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E) const = 0;
+    virtual const std::valarray<real_t> step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E) const = 0;
 
-    virtual const std::valarray<real_t>& tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma) const = 0;
+    virtual const std::valarray<real_t> tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma) const = 0;
 
-    virtual const std::valarray<real_t>& elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
+    virtual const std::valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
 
-    virtual const std::valarray<real_t>& compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
+    virtual const std::valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const = 0;
 
     virtual void reset_to_default_fit_params() = 0;
 

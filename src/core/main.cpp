@@ -207,6 +207,11 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
                         size_t j)
 {
     fit_routine->fit_spectra(model, spectra, detector, elements_to_fit, out_fit_counts, i, j);
+    //save count / sec
+    for (auto& el_itr : *elements_to_fit)
+    {
+        (*out_fit_counts)[el_itr.first][i][j] = (*out_fit_counts)[el_itr.first][i][j] / spectra->elapsed_lifetime();
+    }
     return true;
 }
 
@@ -602,6 +607,11 @@ void process_dataset_file(std::string dataset_directory,
         extra_override_values.clear();
         //load override parameters
         load_override_params(dataset_directory, detector_num, &override_fit_params, &detector, &elements_to_fit, &extra_override_values);
+        //Update element ratios by detector element
+        for(auto& itr : elements_to_fit)
+        {
+            itr.second->init_energy_ratio_for_detector_element( detector.get_element() );
+        }
 
         //load spectra volume
         if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values) )

@@ -85,9 +85,9 @@ Param_Optimized_Fit_Routine::~Param_Optimized_Fit_Routine()
 // ----------------------------------------------------------------------------
 
 void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                                 const Spectra * const spectra,
-                                                 const Detector * const detector,
-                                                 const Fit_Element_Map_Dict * const elements_to_fit)
+                                                                  const Spectra * const spectra,
+                                                                  const Detector * const detector,
+                                                                  const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
 
@@ -269,7 +269,7 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
+void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
                                              const Detector * const detector,
                                              const Fit_Element_Map_Dict * const elements_to_fit,
                                              const struct Range energy_range)
