@@ -79,18 +79,18 @@ public:
                              size_t row_idx=0,
                              size_t col_idx=0);
 
-
     virtual void initialize(const models::Base_Model * const model,
                             const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
-protected:
+    Spectra model_spectrum(const Fit_Parameters * const fit_params,
+                           const Spectra * const spectra,
+                           const Detector * const detector,
+                           const Fit_Element_Map_Dict * const elements_to_fit,
+                           const struct Range energy_range);
 
-    virtual void _pre_process(const models::Base_Model * const model,
-                              const Spectra * const spectra,
-                              const Detector * const detector,
-                              const Fit_Element_Map_Dict * const elements_to_fit);
+protected:
 
     unordered_map<string, Spectra> _generate_element_models(const models::Base_Model * const model,
                                                             const Detector * const detector,
@@ -99,7 +99,7 @@ protected:
 
 private:
 
-    static unordered_map<string, Spectra> _element_models;
+    unordered_map<string, Spectra> _element_models;
 
 };
 

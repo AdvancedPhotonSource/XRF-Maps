@@ -73,51 +73,13 @@ Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 
 }
 
-// ----------------------------------------------------------------------------
-
-void Matrix_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
-                                              const Detector * const detector,
-                                              const Fit_Element_Map_Dict * const elements_to_fit,
-                                              const struct Range energy_range)
-{
-
-    Fit_Parameters fit_params = model->get_fit_parameters();
-    fit_params.set_all(E_Bound_Type::FIXED);
-
-    Param_Optimized_Fit_Routine::initialize(fit_params, detector, elements_to_fit, energy_range);
-
-    _element_models.clear();
-
-    std::cout<<"-------- Generating element models ---------"<<std::endl;
-    _element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
-
-}
-
-void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
-                                                const Spectra * const spectra,
-                                                const Detector * const detector,
-                                                const Fit_Element_Map_Dict * const elements_to_fit,
-                                                Fit_Count_Dict *out_counts_dic,
-                                                size_t row_idx,
-                                                size_t col_idx)
-{
-
-    _calc_and_update_coherent_amplitude(fit_params, spectra, detector);
-    _update_elements_guess(fit_params, spectra, detector, elements_to_fit);
-
-
-    //fit
-
-    _save_counts(fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
-}
-
 // --------------------------------------------------------------------------------------------------------------------
 
-void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
-                                              const Spectra * const spectra,
-                                              const Detector * const detector,
-                                              const Fit_Element_Map_Dict * const elements_to_fit,
-                                              const struct Range energy_range)
+Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const fit_params,
+                                                     const Spectra * const spectra,
+                                                     const Detector * const detector,
+                                                     const Fit_Element_Map_Dict * const elements_to_fit,
+                                                     const struct Range energy_range)
 {
     Spectra spectra_model(energy_range.count());
 
@@ -207,7 +169,9 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     //valarray<real_t> value(0.0, energy_range.count());
     valarray<real_t> counts(0.0, energy_range.count());
 
-    Fit_Parameters fit_parameters = model->get_fit_parameters();
+    Fit_Parameters fit_parameters = model->fit_parameters();
+    //set all fit parameters to be fixed. We only want to fit element counts
+    fit_parameters.set_all(E_Bound_Type::FIXED);
 
     valarray<real_t> energy((real_t)0.0, energy_range.count());
     real_t e_val = energy_range.min;
@@ -247,7 +211,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     elastic_model += model->elastic_peak(&fit_parameters, ev, gain);
     element_spectra[STR_COHERENT_SCT_AMPLITUDE] = elastic_model;
     //Set it so we fit coherent amp in fit params
-    (*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::xrf::E_Bound_Type::FIT;
+    ///(*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::xrf::E_Bound_Type::FIT;
 
 
     // compton peak
@@ -257,7 +221,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     compton_model += model->compton_peak(&fit_parameters, ev, gain);
     element_spectra[STR_COMPTON_AMPLITUDE] = compton_model;
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
-    (*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::xrf::FIT;
+    ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::xrf::FIT;
 
     /*
     //int this_i = i + 2;
@@ -282,6 +246,40 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 
 // ----------------------------------------------------------------------------
 
+void Matrix_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
+                                              const Detector * const detector,
+                                              const Fit_Element_Map_Dict * const elements_to_fit,
+                                              const struct Range energy_range)
+{
+
+    _element_models.clear();
+    std::cout<<"-------- Generating element models ---------"<<std::endl;
+    _element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
+
+}
+
+// ----------------------------------------------------------------------------
+
+void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
+                                                const Spectra * const spectra,
+                                                const Detector * const detector,
+                                                const Fit_Element_Map_Dict * const elements_to_fit,
+                                                Fit_Count_Dict *out_counts_dic,
+                                                size_t row_idx,
+                                                size_t col_idx)
+{
+
+    Fit_Parameters fit_params = model->fit_parameters();
+    _add_elements_to_fit_parameters(&fit_params, nullptr, detector, elements_to_fit);
+    _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
+
+
+    //fit
+
+    _save_counts(&fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+}
+
+// ----------------------------------------------------------------------------
 
 } //namespace routines
 } //namespace fitting

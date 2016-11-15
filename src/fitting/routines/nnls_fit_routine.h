@@ -87,14 +87,16 @@ public:
 
 protected:
 
-    void _generate_fitmatrix(Fit_Parameters *fit_params,
-                             const unordered_map<string, Spectra> * const element_models,
-                             struct Range energy_range);
+    void _generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
+                             const struct Range energy_range);
 
 private:
 
     size_t _max_iter;
+
     nsNNLS::matrix* _fitmatrix;
+
+    std::unordered_map<std::string, int> _element_row_index;
 
 };
 

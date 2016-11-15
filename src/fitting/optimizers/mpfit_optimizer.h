@@ -73,7 +73,7 @@ public:
                           const Spectra * const spectra,
                           const Detector * const detector,
                           const Fit_Element_Map_Dict * const elements_to_fit,
-                          Base_Model* model);
+                          const Base_Model * const model);
 
 private:
 

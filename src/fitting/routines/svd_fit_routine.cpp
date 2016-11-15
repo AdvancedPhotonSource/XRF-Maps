@@ -75,10 +75,11 @@ SVD_Fit_Routine::~SVD_Fit_Routine()
 
 // ----------------------------------------------------------------------------
 
-void SVD_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
-                                        const unordered_map<string, Spectra> * const element_models,
-                                        struct Range energy_range)
+void SVD_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
+                                          const struct Range energy_range)
 {
+
+    _element_row_index.clear();
 
     _fitmatrix.resize(energy_range.count(), element_models->size());
     int i = 0;
@@ -90,7 +91,8 @@ void SVD_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
             _fitmatrix(j,i) = itr.second[j];
         }
         //save element index for later
-        (*fit_params)[itr.first].opt_array_index = i;
+        _element_row_index[itr.first] = i;
+        //(*fit_params)[itr.first].opt_array_index = i;
         i++;
     }
 
@@ -123,7 +125,7 @@ void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
     for(const auto& itr : *elements_to_fit)
     {
         //[itr.first];
-        (*out_counts_dic)[itr.first][row_idx][col_idx] = result[param.opt_array_index];
+        (*out_counts_dic)[itr.first][row_idx][col_idx] = result[_element_row_index[itr.first]];
     }
 
 }
@@ -136,11 +138,9 @@ void SVD_Fit_Routine::initialize(const models::Base_Model * const model,
                         const struct Range energy_range)
 {
 
-    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
+    unordered_map<string, Spectra> element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
 
-    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
-
-    _generate_fitmatrix(fit_params, &element_models, energy_range);
+    _generate_fitmatrix(&element_models, energy_range);
 
 }
 

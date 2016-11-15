@@ -90,6 +90,11 @@ public:
 
 protected:
 
+    void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
+                                         const Spectra * const spectra,
+                                         const Detector * const detector,
+                                         const Fit_Element_Map_Dict * const elements_to_fit);
+
     void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
                                              const Spectra * const spectra,
                                              const Detector * const detector);
@@ -103,26 +108,6 @@ protected:
                                size_t row_idx,
                                size_t col_idx);
 
-
-    void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                         const Spectra * const spectra,
-                                         const Detector * const detector,
-                                         const Fit_Element_Map_Dict * const elements_to_fit);
-
-    /**
-     * @brief _update_elements_guess : Updates the guess values for each element to fit based on spectra details
-     * @param fit_params : Stores the guess values for each element
-     * @param spectra : used to create guess values
-     * @param calibration : Energy calibration
-     * @param elements_to_fit : elements to update
-     */
-    void _update_elements_guess(Fit_Parameters *fit_params,
-                                const Spectra * const spectra,
-                                const Detector * const detector,
-                                const Fit_Element_Map_Dict * const elements_to_fit);
-
-
-    valarray<real_t> _background_counts;
 
 private:
 

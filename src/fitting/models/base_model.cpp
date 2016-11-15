@@ -70,7 +70,5 @@ Base_Model::~Base_Model()
 
 }
 
-
-
 } //namespace models
 } //namespace fitting

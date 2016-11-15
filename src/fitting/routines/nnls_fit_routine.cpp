@@ -78,6 +78,7 @@ NNLS_Fit_Routine::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routi
 
 NNLS_Fit_Routine::~NNLS_Fit_Routine()
 {
+    _element_row_index.clear();
     if(_fitmatrix != nullptr)
     {
         delete _fitmatrix;
@@ -87,11 +88,11 @@ NNLS_Fit_Routine::~NNLS_Fit_Routine()
 
 // ----------------------------------------------------------------------------
 
-void NNLS_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
-                                        const unordered_map<string, Spectra> * const element_models,
-                                        struct Range energy_range)
+void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
+                                           const struct Range energy_range)
 {
 
+    _element_row_index.clear();
     if(_fitmatrix != nullptr)
     {
         delete _fitmatrix;
@@ -108,7 +109,7 @@ void NNLS_Fit_Routine::_generate_fitmatrix(Fit_Parameters *fit_params,
             _fitmatrix->set(j,i,itr.second[j]);
         }
         //save element index for later
-        (*fit_params)[itr.first].opt_array_index = i;
+        _element_row_index[itr.first] = i;
         i++;
     }
 
@@ -146,10 +147,10 @@ void NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
     for(const auto& itr : *elements_to_fit)
     {
         //Fit_Param param = (*fit_params)[itr.first];
-        (*out_counts_dic)[itr.first][row_idx][col_idx] = result_p[param.opt_array_index];
+        (*out_counts_dic)[itr.first][row_idx][col_idx] = result_p[_element_row_index[itr.first]];
     }
 
-    if (out_counts_dic->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0 )
     {
         (*out_counts_dic)[data_struct::xrf::STR_NUM_ITR][row_idx][col_idx] = num_iter;
     }
@@ -166,11 +167,9 @@ void NNLS_Fit_Routine::initialize(const models::Base_Model * const model,
                                   const struct Range energy_range)
 {
 
-    Base_Model::initialize(fit_params, detector, elements_to_fit, energy_range);
+    unordered_map<string, Spectra> element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
 
-    unordered_map<string, Spectra> element_models = _generate_element_models(fit_params, detector, elements_to_fit, energy_range);
-
-    _generate_fitmatrix(fit_params, &element_models, energy_range);
+    _generate_fitmatrix(&element_models, energy_range);
 
 }
 

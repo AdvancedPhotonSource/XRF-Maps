@@ -103,12 +103,12 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
-                               Base_Model* model)
+                               const Base_Model * const model)
 {
 
     User_Data ud;
 
-    ud.fit_model = model;
+    ud.fit_model = (Base_Model*)model;
     // set spectra to fit
     ud.spectra = (Spectra*)spectra;
     ud.fit_parameters = fit_params;

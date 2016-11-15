@@ -79,6 +79,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //#include "threadpool_distributor.h"
 
+#include "gaussian_model.h"
+
 #include "element_info.h"
 
 #include "aps_fit_params_import.h"
@@ -195,8 +197,8 @@ data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(data_struct::xrf::Fit_
 
 // ----------------------------------------------------------------------------
 
-bool fit_single_spectra(fitting::models::Base_Model *model,
-                        data_struct::xrf::Fit_Parameters fit_params,
+bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
+                        const fitting::models::Base_Model * const model,
                         const data_struct::xrf::Spectra * const spectra,
                         const data_struct::xrf::Detector * const detector,
                         const data_struct::xrf::Fit_Element_Map_Dict * const elements_to_fit,
@@ -204,7 +206,7 @@ bool fit_single_spectra(fitting::models::Base_Model *model,
                         size_t i,
                         size_t j)
 {
-    model->fit_spectra(fit_params, spectra, detector, elements_to_fit, out_fit_counts, i, j);
+    fit_routine->fit_spectra(model, spectra, detector, elements_to_fit, out_fit_counts, i, j);
     return true;
 }
 
@@ -446,7 +448,7 @@ bool process_integrated_dataset(std::string dataset_directory,
     //Optimizers for fitting models
     fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
 
-    fitting::models::Base_Model * model = nullptr;
+    fitting::models::Gaussian_Model model;
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
@@ -482,14 +484,12 @@ bool process_integrated_dataset(std::string dataset_directory,
             case Processing_Types::GAUSS_TAILS:
                 fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
                 ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
-                model = new fitting::models::Gaussian_Model();
                 //save_loc = "XRF_tails_fits";
                 alloc_iter_count = true;
                 break;
             case Processing_Types::GAUSS_MATRIX:
                 fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
                 ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
-                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_fits";
                 alloc_iter_count = true;
                 break;
@@ -499,12 +499,10 @@ bool process_integrated_dataset(std::string dataset_directory,
                 break;
             case Processing_Types::SVD:
                 fit_routine = new fitting::routines::SVD_Fit_Routine();
-                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_roi_plus";
                 break;
             case Processing_Types::NNLS:
                 fit_routine = new fitting::routines::NNLS_Fit_Routine();
-                model = new fitting::models::Gaussian_Matrix_Model();
                 //save_loc = "XRF_nnls";
                 alloc_iter_count = true;
                 break;
@@ -514,14 +512,16 @@ bool process_integrated_dataset(std::string dataset_directory,
 
             data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
 
-            //Get required fit parameters from model
-            data_struct::xrf::Fit_Parameters fit_params = model->get_fit_parameters();
+            //reset model fit parameters to defaults
+            model.reset_to_default_fit_params();
             //Update fit parameters by override values
-            fit_params.update_values(override_fit_params);
-
-            fit_routine->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
-
-            data_struct::xrf::Fit_Parameters result_fits = fit_routine->fit_spectra(fit_params, &integrated_spectra, &detector, &elements_to_fit, element_fit_count_dict);
+            model.update_fit_params_values(override_fit_params);
+            //Initialize the fit routine
+            fit_routine->initialize(&model, &detector, &elements_to_fit, energy_range);
+            //Fit the spectra saving the element counts in element_fit_count_dict
+            fit_routine->fit_spectra(&model, &integrated_spectra, &detector, &elements_to_fit, element_fit_count_dict);
+            //Get the resulting fit parameters from the fit
+            data_struct::xrf::Fit_Parameters result_fits = model.fit_parameters();
 
             //get new detector energy offset, slope, and quadratic
 
@@ -531,12 +531,6 @@ bool process_integrated_dataset(std::string dataset_directory,
             {
                 delete fit_routine;
                 fit_routine = nullptr;
-            }
-
-            if (model != nullptr)
-            {
-                delete model;
-                model = nullptr;
             }
 
         }
@@ -557,15 +551,17 @@ void process_dataset_file(std::string dataset_directory,
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
     //Fitting models
-    fitting::models::Base_Model *model = nullptr;
-    fitting::models::Gauss_Tails_Model gauss_tails_model;
-    fitting::models::Gauss_Matrix_Model gauss_matrix_model;
-    fitting::models::ROI_Model roi_model;
-    fitting::models::SVD_Model svd_model;
-    fitting::models::NNLS_Model nnls_model;
+    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
+    fitting::routines::Param_Optimized_Fit_Routine params_fit_routine;
+    fitting::routines::Matrix_Optimized_Fit_Routine matrix_fit_routine;
+    fitting::routines::ROI_Fit_Routine roi_fit_routine;
+    fitting::routines::SVD_Fit_Routine svd_fit_routine;
+    fitting::routines::NNLS_Fit_Routine nnls_fit_routine;
 
     //Optimizers for fitting models
     fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
+
+    fitting::models::Gaussian_Model model;
 
     //Fitting parameters
     data_struct::xrf::Fit_Parameters fit_params;
@@ -582,8 +578,8 @@ void process_dataset_file(std::string dataset_directory,
 
     std::string save_loc;
 
-    gauss_tails_model.set_optimizer(&lmfit_optimizer);
-    gauss_matrix_model.set_optimizer(&lmfit_optimizer);
+    params_fit_routine.set_optimizer(&lmfit_optimizer);
+    matrix_fit_routine.set_optimizer(&lmfit_optimizer);
 
     //bool first_time = true;
 
@@ -635,25 +631,25 @@ void process_dataset_file(std::string dataset_directory,
             switch(proc_type)
             {
             case Processing_Types::GAUSS_TAILS:
-                model = &gauss_tails_model;
+                fit_routine = &params_fit_routine;
                 save_loc = "XRF_tails_fits";
                 alloc_iter_count = true;
                 break;
             case Processing_Types::GAUSS_MATRIX:
-                model = &gauss_matrix_model;
+                fit_routine = &matrix_fit_routine;
                 save_loc = "XRF_fits";
                 alloc_iter_count = true;
                 break;
             case Processing_Types::ROI:
-                model = &roi_model;
+                fit_routine = &roi_fit_routine;
                 save_loc = "XRF_roi";
                 break;
             case Processing_Types::SVD:
-                model = &svd_model;
+                fit_routine = &svd_fit_routine;
                 save_loc = "XRF_roi_plus";
                 break;
             case Processing_Types::NNLS:
-                model = &nnls_model;
+                fit_routine = &nnls_fit_routine;
                 save_loc = "XRF_nnls";
                 alloc_iter_count = true;
                 break;
@@ -661,10 +657,10 @@ void process_dataset_file(std::string dataset_directory,
                 continue;
             }
 
-            //Get required fit parameters from model
-            fit_params = model->get_fit_parameters();
+            //reset model fit parameters to defaults
+            model.reset_to_default_fit_params();
             //Update fit parameters by override values
-            fit_params.update_values(override_fit_params);
+            model.update_fit_params_values(override_fit_params);
 
             if (alloc_iter_count)
             {
@@ -676,14 +672,14 @@ void process_dataset_file(std::string dataset_directory,
             }
 
             //Initialize model
-            model->initialize(&fit_params, &detector, &elements_to_fit, energy_range);
+            fit_routine->initialize(&model, &detector, &elements_to_fit, energy_range);
 
             for(size_t i=0; i<spectra_volume->rows(); i++)
             {
                 for(size_t j=0; j<spectra_volume->cols(); j++)
                 {
                     //std::cout<< i<<" "<<j<<std::endl;
-                    fit_job_queue->emplace( tp->enqueue(fit_single_spectra, model, fit_params, &(*spectra_volume)[i][j], &detector, &elements_to_fit, element_fit_count_dict, i, j) );
+                    fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &detector, &elements_to_fit, element_fit_count_dict, i, j) );
                 }
             }
 

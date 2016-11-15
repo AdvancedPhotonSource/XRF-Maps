@@ -107,18 +107,18 @@ public:
 
     ~Gaussian_Model();
 
-    virtual Fit_Parameters get_fit_parameters();
+    virtual const Fit_Parameters& fit_parameters() const { return _fit_parameters; }
 
-    virtual Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                   const Spectra * const spectra,
-                                   const Detector * const detector,
-                                   const Fit_Element_Map_Dict * const elements_to_fit,
-                                   const struct Range energy_range);
+    virtual const Spectra& model_spectrum(const Fit_Parameters * const fit_params,
+                                          const Spectra * const spectra,
+                                          const Detector * const detector,
+                                          const Fit_Element_Map_Dict * const elements_to_fit,
+                                          const struct Range energy_range);
 
-    Spectra model_spectrum_element(const Fit_Parameters * const fitp,
-                                   const Fit_Element_Map * const element_to_fit,
-                                   const Detector * const detector,
-                                   valarray<real_t> energy);
+    virtual const Spectra& model_spectrum_element(const Fit_Parameters * const fitp,
+                                                  const Fit_Element_Map * const element_to_fit,
+                                                  const Detector * const detector,
+                                                  valarray<real_t> energy) const;
 
     /**
      * @brief gauss_peak :  models a gaussian fluorescence peak, see also van espen, spectrum evaluation,
@@ -129,7 +129,7 @@ public:
      * @param delta_energy
      * @return
      */
-    virtual valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy);
+    virtual const valarray<real_t>& peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const;
 
     /**
      * @brief gauss_step : gain / 2.0 /  peak_E * Faddeeva::erfc(delta_energy/(M_SQRT2 * sigma));
@@ -139,13 +139,17 @@ public:
      * @param peak_E
      * @return
      */
-    virtual valarray<real_t> step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E);
+    virtual const valarray<real_t>& step(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t peak_E) const;
 
-    virtual valarray<real_t> tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma);
+    virtual const valarray<real_t>& tail(real_t gain, real_t sigma, valarray<real_t>& delta_energy, real_t gamma) const;
 
-    virtual valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
+    virtual const valarray<real_t>& elastic_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const;
 
-    virtual valarray<real_t> compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain);
+    virtual const valarray<real_t>& compton_peak(const Fit_Parameters * const fitp, valarray<real_t> ev, real_t gain) const;
+
+    virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
+
+    virtual void update_fit_params_values(Fit_Parameters fit_params) { _fit_parameters.update_values(fit_params); }
 
 protected:
 

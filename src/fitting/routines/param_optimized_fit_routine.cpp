@@ -82,77 +82,76 @@ Param_Optimized_Fit_Routine::~Param_Optimized_Fit_Routine()
 
 }
 
-void Param_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
-                                             const Detector * const detector,
-                                             const Fit_Element_Map_Dict * const elements_to_fit,
-                                             const struct Range energy_range)
+// ----------------------------------------------------------------------------
+
+void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
+                                                 const Spectra * const spectra,
+                                                 const Detector * const detector,
+                                                 const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
-    _add_elements_to_fit_parameters(fit_params, nullptr, detector, elements_to_fit);
+
+    real_t this_factor = (real_t)14.0; //used to be 10.0
+
+    for (auto el_itr : *elements_to_fit)
+    {
+        real_t e_guess = (real_t)1.0e-10;
+        data_struct::xrf::Fit_Element_Map *element = el_itr.second;
+
+        element->init_energy_ratio_for_detector_element( detector->get_element() );
+        std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
+
+        //if element counts is not in fit params structure, add it
+        if( false == fit_params->contains(el_itr.first) )
+        {
+            data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
+            (*fit_params)[el_itr.first] = fp;
+        }
+
+        if(spectra != nullptr  && energies.size() > 0)
+        {
+            real_t e_energy = element->energy_ratios()[0].energy;
+            real_t min_e =  e_energy - (real_t)0.1;
+            real_t max_e =  e_energy + (real_t)0.1;
+
+            struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), detector);
+
+            real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
+            sum /= energy_range.count();
+            e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
+            //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
+            e_guess = std::log10(e_guess);
+
+            (*fit_params)[el_itr.first].value = e_guess;
+        }
+        else
+        {
+            e_guess = std::log10(e_guess);
+            (*fit_params)[el_itr.first].value = e_guess;
+        }
+    }
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                              const Spectra * const spectra,
-                                              const Detector * const detector,
-                                              const Fit_Element_Map_Dict * const elements_to_fit,
-                                              Fit_Count_Dict *out_counts_dic,
-                                              size_t row_idx,
-                                              size_t col_idx)
+void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
+                                                                      const Spectra * const spectra,
+                                                                      const Detector * const detector)
 {
-    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    // fitp.g.xmin = MIN_ENERGY_TO_FIT
-    // fitp.g.xmax = MAX_ENERGY_TO_FIT
-    /*
-    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
-    */
-
-    _calc_and_update_coherent_amplitude(fit_params, spectra, detector);
-    _update_elements_guess(fit_params, spectra, detector, elements_to_fit);
-
-    if(spectra->sum() == 0)
-    {
-
-        fit_params->set_all_value(-10.0, E_Bound_Type::FIT);
-
-        for (auto el_itr : *elements_to_fit)
-        {
-            if( fit_params->contains(el_itr.first) )
-            {
-                (*fit_params)[el_itr.first].value = -10.0;
-            }
-        }
-        return;
-    }
-
-/*
-    if(_snip_background)
-    {
-        //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
-        _snip_background = false;
-
-        if(_background_counts.size() != spectra->size())
-        {
-            _background_counts.resize(spectra->size());
-        }
-
-        //zero out
-        //_background_counts *= 0.0;
-        real_t spectral_binning = 0.0;
-        //_background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
-    }
-*/
-
-
-
-    if(_optimizer != nullptr)
-    {
-///        _optimizer->minimize(model, spectra, detector, elements_to_fit);
-        _save_counts(fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
-    }
+    //STR_COHERENT_SCT_ENERGY
+    //STR_COHERENT_SCT_AMPLITUDE
+    real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
+    real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
+    real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
+    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
+    size_t e_size = (energy_range.max + 1) - energy_range.min;
+    real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
+    sum /= energy_range.count();
+    real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
+    real_t logval = std::log10(e_guess);
+    (*fitp)[STR_COMPTON_AMPLITUDE].value = logval;
+    (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
 
 }
 
@@ -204,127 +203,86 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
 
 // ----------------------------------------------------------------------------
 
+void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                              const Spectra * const spectra,
+                                              const Detector * const detector,
+                                              const Fit_Element_Map_Dict * const elements_to_fit,
+                                              Fit_Count_Dict *out_counts_dic,
+                                              size_t row_idx,
+                                              size_t col_idx)
+{
+    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
+    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
+    // fitp.g.xmin = MIN_ENERGY_TO_FIT
+    // fitp.g.xmax = MAX_ENERGY_TO_FIT
+    /*
+    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
+    */
+
+    Fit_Parameters fit_params = model->fit_parameters();
+    _add_elements_to_fit_parameters(&fit_params, nullptr, detector, elements_to_fit);
+    _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
+
+    //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0
+    if(spectra->sum() == 0)
+    {
+
+        fit_params.set_all_value(-10.0, E_Bound_Type::FIT);
+
+        for (auto el_itr : *elements_to_fit)
+        {
+            if( fit_params.contains(el_itr.first) )
+            {
+                fit_params[el_itr.first].value = -10.0;
+            }
+        }
+        return;
+    }
+
+/*
+    if(_snip_background)
+    {
+        //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
+        _snip_background = false;
+
+        if(_background_counts.size() != spectra->size())
+        {
+            _background_counts.resize(spectra->size());
+        }
+
+        //zero out
+        //_background_counts *= 0.0;
+        real_t spectral_binning = 0.0;
+        //_background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+    }
+*/
+
+
+
+    if(_optimizer != nullptr)
+    {
+        _optimizer->minimize(&fit_params, spectra, detector, elements_to_fit, model);
+        _save_counts(&fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+void Param_Optimized_Fit_Routine::initialize(const models::Base_Model * const model,
+                                             const Detector * const detector,
+                                             const Fit_Element_Map_Dict * const elements_to_fit,
+                                             const struct Range energy_range)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
 void Param_Optimized_Fit_Routine::set_optimizer(Optimizer *optimizer)
 {
 
     _optimizer = optimizer;
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                                 const Spectra * const spectra,
-                                                 const Detector * const detector,
-                                                 const Fit_Element_Map_Dict * const elements_to_fit)
-{
-
-    real_t this_factor = (real_t)10.0;
-
-    for (auto el_itr : *elements_to_fit)
-    {
-        real_t e_guess = (real_t)1.0e-10;
-        if(false == fit_params->contains(el_itr.first))
-        {
-            data_struct::xrf::Fit_Element_Map *element = el_itr.second;
-            element->init_energy_ratio_for_detector_element( detector->get_element() );
-            if(element->energy_ratios().size() > 0)
-            {
-                std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
-                if( false == (*fit_params).contains(el_itr.first) )
-                {
-
-                    if (spectra != nullptr && energies.size() > 0)
-                    {
-                        real_t e_energy = element->energy_ratios()[0].energy;
-                        real_t min_e =  e_energy - (real_t)0.1;
-                        real_t max_e =  e_energy + (real_t)0.1;
-
-                        struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
-                        real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
-                        sum /= energy_range.count();
-                        e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
-                        //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
-                    }
-                    e_guess = std::log10(e_guess);
-                    //                             name                   min               max                               val       step size       fit
-                    //data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)1.0e-10, std::numeric_limits<real_t>::max(), e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::LIMITED_LO);
-                    data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
-                    (*fit_params)[el_itr.first] = fp;
-                    //std::cout<<"add "<<el_itr.first<<" val "<<e_guess<<std::endl;
-                }
-            }
-        }
-    }
-    std::cout<<std::endl;
-}
-
-// ----------------------------------------------------------------------------
-
-void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-                                                                      const Spectra * const spectra,
-                                                                      const Detector * const detector)
-{
-    //STR_COHERENT_SCT_ENERGY
-    //STR_COHERENT_SCT_AMPLITUDE
-    real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
-    real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
-    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
-    size_t e_size = (energy_range.max + 1) - energy_range.min;
-    real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
-    sum /= energy_range.count();
-    real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
-    real_t logval = std::log10(e_guess);
-    (*fitp)[STR_COMPTON_AMPLITUDE].value = logval;
-    (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Param_Optimized_Fit_Routine::_update_elements_guess(Fit_Parameters *fit_params,
-                                                          const Spectra * const spectra,
-                                                          const Detector * const detector,
-                                                          const Fit_Element_Map_Dict * const elements_to_fit)
-{
-
-    real_t this_factor = (real_t)14.0;
-
-    for (auto el_itr : *elements_to_fit)
-    {
-        real_t e_guess = (real_t)1.0e-10;
-        data_struct::xrf::Fit_Element_Map *element = el_itr.second;
-
-        std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
-        if( fit_params->contains(el_itr.first) )
-        {
-            if(spectra != nullptr  && energies.size() > 0)
-            {
-
-                real_t e_energy = element->energy_ratios()[0].energy;
-                real_t min_e =  e_energy - (real_t)0.1;
-                real_t max_e =  e_energy + (real_t)0.1;
-
-                struct Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
-
-                real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
-                sum /= energy_range.count();
-                e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
-                //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
-                e_guess = std::log10(e_guess);
-
-                (*fit_params)[el_itr.first].value = e_guess;
-                //std::cout<<"if "<<el_itr.first<<" val "<<e_guess<<std::endl;
-            }
-            else
-            {
-                e_guess = std::log10(e_guess);
-                (*fit_params)[el_itr.first].value = e_guess;
-                //std::cout<<"el "<<el_itr.first<<" val "<<e_guess<<std::endl;
-            }
-        }
-    }
 
 }
 

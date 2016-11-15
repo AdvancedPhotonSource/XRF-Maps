@@ -56,7 +56,7 @@ namespace fitting
 namespace routines
 {
 
-
+// --------------------------------------------------------------------------------------------------------------------
 
 Base_Fit_Routine::Base_Fit_Routine()
 {
@@ -71,30 +71,6 @@ Base_Fit_Routine::~Base_Fit_Routine()
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-/*
-Fit_Parameters Base_Fit_Routine::fit_spectra(const Fit_Parameters fit_params,
-                                       const Spectra * const spectra,
-                                       const Detector * const detector,
-                                       const Fit_Element_Map_Dict * const elements_to_fit,
-                                       Fit_Count_Dict *out_counts_dic,
-                                       size_t row_idx,
-                                       size_t col_idx)
-{
-
-    Fit_Parameters local_fit_params = fit_params;
-
-    _pre_process(&local_fit_params, spectra, detector, elements_to_fit);
-
-    _fit_spectra(&local_fit_params, spectra, detector, elements_to_fit);
-
-    _post_process(&local_fit_params, spectra, detector, elements_to_fit, out_counts_dic, row_idx, col_idx);
-
-    return local_fit_params;
-
-}
-*/
-// --------------------------------------------------------------------------------------------------------------------
-
 
 } //namespace routines
 } //namespace fitting
