@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "element_info.h"
+#include <cmath>
 
 namespace data_struct
 {
@@ -278,6 +279,59 @@ void Element_Info::get_energies_between(real_t energy, real_t* out_low, real_t* 
     }
 }
 
+real_t Element_Info::calc_beta(real_t density, real_t energy)
+{
+    real_t beta = 0.0;
+    real_t molecules_per_cc = 0.0;
+    real_t atwt = Element_Weight.at(this->number);
+    size_t low_e_idx=0, high_e_idx=0;
+    bool found_indexes = false;
+
+    ////z = wo+1
+    if (atwt != 0.0)
+    {
+        molecules_per_cc = density * AVOGADRO / atwt;
+    }
+
+    real_t wavelength_angstroms = HC_ANGSTROMS / energy;
+    // This constant has wavelength in angstroms and then
+    // they are converted to centimeters.
+    real_t constant = RE * (1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / (2.0 * M_PI);
+
+
+    for(size_t i=0; i< energies->size(); i++)
+    {
+        if( (*energies)[i] > energy)
+        {
+            low_e_idx = i - 1;
+            high_e_idx = i;
+            found_indexes = true;
+            break;
+        }
+    }
+    if(found_indexes)
+    {
+        //log warning
+        return beta;
+    }
+
+    real_t ln_lower_energy = std::log( (*energies)[low_e_idx] );
+    real_t ln_higher_energy = std::log( (*energies)[high_e_idx] );
+    real_t fraction = (std::log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
+
+    ////real_t f1_lower = f1_atomic_scattering_real[low_e_idx];
+    ////real_t f1_higher = f1_atomic_scattering_real[high_e_idx];
+    ////real_t f1_array = f1_lower + fraction * (f1_higher - f1_lower);
+
+    real_t ln_f2_lower = std::log( std::abs(f2_atomic_scattering_imaginary[low_e_idx]) );
+    real_t ln_f2_higher = std::log( std::abs(f2_atomic_scattering_imaginary[high_e_idx]) );
+    real_t f2_array = std::exp( ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower) );
+
+    ////delta_array = constant * f1_array
+    beta = constant * f2_array;
+
+    return beta;
+}
 
 // -----------------------------Element_Info_Map-------------------------------
 
@@ -325,6 +379,16 @@ void Element_Info_Map::add_element(Element_Info* element)
     // TODO: check if it exists
     _number_element_info_map.insert(std::pair<int, Element_Info*>(element->number, element));
     _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name, element));
+}
+
+real_t Element_Info_Map::calc_beta(std::string element_name, real_t density, real_t energy)
+{
+    real_t beta = 0.0;
+    if (_name_element_info_map.count(element_name) > 0)
+    {
+        beta = _name_element_info_map.at(element_name)->calc_beta(density, energy);
+    }
+    return beta;
 }
 
 Element_Info* Element_Info_Map::get_element(int element_number)

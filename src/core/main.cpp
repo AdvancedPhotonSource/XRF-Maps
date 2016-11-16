@@ -304,7 +304,7 @@ bool load_quantification_standard(std::string dataset_directory,
             {
                 for(size_t i=0; i<element_names.size(); i++)
                 {
-                    quantification_standard->append_element_weight(element_names[i], element_weights[i]);
+                    quantification_standard->append_element(element_names[i], element_weights[i]);
                 }
             }
             else

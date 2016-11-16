@@ -56,11 +56,44 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <unordered_map>
 #include "spectra.h"
+#include "element_info.h"
 
 namespace data_struct
 {
 namespace xrf
 {
+
+
+struct Element_Quant
+{
+    Element_Quant()
+    {
+        zero();
+    }
+    Element_Quant(real_t weight_)
+    {
+        zero();
+        weight = weight_;
+    }
+    void zero()
+    {
+        weight = 0.0;
+        absorption = 0.0;
+        transmission_Be = 0.0;
+        transmission_Ge = 0.0; // or Si dead layer
+        yield = 0.0;
+        transmission_through_Si_detector = 0.0;
+        transmission_through_air = 0.0;// (N2)
+    }
+
+    real_t weight;  // in ug/cm2
+    real_t absorption;
+    real_t transmission_Be;
+    real_t transmission_Ge; // or Si dead layer
+    real_t yield;
+    real_t transmission_through_Si_detector;
+    real_t transmission_through_air;// (N2)
+};
 
 //-----------------------------------------------------------------------------
 
@@ -75,15 +108,23 @@ public:
 
     ~Quantification_Standard();
 
-    void append_element_weight(std::string name, real_t weight) {_element_weights[name] = weight;}
+    void append_element(std::string name, real_t weight);
 
-    std::unordered_map<std::string, real_t>* element_weights() { return &_element_weights; }
-
-    const real_t& element_weight(std::string element_symb) const { return _element_weights.at(element_symb); }
+    const real_t& element_weight(std::string element_symb) const { return _element_quants.at(element_symb).weight; }
 
     void standard_filename(std::string standard_filename) { _standard_filename = standard_filename; }
 
     const std::string& standard_filename() { return _standard_filename; }
+
+    std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy, Element_Info* detector_element);
+
+    real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
+
+    real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor) const;
+
+    std::unordered_map<std::string, real_t> fit_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
+
+//  void residuals(real_t p, std::unordered_map<std::string, real_t> y);
 
 protected:
 
@@ -93,7 +134,9 @@ protected:
     real_t _IC_US;
     real_t _IC_DS;
 
-    std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
+    //std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
+
+    std::unordered_map<std::string, Element_Quant> _element_quants;
 
     //std::valarray<real_t> _us_amp;
     //std::valarray<real_t> _ds_amp;

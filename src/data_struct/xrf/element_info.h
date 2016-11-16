@@ -60,6 +60,10 @@ namespace data_struct
 namespace xrf
 {
 
+const real_t AVOGADRO = (real_t)6.02204531e23;
+const real_t HC_ANGSTROMS = (real_t)12398.52;
+const real_t RE = (real_t)2.817938070e-13;		// in cm
+
 struct DLL_EXPORT Element_Info
 {
 	Element_Info();
@@ -69,6 +73,8 @@ struct DLL_EXPORT Element_Info
 	void init_f_energies(int len);
 	void init_extra_energies(int len);
     void get_energies_between(real_t energy, real_t* out_low, real_t* out_high, size_t* out_low_idx, size_t* out_high_idx);
+
+    real_t calc_beta(real_t density, real_t energy);
 
     int number;
     std::string name;
@@ -113,6 +119,8 @@ public:
 	void generate_default_elements(int start_element, int end_element);
 
 	void add_element(Element_Info* element);
+
+    real_t calc_beta(std::string element_name, real_t density, real_t energy);
 
     Element_Info* get_element(int element_number);
 

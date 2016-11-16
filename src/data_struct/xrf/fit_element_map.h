@@ -61,10 +61,6 @@ namespace xrf
 const real_t ENERGY_RES_OFFSET = 150.0;
 const real_t ENERGY_RES_SQRT = 12.0;
 
-const real_t AVOGADRO = (real_t)6.02204531e23;
-const real_t HC_ANGSTROMS = (real_t)12398.52;
-const real_t RE = (real_t)2.817938070e-13;		// in cm
-
 //-----------------------------------------------------------------------------
 
 enum Element_Param_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
