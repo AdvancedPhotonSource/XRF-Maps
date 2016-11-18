@@ -173,12 +173,9 @@ real_t Quantification_Standard::transmission(real_t thickness, real_t beta, real
 
 real_t Quantification_Standard::absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor) const
 {
-    // make sure shell_factor is defined, and if not, set it to 1
     // shell factor <1 is to determine how much is
     // absorbed by a subshell, and is essentially the
     // ratio of jump factor -1 / jump factor
-    if (shell_factor == 0)
-        shell_factor = 1;
 
     return ( 1 - std::abs( std::exp( (-4.0 * M_PI * thickness * shell_factor * beta / llambda) ) ) );
 }

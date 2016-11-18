@@ -120,7 +120,7 @@ public:
 
     real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 
-    real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor) const;
+    real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
     std::unordered_map<std::string, real_t> fit_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
 
