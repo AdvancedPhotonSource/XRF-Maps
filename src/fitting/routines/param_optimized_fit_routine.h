@@ -74,7 +74,6 @@ public:
 
     virtual void fit_spectra(const models::Base_Model * const model,
                              const Spectra * const spectra,
-                             const Detector * const detector,
                              const Fit_Element_Map_Dict * const elements_to_fit,
                              Fit_Count_Dict *out_counts_dic,
                              size_t row_idx=0,
@@ -82,7 +81,6 @@ public:
 
 
     virtual void initialize(models::Base_Model * const model,
-                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
@@ -92,12 +90,10 @@ protected:
 
     void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                          const Spectra * const spectra,
-                                         const Detector * const detector,
                                          const Fit_Element_Map_Dict * const elements_to_fit);
 
     void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
-                                             const Spectra * const spectra,
-                                             const Detector * const detector);
+                                             const Spectra * const spectra);
 
 
     virtual void _save_counts(Fit_Parameters *fit_params,

@@ -72,7 +72,7 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->spectra, ud->detector, ud->elements, *(ud->energy_range));
+    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, *(ud->energy_range));
     //Calculate residuals
     std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
 
@@ -119,7 +119,6 @@ LMFit_Optimizer::~LMFit_Optimizer()
 
 void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                const Base_Model * const model)
 {
@@ -130,7 +129,6 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     // set spectra to fit
     ud.spectra = (Spectra*)spectra;
     ud.fit_parameters = fit_params;
-    ud.detector = (Detector*)detector;
     ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
 
     //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
@@ -152,6 +150,25 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
     //ud.weights = &weights;
+
+
+    /*
+        if(_snip_background)
+        {
+            //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
+            _snip_background = false;
+
+            if(_background_counts.size() != spectra->size())
+            {
+                _background_counts.resize(spectra->size());
+            }
+
+            //zero out
+            //_background_counts *= 0.0;
+            real_t spectral_binning = 0.0;
+            ud.spectra_background = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+        }
+    */
 
 
     lm_status_struct status;

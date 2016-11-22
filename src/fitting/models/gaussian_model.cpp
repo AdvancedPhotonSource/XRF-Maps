@@ -92,9 +92,13 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 {
 
     Fit_Parameters fit_params;
-    //                                                  name                     min               max           val              step            use
-    fit_params.add_parameter(STR_FWHM_OFFSET, Fit_Param(STR_FWHM_OFFSET,        (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
-    fit_params.add_parameter(STR_FWHM_FANOPRIME, Fit_Param(STR_FWHM_FANOPRIME,  (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001, E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
+    //                                                        name                     min               max             val              step              use
+    fit_params.add_parameter(STR_ENERGY_OFFSET,    Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
+    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_OFFSET,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
+    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
+
+    fit_params.add_parameter(STR_FWHM_OFFSET,    Fit_Param(STR_FWHM_OFFSET,        (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
+    fit_params.add_parameter(STR_FWHM_FANOPRIME, Fit_Param(STR_FWHM_FANOPRIME,     (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI)); //LIMITED_LO_HI  fixed
 
     fit_params.add_parameter(STR_COHERENT_SCT_ENERGY, Fit_Param(STR_COHERENT_SCT_ENERGY,	   (real_t)9.4, (real_t)10.4, (real_t)9.99, (real_t)0.001,  E_Bound_Type::LIMITED_LO_HI)); // LIMITED_LO_HI fixed  0
     fit_params.add_parameter(STR_COHERENT_SCT_AMPLITUDE, Fit_Param(STR_COHERENT_SCT_AMPLITUDE, (real_t)0.000001, (real_t)10.0, (real_t)10.0,  (real_t)0.00001, E_Bound_Type::FIT));
@@ -133,10 +137,8 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 // ----------------------------------------------------------------------------
 
 const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_params,
-                                          const Spectra * const spectra,
-                                          const Detector * const detector,
-                                          const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
-                                          const struct Range energy_range)
+                                             const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
+                                             const struct Range energy_range)
 {
 
     Spectra agr_spectra(energy_range.count());
@@ -144,7 +146,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 
     std::valarray<real_t> energy((real_t)0.0, energy_range.count());
-    std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
+    //std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
     real_t e_val = energy_range.min;
     for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
     {
@@ -152,27 +154,28 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
         e_val += 1.0;
     }
 
-    real_t gain = detector->energy_slope();
-    std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
+    //real_t gain = detector->energy_slope();
+    std::valarray<real_t> ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + std::pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
 
-
+/* move outside
     if( _snip_background )
     {
         real_t spectral_binning = 0.0;
         background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
     }
-
+*/
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-        spectra_model = model_spectrum_element(fit_params, itr.second, detector, energy);
+        spectra_model = model_spectrum_element(fit_params, itr.second, ev, energy);
         agr_spectra += spectra_model;
     }
 
-    agr_spectra += elastic_peak(fit_params, ev, gain);
-    agr_spectra += compton_peak(fit_params, ev, gain);
+    agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
-    agr_spectra += background_counts;
+    //agr_spectra += background_counts;
+
 /*
     // pileup
     //temp_element_pos = np.array(keywords.added_params[4:13]);
@@ -230,13 +233,13 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const Detector * const detector, std::valarray<real_t> energy)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const std::valarray<real_t> &ev, std::valarray<real_t> energy)
 {
     Spectra spectra_model(energy.size());
     std::valarray<real_t> peak_counts(0.0, energy.size());
 
-    real_t gain = detector->energy_slope();
-    std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
+    //real_t gain = detector->energy_slope();
+    //std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {
@@ -276,11 +279,11 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
             faktor = faktor / ((real_t)1.0 + f_tail + f_step);
         }
         // peak, gauss
-        //value = faktor * this->peak(gain, sigma, delta_energy);
-        spectra_model += faktor * this->peak(gain, sigma, delta_energy);
+        //value = faktor * this->peak(fit_params->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+        spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
 
 /*      //separates counts into which lines they are
-        peak_counts = faktor * this->peak(gain, sigma, delta_energy);
+        peak_counts = faktor * this->peak(fit_params->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
         switch(er_struct.ptype)
         {
             case Element_Param_Type::Ka_Line:
@@ -307,7 +310,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         {
             value = faktor * f_step;
             //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
-            spectra_model += value * this->step(gain, sigma, delta_energy, er_struct.energy);
+            spectra_model += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
             //counts_arr->step = fit_counts.step + value;
         }
         //  peak, tail;; use different tail for K beta vs K alpha lines
@@ -315,7 +318,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         {
             real_t gamma = std::abs( fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy) ) * element_to_fit->width_multi();
             value = faktor * kb_f_tail;
-            spectra_model += value * this->tail(gain, sigma, delta_energy, gamma);
+            spectra_model += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
             //fit_counts.tail = fit_counts.tail + value;
         }
     }

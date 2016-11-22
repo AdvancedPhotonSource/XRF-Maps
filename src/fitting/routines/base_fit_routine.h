@@ -90,7 +90,6 @@ public:
      */
     virtual void fit_spectra(const models::Base_Model * const model,
                              const Spectra * const spectra,
-                             const Detector * const detector,
                              const Fit_Element_Map_Dict * const elements_to_fit,
                              Fit_Count_Dict *out_counts_dic,
                              size_t row_idx=0,
@@ -104,7 +103,6 @@ public:
      * @param energy_range
      */
     virtual void initialize(models::Base_Model * const model,
-                            const Detector * const detector,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range) = 0;
 

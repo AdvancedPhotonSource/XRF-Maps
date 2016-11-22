@@ -102,7 +102,6 @@ void SVD_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> *
 
 void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                   const Spectra * const spectra,
-                                  const Detector * const detector,
                                   const Fit_Element_Map_Dict * const elements_to_fit,
                                   Fit_Count_Dict *out_counts_dic,
                                   size_t row_idx,
@@ -133,12 +132,11 @@ void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
 // ----------------------------------------------------------------------------
 
 void SVD_Fit_Routine::initialize(models::Base_Model * const model,
-                                 const Detector * const detector,
                                  const Fit_Element_Map_Dict * const elements_to_fit,
                                  const struct Range energy_range)
 {
 
-    unordered_map<string, Spectra> element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
+    unordered_map<string, Spectra> element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
     _generate_fitmatrix(&element_models, energy_range);
 

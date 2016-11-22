@@ -52,6 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <cmath>
 
+//debug
+#include <iostream>;
 
 namespace data_struct
 {
@@ -85,24 +87,77 @@ void Quantification_Standard::append_element(std::string name, real_t weight)
 
 //-----------------------------------------------------------------------------
 
-std::unordered_map<std::string, Element_Quant> Quantification_Standard::generate_quant_map(real_t incident_energy, Element_Info* detector_element)
+std::unordered_map<std::string, Element_Quant> Quantification_Standard::generate_quant_map(real_t incident_energy,
+                                                                                           Element_Info* detector_element,
+                                                                                           Electron_Shell shell,
+                                                                                           bool airpath = false,
+                                                                                           size_t start_z = 0,
+                                                                                           size_t end_z = 95)
 {
 
     std::unordered_map<std::string, Element_Quant> element_quant_map;
-    /*
+
     //incident_E(incident_energy) == COHERENT_SCT_ENERGY: Maps_fit_params
     //fit_t_be == BE_WINDOW_THICKNESS * 1000
     //fit_t_ge == GE_DEAD_LAYER * 1000 if detector is not Si
     //add_float['a'] == DET_CHIP_THICKNESS   * 1000
-    for (int i=0; i < 92; i ++)
+    for (int i=start_z; i <= end_z; i ++)
     {
         real_t beta;
-        real_t shell_factor;
+        real_t shell_factor = 0.0;
+        real_t ev;
+        real_t jump_factor = 0.0;
+        real_t total_jump_factor = 0.0;
         Element_Quant element_quant;
         Element_Info* element_info = Element_Info_Map::inst()->get_element(i);
         if(element_info == nullptr)
         {
             continue;
+        }
+        switch(shell)
+        {
+        case K_SHELL:
+            ev = element_info->xrf.at("ka1") * 1000.0;
+            element_quant.yield = element_info->yieldD.at("k");
+            if( incident_energy > element_info->bindingE.at("K") )
+            {
+                jump_factor = element_info->jump.at("K");
+            }
+            break;
+        case L_SHELL:
+            ev = element_info->xrf.at("la1") * 1000.0;
+            element_quant.yield = element_info->xrf_abs_yield.at("la1");
+            jump_factor = element_info->jump.at("L3");
+            if( incident_energy > element_info->bindingE.at("L2") )
+            {
+                total_jump_factor = element_info->jump.at("L2");
+            }
+            if( incident_energy > element_info->bindingE.at("L1") )
+            {
+                total_jump_factor = total_jump_factor * element_info->jump.at("L1");
+            }
+            break;
+        case M_SHELL:
+            ev = element_info->xrf.at("ma1") * 1000.0;
+            element_quant.yield = element_info->xrf_abs_yield.at("ma1");
+            jump_factor = element_info->jump.at("M5");
+            total_jump_factor = element_info->jump.at("M1") * element_info->jump.at("M2") * element_info->jump.at("M3") * element_info->jump.at("M4");
+            break;
+        default:
+            std::cout<<"Unsupported shell. Currently only support for K, L, and M "<<std::endl;
+            break;
+        }
+
+        if( jump_factor != 0.0 )
+        {
+            if( total_jump_factor == 0.0 )
+            {
+                shell_factor = (jump_factor - 1.0) / jump_factor;
+            }
+            else
+            {
+                shell_factor = (jump_factor - 1.0) / jump_factor / total_jump_factor;
+            }
         }
         // replace straight henke routines, with those
         // that take the absorption edges into account
@@ -117,20 +172,20 @@ std::unordered_map<std::string, Element_Quant> Quantification_Standard::generate
         ////aux_arr[mm, 0] = self.absorption(thickness, beta, 1239.852/((self.maps_conf.incident_E+0.1)*1000.), shell_factor=shell_factor)
         element_quant.absorption = absorption(thickness, beta, 1239.852 / ((incident_energy + 0.1) * 1000.0), shell_factor);
 
-        beta  = Element_Info_Map::inst()->calc_beta('Be', 1.848, ev);
+        beta  = Element_Info_Map::inst()->calc_beta("Be", 1.848, ev);
         ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
-        element_quant.transmission_Be = transmission(self.maps_conf.fit_t_be, beta, 1239.852 / ev);
+        element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, 1239.852 / ev);
 
-        beta  = Element_Info_Map::inst()->calc_beta( 'Ge', 5.323, ev);
+        beta  = Element_Info_Map::inst()->calc_beta("Ge", 5.323, ev);
         ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
-        element_quant.transmission_Ge = transmission(self.maps_conf.fit_t_be, beta, 1239.852 / ev);
+        element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, 1239.852 / ev);
 
         ////aux_arr[mm, 3] = yieldd
-        element_quant.yield = yieldd; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
+        //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
 
         if (self.maps_conf.add_long['a'] == 1)
         {
-            beta  = Element_Info_Map::inst()->calc_beta( 'Si', 2.3, ev);
+            beta  = Element_Info_Map::inst()->calc_beta("Si", 2.3, ev);
         }
         ////aux_arr[mm, 4] = self.transmission(self.maps_conf.add_float['a'], beta, 1239.852/ev)
         element_quant.transmission_through_Si_detector = self.transmission(self.maps_conf.add_float['a'], beta, 1239.852 / ev);
@@ -142,11 +197,11 @@ std::unordered_map<std::string, Element_Quant> Quantification_Standard::generate
         if( airpath > 0)
         {
             //density = 1.0
-            density = 0.00117;
+            real_t density = 0.00117;
             //air_ele = 'N78.08O20.95Ar0.93'
             //density = 1.2047e-3
             //f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt = Chenke.get_henke_single('air', density, ev)
-            beta = Element_Info_Map::inst()->calc_beta('air', density, ev);
+            beta = Element_Info_Map::inst()->calc_beta("air", density, ev);
             ////aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  // airpath is read in microns, transmission function expects nm
             // airpath is read in microns, transmission function expects nm
             element_quant.transmission_through_Si_detector = transmission( airpath * 1000.0, beta, 1239.852 / ev);
@@ -158,7 +213,7 @@ std::unordered_map<std::string, Element_Quant> Quantification_Standard::generate
         }
         element_quant_map.emplace( std::pair <std::string, Element_Quant>(element_info->name, element_quant) );
     }
-*/
+
     return element_quant_map;
 }
 
@@ -182,7 +237,7 @@ real_t Quantification_Standard::absorption(real_t thickness, real_t beta, real_t
 
 //-----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> Quantification_Standard::fit_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p)
+std::unordered_map<std::string, real_t> Quantification_Standard::model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p)
 {
     // aux_arr[mm, 0] = absorption
     // aux_arr[mm, 1] = transmission, Be

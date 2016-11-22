@@ -63,6 +63,10 @@ namespace models
 using namespace data_struct::xrf;
 using namespace std;
 
+// Detector energy
+const string STR_ENERGY_OFFSET          = "ENERGY_OFFSET";
+const string STR_ENERGY_SLOPE           = "ENERGY_SLOPE";
+const string STR_ENERGY_QUADRATIC       = "ENERGY_QUADRATIC";
 
 /**
  * @brief The Base_Model class: base class for modeling spectra and fitting elements
@@ -96,16 +100,14 @@ public:
      * @return
      */
     virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                          const Spectra * const spectra,
-                                          const Detector * const detector,
-                                          const Fit_Element_Map_Dict * const elements_to_fit,
-                                          const struct Range energy_range) = 0;
+                                         const Fit_Element_Map_Dict * const elements_to_fit,
+                                         const struct Range energy_range) = 0;
 
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
-                                                  const Fit_Element_Map * const element_to_fit,
-                                                  const Detector * const detector,
-                                                  valarray<real_t> energy) = 0;
+                                                 const Fit_Element_Map * const element_to_fit,
+                                                 const std::valarray<real_t> &ev,
+                                                 valarray<real_t> energy) = 0;
 
     virtual const std::valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const = 0;
 

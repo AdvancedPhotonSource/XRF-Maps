@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <unordered_map>
 
+#include "base_model.h"
+
 namespace io
 {
 namespace file
@@ -66,15 +68,15 @@ namespace aps
  * Translation map from APS file tags to internal tags
  */
 const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]", data_struct::xrf::STR_E_OFFSET),
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MAX", data_struct::xrf::STR_E_OFFSET),
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MIN", data_struct::xrf::STR_E_OFFSET),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]", data_struct::xrf::STR_E_LINEAR),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MAX", data_struct::xrf::STR_E_LINEAR),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MIN", data_struct::xrf::STR_E_LINEAR),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]", data_struct::xrf::STR_E_QUADRATIC),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MAX", data_struct::xrf::STR_E_QUADRATIC),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MIN", data_struct::xrf::STR_E_QUADRATIC),
+    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]", fitting::models::STR_ENERGY_OFFSET),
+    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MAX", fitting::models::STR_ENERGY_OFFSET),
+    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MIN", fitting::models::STR_ENERGY_OFFSET),
+    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]", fitting::models::STR_ENERGY_SLOPE),
+    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MAX", fitting::models::STR_ENERGY_SLOPE),
+    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MIN", fitting::models::STR_ENERGY_SLOPE),
+    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]", fitting::models::STR_ENERGY_QUADRATIC),
+    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MAX", fitting::models::STR_ENERGY_QUADRATIC),
+    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MIN", fitting::models::STR_ENERGY_QUADRATIC),
     std::pair<std::string, std::string>("FWHM_OFFSET", data_struct::xrf::STR_FWHM_OFFSET),
     std::pair<std::string, std::string>("FWHM_FANOPRIME", data_struct::xrf::STR_FWHM_FANOPRIME),
     std::pair<std::string, std::string>("COHERENT_SCT_ENERGY", data_struct::xrf::STR_COHERENT_SCT_ENERGY),
@@ -123,7 +125,6 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 bool APS_Fit_Params_Import::load(std::string path,
                                  data_struct::xrf::Element_Info_Map * element_info_map,
                                  data_struct::xrf::Fit_Parameters * out_fit_params,
-                                 data_struct::xrf::Detector * detector,
                                  std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
                                  std::unordered_map<std::string, std::string>* out_values)
 {
@@ -287,13 +288,16 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
 
+
                     if(value == "0")
                     {
-                        detector->set_element(element_info_map->get_element("Ge"));
+                        //detector->set_element(element_info_map->get_element("Ge"));
+                        (*out_values)[data_struct::xrf::STR_DETECTOR_ELEMENT] = "Ge";
                     }
                     else if(value == "1")
                     {
-                        detector->set_element(element_info_map->get_element("Si"));
+                        //detector->set_element(element_info_map->get_element("Si"));
+                        (*out_values)[data_struct::xrf::STR_DETECTOR_ELEMENT] = "Si";
                     }
                     else
                     {

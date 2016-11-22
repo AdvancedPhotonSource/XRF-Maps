@@ -73,7 +73,7 @@ int residuals_mpfit(int m, int params_size, double *params, double *dy, double *
     ud->fit_parameters->from_array(params, params_size);
 
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->spectra, ud->detector, ud->elements, *(ud->energy_range));
+    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, *(ud->energy_range));
 
     //Calculate residuals
     std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
@@ -125,7 +125,6 @@ MPFit_Optimizer::~MPFit_Optimizer()
 
 void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               const Detector * const detector,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                const Base_Model * const model)
 {
@@ -135,7 +134,6 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     // set spectra to fit
     ud.spectra = (Spectra*)spectra;
     ud.fit_parameters = fit_params;
-    ud.detector = (Detector*)detector;
     ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
 
     //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);

@@ -78,7 +78,7 @@ struct User_Data
     Spectra *spectra;
     std::valarray<real_t> *weights;
     Fit_Parameters *fit_parameters;
-    Detector *detector;
+    std::valarray<real_t> *spectra_background;
     Fit_Element_Map_Dict *elements;
     Range *energy_range;
     //Fit_Counts_Array* counts_arr;
@@ -105,7 +105,6 @@ public:
 
     virtual void minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
-                          const Detector * const detector,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model) = 0;
 

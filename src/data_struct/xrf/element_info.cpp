@@ -388,6 +388,10 @@ real_t Element_Info_Map::calc_beta(std::string element_name, real_t density, rea
     {
         beta = _name_element_info_map.at(element_name)->calc_beta(density, energy);
     }
+    else if(Henke_Compound_Density_Map.count(element_name) > 0)
+    {
+        //beta = calc_compound_beta(element_name, density, energy);
+    }
     return beta;
 }
 

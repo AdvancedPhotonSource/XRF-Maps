@@ -64,6 +64,8 @@ namespace xrf
 {
 
 
+enum Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
+
 struct Element_Quant
 {
     Element_Quant()
@@ -116,13 +118,18 @@ public:
 
     const std::string& standard_filename() { return _standard_filename; }
 
-    std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy, Element_Info* detector_element);
+    std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy,
+                                                                      Element_Info* detector_element,
+                                                                      Electron_Shell shell,
+                                                                      bool airpath,
+                                                                      size_t start_z,
+                                                                      size_t end_z);
 
     real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 
     real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
-    std::unordered_map<std::string, real_t> fit_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
+    std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
 
 //  void residuals(real_t p, std::unordered_map<std::string, real_t> y);
 

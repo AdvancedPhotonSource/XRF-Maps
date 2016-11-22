@@ -72,21 +72,21 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
 
 void ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                   const Spectra * const spectra,
-                                  const Detector * const detector,
                                   const Fit_Element_Map_Dict * const elements_to_fit,
                                   Fit_Count_Dict *out_counts_dic,
                                   size_t row_idx,
                                   size_t col_idx)
 {
 
+    Fit_Parameters fitp = model->fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
     for(const auto& e_itr : *elements_to_fit)
     {
         Fit_Element_Map* element = e_itr.second;
         // note: center position for peaks/rois is in keV, widths of ROIs is in eV
-        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
-        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - detector->energy_offset()) / detector->energy_slope());
+        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
+        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
 
         if (right_roi >= n_mca_channels)
         {
@@ -121,7 +121,6 @@ void ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
 // --------------------------------------------------------------------------------------------------------------------
 
 void ROI_Fit_Routine::initialize(models::Base_Model * const model,
-                                 const Detector * const detector,
                                  const Fit_Element_Map_Dict * const elements_to_fit,
                                  const struct Range energy_range)
 {

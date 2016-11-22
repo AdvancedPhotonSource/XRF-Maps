@@ -110,15 +110,13 @@ public:
     virtual const Fit_Parameters& fit_parameters() const { return _fit_parameters; }
 
     virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                          const Spectra * const spectra,
-                                          const Detector * const detector,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           const struct Range energy_range);
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
-                                                  const Fit_Element_Map * const element_to_fit,
-                                                  const Detector * const detector,
-                                                  valarray<real_t> energy);
+                                                 const Fit_Element_Map * const element_to_fit,
+                                                 const std::valarray<real_t> &ev,
+                                                 valarray<real_t> energy);
 
     /**
      * @brief gauss_peak :  models a gaussian fluorescence peak, see also van espen, spectrum evaluation,

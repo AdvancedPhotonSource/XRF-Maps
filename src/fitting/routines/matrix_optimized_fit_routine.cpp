@@ -152,7 +152,6 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
 // ----------------------------------------------------------------------------
 
 unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_models(models::Base_Model * const model,
-                                                                                      const Detector * const detector,
                                                                                       const Fit_Element_Map_Dict * const elements_to_fit,
                                                                                       struct Range energy_range)
 {
@@ -175,8 +174,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         e_val += 1.0;
     }
 
-    real_t gain = detector->energy_slope();
-    valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + pow(energy, (real_t)2.0) * detector->energy_quadratic();
+    valarray<real_t> ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
     int i = 0;
     for(const auto& itr : (*elements_to_fit))
@@ -192,7 +190,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, detector, energy);
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, energy);
     }
 
     //i = elements_to_fit->size();
@@ -202,7 +200,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     Spectra elastic_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COHERENT_SCT_AMPLITUDE].value = 0.0;
-    elastic_model += model->elastic_peak(&fit_parameters, ev, gain);
+    elastic_model += model->elastic_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
     element_spectra[STR_COHERENT_SCT_AMPLITUDE] = elastic_model;
     //Set it so we fit coherent amp in fit params
     ///(*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::xrf::E_Bound_Type::FIT;
@@ -212,7 +210,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     Spectra compton_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COMPTON_AMPLITUDE].value = 0.0;
-    compton_model += model->compton_peak(&fit_parameters, ev, gain);
+    compton_model += model->compton_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
     element_spectra[STR_COMPTON_AMPLITUDE] = compton_model;
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
     ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::xrf::FIT;
@@ -226,7 +224,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         }
         delta_energy = ev.copy() - (add_pars[i, j].energy);
         faktor = add_pars[i, j].ratio;
-        counts = faktor * this->model_gauss_peak(gain, sigma[i, j], delta_energy);
+        counts = faktor * this->model_gauss_peak(fit_parameters.at(STR_ENERGY_SLOPE).value, sigma[i, j], delta_energy);
 
         //fitmatrix[:, this_i+ii] = fitmatrix[:, this_i+ii]+counts[:];
         fitmatrix.row(this_i + ii) = fitmatrix.row(this_i + ii) + counts;
@@ -241,14 +239,13 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 // ----------------------------------------------------------------------------
 
 void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
-                                              const Detector * const detector,
                                               const Fit_Element_Map_Dict * const elements_to_fit,
                                               const struct Range energy_range)
 {
 
     _element_models.clear();
     std::cout<<"-------- Generating element models ---------"<<std::endl;
-    _element_models = _generate_element_models(model, detector, elements_to_fit, energy_range);
+    _element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
 }
 
@@ -256,7 +253,6 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
 void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
                                                 const Spectra * const spectra,
-                                                const Detector * const detector,
                                                 const Fit_Element_Map_Dict * const elements_to_fit,
                                                 Fit_Count_Dict *out_counts_dic,
                                                 size_t row_idx,
@@ -264,8 +260,8 @@ void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const
 {
 
     Fit_Parameters fit_params = model->fit_parameters();
-    _add_elements_to_fit_parameters(&fit_params, spectra, detector, elements_to_fit);
-    _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
+    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
 
     if(_optimizer != nullptr)

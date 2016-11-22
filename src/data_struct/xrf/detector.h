@@ -140,7 +140,7 @@ protected:
  * @param calibration: energy calibration
  * @return Range structure with the min energy and max enegry of the spectra to fit.
  */
-DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, const Detector * const detector);
+DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
 
 
 } //namespace xrf

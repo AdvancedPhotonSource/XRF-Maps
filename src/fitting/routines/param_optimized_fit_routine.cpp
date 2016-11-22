@@ -86,7 +86,6 @@ Param_Optimized_Fit_Routine::~Param_Optimized_Fit_Routine()
 
 void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                                                   const Spectra * const spectra,
-                                                                  const Detector * const detector,
                                                                   const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
@@ -114,7 +113,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
             real_t min_e =  e_energy - (real_t)0.1;
             real_t max_e =  e_energy + (real_t)0.1;
 
-            struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), detector);
+            struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
 
             real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
             sum /= energy_range.count();
@@ -143,15 +142,14 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
 // ----------------------------------------------------------------------------
 
 void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-                                                                      const Spectra * const spectra,
-                                                                      const Detector * const detector)
+                                                                      const Spectra * const spectra)
 {
     //STR_COHERENT_SCT_ENERGY
     //STR_COHERENT_SCT_AMPLITUDE
     real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
     real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
     real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
-    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), detector);
+    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->at(STR_ENERGY_OFFSET).value, fitp->at(STR_ENERGY_SLOPE).value);
     size_t e_size = (energy_range.max + 1) - energy_range.min;
     real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
     sum /= energy_range.count();
@@ -211,7 +209,6 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
 
 void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                               const Spectra * const spectra,
-                                              const Detector * const detector,
                                               const Fit_Element_Map_Dict * const elements_to_fit,
                                               Fit_Count_Dict *out_counts_dic,
                                               size_t row_idx,
@@ -226,8 +223,8 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
     */
 
     Fit_Parameters fit_params = model->fit_parameters();
-    _add_elements_to_fit_parameters(&fit_params, spectra, detector, elements_to_fit);
-    _calc_and_update_coherent_amplitude(&fit_params, spectra, detector);
+    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0
     if(spectra->sum() == 0)
@@ -245,29 +242,9 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
         return;
     }
 
-/*
-    if(_snip_background)
-    {
-        //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
-        _snip_background = false;
-
-        if(_background_counts.size() != spectra->size())
-        {
-            _background_counts.resize(spectra->size());
-        }
-
-        //zero out
-        //_background_counts *= 0.0;
-        real_t spectral_binning = 0.0;
-        //_background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
-    }
-*/
-
-
-
     if(_optimizer != nullptr)
     {
-        _optimizer->minimize(&fit_params, spectra, detector, elements_to_fit, model);
+        _optimizer->minimize(&fit_params, spectra, elements_to_fit, model);
         _save_counts(&fit_params, spectra, elements_to_fit, out_counts_dic, row_idx, col_idx);
     }
 
@@ -276,7 +253,6 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
 // ----------------------------------------------------------------------------
 
 void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
-                                             const Detector * const detector,
                                              const Fit_Element_Map_Dict * const elements_to_fit,
                                              const struct Range energy_range)
 {
