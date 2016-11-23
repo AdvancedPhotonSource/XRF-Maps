@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fit_parameters.h"
 #include "detector.h"
 #include "base_model.h"
+#include "quantification_standard.h"
 
 
 namespace fitting
@@ -91,6 +92,13 @@ struct Gen_User_Data
     Fit_Parameters *fit_parameters;
     Range *energy_range;
     std::function<const Spectra(Fit_Parameters*, Range*)> func;
+};
+
+struct Quant_User_Data
+{
+    Quantification_Standard * quantification;
+    Fit_Parameters * fit_parameters;
+    std::unordered_map<std::string, Element_Quant> quant_map;
 };
 
 /**

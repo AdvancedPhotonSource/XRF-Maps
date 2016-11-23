@@ -58,6 +58,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "spectra.h"
 #include "element_info.h"
 
+#include "optimizer.h"
+
 namespace data_struct
 {
 namespace xrf
@@ -86,6 +88,7 @@ struct Element_Quant
         yield = 0.0;
         transmission_through_Si_detector = 0.0;
         transmission_through_air = 0.0;// (N2)
+        index = -1;
     }
 
     real_t weight;  // in ug/cm2
@@ -95,6 +98,7 @@ struct Element_Quant
     real_t yield;
     real_t transmission_through_Si_detector;
     real_t transmission_through_air;// (N2)
+    int index; //used to map to and from fitting function
 };
 
 //-----------------------------------------------------------------------------
@@ -118,20 +122,38 @@ public:
 
     const std::string& standard_filename() { return _standard_filename; }
 
+    bool quantifiy(fitting::optimizers::Optimizer * optimizer,
+                   real_t incident_energy,
+                   Element_Info* detector_element,
+                   bool airpath,
+                   real_t detector_chip_thickness,
+                   real_t beryllium_window_thickness,
+                   real_t germanium_dead_layer);
+
+    Element_Quant generate_element_quant(real_t incident_energy,
+                                        Element_Info* detector_element,
+                                        Electron_Shell shell,
+                                        bool airpath,
+                                        real_t detector_chip_thickness,
+                                        real_t beryllium_window_thickness,
+                                        real_t germanium_dead_layer,
+                                        size_t z_number);
+
     std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy,
                                                                       Element_Info* detector_element,
                                                                       Electron_Shell shell,
-                                                                      bool airpath,
-                                                                      size_t start_z,
-                                                                      size_t end_z);
+                                                                      bool airpath = false,
+                                                                      real_t detector_chip_thickness = 0.0,
+                                                                      real_t beryllium_window_thickness = 0.0,
+                                                                      real_t germanium_dead_layer = 0.0,
+                                                                      size_t start_z = 0,
+                                                                      size_t end_z = 95);
 
     real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 
     real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
     std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
-
-//  void residuals(real_t p, std::unordered_map<std::string, real_t> y);
 
 protected:
 
@@ -144,6 +166,8 @@ protected:
     //std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
 
     std::unordered_map<std::string, Element_Quant> _element_quants;
+
+    std::unordered_map<std::string, Element_Quant> _calibration_curve;
 
     //std::valarray<real_t> _us_amp;
     //std::valarray<real_t> _ds_amp;

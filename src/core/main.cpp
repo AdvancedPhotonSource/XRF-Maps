@@ -719,6 +719,27 @@ void process_dataset_file(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+bool generate_calibration_curve(std::string dataset_directory,
+                                data_struct::xrf::Quantification_Standard *quantification,
+                                size_t detector_num)
+{
+    //Optimizers for fitting quantification calibration curve
+    fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
+    //Output of fits for elements specified
+    std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
+    //Parameters for calibration curve
+    data_struct::xrf::Fit_Parameters override_fit_params;
+    std::unordered_map< std::string, std::string > extra_override_values;
+    //load override parameters
+    load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
+
+
+    //quantification->quantifiy(bool airpath, real_t detector_chip_thickness, real_t beryllium_window_thickness, real_t germanium_dead_layer);
+
+}
+
+// ----------------------------------------------------------------------------
+
 bool perform_quantification(std::string dataset_directory,
                             std::string quantification_info_file,
                             std::vector<Processing_Types> proc_types,
@@ -732,7 +753,7 @@ bool perform_quantification(std::string dataset_directory,
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
             process_integrated_dataset(dataset_directory, proc_types, &(*quant_stand_list)[detector_num], detector_num);
-            //quantification_standard.generate_quant_map(
+            generate_calibration_curve(dataset_directory, &(*quant_stand_list)[detector_num], detector_num);
         }
     }
     else

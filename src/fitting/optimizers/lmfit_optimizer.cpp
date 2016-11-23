@@ -103,6 +103,37 @@ void general_residuals_lmfit( const double *par, int m_dat, const void *data, do
 
 }
 
+
+//-----------------------------------------------------------------------------
+
+void quantification_residuals( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
+{
+    ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
+
+    //y is array of elements standards
+    //x is indexes of elements in standard
+    //p is array size 2 but seems only first index is used
+    ///return (y - this->fit_calibrationcurve(x, p));
+
+    Quant_User_Data* ud = (Quant_User_Data*)(data);
+
+    //Update fit parameters from optimizer
+    ud->fit_parameters->from_array(par, m_dat);
+    //Model spectra based on new fit parameters
+
+    //Calculate residuals
+    std::unordered_map<std::string, real_t> result_map = ud->quantification->model_calibrationcurve(ud->quant_map, par[0]);
+
+    for(auto& itr : ud->quant_map)
+    {
+        if(itr.second.index > -1)
+        {
+            fvec[itr.second.index] = itr.second.weight - result_map[itr.first];
+        }
+    }
+}
+
+
 // =====================================================================================================================
 
 
