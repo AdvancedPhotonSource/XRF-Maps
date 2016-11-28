@@ -122,7 +122,7 @@ void quantification_residuals( const double *par, int m_dat, const void *data, d
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification->model_calibrationcurve(ud->quant_map, par[0]);
+    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, par[0]);
 
     for(auto& itr : ud->quant_map)
     {

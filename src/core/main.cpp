@@ -723,6 +723,13 @@ bool generate_calibration_curve(std::string dataset_directory,
                                 data_struct::xrf::Quantification_Standard *quantification,
                                 size_t detector_num)
 {
+
+    bool air_path = false;
+    real_t detector_chip_thickness = 0.0;
+    real_t beryllium_window_thickness = 0.0;
+    real_t germanium_dead_layer = 0.0;
+    real_t incident_energy = 9.0;
+
     //Optimizers for fitting quantification calibration curve
     fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
     //Output of fits for elements specified
@@ -733,8 +740,15 @@ bool generate_calibration_curve(std::string dataset_directory,
     //load override parameters
     load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
 
+    data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
 
-    //quantification->quantifiy(bool airpath, real_t detector_chip_thickness, real_t beryllium_window_thickness, real_t germanium_dead_layer);
+    quantification->quantifiy(&lmfit_optimizer,
+                              incident_energy,
+                              detector_element,
+                              false,
+                              detector_chip_thickness,
+                              beryllium_window_thickness,
+                              germanium_dead_layer);
 
 }
 

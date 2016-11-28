@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Quantification_Standard_H
-#define Quantification_Standard_H
+#ifndef Quantification_Model_H
+#define Quantification_Model_H
 
 #include "defines.h"
 
@@ -57,52 +57,69 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "element_info.h"
 #include "element_quant.h"
-#include "optimizer.h"
+
+namespace quantification
+{
+namespace models
+{
+
+using namespace data_struct::xrf;
 
 
-namespace data_struct
-{
-namespace xrf
-{
+enum Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
+
 
 //-----------------------------------------------------------------------------
 
 ///
-/// \brief The Quantification_Standard class:
+/// \brief The Quantification_Model class:
 ///
-class DLL_EXPORT Quantification_Standard
+class DLL_EXPORT Quantification_Model
 {
 
 public:
-    Quantification_Standard();
+    Quantification_Model();
 
-    ~Quantification_Standard();
+    ~Quantification_Model();
 
-    void append_element(std::string name, real_t weight);
+    Element_Quant generate_element_quant(real_t incident_energy,
+                                        Element_Info* detector_element,
+                                        Electron_Shell shell,
+                                        bool airpath,
+                                        real_t detector_chip_thickness,
+                                        real_t beryllium_window_thickness,
+                                        real_t germanium_dead_layer,
+                                        size_t z_number);
 
-    const real_t& element_weight(std::string element_symb) const { return _element_quants.at(element_symb).weight; }
+    std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy,
+                                                                      Element_Info* detector_element,
+                                                                      Electron_Shell shell,
+                                                                      bool airpath = false,
+                                                                      real_t detector_chip_thickness = 0.0,
+                                                                      real_t beryllium_window_thickness = 0.0,
+                                                                      real_t germanium_dead_layer = 0.0,
+                                                                      size_t start_z = 0,
+                                                                      size_t end_z = 95);
 
-    void standard_filename(std::string standard_filename) { _standard_filename = standard_filename; }
+    real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 
-    const std::string& standard_filename() { return _standard_filename; }
+    real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
-    bool quantifiy(fitting::optimizers::Optimizer * optimizer,
-                   real_t incident_energy,
-                   Element_Info* detector_element,
-                   bool airpath,
-                   real_t detector_chip_thickness,
-                   real_t beryllium_window_thickness,
-                   real_t germanium_dead_layer);
+    std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
 
 protected:
-
+/*
     std::string _standard_filename;
 
     real_t _sr_current;
     real_t _IC_US;
     real_t _IC_DS;
+*/
+    //std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
 
-    std::unordered_map<std::string, Element_Quant> _element_quants;
+//    std::unordered_map<std::string, Element_Quant> _element_quants;
+
+//    std::unordered_map<std::string, Element_Quant> _calibration_curve;
 
 };
 
@@ -113,4 +130,4 @@ protected:
 
 } //namespace data_struct
 
-#endif // Quantification_Standard_H
+#endif // Quantification_Model_H

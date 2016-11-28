@@ -47,89 +47,59 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Optimizer_H
-#define Optimizer_H
+#ifndef Element_Quant_H
+#define Element_Quant_H
 
-#include <functional>
+#include "defines.h"
 
-#include "fit_parameters.h"
-#include "detector.h"
-#include "base_model.h"
-#include "quantification_model.h"
-
-
-namespace fitting
+namespace data_struct
 {
-namespace optimizers
+namespace xrf
 {
 
-using namespace std;
-using namespace data_struct::xrf;
-using namespace fitting::models;
+//-----------------------------------------------------------------------------
 
-
-enum OPTIMIZER_INFO { IMPROPER_INPUT, MOST_TOL, EXCEED_CALL, TOL_TOO_SMALL, NO_PROGRESS };
-
-/**
- * @brief The User_Data struct : Structure used by minimize function for optimizers
- */
-struct User_Data
+struct DLL_EXPORT Element_Quant
 {
-    Base_Model* fit_model;
-    Spectra *spectra;
-    std::valarray<real_t> *weights;
-    Fit_Parameters *fit_parameters;
-    std::valarray<real_t> *spectra_background;
-    Fit_Element_Map_Dict *elements;
-    Range *energy_range;
-    //Fit_Counts_Array* counts_arr;
+    Element_Quant()
+    {
+        zero();
+    }
+    Element_Quant(real_t weight_)
+    {
+        zero();
+        weight = weight_;
+    }
+    void zero()
+    {
+        weight = 0.0;
+        absorption = 0.0;
+        transmission_Be = 0.0;
+        transmission_Ge = 0.0; // or Si dead layer
+        yield = 0.0;
+        transmission_through_Si_detector = 0.0;
+        transmission_through_air = 0.0;// (N2)
+        e_cal_ratio = 0.0;
+        index = -1;
+    }
+
+    real_t weight;  // in ug/cm2
+    real_t absorption;
+    real_t transmission_Be;
+    real_t transmission_Ge; // or Si dead layer
+    real_t yield;
+    real_t transmission_through_Si_detector;
+    real_t transmission_through_air;// (N2)
+
+    real_t e_cal_ratio;
+    int index; //used to map to and from fitting function
 };
 
-struct Gen_User_Data
-{
-    Spectra *spectra;
-    std::valarray<real_t> *weights;
-    Fit_Parameters *fit_parameters;
-    Range *energy_range;
-    std::function<const Spectra(Fit_Parameters*, Range*)> func;
-};
-
-struct Quant_User_Data
-{
-    quantification::models::Quantification_Model * quantification_model;
-    Fit_Parameters * fit_parameters;
-    std::unordered_map<std::string, Element_Quant> quant_map;
-};
-
-/**
- * @brief The Optimizer class : Base class for error minimization to find optimal specta model
- */
-class DLL_EXPORT Optimizer
-{
-public:
-    Optimizer(){}
-
-    ~Optimizer(){}
-
-    virtual void minimize(Fit_Parameters *fit_params,
-                          const Spectra * const spectra,
-                          const Fit_Element_Map_Dict * const elements_to_fit,
-                          const Base_Model * const model) = 0;
-
-    virtual void minimize_func(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func) = 0;
+//-----------------------------------------------------------------------------
 
 
-    //virtual void minimize_quantification() = 0;
+} //namespace xrf
 
-private:
+} //namespace data_struct
 
-
-};
-
-} //namespace optimizers
-
-} //namespace fitting
-
-#endif // Optimizer
+#endif // Element_Quant_H

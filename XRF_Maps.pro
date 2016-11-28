@@ -24,6 +24,7 @@ INCLUDEPATH += src/core
 INCLUDEPATH += src/data_struct
 INCLUDEPATH += src/data_struct/xrf
 INCLUDEPATH += src/data_struct/xrf/aps
+INCLUDEPATH += src/quantification/models
 INCLUDEPATH += src/workflow
 INCLUDEPATH += src/workflow/distributors
 INCLUDEPATH += src/io/file
@@ -126,6 +127,7 @@ SOURCES += \
     src/data_struct/xrf/fit_parameters.cpp \
     src/data_struct/xrf/fit_element_map.cpp \
     src/data_struct/xrf/quantification_standard.cpp \
+    #src/data_struct/xrf/element_quant.cpp \
     src/data_struct/xrf/detector.cpp \
     src/data_struct/xrf/spectra.cpp \
     src/data_struct/xrf/spectra_line.cpp \
@@ -143,6 +145,7 @@ SOURCES += \
     src/fitting/optimizers/lmfit_optimizer.cpp \
     src/fitting/optimizers/mpfit_optimizer.cpp \
     src/fitting/optimizers/minpack_optimizer.cpp \
+    src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
     #src/workflow/task.cpp \
     #src/workflow/task_queue.cpp \
@@ -179,6 +182,7 @@ HEADERS += \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \
+    src/data_struct/xrf/element_quant.h \
     src/data_struct/xrf/quantification_standard.h \
     src/data_struct/xrf/detector.h \
     src/data_struct/base_dataset.h \
@@ -199,6 +203,7 @@ HEADERS += \
     src/fitting/optimizers/lmfit_optimizer.h \
     src/fitting/optimizers/mpfit_optimizer.h \
     src/fitting/optimizers/minpack_optimizer.h \
+    src/quantification/models/quantification_model.h \
     #src/fitting/optimizers/ceres_optimizer.h \
     #src/workflow/task.h \
     #src/workflow/task_queue.h \
