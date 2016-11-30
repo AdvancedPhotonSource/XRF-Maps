@@ -847,6 +847,11 @@ bool perform_quantification(std::string dataset_directory,
                 //Fit the spectra saving the element counts in element_fit_count_dict
                 fit_routine->fit_spectra(&model, &integrated_spectra, &elements_to_fit, element_fit_count_dict);
 
+                for (auto& itr : *element_fit_count_dict)
+                {
+                    itr.second[0][0] /= integrated_spectra.elapsed_lifetime();
+                }
+
                 quantification_standard->quantifiy(&lmfit_optimizer,
                                                   element_fit_count_dict,
                                                   incident_energy,
@@ -855,6 +860,12 @@ bool perform_quantification(std::string dataset_directory,
                                                   detector_chip_thickness,
                                                   beryllium_window_thickness,
                                                   germanium_dead_layer);
+
+                if (element_fit_count_dict != nullptr)
+                {
+                    delete element_fit_count_dict;
+                }
+                element_fit_count_dict = nullptr;
 
                 if (fit_routine != nullptr)
                 {

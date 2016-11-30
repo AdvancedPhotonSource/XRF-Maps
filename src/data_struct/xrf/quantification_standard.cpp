@@ -98,7 +98,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
     quantification::models::Quantification_Model quantification_model;
     std::vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
-    std::unordered_map<std::string, real_t> quant_list = {std::pair<std::string, real_t>("current", 10.0), std::pair<std::string, real_t>("us_ic", 1.0), std::pair<std::string, real_t>("ds_ic", 1.0) };
+    std::unordered_map<std::string, real_t> quant_list = {std::pair<std::string, real_t>("current", 101.94), std::pair<std::string, real_t>("us_ic", 268303.0), std::pair<std::string, real_t>("ds_ic", 134818.0) };
 
     for(auto shell : shells_to_quant)
     {
@@ -141,24 +141,13 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             }
             Fit_Parameters fit_params;
             fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
-            fit_params["quantifier"].value = 100000.0 / quant_itr.second;
+            fit_params["quantifier"].value = 100000.0 / (quant_itr.second);
             optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
             quant_itr.second = fit_params["quantifier"].value;
         }
 
     }
 
-//    if l == 0:
-//        factor = std.current
-//    if l == 1:
-//        factor = std.us_ic
-//    if l == 2:
-//        factor = std.ds_ic
-//   e_cal_factor = (weight_ugr_cm * factor)
-//   e_cal = e_cal_factor / counts
-//   y = 1.0 / e_cal
-//initial guess: parinfo_value[0] = 100000.0 / factor
-    //optimizer->minimize_quantification(_element_quants, &quantification_model);
 
     return false;
 

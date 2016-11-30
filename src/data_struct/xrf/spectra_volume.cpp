@@ -188,11 +188,11 @@ const Spectra Spectra_Volume::integrate()
             for(size_t k = 0; k < _data_vol[0][0].size(); k++)
             {
                 i_spectra[k] += _data_vol[i][j][k];
-                elt += _data_vol[i][j].elapsed_lifetime();
-                ert += _data_vol[i][j].elapsed_realtime();
-                in_cnt += _data_vol[i][j].input_counts();
-                out_cnt += _data_vol[i][j].output_counts();
             }
+            elt += _data_vol[i][j].elapsed_lifetime();
+            ert += _data_vol[i][j].elapsed_realtime();
+            in_cnt += _data_vol[i][j].input_counts();
+            out_cnt += _data_vol[i][j].output_counts();
         }
     }
 
