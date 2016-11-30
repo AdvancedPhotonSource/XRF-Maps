@@ -290,7 +290,24 @@ const std::unordered_map<int, real_t> Element_Weight = {
     std::pair<int, real_t>(89, 227.0278),
     std::pair<int, real_t>(90, 232.0381),
     std::pair<int, real_t>(91, 231.0359),
-    std::pair<int, real_t>(92, 238.0289)
+    std::pair<int, real_t>(92, 238.0289),
+    std::pair<int, real_t>(93, 237.0),
+    std::pair<int, real_t>(94, 244.0),
+    std::pair<int, real_t>(95, 243.0),
+    std::pair<int, real_t>(96, 247.0),
+    std::pair<int, real_t>(97, 247.0),
+    std::pair<int, real_t>(98, 251.0),
+    std::pair<int, real_t>(99, 252.0),
+    std::pair<int, real_t>(100, 257.0),
+    std::pair<int, real_t>(101, 258.0),
+    std::pair<int, real_t>(102, 259.0),
+    std::pair<int, real_t>(103, 262.0),
+    std::pair<int, real_t>(104, 261.0),
+    std::pair<int, real_t>(105, 262.0),
+    std::pair<int, real_t>(106, 266.0),
+    std::pair<int, real_t>(107, 264.0),
+    std::pair<int, real_t>(108, 277.0),
+    std::pair<int, real_t>(109, 268.0)
 };
 
 } //namespace xrf

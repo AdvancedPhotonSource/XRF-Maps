@@ -111,13 +111,13 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
                 continue;
             }
             Element_Quant element_quant = quantification_model.generate_element_quant(incident_energy,
-                                                                               detector_element,
-                                                                               shell,
-                                                                               airpath,
-                                                                               detector_chip_thickness,
-                                                                               beryllium_window_thickness,
-                                                                               germanium_dead_layer,
-                                                                               element->number);
+                                                                                       detector_element,
+                                                                                       shell,
+                                                                                       airpath,
+                                                                                       detector_chip_thickness,
+                                                                                       beryllium_window_thickness,
+                                                                                       germanium_dead_layer,
+                                                                                       element->number);
             itr.second.absorption = element_quant.absorption;
             itr.second.transmission_Be = element_quant.transmission_Be;
             itr.second.transmission_Ge = element_quant.transmission_Ge;
@@ -146,10 +146,25 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             quant_itr.second = fit_params["quantifier"].value;
         }
 
+        std::unordered_map<std::string, Element_Quant> element_quant_map = quantification_model.generate_quant_map(incident_energy,
+                                                                                                                    detector_element,
+                                                                                                                    shell,
+                                                                                                                    airpath,
+                                                                                                                    detector_chip_thickness,
+                                                                                                                    beryllium_window_thickness,
+                                                                                                                    germanium_dead_layer,
+                                                                                                                    1,
+                                                                                                                    92);
+        for (auto& quant_itr : quant_list)
+        {
+            std::unordered_map<std::string, real_t> calibration_curve = quantification_model.model_calibrationcurve(element_quant_map, quant_itr.second);
+            //save calibration_curve for each shell and each quant;
+        }
+
     }
 
 
-    return false;
+    return true;
 
 }
 

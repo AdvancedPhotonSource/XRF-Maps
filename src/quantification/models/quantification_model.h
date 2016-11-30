@@ -108,18 +108,6 @@ public:
     std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
 
 protected:
-/*
-    std::string _standard_filename;
-
-    real_t _sr_current;
-    real_t _IC_US;
-    real_t _IC_DS;
-*/
-    //std::unordered_map<std::string, real_t> _element_weights; // in ug/cm2
-
-//    std::unordered_map<std::string, Element_Quant> _element_quants;
-
-//    std::unordered_map<std::string, Element_Quant> _calibration_curve;
 
 };
 

@@ -87,6 +87,8 @@ std::unordered_map<std::string, Element_Quant> Quantification_Model::generate_qu
                                                                                            size_t end_z)
 {
     std::unordered_map<std::string, Element_Quant> element_quant_map;
+    start_z = std::max(start_z, (size_t)1);
+    end_z = std::min(end_z, (size_t)92);
 
     for (int i=start_z; i <= end_z; i ++)
     {
