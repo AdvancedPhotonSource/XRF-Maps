@@ -77,6 +77,10 @@ public:
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func);
+
+    virtual void minimize_quantification(Fit_Parameters *fit_params,
+                                         std::unordered_map<std::string, Element_Quant> * quant_map,
+                                         quantification::models::Quantification_Model * quantification_model){}
 private:
 
 

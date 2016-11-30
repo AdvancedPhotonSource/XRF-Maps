@@ -80,7 +80,6 @@ struct DLL_EXPORT Element_Quant
         transmission_through_Si_detector = 0.0;
         transmission_through_air = 0.0;// (N2)
         e_cal_ratio = 0.0;
-        index = -1;
     }
 
     real_t weight;  // in ug/cm2
@@ -92,7 +91,7 @@ struct DLL_EXPORT Element_Quant
     real_t transmission_through_air;// (N2)
 
     real_t e_cal_ratio;
-    int index; //used to map to and from fitting function
+
 };
 
 //-----------------------------------------------------------------------------

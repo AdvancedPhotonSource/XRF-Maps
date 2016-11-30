@@ -87,6 +87,7 @@ void Quantification_Standard::append_element(std::string name, real_t weight)
 //-----------------------------------------------------------------------------
 
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
+                                        data_struct::xrf::Fit_Count_Dict  *element_counts,
                                         real_t incident_energy,
                                         Element_Info* detector_element,
                                         bool airpath,
@@ -97,6 +98,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
     quantification::models::Quantification_Model quantification_model;
     std::vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
+    std::unordered_map<std::string, real_t> quant_list = {std::pair<std::string, real_t>("current", 10.0), std::pair<std::string, real_t>("us_ic", 1.0), std::pair<std::string, real_t>("ds_ic", 1.0) };
 
     for(auto shell : shells_to_quant)
     {
@@ -122,23 +124,28 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             itr.second.transmission_through_air = element_quant.transmission_through_air;
             itr.second.transmission_through_Si_detector = element_quant.transmission_through_Si_detector;
             itr.second.yield = element_quant.yield;
+
         }
 
-        /*
+
         for (auto& quant_itr : quant_list)
         {
+
             for(auto& element_itr : _element_quants)
             {
-                //factor = itr.second;
+                //factor = quant_itr.second;
                 real_t e_cal_factor = (element_itr.second.weight * quant_itr.second);
-                real_t e_cal = e_cal_factor / counts;
+                real_t e_cal = e_cal_factor / element_counts->at(element_itr.first)[0][0];
                 element_itr.second.e_cal_ratio = 1.0 / e_cal;
                 //initial guess: parinfo_value[0] = 100000.0 / factor
-
             }
-            optimizer->minimize_quantification(_element_quants, &quantification_model);
+            Fit_Parameters fit_params;
+            fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
+            fit_params["quantifier"].value = 100000.0 / quant_itr.second;
+            optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
+            quant_itr.second = fit_params["quantifier"].value;
         }
-        */
+
     }
 
 //    if l == 0:

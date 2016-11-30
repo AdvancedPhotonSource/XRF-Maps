@@ -202,7 +202,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
     ////aux_arr[mm, 3] = yieldd
     //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
 
-    if (detector_element->name == "Si") //  (self.maps_conf.add_long['a'] == 1)
+    if (detector_element->name == "Si" && detector_chip_thickness > 0,0) //  (self.maps_conf.add_long['a'] == 1)
     {
         beta  = Element_Info_Map::inst()->calc_beta("Si", 2.3, ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, 1239.852 / ev);
@@ -280,5 +280,5 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
 
 //-----------------------------------------------------------------------------
 
-} //namespace xrf
-} //namespace data_struct
+} //namespace models
+} //namespace quantification

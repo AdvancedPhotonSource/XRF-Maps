@@ -309,7 +309,7 @@ real_t Element_Info::calc_beta(real_t density, real_t energy)
             break;
         }
     }
-    if(found_indexes)
+    if(false == found_indexes)
     {
         //log warning
         return beta;

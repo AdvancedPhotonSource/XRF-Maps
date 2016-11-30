@@ -87,6 +87,7 @@ public:
     const std::string& standard_filename() { return _standard_filename; }
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
+                   data_struct::xrf::Fit_Count_Dict  *element_counts,
                    real_t incident_energy,
                    Element_Info* detector_element,
                    bool airpath,
@@ -94,6 +95,7 @@ public:
                    real_t beryllium_window_thickness,
                    real_t germanium_dead_layer);
 
+    std::unordered_map<std::string, Element_Quant> _element_quants;
 protected:
 
     std::string _standard_filename;
@@ -102,7 +104,7 @@ protected:
     real_t _IC_US;
     real_t _IC_DS;
 
-    std::unordered_map<std::string, Element_Quant> _element_quants;
+
 
 };
 

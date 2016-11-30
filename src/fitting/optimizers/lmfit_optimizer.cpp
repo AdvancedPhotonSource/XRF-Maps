@@ -122,14 +122,13 @@ void quantification_residuals( const double *par, int m_dat, const void *data, d
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, par[0]);
+    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(*(ud->quant_map), par[0]);
 
-    for(auto& itr : ud->quant_map)
+    int idx = 0;
+    for(auto& itr : *(ud->quant_map))
     {
-        if(itr.second.index > -1)
-        {
-            fvec[itr.second.index] = itr.second.weight - result_map[itr.first];
-        }
+        fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+        idx++;
     }
 }
 
@@ -311,6 +310,34 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
     }
 
+}
+
+void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
+                                              std::unordered_map<std::string, Element_Quant> * quant_map,
+                                              quantification::models::Quantification_Model * quantification_model)
+{
+    Quant_User_Data ud;
+
+    ud.quant_map = quant_map;
+    ud.quantification_model = quantification_model;
+    ud.fit_parameters = fit_params;
+
+    std::vector<real_t> fitp_arr = fit_params->to_array();
+    std::vector<real_t> perror(fitp_arr.size());
+
+    int info;
+
+    lm_status_struct status;
+    lm_control_struct control = lm_control_double;
+
+    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals, &control, &status );
+    printf(".");
+    fit_params->from_array(fitp_arr);
+
+    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    {
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
+    }
 }
 
 } //namespace optimizers
