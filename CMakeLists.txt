@@ -151,14 +151,19 @@ include_directories(src/support/nnls)
 include_directories(src/data_struct)
 include_directories(src/data_struct/xrf)
 include_directories(src/data_struct/xrf/aps)
+include_directories(src/quantification)
+include_directories(src/quantification/models)
 include_directories(src/fitting)
 include_directories(src/fitting/models)
+include_directories(src/fitting/routines)
 include_directories(src/fitting/optimizers)
 
-# Include XRF Maps header files
+# Include libxrf_io Maps header files
 include_directories(src/io/file)
 include_directories(src/io/file/aps)
 include_directories(src/workflow)
+
+# Include XRF-Maps Maps header files
 include_directories(src/core)
 
 # Visual Studio specific include and source
@@ -182,35 +187,39 @@ endif()
 set(libxrf_fit_HEADERS
     src/core/defines.h
     src/support/faddeeva/Faddeeva.hh
-	src/support/minpack/minpack.hpp
-	src/support/cmpfit-1.3a/mpfit.h
-	src/support/lmfit_6.1/lmstruct.h
-	src/support/lmfit_6.1/lmmin.h
-	src/support/lmfit_6.1/lmcurve_tyd.h
-	src/support/lmfit_6.1/lmcurve.h
-	src/support/nnls/nnls.h
-	src/support/nnls/vector.h
-	src/support/nnls/matrix.h
-	src/support/nnls/denseMatrix.h
-	src/data_struct/base_dataset.h
+    src/support/minpack/minpack.hpp
+    src/support/cmpfit-1.3a/mpfit.h
+    src/support/lmfit_6.1/lmstruct.h
+    src/support/lmfit_6.1/lmmin.h
+    src/support/lmfit_6.1/lmcurve_tyd.h
+    src/support/lmfit_6.1/lmcurve.h
+    src/support/nnls/nnls.h
+    src/support/nnls/vector.h
+    src/support/nnls/matrix.h
+    src/support/nnls/denseMatrix.h
+    src/data_struct/base_dataset.h
     #src/data_struct/ndarray.h
-	src/data_struct/xrf/quantification_standard.h
+    src/data_struct/xrf/quantification_standard.h
+    src/data_struct/xrf/element_quant.h
     src/data_struct/xrf/element_info.h
     src/data_struct/xrf/fit_parameters.h
-	src/data_struct/xrf/fit_element_map.h
-	src/data_struct/xrf/detector.h
+    src/data_struct/xrf/fit_element_map.h
+    src/data_struct/xrf/detector.h
     src/data_struct/xrf/spectra.h
     src/data_struct/xrf/spectra_line.h
     src/data_struct/xrf/spectra_volume.h
+    src/quantification/models/quantification_model.h
     src/fitting/models/base_model.h
-    src/fitting/models/gauss_tails_model.h
-    src/fitting/models/gauss_matrix_model.h
-	src/fitting/models/roi_model.h
-	src/fitting/models/svd_model.h
-	src/fitting/models/nnls_model.h
-	src/fitting/optimizers/optimizer.h
-	src/fitting/optimizers/mpfit_optimizer.h
-	src/fitting/optimizers/lmfit_optimizer.h
+    src/fitting/models/gaussian_model.h
+    src/fitting/routines/base_fit_routine.h
+    src/fitting/routines/param_optimized_fit_routine.h
+    src/fitting/routines/matrix_optimized_fit_routine.h
+    src/fitting/routines/roi_fit_routine.h
+    src/fitting/routines/svd_fit_routine.h
+    src/fitting/routines/nnls_fit_routine.h
+    src/fitting/optimizers/optimizer.h
+    src/fitting/optimizers/mpfit_optimizer.h
+    src/fitting/optimizers/lmfit_optimizer.h
     #src/workflow/task.h
     #src/workflow/task_queue.h
     #src/workflow/general_function_task.h
@@ -222,63 +231,75 @@ add_library(libxrf_fit SHARED
     #${PYBIND11_HEADERS}
     ${libxrf_fit_HEADERS}
     src/support/faddeeva/Faddeeva.cc
-	src/support/minpack/minpack.cpp
-	src/support/cmpfit-1.3a/mpfit.c
-	src/support/lmfit_6.1/lmmin.c
-	src/support/lmfit_6.1/lmcurve_tyd.c
-	src/support/lmfit_6.1/lmcurve.c
-	src/support/nnls/nnls.cc
-	src/support/nnls/denseMatrix.cc
-	src/data_struct/xrf/quantification_standard.cpp
+    src/support/minpack/minpack.cpp
+    src/support/cmpfit-1.3a/mpfit.c
+    src/support/lmfit_6.1/lmmin.c
+    src/support/lmfit_6.1/lmcurve_tyd.c
+    src/support/lmfit_6.1/lmcurve.c
+    src/support/nnls/nnls.cc
+    src/support/nnls/denseMatrix.cc
+    src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
-	src/data_struct/xrf/fit_element_map.cpp
-	src/data_struct/xrf/detector.cpp
+    src/data_struct/xrf/fit_element_map.cpp
+    src/data_struct/xrf/detector.cpp
     src/data_struct/xrf/spectra.cpp
     src/data_struct/xrf/spectra_line.cpp
     src/data_struct/xrf/spectra_volume.cpp
+    src/quantification/models/quantification_model.cpp
     src/fitting/models/base_model.cpp
-    src/fitting/models/gauss_tails_model.cpp
-    src/fitting/models/gauss_matrix_model.cpp
-	src/fitting/models/roi_model.cpp
-	src/fitting/models/svd_model.cpp
-	src/fitting/models/nnls_model.cpp
-	src/fitting/optimizers/optimizer.cpp
-	src/fitting/optimizers/mpfit_optimizer.cpp
-	src/fitting/optimizers/lmfit_optimizer.cpp
+    src/fitting/models/gaussian_model.cpp
+    src/fitting/routines/base_fit_routine.cpp
+    src/fitting/routines/param_optimized_fit_routine.cpp
+    src/fitting/routines/matrix_optimized_fit_routine.cpp
+    src/fitting/routines/roi_fit_routine.cpp
+    src/fitting/routines/svd_fit_routine.cpp
+    src/fitting/routines/nnls_fit_routine.cpp
+    src/fitting/optimizers/optimizer.cpp
+    src/fitting/optimizers/mpfit_optimizer.cpp
+    src/fitting/optimizers/lmfit_optimizer.cpp
     #src/workflow/task.cpp
     #src/workflow/task_queue.cpp
     #src/workflow/general_function_task.cpp
 )
 
-#--------------- start xrf maps exec -----------------
-set(XRF_MAPPER_HEADERS
+#--------------- start xrf io lib -----------------
+set(XRF_IO_HEADERS
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/base_file_io.h
 	src/io/file/mda_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
-	src/io/file/aps/aps_calibration_io.h
+        #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
 	src/core/command_line_parser.h
 )
 
-add_executable(xrf_maps
-	${XRF_MAPPER_HEADERS}
+add_library(libxrf_io SHARED
 	${XDR_HACK}
+        ${XRF_IO_HEADERS}
 	src/support/mdautils-1.4.1/mda_loader.c
 	src/io/file/mda_io.cpp
 	src/io/file/hdf5_io.cpp
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
-	src/io/file/aps/aps_calibration_io.cpp
+        #src/io/file/aps/aps_calibration_io.cpp
 	src/io/file/aps/aps_fit_params_import.cpp				 
 	src/core/main.cpp
 )
 
+#--------------- start xrf maps exec -----------------
+add_executable(xrf_maps
+        ${XDR_HACK}
+        ${XRF_IO_HEADERS}
+        ${libxrf_fit_HEADERS}
+        src/core/main.cpp
+)
+
 # Don't add a 'lib' prefix to the shared library
 set_target_properties(libxrf_fit PROPERTIES PREFIX "")
+set_target_properties(libxrf_io PROPERTIES PREFIX "")
 
 # Always write the output file directly into the 'libxrf_fit' directory (even on MSVC)
 set(CompilerFlags
@@ -288,7 +309,7 @@ set(CompilerFlags
   RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO)
 
 foreach(CompilerFlag ${CompilerFlags})
-  set_target_properties(libxrf_fit xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+  set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
 endforeach()
 
 if (WIN32)
@@ -297,9 +318,9 @@ if (WIN32)
     # on MSVC (~30% smaller binaries in experiments). /bigobj is needed
     # for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
-    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "/Os /GL /MP /bigobj /DDYNAMIC_LIB")
-    set_target_properties(libxrf_fit PROPERTIES LINK_FLAGS "/LTCG")
-	
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Os /GL /MP /bigobj /DDYNAMIC_LIB")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
+
 	set(NETCDF_LIBRARIES netcdf.lib)
 	set(SZIP_LIB szip.lib)
 	# Link against shared libraries
@@ -332,22 +353,24 @@ elseif (UNIX)
 
   # Optimize for a small binary size
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-Os")
+    set_target_properties(libxrf_fit  libxrf_io PROPERTIES COMPILE_FLAGS "-Os")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
   if(APPLE)
-    set_target_properties(libxrf_fit PROPERTIES SUFFIX ".dylib")
-    set_target_properties(libxrf_fit PROPERTIES COMPILE_FLAGS "-DDARWIN")
-    set_target_properties(libxrf_fit PROPERTIES MACOSX_RPATH ".")
-    set_target_properties(libxrf_fit PROPERTIES LINK_FLAGS "-undefined dynamic_lookup -dead_strip")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".dylib")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-DDARWIN")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES MACOSX_RPATH ".")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "-undefined dynamic_lookup -dead_strip")
     if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
       add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.dylib)
+      add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_io.dylib)
     endif()
   else()
-    set_target_properties(libxrf_fit PROPERTIES SUFFIX ".so")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
     if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
       add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
+      add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
     endif()
   endif()
 endif()
@@ -362,5 +385,5 @@ endif()
 #    install(FILES ${PYBIND11_HEADERS} DESTINATION include/pybind11)
 #endif()
 
-target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
-target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )

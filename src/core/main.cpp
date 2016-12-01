@@ -927,7 +927,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
 void help()
 {
     std::cout<<"Help: "<<std::endl;
-    std::cout<<"Usage: xrf_mapper [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
+    std::cout<<"Usage: xrf_maps [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
     std::cout<<"Options: "<<std::endl;
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
@@ -943,11 +943,11 @@ void help()
     std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
     std::cout<<"Examples: "<<std::endl;
     std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
-    std::cout<<"xrf_mapper --roi --matrix --dir /data/dataset1 "<<std::endl;
+    std::cout<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
     std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<std::endl;
-    std::cout<<"xrf_mapper --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
+    std::cout<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
     std::cout<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<std::endl;
-    std::cout<<"xrf_mapper --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
+    std::cout<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
 }
 
 // ----------------------------------------------------------------------------
