@@ -261,6 +261,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     {
         (*out_fit_counts)[el_itr.first][i][j] = counts_dict[el_itr.first] / spectra->elapsed_lifetime();
     }
+    (*out_fit_counts)[data_struct::xrf::STR_NUM_ITR][i][j] = counts_dict[data_struct::xrf::STR_NUM_ITR];
     return true;
 }
 

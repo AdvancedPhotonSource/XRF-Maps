@@ -221,6 +221,8 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
+    //Add fit param for number of iterations
+    fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
