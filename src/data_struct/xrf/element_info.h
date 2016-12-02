@@ -199,7 +199,7 @@ const std::unordered_map<std::string, real_t> Henke_Compound_Density_Map = {
 
 
 const std::unordered_map<int, real_t> Element_Weight = {
-    std::pair<int, real_t>{1,  1.00794},
+    std::pair<int, real_t>(1,  1.00794),
     std::pair<int, real_t>(2,  4.0026),
     std::pair<int, real_t>(3,  6.941),
     std::pair<int, real_t>(4,  9.01218),

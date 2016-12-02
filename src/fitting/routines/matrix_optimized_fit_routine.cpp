@@ -269,16 +269,16 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
-            real_t value =  fit_params->at(el_itr.first).value;
+            real_t value =  fit_params.at(el_itr.first).value;
             //convert from log10
             value = std::pow(10.0, value);
             counts_dict[el_itr.first] = value;
         }
 
         //check if we are saving the number of iterations and save if so
-        if(fit_params->contains(data_struct::xrf::STR_NUM_ITR))
+        if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
         {
-            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
+            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params.at(data_struct::xrf::STR_NUM_ITR).value;
         }
     }
     return counts_dict;

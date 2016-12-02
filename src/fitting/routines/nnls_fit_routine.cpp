@@ -147,10 +147,8 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
         counts_dict[itr.first] = result_p[_element_row_index[itr.first]];
     }
 
-    if (out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0 )
-    {
-        counts_dict[data_struct::xrf::STR_NUM_ITR] = num_iter;
-    }
+
+    counts_dict[data_struct::xrf::STR_NUM_ITR] = num_iter;
 
     delete solver;
 

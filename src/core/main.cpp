@@ -90,7 +90,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "nnls_fit_routine.h"
 
 #include "lmfit_optimizer.h"
-#include "mpfit_optimizer.h"
+//#include "mpfit_optimizer.h"
 
 #include "fit_element_map.h"
 
@@ -106,14 +106,20 @@ using namespace std::placeholders; //for _1, _2,
 
 enum Processing_Type { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
-std::unordered_map<Processing_Type, std::string> save_loc_map = {
-    ROI, "XRF_roi",
-    GAUSS_TAILS, "XRF_tails_fits",
-    GAUSS_MATRIX, "XRF_fits",
-    SVD, "XRF_roi_plus",
-    NNLS, "XRF_nnls"
+const std::unordered_map<int, std::string> save_loc_map = {
+    {ROI, "XRF_roi"},
+    {GAUSS_TAILS, "XRF_tails_fits"},
+    {GAUSS_MATRIX, "XRF_fits"},
+    {SVD, "XRF_roi_plus"},
+    {NNLS, "XRF_nnls"}
 };
-
+/*
+std::pair<Processing_Type, std::string>(ROI, "XRF_roi"),
+std::pair<Processing_Type, std::string>(GAUSS_TAILS, "XRF_tails_fits"),
+std::pair<Processing_Type, std::string>(GAUSS_MATRIX, "XRF_fits"),
+std::pair<Processing_Type, std::string>(SVD, "XRF_roi_plus"),
+std::pair<Processing_Type, std::string>(NNLS, "XRF_nnls")
+    */
 //Optimizers for fitting models
 fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
 
@@ -392,10 +398,10 @@ bool load_override_params(std::string dataset_directory,
     else
     {
         data_struct::xrf::Element_Info* detector_element;
-        if (extra_override_values.count(data_struct::xrf::STR_DETECTOR_ELEMENT) > 0)
+        if (extra_override_values->count(data_struct::xrf::STR_DETECTOR_ELEMENT) > 0)
         {
             // Get the element info class                                                                                 // detector element as string "Si" or "Ge" usually
-            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(extra_override_values.at(data_struct::xrf::STR_DETECTOR_ELEMENT));
+            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(extra_override_values->at(data_struct::xrf::STR_DETECTOR_ELEMENT));
         }
         else
         {
@@ -490,8 +496,6 @@ bool optimize_integrated_dataset(std::string dataset_directory,
     data_struct::xrf::Spectra_Volume spectra_volume;
     //Fit parameter updates from user
     data_struct::xrf::Fit_Parameters override_fit_params;
-    //Element detector
-    data_struct::xrf::Detector detector;
     //Output of fits for elements specified
     data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
     std::unordered_map< std::string, std::string > extra_override_values;
@@ -566,23 +570,12 @@ void process_dataset_file(std::string dataset_directory,
 
     fitting::models::Gaussian_Model model;
 
-    //Fitting parameters
-    data_struct::xrf::Fit_Parameters fit_params;
-
-    //Element detector
-    data_struct::xrf::Detector detector;
-
     //Output of fits for elements specified
-    std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
+    data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
     energy_range.min = 0;
-
-    //Detector element
-    data_struct::xrf::Element_Info* detector_element;
-
-    std::string save_loc;
 
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
@@ -631,7 +624,6 @@ void process_dataset_file(std::string dataset_directory,
 
             //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
             bool alloc_iter_count = true;
-            save_loc = save_loc_map[proc_type];
 
             //reset model fit parameters to defaults
             model.reset_to_default_fit_params();
@@ -643,8 +635,6 @@ void process_dataset_file(std::string dataset_directory,
                 //Allocate memeory to save number of fit iterations
                 element_fit_count_dict->emplace(std::pair<std::string, data_struct::xrf::Fit_Counts_Array>(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Counts_Array()) );
                 element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
-                //add num iters as a fit param
-                fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Param(data_struct::xrf::STR_NUM_ITR, 0.0, std::numeric_limits<real_t>::max(), 0.0, 1.0, data_struct::xrf::FIXED));
             }
 
             //Initialize model
@@ -660,7 +650,7 @@ void process_dataset_file(std::string dataset_directory,
             }
 
             //file_job_queue->emplace( tp->enqueue( save_results, full_save_path, save_loc, element_fit_count_dict, fit_job_queue) );
-            save_results( full_save_path, save_loc, element_fit_count_dict, fit_routine, fit_job_queue );
+            save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
         }
 
         //tp->enqueue( save_volume, full_save_path, spectra_volume, file_job_queue );
@@ -686,10 +676,6 @@ bool perform_quantification(std::string dataset_directory,
     real_t beryllium_window_thickness = 0.0;
     real_t germanium_dead_layer = 0.0;
     real_t incident_energy = 9.0;
-
-    //Fit parameter updates from user
-    data_struct::xrf::Fit_Parameters override_fit_params;
-    std::unordered_map< std::string, std::string > extra_override_values;
 
     fitting::models::Gaussian_Model model;
 
@@ -753,29 +739,29 @@ bool perform_quantification(std::string dataset_directory,
                 //Initialize the fit routine
                 fit_routine->initialize(&model, &elements_to_fit, energy_range);
                 //Fit the spectra
-                counts_dict = fit_routine->fit_spectra(&model, &integrated_spectra, &elements_to_fit);
-
-                for (auto& itr : counts_dict)
-                {
-                    itr.second[0][0] /= integrated_spectra.elapsed_lifetime();
-                }
-
-                quantification_standard->quantifiy(&lmfit_optimizer,
-                                                  counts_dict,
-                                                  incident_energy,
-                                                  detector_element,
-                                                  air_path,
-                                                  detector_chip_thickness,
-                                                  beryllium_window_thickness,
-                                                  germanium_dead_layer);
-
-
+                std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model,
+                                                                                              &integrated_spectra,
+                                                                                              &elements_to_fit);
 
                 if (fit_routine != nullptr)
                 {
                     delete fit_routine;
                     fit_routine = nullptr;
                 }
+
+                for (auto& itr : counts_dict)
+                {
+                    itr.second /= integrated_spectra.elapsed_lifetime();
+                }
+
+                quantification_standard->quantifiy(&lmfit_optimizer,
+                                                  &counts_dict,
+                                                  incident_energy,
+                                                  detector_element,
+                                                  air_path,
+                                                  detector_chip_thickness,
+                                                  beryllium_window_thickness,
+                                                  germanium_dead_layer);
 
             }
         }
