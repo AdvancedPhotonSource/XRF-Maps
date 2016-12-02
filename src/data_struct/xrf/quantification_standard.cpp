@@ -87,7 +87,7 @@ void Quantification_Standard::append_element(std::string name, real_t weight)
 //-----------------------------------------------------------------------------
 
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
-                                        data_struct::xrf::Fit_Count_Dict  *element_counts,
+                                        std::unordered_map<std::string, real_t>  *element_counts,
                                         real_t incident_energy,
                                         Element_Info* detector_element,
                                         bool airpath,
@@ -135,7 +135,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             {
                 //factor = quant_itr.second;
                 real_t e_cal_factor = (element_itr.second.weight * quant_itr.second);
-                real_t e_cal = e_cal_factor / element_counts->at(element_itr.first)[0][0];
+                real_t e_cal = e_cal_factor / element_counts->at(element_itr.first);
                 element_itr.second.e_cal_ratio = 1.0 / e_cal;
                 //initial guess: parinfo_value[0] = 100000.0 / factor
             }

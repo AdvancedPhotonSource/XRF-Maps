@@ -100,14 +100,12 @@ void SVD_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> *
 
 // ----------------------------------------------------------------------------
 
-void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                  const Spectra * const spectra,
-                                  const Fit_Element_Map_Dict * const elements_to_fit,
-                                  Fit_Count_Dict *out_counts_dic,
-                                  size_t row_idx,
-                                  size_t col_idx)
+std::unordered_map<std::string, real_t> SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                                     const Spectra * const spectra,
+                                                                     const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
+    std::unordered_map<std::string, real_t> counts_dict;
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
     Eigen::VectorXd rhs;
     rhs.resize(spectra->size());
@@ -124,9 +122,11 @@ void SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
     for(const auto& itr : *elements_to_fit)
     {
         //[itr.first];
-        (*out_counts_dic)[itr.first][row_idx][col_idx] = result[_element_row_index[itr.first]];
+        counts_dict[itr.first] = result[_element_row_index[itr.first]];
+        //(*out_counts_dic)[itr.first][row_idx][col_idx] = result[_element_row_index[itr.first]];
     }
 
+    return counts_dict;
 }
 
 // ----------------------------------------------------------------------------

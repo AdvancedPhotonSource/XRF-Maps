@@ -71,12 +71,9 @@ public:
 
     ~NNLS_Fit_Routine();
 
-    virtual void fit_spectra(const models::Base_Model * const model,
-                             const Spectra * const spectra,
-                             const Fit_Element_Map_Dict * const elements_to_fit,
-                             Fit_Count_Dict *out_counts_dic,
-                             size_t row_idx=0,
-                             size_t col_idx=0);
+    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
+                                                                 const Spectra * const spectra,
+                                                                 const Fit_Element_Map_Dict * const elements_to_fit);
 
 
     virtual void initialize(models::Base_Model * const model,

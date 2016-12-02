@@ -207,12 +207,9 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                              const Spectra * const spectra,
-                                              const Fit_Element_Map_Dict * const elements_to_fit,
-                                              Fit_Count_Dict *out_counts_dic,
-                                              size_t row_idx,
-                                              size_t col_idx)
+std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                                                 const Spectra * const spectra,
+                                                                                 const Fit_Element_Map_Dict * const elements_to_fit)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
@@ -222,6 +219,7 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
     Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
     */
 
+    std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
@@ -245,9 +243,24 @@ void Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const m
     if(_optimizer != nullptr)
     {
         _optimizer->minimize(&fit_params, spectra, elements_to_fit, model);
-        _save_counts(&fit_params, spectra, elements_to_fit, out_counts_dic, row_idx, col_idx);
+
+        //Save the counts from fit parameters into fit count dict for each element
+        for (auto el_itr : *elements_to_fit)
+        {
+            real_t value =  fit_params->at(el_itr.first).value;
+            //convert from log10
+            value = std::pow(10.0, value);
+            counts_dict[el_itr.first] = value;
+        }
+
+        //check if we are saving the number of iterations and save if so
+        if(fit_params->contains(data_struct::xrf::STR_NUM_ITR))
+        {
+            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
+        }
     }
 
+    return counts_dict;
 }
 
 // ----------------------------------------------------------------------------

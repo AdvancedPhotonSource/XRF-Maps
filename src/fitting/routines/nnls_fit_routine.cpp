@@ -117,17 +117,15 @@ void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> 
 
 // ----------------------------------------------------------------------------
 
-void NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                   const Spectra * const spectra,
-                                   const Fit_Element_Map_Dict * const elements_to_fit,
-                                   Fit_Count_Dict *out_counts_dic,
-                                   size_t row_idx,
-                                   size_t col_idx)
+std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                                       const Spectra * const spectra,
+                                                                       const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
     nsNNLS::nnls * solver;
     nsNNLS::vector * result;
     int num_iter;
+    std::unordered_map<std::string, real_t> counts_dict;
 
     nsNNLS::vector rhs(spectra->size(), (real_t*)&(*spectra)[0]);
 
@@ -146,15 +144,17 @@ void NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
     for(const auto& itr : *elements_to_fit)
     {
         //Fit_Param param = (*fit_params)[itr.first];
-        (*out_counts_dic)[itr.first][row_idx][col_idx] = result_p[_element_row_index[itr.first]];
+        counts_dict[itr.first] = result_p[_element_row_index[itr.first]];
     }
 
     if (out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0 )
     {
-        (*out_counts_dic)[data_struct::xrf::STR_NUM_ITR][row_idx][col_idx] = num_iter;
+        counts_dict[data_struct::xrf::STR_NUM_ITR] = num_iter;
     }
 
     delete solver;
+
+    return counts_dict;
 
 }
 

@@ -49,6 +49,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Base_Fit_Routine_H
 #define Base_Fit_Routine_H
 
+#include <unordered_map>
+
 #include "spectra.h"
 #include "base_model.h"
 #include "fit_element_map.h"
@@ -88,12 +90,9 @@ public:
      * @param row_idx : row index used to save the fitted value back into elements_to_fit class
      * @param col_idx : column index used to save the fitted value back into elements_to_fit class
      */
-    virtual void fit_spectra(const models::Base_Model * const model,
-                             const Spectra * const spectra,
-                             const Fit_Element_Map_Dict * const elements_to_fit,
-                             Fit_Count_Dict *out_counts_dic,
-                             size_t row_idx=0,
-                             size_t col_idx=0) = 0;
+    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
+                                                                const Spectra * const spectra,
+                                                                const Fit_Element_Map_Dict * const elements_to_fit) = 0;
 
     /**
      * @brief initialize : Initialize the model

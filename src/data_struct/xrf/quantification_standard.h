@@ -87,7 +87,7 @@ public:
     const std::string& standard_filename() { return _standard_filename; }
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
-                   data_struct::xrf::Fit_Count_Dict  *element_counts,
+                   std::unordered_map<std::string, real_t>  *element_counts,
                    real_t incident_energy,
                    Element_Info* detector_element,
                    bool airpath,

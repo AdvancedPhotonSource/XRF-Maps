@@ -251,14 +251,12 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
 // ----------------------------------------------------------------------------
 
-void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
+std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
                                                 const Spectra * const spectra,
-                                                const Fit_Element_Map_Dict * const elements_to_fit,
-                                                Fit_Count_Dict *out_counts_dic,
-                                                size_t row_idx,
-                                                size_t col_idx)
+                                                const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
+    std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
@@ -268,9 +266,22 @@ void Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const
     {
         std::function<const Spectra(const Fit_Parameters * const, const  Range * const)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2);
         _optimizer->minimize_func(&fit_params, spectra, gen_func);
-        _save_counts(&fit_params, spectra, elements_to_fit, out_counts_dic, row_idx, col_idx);
-    }
+        //Save the counts from fit parameters into fit count dict for each element
+        for (auto el_itr : *elements_to_fit)
+        {
+            real_t value =  fit_params->at(el_itr.first).value;
+            //convert from log10
+            value = std::pow(10.0, value);
+            counts_dict[el_itr.first] = value;
+        }
 
+        //check if we are saving the number of iterations and save if so
+        if(fit_params->contains(data_struct::xrf::STR_NUM_ITR))
+        {
+            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
+        }
+    }
+    return counts_dict;
 
 }
 
