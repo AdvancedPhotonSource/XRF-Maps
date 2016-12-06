@@ -56,6 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fit_element_map.h"
 #include "hdf5.h"
 
+#include "quantification_standard.h"
+
 namespace io
 {
 namespace file
@@ -135,6 +137,7 @@ public:
     bool save_element_fits(const std::string filename,
                            const std::string path,
                            const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                           data_struct::xrf::Quantification_Standard * quantification_standard,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,

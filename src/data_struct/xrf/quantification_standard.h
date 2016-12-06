@@ -65,6 +65,8 @@ namespace data_struct
 namespace xrf
 {
 
+using namespace std;
+
 //-----------------------------------------------------------------------------
 
 ///
@@ -78,16 +80,16 @@ public:
 
     ~Quantification_Standard();
 
-    void append_element(std::string name, real_t weight);
+    void append_element(string name, real_t weight);
 
-    const real_t& element_weight(std::string element_symb) const { return _element_quants.at(element_symb).weight; }
+    const real_t& element_weight(string element_symb) const { return _element_quants.at(element_symb).weight; }
 
-    void standard_filename(std::string standard_filename) { _standard_filename = standard_filename; }
+    void standard_filename(string standard_filename) { _standard_filename = standard_filename; }
 
-    const std::string& standard_filename() { return _standard_filename; }
+    const string& standard_filename() { return _standard_filename; }
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
-                   std::unordered_map<std::string, real_t>  *element_counts,
+                   unordered_map<string, real_t>  *element_counts,
                    real_t incident_energy,
                    Element_Info* detector_element,
                    bool airpath,
@@ -95,7 +97,10 @@ public:
                    real_t beryllium_window_thickness,
                    real_t germanium_dead_layer);
 
-    std::unordered_map<std::string, Element_Quant> _element_quants;
+    unordered_map<string, Element_Quant> _element_quants;
+
+    unordered_map<string, unordered_map<int, unordered_map<string, real_t> > > _calibration_curves;
+
 protected:
 
     std::string _standard_filename;

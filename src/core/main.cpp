@@ -157,6 +157,7 @@ bool save_results(std::string full_path,
                   std::string save_loc,
                   const data_struct::xrf::Fit_Count_Dict * const element_counts,
                   fitting::routines::Base_Fit_Routine* fit_routine,
+                  data_struct::xrf::Quantification_Standard * quantification_standard,
                   std::queue<std::future<bool> >* job_queue)
 {
 
@@ -169,7 +170,7 @@ bool save_results(std::string full_path,
     }
 
     io::file::HDF5_IO hdf5_io;
-    hdf5_io.save_element_fits(full_path, save_loc, element_counts);
+    hdf5_io.save_element_fits(full_path, save_loc, element_counts, quantification_standard);
 
     delete fit_routine;
     delete job_queue;
@@ -269,7 +270,9 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
-                                  data_struct::xrf::Quantification_Standard * quantification_standard)
+                                  std::string *standard_file_name,
+                                  std::unordered_map<std::string, real_t> *element_standard_weights)
+                                  //data_struct::xrf::Quantification_Standard * quantification_standard)
 {
     std::string path = dataset_directory + quantification_info_file;
     std::ifstream paramFileStream(path);
@@ -302,7 +305,8 @@ bool load_quantification_standard(std::string dataset_directory,
                     std::getline(strstream, standard_filename, ':');
                     standard_filename.erase(std::remove_if(standard_filename.begin(), standard_filename.end(), ::isspace), standard_filename.end());
                     std::cout << "Standard file name = "<< standard_filename << std::endl;
-                    quantification_standard->standard_filename(standard_filename);
+                    //quantification_standard->standard_filename(standard_filename);
+                    (*standard_file_name) = standard_filename;
                     has_filename = true;
                 }
                 else if (tag == "ELEMENTS_IN_STANDARD")
@@ -351,7 +355,8 @@ bool load_quantification_standard(std::string dataset_directory,
             {
                 for(size_t i=0; i<element_names.size(); i++)
                 {
-                    quantification_standard->append_element(element_names[i], element_weights[i]);
+                    (*element_standard_weights)[element_names[i]] = element_weights[i];
+                    //quantification_standard->append_element(element_names[i], element_weights[i]);
                 }
             }
             else
@@ -581,6 +586,8 @@ void process_dataset_file(std::string dataset_directory,
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
 
+        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
+
         data_struct::xrf::Fit_Parameters override_fit_params;
 
         std::string str_detector_num = std::to_string(detector_num);
@@ -651,7 +658,7 @@ void process_dataset_file(std::string dataset_directory,
             }
 
             //file_job_queue->emplace( tp->enqueue( save_results, full_save_path, save_loc, element_fit_count_dict, fit_job_queue) );
-            save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
+            save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, quantification_standard, fit_job_queue );
         }
 
         //tp->enqueue( save_volume, full_save_path, spectra_volume, file_job_queue );
@@ -686,12 +693,21 @@ bool perform_quantification(std::string dataset_directory,
     fitting::models::Range energy_range;
     energy_range.min = 0;
 
-    data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[0];
+    std::string standard_file_name;
+    std::unordered_map<std::string, real_t> element_standard_weights;
+    //data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[0];
 
-    if( load_quantification_standard(dataset_directory, quantification_info_file, quantification_standard) )
+    if( load_quantification_standard(dataset_directory, quantification_info_file, &standard_file_name, &element_standard_weights) )
     {
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
+            data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[detector_num];
+            quantification_standard->standard_filename(standard_file_name);
+            for(auto& itr : element_standard_weights)
+            {
+                quantification_standard->append_element(itr.first, itr.second);
+            }
+
             //Output of fits for elements specified
             std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
             //Parameters for calibration curve

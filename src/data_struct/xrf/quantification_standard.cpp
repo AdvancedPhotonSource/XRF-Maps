@@ -79,15 +79,15 @@ Quantification_Standard::~Quantification_Standard()
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::append_element(std::string name, real_t weight)
+void Quantification_Standard::append_element(string name, real_t weight)
 {
-    _element_quants.emplace(std::pair<std::string, Element_Quant>(name, Element_Quant(weight)));
+    _element_quants.emplace(pair<string, Element_Quant>(name, Element_Quant(weight)));
 }
 
 //-----------------------------------------------------------------------------
 
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
-                                        std::unordered_map<std::string, real_t>  *element_counts,
+                                        unordered_map<string, real_t>  *element_counts,
                                         real_t incident_energy,
                                         Element_Info* detector_element,
                                         bool airpath,
@@ -97,8 +97,8 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 {
 
     quantification::models::Quantification_Model quantification_model;
-    std::vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
-    std::unordered_map<std::string, real_t> quant_list = {std::pair<std::string, real_t>("current", 101.94), std::pair<std::string, real_t>("us_ic", 268303.0), std::pair<std::string, real_t>("ds_ic", 134818.0) };
+    vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
+    unordered_map<string, real_t> quant_list = {pair<string, real_t>("current", 101.94), pair<string, real_t>("us_ic", 268303.0), pair<string, real_t>("ds_ic", 134818.0) };
 
     for(auto shell : shells_to_quant)
     {
@@ -127,7 +127,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
         }
 
-
+        //quantify for elements that have weights read in
         for (auto& quant_itr : quant_list)
         {
 
@@ -146,18 +146,20 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             quant_itr.second = fit_params["quantifier"].value;
         }
 
-        std::unordered_map<std::string, Element_Quant> element_quant_map = quantification_model.generate_quant_map(incident_energy,
-                                                                                                                    detector_element,
-                                                                                                                    shell,
-                                                                                                                    airpath,
-                                                                                                                    detector_chip_thickness,
-                                                                                                                    beryllium_window_thickness,
-                                                                                                                    germanium_dead_layer,
-                                                                                                                    1,
-                                                                                                                    92);
+        //generate calibration curve for all elements
+        unordered_map<string, Element_Quant> element_quant_map = quantification_model.generate_quant_map(incident_energy,
+                                                                                                                   detector_element,
+                                                                                                                   shell,
+                                                                                                                   airpath,
+                                                                                                                   detector_chip_thickness,
+                                                                                                                   beryllium_window_thickness,
+                                                                                                                   germanium_dead_layer,
+                                                                                                                   1,
+                                                                                                                   92);
         for (auto& quant_itr : quant_list)
         {
-            std::unordered_map<std::string, real_t> calibration_curve = quantification_model.model_calibrationcurve(element_quant_map, quant_itr.second);
+            _calibration_curves[quant_itr.first][shell] = quantification_model.model_calibrationcurve(element_quant_map, quant_itr.second);
+            //unordered_map<string, real_t> calibration_curve = quantification_model.model_calibrationcurve(element_quant_map, quant_itr.second);
             //save calibration_curve for each shell and each quant;
         }
 

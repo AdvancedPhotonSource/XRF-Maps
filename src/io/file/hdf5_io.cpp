@@ -564,6 +564,7 @@ bool HDF5_IO::save_spectra_volume(const std::string filename,
 bool HDF5_IO::save_element_fits(std::string filename,
                                 std::string path,
                                 const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                                data_struct::xrf::Quantification_Standard * quantification_standard,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
@@ -719,6 +720,24 @@ bool HDF5_IO::save_element_fits(std::string filename,
         i++;
     }
 
+    //save quantification
+    for(auto& quant_itr : quantification_standard->_calibration_curves)
+    {
+        for(auto& shell_itr : quant_itr.second)
+        {
+            //create dataset for different shell curves
+            std::unordered_map<std::string, real_t> calibration_curve = shell_itr.second;
+            for (std::string el_name : element_lines)
+            {
+                if(calibration_curve.count(el_name) < 1 )
+                {
+                    continue;
+                }
+                //save the values
+            }
+        }
+    }
+
     H5Dclose(dset_id);
     H5Dclose(dset_ch_id);
     H5Sclose(memoryspace);
@@ -742,6 +761,7 @@ bool HDF5_IO::save_element_fits(std::string filename,
     return true;
 
 }
+
 
 } //end namespace file
 }// end namespace io
