@@ -107,19 +107,13 @@ using namespace std::placeholders; //for _1, _2,
 enum Processing_Type { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
 const std::unordered_map<int, std::string> save_loc_map = {
-    {ROI, "XRF_roi"},
-    {GAUSS_TAILS, "XRF_tails_fits"},
-    {GAUSS_MATRIX, "XRF_fits"},
-    {SVD, "XRF_roi_plus"},
-    {NNLS, "XRF_nnls"}
+    {ROI, "ROI"},
+    {GAUSS_TAILS, "Params"},
+    {GAUSS_MATRIX, "Matrix"},
+    {SVD, "SVD"},
+    {NNLS, "NNLS"}
 };
-/*
-std::pair<Processing_Type, std::string>(ROI, "XRF_roi"),
-std::pair<Processing_Type, std::string>(GAUSS_TAILS, "XRF_tails_fits"),
-std::pair<Processing_Type, std::string>(GAUSS_MATRIX, "XRF_fits"),
-std::pair<Processing_Type, std::string>(SVD, "XRF_roi_plus"),
-std::pair<Processing_Type, std::string>(NNLS, "XRF_nnls")
-    */
+
 //Optimizers for fitting models
 fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
 
@@ -723,7 +717,7 @@ bool perform_quantification(std::string dataset_directory,
             }
 
             elements_to_fit.clear();
-            for(auto& itr : quantification_standard->_element_quants)
+            for(auto& itr : element_standard_weights)
             {
                 data_struct::xrf::Element_Info* e_info = data_struct::xrf::Element_Info_Map::inst()->get_element(itr.first);
                 elements_to_fit[itr.first] = new data_struct::xrf::Fit_Element_Map(itr.first, e_info);
@@ -771,7 +765,9 @@ bool perform_quantification(std::string dataset_directory,
                     itr.second /= integrated_spectra.elapsed_lifetime();
                 }
 
+                //save for each proc
                 quantification_standard->quantifiy(&lmfit_optimizer,
+                                                   save_loc_map.at(proc_type),
                                                   &counts_dict,
                                                   incident_energy,
                                                   detector_element,
@@ -785,6 +781,7 @@ bool perform_quantification(std::string dataset_directory,
     }
     else
     {
+        std::cout<<"Error loading quantification standard "<<quantification_info_file<<std::endl;
         return false;
     }
 

@@ -1,4 +1,4 @@
-/***
+﻿/***
 Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
 Copyright 2016. UChicago Argonne, LLC. This software was produced
@@ -90,7 +90,7 @@ public:
                                         real_t beryllium_window_thickness,
                                         real_t germanium_dead_layer,
                                         size_t z_number);
-
+    /*
     std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy,
                                                                       Element_Info* detector_element,
                                                                       Electron_Shell shell,
@@ -100,12 +100,24 @@ public:
                                                                       real_t germanium_dead_layer = 0.0,
                                                                       size_t start_z = 0,
                                                                       size_t end_z = 95);
+    */
+    std::vector<Element_Quant> generate_quant_vec(real_t incident_energy,
+                                                  Element_Info* detector_element,
+                                                  Electron_Shell shell,
+                                                  bool airpath = false,
+                                                  real_t detector_chip_thickness = 0.0,
+                                                  real_t beryllium_window_thickness = 0.0,
+                                                  real_t germanium_dead_layer = 0.0,
+                                                  size_t start_z = 0,
+                                                  size_t end_z = 95);
 
     real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 
     real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
     std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
+
+    std::vector<real_t> model_calibrationcurve(std::vector<Element_Quant> quant_vec, real_t p);
 
 protected:
 

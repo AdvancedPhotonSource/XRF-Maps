@@ -579,7 +579,10 @@ bool HDF5_IO::save_element_fits(std::string filename,
     start = std::chrono::system_clock::now();
 
     hid_t    file_id, dset_id, memoryspace, filespace, dataspace_id, filetype, dataspace_ch_id, dataspace_ch_off_id, memtype, status, maps_grp_id, dset_ch_id, dcpl_id;
+    hid_t   xrf_grp_id, fit_grp_id;
     herr_t   error;
+
+    hid_t q_dataspace_id, q_dataspace_ch_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_dset_ch_id, q_grp_id, q_fit_grp_id;
 
     dset_id = -1;
     dset_ch_id = -1;
@@ -587,6 +590,8 @@ bool HDF5_IO::save_element_fits(std::string filename,
     hsize_t offset[3];
     hsize_t count[3];
     hsize_t chunk_dims[3];
+
+    hsize_t q_dims_out[3];
 
     file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
@@ -643,12 +648,30 @@ bool HDF5_IO::save_element_fits(std::string filename,
         return false;
     }
 
+    xrf_grp_id = H5Gopen(maps_grp_id, "XRF", H5P_DEFAULT);
+    if(xrf_grp_id < 0)
+        xrf_grp_id = H5Gcreate(maps_grp_id, "XRF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(xrf_grp_id < 0)
+    {
+        std::cout<<"Error creating group MAPS/XRF"<<std::endl;
+        return false;
+    }
+
+    fit_grp_id = H5Gopen(xrf_grp_id, path.c_str(), H5P_DEFAULT);
+    if(fit_grp_id < 0)
+        fit_grp_id = H5Gcreate(xrf_grp_id, path.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(fit_grp_id < 0)
+    {
+        std::cout<<"Error creating group MAPS/XRF/"<<path<<std::endl;
+        return false;
+    }
+
     //dset_id = H5Dopen (maps_grp_id, path.c_str(), H5P_DEFAULT);
     if(dset_id < 0)
-        dset_id = H5Dcreate (maps_grp_id, path.c_str(), H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
+        dset_id = H5Dcreate (fit_grp_id, "Counts", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
     if(dset_id < 0)
     {
-        std::cout<<"Error creating dataset "<<path<<std::endl;
+        std::cout<<"Error creating dataset MAPS/XRF/"<<path<<"/Counts"<<std::endl;
         return false;
     }
 
@@ -657,12 +680,12 @@ bool HDF5_IO::save_element_fits(std::string filename,
     memtype = H5Tcopy (H5T_C_S1);
     status = H5Tset_size (memtype, 256);
 
-    dset_ch_id = H5Dopen (maps_grp_id, "channel_names", H5P_DEFAULT);
+    dset_ch_id = H5Dopen (fit_grp_id, "channel_names", H5P_DEFAULT);
     if(dset_ch_id < 0)
-        dset_ch_id = H5Dcreate (maps_grp_id, "channel_names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dset_ch_id = H5Dcreate (fit_grp_id, "channel_names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(dset_ch_id < 0)
     {
-        std::cout<<"Error creating 'channel_names' dataset"<<std::endl;
+        std::cout<<"Error creating dataset MAPS/XRF/"<<path<<"/channel_names"<<std::endl;
         return false;
     }
 
@@ -720,22 +743,92 @@ bool HDF5_IO::save_element_fits(std::string filename,
         i++;
     }
 
-    //save quantification
-    for(auto& quant_itr : quantification_standard->_calibration_curves)
+
+    //--                        save calibration curve                  --
+
+    if( quantification_standard != nullptr && quantification_standard->calibration_curves.count(path) > 0)
     {
-        for(auto& shell_itr : quant_itr.second)
+
+        q_grp_id = H5Gopen(maps_grp_id, "Quantification", H5P_DEFAULT);
+        if(q_grp_id < 0)
+            q_grp_id = H5Gcreate(maps_grp_id, "Quantification", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(q_grp_id < 0)
         {
-            //create dataset for different shell curves
-            std::unordered_map<std::string, real_t> calibration_curve = shell_itr.second;
-            for (std::string el_name : element_lines)
+            std::cout<<"Error creating group MAPS/Quantification"<<std::endl;
+            return false;
+        }
+
+        q_fit_grp_id = H5Gopen(q_grp_id, path.c_str(), H5P_DEFAULT);
+        if(q_fit_grp_id < 0)
+            q_fit_grp_id = H5Gcreate(q_grp_id, path.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(q_fit_grp_id < 0)
+        {
+            std::cout<<"Error creating group MAPS/Quantification/"<<path<<std::endl;
+            return false;
+        }
+
+
+        data_struct::xrf::Quantifiers quantifiers = quantification_standard->calibration_curves.at(path);
+        //auto shell_itr = quantification_standard->_calibration_curves.begin();
+
+        q_dims_out[0] = quantifiers.calib_curves.size(); // current, us_ic, and ds_ic
+        q_dims_out[1] = 3; // shells K, L, and M
+        q_dims_out[2] = 93; // elements 1 - 92
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+        count[0] = 1;
+        count[1] = 1;
+        count[2] = q_dims_out[2];
+
+        q_memoryspace_id = H5Screate_simple(3, count, NULL);
+        q_filespace_id = H5Screate_simple(3, q_dims_out, NULL);
+
+        q_dataspace_id = H5Screate_simple (3, q_dims_out, NULL);
+        q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, NULL);
+
+        //dset_id = H5Dopen (fit_grp_id, "Calibration_Curve", H5P_DEFAULT);
+        //if(q_dset_id < 0)
+            q_dset_id = H5Dcreate (q_fit_grp_id, "Calibration_Curve", H5T_INTEL_F64, q_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(q_dset_id < 0)
+        {
+            std::cout<<"Error creating dataset MAPS/Quantification/"<<path<<"/Calibration_Curve"<<std::endl;
+            return false;
+        }
+
+
+        //save quantification
+        //for(auto& quant_itr : quantification_standard->calibration_curves)
+        for (size_t i =0; i< quantifiers.calib_curves.size(); i++)
+        {
+            //for(auto& shell_itr : quant_itr.second)
+            for(size_t j=0; j<3; j++)
             {
-                if(calibration_curve.count(el_name) < 1 )
-                {
-                    continue;
-                }
-                //save the values
+                //int element_offset = 0;
+                //create dataset for different shell curves
+                std::vector<real_t> calibration_curve = quantifiers.calib_curves[i].shell_curves[j];
+
+                offset[0] = i;
+                offset[1] = j;
+                offset[2] = 0;
+
+                //H5Sselect_hyperslab (q_dataspace_ch_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                //H5Sselect_hyperslab (q_dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], NULL, count, NULL);
+                //status = H5Dwrite (q_dset_ch_id, memtype, q_dataspace_ch_off_id, q_dataspace_ch_id, H5P_DEFAULT, (void*)(el_name.c_str()));
+
+                H5Sselect_hyperslab (q_filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+                status = H5Dwrite (q_dset_id, H5T_NATIVE_DOUBLE, q_memoryspace_id, q_filespace_id, H5P_DEFAULT, (void*)&calibration_curve[0]);
             }
         }
+
+        H5Dclose(q_dset_id);
+        H5Dclose(q_dset_ch_id);
+        H5Sclose(q_dataspace_id);
+        H5Sclose(q_dataspace_ch_id);
+        H5Gclose(q_fit_grp_id);
+        H5Gclose(q_grp_id);
+
     }
 
     H5Dclose(dset_id);
@@ -746,8 +839,10 @@ bool HDF5_IO::save_element_fits(std::string filename,
     H5Sclose(dataspace_ch_id);
     //h5Tclose(filetype);
     //h5Tclose(memtype);
-    H5Pclose(dcpl_id);
+    H5Pclose(dcpl_id);    
     H5Sclose(dataspace_id);
+    H5Gclose(fit_grp_id);
+    H5Gclose(xrf_grp_id);
     H5Gclose(maps_grp_id);
     H5Fclose(file_id);
 

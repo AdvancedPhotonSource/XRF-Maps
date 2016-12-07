@@ -69,6 +69,69 @@ using namespace std;
 
 //-----------------------------------------------------------------------------
 
+struct Calibration_Curve
+{
+    //enum C_KEYS {K_SHELL, L_SHELL, M_SHELL};
+
+    Calibration_Curve()
+    {
+        shell_curves.resize(3);
+    }
+
+    Calibration_Curve(size_t i)
+    {
+        shell_curves.resize(3);
+        resize(i);
+    }
+
+    void resize(size_t i)
+    {
+        for(auto& curve : shell_curves)
+        {
+            curve.resize(i);
+        }
+    }
+
+    vector<vector<real_t> > shell_curves;
+
+    //vector<real_t> K_shell_curve;
+    //vector<real_t> L_shell_curve;
+    //vector<real_t> M_shell_curve;
+};
+
+//-----------------------------------------------------------------------------
+
+struct Quantifiers
+{
+    enum Q_KEYS {CURRENT, US_IC, DS_IC};
+
+    Quantifiers()
+    {
+        calib_curves.resize(3);
+    }
+
+    Quantifiers(size_t i)
+    {
+        calib_curves.resize(3);
+        resize(i);
+    }
+
+    void resize(size_t i)
+    {
+        for(auto& curve : calib_curves)
+        {
+            curve.resize(i);
+        }
+    }
+
+    vector<Calibration_Curve> calib_curves;
+    //Calibration_Curve current;
+    //Calibration_Curve us_ic;
+    //Calibration_Curve ds_ic;
+};
+
+//-----------------------------------------------------------------------------
+
 ///
 /// \brief The Quantification_Standard class:
 ///
@@ -89,6 +152,7 @@ public:
     const string& standard_filename() { return _standard_filename; }
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
+                   string proc_type_str,
                    unordered_map<string, real_t>  *element_counts,
                    real_t incident_energy,
                    Element_Info* detector_element,
@@ -97,11 +161,16 @@ public:
                    real_t beryllium_window_thickness,
                    real_t germanium_dead_layer);
 
-    unordered_map<string, Element_Quant> _element_quants;
-
-    unordered_map<string, unordered_map<int, unordered_map<string, real_t> > > _calibration_curves;
+    //           proc_type  quantifier
+    unordered_map<string, Quantifiers> calibration_curves;
 
 protected:
+
+    unordered_map<string, Element_Quant> _element_quants;
+
+    unordered_map<string, real_t>  _element_counts;
+
+    Spectra _integrated_spectra;
 
     std::string _standard_filename;
 
