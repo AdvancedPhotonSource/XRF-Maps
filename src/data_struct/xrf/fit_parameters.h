@@ -106,7 +106,7 @@ namespace xrf
     const std::string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
     const std::string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
 
-const std::string STR_NUM_ITR = "Num_iter";
+const std::string STR_NUM_ITR = "Num_Iter";
 const std::string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
 
 const std::vector<std::string> k_elements {"Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr",

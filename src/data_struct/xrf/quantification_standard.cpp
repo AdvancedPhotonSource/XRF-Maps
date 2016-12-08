@@ -86,6 +86,17 @@ void Quantification_Standard::append_element(string name, real_t weight)
 
 //-----------------------------------------------------------------------------
 
+void Quantification_Standard::element_counts(string proc_type_str, unordered_map<string, real_t> map)
+{
+    _element_counts[proc_type_str].clear();
+    for(auto itr: map)
+    {
+          _element_counts[proc_type_str][itr.first] = itr.second;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
                                         string proc_type_str,
                                         unordered_map<string, real_t>  *element_counts,
@@ -99,11 +110,19 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
     quantification::models::Quantification_Model quantification_model;
     vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
-    unordered_map<size_t, real_t> quant_list = {
+    unordered_map<size_t, real_t*> quant_list =
+    {
+        {Quantifiers::CURRENT, &_sr_current},
+        {Quantifiers::US_IC, &_IC_US},
+        {Quantifiers::DS_IC, &_IC_DS}
+    };
+    /*{
         {Quantifiers::CURRENT, 101.94},
         {Quantifiers::US_IC, 268303.0},
         {Quantifiers::DS_IC, 134818.0}
         };
+*/
+    _element_counts[proc_type_str] = *element_counts;
 
     calibration_curves.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
     Quantifiers *quantifiers = &calibration_curves.at(proc_type_str);
@@ -138,7 +157,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             itr.second.yield = element_quant.yield;
 
             //factor = quant_itr.second;
-            real_t e_cal_factor = (itr.second.weight * quant_itr.second);
+            real_t e_cal_factor = (itr.second.weight * (*quant_itr.second));
             real_t e_cal = e_cal_factor / element_counts->at(itr.first);
             itr.second.e_cal_ratio = 1.0 / e_cal;
             //initial guess: parinfo_value[0] = 100000.0 / factor
@@ -147,9 +166,9 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
         Fit_Parameters fit_params;
         fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
-        fit_params["quantifier"].value = 100000.0 / (quant_itr.second);
+        fit_params["quantifier"].value = 100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
-        quant_itr.second = fit_params["quantifier"].value;
+        (*quant_itr.second) = fit_params["quantifier"].value;
 
 
 
@@ -167,7 +186,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
                                                                                            1,
                                                                                            92);
 
-            quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, quant_itr.second);
+            quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, *quant_itr.second);
         }
 
     }

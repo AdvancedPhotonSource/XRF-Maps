@@ -126,7 +126,9 @@ public:
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
-    bool save_spectra_volume(const std::string filename,
+    hid_t start_save_seq(const std::string filename);
+
+    bool save_spectra_volume(const hid_t file_id,
                              const std::string path,
                              const data_struct::xrf::Spectra_Volume * const spectra_volume,
                              size_t row_idx_start=0,
@@ -134,14 +136,23 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_element_fits(const std::string filename,
+    bool save_element_fits(const hid_t file_id,
                            const std::string path,
                            const data_struct::xrf::Fit_Count_Dict * const element_counts,
-                           data_struct::xrf::Quantification_Standard * quantification_standard,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
+
+    bool save_quantification(const hid_t file_id,
+                             const std::string path,
+                             data_struct::xrf::Quantification_Standard * quantification_standard,
+                             size_t row_idx_start=0,
+                             int row_idx_end=-1,
+                             size_t col_idx_start=0,
+                             int col_idx_end=-1);
+
+    bool end_save_seq(const hid_t);
 
 private:
     void parse_group_info(hid_t h5file, hid_t id);

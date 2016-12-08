@@ -164,7 +164,11 @@ bool save_results(std::string full_path,
     }
 
     io::file::HDF5_IO hdf5_io;
-    hdf5_io.save_element_fits(full_path, save_loc, element_counts, quantification_standard);
+    hid_t f_id = hdf5_io.start_save_seq(full_path);
+    hdf5_io.save_element_fits(f_id, save_loc, element_counts);
+    hdf5_io.save_quantification(f_id, save_loc, quantification_standard);
+    hdf5_io.end_save_seq(f_id);
+
 
     delete fit_routine;
     delete job_queue;
@@ -188,7 +192,9 @@ bool save_volume(std::string full_path,
     }
 
     io::file::HDF5_IO hdf5_io;
-    hdf5_io.save_spectra_volume(full_path, "mca_arr", spectra_volume);
+    hid_t f_id = hdf5_io.start_save_seq(full_path);
+    hdf5_io.save_spectra_volume(f_id, "mca_arr", spectra_volume);
+    hdf5_io.end_save_seq(f_id);
 
     delete job_queue;
     delete spectra_volume;
@@ -764,6 +770,7 @@ bool perform_quantification(std::string dataset_directory,
                 {
                     itr.second /= integrated_spectra.elapsed_lifetime();
                 }
+                quantification_standard->integrated_spectra(integrated_spectra);
 
                 //save for each proc
                 quantification_standard->quantifiy(&lmfit_optimizer,

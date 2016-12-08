@@ -92,6 +92,7 @@ struct Calibration_Curve
         }
     }
 
+    string quantifier_name;
     vector<vector<real_t> > shell_curves;
 
     //vector<real_t> K_shell_curve;
@@ -108,11 +109,17 @@ struct Quantifiers
     Quantifiers()
     {
         calib_curves.resize(3);
+        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[DS_IC].quantifier_name = "DS_IC";
     }
 
     Quantifiers(size_t i)
     {
         calib_curves.resize(3);
+        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[DS_IC].quantifier_name = "DS_IC";
         resize(i);
     }
 
@@ -147,9 +154,31 @@ public:
 
     const real_t& element_weight(string element_symb) const { return _element_quants.at(element_symb).weight; }
 
+    const unordered_map<string, Element_Quant>& element_weights() const { return _element_quants; }
+
     void standard_filename(string standard_filename) { _standard_filename = standard_filename; }
 
-    const string& standard_filename() { return _standard_filename; }
+    const string& standard_filename() const { return _standard_filename; }
+
+    void element_counts(string, unordered_map<string, real_t> map);
+
+    const unordered_map<string, unordered_map<string, real_t> >& element_counts() const { return _element_counts; }
+
+    void integrated_spectra(const Spectra &spec) {_integrated_spectra = spec; }
+
+    const Spectra& integrated_spectra() const { return _integrated_spectra; }
+
+    const real_t& sr_current() {return _sr_current;}
+
+    void sr_current(real_t val) {_sr_current = val;}
+
+    const real_t& IC_US() {return _IC_US;}
+
+    void IC_US(real_t val) {_IC_US = val;}
+
+    const real_t& IC_DS() {return _IC_DS;}
+
+    void IC_DS(real_t val) {_IC_DS = val;}
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
                    string proc_type_str,
@@ -165,10 +194,11 @@ public:
     unordered_map<string, Quantifiers> calibration_curves;
 
 protected:
-
+    //          element    quant
     unordered_map<string, Element_Quant> _element_quants;
 
-    unordered_map<string, real_t>  _element_counts;
+    //          proc_type               Element   Counts
+    unordered_map<string, unordered_map<string, real_t> >  _element_counts;
 
     Spectra _integrated_spectra;
 
