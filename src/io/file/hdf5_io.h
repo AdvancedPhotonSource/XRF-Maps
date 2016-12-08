@@ -130,7 +130,7 @@ public:
 
     bool save_spectra_volume(const hid_t file_id,
                              const std::string path,
-                             const data_struct::xrf::Spectra_Volume * const spectra_volume,
+                             data_struct::xrf::Spectra_Volume * spectra_volume,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,
                              size_t col_idx_start=0,
@@ -145,7 +145,6 @@ public:
                            int col_idx_end=-1);
 
     bool save_quantification(const hid_t file_id,
-                             const std::string path,
                              data_struct::xrf::Quantification_Standard * quantification_standard,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,

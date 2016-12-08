@@ -168,10 +168,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
         fit_params["quantifier"].value = 100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
-        (*quant_itr.second) = fit_params["quantifier"].value;
-
-
-
+        real_t val = fit_params["quantifier"].value;
 
         for(auto shell : shells_to_quant)
         {
@@ -186,7 +183,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
                                                                                            1,
                                                                                            92);
 
-            quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, *quant_itr.second);
+            quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
         }
 
     }
