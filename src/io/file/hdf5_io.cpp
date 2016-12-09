@@ -57,6 +57,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "element_info.h"
 
+#define HDF5_SAVE_VERSION 10.0
+
 namespace io
 {
 namespace file
@@ -498,6 +500,7 @@ bool HDF5_IO::end_save_seq(const hid_t file_id)
 
     H5Fclose(file_id);
     return true;
+
 }
 
 //-----------------------------------------------------------------------------
@@ -631,6 +634,14 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     H5Sclose(dataspace_id);
 
 
+    //save file version
+    save_val = HDF5_SAVE_VERSION;
+    dataspace_id = H5Screate_simple (1, count, NULL);
+    dset_id = H5Dcreate (maps_grp_id, "version", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+    H5Dclose(dset_id);
+    H5Sclose(dataspace_id);
+
     H5Gclose(spec_grp_id);
     H5Gclose(maps_grp_id);
 
@@ -660,7 +671,7 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-
+    std::string xrf_grp_name = "XRF_Fits";
     hid_t    dset_id, memoryspace, filespace, dataspace_id, filetype, dataspace_ch_id, dataspace_ch_off_id, memtype, status, maps_grp_id, dset_ch_id, dcpl_id;
     hid_t   xrf_grp_id, fit_grp_id;
     herr_t   error;
@@ -721,12 +732,12 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         return false;
     }
 
-    xrf_grp_id = H5Gopen(maps_grp_id, "XRF", H5P_DEFAULT);
+    xrf_grp_id = H5Gopen(maps_grp_id, xrf_grp_name.c_str(), H5P_DEFAULT);
     if(xrf_grp_id < 0)
-        xrf_grp_id = H5Gcreate(maps_grp_id, "XRF", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        xrf_grp_id = H5Gcreate(maps_grp_id, xrf_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(xrf_grp_id < 0)
     {
-        std::cout<<"Error creating group MAPS/XRF"<<std::endl;
+        std::cout<<"Error creating group MAPS/"<<xrf_grp_name<<std::endl;
         return false;
     }
 
@@ -735,7 +746,7 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         fit_grp_id = H5Gcreate(xrf_grp_id, path.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(fit_grp_id < 0)
     {
-        std::cout<<"Error creating group MAPS/XRF/"<<path<<std::endl;
+        std::cout<<"Error creating group MAPS/"<<xrf_grp_name<<"/"<<path<<std::endl;
         return false;
     }
 
@@ -744,7 +755,7 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         dset_id = H5Dcreate (fit_grp_id, "Counts_Per_Sec", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
     if(dset_id < 0)
     {
-        std::cout<<"Error creating dataset MAPS/XRF/"<<path<<"/Counts_Per_Sec"<<std::endl;
+        std::cout<<"Error creating dataset MAPS/"<<xrf_grp_name<<"/"<<path<<"/Counts_Per_Sec"<<std::endl;
         return false;
     }
 
@@ -758,7 +769,7 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         dset_ch_id = H5Dcreate (fit_grp_id, "channel_names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(dset_ch_id < 0)
     {
-        std::cout<<"Error creating dataset MAPS/XRF/"<<path<<"/channel_names"<<std::endl;
+        std::cout<<"Error creating dataset MAPS/"<<xrf_grp_name<<"/"<<path<<"/channel_names"<<std::endl;
         return false;
     }
 
@@ -859,10 +870,10 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
     start = std::chrono::system_clock::now();
 
     hid_t    dset_id, memoryspace_id, filespace_id, dataspace_id, filetype, dataspace_ch_id, dataspace_ch_off_id, memtype,  dset_ch_id;
-    hid_t   xrf_grp_id, fit_grp_id;
+//    hid_t   xrf_grp_id, fit_grp_id;
     herr_t   error;
 
-    hid_t q_dataspace_id, q_dataspace_ch_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_dset_ch_id, q_grp_id, q_fit_grp_id, dcpl_id, maps_grp_id, status;
+    hid_t q_dataspace_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_dset_ch_id, q_grp_id, q_fit_grp_id, dcpl_id, maps_grp_id, status;
 
 //    dset_id = -1;
 //    dset_ch_id = -1;
