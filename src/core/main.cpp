@@ -123,7 +123,8 @@ bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         std::unordered_map< std::string, std::string > *extra_override_values);
+                         std::unordered_map< std::string, std::string > *extra_override_values,
+                         data_struct::xrf::Quantification_Standard * quantification_standard);
 
 // ----------------------------------------------------------------------------
 
@@ -436,14 +437,15 @@ bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         std::unordered_map< std::string, std::string > *extra_override_values)
+                         std::unordered_map< std::string, std::string > *extra_override_values,
+                         data_struct::xrf::Quantification_Standard * quantification_standard)
 {
 
     //Dataset importer
     io::file::MDA_IO mda_io;
     io::file::HDF5_IO hdf5_io;
     io::file::NetCDF_IO netcdf_io;
-    data_struct::xrf::Detector detector;
+    //data_struct::xrf::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
     std::cout<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
@@ -456,7 +458,7 @@ bool load_spectra_volume(std::string dataset_directory,
         file_io_0.close();
 
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &detector, spectra_volume, hasNetcdf, extra_override_values) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf, extra_override_values, quantification_standard) )
     {
         std::cout<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
         return false;
@@ -519,7 +521,7 @@ bool optimize_integrated_dataset(std::string dataset_directory,
     load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
 
     //load the quantification standard dataset
-    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values) )
+    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, nullptr) )
     {
         std::cout<<"Error in optimize_integrated_dataset loading dataset for detector"<<detector_num<<std::endl;
         return false;
@@ -605,7 +607,7 @@ void process_dataset_file(std::string dataset_directory,
         load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
 
         //load spectra volume
-        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values) )
+        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values, nullptr) )
         {
             std::cout<<"Skipping detector "<<detector_num<<std::endl;
             continue;
@@ -683,7 +685,7 @@ bool perform_quantification(std::string dataset_directory,
     real_t detector_chip_thickness = 0.0;
     real_t beryllium_window_thickness = 0.0;
     real_t germanium_dead_layer = 0.0;
-    real_t incident_energy = 9.0;
+    real_t incident_energy = 10.0;
 
     fitting::models::Gaussian_Model model;
 
@@ -721,6 +723,23 @@ bool perform_quantification(std::string dataset_directory,
                 // Get the element info class                                                                                 // detector element as string "Si" or "Ge" usually
                 detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(extra_override_values.at(data_struct::xrf::STR_DETECTOR_ELEMENT));
             }
+            if (extra_override_values.count(data_struct::xrf::STR_BE_WINDOW_THICKNESS) > 0)
+            {
+                beryllium_window_thickness = std::stof(extra_override_values.at(data_struct::xrf::STR_BE_WINDOW_THICKNESS));
+            }
+            if (extra_override_values.count(data_struct::xrf::STR_GE_DEAD_LAYER) > 0)
+            {
+                germanium_dead_layer = std::stof(extra_override_values.at(data_struct::xrf::STR_GE_DEAD_LAYER));
+            }
+            if (extra_override_values.count(data_struct::xrf::STR_DET_CHIP_THICKNESS) > 0)
+            {
+                detector_chip_thickness = std::stof(extra_override_values.at(data_struct::xrf::STR_DET_CHIP_THICKNESS));
+            }
+
+            if(override_fit_params.contains(data_struct::xrf::STR_COHERENT_SCT_ENERGY))
+            {
+                incident_energy = override_fit_params.at(data_struct::xrf::STR_COHERENT_SCT_ENERGY).value;
+            }
 
             elements_to_fit.clear();
             for(auto& itr : element_standard_weights)
@@ -732,7 +751,7 @@ bool perform_quantification(std::string dataset_directory,
 
             data_struct::xrf::Spectra_Volume spectra_volume;
             //load the quantification standard dataset
-            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values) )
+            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, quantification_standard) )
             {
                 std::cout<<"Error in perform_quantification loading dataset for detector"<<detector_num<<std::endl;
                 return false;
@@ -766,9 +785,9 @@ bool perform_quantification(std::string dataset_directory,
                     fit_routine = nullptr;
                 }
 
-                for (auto& itr : counts_dict)
+                for (auto& itr : elements_to_fit)
                 {
-                    itr.second /= integrated_spectra.elapsed_lifetime();
+                    counts_dict[itr.first] /= integrated_spectra.elapsed_lifetime();
                 }
                 quantification_standard->integrated_spectra(integrated_spectra);
 
@@ -838,12 +857,12 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
 void help()
 {
     std::cout<<"Help: "<<std::endl;
-    std::cout<<"Usage: xrf_maps [Options] [Fitting models] --dir [dataset directory] \n"<<std::endl;
+    std::cout<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
     std::cout<<"Options: "<<std::endl;
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
-    std::cout<<"Fitting models: "<<std::endl;
+    std::cout<<"Fitting Routines: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
     std::cout<<"--nnls : Non-Negative Least Squares"<<std::endl;
@@ -951,7 +970,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    quant_stand_list.resize( (detector_num_end - detector_num_start) + 1);
+    //quant_stand_list.resize( (detector_num_end - detector_num_start) + 1);
+    //TODO:
+    quant_stand_list.resize(4);
 
     dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)

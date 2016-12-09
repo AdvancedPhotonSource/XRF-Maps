@@ -108,6 +108,9 @@ namespace xrf
 
 const std::string STR_NUM_ITR = "Num_Iter";
 const std::string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
+const std::string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
+const std::string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
+const std::string STR_GE_DEAD_LAYER = "GE_DEAD_LAYER";
 
 const std::vector<std::string> k_elements {"Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr",
                                              "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se",

@@ -65,8 +65,8 @@ Quantification_Standard::Quantification_Standard()
 {
 
     _sr_current = 1.0;
-    _IC_US = 1.0;
-    _IC_DS = 1.0;
+    _US_IC = 1.0;
+    _DS_IC = 1.0;
 
 }
 
@@ -113,8 +113,8 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
     unordered_map<size_t, real_t*> quant_list =
     {
         {Quantifiers::CURRENT, &_sr_current},
-        {Quantifiers::US_IC, &_IC_US},
-        {Quantifiers::DS_IC, &_IC_DS}
+        {Quantifiers::US_IC, &_US_IC},
+        {Quantifiers::DS_IC, &_DS_IC}
     };
     /*{
         {Quantifiers::CURRENT, 101.94},

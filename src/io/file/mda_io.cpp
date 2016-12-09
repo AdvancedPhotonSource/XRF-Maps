@@ -71,6 +71,8 @@ namespace io
 namespace file
 {
 
+//-----------------------------------------------------------------------------
+
 MDA_IO::MDA_IO() : Base_File_IO()
 {
 
@@ -79,12 +81,16 @@ MDA_IO::MDA_IO() : Base_File_IO()
 
 }
 
+//-----------------------------------------------------------------------------
+
 MDA_IO::~MDA_IO()
 {
 
     unload();
 
 }
+
+//-----------------------------------------------------------------------------
 
 void MDA_IO::unload()
 {
@@ -99,6 +105,8 @@ void MDA_IO::unload()
         _mda_file_info = nullptr;
     }
 }
+
+//-----------------------------------------------------------------------------
 
 void MDA_IO::lazy_load()
 {
@@ -122,6 +130,8 @@ void MDA_IO::lazy_load()
     std::fclose(fptr);
 
 }
+
+//-----------------------------------------------------------------------------
 
 bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
 {
@@ -157,8 +167,21 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 }
 
-int MDA_IO::_find_2d_detector_index(std::string det_name)
+//-----------------------------------------------------------------------------
+
+int MDA_IO::_find_2d_detector_index(std::string det_name, int detector_num, real_t& val)
 {
+
+    for(int k=0; k<_mda_file->scan->number_detectors; k++)
+    {
+        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
+        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
+        if(strcmp(_mda_file->scan->detectors[k]->name, det_name.c_str())  == 0)
+        {
+            val = _mda_file->scan->detectors_data[k][detector_num];
+            return k;
+        }
+    }
 
     for(int k=0; k<_mda_file->scan->sub_scans[0]->number_detectors; k++)
     {
@@ -166,12 +189,15 @@ int MDA_IO::_find_2d_detector_index(std::string det_name)
         //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
         if(strcmp(_mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str())  == 0)
         {
+            val = _mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
             return k;
         }
     }
     return -1;
 
 }
+
+//-----------------------------------------------------------------------------
 
 void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
 {
@@ -188,12 +214,14 @@ void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
 
 }
 
+//-----------------------------------------------------------------------------
+
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
-                                 data_struct::xrf::Detector* detector,
                                  data_struct::xrf::Spectra_Volume* vol,
                                  bool hasNetCDF,
-                                 std::unordered_map< std::string, std::string > *extra_override_values)
+                                 std::unordered_map< std::string, std::string > *extra_override_values,
+                                 data_struct::xrf::Quantification_Standard * quantification_standard)
 {
     //index per row and col
     int elt_idx = -1;
@@ -202,9 +230,9 @@ bool MDA_IO::load_spectra_volume(std::string path,
     int outcnt_idx = -1;
 
 
-    int sr_current_idx = -1;
-    int us_ic_idx = -1;
-    int ds_ic_idx = -1;
+    //int sr_current_idx = -1;
+    //int us_ic_idx = -1;
+    //int ds_ic_idx = -1;
     int dpc1_ic_idx = -1;
     int dpc2_ic_idx = -1;
 
@@ -292,35 +320,43 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     if (extra_override_values != nullptr)
     {
+        real_t tmp_val;
         if (extra_override_values->count("ELT1") > 0)
         {
-            elt_idx = _find_2d_detector_index( extra_override_values->at("ELT1") );
+            elt_idx = _find_2d_detector_index( extra_override_values->at("ELT1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("ERT1") > 0)
         {
-            ert_idx = _find_2d_detector_index( extra_override_values->at("ERT1") );
+            ert_idx = _find_2d_detector_index( extra_override_values->at("ERT1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("ICR1") > 0)
         {
-            incnt_idx = _find_2d_detector_index( extra_override_values->at("ICR1") );
+            incnt_idx = _find_2d_detector_index( extra_override_values->at("ICR1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("OCR1") > 0)
         {
-            outcnt_idx = _find_2d_detector_index( extra_override_values->at("OCR1") );
+            outcnt_idx = _find_2d_detector_index( extra_override_values->at("OCR1"), detector_num, tmp_val );
         }
-/* not need for processing counts, but will be used later to save to hdf5
-        if (extra_override_values->count("SRCURRENT") > 0)
+        if(quantification_standard != nullptr)
         {
-            sr_current_idx = _find_2d_detector_index( extra_override_values->at("SRCURRENT") );
+            if (extra_override_values->count("SRCURRENT") > 0)
+            {
+                _find_2d_detector_index( extra_override_values->at("SRCURRENT"), detector_num, tmp_val );
+                quantification_standard->sr_current(tmp_val);
+            }
+            if (extra_override_values->count("US_IC") > 0)
+            {
+                _find_2d_detector_index( extra_override_values->at("US_IC"), detector_num, tmp_val );
+                quantification_standard->US_IC(tmp_val);
+            }
+            if (extra_override_values->count("DS_IC") > 0)
+            {
+                _find_2d_detector_index( extra_override_values->at("DS_IC"), detector_num, tmp_val );
+                quantification_standard->DS_IC(tmp_val);
+            }
         }
-        if (extra_override_values->count("US_IC") > 0)
-        {
-            us_ic_idx = _find_2d_detector_index( extra_override_values->at("US_IC") );
-        }
-        if (extra_override_values->count("DS_IC") > 0)
-        {
-            ds_ic_idx = _find_2d_detector_index( extra_override_values->at("DS_IC") );
-        }
+        /* not need for processing counts, but will be used later to save to hdf5*/
+        /*
         if (extra_override_values->count("DPC1_IC") > 0)
         {
             dpc1_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC1_IC") );
@@ -455,6 +491,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
     return true;
 }
 
+//-----------------------------------------------------------------------------
+
 bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Map *element_map)
 {
     std::ifstream fileStream(filename);
@@ -538,6 +576,8 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
     return true;
 }
+
+//-----------------------------------------------------------------------------
 
 } //end namespace file
 }// end namespace io

@@ -172,13 +172,13 @@ public:
 
     void sr_current(real_t val) {_sr_current = val;}
 
-    const real_t& US_IC() {return _IC_US;}
+    const real_t& US_IC() {return _US_IC;}
 
-    void US_IC(real_t val) {_IC_US = val;}
+    void US_IC(real_t val) {_US_IC = val;}
 
-    const real_t& DS_IC() {return _IC_DS;}
+    const real_t& DS_IC() {return _DS_IC;}
 
-    void DS_IC(real_t val) {_IC_DS = val;}
+    void DS_IC(real_t val) {_DS_IC = val;}
 
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
                    string proc_type_str,
@@ -205,8 +205,8 @@ protected:
     std::string _standard_filename;
 
     real_t _sr_current;
-    real_t _IC_US;
-    real_t _IC_DS;
+    real_t _US_IC;
+    real_t _DS_IC;
 
 
 
