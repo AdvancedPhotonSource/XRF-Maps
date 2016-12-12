@@ -151,6 +151,12 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
+    bool save_scalars(const hid_t file_id,
+                     size_t row_idx_start=0,
+                     int row_idx_end=-1,
+                     size_t col_idx_start=0,
+                     int col_idx_end=-1);
+
     bool end_save_seq(const hid_t);
 
 private:
