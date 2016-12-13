@@ -180,6 +180,8 @@ public:
 
     void DS_IC(real_t val) {_DS_IC = val;}
 
+    bool processed() {return _processed;}
+
     bool quantifiy(fitting::optimizers::Optimizer * optimizer,
                    string proc_type_str,
                    unordered_map<string, real_t>  *element_counts,
@@ -194,6 +196,9 @@ public:
     unordered_map<string, Quantifiers> calibration_curves;
 
 protected:
+
+    bool _processed;
+
     //          element    quant
     unordered_map<string, Element_Quant> _element_quants;
 

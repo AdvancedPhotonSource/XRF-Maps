@@ -67,6 +67,7 @@ Quantification_Standard::Quantification_Standard()
     _sr_current = 1.0;
     _US_IC = 1.0;
     _DS_IC = 1.0;
+    _processed = false;
 
 }
 
@@ -187,6 +188,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         }
 
     }
+    _processed = true;
 
     return true;
 

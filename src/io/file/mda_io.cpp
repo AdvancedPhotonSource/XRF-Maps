@@ -355,8 +355,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 quantification_standard->DS_IC(tmp_val);
             }
         }
-        /* not need for processing counts, but will be used later to save to hdf5*/
-        /*
+/*
         if (extra_override_values->count("DPC1_IC") > 0)
         {
             dpc1_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC1_IC") );
