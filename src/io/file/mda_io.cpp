@@ -273,6 +273,13 @@ bool MDA_IO::load_spectra_volume(std::string path,
     std::cout<<" cols "<< header->dimensions[0] << " rows " << header->dimensions[1] <<std::endl;
 
 
+    _mda_file = mda_load(fptr);
+    if (_mda_file == nullptr)
+    {
+        return false;
+    }
+
+
     if (header->data_rank == 2)
     {
         if(hasNetCDF)
@@ -307,12 +314,6 @@ bool MDA_IO::load_spectra_volume(std::string path,
     else
     {
         std::cout<<" Error: no support for data rank "<< header->data_rank <<std::endl;
-        return false;
-    }
-
-    _mda_file = mda_load(fptr);
-    if (_mda_file == nullptr)
-    {
         return false;
     }
 

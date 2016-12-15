@@ -496,7 +496,10 @@ bool load_spectra_volume(std::string dataset_directory,
         }
 
     }
-    mda_io.unload(); //TODO optimize so we load straight to memeory
+    std::string str_detector_num = std::to_string(detector_num);
+    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+    hdf5_io.save_scalars(full_save_path, detector_num, mda_io.get_scan_ptr());
+    mda_io.unload();
 
     return true;
 }
@@ -959,6 +962,7 @@ int main(int argc, char *argv[])
         quant_standard_filename = clp.get_option("--quantify-with");
     }
 
+    //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
     if ( clp.option_exists("--detector-range") )
     {

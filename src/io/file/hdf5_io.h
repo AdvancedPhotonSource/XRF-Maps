@@ -56,6 +56,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fit_element_map.h"
 #include "hdf5.h"
 
+//Include mda data structures to save scalars
+#include "mda-load.h"
+
 #include "quantification_standard.h"
 
 namespace io
@@ -151,15 +154,20 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_scalars(const hid_t file_id,
-                     size_t row_idx_start=0,
-                     int row_idx_end=-1,
-                     size_t col_idx_start=0,
-                     int col_idx_end=-1);
+    bool save_scalars(const std::string filename,
+                      size_t detector_num,
+                      struct mda_file *mda_scalars,
+                      size_t row_idx_start=0,
+                      int row_idx_end=-1,
+                      size_t col_idx_start=0,
+                      int col_idx_end=-1);
 
     bool end_save_seq(const hid_t);
 
 private:
+
+    //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalars)
+
     void parse_group_info(hid_t h5file, hid_t id);
     void parse_dataset_info(hid_t h5file, hid_t id);
     void parse_attr_info(hid_t h5file, hid_t id);

@@ -80,6 +80,8 @@ public:
 
     void unload();
 
+    struct mda_file* get_scan_ptr() { return _mda_file; }
+
     /**
      * @brief lazy_load : Only load in the meta info, not the actual datasets
      * @param filename
