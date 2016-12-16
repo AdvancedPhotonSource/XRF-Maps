@@ -731,12 +731,12 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     for(size_t row=row_idx_start; row < row_idx_end; row++)
     {
         offset[1] = row;
-        offset_time[0] = row;
+        offset_time[1] = row;
         for(size_t col=col_idx_start; col < col_idx_end; col++)
         {
             const data_struct::xrf::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
-            offset_time[1] = col;
+            offset_time[0] = col;
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
             status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
@@ -1474,13 +1474,46 @@ bool HDF5_IO::save_scalars(const std::string filename,
     dset_desc_id = H5Dcreate (extra_grp_id, "Description", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     dset_unit_id = H5Dcreate (extra_grp_id, "Unit", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+    std::string str_val;
+    short* s_val;
+    int* i_val;
+    float* f_val;
+    double* d_val;
+
     for(int16_t i =0 ; i < mda_scalars->extra->number_pvs; i++)
     {
         offset[0] = i;
         struct mda_pv * pv = mda_scalars->extra->pvs[i];
+        switch(pv->type)
+        {
+
+        case EXTRA_PV_STRING:
+            str_val = std::string(pv->values);
+            break;
+        case EXTRA_PV_INT8:
+*i_val = 123;
+            break;
+        case EXTRA_PV_INT16:
+            s_val = (short*)pv->values;
+            str_val = std::to_string(*s_val);
+            break;
+        case EXTRA_PV_INT32:
+            i_val = (int*)pv->values;
+            str_val = std::to_string(*i_val);
+            break;
+        case EXTRA_PV_FLOAT:
+            f_val = (float*)pv->values;
+            str_val = std::to_string(*f_val);
+            break;
+        case EXTRA_PV_DOUBLE:
+            d_val = (double*)pv->values;
+            str_val = std::to_string(*d_val);
+            break;
+
+        }
         H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
         status = H5Dwrite (dset_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)pv->name);
-        status = H5Dwrite (dset_val_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)pv->values);
+        status = H5Dwrite (dset_val_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)str_val.c_str());
         status = H5Dwrite (dset_desc_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)pv->description);
         status = H5Dwrite (dset_unit_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)pv->unit);
     }
