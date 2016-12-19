@@ -974,7 +974,10 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         element_lines.push_back(el_name+"_M");
     }
 
+    element_lines.push_back(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE);
+    element_lines.push_back(data_struct::xrf::STR_COMPTON_AMPLITUDE);
     element_lines.push_back(data_struct::xrf::STR_NUM_ITR);
+
 
     int i=0;
     //save by element Z order
@@ -1397,6 +1400,7 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
 bool HDF5_IO::save_scalars(const std::string filename,
                            size_t detector_num,
                            struct mda_file *mda_scalars,
+                           std::unordered_map< std::string, std::string > *extra_override_values,
                            size_t row_idx_start,
                            int row_idx_end,
                            size_t col_idx_start,
@@ -1407,6 +1411,19 @@ bool HDF5_IO::save_scalars(const std::string filename,
     hid_t filetype, memtype;
     hid_t dset_desc_id, dset_unit_id, dset_id, dset_val_id;
     hid_t scan_grp_id, scalars_grp_id, extra_grp_id, maps_grp_id;
+    MDA_IO mda_io;
+    int dpc1_ic_idx = -1;
+    int dpc2_ic_idx = -1;
+
+    int cfg1_idx = -1;
+    int cfg2_idx = -1;
+    int cfg3_idx = -1;
+    int cfg4_idx = -1;
+    int cfg5_idx = -1;
+    int cfg6_idx = -1;
+    int cfg7_idx = -1;
+    int cfg8_idx = -1;
+    int cfg9_idx = -1;
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
 
@@ -1490,9 +1507,9 @@ bool HDF5_IO::save_scalars(const std::string filename,
         case EXTRA_PV_STRING:
             str_val = std::string(pv->values);
             break;
-        case EXTRA_PV_INT8:
-*i_val = 123;
-            break;
+        //case EXTRA_PV_INT8:
+
+        //    break;
         case EXTRA_PV_INT16:
             s_val = (short*)pv->values;
             str_val = std::to_string(*s_val);
@@ -1573,45 +1590,97 @@ bool HDF5_IO::save_scalars(const std::string filename,
     status = H5Dwrite (dset_id, memtype, memoryspace_id, memoryspace_id, H5P_DEFAULT, (void*)mda_scalars->scan->name);
     H5Dclose(dset_id);
 
-    //save scalars
-    /*
-    for(int32_t i=0; i<mda_scalars->scan->last_point; i++)
+    real_t val;
+    if(extra_override_values != nullptr)
     {
-        for(int32_t i=0; i<mda_scalars->scan->sub_scans[0]->last_point; i++)
+        if (extra_override_values->count("DPC1_IC") > 0)
         {
-
+            dpc1_ic_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("DPC1_IC"), detector_num, val );
         }
-    }*/
-    //val = _mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
+        if (extra_override_values->count("DPC2_IC") > 0)
+        {
+            dpc2_ic_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("DPC2_IC"), detector_num, val );
+        }
+
+        if (extra_override_values->count("CFG_1") > 0)
+        {
+            cfg1_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_1"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_2") > 0)
+        {
+            cfg2_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_2"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_3") > 0)
+        {
+            cfg3_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_3"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_4") > 0)
+        {
+            cfg4_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_4"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_5") > 0)
+        {
+            cfg5_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_5"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_6") > 0)
+        {
+            cfg6_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_6"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_7") > 0)
+        {
+            cfg7_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_7"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_8") > 0)
+        {
+            cfg8_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_8"), detector_num, val );
+        }
+        if (extra_override_values->count("CFG_9") > 0)
+        {
+            cfg9_idx = mda_io.find_2d_detector_index(mda_scalars, extra_override_values->at("CFG_9"), detector_num, val );
+        }
 
 
-    /*
-        # generate direct maps, such as SR current, ICs, life time
-        # 0:srcurrent, 1:us_ic, 2:ds_ic, 3:dpc1_ic, 4:dpc2_ic,
-        # 5:cfg_1, 6:cfg_2, 7:cfg_3, 8:cfg_4, 9:cfg_5, 10:cfg_6, 11:cfg_7, 12:cfg_8
-        # 13:ELT1, 14:ERT1, 15: ELT2, 16:ERT2, 17:ELT3, 18: ERT3
 
-        t_1 = d_det[:, :, wo_1]
-        t_2 = d_det[:, :, wo_2]
-        t_3 = d_det[:, :, wo_3]
-        t_4 = d_det[:, :, wo_4]
-        t_5 = d_det[:, :, wo_5]
-        t_6 = d_det[:, :, wo_6]
-        t_7 = d_det[:, :, wo_7]
-        t_8 = d_det[:, :, wo_8]
-        t_abs = t_2+t_3+t_4+t_5
+        //save scalars
+        /*
+        for(int32_t i=0; i<mda_scalars->scan->last_point; i++)
+        {
+            for(int32_t i=0; i<mda_scalars->scan->sub_scans[0]->last_point; i++)
+            {
 
-        if make_maps_conf.dmaps[this_det].name == 'abs_cfg' :
-            dmaps_set[:, :, this_det] = t_abs/d_det[:, :, wo_a]
-        if make_maps_conf.dmaps[this_det].name == 'H_dpc_cfg' :
-            dmaps_set[:, :, this_det] = (t_2-t_3-t_4+t_5)/t_abs
-        if make_maps_conf.dmaps[this_det].name == 'V_dpc_cfg' :
-            dmaps_set[:, :, this_det] = (t_2+t_3-t_4-t_5)/t_abs
-        if make_maps_conf.dmaps[this_det].name == 'dia1_dpc_cfg' :
-            dmaps_set[:, :, this_det] = (t_2-t_4)/t_abs
-        if make_maps_conf.dmaps[this_det].name == 'dia2_dpc_cfg' :
-            dmaps_set[:, :, this_det] = (t_3-t_5)/t_abs
-     */
+            }
+        }*/
+        //val = _mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
+
+
+        /*
+            # generate direct maps, such as SR current, ICs, life time
+            # 0:srcurrent, 1:us_ic, 2:ds_ic, 3:dpc1_ic, 4:dpc2_ic,
+            # 5:cfg_1, 6:cfg_2, 7:cfg_3, 8:cfg_4, 9:cfg_5, 10:cfg_6, 11:cfg_7, 12:cfg_8
+            # 13:ELT1, 14:ERT1, 15: ELT2, 16:ERT2, 17:ELT3, 18: ERT3
+
+            t_1 = d_det[:, :, wo_1]
+            t_2 = d_det[:, :, wo_2]
+            t_3 = d_det[:, :, wo_3]
+            t_4 = d_det[:, :, wo_4]
+            t_5 = d_det[:, :, wo_5]
+            t_6 = d_det[:, :, wo_6]
+            t_7 = d_det[:, :, wo_7]
+            t_8 = d_det[:, :, wo_8]
+            t_abs = t_2+t_3+t_4+t_5
+
+            if make_maps_conf.dmaps[this_det].name == 'abs_cfg' :
+                dmaps_set[:, :, this_det] = t_abs/d_det[:, :, wo_a]
+            if make_maps_conf.dmaps[this_det].name == 'H_dpc_cfg' :
+                dmaps_set[:, :, this_det] = (t_2-t_3-t_4+t_5)/t_abs
+            if make_maps_conf.dmaps[this_det].name == 'V_dpc_cfg' :
+                dmaps_set[:, :, this_det] = (t_2+t_3-t_4-t_5)/t_abs
+            if make_maps_conf.dmaps[this_det].name == 'dia1_dpc_cfg' :
+                dmaps_set[:, :, this_det] = (t_2-t_4)/t_abs
+            if make_maps_conf.dmaps[this_det].name == 'dia2_dpc_cfg' :
+                dmaps_set[:, :, this_det] = (t_3-t_5)/t_abs
+         */
+    }
 
     H5Sclose(memoryspace_id);
     H5Pclose(dcpl_id);

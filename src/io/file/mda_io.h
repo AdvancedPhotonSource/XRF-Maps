@@ -101,9 +101,9 @@ public:
                                      std::unordered_map< std::string, std::string > *extra_override_values,
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
 
-private:
+    int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);
 
-    int _find_2d_detector_index(std::string det_name, int detector_num, real_t& val);
+private:
 
     void _load_detector_meta_data(data_struct::xrf::Detector * detector);
 

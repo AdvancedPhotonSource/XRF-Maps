@@ -124,7 +124,8 @@ bool load_spectra_volume(std::string dataset_directory,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
                          std::unordered_map< std::string, std::string > *extra_override_values,
-                         data_struct::xrf::Quantification_Standard * quantification_standard);
+                         data_struct::xrf::Quantification_Standard * quantification_standard,
+                         bool save_scalars);
 
 // ----------------------------------------------------------------------------
 
@@ -438,7 +439,8 @@ bool load_spectra_volume(std::string dataset_directory,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
                          std::unordered_map< std::string, std::string > *extra_override_values,
-                         data_struct::xrf::Quantification_Standard * quantification_standard)
+                         data_struct::xrf::Quantification_Standard * quantification_standard,
+                         bool save_scalars)
 {
 
     //Dataset importer
@@ -496,9 +498,12 @@ bool load_spectra_volume(std::string dataset_directory,
         }
 
     }
-    std::string str_detector_num = std::to_string(detector_num);
-    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-    hdf5_io.save_scalars(full_save_path, detector_num, mda_io.get_scan_ptr());
+    if(save_scalars)
+    {
+        std::string str_detector_num = std::to_string(detector_num);
+        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+        hdf5_io.save_scalars(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
+    }
     mda_io.unload();
 
     return true;
@@ -534,7 +539,7 @@ bool optimize_integrated_dataset(std::string dataset_directory,
     load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
 
     //load the quantification standard dataset
-    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, nullptr) )
+    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, nullptr, false) )
     {
         std::cout<<"Error in optimize_integrated_dataset loading dataset for detector"<<detector_num<<std::endl;
         return false;
@@ -619,8 +624,12 @@ void process_dataset_file(std::string dataset_directory,
         //load override parameters
         load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
 
+        //add compton and coherant amp
+        elements_to_fit.emplace(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COMPTON_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COMPTON_AMPLITUDE, nullptr)) );
+        elements_to_fit.emplace(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
+
         //load spectra volume
-        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values, nullptr) )
+        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &extra_override_values, nullptr, true) )
         {
             std::cout<<"Skipping detector "<<detector_num<<std::endl;
             continue;
@@ -764,7 +773,7 @@ bool perform_quantification(std::string dataset_directory,
 
             data_struct::xrf::Spectra_Volume spectra_volume;
             //load the quantification standard dataset
-            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, quantification_standard) )
+            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, quantification_standard, false) )
             {
                 std::cout<<"Error in perform_quantification loading dataset for detector"<<detector_num<<std::endl;
                 return false;

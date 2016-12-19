@@ -169,27 +169,27 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 //-----------------------------------------------------------------------------
 
-int MDA_IO::_find_2d_detector_index(std::string det_name, int detector_num, real_t& val)
+int MDA_IO::find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val)
 {
 
-    for(int k=0; k<_mda_file->scan->number_detectors; k++)
+    for(int k=0; k<mda_file->scan->number_detectors; k++)
     {
         //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
         //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
-        if(strcmp(_mda_file->scan->detectors[k]->name, det_name.c_str())  == 0)
+        if(strcmp(mda_file->scan->detectors[k]->name, det_name.c_str())  == 0)
         {
-            val = _mda_file->scan->detectors_data[k][detector_num];
+            val = mda_file->scan->detectors_data[k][detector_num];
             return k;
         }
     }
 
-    for(int k=0; k<_mda_file->scan->sub_scans[0]->number_detectors; k++)
+    for(int k=0; k<mda_file->scan->sub_scans[0]->number_detectors; k++)
     {
         //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
         //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
-        if(strcmp(_mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str())  == 0)
+        if(strcmp(mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str())  == 0)
         {
-            val = _mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
+            val = mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
             return k;
         }
     }
@@ -228,24 +228,6 @@ bool MDA_IO::load_spectra_volume(std::string path,
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
-
-
-    //int sr_current_idx = -1;
-    //int us_ic_idx = -1;
-    //int ds_ic_idx = -1;
-    int dpc1_ic_idx = -1;
-    int dpc2_ic_idx = -1;
-
-    int cfg1_idx = -1;
-    int cfg2_idx = -1;
-    int cfg3_idx = -1;
-    int cfg4_idx = -1;
-    int cfg5_idx = -1;
-    int cfg6_idx = -1;
-    int cfg7_idx = -1;
-    int cfg8_idx = -1;
-    int cfg9_idx = -1;
-
 
     bool single_row_scan = false;
 
@@ -324,85 +306,39 @@ bool MDA_IO::load_spectra_volume(std::string path,
         real_t tmp_val;
         if (extra_override_values->count("ELT1") > 0)
         {
-            elt_idx = _find_2d_detector_index( extra_override_values->at("ELT1"), detector_num, tmp_val );
+            elt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ELT1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("ERT1") > 0)
         {
-            ert_idx = _find_2d_detector_index( extra_override_values->at("ERT1"), detector_num, tmp_val );
+            ert_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ERT1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("ICR1") > 0)
         {
-            incnt_idx = _find_2d_detector_index( extra_override_values->at("ICR1"), detector_num, tmp_val );
+            incnt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ICR1"), detector_num, tmp_val );
         }
         if (extra_override_values->count("OCR1") > 0)
         {
-            outcnt_idx = _find_2d_detector_index( extra_override_values->at("OCR1"), detector_num, tmp_val );
+            outcnt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("OCR1"), detector_num, tmp_val );
         }
         if(quantification_standard != nullptr)
         {
             if (extra_override_values->count("SRCURRENT") > 0)
             {
-                _find_2d_detector_index( extra_override_values->at("SRCURRENT"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, extra_override_values->at("SRCURRENT"), detector_num, tmp_val );
                 quantification_standard->sr_current(tmp_val);
             }
             if (extra_override_values->count("US_IC") > 0)
             {
-                _find_2d_detector_index( extra_override_values->at("US_IC"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, extra_override_values->at("US_IC"), detector_num, tmp_val );
                 quantification_standard->US_IC(tmp_val);
             }
             if (extra_override_values->count("DS_IC") > 0)
             {
-                _find_2d_detector_index( extra_override_values->at("DS_IC"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, extra_override_values->at("DS_IC"), detector_num, tmp_val );
                 quantification_standard->DS_IC(tmp_val);
             }
         }
-/*
-        if (extra_override_values->count("DPC1_IC") > 0)
-        {
-            dpc1_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC1_IC") );
-        }
-        if (extra_override_values->count("DPC2_IC") > 0)
-        {
-            dpc2_ic_idx = _find_2d_detector_index( extra_override_values->at("DPC2_IC") );
-        }
 
-        if (extra_override_values->count("CFG_1") > 0)
-        {
-            cfg1_idx = _find_2d_detector_index( extra_override_values->at("CFG_1") );
-        }
-        if (extra_override_values->count("CFG_2") > 0)
-        {
-            cfg2_idx = _find_2d_detector_index( extra_override_values->at("CFG_2") );
-        }
-        if (extra_override_values->count("CFG_3") > 0)
-        {
-            cfg3_idx = _find_2d_detector_index( extra_override_values->at("CFG_3") );
-        }
-        if (extra_override_values->count("CFG_4") > 0)
-        {
-            cfg4_idx = _find_2d_detector_index( extra_override_values->at("CFG_4") );
-        }
-        if (extra_override_values->count("CFG_5") > 0)
-        {
-            cfg5_idx = _find_2d_detector_index( extra_override_values->at("CFG_5") );
-        }
-        if (extra_override_values->count("CFG_6") > 0)
-        {
-            cfg6_idx = _find_2d_detector_index( extra_override_values->at("CFG_6") );
-        }
-        if (extra_override_values->count("CFG_7") > 0)
-        {
-            cfg7_idx = _find_2d_detector_index( extra_override_values->at("CFG_7") );
-        }
-        if (extra_override_values->count("CFG_8") > 0)
-        {
-            cfg8_idx = _find_2d_detector_index( extra_override_values->at("CFG_8") );
-        }
-        if (extra_override_values->count("CFG_9") > 0)
-        {
-            cfg9_idx = _find_2d_detector_index( extra_override_values->at("CFG_9") );
-        }
-*/
     }
     std::cout<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 

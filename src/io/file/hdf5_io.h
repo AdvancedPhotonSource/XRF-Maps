@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "hdf5.h"
 
 //Include mda data structures to save scalars
-#include "mda-load.h"
+#include "mda_io.h"
 
 #include "quantification_standard.h"
 
@@ -157,6 +157,7 @@ public:
     bool save_scalars(const std::string filename,
                       size_t detector_num,
                       struct mda_file *mda_scalars,
+                      std::unordered_map< std::string, std::string > *extra_override_values,
                       size_t row_idx_start=0,
                       int row_idx_end=-1,
                       size_t col_idx_start=0,
