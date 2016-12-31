@@ -8,3 +8,9 @@ X-ray fluorescence (XRF) imaging typically involves the creation and analysis of
  NetCDF : http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
  Eigen : http://eigen.tuxfamily.org/index.php?title=Main_Page
 
+#Compile
+ 1) mkdir build ; cd build
+ 2) cmake -D CMAKE_CXX_COMPILER=/usr/bin/g++ ../
+ 3) make
+
+ Libraries and executable stored in bin directory

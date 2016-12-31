@@ -59,7 +59,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" 
 
 include_directories(GCC_INCLUDE_DIR)
 
-set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
+set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 IF( NOT EIGEN3_INCLUDE_DIR )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 ENDIF()
