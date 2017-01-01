@@ -33,9 +33,7 @@
 #ifdef XDR_HACK
 #if defined XDR_LE || defined XDR_BE
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include "xdr_hack.h"
 
 int xdr_int8_t( FILE *fptr, int8_t *my_int8)
 {

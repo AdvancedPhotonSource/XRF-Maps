@@ -59,26 +59,35 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" 
 
 include_directories(GCC_INCLUDE_DIR)
 
-set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
-IF( NOT EIGEN3_INCLUDE_DIR )
-    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
+IF(MSVC)
+  set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
+  #set(NETCDF_INCLUDES "" CACHE PATH "NetCDF include folder")
+  #set(NETCDF_LIBRARIES "" CACHE FILEPATH "NetCDF library")
+  #set(HDF5_INCLUDES "" CACHE PATH "HDF5 include folder")
+  #set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
+ELSE()
+  set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 ENDIF()
 
-#set(NetCDF_INCLUDE "" CACHE PATH "NetCDF-C include folder")
-#set(NetCDF_LIB_DIR "" CACHE PATH "NetCDF-C lib folder")
 find_package(NetCDF REQUIRED)
 
 set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
-
 
 find_package (Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
 
+IF( NOT EIGEN3_INCLUDE_DIR )
+    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
+ENDIF()
+IF( NOT SZip_LIB_DIR )
+    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
+ENDIF()
+
 #find_package(VTK REQUIRED)
 #include(${VTK_USE_FILE})
 
-link_directories( ${HDF5_LIB} ${SZip_LIB_DIR} ${NetCDF_LIB_DIR} )
+link_directories( ${SZip_LIB_DIR} )
 
 # Set a default build configuration if none is specified. 'MinSizeRel' produces the smallest binaries
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -168,7 +177,7 @@ include_directories(src/core)
 
 # Visual Studio specific include and source
 if(MSVC)
-  set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c )
+  set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
   include_directories(src/support/direct)
 else()
   set(XDR_HACK  )
@@ -273,12 +282,11 @@ set(XRF_IO_HEADERS
 	src/io/file/csv_io.h
         #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
-	src/core/command_line_parser.h
 )
 
 add_library(libxrf_io SHARED
+	${XRF_IO_HEADERS}
 	${XDR_HACK}
-        ${XRF_IO_HEADERS}
 	src/support/mdautils-1.4.1/mda_loader.c
 	src/io/file/mda_io.cpp
 	src/io/file/hdf5_io.cpp
@@ -286,15 +294,12 @@ add_library(libxrf_io SHARED
 	src/io/file/csv_io.cpp
         #src/io/file/aps/aps_calibration_io.cpp
 	src/io/file/aps/aps_fit_params_import.cpp				 
-	src/core/main.cpp
 )
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
-        ${XDR_HACK}
-        ${XRF_IO_HEADERS}
-        ${libxrf_fit_HEADERS}
-        src/core/main.cpp
+	src/core/command_line_parser.h
+    src/core/main.cpp
 )
 
 # Don't add a 'lib' prefix to the shared library
@@ -321,16 +326,16 @@ if (WIN32)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Os /GL /MP /bigobj /DDYNAMIC_LIB")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
 
-	set(NETCDF_LIBRARIES netcdf.lib)
+#	set(NETCDF_LIBRARIES netcdf.lib)
 	set(SZIP_LIB szip.lib)
-	# Link against shared libraries
-#    target_link_libraries(libxrf_fit  )
-#	target_link_libraries(libxrf_fit  )
   endif()
 
   # .PYD file extension on Windows
   #set_target_properties(libxrf_fit PROPERTIES SUFFIX ".pyd")
  
+  target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+
 elseif (UNIX)
   # It's quite common to have multiple copies of the same Python version
   # installed on one's system. E.g.: one copy from the OS and another copy
@@ -347,9 +352,6 @@ elseif (UNIX)
 
   #set(NETCDF_LIB netcdf)
   set(SZIP_LIB sz)
-
-#  target_link_libraries(libxrf_fit optimized hdf5 optimized netcdf_c )
-#  target_link_libraries(libxrf_fit debug hdf5 debug netcdf_c )
 
   # Optimize for a small binary size
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)

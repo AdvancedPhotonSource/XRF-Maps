@@ -5,6 +5,6 @@ X-ray fluorescence (XRF) imaging typically involves the creation and analysis of
 
 # Libraries
  HDF5 : https://www.hdfgroup.org/downloads/
- NetCDF : http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+ NetCDF : http://www.unidata.ucar.edu/downloads/netcdf/index.jsp (Download http://www.unidata.ucar.edu/software/netcdf/docs/winbin.html)
  Eigen : http://eigen.tuxfamily.org/index.php?title=Main_Page
 

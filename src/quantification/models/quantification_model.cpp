@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 //debug
 #include <iostream>
