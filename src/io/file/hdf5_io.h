@@ -50,13 +50,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #define HDF5_IO_H
 
 #include <mutex>
+#include <list>
 #include "base_file_io.h"
 #include "base_dataset.h"
 #include "spectra_volume.h"
 #include "fit_element_map.h"
 #include "hdf5.h"
 
-//Include mda data structures to save scalars
+//Include mda data structures to save scalers
 #include "mda_io.h"
 
 #include "quantification_standard.h"
@@ -86,6 +87,7 @@ struct HDF5_Spectra_Layout
    unsigned int col_dim;
    unsigned int spectrum_dim;
 };
+
 
 struct HDF5_Range
 {
@@ -154,9 +156,9 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_scalars(const std::string filename,
+    bool save_scalers(const std::string filename,
                       size_t detector_num,
-                      struct mda_file *mda_scalars,
+                      struct mda_file *mda_scalers,
                       std::unordered_map< std::string, std::string > *extra_override_values,
                       size_t row_idx_start=0,
                       int row_idx_end=-1,
@@ -167,11 +169,25 @@ public:
 
 private:
 
-    //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalars)
 
-    void parse_group_info(hid_t h5file, hid_t id);
-    void parse_dataset_info(hid_t h5file, hid_t id);
-    void parse_attr_info(hid_t h5file, hid_t id);
+    //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
+
+    struct scaler_struct
+    {
+        scaler_struct(std::string name, int mda_idx_, int hdf_idx_)
+        {
+             hdf_name = name;
+             mda_idx = mda_idx_;
+             hdf_idx = hdf_idx_;
+        }
+        int mda_idx;
+        int hdf_idx;
+        std::string hdf_name;
+    };
+
+    //void _parse_group_info(hid_t h5file, hid_t id);
+    //void _parse_dataset_info(hid_t h5file, hid_t id);
+    //void _parse_attr_info(hid_t h5file, hid_t id);
 
     std::mutex _mutex;
 

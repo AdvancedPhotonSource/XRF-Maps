@@ -125,7 +125,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          size_t detector_num,
                          std::unordered_map< std::string, std::string > *extra_override_values,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
-                         bool save_scalars);
+                         bool save_scalers);
 
 // ----------------------------------------------------------------------------
 
@@ -440,7 +440,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          size_t detector_num,
                          std::unordered_map< std::string, std::string > *extra_override_values,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
-                         bool save_scalars)
+                         bool save_scalers)
 {
 
     //Dataset importer
@@ -498,11 +498,11 @@ bool load_spectra_volume(std::string dataset_directory,
         }
 
     }
-    if(save_scalars)
+    if(save_scalers)
     {
         std::string str_detector_num = std::to_string(detector_num);
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        hdf5_io.save_scalars(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
+        hdf5_io.save_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
     }
     mda_io.unload();
 
@@ -839,6 +839,13 @@ bool perform_quantification(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+void sort_dataset_files_by_size(std::vector<std::string> *dataset_files)
+{
+
+}
+
+// ----------------------------------------------------------------------------
+
 std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
 {
     std::vector<std::string> dataset_files;
@@ -884,6 +891,7 @@ void help()
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
+    std::cout<<"--optimize-fit-override-params : Integrate the 8 largest mda datasets and fit with multiple params \n"<<std::endl;
     std::cout<<"Fitting Routines: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
@@ -893,6 +901,12 @@ void help()
     std::cout<<"Dataset: "<<std::endl;
     std::cout<<"--dir : Dataset directory "<<std::endl;
     std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
+    /*
+    std::cout<<"Legacy Macros: "<<std::endl;
+    std::cout<<"-A: Run roi and roi_plus"<<std::endl;
+    std::cout<<"-B: Run optimize-fit-override-params"<<std::endl;
+    std::cout<<"-C: Run matrix"<<std::endl;
+    */
     std::cout<<"Examples: "<<std::endl;
     std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
     std::cout<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
@@ -912,6 +926,7 @@ int main(int argc, char *argv[])
     std::vector<std::string> dataset_files;
     std::vector<Processing_Type> proc_types;
     std::string quant_standard_filename = "";
+    bool optimize_fit_override_params = false;
 
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
@@ -969,6 +984,11 @@ int main(int argc, char *argv[])
     if ( clp.option_exists("--quantify-with") )
     {
         quant_standard_filename = clp.get_option("--quantify-with");
+    }
+
+    if( clp.option_exists("--optimize-fit-override-params") )
+    {
+        optimize_fit_override_params = true;
     }
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
@@ -1053,6 +1073,22 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    if(optimize_fit_override_params)
+    {
+        std::vector<std::string> largest_dataset_files;
+        // find all files in the dataset
+        largest_dataset_files = find_all_dataset_files(dataset_dir);
+        if (largest_dataset_files.size() == 0)
+        {
+            std::cout<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
+            return -1;
+        }
+        sort_dataset_files_by_size(&largest_dataset_files);
+        //integrate and fit with param_optimiized
+        //optimize_integrated_dataset(dataset_dir, dataset_file, Processing_Type::GAUSS_TAILS);
+        //save new override.txt for each detector
+    }
+
     if (quant_standard_filename.length() > 0)
     {
         perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, detector_num_start, detector_num_end);
@@ -1062,8 +1098,6 @@ int main(int argc, char *argv[])
     {
         process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, detector_num_start, detector_num_end);
     }
-
-    //optimize_integrated_dataset(dataset_dir, dataset_file, Processing_Type::GAUSS_TAILS);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
