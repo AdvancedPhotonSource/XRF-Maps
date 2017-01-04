@@ -103,6 +103,10 @@ public:
 
     int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);
 
+    int get_multiplied_dims(std::string path);
+
+    int get_rank_and_dims(std::string path, int* dims);
+
 private:
 
     void _load_detector_meta_data(data_struct::xrf::Detector * detector);

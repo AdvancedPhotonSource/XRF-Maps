@@ -267,6 +267,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         if(hasNetCDF)
         {
             vol->resize(header->dimensions[0], header->dimensions[1], 2048);
+            delete header;
             return true;
         }
         else
@@ -282,7 +283,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
             else
             {
                 //if not then we don't know what is dataset is.
-                 return false;
+                delete header;
+                return false;
             }
         }
     }
@@ -296,8 +298,11 @@ bool MDA_IO::load_spectra_volume(std::string path,
     else
     {
         std::cout<<" Error: no support for data rank "<< header->data_rank <<std::endl;
+        delete header;
         return false;
     }
+
+    delete header;
 
     //_load_detector_meta_data(detector);
 
@@ -372,33 +377,36 @@ bool MDA_IO::load_spectra_volume(std::string path,
                     cols = _mda_file->scan->sub_scans[i]->last_point;
                 }
 */
-                if(elt_idx > -1)
-                {
-                    //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
-                    (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
-                }
-                if(ert_idx > -1)
-                {
-                    //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
-                    (*vol)[i][j].elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
-                }
-                if(incnt_idx > -1)
-                {
-                    //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
-                    (*vol)[i][j].input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
-                }
-                if(outcnt_idx > -1)
-                {
-                    //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
-                    (*vol)[i][j].output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
-                }
-                if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
-                {
-                    (*vol)[i][j].recalc_elapsed_lifetime();
-                }
+
 
                 if (single_row_scan)
                 {
+                    if(elt_idx > -1)
+                    {
+                        //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
+                        (*vol)[i][j].elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
+                    }
+                    if(ert_idx > -1)
+                    {
+                        //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
+                        (*vol)[i][j].elapsed_realtime(_mda_file->scan->detectors_data[ert_idx][j]);
+                    }
+                    if(incnt_idx > -1)
+                    {
+                        //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
+                        (*vol)[i][j].input_counts(_mda_file->scan->detectors_data[incnt_idx][j]);
+                    }
+                    if(outcnt_idx > -1)
+                    {
+                        //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
+                        (*vol)[i][j].output_counts(_mda_file->scan->detectors_data[outcnt_idx][j]);
+                    }
+                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                    {
+                        (*vol)[i][j].recalc_elapsed_lifetime();
+                    }
+
+
                     for(size_t k=0; k<spectra; k++)
                     {
 
@@ -407,6 +415,32 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 }
                 else
                 {
+                    if(elt_idx > -1)
+                    {
+                        //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
+                        (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                    }
+                    if(ert_idx > -1)
+                    {
+                        //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
+                        (*vol)[i][j].elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
+                    }
+                    if(incnt_idx > -1)
+                    {
+                        //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
+                        (*vol)[i][j].input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
+                    }
+                    if(outcnt_idx > -1)
+                    {
+                        //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
+                        (*vol)[i][j].output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
+                    }
+                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                    {
+                        (*vol)[i][j].recalc_elapsed_lifetime();
+                    }
+
+
                     for(size_t k=0; k<spectra; k++)
                     {
                         (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
@@ -423,8 +457,83 @@ bool MDA_IO::load_spectra_volume(std::string path,
         return false;
     }
 
-
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+int MDA_IO::get_multiplied_dims(std::string path)
+{
+    int f_size = -1;
+
+
+    std::FILE *fptr = std::fopen(path.c_str(), "rb");
+    struct mda_header *header = mda_header_load(fptr);
+
+    std::fclose(fptr);
+
+    if (header == nullptr)
+    {
+        std::cout<<"Unable to open mda file "<< path <<std::endl;
+        return f_size;
+    }
+    else if(header->data_rank == 1)
+    {
+        f_size = header->dimensions[0];
+    }
+    else if(header->data_rank == 2 || header->data_rank == 3)
+    {
+        f_size = header->dimensions[0] * header->dimensions[1];
+    }
+    else
+    {
+        std::cout<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
+    }
+
+    delete header;
+
+    return f_size;
+}
+
+//-----------------------------------------------------------------------------
+
+int MDA_IO::get_rank_and_dims(std::string path, int* dims)
+{
+
+    std::FILE *fptr = std::fopen(path.c_str(), "rb");
+    struct mda_header *header = mda_header_load(fptr);
+    int rank = -1;
+    std::fclose(fptr);
+
+    if (header == nullptr)
+    {
+        std::cout<<"Unable to open mda file "<< path <<std::endl;
+        return -1;
+    }
+    else if(header->data_rank == 1)
+    {
+        dims[0] = header->dimensions[0];
+    }
+    else if(header->data_rank == 2)
+    {
+        dims[0] = header->dimensions[0];
+        dims[1] = header->dimensions[1];
+    }
+    else if(header->data_rank == 3)
+    {
+        dims[0] = header->dimensions[0];
+        dims[1] = header->dimensions[1];
+        dims[2] = header->dimensions[1];
+    }
+    else
+    {
+        std::cout<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
+    }
+    rank = header->data_rank;
+
+    delete header;
+
+    return rank;
 }
 
 //-----------------------------------------------------------------------------

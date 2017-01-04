@@ -106,10 +106,17 @@ using namespace std::placeholders; //for _1, _2,
 
 enum Processing_Type { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
+struct file_name_size
+{
+    file_name_size(std::string name, int size) { filename = name; total_rank_size = size;}
+    std::string filename;
+    int total_rank_size;
+};
+
 const std::unordered_map<int, std::string> save_loc_map = {
     {ROI, "ROI"},
     {GAUSS_TAILS, "Params"},
-    {GAUSS_MATRIX, "Matrix"},
+    {GAUSS_MATRIX, "Fitted"},
     {SVD, "SVD"},
     {NNLS, "NNLS"}
 };
@@ -203,6 +210,8 @@ bool save_volume(std::string full_path,
 
     return true;
 }
+
+// ----------------------------------------------------------------------------
 
 fitting::routines::Base_Fit_Routine * generate_fit_routine(Processing_Type proc_type)
 {
@@ -509,17 +518,102 @@ bool load_spectra_volume(std::string dataset_directory,
     return true;
 }
 
+// ----------------------------------------------------------------------------
+
+bool load_and_integrate_spectra_volume(std::string dataset_directory,
+                                       std::string dataset_file,
+                                       data_struct::xrf::Spectra *integrated_spectra,
+                                       size_t detector_num,
+                                       std::unordered_map< std::string, std::string > *extra_override_values)
+{
+    //Dataset importer
+    io::file::MDA_IO mda_io;
+    io::file::HDF5_IO hdf5_io;
+    io::file::NetCDF_IO netcdf_io;
+    //data_struct::xrf::Detector detector;
+    std::string tmp_dataset_file = dataset_file;
+    bool ret_val = true;
+
+    std::cout<<"load_spectra_volume_and_integrate(): Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+
+    //check if we have a netcdf file associated with this dataset.
+    tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
+    std::ifstream file_io_0(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
+    std::ifstream file_io_hdf(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5");
+    bool hasNetcdf = file_io_0.is_open();
+    bool hasHdf = file_io_hdf.is_open();
+    if(hasNetcdf)
+        file_io_0.close();
+    if(hasHdf)
+        file_io_hdf.close();
+
+    //load spectra
+    if (false == hasNetcdf && false == hasHdf)
+    {
+        data_struct::xrf::Spectra_Volume spectra_volume;
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf, extra_override_values, nullptr);
+        *integrated_spectra = spectra_volume.integrate();
+        mda_io.unload();
+    }
+    else
+    {
+        int rank;
+        int dims[10];
+        dims[0] = 0;
+        rank = mda_io.get_rank_and_dims(dataset_directory+"mda/"+dataset_file, &dims[0]);
+        if(rank == 3)
+            integrated_spectra->resize(dims[2]);
+        else
+            integrated_spectra->resize(2048);
+
+
+        if(hasNetcdf)
+        {
+            dataset_file = dataset_file.substr(0, dataset_file.size()-4);
+            std::ifstream file_io(dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc");
+            if(file_io.is_open())
+            {
+                file_io.close();
+                std::string full_filename;
+                for(size_t i=0; i<dims[0]; i++)
+                {
+                    data_struct::xrf::Spectra_Line spectra_line;
+                    full_filename = dataset_directory + "flyXRF/" + dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
+                    std::cout<<"Loading file "<<full_filename<<std::endl;
+                    netcdf_io.load_spectra_line(full_filename, detector_num, &spectra_line);
+                    for(int k=0; k<spectra_line.size(); k++)
+                    {
+                        *integrated_spectra += spectra_line[k];
+                    }
+                }
+            }
+            else
+            {
+                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc"<<std::endl;
+                //return false;
+            }
+        }
+        else if (hasHdf)
+        {
+            ret_val = hdf5_io.load_and_integrate_spectra_volume(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5", detector_num, integrated_spectra);
+        }
+
+    }
+
+
+    return ret_val;
+}
 
 // ----------------------------------------------------------------------------
 
 bool optimize_integrated_dataset(std::string dataset_directory,
-                                 std::vector<Processing_Type> proc_types,
-                                 data_struct::xrf::Quantification_Standard * quantification_standard,
-                                 size_t detector_num)
+                                 std::string  dataset_filename,
+                                 size_t detector_num,
+                                 Processing_Type proc_type,
+                                 data_struct::xrf::Fit_Parameters* out_fitp)
 {
 
-    //Spectra of quantification datasaet
-    data_struct::xrf::Spectra_Volume spectra_volume;
+    data_struct::xrf::Spectra spectra;
     //Fit parameter updates from user
     data_struct::xrf::Fit_Parameters override_fit_params;
     //Output of fits for elements specified
@@ -536,49 +630,63 @@ bool optimize_integrated_dataset(std::string dataset_directory,
     energy_range.min = 0;
 
     //load override parameters
-    load_override_params(dataset_directory, detector_num, &override_fit_params, &elements_to_fit, &extra_override_values);
+    load_override_params(dataset_directory, -1, &override_fit_params, &elements_to_fit, &extra_override_values);
 
     //load the quantification standard dataset
-    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &extra_override_values, nullptr, false) )
+    if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &spectra, detector_num, &extra_override_values) )
     {
-        std::cout<<"Error in optimize_integrated_dataset loading dataset for detector"<<detector_num<<std::endl;
+        std::cout<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
         return false;
     }
 
     //First we integrate the spectra and get the elemental counts
-    data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
-    energy_range.max = integrated_spectra.size() -1;
+ //   data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
+    energy_range.max = spectra.size() -1;
 
-    for(auto proc_type : proc_types)
+
+    //Fitting routines
+    fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
+
+    data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
+
+    //reset model fit parameters to defaults
+    model.reset_to_default_fit_params();
+    //Update fit parameters by override values
+    model.update_fit_params_values(override_fit_params);
+    //Initialize the fit routine
+    fit_routine->initialize(&model, &elements_to_fit, energy_range);
+    //Fit the spectra saving the element counts in element_fit_count_dict
+    counts_dict = fit_routine->fit_spectra(&model, &spectra, &elements_to_fit);
+    //Get the resulting fit parameters from the fit
+    *out_fitp = model.fit_parameters();
+
+    if (fit_routine != nullptr)
     {
-        //Fitting routines
-        fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
+        delete fit_routine;
+        fit_routine = nullptr;
+    }
 
-        data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
-
-        //reset model fit parameters to defaults
-        model.reset_to_default_fit_params();
-        //Update fit parameters by override values
-        model.update_fit_params_values(override_fit_params);
-        //Initialize the fit routine
-        fit_routine->initialize(&model, &elements_to_fit, energy_range);
-        //Fit the spectra saving the element counts in element_fit_count_dict
-        counts_dict = fit_routine->fit_spectra(&model, &integrated_spectra, &elements_to_fit);
-        //Get the resulting fit parameters from the fit
-        data_struct::xrf::Fit_Parameters result_fits = model.fit_parameters();
-
-        //get new detector energy offset, slope, and quadratic
-
-        //hdf5_io.save_element_fits(full_path, save_loc, element_counts);
-
-        if (fit_routine != nullptr)
-        {
-            delete fit_routine;
-            fit_routine = nullptr;
-        }
-
-    }// end for
     return true;
+
+}
+
+// ----------------------------------------------------------------------------
+
+void generate_optimal_params(std::string dataset_directory,
+                             std::vector<std::string> dataset_files,
+                             ThreadPool* tp,
+                             size_t detector_num_start,
+                             size_t detector_num_end)
+{
+
+    for(auto &itr : dataset_files)
+    {
+        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+        {
+            data_struct::xrf::Fit_Parameters out_fitp;
+            optimize_integrated_dataset(dataset_directory, itr, detector_num, Processing_Type::GAUSS_TAILS, &out_fitp);
+        }
+    }
 
 }
 
@@ -839,8 +947,35 @@ bool perform_quantification(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-void sort_dataset_files_by_size(std::vector<std::string> *dataset_files)
+bool compare_file_size (const file_name_size& first, const file_name_size& second)
 {
+    return ( first.total_rank_size > second.total_rank_size );
+}
+
+// ----------------------------------------------------------------------------
+
+void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files)
+{
+
+    io::file::MDA_IO mda_io;
+
+    std::list<file_name_size> f_list;
+
+    for (auto &itr : *dataset_files)
+    {
+        std::string full_path = dataset_directory + "/mda/"+itr;
+        int fsize = mda_io.get_multiplied_dims(full_path);
+        f_list.push_back(file_name_size(itr, fsize));
+    }
+
+    f_list.sort(compare_file_size);
+
+    dataset_files->clear();
+
+    for(auto &itr : f_list)
+    {
+        dataset_files->push_back(itr.filename);
+    }
 
 }
 
@@ -905,7 +1040,7 @@ void help()
     std::cout<<"Legacy Macros: "<<std::endl;
     std::cout<<"-A: Run roi and roi_plus"<<std::endl;
     std::cout<<"-B: Run optimize-fit-override-params"<<std::endl;
-    std::cout<<"-C: Run matrix"<<std::endl;
+    std::cout<<"-C: Run roi and matrix"<<std::endl;
     */
     std::cout<<"Examples: "<<std::endl;
     std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
@@ -1029,7 +1164,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (proc_types.size() == 0)
+    if (proc_types.size() == 0 && optimize_fit_override_params == false)
     {
         help();
         return -1;
@@ -1075,18 +1210,15 @@ int main(int argc, char *argv[])
 
     if(optimize_fit_override_params)
     {
-        std::vector<std::string> largest_dataset_files;
-        // find all files in the dataset
-        largest_dataset_files = find_all_dataset_files(dataset_dir);
-        if (largest_dataset_files.size() == 0)
+
+        if (dataset_files.size() == 0)
         {
             std::cout<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
             return -1;
         }
-        sort_dataset_files_by_size(&largest_dataset_files);
-        //integrate and fit with param_optimiized
-        //optimize_integrated_dataset(dataset_dir, dataset_file, Processing_Type::GAUSS_TAILS);
-        //save new override.txt for each detector
+        sort_dataset_files_by_size(dataset_dir, &dataset_files);
+
+        generate_optimal_params(dataset_dir, dataset_files, &tp, detector_num_start, detector_num_end);
     }
 
     if (quant_standard_filename.length() > 0)

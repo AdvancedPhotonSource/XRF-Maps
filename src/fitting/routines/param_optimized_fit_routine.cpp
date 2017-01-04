@@ -255,6 +255,8 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
             counts_dict[el_itr.first] = value;
         }
 
+        model->update_fit_params_values(fit_params);
+
         //check if we are saving the number of iterations and save if so
         if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
         {
