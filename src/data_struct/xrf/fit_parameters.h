@@ -228,6 +228,8 @@ struct DLL_EXPORT Fit_Param
         opt_array_index = -1;
     }
 
+    std::string bound_type_str();
+
     std::string name;
     real_t min_val;
     real_t max_val;

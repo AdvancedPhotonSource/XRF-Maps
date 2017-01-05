@@ -57,6 +57,33 @@ namespace data_struct
 namespace xrf
 {
 
+std::string Fit_Param::bound_type_str()
+{
+    std::string str_bound_type = " ";
+    switch (bound_type)
+    {
+        case data_struct::xrf::NOT_INIT:
+            str_bound_type = "Not Initialized";
+            break;
+        case data_struct::xrf::FIXED:
+            str_bound_type = "Fixed";
+            break;
+        case data_struct::xrf::LIMITED_LO_HI:
+            str_bound_type = "LIMITED LO HI";
+            break;
+        case data_struct::xrf::LIMITED_LO:
+            str_bound_type = "LIMITED LO";
+            break;
+        case data_struct::xrf::LIMITED_HI:
+            str_bound_type = "LIMITED HI";
+            break;
+        case data_struct::xrf::FIT:
+            str_bound_type = "FIT";
+            break;
+    }
+    return str_bound_type;
+}
+
 Fit_Parameters::Fit_Parameters(const Fit_Parameters& fit_pars)
 {
     _params.clear();
