@@ -1287,16 +1287,18 @@ int main(int argc, char *argv[])
         generate_optimal_params(dataset_dir, dataset_files, &tp, detector_num_start, detector_num_end);
     }
 
-    if (quant_standard_filename.length() > 0)
+    if(proc_types.size() > 0)
     {
-        perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, detector_num_start, detector_num_end);
-    }
+        if (quant_standard_filename.length() > 0)
+        {
+            perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, detector_num_start, detector_num_end);
+        }
 
-    for(std::string dataset_file : dataset_files)
-    {
-        process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, detector_num_start, detector_num_end);
+        for(std::string dataset_file : dataset_files)
+        {
+            process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, detector_num_start, detector_num_end);
+        }
     }
-
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "\n\n ---- Total elapsed time: " << elapsed_seconds.count() << "s -----\n\n";

@@ -78,11 +78,33 @@ bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Par
     if(file_stream.is_open())
     {
         file_stream<<"Optimized Fit Parameters"<<std::endl;
-        file_stream<<"Name,Value"<<std::endl;
+        file_stream<<"Name,Value,Fixed,Min,Max"<<std::endl;
 
         for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
         {
-            file_stream<<itr->first<<","<<itr->second.value<<std::endl;
+            std::string str_bound_type = " ";
+            switch (itr->second.bound_type)
+            {
+                case data_struct::xrf::NOT_INIT:
+                    str_bound_type = "Not Initialized";
+                    break;
+                case data_struct::xrf::FIXED:
+                    str_bound_type = "Fixed";
+                    break;
+                case data_struct::xrf::LIMITED_LO_HI:
+                    str_bound_type = "LIMITED LO HI";
+                    break;
+                case data_struct::xrf::LIMITED_LO:
+                    str_bound_type = "LIMITED LO";
+                    break;
+                case data_struct::xrf::LIMITED_HI:
+                    str_bound_type = "LIMITED HI";
+                    break;
+                case data_struct::xrf::FIT:
+                    str_bound_type = "FIT";
+                    break;
+            }
+            file_stream<<itr->first<<","<<itr->second.value<<","<<str_bound_type<<","<<itr->second.min_val<<","<<itr->second.max_val<<std::endl;
         }
         file_stream.close();
     }
