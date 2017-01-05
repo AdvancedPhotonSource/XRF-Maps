@@ -942,7 +942,7 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
 
     dset_rt_id = H5Dcreate (spec_grp_id, "Elapsed_Realtime", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     dset_lt_id = H5Dcreate (spec_grp_id, "Elapsed_Livetime", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    incnt_dset_id = H5Dcreate (spec_grp_id, "Outpout_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    incnt_dset_id = H5Dcreate (spec_grp_id, "Output_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     outcnt_dset_id = H5Dcreate (spec_grp_id, "Input_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     H5Sselect_hyperslab (memoryspace_time_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);

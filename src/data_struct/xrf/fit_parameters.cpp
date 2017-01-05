@@ -84,6 +84,18 @@ std::vector<real_t> Fit_Parameters::to_array()
     return arr;
 }
 
+void Fit_Parameters::moving_average_with(Fit_Parameters fit_params)
+{
+    for(const auto &itr : _params)
+    {
+        if(fit_params.contains(itr.first))
+        {
+            _params[itr.first].value += fit_params[itr.first].value;
+            _params[itr.first].value *= 0.5;;
+        }
+    }
+}
+
 void Fit_Parameters::from_array(std::vector<real_t> arr)
 {
     from_array(&arr[0], arr.size());

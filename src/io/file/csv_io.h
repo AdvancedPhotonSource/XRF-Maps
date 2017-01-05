@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define CSV_IO_H
 
 #include "element_info.h"
+#include "fit_parameters.h"
 
 namespace io
 {
@@ -73,6 +74,8 @@ public:
      * @return
      */
     ~CSV_IO();
+
+    bool save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Parameters fit_params);
 
 private:
 

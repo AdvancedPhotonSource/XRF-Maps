@@ -72,6 +72,26 @@ CSV_IO::~CSV_IO()
 
 }
 
+bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Parameters fit_params)
+{
+    std::ofstream file_stream(fullpath);
+    if(file_stream.is_open())
+    {
+        file_stream<<"Optimized Fit Parameters"<<std::endl;
+        file_stream<<"Name,Value"<<std::endl;
+
+        for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        {
+            file_stream<<itr->first<<","<<itr->second.value<<std::endl;
+        }
+        file_stream.close();
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
 
 bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_Info_Map *element_map)
 {

@@ -100,6 +100,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "command_line_parser.h"
 
+
 using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
@@ -111,6 +112,15 @@ struct file_name_size
     file_name_size(std::string name, int size) { filename = name; total_rank_size = size;}
     std::string filename;
     int total_rank_size;
+};
+
+struct file_name_fit_params
+{
+    std::string dataset_dir;
+    std::string dataset_filename;
+    int detector_num;
+    data_struct::xrf::Fit_Parameters fit_params;
+    bool success;
 };
 
 const std::unordered_map<int, std::string> save_loc_map = {
@@ -209,6 +219,31 @@ bool save_volume(std::string full_path,
     delete spectra_volume;
 
     return true;
+}
+
+// ----------------------------------------------------------------------------
+
+void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
+{
+    io::file::CSV_IO csv_io;
+    std::string full_path = file_and_fit_params.dataset_dir+"/output/"+file_and_fit_params.dataset_filename+std::to_string(file_and_fit_params.detector_num)+".csv";
+    std::cout<<"save_optimized_fit_params(): "<<full_path<<std::endl;
+    csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
+}
+
+// ----------------------------------------------------------------------------
+
+void save_averaged_fit_params(std::string dataset_dir, std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
+{
+    io::file::CSV_IO csv_io;
+    int i =0;
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        std::string full_path = dataset_dir+"/avrg_maps_fit_override_parameters.txt" + std::to_string(detector_num);
+        std::cout<<"save_averaged_fit_params(): "<<full_path<<std::endl;
+        csv_io.save_fit_parameters(full_path, fit_params_avgs[i] );
+        i++;
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -536,6 +571,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     std::cout<<"load_spectra_volume_and_integrate(): Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
 
+    //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
+
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
     std::ifstream file_io_0(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
@@ -606,19 +643,26 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-bool optimize_integrated_dataset(std::string dataset_directory,
-                                 std::string  dataset_filename,
-                                 size_t detector_num,
-                                 Processing_Type proc_type,
-                                 data_struct::xrf::Fit_Parameters* out_fitp)
+ struct file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
+                                                            std::string  dataset_filename,
+                                                            size_t detector_num)
 {
 
     data_struct::xrf::Spectra spectra;
     //Fit parameter updates from user
     data_struct::xrf::Fit_Parameters override_fit_params;
+    //Optimized fit parameters
+    data_struct::xrf::Fit_Parameters optimized_fit_params;
     //Output of fits for elements specified
     data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
     std::unordered_map< std::string, std::string > extra_override_values;
+
+    //return structure
+    struct file_name_fit_params ret_struct;
+
+    ret_struct.dataset_dir = dataset_directory;
+    ret_struct.dataset_filename = dataset_filename;
+    ret_struct.detector_num = detector_num;
 
     //
     std::unordered_map<std::string, real_t> counts_dict;
@@ -636,7 +680,8 @@ bool optimize_integrated_dataset(std::string dataset_directory,
     if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &spectra, detector_num, &extra_override_values) )
     {
         std::cout<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
-        return false;
+        ret_struct.success = false;
+        return ret_struct;
     }
 
     //First we integrate the spectra and get the elemental counts
@@ -645,28 +690,22 @@ bool optimize_integrated_dataset(std::string dataset_directory,
 
 
     //Fitting routines
-    fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
+    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
+    fit_routine.set_optimizer(&lmfit_optimizer);
 
-    data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
+    //data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
     //Update fit parameters by override values
     model.update_fit_params_values(override_fit_params);
     //Initialize the fit routine
-    fit_routine->initialize(&model, &elements_to_fit, energy_range);
+    fit_routine.initialize(&model, &elements_to_fit, energy_range);
     //Fit the spectra saving the element counts in element_fit_count_dict
-    counts_dict = fit_routine->fit_spectra(&model, &spectra, &elements_to_fit);
-    //Get the resulting fit parameters from the fit
-    *out_fitp = model.fit_parameters();
+    ret_struct.fit_params = fit_routine.fit_spectra_parameters(&model, &spectra, &elements_to_fit);
+    ret_struct.success = true;
 
-    if (fit_routine != nullptr)
-    {
-        delete fit_routine;
-        fit_routine = nullptr;
-    }
-
-    return true;
+    return ret_struct;
 
 }
 
@@ -678,15 +717,42 @@ void generate_optimal_params(std::string dataset_directory,
                              size_t detector_num_start,
                              size_t detector_num_end)
 {
+    bool first = true;
+    std::queue<std::future<struct file_name_fit_params> > job_queue;
+
+    std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
+    fit_params_avgs.resize(detector_num_end - detector_num_start + 1);
 
     for(auto &itr : dataset_files)
     {
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            data_struct::xrf::Fit_Parameters out_fitp;
-            optimize_integrated_dataset(dataset_directory, itr, detector_num, Processing_Type::GAUSS_TAILS, &out_fitp);
+            //data_struct::xrf::Fit_Parameters out_fitp;
+            //out_fitp = optimize_integrated_fit_params(dataset_directory, itr, detector_num);
+            job_queue.emplace( tp->enqueue(optimize_integrated_fit_params, dataset_directory, itr, detector_num) );
         }
     }
+
+
+    while(!job_queue.empty())
+    {
+        auto ret = std::move(job_queue.front());
+        job_queue.pop();
+        struct file_name_fit_params f_struct = ret.get();
+        if(f_struct.success)
+        {
+            if(first)
+            {
+                fit_params_avgs[f_struct.detector_num] = f_struct.fit_params;
+            }
+            else
+            {
+                fit_params_avgs[f_struct.detector_num].moving_average_with(f_struct.fit_params);
+            }
+            save_optimized_fit_params(f_struct);
+        }
+    }
+    save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
 
 }
 

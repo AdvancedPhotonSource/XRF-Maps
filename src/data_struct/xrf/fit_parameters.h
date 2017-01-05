@@ -258,6 +258,12 @@ public:
 
     void add_parameter(std::string name, Fit_Param param);
 
+    inline auto begin() { return _params.begin(); }
+
+    inline auto end() { return _params.end(); }
+
+    void moving_average_with(Fit_Parameters fit_params);
+
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 
     std::vector<real_t> to_array();

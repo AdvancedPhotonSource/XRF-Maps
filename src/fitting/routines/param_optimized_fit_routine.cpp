@@ -229,7 +229,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
-    //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0
+    //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
     if(spectra->sum() == 0)
     {
 
@@ -255,7 +255,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
             counts_dict[el_itr.first] = value;
         }
 
-        model->update_fit_params_values(fit_params);
+        //model->update_fit_params_values(fit_params);
 
         //check if we are saving the number of iterations and save if so
         if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
@@ -266,6 +266,67 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 
     return counts_dict;
 }
+
+// ----------------------------------------------------------------------------
+//TODO: FIX SO this isn't a repeat function
+Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
+                                                        const Spectra * const spectra,
+                                                        const Fit_Element_Map_Dict * const elements_to_fit)
+{
+    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
+    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
+    // fitp.g.xmin = MIN_ENERGY_TO_FIT
+    // fitp.g.xmax = MAX_ENERGY_TO_FIT
+    /*
+    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
+    */
+
+    std::unordered_map<std::string, real_t> counts_dict;
+    Fit_Parameters fit_params = model->fit_parameters();
+    //Add fit param for number of iterations
+    fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
+    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    _calc_and_update_coherent_amplitude(&fit_params, spectra);
+
+    //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
+    if(spectra->sum() == 0)
+    {
+
+        fit_params.set_all_value(-10.0, E_Bound_Type::FIT);
+
+        for (auto el_itr : *elements_to_fit)
+        {
+            counts_dict[el_itr.first] = -10.0;
+        }
+    }
+    else
+    {
+        if(_optimizer != nullptr)
+        {
+            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model);
+
+            //Save the counts from fit parameters into fit count dict for each element
+            for (auto el_itr : *elements_to_fit)
+            {
+                real_t value =  fit_params.at(el_itr.first).value;
+                //convert from log10
+                value = std::pow(10.0, value);
+                counts_dict[el_itr.first] = value;
+            }
+
+            //model->update_fit_params_values(fit_params);
+
+            //check if we are saving the number of iterations and save if so
+            if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
+            {
+                counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params.at(data_struct::xrf::STR_NUM_ITR).value;
+            }
+        }
+    }
+
+    return fit_params;
+}
+
 
 // ----------------------------------------------------------------------------
 
