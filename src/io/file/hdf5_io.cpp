@@ -833,6 +833,9 @@ bool HDF5_IO::end_save_seq(const hid_t file_id)
 bool HDF5_IO::save_spectra_volume(const hid_t file_id,
                                   const std::string path,
                                   data_struct::xrf::Spectra_Volume * spectra_volume,
+                                  real_t energy_offset,
+                                  real_t energy_slope,
+                                  real_t energy_quad,
                                   size_t row_idx_start,
                                   int row_idx_end,
                                   size_t col_idx_start,
@@ -1029,6 +1032,42 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     H5Dclose(dset_id);
     H5Sclose(dataspace_id);
 
+    //save energy vector
+    std::vector<real_t> out_vec;
+    data_struct::xrf::gen_energy_vector(spectra.size(), energy_offset, energy_slope, &out_vec);
+    count[0] = out_vec.size();
+    memoryspace_id = H5Screate_simple(1, count, NULL);
+    filespace_id = H5Screate_simple(1, count, NULL);
+    dataspace_id = H5Screate_simple (1, count, NULL);
+    dset_id = H5Dcreate (spec_grp_id, "Energy", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    offset[0] = 0;
+    H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&out_vec[0]);
+    H5Dclose(dset_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(filespace_id);
+    H5Sclose(dataspace_id);
+
+    //save energy calibration
+    count[0] = 3;
+    dataspace_id = H5Screate_simple (1, count, NULL);
+    filespace_id = H5Screate_simple (1, count, NULL);
+    dset_id = H5Dcreate (spec_grp_id, "Energy_Calibration", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    count[0] = 1;
+    memoryspace_id = H5Screate_simple(1, count, NULL);
+    offset[0] = 0;
+    H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&energy_offset);
+    offset[0] = 1;
+    H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&energy_slope);
+    offset[0] = 2;
+    H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&energy_quad);
+    H5Dclose(dset_id);
+    H5Sclose(filespace_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_id);
 
     //save file version
     save_val = HDF5_SAVE_VERSION;

@@ -143,6 +143,8 @@ protected:
 DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
 
 
+DLL_EXPORT void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec);
+
 } //namespace xrf
 
 } //namespace data_struct

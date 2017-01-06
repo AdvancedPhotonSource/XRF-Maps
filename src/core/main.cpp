@@ -199,6 +199,9 @@ bool save_results(std::string full_path,
 bool save_volume(std::string full_path,
                  data_struct::xrf::Quantification_Standard * quantification_standard,
                  data_struct::xrf::Spectra_Volume *spectra_volume,
+                 real_t energy_offset,
+                 real_t energy_slope,
+                 real_t energy_quad,
                  std::queue<std::future<bool> >* job_queue)
 {
     //wait for queue to finish processing
@@ -212,7 +215,7 @@ bool save_volume(std::string full_path,
     io::file::HDF5_IO hdf5_io;
     hid_t f_id = hdf5_io.start_save_seq(full_path);
     hdf5_io.save_quantification(f_id, quantification_standard);
-    hdf5_io.save_spectra_volume(f_id, "mca_arr", spectra_volume);
+    hdf5_io.save_spectra_volume(f_id, "mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
     hdf5_io.end_save_seq(f_id);
 
     delete job_queue;
@@ -651,8 +654,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     data_struct::xrf::Spectra spectra;
     //Fit parameter updates from user
     data_struct::xrf::Fit_Parameters override_fit_params;
-    //Optimized fit parameters
-    data_struct::xrf::Fit_Parameters optimized_fit_params;
     //Output of fits for elements specified
     data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
     std::unordered_map< std::string, std::string > extra_override_values;
@@ -663,9 +664,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     ret_struct.dataset_dir = dataset_directory;
     ret_struct.dataset_filename = dataset_filename;
     ret_struct.detector_num = detector_num;
-
-    //
-    std::unordered_map<std::string, real_t> counts_dict;
 
     fitting::models::Gaussian_Model model;
 
@@ -684,16 +682,12 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         return ret_struct;
     }
 
-    //First we integrate the spectra and get the elemental counts
- //   data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
     energy_range.max = spectra.size() -1;
 
 
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
     fit_routine.set_optimizer(&lmfit_optimizer);
-
-    //data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&elements_to_fit, 1, 1);
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
@@ -859,8 +853,25 @@ void process_dataset_file(std::string dataset_directory,
             save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
         }
 
+        real_t energy_offset = 0.0;
+        real_t energy_slope = 0.0;
+        real_t energy_quad = 0.0;
+        data_struct::xrf::Fit_Parameters fit_params = model.fit_parameters();
+        if(fit_params.contains(fitting::models::STR_ENERGY_OFFSET))
+        {
+            energy_offset = fit_params[fitting::models::STR_ENERGY_OFFSET].value;
+        }
+        if(fit_params.contains(fitting::models::STR_ENERGY_SLOPE))
+        {
+            energy_slope = fit_params[fitting::models::STR_ENERGY_SLOPE].value;
+        }
+        if(fit_params.contains(fitting::models::STR_ENERGY_QUADRATIC))
+        {
+            energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
+        }
+
         //tp->enqueue( save_volume, full_save_path, spectra_volume, file_job_queue );
-        save_volume( full_save_path, quantification_standard, spectra_volume, file_job_queue);
+        save_volume( full_save_path, quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad, file_job_queue);
 
     }
 
@@ -1215,7 +1226,7 @@ int main(int argc, char *argv[])
     }
 
     //quant_stand_list.resize( (detector_num_end - detector_num_start) + 1);
-    //TODO:
+    //TODO: don't assume we can only have 4 detectors. The code also assumes quant_stand_list[0] is always detector 0. Maybe resize to detecotr_num_end?
     quant_stand_list.resize(4);
 
     dataset_dir = clp.get_option("--dir");

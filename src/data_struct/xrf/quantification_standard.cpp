@@ -185,6 +185,14 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
                                                                                            92);
 
             quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
+            //change nan's to zeros
+            for(int l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
+            {
+                if( std::isnan(quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l]) )
+                {
+                    quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l] = 0.0;
+                }
+            }
         }
 
     }
