@@ -520,22 +520,21 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         if(hasNetcdf)
         {
-            dataset_file = dataset_file.substr(0, dataset_file.size()-4);
-            std::ifstream file_io(dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc");
+            std::ifstream file_io(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
                 std::string full_filename;
                 for(size_t i=0; i<spectra_volume->rows(); i++)
                 {
-                    full_filename = dataset_directory + "flyXRF/" + dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
                     std::cout<<"Loading file "<<full_filename<<std::endl;
                     netcdf_io.load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                 }
             }
             else
             {
-                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc"<<std::endl;
+                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc"<<std::endl;
                 //return false;
             }
         }
@@ -609,8 +608,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
         if(hasNetcdf)
         {
-            dataset_file = dataset_file.substr(0, dataset_file.size()-4);
-            std::ifstream file_io(dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc");
+            std::ifstream file_io(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
@@ -618,7 +616,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 for(size_t i=0; i<dims[0]; i++)
                 {
                     data_struct::xrf::Spectra_Line spectra_line;
-                    full_filename = dataset_directory + "flyXRF/" + dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
                     std::cout<<"Loading file "<<full_filename<<std::endl;
                     netcdf_io.load_spectra_line(full_filename, detector_num, &spectra_line);
                     for(int k=0; k<spectra_line.size(); k++)
@@ -629,7 +627,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
             else
             {
-                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+dataset_file+"_2xfm3__0.nc"<<std::endl;
+                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc"<<std::endl;
                 //return false;
             }
         }

@@ -65,7 +65,7 @@ int nnls::optimize()
   }
   //showStatus();
   cleanUp();
-  fprintf(stderr, "-------------------  %d \n", out.iter);
+  fprintf(stderr, "-");
   return out.iter;
 }
 

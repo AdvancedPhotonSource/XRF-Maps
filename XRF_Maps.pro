@@ -14,8 +14,8 @@ CONFIG   -= app_bundle
 CONFIG += c++14
 
 TEMPLATE = app
-CONFIG += debug
-#CONFIG += release
+#CONFIG += debug
+CONFIG += release
 CONFIG += console
 
 QMAKE_EXT_CPP += .c
@@ -99,7 +99,7 @@ INCLUDEPATH += /local/aglowacki/libs/lmfit/include
 LIBS += -L/local/aglowacki/libs/lmfit/lib -llmfit
 
 INCLUDEPATH += /usr/include/hdf5/serial
-QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -D__cminpack_double__
+QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -D__cminpack_double__ -g
 QMAKE_LIBS += -lhdf5
 
 

@@ -1675,10 +1675,8 @@ bool HDF5_IO::save_scalers(const std::string filename,
     hid_t scan_grp_id, scalers_grp_id, extra_grp_id, maps_grp_id;
     MDA_IO mda_io;
 
-    std::list<std::string> scaler_strings = {"SRCURRENT", "US_IC", "DS_IC", "DPC1_IC", "DPC2_IC",
-                                             "CFG_1", "CFG_2", "CFG_3", "CFG_4",
-                                             "CFG_5", "CFG_6", "CFG_7", "CFG_8",
-                                             "CFG_9", "CFG_10"};
+    //don't save these scalers
+    std::list<std::string> ignore_scaler_strings = {"ELT1", "ERT1", "ICR1", "OCR1"};
     std::list<struct scaler_struct> scalers;
 
     hid_t dset_cps_id;
@@ -1865,38 +1863,42 @@ bool HDF5_IO::save_scalers(const std::string filename,
         }
 
         int hdf_idx = 0;
-        for(auto itr : scaler_strings)
+        for(auto itr : *extra_override_values)
         {
-            int mda_idx = -1;
-            if (extra_override_values->count(itr) > 0)
+            //don't save ELT1, ERT1, ICR1, OCR1. these are saved elsewhere
+            std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
+            if(s_itr != ignore_scaler_strings.end())
+                continue;
+
+            int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val );
+            if (mda_idx > -1)
             {
-                mda_idx = mda_io.find_2d_detector_index(mda_scalers, extra_override_values->at(itr), detector_num, val );
-                scalers.push_back(scaler_struct(itr, mda_idx, hdf_idx));
+                scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx));
                 hdf_idx++;
-                if(itr == "US_IC")
+                if(itr.first == "US_IC")
                     us_ic_idx = mda_idx;
-                else if(itr == "DS_IC")
+                else if(itr.first == "DS_IC")
                     ds_ic_idx = mda_idx;
-                else if(itr == "CFG_2")
+                else if(itr.first == "CFG_2")
                     cfg_2_idx = mda_idx;
-                else if(itr == "CFG_3")
+                else if(itr.first == "CFG_3")
                     cfg_3_idx = mda_idx;
-                else if(itr == "CFG_4")
+                else if(itr.first == "CFG_4")
                     cfg_4_idx = mda_idx;
-                else if(itr == "CFG_5")
+                else if(itr.first == "CFG_5")
                     cfg_5_idx = mda_idx;
             }
         }
 
         if (mda_scalers->header->data_rank == 2)
         {
-                if(mda_scalers->header->dimensions[1] == 2000)
-                {
-                    count_3d[0] = 1;
-                    count_3d[1] = 1;
-                    count_3d[2] = mda_scalers->scan->last_point;
-                    single_row_scan = true;
-                }
+            if(mda_scalers->header->dimensions[1] == 2000)
+            {
+                count_3d[0] = 1;
+                count_3d[1] = 1;
+                count_3d[2] = mda_scalers->scan->last_point;
+                single_row_scan = true;
+            }
         }
         else if (mda_scalers->header->data_rank == 3)
         {
@@ -2071,7 +2073,7 @@ bool HDF5_IO::save_scalers(const std::string filename,
         // 5:cfg_1, 6:cfg_2, 7:cfg_3, 8:cfg_4, 9:cfg_5, 10:cfg_6, 11:cfg_7, 12:cfg_8
         // 13:ELT1, 14:ERT1, 15: ELT2, 16:ERT2, 17:ELT3, 18: ERT3
 
-
+        H5Dclose(dset_names_id);
         H5Dclose(dset_cps_id);
         H5Sclose(dataspace_id);
         H5Sclose(filespace_id);
