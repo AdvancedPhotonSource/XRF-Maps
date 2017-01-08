@@ -174,6 +174,8 @@ public:
 
 private:
 
+	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
+	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
 
     //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 
