@@ -161,14 +161,14 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_scalers(const std::string filename,
-                      size_t detector_num,
-                      struct mda_file *mda_scalers,
-                      std::unordered_map< std::string, std::string > *extra_override_values,
-                      size_t row_idx_start=0,
-                      int row_idx_end=-1,
-                      size_t col_idx_start=0,
-                      int col_idx_end=-1);
+    bool save_scan_scalers(const std::string filename,
+                          size_t detector_num,
+                          struct mda_file *mda_scalers,
+                          std::unordered_map< std::string, std::string > *extra_override_values,
+                          size_t row_idx_start=0,
+                          int row_idx_end=-1,
+                          size_t col_idx_start=0,
+                          int col_idx_end=-1);
 
     bool end_save_seq(const hid_t);
 
@@ -176,6 +176,7 @@ private:
 
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
+    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, std::unordered_map< std::string, std::string > *extra_override_values);
 
     //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 

@@ -544,12 +544,14 @@ bool load_spectra_volume(std::string dataset_directory,
         }
 
     }
+
     if(save_scalers)
     {
         std::string str_detector_num = std::to_string(detector_num);
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        hdf5_io.save_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
+        hdf5_io.save_scan_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
     }
+
     mda_io.unload();
 
     return true;

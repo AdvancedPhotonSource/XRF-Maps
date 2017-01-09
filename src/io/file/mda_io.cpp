@@ -350,7 +350,14 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     try
     {
-        if( false == single_row_scan )
+        if( single_row_scan )
+        {
+            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
+            {
+                cols = _mda_file->scan->last_point + 1;
+            }
+        }
+        else
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
@@ -363,12 +370,14 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             // update num rows if header is incorrect and not single row scan
 
-            if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
+            if(false == single_row_scan)
             {
-                cols = _mda_file->scan->sub_scans[i]->last_point + 1;
-                //TODO: set a flag to return to tell that this is a bad scan
+                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
+                {
+                    cols = _mda_file->scan->sub_scans[i]->last_point + 1;
+                    //TODO: set a flag to return to tell that this is a bad scan
+                }
             }
-
             for(size_t j=0; j<cols; j++)
             {
 /* TODO: we might need to do the same check for spectra
