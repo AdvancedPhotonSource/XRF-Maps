@@ -54,7 +54,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <algorithm>
 #include <unordered_map>
-
+#include <chrono>
+#include <ctime>
 #include "base_model.h"
 
 namespace io
@@ -109,9 +110,47 @@ const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
     std::pair<std::string, std::string>("ESCAPE_LINEAR", data_struct::xrf::STR_ESCAPE_LINEAR)
 };
 
+const std::vector<std::string> Updatable_TAGS = {
+                                        "CAL_OFFSET_[E_OFFSET]",
+                                        "CAL_SLOPE_[E_LINEAR]",
+                                        "CAL_QUAD_[E_QUADRATIC]",
+                                        "FWHM_OFFSET",
+                                        "FWHM_FANOPRIME",
+                                        "COHERENT_SCT_ENERGY",
+                                        "COMPTON_ANGLE",
+                                        "COMPTON_FWHM_CORR",
+                                        "COMPTON_STEP",
+                                        "COMPTON_F_TAIL",
+                                        "COMPTON_GAMMA",
+                                        "COMPTON_HI_F_TAIL",
+                                        "COMPTON_HI_GAMMA",
+                                        "STEP_OFFSET",
+                                        "STEP_LINEAR",
+                                        "STEP_QUADRATIC",
+                                        "F_TAIL_OFFSET",
+                                        "F_TAIL_LINEAR",
+                                        "F_TAIL_QUADRATIC",
+                                        "KB_F_TAIL_OFFSET",
+                                        "KB_F_TAIL_LINEAR",
+                                        "KB_F_TAIL_QUADRATIC",
+                                        "GAMMA_OFFSET",
+                                        "GAMMA_LINEAR",
+                                        "GAMMA_QUADRATIC",
+                                        "SNIP_WIDTH",
+                                        "SI_ESCAPE_FACTOR",
+                                        "GE_ESCAPE_FACTOR",
+                                        "ESCAPE_LINEAR"
+};
+
+const std::vector<std::string> Updatable_detector_dependand_TAGS = {
+                                                                "ELT1",
+                                                                "ERT1",
+                                                                "ICR1",
+                                                                "OCR1"
+};
+
 APS_Fit_Params_Import::APS_Fit_Params_Import()
 {
-
 
 
 }
@@ -140,7 +179,7 @@ bool APS_Fit_Params_Import::load(std::string path,
         std::string tag;
         try
         {
-            for (std::string line; std::getline(paramFileStream, line); )
+            for (std::string line; std::getline(paramFileStream, line, '\n'); )
             //while(std::getline(paramFileStream, line))
             {
                 std::istringstream strstream(line);
@@ -354,6 +393,100 @@ bool APS_Fit_Params_Import::load(std::string path,
 
 }
 
+bool APS_Fit_Params_Import::save(std::string path,
+                                 data_struct::xrf::Fit_Parameters fit_params,
+                                 int detector_num)
+{
+
+    std::ifstream in_stream(path);
+    std::string save_path = path+std::to_string(detector_num);
+    std::ofstream out_stream(save_path);
+
+    std::cout<<"save_averaged_fit_params(): "<<save_path<<std::endl;
+
+    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    std::time_t tt;
+    tt = std::chrono::system_clock::to_time_t(today);
+
+    if ( in_stream.is_open() && out_stream.is_open() )
+    {
+        in_stream.exceptions(std::ifstream::failbit);
+        //std::string line;
+        std::string tag;
+        try
+        {
+            for (std::string line; std::getline(in_stream, line, '\n'); )
+            {
+                std::istringstream strstream(line);
+                std::getline(strstream, tag, ':');
+                if(tag == "DATE")
+                {
+                    out_stream<<tag<<": "<<std::ctime(&tt)<<"\n";
+                }
+                else if( std::find(Updatable_TAGS.begin(), Updatable_TAGS.end(), tag) != Updatable_TAGS.end() )
+                {
+                    std::string trans_str = FILE_TAGS_TRANSLATION.at(tag);
+                    if(fit_params.contains( trans_str ) )
+                    {
+                        std::string str_val = std::to_string(fit_params.at( trans_str ).value);
+                        out_stream<<tag<<": "<<str_val<<"\n";
+                    }
+                    else
+                    {
+                        out_stream<<line<<"\n";
+                    }
+                }
+                else if( std::find(Updatable_detector_dependand_TAGS.begin(), Updatable_detector_dependand_TAGS.end(), tag) != Updatable_detector_dependand_TAGS.end() )
+                {
+                    /*
+                    ELT1: dxpXMAP2xfm3:mca1.ELTM
+                    ERT1: dxpXMAP2xfm3:mca1.ERTM
+                    ICR1: dxpXMAP2xfm3:dxp1:InputCountRate
+                    OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
+                    */
+                    std::string str_det_num = std::to_string(detector_num + 1);
+                    int idx = line.find(":mca");
+                    if(idx > -1)
+                    {
+                        line[idx+4] = str_det_num[0];
+                    }
+
+                    idx = line.find(":dxp");
+                    if(idx > -1)
+                    {
+
+                        line[idx+4] = str_det_num[0];
+                    }
+                    out_stream<<line<<"\n";
+                }
+                else
+                {
+                    out_stream<<line<<"\n";
+                }
+            }
+        }
+
+        catch(std::exception e)
+        {
+            if (in_stream.eof() == 0 && (in_stream.bad() || in_stream.fail()) )
+            {
+                std::cerr << "ios Exception happened: " << e.what() << "\n"
+                    << "Error bits are: "
+                    << "\nfailbit: " << in_stream.fail()
+                    << "\neofbit: " << in_stream.eof()
+                    << "\nbadbit: " << in_stream.bad() << std::endl;
+            }
+        }
+
+        in_stream.close();
+        out_stream.close();
+        return true;
+
+    }
+
+    std::cout<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<std::endl;
+    return false;
+}
 
 } //end namespace aps
 } //end namespace file

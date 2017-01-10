@@ -197,7 +197,7 @@ private:
     //void _parse_dataset_info(hid_t h5file, hid_t id);
     //void _parse_attr_info(hid_t h5file, hid_t id);
 
-    std::mutex _mutex;
+    static std::mutex _mutex;
 
 };
 

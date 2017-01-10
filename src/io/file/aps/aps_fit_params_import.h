@@ -76,6 +76,10 @@ public:
               std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
               std::unordered_map<std::string, std::string>* out_values);
 
+    bool save(std::string path,
+              data_struct::xrf::Fit_Parameters fit_params,
+              int detector_num);
+
 private:
 
 

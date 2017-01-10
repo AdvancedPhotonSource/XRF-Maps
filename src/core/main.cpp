@@ -71,6 +71,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "hdf5_io.h"
 #include "csv_io.h"
 
+
 #include "spectra_volume.h"
 #include "detector.h"
 
@@ -238,13 +239,12 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
 void save_averaged_fit_params(std::string dataset_dir, std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
 {
-    io::file::CSV_IO csv_io;
+    io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
+    std::string full_path = dataset_dir+"/maps_fit_parameters_override.txt";
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        std::string full_path = dataset_dir+"/avrg_maps_fit_override_parameters.txt" + std::to_string(detector_num);
-        std::cout<<"save_averaged_fit_params(): "<<full_path<<std::endl;
-        csv_io.save_fit_parameters(full_path, fit_params_avgs[i] );
+        aps_io.save(full_path, fit_params_avgs[i], detector_num );
         i++;
     }
 }
@@ -771,6 +771,7 @@ void process_dataset_file(std::string dataset_directory,
     fitting::models::Range energy_range;
     energy_range.min = 0;
 
+
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
 
@@ -896,6 +897,9 @@ bool perform_quantification(std::string dataset_directory,
 
     fitting::models::Gaussian_Model model;
 
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
     data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
 
     //Range of energy in spectra to fit
@@ -1017,6 +1021,11 @@ bool perform_quantification(std::string dataset_directory,
         std::cout<<"Error loading quantification standard "<<quantification_info_file<<std::endl;
         return false;
     }
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    std::cout << "\n\n quantification elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
 
     return true;
 
