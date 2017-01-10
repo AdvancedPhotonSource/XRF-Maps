@@ -1217,10 +1217,10 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
         return false;
     }
 
-    filetype = H5Tcopy (H5T_FORTRAN_S1);
-    H5Tset_size (filetype, 255);
+    filetype = H5Tcopy (H5T_C_S1);
+    H5Tset_size (filetype, 256);
     memtype = H5Tcopy (H5T_C_S1);
-    status = H5Tset_size (memtype, 256);
+    status = H5Tset_size (memtype, H5T_VARIABLE);
 
     dset_ch_id = H5Dopen (fit_grp_id, "Channel_Names", H5P_DEFAULT);
     if(dset_ch_id < 0)
@@ -1381,10 +1381,10 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
         return false;
     }
 
-    filetype = H5Tcopy (H5T_FORTRAN_S1);
-    H5Tset_size (filetype, 255);
+    filetype = H5Tcopy (H5T_C_S1);
+    H5Tset_size (filetype, 256);
     memtype = H5Tcopy (H5T_C_S1);
-    status = H5Tset_size (memtype, 256);
+    status = H5Tset_size (memtype, H5T_VARIABLE);
 
 
 
@@ -1701,10 +1701,10 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 	try
 	{
 
-		filetype = H5Tcopy(H5T_FORTRAN_S1);
-		H5Tset_size(filetype, 255);
+		filetype = H5Tcopy(H5T_C_S1);
+		H5Tset_size(filetype, 256);
 		memtype = H5Tcopy(H5T_C_S1);
-		status = H5Tset_size(memtype, 256);
+		status = H5Tset_size(memtype, H5T_VARIABLE);
 
 
 		memoryspace_id = H5Screate_simple(1, count, NULL);
@@ -1878,10 +1878,10 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	try
 	{
 
-        filetype = H5Tcopy(H5T_FORTRAN_S1);
-        H5Tset_size(filetype, 512);
+        filetype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(filetype, 256);
 		memtype = H5Tcopy(H5T_C_S1);
-        status = H5Tset_size(memtype, 512);
+        status = H5Tset_size(memtype, H5T_VARIABLE);
 
         //std::cout<<"HDF5_IO::_save_extras() - extra_pvs group"<<std::endl;
 		extra_grp_id = H5Gopen(scan_grp_id, "Extra_PVs", H5P_DEFAULT);
@@ -2064,27 +2064,22 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 			if (pv->name != nullptr)
 			{
 				//need this becuase it crashes on windows if we just pass the char *
-				std::string name = std::string(pv->name);
-                //std::cout<<"HDF5_IO::_save_extras() - save name : "<<name<<" "<<name.length()<<std::endl;
-                //BUG: causes crash randomly when writing name to hdf. not sure why yet
-                name = std::string("a");
-                status = H5Dwrite(dset_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)name.c_str());
+				//std::string name = std::string(pv->name, std::strlen(pv->name));
+                status = H5Dwrite(dset_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)pv->name);
 			}
 
             //std::cout<<"HDF5_IO::_save_extras() - save val : "<<str_val<<" "<<str_val.length()<<std::endl;
             status = H5Dwrite(dset_val_id, memtype, memoryspace_id2, filespace_id2, H5P_DEFAULT, (void*)str_val.c_str());
 			if (pv->description != nullptr)
 			{
-                std::string description = std::string(pv->description);
-                //std::cout<<"HDF5_IO::_save_extras() - save desc : "<<description<<" "<<description.length()<<std::endl;
-                status = H5Dwrite(dset_desc_id, memtype, memoryspace_id3, filespace_id3, H5P_DEFAULT, (void*)description.c_str());
+                //std::string description = std::string(pv->description, std::strlen(pv->description));
+                status = H5Dwrite(dset_desc_id, memtype, memoryspace_id3, filespace_id3, H5P_DEFAULT, (void*)pv->description);
 			}
 
 			if (pv->unit != nullptr)
 			{
-                std::string unit = std::string(pv->unit);
-                //std::cout<<"HDF5_IO::_save_extras() - save unit : "<<unit<<" "<<unit.length()<<std::endl;
-                status = H5Dwrite(dset_unit_id, memtype, memoryspace_id4, filespace_id4, H5P_DEFAULT, (void*)unit.c_str());
+                //std::string unit = std::string(pv->unit, std::strlen(pv->unit));
+                status = H5Dwrite(dset_unit_id, memtype, memoryspace_id4, filespace_id4, H5P_DEFAULT, (void*)pv->unit);
 			}
 		}
 
@@ -2261,10 +2256,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
     hid_t dset_cps_id;
 
 
-    filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, 255);
+    filetype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(filetype, 256);
     memtype = H5Tcopy(H5T_C_S1);
-    status = H5Tset_size(memtype, 256);
+    status = H5Tset_size(memtype, H5T_VARIABLE);
 
 
     try
