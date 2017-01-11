@@ -84,8 +84,12 @@ IF( NOT SZip_LIB_DIR )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 ENDIF()
 
-#find_package(VTK REQUIRED)
-#include(${VTK_USE_FILE})
+option(BUILD_WITH_VTK "Build with VTK")
+
+IF (BUILD_WITH_VTK)
+  find_package(VTK REQUIRED)
+  include(${VTK_USE_FILE})
+ENDIF()
 
 link_directories( ${SZip_LIB_DIR} )
 

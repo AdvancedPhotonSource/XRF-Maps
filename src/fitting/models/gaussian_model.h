@@ -99,6 +99,13 @@ const string STR_KB_F_TAIL_QUADRATIC    = "KB_F_TAIL_QUADRATIC";
 using namespace data_struct::xrf;
 using namespace fitting::optimizers;
 
+/*
+ 1 batch_a: matrix batch fit
+ 2 batch_b: batch_fit_wo_tails
+ 3 batch_c: batch_fit_w_tails
+ 4 batch fit with free E, everything else fixed
+ */
+enum Fit_Params_Preset { MATRIX_BATCH_FIT, BATCH_FIT_NO_TAILS, BATCH_FIT_WITH_TAILS, BATCH_FIT_WITH_FREE_ENERGY };
 
 class DLL_EXPORT Gaussian_Model: public Base_Model
 {
@@ -117,6 +124,8 @@ public:
                                                  const Fit_Element_Map * const element_to_fit,
                                                  const std::valarray<real_t> &ev,
                                                  valarray<real_t> energy);
+
+    void set_fit_params_preset(Fit_Params_Preset lock_macro);
 
     /**
      * @brief gauss_peak :  models a gaussian fluorescence peak, see also van espen, spectrum evaluation,

@@ -169,7 +169,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = 0.1;   // Initial step bound                         Default: 100.0
     mp_config.covtol = 1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    mp_config.maxiter = 1000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    mp_config.maxiter = 2000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -188,24 +188,25 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
 
-/*
+
     /////////////// init params limits /////////////////////////
     struct mp_par_struct *mp_par = new struct mp_par_struct[fitp_arr.size()];
-    for(const auto& itr : fit_params->_params)
+
+    for(auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
     {
-        Fit_Param fit = itr.second;
+        Fit_Param fit = (*fit_params)[itr->first];
         if (fit.opt_array_index > -1)
         {
 
             if(fit.value > fit.max_val)
             {
                 fit.max_val = fit.value + 1.0;
-                fit_params->_params[itr.first].max_val = fit.value + 1.0;
+                (*fit_params)[itr->first].max_val = fit.value + 1.0;
             }
             if(fit.value < fit.min_val)
             {
                 fit.min_val = fit.value - 1.0;
-                fit_params->_params[itr.first].min_val = fit.value - 1.0;
+                (*fit_params)[itr->first].min_val = fit.value - 1.0;
             }
             if(fit.bound_type == E_Bound_Type::LIMITED_HI
             || fit.bound_type == E_Bound_Type::LIMITED_LO
@@ -215,8 +216,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                 {
                     fit.max_val += 0.1;
                     fit.min_val -= 0.1;
-                    fit_params->_params[itr.first].max_val += 1.0;
-                    fit_params->_params[itr.first].min_val -= 1.0;
+                    (*fit_params)[itr->first].max_val += 1.0;
+                    (*fit_params)[itr->first].min_val -= 1.0;
                 }
             }
 
@@ -275,17 +276,20 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
             mp_par[fit.opt_array_index].deriv_abstol = 0.00001; // Absolute tolerance for derivative debug printout
         }
     }
-*/
+
 
     mp_result result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
+
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, 0, (void *) &ud, &result);
+
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, &mp_config, (void *) &ud, &result);
 
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], 0, (void *) &ud, &result);
 
-    info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], 0, &mp_config, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], &mp_config, (void *) &ud, &result);
+
     std::cout<<"*** testlinfit status = "<<info<<std::endl;
 
 

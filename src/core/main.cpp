@@ -91,14 +91,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "nnls_fit_routine.h"
 
 #include "lmfit_optimizer.h"
-//#include "mpfit_optimizer.h"
+#include "mpfit_optimizer.h"
 
 #include "fit_element_map.h"
 
 #include "quantification_standard.h"
-
-//#include "vtk_graph.h"
-
+#ifdef _BUILD_WITH_VTK
+  #include "vtk_graph.h"
+#endif
 #include "command_line_parser.h"
 
 
@@ -121,6 +121,8 @@ struct file_name_fit_params
     std::string dataset_filename;
     int detector_num;
     data_struct::xrf::Fit_Parameters fit_params;
+    data_struct::xrf::Spectra spectra;
+    data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
     bool success;
 };
 
@@ -134,6 +136,12 @@ const std::unordered_map<int, std::string> save_loc_map = {
 
 //Optimizers for fitting models
 fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
+fitting::optimizers::MPFit_Optimizer mpfit_optimizer;
+
+fitting::optimizers::Optimizer *optimizer = &lmfit_optimizer;
+
+//default mode for which parameters to fit when optimizing fit parameters
+fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
 
 // ----------------------------------------------------------------------------
 
@@ -233,6 +241,19 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     std::string full_path = file_and_fit_params.dataset_dir+"/output/"+file_and_fit_params.dataset_filename+std::to_string(file_and_fit_params.detector_num)+".csv";
     std::cout<<"save_optimized_fit_params(): "<<full_path<<std::endl;
     csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
+
+#ifdef _BUILD_WITH_VTK
+    fitting::models::Gaussian_Model model;
+    //Range of energy in spectra to fit
+    fitting::models::Range energy_range;
+    energy_range.min = 0;
+    energy_range.max = file_and_fit_params.spectra.size() -1;
+
+    data_struct::xrf::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
+    std::string str_path = file_and_fit_params.dataset_dir+"/output/fit_"+file_and_fit_params.dataset_filename+"_det"+std::to_string(file_and_fit_params.detector_num)+".png";
+    visual::SavePlotSpectras(str_path, file_and_fit_params.spectra, model_spectra, true);
+#endif
+
 }
 
 // ----------------------------------------------------------------------------
@@ -259,11 +280,11 @@ fitting::routines::Base_Fit_Routine * generate_fit_routine(Processing_Type proc_
     {
         case Processing_Type::GAUSS_TAILS:
             fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
-            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
+            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
             break;
         case Processing_Type::GAUSS_MATRIX:
             fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
-            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(&lmfit_optimizer);
+            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
             break;
         case Processing_Type::ROI:
             fit_routine = new fitting::routines::ROI_Fit_Routine();
@@ -651,11 +672,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                                             size_t detector_num)
 {
 
-    data_struct::xrf::Spectra spectra;
     //Fit parameter updates from user
     data_struct::xrf::Fit_Parameters override_fit_params;
-    //Output of fits for elements specified
-    data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
     std::unordered_map< std::string, std::string > extra_override_values;
 
     //return structure
@@ -672,31 +690,33 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     energy_range.min = 0;
 
     //load override parameters
-    load_override_params(dataset_directory, -1, &override_fit_params, &elements_to_fit, &extra_override_values);
+    load_override_params(dataset_directory, -1, &override_fit_params, &ret_struct.elements_to_fit, &extra_override_values);
 
     //load the quantification standard dataset
-    if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &spectra, detector_num, &extra_override_values) )
+    if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &extra_override_values) )
     {
         std::cout<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
         ret_struct.success = false;
         return ret_struct;
     }
 
-    energy_range.max = spectra.size() -1;
+    energy_range.max = ret_struct.spectra.size() -1;
 
 
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-    fit_routine.set_optimizer(&lmfit_optimizer);
+    fit_routine.set_optimizer(optimizer);
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
     //Update fit parameters by override values
     model.update_fit_params_values(override_fit_params);
+    model.set_fit_params_preset(optimize_fit_params_preset);
     //Initialize the fit routine
-    fit_routine.initialize(&model, &elements_to_fit, energy_range);
+    fit_routine.initialize(&model, &ret_struct.elements_to_fit, energy_range);
     //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct.fit_params = fit_routine.fit_spectra_parameters(&model, &spectra, &elements_to_fit);
+    ret_struct.fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct.spectra, &ret_struct.elements_to_fit);
+
     ret_struct.success = true;
 
     return ret_struct;
@@ -1003,7 +1023,7 @@ bool perform_quantification(std::string dataset_directory,
                 quantification_standard->integrated_spectra(integrated_spectra);
 
                 //save for each proc
-                quantification_standard->quantifiy(&lmfit_optimizer,
+                quantification_standard->quantifiy(optimizer,
                                                    save_loc_map.at(proc_type),
                                                   &counts_dict,
                                                   incident_energy,
@@ -1112,7 +1132,9 @@ void help()
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
-    std::cout<<"--optimize-fit-override-params : Integrate the 8 largest mda datasets and fit with multiple params \n"<<std::endl;
+    std::cout<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
+               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
+    std::cout<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
     std::cout<<"Fitting Routines: "<<std::endl;
     std::cout<<"--roi : ROI "<<std::endl;
     std::cout<<"--roi_plus : SVD method "<<std::endl;
@@ -1210,6 +1232,28 @@ int main(int argc, char *argv[])
     if( clp.option_exists("--optimize-fit-override-params") )
     {
         optimize_fit_override_params = true;
+
+        std::string opt = clp.get_option("--optimize-fit-override-params");
+        if(opt == "1")
+            optimize_fit_params_preset = fitting::models::MATRIX_BATCH_FIT;
+        else if(opt == "2")
+            optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+        else if(opt == "3")
+            optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_TAILS;
+        else if(opt == "4")
+            optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_FREE_ENERGY;
+        else
+            std::cout<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<std::endl;
+    }
+
+    if( clp.option_exists("--optimizer"))
+    {
+        std::string opt = clp.get_option("--optimizer");
+        if(opt == "mpfit")
+        {
+            optimizer = &mpfit_optimizer;
+        }
+        //lmfit by default
     }
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification

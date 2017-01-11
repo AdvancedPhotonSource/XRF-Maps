@@ -136,6 +136,168 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 
 // ----------------------------------------------------------------------------
 
+void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
+{
+
+    switch (preset)
+    {
+        case MATRIX_BATCH_FIT: //matrix batch fit
+            _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+
+            _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_GAMMA_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_KB_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+            break;
+        case BATCH_FIT_NO_TAILS: // batch fit without tails
+            _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
+
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+
+            _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_GAMMA_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_KB_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+            break;
+        case BATCH_FIT_WITH_TAILS: //batch fit with tails
+            _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
+
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+
+            _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
+
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_TAIL_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_F_TAIL_LINEAR].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_GAMMA_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_KB_F_TAIL_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+            break;
+        case BATCH_FIT_WITH_FREE_ENERGY: // batch fit with free E, everything else fixed
+            _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+
+            _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_GAMMA_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_KB_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+            break;
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                              const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
                                              const struct Range energy_range)
