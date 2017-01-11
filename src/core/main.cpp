@@ -1296,15 +1296,27 @@ int main(int argc, char *argv[])
 
     if(optimize_fit_override_params)
     {
-
+		std::vector<std::string> optim_dataset_files;
         if (dataset_files.size() == 0)
         {
             std::cout<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
             return -1;
         }
-        sort_dataset_files_by_size(dataset_dir, &dataset_files);
+		for (auto& itr : dataset_files)
+		{
+			optim_dataset_files.push_back(itr);
+		}
 
-        generate_optimal_params(dataset_dir, dataset_files, &tp, detector_num_start, detector_num_end);
+        sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
+		//if no files were specified only take the 8 largest datasets
+		if (dset_file.length() < 1)
+		{
+			while (optim_dataset_files.size() > 9)
+			{
+				optim_dataset_files.pop_back();
+			}
+		}
+        generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
     }
 
     if(proc_types.size() > 0)
