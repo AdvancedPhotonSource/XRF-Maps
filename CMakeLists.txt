@@ -87,6 +87,7 @@ ENDIF()
 option(BUILD_WITH_VTK "Build with VTK")
 
 IF (BUILD_WITH_VTK)
+  add_definitions(-D_BUILD_WITH_VTK)
   find_package(VTK REQUIRED)
   include(${VTK_USE_FILE})
 ENDIF()
