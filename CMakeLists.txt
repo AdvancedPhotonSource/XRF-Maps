@@ -90,6 +90,10 @@ IF (BUILD_WITH_VTK)
   add_definitions(-D_BUILD_WITH_VTK)
   find_package(VTK REQUIRED)
   include(${VTK_USE_FILE})
+  set(VISUAL_INC src/visual/vtk_graph.h src/visual/vtk_graph.cpp )
+  include_directories(src/visual/)
+ELSE()
+  set(VISUAL_INC )
 ENDIF()
 
 link_directories( ${SZip_LIB_DIR} )
@@ -303,6 +307,7 @@ add_library(libxrf_io SHARED
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
+	${VISUAL_INC}
 	src/core/command_line_parser.h
     src/core/main.cpp
 )
