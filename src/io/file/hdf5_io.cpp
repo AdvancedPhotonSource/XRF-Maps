@@ -842,6 +842,7 @@ hid_t HDF5_IO::start_save_seq(const std::string filename)
 bool HDF5_IO::end_save_seq(const hid_t file_id)
 {
 
+    H5Fflush(file_id, H5F_SCOPE_LOCAL);
     H5Fclose(file_id);
     H5close(); //test first, might break h5
     return true;
@@ -979,12 +980,12 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     for(size_t row=row_idx_start; row < row_idx_end; row++)
     {
         offset[1] = row;
-        offset_time[1] = row;
+        offset_time[0] = row;
         for(size_t col=col_idx_start; col < col_idx_end; col++)
         {
             const data_struct::xrf::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
-            offset_time[0] = col;
+            offset_time[1] = col;
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
             status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
@@ -2488,7 +2489,58 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
                     if (single_row_scan)
                     {
-                        //TODO: finish single row scan scalers
+
+                        for (int32_t j = 0; j < mda_scalers->scan->last_point; j++)
+                        {
+                            double us_ic = mda_scalers->scan->detectors_data[us_ic_idx][j];
+                            double ds_ic = mda_scalers->scan->detectors_data[ds_ic_idx][j];
+                            double t_2 = mda_scalers->scan->detectors_data[cfg_2_idx][j];
+                            double t_3 = mda_scalers->scan->detectors_data[cfg_3_idx][j];
+                            double t_4 = mda_scalers->scan->detectors_data[cfg_4_idx][j];
+                            double t_5 = mda_scalers->scan->detectors_data[cfg_5_idx][j];
+
+
+                            offset_3d[1] = 0;
+                            offset_3d[2] = j;
+
+                            double t_abs = t_2 + t_3 + t_4 + t_5;
+                            double abs_ic = ds_ic / us_ic;
+
+                            offset_3d[0] = hdf_idx;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&abs_ic);
+
+                            double abs_cfg = t_abs / us_ic;
+
+                            offset_3d[0] = hdf_idx + 1;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&abs_cfg);
+
+                            double H_dpc_cfg = (t_2 - t_3 - t_4 + t_5) / t_abs;
+
+                            offset_3d[0] = hdf_idx + 2;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&H_dpc_cfg);
+
+                            double V_dpc_cfg = (t_2 + t_3 - t_4 - t_5) / t_abs;
+
+                            offset_3d[0] = hdf_idx + 3;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&V_dpc_cfg);
+
+                            double dia1_dpc_cfg = (t_2 - t_4) / t_abs;
+
+                            offset_3d[0] = hdf_idx + 4;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&dia1_dpc_cfg);
+
+                            double dia2_dpc_cfg = (t_3 - t_5) / t_abs;
+
+                            offset_3d[0] = hdf_idx + 5;
+                            H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                            status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&dia2_dpc_cfg);
+                        }
+
                     }
                     else
                     {
