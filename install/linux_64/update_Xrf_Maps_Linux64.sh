@@ -191,4 +191,6 @@ echo "cd bin">> xrf_maps.sh
 echo "./xrf_maps $@">> xrf_maps.sh
 echo "cd ..">> xrf_maps.sh
 
+chmod +x xrf_maps.sh
+
 echo "Finished updating."
