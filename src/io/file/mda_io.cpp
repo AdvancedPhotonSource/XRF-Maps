@@ -309,6 +309,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     if (extra_override_values != nullptr)
     {
         real_t tmp_val;
+
         if (extra_override_values->count("ELT1") > 0)
         {
             elt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ELT1"), detector_num, tmp_val );

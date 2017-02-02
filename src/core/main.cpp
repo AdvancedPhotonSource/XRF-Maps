@@ -191,10 +191,8 @@ bool save_results(std::string full_path,
     }
 
     io::file::HDF5_IO hdf5_io;
-    hid_t f_id = hdf5_io.start_save_seq(full_path);
-    hdf5_io.save_element_fits(f_id, save_loc, element_counts);
-    hdf5_io.end_save_seq(f_id);
 
+    hdf5_io.save_element_fits(full_path, save_loc, element_counts);
 
     delete fit_routine;
     delete job_queue;
@@ -920,6 +918,8 @@ bool perform_quantification(std::string dataset_directory,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
+    std::cout << "\n\n perform_quantification()\n"<<std::endl;
+
     data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
 
     //Range of energy in spectra to fit
@@ -1053,6 +1053,44 @@ bool perform_quantification(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+void generate_h5_averages(std::string dataset_directory,
+                          std::string dataset_file,
+                          ThreadPool* tp,
+                          size_t detector_num_start,
+                          size_t detector_num_end)
+{
+
+    std::cout << "\n\n generate_h5_averages()\n"<<std::endl;
+
+    std::list<std::string> hdf5_filenames;
+    io::file::HDF5_IO hdf5_io;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    if (detector_num_start == detector_num_end)
+    {
+        std::cout << "Warning: detector range "<<detector_num_start<<":"<<detector_num_end<<" is only 1 detector. Nothing to avg.\n"<<std::endl;
+        return;
+    }
+
+
+    for(size_t detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
+    {
+        hdf5_filenames.push_back(dataset_directory+dataset_file+".h5"+std::to_string(detector_num));
+    }
+
+    hdf5_io.generate_avg(dataset_directory+dataset_file+".h5", hdf5_filenames);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    std::cout << "\n\n generate_h5_averages elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
+
+
+}
+
+// ----------------------------------------------------------------------------
+
 bool compare_file_size (const file_name_size& first, const file_name_size& second)
 {
     return ( first.total_rank_size > second.total_rank_size );
@@ -1132,6 +1170,12 @@ void help()
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
+    std::cout<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
+    std::cout<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
+    std::cout<<"    us = upstream ion chamber\n";
+    std::cout<<"    ds = downstream ion chamber\n";
+    std::cout<<"    sr = sr current. "<<std::endl;
+    std::cout<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
     std::cout<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
     std::cout<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
@@ -1144,12 +1188,6 @@ void help()
     std::cout<<"Dataset: "<<std::endl;
     std::cout<<"--dir : Dataset directory "<<std::endl;
     std::cout<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
-    /*
-    std::cout<<"Legacy Macros: "<<std::endl;
-    std::cout<<"-A: Run roi and roi_plus"<<std::endl;
-    std::cout<<"-B: Run optimize-fit-override-params"<<std::endl;
-    std::cout<<"-C: Run roi and matrix"<<std::endl;
-    */
     std::cout<<"Examples: "<<std::endl;
     std::cout<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
     std::cout<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
@@ -1169,6 +1207,7 @@ int main(int argc, char *argv[])
     std::vector<std::string> dataset_files;
     std::vector<Processing_Type> proc_types;
     std::string quant_standard_filename = "";
+    std::string whole_command_line = "";
     bool optimize_fit_override_params = false;
 
     //Default is to process detectors 0 through 3
@@ -1256,6 +1295,16 @@ int main(int argc, char *argv[])
         //lmfit by default
     }
 
+
+    if( clp.option_exists("--add-exchange"))
+    {
+        //TODO:
+    }
+    if( clp.option_exists("--quick-and-dirty"))
+    {
+        //TODO:
+    }
+
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
     if ( clp.option_exists("--detector-range") )
@@ -1327,6 +1376,13 @@ int main(int argc, char *argv[])
         dataset_files.push_back(dset_file);
     }
 
+    //gen whole command line to save in hdf5 later
+    for(int ic = 0; ic < argc; ic++)
+    {
+        whole_command_line += " " + std::string(argv[ic]);
+    }
+    std::cout<<"whole command line : "<<whole_command_line<<std::endl;
+
     std::cout << "Processing detectors " << detector_num_start << " - "<< detector_num_end <<" \n";
 
     start = std::chrono::system_clock::now();
@@ -1375,6 +1431,15 @@ int main(int argc, char *argv[])
             process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, detector_num_start, detector_num_end);
         }
     }
+
+    if( clp.option_exists("--generate-avg-h5"))
+    {
+        for(std::string dataset_file : dataset_files)
+        {
+            generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+        }
+    }
+
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "\n\n ---- Total elapsed time: " << elapsed_seconds.count() << "s -----\n\n";

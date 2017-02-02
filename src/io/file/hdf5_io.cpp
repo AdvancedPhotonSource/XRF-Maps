@@ -1120,7 +1120,7 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_element_fits(const hid_t file_id,
+bool HDF5_IO::save_element_fits(std::string full_path,
                                 std::string path,
                                 const data_struct::xrf::Fit_Count_Dict * const element_counts,
                                 size_t row_idx_start,
@@ -1131,6 +1131,8 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
     std::unique_lock<std::mutex> lock(_mutex);
 
     std::cout<<"HDF5_IO::save_element_fits()"<<std::endl;
+
+    hid_t file_id = start_save_seq(full_path);
 
 //hid_t error_stack = H5Eget_current_stack();
 //H5Eset_auto2(error_stack, NULL, NULL);
@@ -1319,6 +1321,9 @@ bool HDF5_IO::save_element_fits(const hid_t file_id,
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
+
+
+    end_save_seq(file_id);
 
     std::cout << "\n\n save channels elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
 
@@ -2726,6 +2731,37 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);
 
+    end_save_seq(file_id);
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::generate_avg(std::string avg_filename, std::list<std::string> files_to_avg)
+{
+    std::cout << "HDF5_IO::generate_avg(): " << avg_filename << std::endl;
+
+    std::list<hid_t> hdf5_file_ids;
+    hid_t file_id = start_save_seq(avg_filename);
+
+    for(auto& filename : files_to_avg)
+    {
+        hid_t    rd_file_id;
+
+        rd_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        if (rd_file_id > -1)
+        {
+            hdf5_file_ids.push_back(rd_file_id);
+        }
+    }
+
+    //TODO:
+
+    for(auto& f_id : hdf5_file_ids)
+    {
+        H5Fclose(f_id);
+    }
     end_save_seq(file_id);
 
     return true;

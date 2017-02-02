@@ -131,6 +131,8 @@ public:
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
+    bool generate_avg(std::string avg_filename, std::list<std::string> files_to_avg);
+
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
     hid_t start_save_seq(const std::string filename);
@@ -146,7 +148,7 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_element_fits(const hid_t file_id,
+    bool save_element_fits(std::string full_path,
                            const std::string path,
                            const data_struct::xrf::Fit_Count_Dict * const element_counts,
                            size_t row_idx_start=0,
