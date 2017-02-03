@@ -1062,7 +1062,7 @@ void generate_h5_averages(std::string dataset_directory,
 
     std::cout << "\n\n generate_h5_averages()\n"<<std::endl;
 
-    std::list<std::string> hdf5_filenames;
+    std::vector<std::string> hdf5_filenames;
     io::file::HDF5_IO hdf5_io;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -1074,12 +1074,12 @@ void generate_h5_averages(std::string dataset_directory,
     }
 
 
-    for(size_t detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        hdf5_filenames.push_back(dataset_directory+dataset_file+".h5"+std::to_string(detector_num));
+        hdf5_filenames.push_back(dataset_directory+"img.dat/"+dataset_file+".h5"+std::to_string(detector_num));
     }
 
-    hdf5_io.generate_avg(dataset_directory+dataset_file+".h5", hdf5_filenames);
+    hdf5_io.generate_avg(dataset_directory+"img.dat/"+dataset_file+".h5", hdf5_filenames);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
@@ -1343,7 +1343,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (proc_types.size() == 0 && optimize_fit_override_params == false)
+    if (proc_types.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
     {
         help();
         return -1;

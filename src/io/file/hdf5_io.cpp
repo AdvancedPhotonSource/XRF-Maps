@@ -60,6 +60,27 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define HDF5_SAVE_VERSION 10.0
 
+const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
+                                                       "Element_Weights_Names",
+                                                       "DS_IC",
+                                                       "US_IC",
+                                                       "Standard_Name",
+                                                       "Channel_Names",
+                                                       "Names",
+                                                       "vresion"
+                                                      };
+
+
+const std::vector<std::string> hdf5_copy_grp_names = {"Scan"
+                                                      };
+
+const std::vector<std::string> xrf_analysis_save_names = {"ROI",
+                                                          "Params",
+                                                          "Fitted",
+                                                          "SVD",
+                                                          "NNLS"
+                                                         };
+
 namespace io
 {
 namespace file
@@ -1177,7 +1198,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     count[1] = 1;
     count[2] = dims_out[2];
     chunk_dims[0] = 1;
-    chunk_dims[1] = 1;
+    chunk_dims[1] = dims_out[1];
     chunk_dims[2] = dims_out[2];
 
     dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
@@ -2738,12 +2759,18 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::generate_avg(std::string avg_filename, std::list<std::string> files_to_avg)
+bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg)
 {
     std::cout << "HDF5_IO::generate_avg(): " << avg_filename << std::endl;
 
-    std::list<hid_t> hdf5_file_ids;
-    hid_t file_id = start_save_seq(avg_filename);
+    hid_t ocpypl_id, status, src_maps_grp_id, src_analyzed_grp_id, dst_analyzed_grp_id, src_fit_grp_id, dst_fit_grp_id;
+    hid_t error;
+    std::vector<hid_t> hdf5_file_ids;
+    std::string group_name = "";
+
+    hid_t file_id = H5Fcreate(avg_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+    hid_t dst_maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     for(auto& filename : files_to_avg)
     {
@@ -2756,7 +2783,149 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::list<std::string> file
         }
     }
 
-    //TODO:
+    if(hdf5_file_ids.size() > 1)
+    {
+        ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+        status = H5Pset_copy_object(ocpypl_id, H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG);
+
+        //Copy Scan
+        src_maps_grp_id = H5Gopen(hdf5_file_ids[0], "MAPS", H5P_DEFAULT);
+        if(src_maps_grp_id > -1)
+            status = H5Ocopy(src_maps_grp_id, "Scan", dst_maps_grp_id, "Scan", ocpypl_id, H5P_DEFAULT);
+
+        //Average XRF_Analyzed
+        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT);
+        if(src_analyzed_grp_id > -1)
+        {
+            dst_analyzed_grp_id = H5Gcreate(dst_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+            for(std::string analysis_grp_name : xrf_analysis_save_names)
+            {
+                src_fit_grp_id = H5Gopen(src_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT);
+                if(src_fit_grp_id > -1)
+                {
+                    //std::vector<hid_t> analysis_ids;
+
+                    dst_fit_grp_id = H5Gcreate(dst_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                    //copy channel names
+                    status = H5Ocopy(src_fit_grp_id, "Channel_Names", dst_fit_grp_id, "Channel_Names", ocpypl_id, H5P_DEFAULT);
+                    _gen_average("/MAPS/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                    /*
+                    status = H5Ocopy(src_fit_grp_id, "Counts_Per_Sec", dst_fit_grp_id, "Counts_Per_Sec", ocpypl_id, H5P_DEFAULT);
+                    //average
+                    hid_t dset_id = H5Dopen2(src_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
+
+                    hid_t dataspace_id = H5Dget_space(dset_id);
+                    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+
+                    hsize_t* dims_in = new hsize_t[rank];
+                    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+
+                    //get all the other files dataset ids
+                    for(int k=1; k<hdf5_file_ids.size(); k++)
+                    {
+                        std::string full_hdf5_path =  "/MAPS/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec";
+                        hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
+                        if( det_analysis_dset_id > -1 )
+                            analysis_ids.push_back(det_analysis_dset_id);
+                    }
+
+                    //hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
+
+                    std::valarray<real_t> buffer1(dims_in[0] * dims_in[1] * dims_in[2]);
+                    std::valarray<real_t> buffer2(dims_in[0] * dims_in[1] * dims_in[2]);
+                    float divisor = 1.0;
+                    error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+                    for(int k=0; k<analysis_ids.size(); k++)
+                    {
+                        error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
+                        if(error > -1)
+                        {
+                            buffer1 += buffer2;
+                            divisor += 1.0;
+                        }
+                        else
+                        {
+                        std::cout<<"Error reading Counts_Per_Sec dataset "<<  analysis_grp_name<<std::endl;
+                        }
+                    }
+
+                    buffer1 /= divisor;
+
+                    hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
+                    error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+
+                    for(int k=1; k<hdf5_file_ids.size(); k++)
+                    {
+                        H5Dclose(analysis_ids[k]);
+                    }
+
+                    //clean up
+                    delete [] dims_in;
+                    H5Dclose(dset_id);
+                    H5Dclose(dst_dset_id);
+                    */
+                    H5Gclose(dst_fit_grp_id);
+                    H5Gclose(src_fit_grp_id);
+
+                }
+            }
+            H5Gclose(dst_analyzed_grp_id);
+            H5Gclose(src_analyzed_grp_id);
+        }
+
+        //Average Spectra
+        group_name = "Spectra";
+        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, group_name.c_str(), H5P_DEFAULT);
+        if(src_analyzed_grp_id > -1)
+        {
+            dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+            _gen_average("/MAPS/"+group_name+"/Elapsed_Livetime", "Elapsed_Livetime", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+            _gen_average("/MAPS/"+group_name+"/Elapsed_Realtime", "Elapsed_Realtime", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+            _gen_average("/MAPS/"+group_name+"/Input_Counts", "Input_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+            _gen_average("/MAPS/"+group_name+"/Output_Counts", "Output_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+
+            src_inner_grp_id = H5Gopen(src_maps_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+            if(src_inner_grp_id > -1)
+            {
+                dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+                _gen_average("/MAPS/Spectra/Elapsed_Livetime", "Elapsed_Livetime", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+
+
+
+            H5Gclose(dst_fit_grp_id);
+            H5Gclose(src_analyzed_grp_id);
+        }
+
+        //Average Quantification
+        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "Quantification", H5P_DEFAULT);
+        if(src_analyzed_grp_id > -1)
+        {
+            dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Quantification", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+            H5Gclose(dst_fit_grp_id);
+            H5Gclose(src_analyzed_grp_id);
+        }
+
+        //Average Scalers
+        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "Scalers", H5P_DEFAULT);
+        if(src_analyzed_grp_id > -1)
+        {
+            dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+            H5Gclose(dst_fit_grp_id);
+            H5Gclose(src_analyzed_grp_id);
+        }
+
+
+        if(src_maps_grp_id > -1)
+            H5Gclose(src_maps_grp_id);
+    }
+
+
+    H5Gclose(dst_maps_grp_id);
 
     for(auto& f_id : hdf5_file_ids)
     {
@@ -2769,133 +2938,69 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::list<std::string> file
 
 //-----------------------------------------------------------------------------
 
-//This should probably be in a different section instead of hdf_io
-// -----------------------------------------------------------------------------
-//  Applies 2-D Fourier integration to reconstruct dpc images,
-//  presents fluorescence maps for select elements if present in data directory
-// VARIABLE DECLARATIONS / MEANINGS:
-// info				  structure of info about illumination etc
-// delta, beta		  optical parameters
-// nrml				  right-minus-left normalised to transmission signal
-// ntmb				  top-minus-bottom normalised to transmission signal
-//
-// gxdt				   x component of the gradient of the delta.thickness
-// gydt				   y component of the gradient of the delta.thickness
-//
-// ngxdt				   x component of the gradient of the delta.thickness, normalised
-//						  so as to have zero mean
-// ngydt				   y component of the gradient of the delta.thickness, normalised
-//						  so as to have zero mean
-// =============================================
-bool simple_dpc_integration(std::valarray<real_t> nrml, std::valarray<real_t> ntmb, bool no_int)//=true)
+void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
 {
+    std::vector<hid_t> analysis_ids;
+    hid_t error, status;
 
-    real_t hc = 0.001239842;  // wavelength-energy relationship, microns / keV
-/*
-    if nrml.ndim < 1:
-        nrml = 0
-        ntmb = 0
-        rdt = 0
-        return false;
-        */
-/*
-    sz = nrml.shape
-    nx = sz[0]
-    ny = sz[1]
+    status = H5Ocopy(src_fit_grp_id, dataset_name.c_str(), dst_fit_grp_id, dataset_name.c_str(), ocpypl_id, H5P_DEFAULT);
 
-    // "what goes up must come down"
-    //	  - can be used to remove beam intensity variations AND
-    //	  - removes first order effect of detector misalignment
-    //			 (i.e., removes 'constant gradient')
+    hid_t dset_id = H5Dopen2(src_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+    hid_t dataspace_id = H5Dget_space(dset_id);
+    int rank = H5Sget_simple_extent_ndims(dataspace_id);
 
-    ylo = 0
-    yhi = ny - 1
+    hsize_t* dims_in = new hsize_t[rank];
+    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
 
-    // find the vertical lines with the smalles
-    // spread, which hopefully are the background
-
-    for i in range(ylo, yhi)
+    unsigned long total = 1;
+    for(int i=0; i< rank; i++)
     {
-        nrml[:, i] = nrml[:, i] - nrml[:, i].mean(axis=0)
-        // added this for the other direction, too.
-        ntmb[:, i] = ntmb[:, i] - ntmb[:, i].mean(axis=0)
+        total *= dims_in[i];
     }
-    // remove first order effect of detector misalignment in vertical
-    //			 (i.e., remove 'constant gradient')
-    ntmb = ntmb - ntmb.mean(axis=0)
-    // added this for the other direction, too.
-    nrml = nrml - nrml.mean(axis=0)
-
-    rdt = 0
-
-    if (no_int == False)
+    //get all the other files dataset ids
+    for(int k=1; k<hdf5_file_ids.size(); k++)
     {
-        cs_d = 40.0
-        zp_d = 160.0
-        zp_dr = 50.0 / 1000.
-        zp_f = 18.26 * 1000.
-        energy = 10.1
-
-        zz = 82.17
-
-        hx = 0.1
-        hy = 0.1
-
-        xlin = np.arange(float(nx)) * hx
-        ylin = np.arange(float(ny)) * hy
-        ylin = ylin[::-1]
-        xax = xlin  // (ylin*0+1)
-        yax = (xlin * 0 + 1)  // ylin
-
-        // =============================================
-        // calculate as gradient of t
-        // gxdt, gydt refers to the gradient of the delta.thickness
-
-        // extra factor of 2 comes from use of diameters, not radii...
-        ngxdt = (np.math.pi * (zp_d + cs_d)) / (8. * zp_f) * nrml
-        ngydt = (np.math.pi * (zp_d + cs_d)) / (8. * zp_f) * ntmb
-
-        // =============================================
-        // implement FFT reconstruction
-
-        dpc = ngxdt + 1j * ngydt
-
-        fx = (np.arange(float(nx)) - nx / 2) / ((nx - 1) * hx)
-        fy = (np.arange(float(ny)) - ny / 2) / ((ny - 1) * hy)
-        fy = fy[::-1]
-        fxt = np.outer(fx, (fy * 0. + 1.))
-        fy = np.outer((fx * 0. + 1.), fy)
-        fx = fxt
-        fxt = 0
-
-        xy = 2j * np.math.pi * (fx + 1j * fy)
-        xy[(nx - 1) / 2, (ny - 1) / 2] = 1  // to avoid 0/0 error
-        xy = np.fft.fftshift(xy)
-
-        Fdpc = np.fft.fft2(dpc)
-
-        Fdpc[0, 0] = 0  // dc level information not available, leads to numerical error
-
-        dt = np.fft.ifft2(Fdpc / xy)
-
-        // is dt the magnitude of the complex value or the real part?
-        // note that the real part dominates, and the magnitude
-        // loses dynamic range due to abs(-1) = 1, i.e. real part is positive only
-
-        idt = dt.imag
-        rdt = dt.real
-
-        temp = np.concatenate((rdt[0, 1:ny - 1].flatten(), rdt[nx - 1, 1:ny - 1].flatten(), \ rdt[0:nx, 0].flatten(), rdt[0:nx, ny - 1].flatten()))
-
-        // set the average of the perimetric values to be zero
-        rdt = rdt - np.mean(temp)
+        hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
+        if( det_analysis_dset_id > -1 )
+            analysis_ids.push_back(det_analysis_dset_id);
     }
-    return nrml, ntmb, rdt
-                 */
-    return true;
+
+    std::valarray<real_t> buffer1(total);
+    std::valarray<real_t> buffer2(total);
+    float divisor = 1.0;
+    error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+    for(int k=0; k<analysis_ids.size(); k++)
+    {
+        error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
+        if(error > -1)
+        {
+            buffer1 += buffer2;
+            divisor += 1.0;
+        }
+        else
+        {
+        std::cout<<"Error reading "<<full_hdf5_path<<" dataset "<<std::endl;
+        }
+    }
+
+    buffer1 /= divisor;
+
+    hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+    error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+
+    for(int k=1; k<hdf5_file_ids.size(); k++)
+    {
+        H5Dclose(analysis_ids[k]);
+    }
+
+    //clean up
+    delete [] dims_in;
+    H5Dclose(dset_id);
+    H5Dclose(dst_dset_id);
+
+
+
 }
-
-//-----------------------------------------------------------------------------
 
 
 } //end namespace file

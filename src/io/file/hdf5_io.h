@@ -131,7 +131,7 @@ public:
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
-    bool generate_avg(std::string avg_filename, std::list<std::string> files_to_avg);
+    bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
@@ -179,6 +179,8 @@ private:
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
     bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, std::unordered_map< std::string, std::string > *extra_override_values);
+
+    void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
     //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 
