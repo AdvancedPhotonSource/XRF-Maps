@@ -1080,6 +1080,26 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     H5Sclose(memoryspace_id);
     H5Sclose(dataspace_id);
 
+    //save input_counts
+    save_val = spectra.input_counts();
+    dataspace_id = H5Screate_simple (1, count, NULL);
+    memoryspace_id = H5Screate_simple (1, count, NULL);
+    dset_id = H5Dcreate (int_spec_grp_id, "Input_Counts", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+    H5Dclose(dset_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_id);
+
+    //save output_counts
+    save_val = spectra.output_counts();
+    dataspace_id = H5Screate_simple (1, count, NULL);
+    memoryspace_id = H5Screate_simple (1, count, NULL);
+    dset_id = H5Dcreate (int_spec_grp_id, "Output_Counts", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+    H5Dclose(dset_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_id);
+
     //save energy vector
     std::vector<real_t> out_vec;
     data_struct::xrf::gen_energy_vector(spectra.size(), energy_offset, energy_slope, &out_vec);
@@ -1569,6 +1589,23 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
         H5Sclose(memoryspace_id);
         H5Sclose(dataspace_id);
 
+        //save input counts
+        save_val = spectra.input_counts();
+        dataspace_id = H5Screate_simple (1, count, NULL);
+        dset_id = H5Dcreate (q_int_spec_grp_id, "Input_Counts", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+        H5Dclose(dset_id);
+        H5Sclose(memoryspace_id);
+        H5Sclose(dataspace_id);
+
+        //save output counts
+        save_val = spectra.output_counts();
+        dataspace_id = H5Screate_simple (1, count, NULL);
+        dset_id = H5Dcreate (q_int_spec_grp_id, "Output_Counts", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite (dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+        H5Dclose(dset_id);
+        H5Sclose(memoryspace_id);
+        H5Sclose(dataspace_id);
 
         //save calibration curves
         //data_struct::xrf::Quantifiers quantifiers = quantification_standard->calibration_curves.at(path);
@@ -2764,7 +2801,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
     std::cout << "HDF5_IO::generate_avg(): " << avg_filename << std::endl;
 
     hid_t ocpypl_id, status, src_maps_grp_id, src_analyzed_grp_id, dst_analyzed_grp_id, src_fit_grp_id, dst_fit_grp_id;
-    hid_t error;
+    hid_t error, src_inner_grp_id, dst_inner_grp_id;
     std::vector<hid_t> hdf5_file_ids;
     std::string group_name = "";
 
@@ -2788,91 +2825,16 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
         ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         status = H5Pset_copy_object(ocpypl_id, H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG);
 
-        //Copy Scan
         src_maps_grp_id = H5Gopen(hdf5_file_ids[0], "MAPS", H5P_DEFAULT);
+        //Copy Scan and Scalers
         if(src_maps_grp_id > -1)
+        {
             status = H5Ocopy(src_maps_grp_id, "Scan", dst_maps_grp_id, "Scan", ocpypl_id, H5P_DEFAULT);
+            status = H5Ocopy(src_maps_grp_id, "Scalers", dst_maps_grp_id, "Scalers", ocpypl_id, H5P_DEFAULT);
+        }
 
         //Average XRF_Analyzed
-        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT);
-        if(src_analyzed_grp_id > -1)
-        {
-            dst_analyzed_grp_id = H5Gcreate(dst_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-            for(std::string analysis_grp_name : xrf_analysis_save_names)
-            {
-                src_fit_grp_id = H5Gopen(src_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT);
-                if(src_fit_grp_id > -1)
-                {
-                    //std::vector<hid_t> analysis_ids;
-
-                    dst_fit_grp_id = H5Gcreate(dst_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                    //copy channel names
-                    status = H5Ocopy(src_fit_grp_id, "Channel_Names", dst_fit_grp_id, "Channel_Names", ocpypl_id, H5P_DEFAULT);
-                    _gen_average("/MAPS/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
-                    /*
-                    status = H5Ocopy(src_fit_grp_id, "Counts_Per_Sec", dst_fit_grp_id, "Counts_Per_Sec", ocpypl_id, H5P_DEFAULT);
-                    //average
-                    hid_t dset_id = H5Dopen2(src_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
-
-                    hid_t dataspace_id = H5Dget_space(dset_id);
-                    int rank = H5Sget_simple_extent_ndims(dataspace_id);
-
-                    hsize_t* dims_in = new hsize_t[rank];
-                    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
-
-                    //get all the other files dataset ids
-                    for(int k=1; k<hdf5_file_ids.size(); k++)
-                    {
-                        std::string full_hdf5_path =  "/MAPS/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec";
-                        hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
-                        if( det_analysis_dset_id > -1 )
-                            analysis_ids.push_back(det_analysis_dset_id);
-                    }
-
-                    //hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
-
-                    std::valarray<real_t> buffer1(dims_in[0] * dims_in[1] * dims_in[2]);
-                    std::valarray<real_t> buffer2(dims_in[0] * dims_in[1] * dims_in[2]);
-                    float divisor = 1.0;
-                    error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
-                    for(int k=0; k<analysis_ids.size(); k++)
-                    {
-                        error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
-                        if(error > -1)
-                        {
-                            buffer1 += buffer2;
-                            divisor += 1.0;
-                        }
-                        else
-                        {
-                        std::cout<<"Error reading Counts_Per_Sec dataset "<<  analysis_grp_name<<std::endl;
-                        }
-                    }
-
-                    buffer1 /= divisor;
-
-                    hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
-                    error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
-
-                    for(int k=1; k<hdf5_file_ids.size(); k++)
-                    {
-                        H5Dclose(analysis_ids[k]);
-                    }
-
-                    //clean up
-                    delete [] dims_in;
-                    H5Dclose(dset_id);
-                    H5Dclose(dst_dset_id);
-                    */
-                    H5Gclose(dst_fit_grp_id);
-                    H5Gclose(src_fit_grp_id);
-
-                }
-            }
-            H5Gclose(dst_analyzed_grp_id);
-            H5Gclose(src_analyzed_grp_id);
-        }
+        _generate_avg_analysis(src_maps_grp_id, dst_maps_grp_id, "MAPS", ocpypl_id, hdf5_file_ids);
 
         //Average Spectra
         group_name = "Spectra";
@@ -2886,14 +2848,14 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
             _gen_average("/MAPS/"+group_name+"/Input_Counts", "Input_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
             _gen_average("/MAPS/"+group_name+"/Output_Counts", "Output_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
-            src_inner_grp_id = H5Gopen(src_maps_grp_id, "Integrated_Spectra", H5P_DEFAULT);
-            if(src_inner_grp_id > -1)
-            {
-                dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            //for now copy the first detector energy and energy_calib, in the future would be nice to normalize over 4 detectors
+            status = H5Ocopy(src_analyzed_grp_id, "Energy", dst_fit_grp_id, "Energy", ocpypl_id, H5P_DEFAULT);
+            status = H5Ocopy(src_analyzed_grp_id, "Energy_Calibration", dst_fit_grp_id, "Energy_Calibration", ocpypl_id, H5P_DEFAULT);
+            //sum mca_arr
+            _gen_average("/MAPS/"+group_name+"/mca_arr", "mca_arr", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
 
-                _gen_average("/MAPS/Spectra/Elapsed_Livetime", "Elapsed_Livetime", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
-
+            _generate_avg_integrated_spectra(src_analyzed_grp_id, dst_fit_grp_id, "MAPS/Spectra", ocpypl_id, hdf5_file_ids);
 
             H5Gclose(dst_fit_grp_id);
             H5Gclose(src_analyzed_grp_id);
@@ -2905,20 +2867,21 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
         {
             dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Quantification", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+            _generate_avg_analysis(src_analyzed_grp_id, dst_fit_grp_id, "MAPS/Quantification", ocpypl_id, hdf5_file_ids);
+
+            status = H5Ocopy(src_analyzed_grp_id, "Element_Weights", dst_fit_grp_id, "Element_Weights", ocpypl_id, H5P_DEFAULT);
+            status = H5Ocopy(src_analyzed_grp_id, "Element_Weights_Names", dst_fit_grp_id, "Element_Weights_Names", ocpypl_id, H5P_DEFAULT);
+            status = H5Ocopy(src_analyzed_grp_id, "Scalers", dst_fit_grp_id, "Scalers", ocpypl_id, H5P_DEFAULT);
+            status = H5Ocopy(src_analyzed_grp_id, "Standard_Name", dst_fit_grp_id, "Standard_Name", ocpypl_id, H5P_DEFAULT);
+
+
+            _generate_avg_integrated_spectra(src_analyzed_grp_id, dst_fit_grp_id, "MAPS/Quantification", ocpypl_id, hdf5_file_ids);
+
             H5Gclose(dst_fit_grp_id);
             H5Gclose(src_analyzed_grp_id);
         }
 
-        //Average Scalers
-        src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "Scalers", H5P_DEFAULT);
-        if(src_analyzed_grp_id > -1)
-        {
-            dst_fit_grp_id = H5Gcreate(dst_maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-            H5Gclose(dst_fit_grp_id);
-            H5Gclose(src_analyzed_grp_id);
-        }
-
+        status = H5Ocopy(src_maps_grp_id, "version", dst_maps_grp_id, "version", ocpypl_id, H5P_DEFAULT);
 
         if(src_maps_grp_id > -1)
             H5Gclose(src_maps_grp_id);
@@ -2938,70 +2901,131 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
+void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
 {
     std::vector<hid_t> analysis_ids;
     hid_t error, status;
 
     status = H5Ocopy(src_fit_grp_id, dataset_name.c_str(), dst_fit_grp_id, dataset_name.c_str(), ocpypl_id, H5P_DEFAULT);
 
-    hid_t dset_id = H5Dopen2(src_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-    hid_t dataspace_id = H5Dget_space(dset_id);
-    int rank = H5Sget_simple_extent_ndims(dataspace_id);
-
-    hsize_t* dims_in = new hsize_t[rank];
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
-
-    unsigned long total = 1;
-    for(int i=0; i< rank; i++)
+    if (status == 0)
     {
-        total *= dims_in[i];
-    }
-    //get all the other files dataset ids
-    for(int k=1; k<hdf5_file_ids.size(); k++)
-    {
-        hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
-        if( det_analysis_dset_id > -1 )
-            analysis_ids.push_back(det_analysis_dset_id);
-    }
+        hid_t dset_id = H5Dopen2(src_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+        hid_t dataspace_id = H5Dget_space(dset_id);
+        int rank = H5Sget_simple_extent_ndims(dataspace_id);
 
-    std::valarray<real_t> buffer1(total);
-    std::valarray<real_t> buffer2(total);
-    float divisor = 1.0;
-    error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
-    for(int k=0; k<analysis_ids.size(); k++)
-    {
-        error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
-        if(error > -1)
+        hsize_t* dims_in = new hsize_t[rank];
+        unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+
+        unsigned long total = 1;
+        for(int i=0; i< rank; i++)
         {
-            buffer1 += buffer2;
-            divisor += 1.0;
+            total *= dims_in[i];
         }
-        else
+        //get all the other files dataset ids
+        for(int k=1; k<hdf5_file_ids.size(); k++)
         {
-        std::cout<<"Error reading "<<full_hdf5_path<<" dataset "<<std::endl;
+            hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
+            if( det_analysis_dset_id > -1 )
+                analysis_ids.push_back(det_analysis_dset_id);
         }
+
+        std::valarray<real_t> buffer1(total);
+        std::valarray<real_t> buffer2(total);
+        float divisor = 1.0;
+        error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+        for(int k=0; k<analysis_ids.size(); k++)
+        {
+            error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
+            if(error > -1)
+            {
+                buffer1 += buffer2;
+                divisor += 1.0;
+            }
+            else
+            {
+            std::cout<<"Error reading "<<full_hdf5_path<<" dataset "<<std::endl;
+            }
+        }
+
+        if(avg)
+        {
+            buffer1 /= divisor;
+        }
+
+        hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+        error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+
+        for(int k=1; k<hdf5_file_ids.size(); k++)
+        {
+            H5Dclose(analysis_ids[k]);
+        }
+
+        //clean up
+        delete [] dims_in;
+        H5Dclose(dset_id);
+        H5Dclose(dst_dset_id);
     }
-
-    buffer1 /= divisor;
-
-    hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-    error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
-
-    for(int k=1; k<hdf5_file_ids.size(); k++)
-    {
-        H5Dclose(analysis_ids[k]);
-    }
-
-    //clean up
-    delete [] dims_in;
-    H5Dclose(dset_id);
-    H5Dclose(dst_dset_id);
-
-
-
 }
 
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
+{
+    hid_t src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT);
+    if(src_analyzed_grp_id > -1)
+    {
+        hid_t dst_analyzed_grp_id = H5Gcreate(dst_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+        for(std::string analysis_grp_name : xrf_analysis_save_names)
+        {
+            hid_t src_fit_grp_id = H5Gopen(src_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT);
+            if(src_fit_grp_id > -1)
+            {
+                //std::vector<hid_t> analysis_ids;
+
+                hid_t dst_fit_grp_id = H5Gcreate(dst_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                //copy channel names
+                hid_t status = H5Ocopy(src_fit_grp_id, "Channel_Names", dst_fit_grp_id, "Channel_Names", ocpypl_id, H5P_DEFAULT);
+                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+
+                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_Current", "Calibration_Curve_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_DS_IC", "Calibration_Curve_DS_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_US_IC", "Calibration_Curve_US_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+
+                H5Gclose(dst_fit_grp_id);
+                H5Gclose(src_fit_grp_id);
+
+            }
+        }
+        H5Gclose(dst_analyzed_grp_id);
+        H5Gclose(src_analyzed_grp_id);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
+{
+    hid_t src_inner_grp_id = H5Gopen(src_analyzed_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+    if(src_inner_grp_id > -1)
+    {
+        hid_t dst_inner_grp_id = H5Gcreate(dst_fit_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+        _gen_average(group_name+"/Integrated_Spectra/Elapsed_Livetime", "Elapsed_Livetime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+        _gen_average(group_name+"/Integrated_Spectra/Elapsed_Realtime", "Elapsed_Realtime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+        _gen_average(group_name+"/Integrated_Spectra/Input_Counts", "Input_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+        _gen_average(group_name+"/Integrated_Spectra/Output_Counts", "Output_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+
+        //don't average the integrated spectra, just sum it
+        _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
+
+        H5Gclose(dst_inner_grp_id);
+        H5Gclose(src_inner_grp_id);
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 } //end namespace file
 }// end namespace io
