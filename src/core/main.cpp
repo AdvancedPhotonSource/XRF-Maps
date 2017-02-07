@@ -797,8 +797,8 @@ void generate_optimal_params(std::string dataset_directory,
 }
 
 // ----------------------------------------------------------------------------
-/*
-void process_dataset_file_quick_n_dirty(std::string dataset_directory,
+
+void quick_n_dirty_process_dataset_file(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
                                         ThreadPool* tp,
@@ -953,7 +953,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
 
 
 }
-*/
+
 // ----------------------------------------------------------------------------
 
 void process_dataset_file(std::string dataset_directory,
@@ -1657,7 +1657,7 @@ int main(int argc, char *argv[])
         {
             if(quick_n_dirty)
             {
-             //   process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
+                quick_n_dirty_process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {
