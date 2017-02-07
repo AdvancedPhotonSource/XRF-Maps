@@ -640,7 +640,10 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         data_struct::xrf::Spectra_Volume spectra_volume;
         ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf, extra_override_values, nullptr);
-        *integrated_spectra = spectra_volume.integrate();
+        if(ret_val)
+        {
+            *integrated_spectra = spectra_volume.integrate();
+        }
         mda_io.unload();
     }
     else
@@ -798,7 +801,93 @@ void generate_optimal_params(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-void quick_n_dirty_process_dataset_file(std::string dataset_directory,
+void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
+                  std::vector<Processing_Type> proc_types,
+                  std::string full_save_path,
+                  struct params_override * override_params,
+                  data_struct::xrf::Quantification_Standard * quantification_standard,
+                  ThreadPool* tp)
+{
+    //Model
+    fitting::models::Gaussian_Model model;
+
+    //Range of energy in spectra to fit
+    fitting::models::Range energy_range;
+    energy_range.min = 0;
+    energy_range.max = spectra_volume->samples_size() -1;
+
+    for(auto proc_type : proc_types)
+    {
+        //Fit job queue
+        std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
+
+        if (override_params->elements_to_fit.size() < 1)
+        {
+            std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+            continue;
+        }
+
+        //Allocate memeory to save fit counts
+        data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
+
+        //Fitting models
+        fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
+
+        //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
+        bool alloc_iter_count = true;
+
+        //reset model fit parameters to defaults
+        model.reset_to_default_fit_params();
+        //Update fit parameters by override values
+        model.update_fit_params_values(override_params->fit_params);
+
+        if (alloc_iter_count)
+        {
+            //Allocate memeory to save number of fit iterations
+            element_fit_count_dict->emplace(std::pair<std::string, data_struct::xrf::Fit_Counts_Array>(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Counts_Array()) );
+            element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
+        }
+
+        //Initialize model
+        fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
+
+        for(size_t i=0; i<spectra_volume->rows(); i++)
+        {
+            for(size_t j=0; j<spectra_volume->cols(); j++)
+            {
+                //std::cout<< i<<" "<<j<<std::endl;
+                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+            }
+        }
+
+        save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
+    }
+
+    real_t energy_offset = 0.0;
+    real_t energy_slope = 0.0;
+    real_t energy_quad = 0.0;
+    data_struct::xrf::Fit_Parameters fit_params = model.fit_parameters();
+    if(fit_params.contains(fitting::models::STR_ENERGY_OFFSET))
+    {
+        energy_offset = fit_params[fitting::models::STR_ENERGY_OFFSET].value;
+    }
+    if(fit_params.contains(fitting::models::STR_ENERGY_SLOPE))
+    {
+        energy_slope = fit_params[fitting::models::STR_ENERGY_SLOPE].value;
+    }
+    if(fit_params.contains(fitting::models::STR_ENERGY_QUADRATIC))
+    {
+        energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
+    }
+
+    std::queue<std::future<bool> >* file_job_queue = new std::queue<std::future<bool> >();
+    save_volume( full_save_path, quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad, file_job_queue);
+
+}
+
+// ----------------------------------------------------------------------------
+
+void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
                                         ThreadPool* tp,
@@ -808,12 +897,6 @@ void quick_n_dirty_process_dataset_file(std::string dataset_directory,
 {
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
-
-    fitting::models::Gaussian_Model model;
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
 
     struct params_override * override_params = nullptr;
     if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
@@ -881,76 +964,7 @@ void quick_n_dirty_process_dataset_file(std::string dataset_directory,
     }
     delete tmp_spectra_volume;
 
-    energy_range.max = spectra_volume->samples_size() -1;
-
-    for(auto proc_type : proc_types)
-    {
-        //Fit job queue
-        std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
-
-        if (override_params->elements_to_fit.size() < 1)
-        {
-            std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
-            continue;
-        }
-
-        //Allocate memeory to save fit counts
-        data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
-
-        //Fitting models
-        fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
-
-        //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
-        bool alloc_iter_count = true;
-
-        //reset model fit parameters to defaults
-        model.reset_to_default_fit_params();
-        //Update fit parameters by override values
-        model.update_fit_params_values(override_params->fit_params);
-
-        if (alloc_iter_count)
-        {
-            //Allocate memeory to save number of fit iterations
-            element_fit_count_dict->emplace(std::pair<std::string, data_struct::xrf::Fit_Counts_Array>(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Counts_Array()) );
-            element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
-        }
-
-        //Initialize model
-        fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
-
-        for(size_t i=0; i<spectra_volume->rows(); i++)
-        {
-            for(size_t j=0; j<spectra_volume->cols(); j++)
-            {
-                //std::cout<< i<<" "<<j<<std::endl;
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
-            }
-        }
-
-        save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
-    }
-
-    real_t energy_offset = 0.0;
-    real_t energy_slope = 0.0;
-    real_t energy_quad = 0.0;
-    data_struct::xrf::Fit_Parameters fit_params = model.fit_parameters();
-    if(fit_params.contains(fitting::models::STR_ENERGY_OFFSET))
-    {
-        energy_offset = fit_params[fitting::models::STR_ENERGY_OFFSET].value;
-    }
-    if(fit_params.contains(fitting::models::STR_ENERGY_SLOPE))
-    {
-        energy_slope = fit_params[fitting::models::STR_ENERGY_SLOPE].value;
-    }
-    if(fit_params.contains(fitting::models::STR_ENERGY_QUADRATIC))
-    {
-        energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
-    }
-    std::queue<std::future<bool> >* file_job_queue = new std::queue<std::future<bool> >();
-
-    //tp->enqueue( save_volume, full_save_path, spectra_volume, file_job_queue );
-    save_volume( full_save_path, nullptr, spectra_volume, energy_offset, energy_slope, energy_quad, file_job_queue);
-
+    proc_spectra(spectra_volume, proc_types, full_save_path, override_params, nullptr, tp);
 
 }
 
@@ -966,13 +980,6 @@ void process_dataset_file(std::string dataset_directory,
                           size_t detector_num_end)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end;
-
-    fitting::models::Gaussian_Model model;
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-
 
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
@@ -1011,76 +1018,7 @@ void process_dataset_file(std::string dataset_directory,
             continue;
         }
 
-        energy_range.max = spectra_volume->samples_size() -1;
-
-        for(auto proc_type : proc_types)
-        {
-            //Fit job queue
-            std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
-
-            if (override_params->elements_to_fit.size() < 1)
-            {
-                std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
-                continue;
-            }
-
-            //Allocate memeory to save fit counts
-            data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
-
-            //Fitting models
-            fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
-
-            //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
-            bool alloc_iter_count = true;
-
-            //reset model fit parameters to defaults
-            model.reset_to_default_fit_params();
-            //Update fit parameters by override values
-            model.update_fit_params_values(override_params->fit_params);
-
-            if (alloc_iter_count)
-            {
-                //Allocate memeory to save number of fit iterations
-                element_fit_count_dict->emplace(std::pair<std::string, data_struct::xrf::Fit_Counts_Array>(data_struct::xrf::STR_NUM_ITR, data_struct::xrf::Fit_Counts_Array()) );
-                element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
-            }
-
-            //Initialize model
-            fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
-
-            for(size_t i=0; i<spectra_volume->rows(); i++)
-            {
-                for(size_t j=0; j<spectra_volume->cols(); j++)
-                {
-                    //std::cout<< i<<" "<<j<<std::endl;
-                    fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
-                }
-            }
-
-            //file_job_queue->emplace( tp->enqueue( save_results, full_save_path, save_loc, element_fit_count_dict, fit_job_queue) );
-            save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
-        }
-
-        real_t energy_offset = 0.0;
-        real_t energy_slope = 0.0;
-        real_t energy_quad = 0.0;
-        data_struct::xrf::Fit_Parameters fit_params = model.fit_parameters();
-        if(fit_params.contains(fitting::models::STR_ENERGY_OFFSET))
-        {
-            energy_offset = fit_params[fitting::models::STR_ENERGY_OFFSET].value;
-        }
-        if(fit_params.contains(fitting::models::STR_ENERGY_SLOPE))
-        {
-            energy_slope = fit_params[fitting::models::STR_ENERGY_SLOPE].value;
-        }
-        if(fit_params.contains(fitting::models::STR_ENERGY_QUADRATIC))
-        {
-            energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
-        }
-
-        //tp->enqueue( save_volume, full_save_path, spectra_volume, file_job_queue );
-        save_volume( full_save_path, quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad, file_job_queue);
-
+        proc_spectra(spectra_volume, proc_types, full_save_path, override_params, quantification_standard, tp);
     }
 
 }
@@ -1657,7 +1595,7 @@ int main(int argc, char *argv[])
         {
             if(quick_n_dirty)
             {
-                quick_n_dirty_process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
+                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {

@@ -363,9 +363,8 @@ elseif (UNIX)
   #set(NETCDF_LIB netcdf)
   set(SZIP_LIB sz)
 
-  # Optimize for a small binary size
-  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(libxrf_fit  libxrf_io PROPERTIES COMPILE_FLAGS "-Os")
+    if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
