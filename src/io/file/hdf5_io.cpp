@@ -1262,7 +1262,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
         return false;
     }
 
-    //dset_id = H5Dopen (maps_grp_id, path.c_str(), H5P_DEFAULT);
+    dset_id = H5Dopen (fit_grp_id, "Counts_Per_Sec", H5P_DEFAULT);
     if(dset_id < 0)
         dset_id = H5Dcreate (fit_grp_id, "Counts_Per_Sec", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
     if(dset_id < 0)
