@@ -1318,6 +1318,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
 
     DIR *dir;
     struct dirent *ent;
+    size_t search_str_size = search_str.length();
     if ((dir = opendir (dataset_directory.c_str())) != NULL)
     {
         /* print all the files and directories within directory */
@@ -1327,7 +1328,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
             // check if extension is .mda
             if (fname.size() > 4)
             {
-                if (fname.rfind(search_str) == fname.size() -4)
+                if (fname.rfind(search_str) == fname.size() -search_str_size)
                 {
                     dataset_files.push_back(fname);
                 }
@@ -1603,8 +1604,8 @@ int main(int argc, char *argv[])
     }
 
     //populate netcdf and hdf5 files for fly scans
-    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "0.nc");
-    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.H5/", "0.h5");
+    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "_0.nc");
+    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.H5/", "_0.h5");
 
     //gen whole command line to save in hdf5 later
     for(int ic = 0; ic < argc; ic++)
