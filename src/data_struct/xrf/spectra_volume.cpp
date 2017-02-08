@@ -99,7 +99,7 @@ void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
     _data_vol.resize(rows);
     for(size_t i=0; i<_data_vol.size(); i++)
     {
-        _data_vol[i].alloc(cols, samples);
+        _data_vol[i].resize(cols, samples);
     }
 /*
     for(Spectra_Line line : _data_vol)

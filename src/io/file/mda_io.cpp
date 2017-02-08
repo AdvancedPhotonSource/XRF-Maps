@@ -533,7 +533,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
     {
         dims[0] = header->dimensions[0];
         dims[1] = header->dimensions[1];
-        dims[2] = header->dimensions[1];
+        dims[2] = header->dimensions[2];
     }
     else
     {

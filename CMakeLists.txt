@@ -333,7 +333,7 @@ if (WIN32)
     # on MSVC (~30% smaller binaries in experiments). /bigobj is needed
     # for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
-    set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Os /GL /MP /bigobj /DDYNAMIC_LIB")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O3 /arch:SSE2 /Qvec-report /GL /MP /bigobj /DDYNAMIC_LIB")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
 
 #	set(NETCDF_LIBRARIES netcdf.lib)

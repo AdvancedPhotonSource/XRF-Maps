@@ -60,6 +60,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <fstream>
 
+#include <stdlib.h>
+
 //#include "pybind11.h"
 
 #include <dirent.h>
@@ -160,6 +162,9 @@ fitting::optimizers::Optimizer *optimizer = &lmfit_optimizer;
 
 //default mode for which parameters to fit when optimizing fit parameters
 fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+
+std::vector<std::string> netcdf_files;
+std::vector<std::string> hdf_files;
 
 // ----------------------------------------------------------------------------
 
@@ -548,14 +553,32 @@ bool load_spectra_volume(std::string dataset_directory,
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
-    std::ifstream file_io_0(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
-    std::ifstream file_io_hdf(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5");
-    bool hasNetcdf = file_io_0.is_open();
-    bool hasHdf = file_io_hdf.is_open();
-    if(hasNetcdf)
-        file_io_0.close();
-    if(hasHdf)
-        file_io_hdf.close();
+    bool hasNetcdf = false;
+    bool hasHdf = false;
+    std::string file_middle = ""; //_2xfm3_ or dxpM...
+    for(auto &itr : netcdf_files)
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+            file_middle = itr.substr(tmp_dataset_file.length(), slen);
+            hasNetcdf = true;
+            break;
+        }
+    }
+    if (hasNetcdf == false)
+    {
+        for(auto &itr : hdf_files)
+        {
+            if (itr.find(tmp_dataset_file) == 0)
+            {
+                size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+                file_middle = itr.substr(tmp_dataset_file.length(), slen);
+                hasHdf = true;
+                break;
+            }
+        }
+    }
 
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf, extra_override_values, quantification_standard) )
@@ -567,27 +590,27 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         if(hasNetcdf)
         {
-            std::ifstream file_io(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
+            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
                 std::string full_filename;
                 for(size_t i=0; i<spectra_volume->rows(); i++)
                 {
-                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     std::cout<<"Loading file "<<full_filename<<std::endl;
                     netcdf_io.load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                 }
             }
             else
             {
-                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc"<<std::endl;
+                std::cout<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
                 //return false;
             }
         }
         else if (hasHdf)
         {
-            hdf5_io.load_spectra_volume(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5", detector_num, spectra_volume);
+            hdf5_io.load_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
         }
 
     }
@@ -626,14 +649,32 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
-    std::ifstream file_io_0(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
-    std::ifstream file_io_hdf(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5");
-    bool hasNetcdf = file_io_0.is_open();
-    bool hasHdf = file_io_hdf.is_open();
-    if(hasNetcdf)
-        file_io_0.close();
-    if(hasHdf)
-        file_io_hdf.close();
+    bool hasNetcdf = false;
+    bool hasHdf = false;
+    std::string file_middle = ""; //_2xfm3_ or dxpM...
+    for(auto &itr : netcdf_files)
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+            file_middle = itr.substr(tmp_dataset_file.length(), slen);
+            hasNetcdf = true;
+            break;
+        }
+    }
+    if (hasNetcdf == false)
+    {
+        for(auto &itr : hdf_files)
+        {
+            if (itr.find(tmp_dataset_file) == 0)
+            {
+                size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+                file_middle = itr.substr(tmp_dataset_file.length(), slen);
+                hasHdf = true;
+                break;
+            }
+        }
+    }
 
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
@@ -651,16 +692,20 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         int rank;
         int dims[10];
         dims[0] = 0;
-        rank = mda_io.get_rank_and_dims(dataset_directory+"mda/"+dataset_file, &dims[0]);
+        rank = mda_io.get_rank_and_dims(dataset_directory + "mda/" + dataset_file, &dims[0]);
         if(rank == 3)
+        {
             integrated_spectra->resize(dims[2]);
+        }
         else
+        {
             integrated_spectra->resize(2048);
+        }
 
 
         if(hasNetcdf)
         {
-            std::ifstream file_io(dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc");
+            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
@@ -668,24 +713,27 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 for(size_t i=0; i<dims[0]; i++)
                 {
                     data_struct::xrf::Spectra_Line spectra_line;
-                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + "_2xfm3__" + std::to_string(i) + ".nc";
+                    spectra_line.resize(dims[1], integrated_spectra->size());
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     std::cout<<"Loading file "<<full_filename<<std::endl;
-                    netcdf_io.load_spectra_line(full_filename, detector_num, &spectra_line);
-                    for(int k=0; k<spectra_line.size(); k++)
+                    if( netcdf_io.load_spectra_line(full_filename, detector_num, &spectra_line) )
                     {
-                        *integrated_spectra += spectra_line[k];
+                        for(int k=0; k<spectra_line.size(); k++)
+                        {
+                            *integrated_spectra += spectra_line[k];
+                        }
                     }
                 }
             }
             else
             {
-                std::cout<<"Did not find netcdf files "<<dataset_directory+"flyXRF/"+tmp_dataset_file+"_2xfm3__0.nc"<<std::endl;
+                std::cout<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
                 //return false;
             }
         }
         else if (hasHdf)
         {
-            ret_val = hdf5_io.load_and_integrate_spectra_volume(dataset_directory+"flyXRF.h5/"+tmp_dataset_file+"_2xfm3__0.h5", detector_num, integrated_spectra);
+            ret_val = hdf5_io.load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, integrated_spectra);
         }
 
     }
@@ -886,7 +934,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
@@ -967,7 +1015,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     proc_spectra(spectra_volume, proc_types, full_save_path, override_params, nullptr, tp);
 
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 void process_dataset_file(std::string dataset_directory,
@@ -1264,11 +1312,9 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 
 // ----------------------------------------------------------------------------
 
-std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
+std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)
 {
     std::vector<std::string> dataset_files;
-
-    dataset_directory += "mda/";
 
     DIR *dir;
     struct dirent *ent;
@@ -1281,7 +1327,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
             // check if extension is .mda
             if (fname.size() > 4)
             {
-                if (fname.rfind(".mda") == fname.size() -4)
+                if (fname.rfind(search_str) == fname.size() -4)
                 {
                     dataset_files.push_back(fname);
                 }
@@ -1301,6 +1347,42 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory)
 
 // ----------------------------------------------------------------------------
 
+void check_and_create_dirs(std::string dataset_directory)
+{
+
+    bool found_img_dat = false;
+
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir (dataset_directory.c_str())) != NULL)
+    {
+        /* print all the files and directories within directory */
+        while ((ent = readdir (dir)) != NULL)
+        {
+            if( strcmp(ent->d_name , "img.dat") == 0)
+            {
+                found_img_dat = true;
+                break;
+            }
+        }
+        closedir (dir);
+    }
+    else
+    {
+        /* could not open directory */
+        std::cout<<"Error: could not open directory "<<dataset_directory<<std::endl;
+    }
+
+    if (false == found_img_dat)
+    {
+        std::string cmd = "mkdir "+dataset_directory+"img.dat";
+        system(cmd.c_str());
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
 void help()
 {
     std::cout<<"Help: "<<std::endl;
@@ -1314,7 +1396,7 @@ void help()
 //    std::cout<<"    us = upstream ion chamber\n";
 //    std::cout<<"    ds = downstream ion chamber\n";
 //    std::cout<<"    sr = sr current. "<<std::endl;
-    std::cout<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
+//    std::cout<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
     std::cout<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
     std::cout<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
@@ -1485,6 +1567,7 @@ int main(int argc, char *argv[])
         dataset_dir += "/";
     }
 
+    check_and_create_dirs(dataset_dir);
 
     if (proc_types.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
     {
@@ -1496,7 +1579,7 @@ int main(int argc, char *argv[])
     if (dset_file.length() < 1)
     {
         // find all files in the dataset
-        dataset_files = find_all_dataset_files(dataset_dir);
+        dataset_files = find_all_dataset_files(dataset_dir + "mda/", ".mda");
         if (dataset_files.size() == 0)
         {
             std::cout<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
@@ -1518,6 +1601,10 @@ int main(int argc, char *argv[])
     {
         dataset_files.push_back(dset_file);
     }
+
+    //populate netcdf and hdf5 files for fly scans
+    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "0.nc");
+    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.H5/", "0.h5");
 
     //gen whole command line to save in hdf5 later
     for(int ic = 0; ic < argc; ic++)
@@ -1595,7 +1682,7 @@ int main(int argc, char *argv[])
         {
             if(quick_n_dirty)
             {
-                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
+                //process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {

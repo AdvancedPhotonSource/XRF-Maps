@@ -72,19 +72,13 @@ public:
 
     const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
 
-    //void append_spectra(Spectra* spectra);
-
-    //std::vector<Spectra*>* get_data() { return &_data_line; }
-
-    void alloc(size_t row_size, size_t spec_size);
+    void resize(size_t cols, size_t samples);
 
     void alloc_row_size(size_t n);
 
     void recalc_elapsed_lifetime();
 
     auto size() const { return _data_line.size(); }
-
-    //void set_val(size_t row, size_t samp, real_t val) { _data_line[row].set_val(samp, val); }
 
 private:
 
