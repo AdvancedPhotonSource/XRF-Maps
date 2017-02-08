@@ -98,12 +98,11 @@ ENDIF()
 
 link_directories( ${SZip_LIB_DIR} )
 
-# Set a default build configuration if none is specified. 'MinSizeRel' produces the smallest binaries
+# Set a default build configuration if none is specified. 'Release' produces the smallest binaries
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'MinSizeRel' as none was specified.")
-  set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Choose the type of build." FORCE)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
+  message(STATUS "Setting build type to 'Release' as none was specified.")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
@@ -121,16 +120,16 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
-  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+#  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     # Default symbol visibility
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
     # Check for Link Time Optimization support
-    CHECK_CXX_COMPILER_FLAG("-flto" HAS_LTO_FLAG)
-    if (HAS_LTO_FLAG)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
-    endif()
-  endif()
+#    CHECK_CXX_COMPILER_FLAG("-flto" HAS_LTO_FLAG)
+#    if (HAS_LTO_FLAG)
+#      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
+#    endif()
+#  endif()
 endif()
 
 # Compile with compiler warnings turned on
@@ -319,9 +318,7 @@ set_target_properties(libxrf_io PROPERTIES PREFIX "")
 # Always write the output file directly into the 'libxrf_fit' directory (even on MSVC)
 set(CompilerFlags
   LIBRARY_OUTPUT_DIRECTORY LIBRARY_OUTPUT_DIRECTORY_RELEASE LIBRARY_OUTPUT_DIRECTORY_DEBUG
-  LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO
-  RUNTIME_OUTPUT_DIRECTORY RUNTIME_OUTPUT_DIRECTORY_RELEASE RUNTIME_OUTPUT_DIRECTORY_DEBUG
-  RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO)
+  RUNTIME_OUTPUT_DIRECTORY RUNTIME_OUTPUT_DIRECTORY_RELEASE RUNTIME_OUTPUT_DIRECTORY_DEBUG)
 
 foreach(CompilerFlag ${CompilerFlags})
   set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
@@ -329,9 +326,7 @@ endforeach()
 
 if (WIN32)
   if (MSVC)
-    # Enforce size-based optimization and link time code generation
-    # on MSVC (~30% smaller binaries in experiments). /bigobj is needed
-    # for bigger binding projects due to the limit to 64k addressable sections
+    # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O3 /arch:SSE2 /Qvec-report /GL /MP /bigobj /DDYNAMIC_LIB")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")

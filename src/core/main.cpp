@@ -934,7 +934,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 }
 
 // ----------------------------------------------------------------------------
-/*
+
 void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
@@ -1015,7 +1015,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     proc_spectra(spectra_volume, proc_types, full_save_path, override_params, nullptr, tp);
 
 }
-*/
+
 // ----------------------------------------------------------------------------
 
 void process_dataset_file(std::string dataset_directory,
@@ -1396,7 +1396,7 @@ void help()
 //    std::cout<<"    us = upstream ion chamber\n";
 //    std::cout<<"    ds = downstream ion chamber\n";
 //    std::cout<<"    sr = sr current. "<<std::endl;
-//    std::cout<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
+    std::cout<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
     std::cout<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
     std::cout<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
@@ -1682,7 +1682,7 @@ int main(int argc, char *argv[])
         {
             if(quick_n_dirty)
             {
-                //process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
+                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {
