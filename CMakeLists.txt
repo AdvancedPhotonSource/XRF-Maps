@@ -328,7 +328,7 @@ if (WIN32)
   if (MSVC)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O3 /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /DDYNAMIC_LIB")
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O2 /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /DDYNAMIC_LIB")
     set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
 
 #	set(NETCDF_LIBRARIES netcdf.lib)
