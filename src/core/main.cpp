@@ -275,6 +275,11 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     visual::SavePlotSpectras(str_path, file_and_fit_params.spectra, model_spectra, true);
 #endif
 
+    for(auto &itr : file_and_fit_params.elements_to_fit)
+    {
+        delete file_and_fit_params.elements_to_fit[itr.first];
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -1703,6 +1708,12 @@ int main(int argc, char *argv[])
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "\n\n ---- Total elapsed time: " << elapsed_seconds.count() << "s -----\n\n";
+
+    //cleanup
+    for (auto & itr : params.elements_to_fit)
+    {
+        delete params.elements_to_fit[itr.first];
+    }
 
     return 0;
     //return a.exec();

@@ -155,7 +155,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     std::valarray<real_t> weights = (real_t)1.0 / ( (real_t)1.0 + (*spectra) );
     weights = convolve1d(weights, 5);
     weights = std::abs(weights);
-    weights /= weights.max();
+    real_t max_weight = weights.max();
+    weights /= max_weight;
     ud.weights = &weights;
 
     //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );

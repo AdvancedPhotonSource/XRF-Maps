@@ -80,10 +80,12 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
 
     for(const auto& e_itr : *elements_to_fit)
     {
+        unsigned int left_roi = 0;
+        unsigned int right_roi = 0;
         Fit_Element_Map* element = e_itr.second;
         // note: center position for peaks/rois is in keV, widths of ROIs is in eV
-        int left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
-        int right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
+        left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
+        right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - fitp.at(models::STR_ENERGY_OFFSET).value) / fitp.at(models::STR_ENERGY_SLOPE).value);
 
         if (right_roi >= n_mca_channels)
         {

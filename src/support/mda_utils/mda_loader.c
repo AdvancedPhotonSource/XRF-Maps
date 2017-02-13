@@ -134,8 +134,7 @@ static struct mda_header *header_read( XDR *xdrs)
   if( !xdr_int16_t(xdrs, &(header->data_rank) ))
     return NULL;
 
-  header->dimensions = (int32_t *) 
-    malloc( header->data_rank * sizeof(int32_t));
+  header->dimensions = (int32_t *) malloc( header->data_rank * sizeof(int32_t));
   if( !xdr_vector( xdrs, (char *) header->dimensions, header->data_rank, 
 		   sizeof( int32_t), (xdrproc_t) xdr_int32_t))
     return NULL;

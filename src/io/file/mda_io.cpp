@@ -267,7 +267,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         if(hasNetCDF)
         {
             vol->resize(header->dimensions[0], header->dimensions[1], 2048);
-            delete header;
+            mda_header_unload(header);
             return true;
         }
         else
@@ -283,7 +283,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
             else
             {
                 //if not then we don't know what is dataset is.
-                delete header;
+                mda_header_unload(header);
                 return false;
             }
         }
@@ -298,11 +298,11 @@ bool MDA_IO::load_spectra_volume(std::string path,
     else
     {
         std::cout<<" Error: no support for data rank "<< header->data_rank <<std::endl;
-        delete header;
+        mda_header_unload(header);
         return false;
     }
 
-    delete header;
+    mda_header_unload(header);
 
     //_load_detector_meta_data(detector);
 
@@ -500,7 +500,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
         std::cout<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
     }
 
-    delete header;
+    mda_header_unload(header);
 
     return f_size;
 }
@@ -541,7 +541,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
     }
     rank = header->data_rank;
 
-    delete header;
+    mda_header_unload(header);
 
     return rank;
 }

@@ -160,15 +160,16 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 
     //n_pileup = 9
     //valarray<real_t> value(0.0, energy_range.count());
-    valarray<real_t> counts(0.0, energy_range.count());
+    real_t start_val = (real_t)0.0;
+    valarray<real_t> counts(start_val, energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    valarray<real_t> energy((real_t)0.0, energy_range.count());
+    valarray<real_t> energy(start_val, energy_range.count());
     real_t e_val = energy_range.min;
-    for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
+    for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
     {
         energy[i] = e_val;
         e_val += 1.0;

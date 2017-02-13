@@ -277,12 +277,19 @@ void nnls::showStatus()
 
 int nnls::cleanUp()
 {
-  delete ax;
+    //TODO: add checks to make sure memory was initialized
+  delete x;
+  delete g;
+  delete refx;
+  delete refg;
   delete oldx;
   delete oldg;
   delete xdelta;
   delete gdelta;
-  delete fset;
-  delete refx;
+  delete ax;
+  free(fset);
+  delete out.obj;
+  delete out.pgnorms;
+  delete out.time;
   return 0;
 }

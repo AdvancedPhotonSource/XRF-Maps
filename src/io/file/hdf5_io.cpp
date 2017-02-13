@@ -2358,7 +2358,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
     std::list<std::string> ignore_scaler_strings = { "ELT1", "ERT1", "ICR1", "OCR1" };
     std::list<struct scaler_struct> scalers;
 
-    hid_t dset_cps_id;
+    hid_t dset_cps_id = -1;
 
 
     try
