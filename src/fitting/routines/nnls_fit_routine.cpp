@@ -147,8 +147,6 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
         counts_dict[itr.first] = result_p[_element_row_index[itr.first]];
     }
 
-    //counts_dict[data_struct::xrf::STR_COMPTON_AMPLITUDE] = result_p[_element_row_index[itr.first]];
-    //counts_dict[data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE] = num_iter;
     counts_dict[data_struct::xrf::STR_NUM_ITR] = num_iter;
 
     delete solver;

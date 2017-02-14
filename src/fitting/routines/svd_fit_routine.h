@@ -67,7 +67,7 @@ public:
 
     SVD_Fit_Routine();
 
-    ~SVD_Fit_Routine();
+    virtual ~SVD_Fit_Routine();
 
     virtual  std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
                                                                  const Spectra * const spectra,

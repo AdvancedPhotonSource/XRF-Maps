@@ -368,6 +368,11 @@ void Element_Info_Map::clear()
         _number_element_info_map[itr.first] = nullptr;
     }
     */
+	for (auto &itr : _name_element_info_map)
+	{
+		delete itr.second;
+		//delete _name_element_info_map[itr.first];
+	}
     _number_element_info_map.clear();
     _name_element_info_map.clear();
 }

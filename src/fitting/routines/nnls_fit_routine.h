@@ -69,7 +69,7 @@ public:
 
     NNLS_Fit_Routine(size_t max_iter);
 
-    ~NNLS_Fit_Routine();
+	virtual ~NNLS_Fit_Routine();
 
     virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
                                                                  const Spectra * const spectra,

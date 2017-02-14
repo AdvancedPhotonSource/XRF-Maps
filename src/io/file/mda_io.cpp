@@ -258,6 +258,10 @@ bool MDA_IO::load_spectra_volume(std::string path,
     _mda_file = mda_load(fptr);
     if (_mda_file == nullptr)
     {
+		if (header != nullptr)
+		{
+			mda_header_unload(header);
+		}
         return false;
     }
 

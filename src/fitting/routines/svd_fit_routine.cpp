@@ -68,7 +68,9 @@ SVD_Fit_Routine::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 
 SVD_Fit_Routine::~SVD_Fit_Routine()
 {
+	_element_row_index.clear();
 
+	_fitmatrix.resize(1, 1);
 }
 
 

@@ -329,8 +329,11 @@ if (WIN32)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O2 /arch:AVX /Qvec-report:2 /GL /MP /bigobj")
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
+	if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+      set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O2 /arch:AVX /Qvec-report:2 /GL /MP /bigobj")
+	  set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
+	endif()
+    
 
 #	set(NETCDF_LIBRARIES netcdf.lib)
 	set(SZIP_LIB szip.lib)

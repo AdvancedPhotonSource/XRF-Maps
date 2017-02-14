@@ -64,7 +64,7 @@ class DLL_EXPORT ROI_Fit_Routine: public Base_Fit_Routine
 public:
     ROI_Fit_Routine();
 
-    ~ROI_Fit_Routine();
+	virtual ~ROI_Fit_Routine();
 
     virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
                                                                 const Spectra * const spectra,

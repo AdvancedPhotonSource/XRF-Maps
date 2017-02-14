@@ -231,16 +231,17 @@ bool save_volume(std::string full_path,
                  data_struct::xrf::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
-                 real_t energy_quad,
-                 std::queue<std::future<bool> >* job_queue)
+                 real_t energy_quad)
+                 //std::queue<std::future<bool> >* job_queue)
 {
+	/*
     //wait for queue to finish processing
     while(!job_queue->empty())
     {
         auto ret = std::move(job_queue->front());
         job_queue->pop();
         ret.get();
-    }
+    }*/
 
     io::file::HDF5_IO hdf5_io;
     hid_t f_id = hdf5_io.start_save_seq(full_path);
@@ -248,7 +249,7 @@ bool save_volume(std::string full_path,
     hdf5_io.save_spectra_volume(f_id, "mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
     hdf5_io.end_save_seq(f_id);
 
-    delete job_queue;
+    //delete job_queue;
     delete spectra_volume;
 
     return true;
@@ -277,7 +278,7 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
     for(auto &itr : file_and_fit_params.elements_to_fit)
     {
-        delete file_and_fit_params.elements_to_fit[itr.first];
+        delete itr.second;
     }
 
 }
@@ -871,14 +872,14 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 
     for(auto proc_type : proc_types)
     {
-        //Fit job queue
-        std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
-
         if (override_params->elements_to_fit.size() < 1)
         {
             std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
             continue;
         }
+
+		//Fit job queue
+		std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
 
         //Allocate memeory to save fit counts
         data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
@@ -933,8 +934,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
         energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
     }
 
-    std::queue<std::future<bool> >* file_job_queue = new std::queue<std::future<bool> >();
-    save_volume( full_save_path, quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad, file_job_queue);
+    save_volume( full_save_path, quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad);
 
 }
 
@@ -1061,13 +1061,11 @@ void process_dataset_file(std::string dataset_directory,
         //Spectra volume data
         data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
 
-        //File job queue
-        std::queue<std::future<bool> >* file_job_queue = new std::queue<std::future<bool> >();
-
         //load spectra volume
         if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &override_params->extra_override_values, nullptr, true) )
         {
             std::cout<<"Skipping detector "<<detector_num<<std::endl;
+			delete spectra_volume;
             continue;
         }
 
@@ -1712,8 +1710,9 @@ int main(int argc, char *argv[])
     //cleanup
     for (auto & itr : params.elements_to_fit)
     {
-        delete params.elements_to_fit[itr.first];
+        delete itr.second;
     }
+	data_struct::xrf::Element_Info_Map::inst()->clear();
 
     return 0;
     //return a.exec();

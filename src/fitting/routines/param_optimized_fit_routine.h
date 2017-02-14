@@ -70,7 +70,7 @@ class DLL_EXPORT Param_Optimized_Fit_Routine: public Base_Fit_Routine
 public:
     Param_Optimized_Fit_Routine();
 
-    ~Param_Optimized_Fit_Routine();
+	virtual ~Param_Optimized_Fit_Routine();
 
     virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
                                                                 const Spectra * const spectra,

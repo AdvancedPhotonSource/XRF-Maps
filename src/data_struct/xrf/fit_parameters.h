@@ -143,6 +143,11 @@ struct DLL_EXPORT Fit_Counts_Array
         resize(rows, cols);
     }
 
+	~Fit_Counts_Array()
+	{
+		counts.resize(0);
+	}
+
     std::valarray<real_t>& operator [](size_t idx) { return counts[idx]; }
 
     const std::valarray<real_t>& operator [](size_t idx) const { return counts[idx]; }
