@@ -168,6 +168,7 @@ void HDF5_IO::lazy_load()
     delete [] offset;
     delete [] count;
     delete [] sel_dims;
+    delete [] buffer;
 
     H5Dclose(dset_id);
     H5Sclose(memoryspace);
@@ -2334,7 +2335,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	return true;
 }
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, std::unordered_map< std::string, std::string > *extra_override_values)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1;
     hid_t filetype, memtype;
@@ -2374,7 +2375,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
         real_t val;
         bool save_cfg_abs = false;
-        if (extra_override_values != nullptr && mda_scalers->scan->scan_rank > 1)
+        if (params_override != nullptr && mda_scalers->scan->scan_rank > 1)
         {
             int us_ic_idx = -1;
             int ds_ic_idx = -1;
@@ -2384,7 +2385,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
             int cfg_5_idx = -1;
 
             int hdf_idx = 0;
-            for (auto itr : *extra_override_values)
+            for (auto itr : params_override->scaler_pvs)
             {
                 //don't save ELT1, ERT1, ICR1, OCR1. these are saved elsewhere
                 std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
@@ -2410,6 +2411,33 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         cfg_5_idx = mda_idx;
                 }
             }
+            for (auto itr : params_override->time_normalized_scalers)
+            {
+                //don't save ELT1, ERT1, ICR1, OCR1. these are saved elsewhere
+                std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
+                if (s_itr != ignore_scaler_strings.end())
+                    continue;
+
+                int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
+                if (mda_idx > -1)
+                {
+                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx));
+                    hdf_idx++;
+                    if (itr.first == "US_IC")
+                        us_ic_idx = mda_idx;
+                    else if (itr.first == "DS_IC")
+                        ds_ic_idx = mda_idx;
+                    else if (itr.first == "CFG_2")
+                        cfg_2_idx = mda_idx;
+                    else if (itr.first == "CFG_3")
+                        cfg_3_idx = mda_idx;
+                    else if (itr.first == "CFG_4")
+                        cfg_4_idx = mda_idx;
+                    else if (itr.first == "CFG_5")
+                        cfg_5_idx = mda_idx;
+                }
+            }
+
 
             if (scalers.size() > 0)
             {
@@ -2740,7 +2768,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 bool HDF5_IO::save_scan_scalers(const std::string filename,
 	size_t detector_num,
 	struct mda_file *mda_scalers,
-	std::unordered_map< std::string, std::string > *extra_override_values,
+    data_struct::xrf::Params_Override * params_override,
 	size_t row_idx_start,
 	int row_idx_end,
 	size_t col_idx_start,
@@ -2784,7 +2812,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
-    _save_scalers(maps_grp_id, mda_scalers, detector_num, extra_override_values);
+    _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override);
 
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);

@@ -221,6 +221,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/xrf/element_info.h
     src/data_struct/xrf/fit_parameters.h
     src/data_struct/xrf/fit_element_map.h
+    src/data_struct/xrf/params_override.h
     src/data_struct/xrf/detector.h
     src/data_struct/xrf/spectra.h
     src/data_struct/xrf/spectra_line.h
@@ -363,7 +364,7 @@ elseif (UNIX)
   set(SZIP_LIB sz)
 
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3 -mavx")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS

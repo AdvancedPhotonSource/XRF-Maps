@@ -222,16 +222,6 @@ void Element_Info::init_f_energies(int len)
 {
     f1_atomic_scattering_real.resize(len);
     f2_atomic_scattering_imaginary.resize(len);
-    /*
-    atomic_scattering_len = len;
-    if(f1_atomic_scattering_real != nullptr)
-        delete [] f1_atomic_scattering_real;
-    f1_atomic_scattering_real = new real_t[atomic_scattering_len];
-
-    if(f2_atomic_scattering_imaginary != nullptr)
-        delete [] f2_atomic_scattering_imaginary;
-    f2_atomic_scattering_imaginary = new real_t[atomic_scattering_len];
-    */
 }
 
 void Element_Info::init_extra_energies(int len)
@@ -239,20 +229,6 @@ void Element_Info::init_extra_energies(int len)
     extra_energies.resize(len);
     extra_f1.resize(len);
     extra_f2.resize(len);
-    /*
-    extra_energies_len = len;
-    if(extra_energies != nullptr)
-        delete [] extra_energies;
-    extra_energies = new real_t[extra_energies_len];
-
-    if(extra_f1 != nullptr)
-        delete [] extra_f1;
-    extra_f1 = new real_t[extra_energies_len];
-
-    if(extra_f2 != nullptr)
-        delete [] extra_f2;
-    extra_f2 = new real_t[extra_energies_len];
-    */
 }
 
 void Element_Info::get_energies_between(real_t energy, real_t* out_low, real_t* out_high, size_t* out_low_idx, size_t* out_high_idx)

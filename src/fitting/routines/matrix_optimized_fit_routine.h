@@ -69,7 +69,7 @@ class DLL_EXPORT Matrix_Optimized_Fit_Routine: public Param_Optimized_Fit_Routin
 public:
     Matrix_Optimized_Fit_Routine();
 
-    ~Matrix_Optimized_Fit_Routine();
+    virtual ~Matrix_Optimized_Fit_Routine();
 
     virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
                                                                 const Spectra * const spectra,

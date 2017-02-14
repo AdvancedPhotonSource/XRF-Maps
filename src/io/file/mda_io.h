@@ -53,8 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mda-load.h"
 #include "element_info.h"
 #include "spectra_volume.h"
-//#include "detector.h"
 #include "quantification_standard.h"
+#include "params_override.h"
 
 namespace io
 {
@@ -98,7 +98,7 @@ public:
                                      size_t detector_num,
                                      data_struct::xrf::Spectra_Volume* vol,
                                      bool hasNetCDF,
-                                     std::unordered_map< std::string, std::string > *extra_override_values,
+                                     data_struct::xrf::Params_Override *override_values,
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
 
     int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);

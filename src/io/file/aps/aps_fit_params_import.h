@@ -50,8 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define APS_FIT_PARAMS_IMPORT_H
 
 #include "defines.h"
-#include "fit_parameters.h"
-#include "fit_element_map.h"
+#include "params_override.h"
 #include "element_info.h"
 #include "detector.h"
 
@@ -72,9 +71,7 @@ public:
 
     bool load(std::string path,
               data_struct::xrf::Element_Info_Map *element_info_map,
-              data_struct::xrf::Fit_Parameters* out_fit_params,
-              std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
-              std::unordered_map<std::string, std::string>* out_values);
+              data_struct::xrf::Params_Override *params_override);
 
     bool save(std::string path,
               data_struct::xrf::Fit_Parameters fit_params,

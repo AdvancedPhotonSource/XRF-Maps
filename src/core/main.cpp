@@ -77,11 +77,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "spectra_volume.h"
 #include "detector.h"
 
-//#include "task_queue.h"
-//#include "general_function_task.h"
-
-//#include "threadpool_distributor.h"
-
 #include "gaussian_model.h"
 
 #include "element_info.h"
@@ -96,6 +91,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mpfit_optimizer.h"
 
 #include "fit_element_map.h"
+#include "params_override.h"
 
 #include "quantification_standard.h"
 #ifdef _BUILD_WITH_VTK
@@ -128,24 +124,6 @@ struct file_name_fit_params
     bool success;
 };
 
-struct params_override
-{
-    params_override()
-    {
-    }
-    params_override(std::string dir, int detector)
-    {
-        dataset_directory = dir;
-        detector_num = detector;
-    }
-
-    std::string dataset_directory;
-    int detector_num;
-    data_struct::xrf::Fit_Parameters fit_params;
-    data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
-    std::unordered_map< std::string, std::string > extra_override_values;
-};
-
 const std::unordered_map<int, std::string> save_loc_map = {
     {ROI, "ROI"},
     {GAUSS_TAILS, "Params"},
@@ -172,7 +150,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         std::unordered_map< std::string, std::string > *extra_override_values,
+                         data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
                          bool save_scalers);
 
@@ -477,9 +455,7 @@ bool load_quantification_standard(std::string dataset_directory,
 
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
-                          data_struct::xrf::Fit_Parameters *fit_params,
-                          data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit,
-                          std::unordered_map< std::string, std::string > *extra_override_values)
+                          data_struct::xrf::Params_Override *params_override)
 {
     //Importer for APS datasets
     io::file::aps::APS_Fit_Params_Import fit_param_importer;
@@ -490,9 +466,7 @@ bool load_override_params(std::string dataset_directory,
 
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
                                         data_struct::xrf::Element_Info_Map::inst(),
-                                        fit_params,
-                                        elements_to_fit,
-                                        extra_override_values))
+                                        params_override))
     {
         std::cout<<"Error loading fit param override file: "<<std::endl;
         return false;
@@ -500,10 +474,11 @@ bool load_override_params(std::string dataset_directory,
     else
     {
         data_struct::xrf::Element_Info* detector_element;
-        if (extra_override_values->count(data_struct::xrf::STR_DETECTOR_ELEMENT) > 0)
+        if(params_override->detector_element.length() > 0)
         {
-            // Get the element info class                                                                                 // detector element as string "Si" or "Ge" usually
-            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(extra_override_values->at(data_struct::xrf::STR_DETECTOR_ELEMENT));
+            // Get the element info class                                   // detector element as string "Si" or "Ge" usually
+
+            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(params_override->detector_element);
         }
         else
         {
@@ -514,18 +489,18 @@ bool load_override_params(std::string dataset_directory,
 
 
         //add compton and coherant amp
-        if(elements_to_fit->count(data_struct::xrf::STR_COMPTON_AMPLITUDE) == 0)
+        if(params_override->elements_to_fit.count(data_struct::xrf::STR_COMPTON_AMPLITUDE) == 0)
         {
-            elements_to_fit->emplace(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COMPTON_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COMPTON_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COMPTON_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COMPTON_AMPLITUDE, nullptr)) );
         }
-        if(elements_to_fit->count(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE) == 0)
+        if(params_override->elements_to_fit.count(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE) == 0)
         {
-            elements_to_fit->emplace(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
         }
 
         std::cout<<"Elements to fit: "<<std::endl;
         //Update element ratios by detector element
-        for(auto& itr : *elements_to_fit)
+        for(auto& itr : params_override->elements_to_fit)
         {
             itr.second->init_energy_ratio_for_detector_element(detector_element);
             std::cout<<itr.first<<" ";
@@ -543,7 +518,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         std::unordered_map< std::string, std::string > *extra_override_values,
+                         data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
                          bool save_scalers)
 {
@@ -587,7 +562,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf, extra_override_values, quantification_standard) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf, params_override, quantification_standard) )
     {
         std::cout<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
         return false;
@@ -625,7 +600,7 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         std::string str_detector_num = std::to_string(detector_num);
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        hdf5_io.save_scan_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), extra_override_values);
+        hdf5_io.save_scan_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), params_override);
     }
 
     mda_io.unload();
@@ -639,7 +614,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::xrf::Spectra *integrated_spectra,
                                        size_t detector_num,
-                                       std::unordered_map< std::string, std::string > *extra_override_values)
+                                       data_struct::xrf::Params_Override * params_override)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
@@ -686,7 +661,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     if (false == hasNetcdf && false == hasHdf)
     {
         data_struct::xrf::Spectra_Volume spectra_volume;
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf, extra_override_values, nullptr);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf, params_override, nullptr);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();
@@ -755,10 +730,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                                             size_t detector_num)
 {
 
-    //Fit parameter updates from user
-    data_struct::xrf::Fit_Parameters override_fit_params;
-    std::unordered_map< std::string, std::string > extra_override_values;
-
     //return structure
     struct file_name_fit_params ret_struct;
 
@@ -772,11 +743,16 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     fitting::models::Range energy_range;
     energy_range.min = 0;
 
+
+    data_struct::xrf::Params_Override params_override;
+
     //load override parameters
-    load_override_params(dataset_directory, -1, &override_fit_params, &ret_struct.elements_to_fit, &extra_override_values);
+    load_override_params(dataset_directory, -1, &params_override);
+
+    ret_struct.elements_to_fit = params_override.elements_to_fit;
 
     //load the quantification standard dataset
-    if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &extra_override_values) )
+    if(false == load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &params_override) )
     {
         std::cout<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
         ret_struct.success = false;
@@ -793,7 +769,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
     //Update fit parameters by override values
-    model.update_fit_params_values(override_fit_params);
+    model.update_fit_params_values(params_override.fit_params);
     model.set_fit_params_preset(optimize_fit_params_preset);
     //Initialize the fit routine
     fit_routine.initialize(&model, &ret_struct.elements_to_fit, energy_range);
@@ -858,7 +834,7 @@ void generate_optimal_params(std::string dataset_directory,
 void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
                   std::vector<Processing_Type> proc_types,
                   std::string full_save_path,
-                  struct params_override * override_params,
+                  data_struct::xrf::Params_Override * override_params,
                   data_struct::xrf::Quantification_Standard * quantification_standard,
                   ThreadPool* tp)
 {
@@ -944,14 +920,14 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
                                         ThreadPool* tp,
-                                        std::unordered_map<int, struct params_override> *fit_params_override_dict,
+                                        std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
                                         size_t detector_num_start,
                                         size_t detector_num_end)
 {
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
-    struct params_override * override_params = nullptr;
+    data_struct::xrf::Params_Override * override_params = nullptr;
     if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
     {
        override_params = &fit_params_override_dict->at(-1);
@@ -972,7 +948,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
 
     //load the first one
     size_t detector_num = detector_num_start;
-    if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &override_params->extra_override_values, nullptr, false) )
+    if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, false) )
     {
         std::cout<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
         delete spectra_volume;
@@ -983,7 +959,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     //load spectra volume
     for(detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
     {
-        if (false == load_spectra_volume(dataset_directory, dataset_file, tmp_spectra_volume, detector_num, &override_params->extra_override_values, nullptr, false) )
+        if (false == load_spectra_volume(dataset_directory, dataset_file, tmp_spectra_volume, detector_num, override_params, nullptr, false) )
         {
             std::cout<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
             delete spectra_volume;
@@ -1028,7 +1004,7 @@ void process_dataset_file(std::string dataset_directory,
                           std::vector<Processing_Type> proc_types,
                           ThreadPool* tp,
                           std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                          std::unordered_map<int, struct params_override> *fit_params_override_dict,
+                          std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {
@@ -1036,7 +1012,7 @@ void process_dataset_file(std::string dataset_directory,
 
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        struct params_override * override_params = nullptr;
+        data_struct::xrf::Params_Override * override_params = nullptr;
         if(fit_params_override_dict->count(detector_num) > 0)
         {
            override_params = &fit_params_override_dict->at(detector_num);
@@ -1062,7 +1038,7 @@ void process_dataset_file(std::string dataset_directory,
         data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
 
         //load spectra volume
-        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, &override_params->extra_override_values, nullptr, true) )
+        if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
         {
             std::cout<<"Skipping detector "<<detector_num<<std::endl;
 			delete spectra_volume;
@@ -1081,7 +1057,7 @@ bool perform_quantification(std::string dataset_directory,
                             std::string quantification_info_file,
                             std::vector<Processing_Type> proc_types,
                             std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, struct params_override> *fit_params_override_dict,
+                            std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
                             size_t detector_num_start,
                             size_t detector_num_end)
 {
@@ -1113,7 +1089,7 @@ bool perform_quantification(std::string dataset_directory,
     {
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            struct params_override * override_params = nullptr;
+            data_struct::xrf::Params_Override * override_params = nullptr;
             if(fit_params_override_dict->count(detector_num) > 0)
             {
                override_params = &fit_params_override_dict->at(detector_num);
@@ -1138,22 +1114,22 @@ bool perform_quantification(std::string dataset_directory,
 
             //Parameters for calibration curve
 
-            if (override_params->extra_override_values.count(data_struct::xrf::STR_DETECTOR_ELEMENT) > 0)
+            if (override_params->detector_element.length() > 0)
             {
-                // Get the element info class                                                                                 // detector element as string "Si" or "Ge" usually
-                detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(override_params->extra_override_values.at(data_struct::xrf::STR_DETECTOR_ELEMENT));
+                // Get the element info class                                           // detector element as string "Si" or "Ge" usually
+                detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(override_params->detector_element);
             }
-            if (override_params->extra_override_values.count(data_struct::xrf::STR_BE_WINDOW_THICKNESS) > 0)
+            if (override_params->be_window_thickness.length() > 0)
             {
-                beryllium_window_thickness = std::stof(override_params->extra_override_values.at(data_struct::xrf::STR_BE_WINDOW_THICKNESS));
+                beryllium_window_thickness = std::stof(override_params->be_window_thickness);
             }
-            if (override_params->extra_override_values.count(data_struct::xrf::STR_GE_DEAD_LAYER) > 0)
+            if (override_params->ge_dead_layer.length() > 0)
             {
-                germanium_dead_layer = std::stof(override_params->extra_override_values.at(data_struct::xrf::STR_GE_DEAD_LAYER));
+                germanium_dead_layer = std::stof(override_params->ge_dead_layer);
             }
-            if (override_params->extra_override_values.count(data_struct::xrf::STR_DET_CHIP_THICKNESS) > 0)
+            if (override_params->det_chip_thickness.length() > 0)
             {
-                detector_chip_thickness = std::stof(override_params->extra_override_values.at(data_struct::xrf::STR_DET_CHIP_THICKNESS));
+                detector_chip_thickness = std::stof(override_params->det_chip_thickness);
             }
 
             if(override_params->fit_params.contains(data_struct::xrf::STR_COHERENT_SCT_ENERGY))
@@ -1172,7 +1148,7 @@ bool perform_quantification(std::string dataset_directory,
 
             data_struct::xrf::Spectra_Volume spectra_volume;
             //load the quantification standard dataset
-            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, &override_params->extra_override_values, quantification_standard, false) )
+            if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
             {
                 std::cout<<"Error in perform_quantification loading dataset for detector"<<detector_num<<std::endl;
                 return false;
@@ -1224,6 +1200,13 @@ bool perform_quantification(std::string dataset_directory,
                                                   germanium_dead_layer);
 
             }
+
+            //cleanup
+            for(auto &itr : elements_to_fit)
+            {
+                delete itr.second;
+            }
+
         }
     }
     else
@@ -1437,7 +1420,7 @@ int main(int argc, char *argv[])
     bool quick_n_dirty = false;
 
     //dict for override info and elements to fit.
-    std::unordered_map<int, struct params_override> fit_params_override_dict;
+    std::unordered_map<int, data_struct::xrf::Params_Override> fit_params_override_dict;
 
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
@@ -1631,14 +1614,14 @@ int main(int argc, char *argv[])
     //try to load maps fit params override txt files for each detector. -1 is general one
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        struct params_override params(dataset_dir, detector_num);
-        if( load_override_params(dataset_dir, detector_num, &params.fit_params, &params.elements_to_fit, &params.extra_override_values) )
+        data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
+        if( load_override_params(dataset_dir, detector_num, &params_override) )
         {
-            fit_params_override_dict[detector_num] = params;
+            fit_params_override_dict[detector_num] = params_override;
         }
     }
-    struct params_override params(dataset_dir, -1);
-    if( load_override_params(dataset_dir, -1, &params.fit_params, &params.elements_to_fit, &params.extra_override_values) )
+    data_struct::xrf::Params_Override params(dataset_dir, -1);
+    if( load_override_params(dataset_dir, -1, &params) )
     {
         fit_params_override_dict[-1] = params;
     }

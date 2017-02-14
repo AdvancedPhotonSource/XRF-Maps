@@ -294,8 +294,6 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     std::cout<<"*** testlinfit status = "<<info<<std::endl;
 
 
-  //  delete [] mp_par;
-
     switch(info)
     {
         case 0:
@@ -335,6 +333,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = result.nfev;
     }
+
+    delete [] mp_par;
 
 }
 

@@ -58,6 +58,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include "base_model.h"
 
+
 namespace io
 {
 namespace file
@@ -163,9 +164,7 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 
 bool APS_Fit_Params_Import::load(std::string path,
                                  data_struct::xrf::Element_Info_Map * element_info_map,
-                                 data_struct::xrf::Fit_Parameters * out_fit_params,
-                                 std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*>* out_elements_to_fit,
-                                 std::unordered_map<std::string, std::string>* out_values)
+                                 data_struct::xrf::Params_Override *params_override)
 {
 
     std::ifstream paramFileStream(path);
@@ -214,14 +213,14 @@ bool APS_Fit_Params_Import::load(std::string path,
                         else
                         {
                             data_struct::xrf::Fit_Element_Map* fit_map;
-                            if(out_elements_to_fit->count(element_symb) > 0)
+                            if(params_override->elements_to_fit.count(element_symb) > 0)
                             {
-                                fit_map = (*out_elements_to_fit)[element_symb];
+                                fit_map = params_override->elements_to_fit[element_symb];
                             }
                             else
                             {
                                 fit_map = new data_struct::xrf::Fit_Element_Map(element_symb, e_info);
-                                (*out_elements_to_fit)[element_symb] = fit_map;
+                                params_override->elements_to_fit[element_symb] = fit_map;
                             }
                         }
                     }
@@ -237,16 +236,16 @@ bool APS_Fit_Params_Import::load(std::string path,
                         std::cout<<"Element with pileup : "<<element_symb<<std::endl;
                         //data_struct::xrf::Element_Param* element_param = new data_struct::xrf::Element_Param();
                         //element_param->name = element_symb;
-                        //out_fit_params->append_element(element_param);
+                        //params_override->fit_params.append_element(element_param);
                     }
                     */
                 }
                 else if(FILE_TAGS_TRANSLATION.count(tag)> 0)
                 {
                     std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
-                    if( false == out_fit_params->contains(tag_name) )
+                    if( false == params_override->fit_params.contains(tag_name))
                     {
-                        out_fit_params->add_parameter(tag_name, data_struct::xrf::Fit_Param(tag_name));
+                        params_override->fit_params.add_parameter(tag_name, data_struct::xrf::Fit_Param(tag_name));
                     }
 
                     std::string str_value;
@@ -255,15 +254,15 @@ bool APS_Fit_Params_Import::load(std::string path,
 
                     if (tag.find("_MAX") != std::string::npos)
                     {
-                        (*out_fit_params)[tag_name].max_val = fvalue;
+                        params_override->fit_params[tag_name].max_val = fvalue;
                     }
                     else if (tag.find("_MIN") != std::string::npos)
                     {
-                        (*out_fit_params)[tag_name].min_val = fvalue;
+                        params_override->fit_params[tag_name].min_val = fvalue;
                     }
                     else
                     {
-                        (*out_fit_params)[tag_name].value = fvalue;
+                        params_override->fit_params[tag_name].value = fvalue;
                     }
                 }
                 else if ( tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
@@ -290,9 +289,9 @@ bool APS_Fit_Params_Import::load(std::string path,
                     element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                     data_struct::xrf::Fit_Element_Map* fit_map;
-                    if(out_elements_to_fit->count(element_symb) > 0)
+                    if(params_override->elements_to_fit.count(element_symb) > 0)
                     {
-                        fit_map = (*out_elements_to_fit)[element_symb];
+                        fit_map = params_override->elements_to_fit[element_symb];
                         for (unsigned int i = 0; i<cnt; i++)
                         {
                             float factor = 1.0;
@@ -304,20 +303,51 @@ bool APS_Fit_Params_Import::load(std::string path,
                 }
                 else if (tag == "FIT_SNIP_WIDTH")
                 {
+                    std::string str_value;
+                    std::getline(strstream, str_value, ':');
+                    float fvalue = std::stof(str_value);
+                    params_override->fit_snip_width = fvalue;
                     //TODO add to fit params
                     /*
-                    data_struct::xrf::Fit_Param* fit_param = out_fit_params->get_fit_param(data_struct::xrf::STR_SNIP_WIDTH);
+                    data_struct::xrf::Fit_Param* fit_param = params_override->fit_params.get_fit_param(data_struct::xrf::STR_SNIP_WIDTH);
                     if (fit_param == nullptr)
                     {
                         fit_param = new data_struct::xrf::Fit_Param(data_struct::xrf::STR_SNIP_WIDTH);
-                        out_fit_params->append_fit_param(fit_param);
+                        params_override->fit_params.append_fit_param(fit_param);
                     }
                     fit_param->bound_type = data_struct::xrf::LIMITED_LO_HI;
                     */
                 }
-                else if (tag == "DS_AMP_SENS_UNIT")
+                else if (tag == "TIME_SCALER_PV")
                 {
-                    std::cout<<"break "<<std::endl;
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->time_scaler = value;
+                }
+                else if (tag == "TIME_SCALER_CLOCK")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->time_scaler_clock = value;
+                }
+                else if (tag == "TIME_NORMALIZED_SCALER")
+                {
+                    std::string name, value;
+                    std::getline(strstream, name, ';');
+                    std::getline(strstream, value);
+                    name.erase(std::remove(name.begin(), name.end(), '\n'), name.end());
+                    name.erase(std::remove(name.begin(), name.end(), '\r'), name.end());
+                    name.erase(std::remove(name.begin(), name.end(), ' '), name.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->time_normalized_scalers.insert(std::pair<std::string, std::string>(name, value));
                 }
                 else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
                 {
@@ -330,48 +360,255 @@ bool APS_Fit_Params_Import::load(std::string path,
 
                     if(value == "0")
                     {
-                        //detector->set_element(element_info_map->get_element("Ge"));
-                        (*out_values)[data_struct::xrf::STR_DETECTOR_ELEMENT] = "Ge";
+                        params_override->detector_element = "Ge";
                     }
                     else if(value == "1")
                     {
-                        //detector->set_element(element_info_map->get_element("Si"));
-                        (*out_values)[data_struct::xrf::STR_DETECTOR_ELEMENT] = "Si";
+                        params_override->detector_element = "Si";
                     }
                     else
                     {
                         std::cout<<"Error: Unknown detector element enumeration : "<<value<<::std::endl;
                     }
                 }
+                else if (tag == "ELT1")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->elt_pv = value;
+                }
+                else if (tag == "ERT1")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ert_pv = value;
+                }
+                else if (tag == "ICR1")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->in_cnt_pv = value;
+                }
+                else if (tag == "OCR1")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->out_cnt_pv = value;
+                }
+                else if (tag == "US_AMP_SENS_NUM_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_num_pv = value;
+                }
+                else if (tag == "US_AMP_SENS_UNIT_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_unit_pv = value;
+                }
+                else if (tag == "DS_AMP_SENS_NUM_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ds_amp_sens_num_pv = value;
+                }
+                else if (tag == "DS_AMP_SENS_UNIT_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ds_amp_sens_unit_pv = value;
+                }
+                else if (tag == "US_AMP_SENS_NUM")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_num = std::stoi(value);
+                }
+                else if (tag == "US_AMP_SENS_UNIT")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_unit = std::stoi(value);
+                }
+                else if (tag == "DS_AMP_SENS_NUM")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ds_amp_sens_num = std::stoi(value);
+                }
+                else if (tag == "DS_AMP_SENS_UNIT")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ds_amp_sens_unit = std::stoi(value);
+                }
+                else if (tag == "BE_WINDOW_THICKNESS")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->be_window_thickness = value;
+                }
+                else if (tag == "DET_CHIP_THICKNESS")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->det_chip_thickness = value;
+                }
+                else if (tag == "GE_DEAD_LAYER")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->ge_dead_layer = value;
+                }
+                else if (tag == "SI_ESCAPE_ENABLE")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+
+                    if(value == "1")
+                    {
+                        params_override->si_escape_enabled = true;
+                    }
+                    else
+                    {
+                        params_override->si_escape_enabled = false;
+                    }
+                }
+                else if (tag == "GE_ESCAPE_ENABLE")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+
+                    if(value == "1")
+                    {
+                        params_override->ge_escape_enabled = true;
+                    }
+                    else
+                    {
+                        params_override->ge_escape_enabled = false;
+                    }
+                }
+                else if (tag == "MAX_ENERGY_TO_FIT")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
+                else if (tag == "MIN_ENERGY_TO_FIT")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
+                else if (tag == "LINEAR_ESCAPE_FACTOR")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
+                else if (tag == "TAIL_FRACTION_ADJUST_SI")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
+                else if (tag == "TAIL_WIDTH_ADJUST_SI")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
+                else if (tag == "IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    //params_override->ge_dead_layer = std::stoi(value);
+                }
                 else
                 {
-                    if (tag.length() > 0 && tag[0] != ' ')
+                    if (tag.length() > 0 && tag[0] != ' ' && (line.find(":") != std::string::npos))
                     {
                         std::string value;
                         std::getline(strstream, value);
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        (*out_values)[tag] = value;
+                        params_override->scaler_pvs[tag] = value;
                     }
                 }
 
-                //todo
-                //FIT_SNIP_WIDTH = use
-
-                //BE_WINDOW_THICKNESS = general
-                //DET_CHIP_THICKNESS = general
-                //GE_DEAD_LAYER = general
-                //MAX_ENERGY_TO_FIT = general
-                //MIN_ENERGY_TO_FIT = general
-                //TAIL_FRACTION_ADJUST_SI
-                //TAIL_WIDTH_ADJUST_SI
-                //SI_ESCAPE_ENABLE = use and batch
-                //GE_ESCAPE_ENABLE = use and batch
-                //ELT1 = dxpXMAP2xfm3:mca4.ELTM
-                //ERT1 = dxpXMAP2xfm3:mca4.ERTM
-                //ICR1 = dxpXMAP2xfm3:dxp1:InputCountRate
-                //OCR1 = dxpXMAP2xfm3:dxp1:OutputCountRate
             }
         }
         catch(std::exception e)

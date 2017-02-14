@@ -182,6 +182,7 @@ HEADERS += \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \
+    src/data_struct/xrf/params_override.h \
     src/data_struct/xrf/element_quant.h \
     src/data_struct/xrf/quantification_standard.h \
     src/data_struct/xrf/detector.h \

@@ -105,8 +105,10 @@ std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_
     }
     for(size_t i=0; i< arr.size(); i++)
     {
-        if(out[i]!=0.0)
+        if( out[i] != (real_t)0.0)
+        {
             new_background[i] = out[i] / real_t(boxcar.size());
+        }
     }
 
 

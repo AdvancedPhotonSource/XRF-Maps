@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mda_io.h"
 
 #include "quantification_standard.h"
+#include "params_override.h"
 
 namespace io
 {
@@ -91,6 +92,12 @@ struct HDF5_Spectra_Layout
 
 struct HDF5_Range
 {
+    HDF5_Range()
+    {
+        offset = nullptr;
+        count = nullptr;
+    }
+
     HDF5_Range(unsigned int rank)
     {
         this->rank = rank;
@@ -103,6 +110,16 @@ struct HDF5_Range
         }
     }
 
+    ~HDF5_Range()
+    {
+        if(offset != nullptr)
+            delete [] offset;
+        offset = nullptr;
+
+        if(count != nullptr)
+            delete [] count;
+        count = nullptr;
+    }
     unsigned int rank;
     unsigned long* offset;
     unsigned long* count;
@@ -166,7 +183,7 @@ public:
     bool save_scan_scalers(const std::string filename,
                           size_t detector_num,
                           struct mda_file *mda_scalers,
-                          std::unordered_map< std::string, std::string > *extra_override_values,
+                          data_struct::xrf::Params_Override * params_override,
                           size_t row_idx_start=0,
                           int row_idx_end=-1,
                           size_t col_idx_start=0,
@@ -178,7 +195,7 @@ private:
 
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, std::unordered_map< std::string, std::string > *extra_override_values);
+    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);

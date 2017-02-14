@@ -54,45 +54,16 @@ namespace data_struct
 namespace xrf
 {
 
-Spectra_Volume::Spectra_Volume() //: Base_Dataset()
+Spectra_Volume::Spectra_Volume()
 {
-    //_data = nullptr;
+
 }
 
 Spectra_Volume::~Spectra_Volume()
 {
-    /*
-    for(auto spec_line : _data_vol)
-    {
-        delete spec_line;
-    }
-    _data_vol.clear();
-
-    if(_data != nullptr)
-        delete [] _data;
-    _data = nullptr;
-*/
-}
-/*
-void Spectra_Volume::append_spectra_line(Spectra_Line* spec_line)
-{
-  // _data_vol.push_back(spec_line);
 
 }
 
-void Spectra_Volume::alloc(unsigned short rank, int *dims)
-{
-    long total = 0;
-    for (unsigned short i=0; i<rank; i++)
-    {
-        total *= (long)dims[i];
-    }
-
-    if (_data != nullptr)
-        delete [] _data;
-    _data = new real_t[total];
-}
-*/
 void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
 {
 
@@ -101,77 +72,8 @@ void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
     {
         _data_vol[i].resize(cols, samples);
     }
-/*
-    for(Spectra_Line line : _data_vol)
-    {
-        line.alloc(rows, samples);
-    }
-    */
-/*
-    _rows = rows;
-    _cols = cols;
-    _samples = samples;
-
-    long total = _rows * _cols * _samples;
-    if (_data != nullptr)
-        delete [] _data;
-    _data = new real_t[total];
-*/
-/*
-    array3D.resize(_samples);
-      for (int i = 0; i < _samples; ++i) {
-        array3D[i].resize(_rows);
-
-        for (int j = 0; j < _rows; ++j)
-          array3D[i][j].resize(_cols);
-      }
-
-      array3D[115][0][0] = 10;
-      */
-/*
-    _data = new real_t**[_cols];
-    for (unsigned int i=0; i<_cols; i++)
-    {
-        _data[i] = new real_t*[_rows];
-        for (unsigned int j=0; j<_rows; j++)
-        {
-            _data[i][j] = new real_t[_samples];
-        }
-    }
-*/
-/*
-    _data = new real_t**[_samples];
-    for (unsigned int s=0; s<_samples; s++)
-    {
-        _data[s] = new real_t*[_rows];
-        for (unsigned int r=0; r<_rows; r++)
-        {
-            _data[s][r] = new real_t[_cols];
-        }
-    }
-    _data[115][0][0] = 10;
-*/
-}
-/*
-void Spectra_Volume::del_data()
-{
-
-    if (_data != nullptr)
-    {
-        for (unsigned int i=0; i<_cols; i++)
-        {
-            for (unsigned int j=0; j<_rows; j++)
-            {
-                delete [] _data[i][j];
-            }
-            delete [] _data[i];
-        }
-        delete [] _data;
-    }
-    _data = nullptr;
 
 }
-*/
 
 const Spectra Spectra_Volume::integrate()
 {
@@ -205,14 +107,7 @@ const Spectra Spectra_Volume::integrate()
 
     return i_spectra;
 }
-/*
-real_t* Spectra_Volume::get_spectra(unsigned int row, unsigned int col)
-{
 
-    return 0;//&_data[ (_samples * col * _rows)+(_samples * row) ];
-
-}
-*/
 void Spectra_Volume::recalc_elapsed_lifetime()
 {
 
@@ -222,44 +117,6 @@ void Spectra_Volume::recalc_elapsed_lifetime()
     }
 
 }
-/*
-void Spectra_Volume::transpose(real_t *buf)
-{
 
-    int col_row = _rows * _cols;
-    for(unsigned int c = 0; c< _cols; c++)
-    {
-        int cTrow = c*_rows;
-        for(unsigned int r = 0; r< _rows; r++)
-        {
-            int rTcol = r*_cols;
-            for(unsigned int s = 0; s< _samples; s++)
-            {
-                //real_t tmp = _data[ s*col_row + rTcol + c ];
-                //_data[ s*col_row + rTcol + c ] = _data[s + (_samples * r)+(_samples * cTrow)];
-                //_data[s + (_samples * r)+(_samples * cTrow)] = tmp;
-                _data[s + (_samples * r)+(_samples * cTrow)] = buf[ s*col_row + rTcol + c ];
-            }
-        }
-    }
-/////////////
-    int col_row = _rows * _cols;
-
-    for(unsigned int s = 0; s< _samples; s++)
-    {
-        for(unsigned int r = 0; r< _rows; r++)
-        {
-            for(unsigned int c = 0; c< _cols; c++)
-            {
-
-                real_t tmp = _data[ (s*col_row) + (r*_cols) + c ];
-                _data[ (s*col_row) + (r*_cols) + c ] = _data[s + (_samples * r)+(_samples * c*_rows)];
-                _data[s + (_samples * r)+(_samples * c*_rows)] = tmp;
-            }
-        }
-    }
-
-}
-*/
 } //namespace xrf
 } //namespace data_struct

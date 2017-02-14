@@ -220,7 +220,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::xrf::Spectra_Volume* vol,
                                  bool hasNetCDF,
-                                 std::unordered_map< std::string, std::string > *extra_override_values,
+                                 data_struct::xrf::Params_Override *override_values,
                                  data_struct::xrf::Quantification_Standard * quantification_standard)
 {
     //index per row and col
@@ -310,41 +310,41 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     //_load_detector_meta_data(detector);
 
-    if (extra_override_values != nullptr)
+    if (override_values != nullptr)
     {
         real_t tmp_val;
 
-        if (extra_override_values->count("ELT1") > 0)
+        if (override_values->elt_pv.length() > 0)
         {
-            elt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ELT1"), detector_num, tmp_val );
+            elt_idx = find_2d_detector_index(_mda_file, override_values->elt_pv, detector_num, tmp_val );
         }
-        if (extra_override_values->count("ERT1") > 0)
+        if (override_values->ert_pv.length() > 0)
         {
-            ert_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ERT1"), detector_num, tmp_val );
+            ert_idx = find_2d_detector_index(_mda_file, override_values->ert_pv, detector_num, tmp_val );
         }
-        if (extra_override_values->count("ICR1") > 0)
+        if (override_values->in_cnt_pv.length() > 0)
         {
-            incnt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("ICR1"), detector_num, tmp_val );
+            incnt_idx = find_2d_detector_index(_mda_file, override_values->in_cnt_pv, detector_num, tmp_val );
         }
-        if (extra_override_values->count("OCR1") > 0)
+        if (override_values->out_cnt_pv.length() > 0)
         {
-            outcnt_idx = find_2d_detector_index(_mda_file, extra_override_values->at("OCR1"), detector_num, tmp_val );
+            outcnt_idx = find_2d_detector_index(_mda_file, override_values->out_cnt_pv, detector_num, tmp_val );
         }
         if(quantification_standard != nullptr)
         {
-            if (extra_override_values->count("SRCURRENT") > 0)
+            if (override_values->scaler_pvs.count("SRCURRENT") > 0)
             {
-                find_2d_detector_index(_mda_file, extra_override_values->at("SRCURRENT"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), detector_num, tmp_val );
                 quantification_standard->sr_current(tmp_val);
             }
-            if (extra_override_values->count("US_IC") > 0)
+            if (override_values->scaler_pvs.count("US_IC") > 0)
             {
-                find_2d_detector_index(_mda_file, extra_override_values->at("US_IC"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("US_IC"), detector_num, tmp_val );
                 quantification_standard->US_IC(tmp_val);
             }
-            if (extra_override_values->count("DS_IC") > 0)
+            if (override_values->scaler_pvs.count("DS_IC") > 0)
             {
-                find_2d_detector_index(_mda_file, extra_override_values->at("DS_IC"), detector_num, tmp_val );
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), detector_num, tmp_val );
                 quantification_standard->DS_IC(tmp_val);
             }
         }
