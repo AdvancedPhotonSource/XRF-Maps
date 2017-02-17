@@ -164,10 +164,10 @@ OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
 		 for the amps, the _NUM value should be between 0 and 8 where 0=1, 1=2, 2=5, 3=10, 4=20, 5=50, 6=100, 7=200, 8=500
 		 for the amps, the _UNIT value should be between 0 and 3 where 0=pa/v, 1=na/v, 2=ua/v 3=ma/v
     search for the PV first, if not found then use the values below
-US_AMP_SENS_NUM_PV: 2xfm:US_AMP
-US_AMP_SENS_UNIT_PV: 2xfm:US_AMP
-DS_AMP_SENS_NUM_PV: 2xfm:US_AMP
-DS_AMP_SENS_UNIT_PV: 2xfm:US_AMP
+US_AMP_SENS_NUM_PV: 2xfm:A1sens_num.VAL
+US_AMP_SENS_UNIT_PV: 2xfm:A1sens_unit.VAL
+DS_AMP_SENS_NUM_PV: 2xfm:A2sens_num.VAL
+DS_AMP_SENS_UNIT_PV: 2xfm:A2sens_unit.VAL
 
 US_AMP_SENS_NUM:        5
 US_AMP_SENS_UNIT:        1

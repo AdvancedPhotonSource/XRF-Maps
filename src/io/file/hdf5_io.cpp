@@ -2349,6 +2349,9 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
     hsize_t offset_3d[3] = { 0, 0, 0 };
     hsize_t count_3d[3] = { 1, 1, 1 };
 
+    int mda_time_scaler_idx = -1;
+    double time_scaler_clock = 1.0;
+
     MDA_IO mda_io;
 
     bool single_row_scan = false;
@@ -2364,6 +2367,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
     try
     {
+
+        if(params_override->time_scaler_clock.length() > 0)
+        {
+            time_scaler_clock = std::stod(params_override->time_scaler_clock);
+        }
 
         filetype = H5Tcopy(H5T_FORTRAN_S1);
         H5Tset_size(filetype, 256);
@@ -2395,7 +2403,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
                 if (mda_idx > -1)
                 {
-                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx));
+                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
                     hdf_idx++;
                     if (itr.first == "US_IC")
                         us_ic_idx = mda_idx;
@@ -2421,7 +2429,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
                 if (mda_idx > -1)
                 {
-                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx));
+                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, true));
                     hdf_idx++;
                     if (itr.first == "US_IC")
                         us_ic_idx = mda_idx;
@@ -2438,10 +2446,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 }
             }
 
+            //search for time scaler index
+            mda_time_scaler_idx = mda_io.find_2d_detector_index(mda_scalers, params_override->time_scaler, detector_num, val);
 
             if (scalers.size() > 0)
             {
-
                 scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
                 if (scalers_grp_id < 0)
                     scalers_grp_id = H5Gcreate(maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -2510,6 +2519,16 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
                         {
                             double val = mda_scalers->scan->detectors_data[itr.mda_idx][i];
+                            if(itr.normalize_by_time)
+                            {
+                                real_t scaler_time_normalizer = 1.0;
+                                if(mda_time_scaler_idx > -1)
+                                {
+                                    double det_time = mda_scalers->scan->detectors_data[mda_time_scaler_idx][i];
+                                    scaler_time_normalizer = det_time / time_scaler_clock;
+                                }
+                                val /= scaler_time_normalizer;
+                            }
                             offset_3d[0] = itr.hdf_idx;
                             offset_3d[1] = 1;
                             offset_3d[2] = i;
@@ -2524,6 +2543,16 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                             for (int32_t j = 0; j < mda_scalers->scan->sub_scans[0]->last_point; j++)
                             {
                                 double val = mda_scalers->scan->sub_scans[i]->detectors_data[itr.mda_idx][j];
+                                if(itr.normalize_by_time)
+                                {
+                                    real_t scaler_time_normalizer = 1.0;
+                                    if(mda_time_scaler_idx > -1)
+                                    {
+                                        double det_time = mda_scalers->scan->sub_scans[i]->detectors_data[mda_time_scaler_idx][i];
+                                        scaler_time_normalizer = det_time / time_scaler_clock;
+                                    }
+                                    val /= scaler_time_normalizer;
+                                }
                                 offset_3d[0] = itr.hdf_idx;
                                 offset_3d[1] = i;
                                 offset_3d[2] = j;

@@ -205,15 +205,17 @@ private:
 
     struct scaler_struct
     {
-        scaler_struct(std::string name, int mda_idx_, int hdf_idx_)
+        scaler_struct(std::string name, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
         {
              hdf_name = name;
              mda_idx = mda_idx_;
              hdf_idx = hdf_idx_;
+             normalize_by_time = normalize_by_time_;
         }
         int mda_idx;
         int hdf_idx;
         std::string hdf_name;
+        bool normalize_by_time;
     };
 
     //void _parse_group_info(hid_t h5file, hid_t id);
