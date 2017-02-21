@@ -195,200 +195,6 @@ bool HDF5_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 //-----------------------------------------------------------------------------
 
-/*
-void HDF5_IO::load_dataset2(std::string path, HDF5_Spectra_Layout layout, HDF5_Range range, data_struct::xrf::Spectra_Volume* spec_vol)
-{
-     _is_loaded = ERROR_LOADING;
-
-     std::chrono::time_point<std::chrono::system_clock> start, end;
-     start = std::chrono::system_clock::now();
-
-     hid_t    file_id, dset_id, dataspace_id, memoryspace, datatype;
-     herr_t   error;
-
-     H5T_class_t dtype_class;
-
-     file_id = H5Fopen(_filename.c_str(), H5P_DEFAULT, H5P_DEFAULT);
-     dset_id = H5Dopen2(file_id, "/MAPS_RAW/data_a", H5P_DEFAULT);
-
-     datatype = H5Dget_type(dset_id);
-     dtype_class = H5Tget_class(datatype);
-
-     dataspace_id = H5Dget_space(dset_id);
-     int rank = H5Sget_simple_extent_ndims(dataspace_id);
-     hsize_t* dims_out = new hsize_t[rank];
-     hsize_t* offset = new hsize_t[rank];
-     hsize_t* count = new hsize_t[rank];
-     hsize_t* sel_dims = new hsize_t[rank];
-     //std::cout<<"rank = "<<rank<< std::endl;
-     unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_out[0], NULL);
-
-     spec_vol->resize(dims_out[layout.row_dim],dims_out[layout.col_dim],dims_out[layout.spectrum_dim]);
-
-//float bufs[2048][11][9];
-//float* pbufs = new float[2048 * 11 * 9];
-
-float *** ppbufs = new float**[dims_out[0]];
-for (int s=0; s<dims_out[0]; s++)
-{
-    ppbufs[s] = new float*[dims_out[1]];
-    for (int r =0; r<dims_out[1]; r++)
-    {
-        ppbufs[s][r] = new float[dims_out[2]];
-    }
-}
-
-
-//std::vector<std::vector<std::vector<float> > > *vec = spec_vol->get_vector();
-     for (int i=0; i < rank; i++)
-     {
-        std::cout<<"dims ["<<i<<"] ="<<dims_out[i]<< std::endl;
-        offset[i] = 0;
-        sel_dims[i] = count[i] = dims_out[i];
-     }
-     //int total = (dims_out[layout.row_dim]*dims_out[layout.col_dim]*dims_out[layout.spectrum_dim]);
-     sel_dims[0] = dims_out[0];
-     sel_dims[1] = dims_out[1];
-     sel_dims[2] = dims_out[2];
-
-     count[0] = dims_out[0];
-     count[1] = dims_out[1];
-     count[2] = dims_out[2];
-
-     memoryspace = H5Screate_simple(rank, sel_dims, NULL);
-
-     H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset, NULL, sel_dims, NULL);
-
-  //   H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset, NULL, sel_dims, NULL);
-     H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-
-     real_t *buf = spec_vol->get_buffer_ptr();
-     //float *buf = new float[dims_out[0] * dims_out[1] * dims_out[2]];
-     //  error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, buf);
-#ifdef _REAL_FLOAT
-       error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, ppbufs);
-#else
-       error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, memoryspace, dataspace_id, H5P_DEFAULT, ppbufs);
-#endif
-     //     spec_vol->transpose(buf);
-
-
-     //delete [] buf;
-     //error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, buf[0][0][0]);
-//          error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, &(bufs[0][0][0]));
- //         error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, pbufs);
-
-
-     //    error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, &(ppbufs[0][0][0]));
-
- //         error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, &((*vec)[0][0][0]));
-    // printf("read in: error = %d \n", error);
-
-
-    // std::cout<<"A[115] "<<buf[115][0][0]<<std::endl;
-     //std::cout<<"A[115] "<<(*vec)[115][0][0]<<std::endl;
-     //i*ny*nz + j*nz + k
-
-//     int i = 115;
-//     int j = 0;
-//     int k = 0;
-//     int ny = 11;
-//     int nz = 9;
-
- //    std::cout<<"A[115] "<<pbufs[ i*ny*nz + j*nz + k  ]<<std::endl;
-     //std::cout<<"B[115] "<<ppbufs[0][0][115]<<std::endl;
-     //std::cout<<"B[115] "<<ppbufs[0][1][1]<<std::endl;
-     //std::cout<<"B[115] "<<ppbufs[0][0]<<std::endl;
-
-//     for(int i=0; i<2048; i++)
-//     {
-//        std::cout<<ppbufs[0][0][i]<<std::endl;
-//     }
-
- //    std::cout<<"C[115] "<<bufs[115][0][0]<<std::endl;
-
-    for(unsigned int c=0; c<dims_out[layout.col_dim]; c++)
-    {
-        for(unsigned int r=0; r<dims_out[layout.row_dim]; r++)
-        {
-            //float *spec_buf = spec_vol->get_spectra(k, j);
-            std::cout<<"|||||"<<std::endl;
-            for(unsigned int s=0; s<dims_out[layout.spectrum_dim]; s++)
-            {
-     //           std::cout<<spec_buf[i]<<" ";
-                  std::cout<<buf[s + (dims_out[layout.spectrum_dim] * dims_out[layout.row_dim] * c)+(dims_out[layout.spectrum_dim] * r) ]<<" ";
-                //std::cout<<bufs[i][k][j]<<" ";
-
-            }
-            std::cout<<std::endl<<std::endl;
-        }
-    }
-
-
-
-
-     float * spec_buf = spec_vol->get_spectra(0,0);
-     for (int i=1004; i<1083; i++)
-        std::cout<<"buff["<<i<<"] = "<<spec_buf[i]<<std::endl;
-
-       for (int i=1004; i<1083; i++)
-          std::cout<<"buff["<<i<<"] = "<<ppbufs[i][0][0]<<std::endl;
-
-     delete [] dims_out;
-     delete [] offset;
-     delete [] count;
-     delete [] sel_dims;
-
-     H5Dclose(dset_id);
-     H5Sclose(memoryspace);
-     H5Sclose(dataspace_id);
-     H5Fclose(file_id);
-
-     end = std::chrono::system_clock::now();
-     std::chrono::duration<double> elapsed_seconds = end-start;
-     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-     std::cout << "finished computation at " << std::ctime(&end_time)
-                  << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
-     _is_loaded = LAZY_LOAD;
-}
-*/
-
-//-----------------------------------------------------------------------------
-
-//void HDF5_IO::parse_group_info(hid_t h5file, hid_t id)
-//{
-
-//}
-
-////-----------------------------------------------------------------------------
-
-//void HDF5_IO::parse_dataset_info(hid_t h5file, hid_t id)
-//{
-//    /*
-//    DataSet dataset = h5file.openDataSet(DATASET_NAME);
-
-//    H5T_class_t type_class = dataset.getTypeClass();
-
-//    DataSpace dataspace = dataset.getSpace();
-
-//    int rank = dataspace.getSimpleExtentNdims();
-
-//    hsize_t *dims_out = new hsize_t[rank];
-//    int ndims = dataspace.getSimpleExtentDims(dims_out, NULL);
-//*/
-//}
-
-////-----------------------------------------------------------------------------
-
-//void HDF5_IO::parse_attr_info(hid_t h5file, hid_t id)
-//{
-
-//}
-
-//-----------------------------------------------------------------------------
-
 bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
 {
 
@@ -398,7 +204,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
 
-   std::cout<<"load_spectra_volume "<< path <<" detector : "<<detector_num<<std::endl;
+   std::cout<<"HDF5_IO::load_spectra_volume "<< path <<" detector : "<<detector_num<<std::endl;
 
    hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
@@ -603,10 +409,9 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    std::cout << "finished computation at " << std::ctime(&end_time)
-                 << "elapsed time: " << elapsed_seconds.count() << "s\n";
+    std::cout << "HDF5_IO::load_spectra_volume elapsed time: " << elapsed_seconds.count() << "s\n";
 
 }
 
@@ -619,7 +424,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    std::cout<<"load_and_integrate_spectra_volume "<< path <<" detector : "<<detector_num<<std::endl;
+    std::cout<<"HDF5_IO::load_and_integrate_spectra_volume "<< path <<" detector : "<<detector_num<<std::endl;
 
     hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
     hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
@@ -833,10 +638,9 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
      end = std::chrono::system_clock::now();
      std::chrono::duration<double> elapsed_seconds = end-start;
-     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+     //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-     std::cout << "finished computation at " << std::ctime(&end_time)
-                  << "elapsed time: " << elapsed_seconds.count() << "s\n";
+     std::cout << "HDF5_IO::load_and_integrate_spectra_volume elapsed time: " << elapsed_seconds.count() << "s\n";
 
      return true;
 }
@@ -1154,7 +958,7 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    std::cout << "\n\n save mca_arr elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
+    std::cout << "HDF5_IO::save_spectra_volume mca_arr elapsed time: " << elapsed_seconds.count() << "s\n";
 
     return true;
 
@@ -1219,7 +1023,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     count[1] = 1;
     count[2] = dims_out[2];
     chunk_dims[0] = 1;
-    chunk_dims[1] = dims_out[1];
+    chunk_dims[1] = dims_out[1]; //TODO: Test to see if 1 would make it save faster
     chunk_dims[2] = dims_out[2];
 
     dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
@@ -1361,14 +1165,12 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     H5Gclose(xrf_grp_id);
     H5Gclose(maps_grp_id);
 
+    end_save_seq(file_id);
+
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-
-    end_save_seq(file_id);
-
-    std::cout << "\n\n save channels elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
-
+    std::cout << "HDF5_IO::save_element_fits elapsed time: " << elapsed_seconds.count() << "s\n";
 
 
     return true;
@@ -1762,7 +1564,7 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    std::cout << "\n\n save channels elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
+    std::cout << "HDF5_IO::save_quantification elapsed time: " << elapsed_seconds.count() << "s\n";
 
 
 
@@ -2813,7 +2615,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 		return false;
     }
 
-	std::cout << "Saving scalers to hdf5: " << filename << std::endl;
+    std::cout << " HDF5_IO::save_scan_scalers Saving scalers to hdf5: " << filename << std::endl;
 
 	hid_t file_id = start_save_seq(filename);
 
