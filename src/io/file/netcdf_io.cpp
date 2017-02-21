@@ -164,8 +164,11 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         elapsed_lifetime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
         if(elapsed_lifetime == 0)
         {
-            std::cout<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
-            elapsed_lifetime = 1.0;
+            if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
+            {
+                std::cout<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                elapsed_lifetime = 1.0;
+            }
         }
         (*spec_line)[j].elapsed_lifetime(elapsed_lifetime);
 
@@ -175,8 +178,11 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         elapsed_realtime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
         if(elapsed_realtime == 0)
         {
-            std::cout<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
-            elapsed_realtime = 1.0;
+            if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
+            {
+                std::cout<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                elapsed_realtime = 1.0;
+            }
         }
         (*spec_line)[j].elapsed_realtime(elapsed_realtime);
 

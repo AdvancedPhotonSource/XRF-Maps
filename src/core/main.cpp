@@ -180,8 +180,10 @@ bool save_results(std::string full_path,
                   std::string save_loc,
                   const data_struct::xrf::Fit_Count_Dict * const element_counts,
                   fitting::routines::Base_Fit_Routine* fit_routine,
-                  std::queue<std::future<bool> >* job_queue)
+                  std::queue<std::future<bool> >* job_queue,
+                  std::chrono::time_point<std::chrono::system_clock> start)
 {
+
 
     //wait for queue to finish processing
     while(!job_queue->empty())
@@ -190,6 +192,10 @@ bool save_results(std::string full_path,
         job_queue->pop();
         ret.get();
     }
+
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "\n\nFitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s\n\n";
 
     io::file::HDF5_IO hdf5_io;
 
@@ -846,8 +852,11 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
     energy_range.min = 0;
     energy_range.max = spectra_volume->samples_size() -1;
 
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+
     for(auto proc_type : proc_types)
     {
+        start = std::chrono::system_clock::now();
         if (override_params->elements_to_fit.size() < 1)
         {
             std::cout<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
@@ -890,7 +899,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
             }
         }
 
-        save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue );
+        save_results( full_save_path, save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue, start );
     }
 
     real_t energy_offset = 0.0;
