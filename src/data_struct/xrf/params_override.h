@@ -72,9 +72,30 @@ public:
 
     Params_Override()
     {
+        detector_num = 0;
+        si_escape_factor = 0.0;
+        ge_escape_factor = 0.0;
+        si_escape_enabled = false;
+        ge_escape_enabled = false;
+        fit_snip_width = 0.0;
+        us_amp_sens_num = 0.0;
+        us_amp_sens_unit = 0.0;
+        ds_amp_sens_num = 0.0;
+        ds_amp_sens_unit = 0.0;
     }
     Params_Override(string dir, int detector)
     {
+
+        si_escape_factor = 0.0;
+        ge_escape_factor = 0.0;
+        si_escape_enabled = false;
+        ge_escape_enabled = false;
+        fit_snip_width = 0.0;
+        us_amp_sens_num = 0.0;
+        us_amp_sens_unit = 0.0;
+        ds_amp_sens_num = 0.0;
+        ds_amp_sens_unit = 0.0;
+
         dataset_directory = dir;
         detector_num = detector;
     }
@@ -113,10 +134,10 @@ public:
     string ds_amp_sens_num_pv;
     string ds_amp_sens_unit_pv;
 
-    int us_amp_sens_num;
-    int us_amp_sens_unit;
-    int ds_amp_sens_num;
-    int ds_amp_sens_unit;
+    real_t us_amp_sens_num;
+    real_t us_amp_sens_unit;
+    real_t ds_amp_sens_num;
+    real_t ds_amp_sens_unit;
 
 };
 
