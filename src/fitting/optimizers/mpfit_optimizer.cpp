@@ -291,8 +291,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], &mp_config, (void *) &ud, &result);
 
-    std::cout<<"*** testlinfit status = "<<info<<std::endl;
-
+    std::cout<<"*";
+/*
 
     switch(info)
     {
@@ -327,7 +327,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
             std::cout<<"!> Unknown info status"<<std::endl;
         break;
     }
-
+*/
     fit_params->from_array(fitp_arr);
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
     {
