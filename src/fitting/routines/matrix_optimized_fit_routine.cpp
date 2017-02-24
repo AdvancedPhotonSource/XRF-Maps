@@ -114,7 +114,6 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
         if(fit_params->contains(itr.first))
         {
             Fit_Param param = fit_params->at(itr.first);
-            real_t va = pow(10.0, param.value);
             spectra_model += pow((real_t)10.0, param.value) * itr.second;
         }
     }
