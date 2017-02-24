@@ -364,7 +364,7 @@ elseif (UNIX)
   set(SZIP_LIB sz)
 
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3 -mavx -ansi-alias")
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3 -mavx")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
