@@ -606,7 +606,7 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         std::string str_detector_num = std::to_string(detector_num);
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        hdf5_io.save_scan_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), params_override);
+        hdf5_io.save_scan_scalers(full_save_path, detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
     }
 
     mda_io.unload();

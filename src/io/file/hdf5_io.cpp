@@ -2137,7 +2137,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	return true;
 }
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override, bool hasNetcdf)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1;
     hid_t filetype, memtype;
@@ -2267,12 +2267,25 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
                 if (mda_scalers->header->data_rank == 2)
                 {
-                    if (mda_scalers->header->dimensions[1] == 2000)
+                    if(hasNetcdf)
                     {
                         count_3d[0] = 1;
-                        count_3d[1] = 1;
-                        count_3d[2] = mda_scalers->scan->last_point;
-                        single_row_scan = true;
+                        count_3d[1] = mda_scalers->header->dimensions[0];
+                        count_3d[2] = mda_scalers->header->dimensions[1];
+                    }
+                    else
+                    {
+                        if (mda_scalers->header->dimensions[1] == 2000) // test if it is a single row scan
+                        {
+                            count_3d[0] = 1;
+                            count_3d[1] = 1;
+                            count_3d[2] = mda_scalers->scan->last_point;
+                            single_row_scan = true;
+                        }
+                        else
+                        {
+                            std::cout<<"HDF5_IO::_save_scalers() Error, unknown or bad mda file\n";
+                        }
                     }
                 }
                 else if (mda_scalers->header->data_rank == 3)
@@ -2830,6 +2843,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 	size_t detector_num,
 	struct mda_file *mda_scalers,
     data_struct::xrf::Params_Override * params_override,
+    bool hasNetcdf,
 	size_t row_idx_start,
 	int row_idx_end,
 	size_t col_idx_start,
@@ -2873,7 +2887,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
-    _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override);
+    _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override, hasNetcdf);
 
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);
