@@ -331,7 +331,7 @@ if (WIN32)
     # /MP enables multithreaded builds (relevant when there are many files).
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
 	if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-            set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/O2 /arch:AVX /Qvec-report:2 /GL /MP /bigobj /Qansi-alias")
+            set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Ox /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /Qansi-alias")
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
 	endif()
     
