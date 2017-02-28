@@ -1385,6 +1385,7 @@ void help()
     std::cout<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
     std::cout<<"Options: "<<std::endl;
     std::cout<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
+    std::cout<<"--thread-affinity : Lock each thread to a logical core. "<<std::endl;
     std::cout<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     std::cout<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
     std::cout<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
@@ -1455,12 +1456,18 @@ int main(int argc, char *argv[])
 
 
     size_t num_threads = std::thread::hardware_concurrency();
+    bool thread_affinity = false;
     if ( clp.option_exists("--nthreads") )
     {
         num_threads = std::stoi(clp.get_option("--nthreads"));
     }
 
-    ThreadPool tp(num_threads);
+    if ( clp.option_exists("--thread-affinity") )
+    {
+        thread_affinity = true;
+    }
+
+    ThreadPool tp(num_threads, thread_affinity);
 
 
     if ( clp.option_exists("--tails") )
