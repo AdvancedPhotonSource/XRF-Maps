@@ -54,6 +54,8 @@
 #include <limits>
 #include <math.h>
 
+#include <Eigen/Core>
+
 #include "defines.h"
 
 namespace data_struct
@@ -128,48 +130,8 @@ const std::vector<std::string> m_elements {"Au_M", "Pb_M", "U_M", "noise", "Pt_M
 enum E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
 
 //-----------------------------------------------------------------------------
-/**
- * @brief The Fit_Counts_Array struct: stucture used to seperate fit counts to element lines for debugging or more details. Not yet implemeneted.
- */
-struct DLL_EXPORT Fit_Counts_Array
-{
-    Fit_Counts_Array()
-    {
 
-    }
-
-    Fit_Counts_Array(size_t rows, size_t cols)
-    {
-        resize(rows, cols);
-    }
-
-	~Fit_Counts_Array()
-	{
-		counts.resize(0);
-	}
-
-    std::valarray<real_t>& operator [](size_t idx) { return counts[idx]; }
-
-    const std::valarray<real_t>& operator [](size_t idx) const { return counts[idx]; }
-
-    void resize(size_t rows, size_t cols)
-    {
-        counts.resize(rows);
-        for(size_t i=0; i<counts.size(); i++)
-        {
-            counts[i].resize(cols);
-            counts[i] = 0.0;
-        }
-    }
-
-    const size_t rows() const {return counts.size(); }
-
-    const size_t cols() const {return counts[0].size(); }
-
-    std::valarray< std::valarray<real_t> > counts;
-};
-
-typedef std::unordered_map<std::string, Fit_Counts_Array > Fit_Count_Dict;
+typedef std::unordered_map<std::string, Eigen::MatrixXd > Fit_Count_Dict;
 
 //-----------------------------------------------------------------------------
 /**

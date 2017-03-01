@@ -141,11 +141,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     energy_range.min = 0;
     energy_range.max = spectra->size()-1;
     ud.energy_range = &energy_range;
-/*
-    Fit_Counts_Array counts_arr;
-    counts_arr.resize(energy_range.count());
-    ud.counts_arr = &counts_arr;
-*/
+
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 

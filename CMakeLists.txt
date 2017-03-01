@@ -161,7 +161,6 @@ include_directories(${NETCDF_INCLUDES})
 # Include libxrf header files
 include_directories(src/support/minpack)
 include_directories(src/support/mdautils-1.4.1)
-include_directories(src/support/faddeeva)
 include_directories(src/support/cmpfit-1.3a)
 include_directories(src/support/lmfit_6.1)
 include_directories(src/support/nnls)
@@ -203,7 +202,6 @@ endif()
 
 set(libxrf_fit_HEADERS
     src/core/defines.h
-    src/support/faddeeva/Faddeeva.hh
     src/support/minpack/minpack.hpp
     src/support/cmpfit-1.3a/mpfit.h
     src/support/lmfit_6.1/lmstruct.h
@@ -248,7 +246,6 @@ set(libxrf_fit_HEADERS
 add_library(libxrf_fit SHARED
     #${PYBIND11_HEADERS}
     ${libxrf_fit_HEADERS}
-    src/support/faddeeva/Faddeeva.cc
     src/support/minpack/minpack.cpp
     src/support/cmpfit-1.3a/mpfit.c
     src/support/lmfit_6.1/lmmin.c

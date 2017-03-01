@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include "Faddeeva.hh"
 #include <string.h>
 
 #define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
@@ -195,7 +194,7 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
         else
         {
         */
-            out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = value;
+            out_counts_dic->at(el_itr.first)(row_idx, col_idx) = value;
        // }
 
     }
@@ -203,7 +202,7 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
     //check if we are saving the number of iterations and save if so
     if(fit_params->contains(data_struct::xrf::STR_NUM_ITR) && out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0)
     {
-        out_counts_dic->at(data_struct::xrf::STR_NUM_ITR).counts[row_idx][col_idx] = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
+        out_counts_dic->at(data_struct::xrf::STR_NUM_ITR)(row_idx, col_idx) = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
     }
 
 }

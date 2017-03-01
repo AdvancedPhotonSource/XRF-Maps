@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include "Faddeeva.hh"
 #include <string.h>
 
 #define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
@@ -502,7 +501,7 @@ const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std:
     std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
     for (unsigned int i=0; i<delta_energy.size(); i++)
     {
-        counts[i] = gain / (real_t)2.0 /  peak_E * Faddeeva::erfc(delta_energy[i]/(M_SQRT2 * sigma));
+        counts[i] = gain / (real_t)2.0 /  peak_E * std::erfc(delta_energy[i]/(M_SQRT2 * sigma));
     }
     return counts;
 }
@@ -520,7 +519,7 @@ const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std:
         {
             temp_a = exp(delta_energy[i]/ (gamma * sigma));
         }
-        counts[i] = gain / 2. / gamma / sigma / exp(-0.5/pow(gamma, 2.0)) * temp_a * Faddeeva::erfc( delta_energy[i]  /( M_SQRT2*sigma) + (1.0/(gamma*M_SQRT2) )  );
+        counts[i] = gain / 2. / gamma / sigma / exp(-0.5/pow(gamma, 2.0)) * temp_a * std::erfc( delta_energy[i]  /( M_SQRT2*sigma) + (1.0/(gamma*M_SQRT2) )  );
     }
     return counts;
 }

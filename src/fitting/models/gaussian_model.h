@@ -139,7 +139,7 @@ public:
     virtual const valarray<real_t> peak(real_t gain, real_t sigma, valarray<real_t>& delta_energy) const;
 
     /**
-     * @brief gauss_step : gain / 2.0 /  peak_E * Faddeeva::erfc(delta_energy/(M_SQRT2 * sigma));
+     * @brief gauss_step : gain / 2.0 /  peak_E * erfc(delta_energy/(M_SQRT2 * sigma));
      * @param gain
      * @param sigma
      * @param delta_energy
