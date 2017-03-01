@@ -1607,7 +1607,7 @@ int main(int argc, char *argv[])
 
     //populate netcdf and hdf5 files for fly scans
     netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "_0.nc");
-    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.H5/", "_0.h5");
+    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5/", "_0.h5");
 
     //gen whole command line to save in hdf5 later
     for(int ic = 0; ic < argc; ic++)
