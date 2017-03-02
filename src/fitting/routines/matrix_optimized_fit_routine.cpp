@@ -108,7 +108,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
         counts_background = keywords.background[energy];
     }
 */
-    /* windows temp fix
+#ifdef WIN32
 	valarray<real_t> tmp_arr(0.0, energy_range->count());
 	for(const auto& itr : _element_models)
     {
@@ -121,8 +121,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
             spectra_model += tmp_arr;
         }
     }
-    */
-
+#else
     for(const auto& itr : _element_models)
     {
         if(fit_params->contains(itr.first))
@@ -131,7 +130,7 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
             spectra_model += pow((real_t)10.0, param.value) * itr.second;
         }
     }
-
+#endif
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
