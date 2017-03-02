@@ -144,6 +144,8 @@ fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models:
 std::vector<std::string> netcdf_files;
 std::vector<std::string> hdf_files;
 
+std::mutex main_mutex;
+
 // ----------------------------------------------------------------------------
 
 bool load_spectra_volume(std::string dataset_directory,
@@ -197,6 +199,7 @@ bool save_results(std::string full_path,
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "\n\nFitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s\n\n";
 
+    std::lock_guard<std::mutex> lock(main_mutex);
     io::file::HDF5_IO hdf5_io;
 
     hdf5_io.save_element_fits(full_path, save_loc, element_counts);
@@ -227,6 +230,7 @@ bool save_volume(std::string full_path,
         ret.get();
     }*/
 
+    std::lock_guard<std::mutex> lock(main_mutex);
     io::file::HDF5_IO hdf5_io;
     hid_t f_id = hdf5_io.start_save_seq(full_path);
     hdf5_io.save_quantification(f_id, quantification_standard);
@@ -529,6 +533,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          bool save_scalers)
 {
 
+    std::lock_guard<std::mutex> lock(main_mutex);
     //Dataset importer
     io::file::MDA_IO mda_io;
     io::file::HDF5_IO hdf5_io;
@@ -622,6 +627,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        size_t detector_num,
                                        data_struct::xrf::Params_Override * params_override)
 {
+    std::lock_guard<std::mutex> lock(main_mutex);
     //Dataset importer
     io::file::MDA_IO mda_io;
     io::file::HDF5_IO hdf5_io;
@@ -1241,7 +1247,7 @@ void generate_h5_averages(std::string dataset_directory,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {
-
+    std::lock_guard<std::mutex> lock(main_mutex);
     std::cout << "\n\n generate_h5_averages()\n"<<std::endl;
 
     std::vector<std::string> hdf5_filenames;

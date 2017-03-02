@@ -33,7 +33,6 @@ INCLUDEPATH += src/fitting/models
 INCLUDEPATH += src/fitting/routines
 INCLUDEPATH += src/fitting/optimizers
 INCLUDEPATH += src/support/mda_utils
-INCLUDEPATH += src/support/faddeeva
 INCLUDEPATH += src/support/minpack
 INCLUDEPATH += src/support/cmpfit-1.3a
 INCLUDEPATH += src/support/nnls
@@ -120,7 +119,6 @@ SOURCES += \
     src/support/nnls/nnls.cc \
     src/support/nnls/denseMatrix.cc \
     src/support/mda_utils/mda_loader.c \
-    src/support/faddeeva/Faddeeva.cc \
     src/support/minpack/minpack.cpp \
     src/support/cmpfit-1.3a/mpfit.c \
     src/data_struct/xrf/element_info.cpp \
@@ -176,7 +174,6 @@ HEADERS += \
     src/support/nnls/matrix.h \
     src/support/nnls/vector.h \
     src/support/mda_utils/mda-load.h \
-    src/support/faddeeva/Faddeeva.hh \
     src/support/minpack/minpack.hpp \
     src/support/cmpfit-1.3a/mpfit.h \
     src/data_struct/xrf/element_info.h \

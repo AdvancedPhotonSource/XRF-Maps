@@ -49,8 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef HDF5_IO_H
 #define HDF5_IO_H
 
-#include <mutex>
+
 #include <list>
+#include <mutex>
 #include "base_file_io.h"
 #include "base_dataset.h"
 #include "spectra_volume.h"
@@ -223,8 +224,6 @@ private:
     //void _parse_group_info(hid_t h5file, hid_t id);
     //void _parse_dataset_info(hid_t h5file, hid_t id);
     //void _parse_attr_info(hid_t h5file, hid_t id);
-
-    static std::mutex _mutex;
 
 };
 

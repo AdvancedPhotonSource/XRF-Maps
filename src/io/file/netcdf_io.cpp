@@ -68,7 +68,7 @@ namespace file
 #define INPUT_COUNTS_OFFSET 36
 #define OUTPUT_COUNTS_OFFSET 38
 
-static std::mutex netcdf_mutex;
+//static std::mutex netcdf_mutex;
 
 NetCDF_IO::NetCDF_IO() : Base_File_IO()
 {
@@ -89,7 +89,7 @@ bool NetCDF_IO::load_dataset(std::string path, Base_Dataset *dset)
 bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line)
 {
 
-	std::unique_lock<std::mutex> lock(netcdf_mutex);
+//    std::lock_guard<std::mutex> lock(netcdf_mutex);
 
     size_t header_size = 256;
     int ncid, varid, retval;

@@ -54,7 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <ctime>
 #include <thread>
-
+#include <mutex>
 
 #include "element_info.h"
 
@@ -81,12 +81,16 @@ const std::vector<std::string> xrf_analysis_save_names = {"ROI",
                                                           "NNLS"
                                                          };
 
+
+
+
+
 namespace io
 {
 namespace file
 {
 
-std::mutex HDF5_IO::_mutex;
+//std::mutex hdf5_mutex;
 
 //-----------------------------------------------------------------------------
 
@@ -197,10 +201,9 @@ bool HDF5_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
 {
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
 
    //_is_loaded = ERROR_LOADING;
-    std::unique_lock<std::mutex> lock(_mutex);
-
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
 
@@ -240,7 +243,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     if(file_id < 0)
     {
 
-        std::cout<<"Error opening file "<<path<<std::endl;
+        std::cout<<"HDF5_IO::load_spectra_volume Error opening file "<<path<<std::endl;
         return false;
     }
 
@@ -419,7 +422,8 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
 bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -460,7 +464,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
      if(file_id < 0)
      {
 
-         std::cout<<"Error opening file "<<path<<std::endl;
+         std::cout<<"HDF5_IO::load_and_integrate_spectra_volume Error opening file "<<path<<std::endl;
          return false;
      }
 
@@ -656,7 +660,7 @@ hid_t HDF5_IO::start_save_seq(const std::string filename)
         file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if(file_id < 0)
     {
-        std::cout<<"Error opening file "<<filename<<std::endl;
+        std::cout<<"HDF5_IO::start_save_seq Error opening file "<<filename<<std::endl;
         return -1;
     }
 
@@ -688,7 +692,7 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
                                   size_t col_idx_start,
                                   int col_idx_end)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
 
     std::cout<<"HDF5_IO::save_spectra_volume()"<<std::endl;
 
@@ -974,7 +978,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
                                 size_t col_idx_start,
                                 int col_idx_end)
 {
-    std::unique_lock<std::mutex> lock(_mutex);
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
 
     std::cout<<"HDF5_IO::save_element_fits()"<<std::endl;
 
@@ -1175,7 +1179,7 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
                                   size_t col_idx_start,
                                   int col_idx_end)
 {
-    std::unique_lock<std::mutex> lock(this->_mutex);
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
 
     std::cout<<"HDF5_IO::save_quantification()"<<std::endl;
 
@@ -2846,7 +2850,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
 
-    std::unique_lock<std::mutex> lock(_mutex);
+    //std::lock_guard<std::mutex> lock(hdf5_mutex);
     hid_t scan_grp_id, maps_grp_id;
 
 	if (mda_scalers == nullptr)
