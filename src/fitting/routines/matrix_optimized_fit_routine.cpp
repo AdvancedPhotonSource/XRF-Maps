@@ -108,13 +108,16 @@ Spectra Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * cons
         counts_background = keywords.background[energy];
     }
 */
-
-    for(const auto& itr : _element_models)
+	valarray<real_t> tmp_arr(0.0, energy_range->count());
+	for(const auto& itr : _element_models)
     {
         if(fit_params->contains(itr.first))
         {
+			tmp_arr = itr.second;
             Fit_Param param = fit_params->at(itr.first);
-            spectra_model += pow((real_t)10.0, param.value) * itr.second;
+			real_t nval = pow((real_t)10.0, param.value);
+			tmp_arr *= nval;
+            spectra_model += tmp_arr;
         }
     }
 
