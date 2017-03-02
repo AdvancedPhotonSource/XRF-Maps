@@ -798,8 +798,8 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
 
     dset_rt_id = H5Dcreate (spec_grp_id, "Elapsed_Realtime", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     dset_lt_id = H5Dcreate (spec_grp_id, "Elapsed_Livetime", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    incnt_dset_id = H5Dcreate (spec_grp_id, "Output_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    outcnt_dset_id = H5Dcreate (spec_grp_id, "Input_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    incnt_dset_id = H5Dcreate (spec_grp_id, "Input_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    outcnt_dset_id = H5Dcreate (spec_grp_id, "Output_Counts", H5T_INTEL_F64, dataspace_time_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     H5Sselect_hyperslab (memoryspace_time_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
 
@@ -999,8 +999,11 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     dset_id = -1;
     dset_ch_id = -1;
     hsize_t dims_out[3];
-    hsize_t offset[3];
-    hsize_t count[3];
+    hsize_t offset[1] = {0};
+    hsize_t offset2[1] = {0};
+    hsize_t offset_3d[3] = {0, 0, 0};
+    hsize_t count[1] = {1};
+    hsize_t count_3d[3] = {1, 1, 1};
     hsize_t chunk_dims[3];
 
     //hsize_t q_dims_out[2];
@@ -1013,12 +1016,12 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     }
     //H5T_FLOAT
     dims_out[0] = element_counts->size();
-    offset[0] = 0;
-    offset[1] = 0;
-    offset[2] = 0;
-    count[0] = 1;
-    count[1] = 1;
-    count[2] = dims_out[2];
+    offset_3d[0] = 0;
+    offset_3d[1] = 0;
+    offset_3d[2] = 0;
+    count_3d[0] = 1;
+    count_3d[1] = dims_out[1];
+    count_3d[2] = dims_out[2];
     chunk_dims[0] = 1;
     chunk_dims[1] = dims_out[1]; 
     chunk_dims[2] = dims_out[2];
@@ -1027,7 +1030,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     H5Pset_chunk(dcpl_id, 3, chunk_dims);
     H5Pset_deflate (dcpl_id, 7);
 
-    memoryspace = H5Screate_simple(3, count, NULL);
+    memoryspace = H5Screate_simple(3, count_3d, NULL);
     filespace = H5Screate_simple(3, dims_out, NULL);
 
     dataspace_id = H5Screate_simple (3, dims_out, NULL);
@@ -1035,7 +1038,7 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     dataspace_ch_id = H5Screate_simple (1, dims_out, NULL);
     dataspace_ch_off_id = H5Screate_simple (1, dims_out, NULL);
 
-    H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
+    H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
 
     maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
@@ -1129,15 +1132,16 @@ bool HDF5_IO::save_element_fits(std::string full_path,
             continue;
         }
         offset[0] = i;
+        offset_3d[0] = i;
 
         H5Sselect_hyperslab (dataspace_ch_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-        H5Sselect_hyperslab (dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], NULL, count, NULL);
+        H5Sselect_hyperslab (dataspace_ch_off_id, H5S_SELECT_SET, offset2, NULL, count, NULL);
 
         el_name.copy(tmp_char, 254);
 
         status = H5Dwrite (dset_ch_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)tmp_char);
 
-		H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset_3d, NULL, chunk_dims, NULL);
 
 		status = H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, memoryspace, filespace, H5P_DEFAULT, (void*)element_counts->at(el_name).data());
         
@@ -2154,7 +2158,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
     bool single_row_scan = false;
 
-	Eigen::MatrixXd scaler_mat, abs_cfg_mat, H_dpc_cfg_mat, V_dpc_cfg_mat, dia1_dpc_cfg_mat, dia2_dpc_cfg_mat;
+    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> scaler_mat, abs_cfg_mat, H_dpc_cfg_mat, V_dpc_cfg_mat, dia1_dpc_cfg_mat, dia2_dpc_cfg_mat;
 
     std::cout<<"HDF5_IO::_save_scalers()"<<std::endl;
 
@@ -2350,21 +2354,15 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
                         {
 							real_t val = mda_scalers->scan->detectors_data[itr.mda_idx][i];
-                            if(itr.normalize_by_time)
+                            if(itr.normalize_by_time && mda_time_scaler_idx > -1)
                             {
                                 real_t scaler_time_normalizer = 1.0;
-                                if(mda_time_scaler_idx > -1)
-                                {
-                                    double det_time = mda_scalers->scan->detectors_data[mda_time_scaler_idx][i];
-                                    scaler_time_normalizer = det_time / time_scaler_clock;
-                                }
+                                double det_time = mda_scalers->scan->detectors_data[mda_time_scaler_idx][i];
+                                scaler_time_normalizer = det_time / time_scaler_clock;
                                 val /= scaler_time_normalizer;
                             }
 							scaler_mat(0, i) = val;
                         }
-						offset_3d[0] = itr.hdf_idx;
-                        H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
-                        status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)scaler_mat.data());
                     }
                     else
                     {
@@ -2374,24 +2372,22 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                             for (int32_t j = 0; j < mda_scalers->scan->sub_scans[0]->last_point; j++)
                             {
 								real_t val = mda_scalers->scan->sub_scans[i]->detectors_data[itr.mda_idx][j];
-                                if(itr.normalize_by_time)
+                                if(itr.normalize_by_time && mda_time_scaler_idx > -1)
                                 {
                                     real_t scaler_time_normalizer = 1.0;
-                                    if(mda_time_scaler_idx > -1)
-                                    {
-                                        double det_time = mda_scalers->scan->sub_scans[i]->detectors_data[mda_time_scaler_idx][i];
-                                        scaler_time_normalizer = det_time / time_scaler_clock;
-                                    }
+                                    double det_time = mda_scalers->scan->sub_scans[i]->detectors_data[mda_time_scaler_idx][j];
+                                    scaler_time_normalizer = det_time / time_scaler_clock;
 									val /= scaler_time_normalizer;
                                 }
 								scaler_mat(i, j) = val;
                             }
                         }
-
-						offset_3d[0] = itr.hdf_idx;
-						H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
-						status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)scaler_mat.data());
                     }
+
+                    offset_3d[0] = itr.hdf_idx;
+                    H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)scaler_mat.data());
+
 
                     offset[0] = itr.hdf_idx;
                     char tmp_char[255] = {0};
@@ -2458,17 +2454,13 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                             double t_4 = mda_scalers->scan->detectors_data[cfg_4_idx][j];
                             double t_5 = mda_scalers->scan->detectors_data[cfg_5_idx][j];
 
-
-                            offset_3d[1] = 0;
-                            offset_3d[2] = j;
-
                             double t_abs = t_2 + t_3 + t_4 + t_5;
-							scaler_mat(1,j) = ds_ic / us_ic;
-							abs_cfg_mat(1,j) = t_abs / us_ic;
-							H_dpc_cfg_mat(1, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
-							V_dpc_cfg_mat(1, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
-                            dia1_dpc_cfg_mat(1, j) = (t_2 - t_4) / t_abs;
-                            dia2_dpc_cfg_mat(1, j) = (t_3 - t_5) / t_abs;
+                            scaler_mat(0,j) = ds_ic / us_ic;
+                            abs_cfg_mat(0,j) = t_abs / us_ic;
+                            H_dpc_cfg_mat(0, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
+                            V_dpc_cfg_mat(0, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
+                            dia1_dpc_cfg_mat(0, j) = (t_2 - t_4) / t_abs;
+                            dia2_dpc_cfg_mat(0, j) = (t_3 - t_5) / t_abs;
 							/*
 							if (itr.normalize_by_time)
 							{
@@ -3065,7 +3057,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
         error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
 
-        for(int k=1; k<hdf5_file_ids.size(); k++)
+        for(int k=1; k<analysis_ids.size(); k++)
         {
             H5Dclose(analysis_ids[k]);
         }

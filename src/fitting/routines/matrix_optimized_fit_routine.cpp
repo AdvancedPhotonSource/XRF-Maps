@@ -169,7 +169,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
                                                                                       const Fit_Element_Map_Dict * const elements_to_fit,
                                                                                       struct Range energy_range)
 {
-    //Eigen::MatrixXd fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
+    // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
     unordered_map<string, Spectra> element_spectra;
 
     //n_pileup = 9

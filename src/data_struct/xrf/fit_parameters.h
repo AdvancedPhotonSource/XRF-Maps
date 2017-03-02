@@ -131,7 +131,7 @@ enum E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_H
 
 //-----------------------------------------------------------------------------
 
-typedef std::unordered_map<std::string, Eigen::MatrixXd > Fit_Count_Dict;
+typedef std::unordered_map<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > Fit_Count_Dict;
 
 //-----------------------------------------------------------------------------
 /**

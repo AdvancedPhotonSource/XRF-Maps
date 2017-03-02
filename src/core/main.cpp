@@ -325,7 +325,7 @@ data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std
     data_struct::xrf::Fit_Count_Dict* element_fit_counts_dict = new data_struct::xrf::Fit_Count_Dict();
     for(auto& e_itr : *elements_to_fit)
     {
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::MatrixXd>(e_itr.first, Eigen::MatrixXd()) );
+        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(e_itr.first, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ()) );
         element_fit_counts_dict->at(e_itr.first).resize(width, height);
     }
     return element_fit_counts_dict;
@@ -889,7 +889,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
         if (alloc_iter_count)
         {
             //Allocate memeory to save number of fit iterations
-            element_fit_count_dict->emplace(std::pair<std::string, Eigen::MatrixXd>(data_struct::xrf::STR_NUM_ITR, Eigen::MatrixXd()) );
+            element_fit_count_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(data_struct::xrf::STR_NUM_ITR, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>() ));
             element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
         }
 
