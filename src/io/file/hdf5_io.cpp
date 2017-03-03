@@ -2293,8 +2293,8 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 else if (mda_scalers->header->data_rank == 3)
                 {
                     count_3d[0] = 1;
-                    count_3d[1] = mda_scalers->scan->last_point;
-                    count_3d[2] = mda_scalers->scan->sub_scans[0]->last_point;
+                    count_3d[1] = mda_scalers->header->dimensions[0];
+                    count_3d[2] = mda_scalers->header->dimensions[1];
                 }
                 else
                 {
@@ -2330,12 +2330,12 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 				if (single_row_scan)
 				{
 					count_2d[0] = 1;
-					count_2d[1] = mda_scalers->scan->last_point;
+                    count_2d[1] = mda_scalers->header->dimensions[0];
 				}
 				else
 				{
-					count_2d[0] = mda_scalers->scan->last_point;
-					count_2d[1] = mda_scalers->scan->sub_scans[0]->last_point;
+                    count_2d[0] = mda_scalers->header->dimensions[0];
+                    count_2d[1] = mda_scalers->header->dimensions[1];
 				}
 				count_3d[1] = count_2d[0];
 				count_3d[2] = count_2d[1];
@@ -2346,6 +2346,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 				memoryspace_id = H5Screate_simple(2, count_2d, NULL);
 
 				scaler_mat.resize(count_2d[0], count_2d[1]);
+                scaler_mat.setZero(count_2d[0], count_2d[1]);
 
                 for (auto &itr : scalers)
                 {
@@ -2366,7 +2367,6 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     }
                     else
                     {
-						scaler_mat.resize(mda_scalers->scan->last_point, mda_scalers->scan->sub_scans[0]->last_point);
                         for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
                         {
                             for (int32_t j = 0; j < mda_scalers->scan->sub_scans[0]->last_point; j++)
@@ -2441,6 +2441,12 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 					V_dpc_cfg_mat.resize(count_2d[0], count_2d[1]);
 					dia1_dpc_cfg_mat.resize(count_2d[0], count_2d[1]);
 					dia2_dpc_cfg_mat.resize(count_2d[0], count_2d[1]);
+
+                    abs_cfg_mat.setZero(count_2d[0], count_2d[1]);
+                    H_dpc_cfg_mat.setZero(count_2d[0], count_2d[1]);
+                    V_dpc_cfg_mat.setZero(count_2d[0], count_2d[1]);
+                    dia1_dpc_cfg_mat.setZero(count_2d[0], count_2d[1]);
+                    dia2_dpc_cfg_mat.setZero(count_2d[0], count_2d[1]);
 
                     if (single_row_scan)
                     {
