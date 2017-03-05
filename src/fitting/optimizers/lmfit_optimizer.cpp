@@ -72,13 +72,13 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, *(ud->energy_range));
+    ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
     //Calculate residuals
-    std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
+    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
 
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = residuals[i];
+        fvec[i] = ud->residuals[i];
     }
 
 }
@@ -92,13 +92,13 @@ void general_residuals_lmfit( const double *par, int m_dat, const void *data, do
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
-    Spectra spectra_model = ud->func(ud->fit_parameters, ud->energy_range);
+    ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
     //Calculate residuals
-    std::valarray<real_t> residuals = ( (*ud->spectra) - spectra_model ) * (*ud->weights);
+    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
 
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = residuals[i];
+        fvec[i] = ud->residuals[i];
     }
 
 }
@@ -155,28 +155,12 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     User_Data ud;
 
-    ud.fit_model = (Base_Model*)model;
-    // set spectra to fit
-    ud.spectra = (Spectra*)spectra;
-    ud.fit_parameters = fit_params;
-    ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
-
-    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra->size()-1;
-    ud.energy_range = &energy_range;
+	fill_user_data(ud, fit_params, spectra, elements_to_fit, model);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-    std::valarray<real_t> weights = (real_t)1.0 / ( (real_t)1.0 + (*spectra) );
-    weights = convolve1d(weights, 5);
-    weights = std::abs(weights);
-    weights /= weights.max();
-    ud.weights = &weights;
 
     //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
     //ud.weights = &weights;
@@ -267,32 +251,17 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
-                                    std::function<const Spectra(const Fit_Parameters * const, const Range * const)> gen_func)
+                                    Gen_Func_Def gen_func)
 {
 
     Gen_User_Data ud;
 
-    ud.func = gen_func;
-    // set spectra to fit
-    ud.spectra = (Spectra*)spectra;
-    ud.fit_parameters = fit_params;
-
-    //fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra->size()-1;
-    ud.energy_range = &energy_range;
+	fill_gen_user_data(ud, fit_params, spectra, gen_func);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-    std::valarray<real_t> weights = (real_t)1.0 / ( (real_t)1.0 + (*spectra) );
-    weights = convolve1d(weights, 5);
-    weights = std::abs(weights);
-    weights /= weights.max();
-    ud.weights = &weights;
 
     //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
     //ud.weights = &weights;

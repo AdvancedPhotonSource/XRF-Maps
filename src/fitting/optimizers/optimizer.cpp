@@ -55,6 +55,62 @@ namespace fitting
 namespace optimizers
 {
 
+	void fill_user_data(User_Data &ud,
+		Fit_Parameters *fit_params,
+		const Spectra * const spectra,
+		const Fit_Element_Map_Dict * const elements_to_fit,
+		const Base_Model * const model)
+	{
+		ud.fit_model = (Base_Model*)model;
+		// set spectra to fit
+		ud.spectra = (Spectra*)spectra;
+		ud.fit_parameters = fit_params;
+		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
+
+		//fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
+		ud.energy_range.min = 0;
+		ud.energy_range.max = spectra->size() - 1;
+		
+
+		std::vector<real_t> fitp_arr = fit_params->to_array();
+		std::vector<real_t> perror(fitp_arr.size());
+
+		int info;
+
+		ud.weights.resize(spectra->size());
+		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+		ud.weights = convolve1d(ud.weights, 5);
+		ud.weights = std::abs(ud.weights);
+		ud.weights /= ud.weights.max();
+
+		ud.residuals.resize(spectra->size());
+		ud.spectra_model.resize(spectra->size());
+	}
+
+	void fill_gen_user_data(Gen_User_Data &ud,
+		Fit_Parameters *fit_params,
+		const Spectra * const spectra,
+		Gen_Func_Def gen_func)
+	{
+		ud.func = gen_func;
+		// set spectra to fit
+		ud.spectra = (Spectra*)spectra;
+		ud.fit_parameters = fit_params;
+
+		//fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
+		ud.energy_range.min = 0;
+		ud.energy_range.max = spectra->size() - 1;
+
+		ud.weights.resize(spectra->size());
+		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+		ud.weights = convolve1d(ud.weights, 5);
+		ud.weights = std::abs(ud.weights);
+		ud.weights /= ud.weights.max();
+
+
+		ud.residuals.resize(spectra->size());
+		ud.spectra_model.resize(spectra->size());
+	}
 
 } //namespace optimizers
 } //namespace fitting

@@ -70,6 +70,9 @@ using namespace fitting::models;
 
 enum OPTIMIZER_INFO { IMPROPER_INPUT, MOST_TOL, EXCEED_CALL, TOL_TOO_SMALL, NO_PROGRESS };
 
+typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
+
+
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
  */
@@ -77,21 +80,24 @@ struct User_Data
 {
     Base_Model* fit_model;
     Spectra *spectra;
-    std::valarray<real_t> *weights;
+    std::valarray<real_t> weights;
     Fit_Parameters *fit_parameters;
     std::valarray<real_t> *spectra_background;
     Fit_Element_Map_Dict *elements;
-    Range *energy_range;
-    //Fit_Counts_Array* counts_arr;
+    Range energy_range;
+	std::valarray<real_t> residuals;
+	Spectra  spectra_model;
 };
 
 struct Gen_User_Data
 {
     Spectra *spectra;
-    std::valarray<real_t> *weights;
+    std::valarray<real_t> weights;
     Fit_Parameters *fit_parameters;
-    Range *energy_range;
-    std::function<const Spectra(Fit_Parameters*, Range*)> func;
+    Range energy_range;
+	Gen_Func_Def func;
+	std::valarray<real_t> residuals;
+	Spectra  spectra_model;
 };
 
 struct Quant_User_Data
@@ -100,6 +106,17 @@ struct Quant_User_Data
     Fit_Parameters * fit_parameters;
     std::unordered_map<std::string, Element_Quant> * quant_map;
 };
+
+void fill_user_data(User_Data &ud,
+	Fit_Parameters *fit_params,
+	const Spectra * const spectra,
+	const Fit_Element_Map_Dict * const elements_to_fit,
+	const Base_Model * const model);
+
+	void fill_gen_user_data(Gen_User_Data &ud,
+		Fit_Parameters *fit_params,
+		const Spectra * const spectra,
+		Gen_Func_Def gen_func);
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
@@ -118,7 +135,7 @@ public:
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-                               std::function<const Spectra(const Fit_Parameters* const, const struct Range* const)> gen_func) = 0;
+								Gen_Func_Def gen_func) = 0;
 
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,
