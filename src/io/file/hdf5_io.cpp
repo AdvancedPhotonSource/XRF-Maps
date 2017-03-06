@@ -120,7 +120,7 @@ void HDF5_IO::lazy_load()
    //size_t      size;
 
     //std::cout<<"pre open file"<< std::endl;
-    file_id = H5Fopen(_filename.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fopen(_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     //std::cout<<"pre open dset "<<std::endl;
     dset_id = H5Dopen2(file_id, "/MAPS_RAW/data_a", H5P_DEFAULT);
 
@@ -239,7 +239,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
        break;
    }
 
-    file_id = H5Fopen(path.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if(file_id < 0)
     {
 
@@ -460,7 +460,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
         break;
     }
 
-     file_id = H5Fopen(path.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
      if(file_id < 0)
      {
 
@@ -657,7 +657,10 @@ hid_t HDF5_IO::start_save_seq(const std::string filename)
 
     file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (file_id < 1)
+    {
+        std::cout<<"HDF5_IO::start_save_seq() Creating file "<<filename<<std::endl;
         file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    }
     if(file_id < 0)
     {
         std::cout<<"HDF5_IO::start_save_seq Error opening file "<<filename<<std::endl;
@@ -2857,7 +2860,7 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 		return false;
     }
 
-    std::cout << " HDF5_IO::save_scan_scalers Saving scalers to hdf5: " << filename << std::endl;
+    std::cout << "HDF5_IO::save_scan_scalers Saving scalers to hdf5: " << filename << std::endl;
 
 	hid_t file_id = start_save_seq(filename);
 
@@ -2907,8 +2910,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 {
     std::cout << "HDF5_IO::generate_avg(): " << avg_filename << std::endl;
 
-    hid_t ocpypl_id, status, src_maps_grp_id, src_analyzed_grp_id, dst_analyzed_grp_id, src_fit_grp_id, dst_fit_grp_id;
-    hid_t error, src_inner_grp_id, dst_inner_grp_id;
+    hid_t ocpypl_id, status, src_maps_grp_id, src_analyzed_grp_id, dst_fit_grp_id;
     std::vector<hid_t> hdf5_file_ids;
     std::string group_name = "";
 
@@ -3013,12 +3015,20 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
     std::vector<hid_t> analysis_ids;
     hid_t error, status;
 
-    status = H5Ocopy(src_fit_grp_id, dataset_name.c_str(), dst_fit_grp_id, dataset_name.c_str(), ocpypl_id, H5P_DEFAULT);
+//    status = H5Ocopy(src_fit_grp_id, dataset_name.c_str(), dst_fit_grp_id, dataset_name.c_str(), ocpypl_id, H5P_DEFAULT);
 
-    if (status == 0)
+//    if (status == 0)
     {
         hid_t dset_id = H5Dopen2(src_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
         hid_t dataspace_id = H5Dget_space(dset_id);
+        hid_t file_type = H5Dget_type(dset_id);
+        hid_t props = H5Dget_create_plist(dset_id);
+        hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, dataset_name.c_str(), file_type, dataspace_id, H5P_DEFAULT, props, H5P_DEFAULT);
+        if(dst_dset_id < 1)
+        {
+            std::cout<<"Error HDF5_IO::_gen_average() :: "<<full_hdf5_path<< " " <<dataset_name<<std::endl;
+            return;
+        }
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
 
         hsize_t* dims_in = new hsize_t[rank];
@@ -3060,7 +3070,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
             buffer1 /= divisor;
         }
 
-        hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+        //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
         error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
 
         for(int k=1; k<analysis_ids.size(); k++)

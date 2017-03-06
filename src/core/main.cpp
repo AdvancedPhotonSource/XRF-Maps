@@ -541,7 +541,7 @@ bool load_spectra_volume(std::string dataset_directory,
     //data_struct::xrf::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
-    std::cout<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+    std::cout<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -590,7 +590,8 @@ bool load_spectra_volume(std::string dataset_directory,
                 for(size_t i=0; i<spectra_volume->rows(); i++)
                 {
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
-                    std::cout<<"Loading file "<<full_filename<<std::endl;
+                    //todo: add verbose option
+                    //std::cout<<"Loading file "<<full_filename<<std::endl;
                     netcdf_io.load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                 }
             }
@@ -1697,14 +1698,17 @@ int main(int argc, char *argv[])
             {
                 process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
+            generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
         }
     }
-
-    if(quick_n_dirty == false && clp.option_exists("--generate-avg-h5"))
+    else
     {
-        for(std::string dataset_file : dataset_files)
+        if(clp.option_exists("--generate-avg-h5"))
         {
-            generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+            for(std::string dataset_file : dataset_files)
+            {
+                generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+            }
         }
     }
 
