@@ -82,7 +82,6 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
     //Spectra spectra_model(energy_range->count());
     (*spectra_model) *= (real_t)0.0;
 
-
 //    valarray<real_t> energy((real_t)0.0, energy_range.count());
 //    real_t e_val = energy_range.min;
 //    for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)

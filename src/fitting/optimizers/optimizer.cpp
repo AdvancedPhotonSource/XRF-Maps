@@ -83,7 +83,6 @@ namespace optimizers
 		ud.weights = std::abs(ud.weights);
 		ud.weights /= ud.weights.max();
 
-		ud.residuals.resize(spectra->size());
 		ud.spectra_model.resize(spectra->size());
 	}
 
@@ -107,8 +106,6 @@ namespace optimizers
 		ud.weights = std::abs(ud.weights);
 		ud.weights /= ud.weights.max();
 
-
-		ud.residuals.resize(spectra->size());
 		ud.spectra_model.resize(spectra->size());
 	}
 

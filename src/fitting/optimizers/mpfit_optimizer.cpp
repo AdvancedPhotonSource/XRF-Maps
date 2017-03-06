@@ -76,11 +76,9 @@ int residuals_mpfit(int m, int params_size, double *params, double *dy, double *
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
 
     //Calculate residuals
-    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
-
     for (int i=0; i<m; i++)
     {
-        dy[i] = ud->residuals[i];
+        dy[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
 	return 0;
@@ -98,11 +96,9 @@ int gen_residuals_mpfit(int m, int params_size, double *params, double *dy, doub
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
 
     //Calculate residuals
-    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
-
     for (int i=0; i<m; i++)
     {
-        dy[i] = ud->residuals[i];
+        dy[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
     return 0;

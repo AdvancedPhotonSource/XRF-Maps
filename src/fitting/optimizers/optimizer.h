@@ -85,8 +85,7 @@ struct User_Data
     std::valarray<real_t> *spectra_background;
     Fit_Element_Map_Dict *elements;
     Range energy_range;
-	std::valarray<real_t> residuals;
-	Spectra  spectra_model;
+    Spectra  spectra_model;
 };
 
 struct Gen_User_Data
@@ -96,7 +95,6 @@ struct Gen_User_Data
     Fit_Parameters *fit_parameters;
     Range energy_range;
 	Gen_Func_Def func;
-	std::valarray<real_t> residuals;
 	Spectra  spectra_model;
 };
 

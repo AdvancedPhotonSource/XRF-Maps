@@ -74,11 +74,9 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
     //Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
     //Calculate residuals
-    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
-
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = ud->residuals[i];
+        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
 }
@@ -94,11 +92,9 @@ void general_residuals_lmfit( const double *par, int m_dat, const void *data, do
     //Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
     //Calculate residuals
-    ud->residuals = ( (*ud->spectra) - ud->spectra_model ) * ud->weights;
-
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = ud->residuals[i];
+        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
 }
