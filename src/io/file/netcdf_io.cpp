@@ -54,12 +54,16 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <ctime>
 #include <thread>
-#include <mutex>
 
 namespace io
 {
 namespace file
 {
+
+std::mutex NetCDF_IO::_mutex;
+
+NetCDF_IO* NetCDF_IO::_this_inst(0);
+
 
 #define ERR(e) {std::cout<<"Error: "<< nc_strerror(e)<<std::endl; return false;}
 
@@ -70,15 +74,34 @@ namespace file
 
 //static std::mutex netcdf_mutex;
 
+//-----------------------------------------------------------------------------
+
 NetCDF_IO::NetCDF_IO() : Base_File_IO()
 {
 
 }
 
+//-----------------------------------------------------------------------------
+
+NetCDF_IO* NetCDF_IO::inst()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_this_inst == nullptr)
+    {
+        _this_inst = new NetCDF_IO();
+    }
+    return _this_inst;
+}
+
+//-----------------------------------------------------------------------------
+
 void NetCDF_IO::lazy_load()
 {
 
 }
+
+//-----------------------------------------------------------------------------
 
 bool NetCDF_IO::load_dataset(std::string path, Base_Dataset *dset)
 {
@@ -86,10 +109,12 @@ bool NetCDF_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 }
 
+//-----------------------------------------------------------------------------
+
 bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line)
 {
 
-//    std::lock_guard<std::mutex> lock(netcdf_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
     size_t header_size = 256;
     int ncid, varid, retval;
@@ -228,6 +253,8 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
        ERR(retval);
 
 }
+
+//-----------------------------------------------------------------------------
 
 } //end namespace file
 }// end namespace io

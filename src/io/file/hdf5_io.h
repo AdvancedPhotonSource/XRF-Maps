@@ -129,7 +129,10 @@ struct HDF5_Range
 class DLL_EXPORT HDF5_IO : public Base_File_IO
 {
 public:
-    HDF5_IO();
+
+    static HDF5_IO* inst();
+
+    ~HDF5_IO();
 
     /**
      * @brief lazy_load : Only load in the meta info, not the actual datasets
@@ -153,10 +156,9 @@ public:
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
-    hid_t start_save_seq(const std::string filename);
+    bool start_save_seq(const std::string filename);
 
-    bool save_spectra_volume(const hid_t file_id,
-                             const std::string path,
+    bool save_spectra_volume(const std::string path,
                              data_struct::xrf::Spectra_Volume * spectra_volume,
                              real_t energy_offset,
                              real_t energy_slope,
@@ -166,34 +168,37 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_element_fits(std::string full_path,
-                           const std::string path,
+    bool save_element_fits(const std::string path,
                            const data_struct::xrf::Fit_Count_Dict * const element_counts,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
-    bool save_quantification(const hid_t file_id,
-                             data_struct::xrf::Quantification_Standard * quantification_standard,
+    bool save_quantification(data_struct::xrf::Quantification_Standard * quantification_standard,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
-    bool save_scan_scalers(const std::string filename,
-                          size_t detector_num,
-                          struct mda_file *mda_scalers,
-                          data_struct::xrf::Params_Override * params_override,
-                          bool hasNetcdf,
-                          size_t row_idx_start=0,
-                          int row_idx_end=-1,
-                          size_t col_idx_start=0,
-                          int col_idx_end=-1);
+    bool save_scan_scalers(size_t detector_num,
+                           struct mda_file *mda_scalers,
+                           data_struct::xrf::Params_Override * params_override,
+                           bool hasNetcdf,
+                           size_t row_idx_start=0,
+                           int row_idx_end=-1,
+                           size_t col_idx_start=0,
+                           int col_idx_end=-1);
 
-    bool end_save_seq(const hid_t);
+    bool end_save_seq();
 
 private:
+
+    HDF5_IO();
+
+    static HDF5_IO *_this_inst;
+
+    static std::mutex _mutex;
 
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
@@ -220,6 +225,8 @@ private:
         std::string hdf_name;
         bool normalize_by_time;
     };
+
+    hid_t _cur_file_id;
 
     //void _parse_group_info(hid_t h5file, hid_t id);
     //void _parse_dataset_info(hid_t h5file, hid_t id);

@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "base_dataset.h"
 #include "spectra_volume.h"
 #include <netcdf.h>
+#include <mutex>
 
 namespace io
 {
@@ -63,7 +64,10 @@ namespace file
 class DLL_EXPORT NetCDF_IO : public Base_File_IO
 {
 public:
-    NetCDF_IO();
+
+    static NetCDF_IO* inst();
+
+    ~NetCDF_IO();
 
     /**
      * @brief lazy_load : Only load in the meta info, not the actual datasets
@@ -80,6 +84,12 @@ public:
     virtual bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
 
 private:
+
+    NetCDF_IO();
+
+    static NetCDF_IO *_this_inst;
+
+    static std::mutex _mutex;
 
 };
 

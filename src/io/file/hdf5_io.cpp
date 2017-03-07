@@ -90,7 +90,9 @@ namespace io
 namespace file
 {
 
-//std::mutex hdf5_mutex;
+std::mutex HDF5_IO::_mutex;
+
+HDF5_IO* HDF5_IO::_this_inst(0);
 
 //-----------------------------------------------------------------------------
 
@@ -99,13 +101,27 @@ HDF5_IO::HDF5_IO() : Base_File_IO()
 	//disable hdf print to std err
 	hid_t status;
 	status = H5Eset_auto(H5E_DEFAULT, NULL, NULL);
+    _cur_file_id = -1;
+}
+
+//-----------------------------------------------------------------------------
+
+HDF5_IO* HDF5_IO::inst()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if (_this_inst == nullptr)
+    {
+        _this_inst = new HDF5_IO();
+    }
+    return _this_inst;
 }
 
 //-----------------------------------------------------------------------------
 
 void HDF5_IO::lazy_load()
 {
-   _is_loaded = ERROR_LOADING;
+   std::lock_guard<std::mutex> lock(_mutex);
 
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
@@ -201,7 +217,7 @@ bool HDF5_IO::load_dataset(std::string path, Base_Dataset *dset)
 
 bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
 {
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
    //_is_loaded = ERROR_LOADING;
    std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -422,7 +438,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
 bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra)
 {
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -651,32 +667,47 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 //-----------------------------------------------------------------------------
 
-hid_t HDF5_IO::start_save_seq(const std::string filename)
+bool HDF5_IO::start_save_seq(const std::string filename)
 {
-    hid_t    file_id;
 
-    file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    if (file_id < 1)
+    if (_cur_file_id > -1)
+    {
+        std::cout<<"HDF5_IO::start_save_seq()  Warning: file already open, calling close() before opening new file. "<<std::endl;
+        end_save_seq();
+    }
+
+    _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (_cur_file_id < 1)
     {
         std::cout<<"HDF5_IO::start_save_seq() Creating file "<<filename<<std::endl;
-        file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        _cur_file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     }
-    if(file_id < 0)
+    if(_cur_file_id < 0)
     {
         std::cout<<"HDF5_IO::start_save_seq Error opening file "<<filename<<std::endl;
-        return -1;
+        return false;
     }
 
-    return file_id;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::end_save_seq(const hid_t file_id)
+bool HDF5_IO::end_save_seq()
 {
 
-    H5Fflush(file_id, H5F_SCOPE_LOCAL);
-    H5Fclose(file_id);
+    if(_cur_file_id > 0)
+    {
+        std::cout<<"HDF5_IO::end_save_seq() closing file"<<std::endl;
+        H5Fflush(_cur_file_id, H5F_SCOPE_LOCAL);
+        H5Fclose(_cur_file_id);
+        _cur_file_id = -1;
+    }
+    else
+    {
+        std::cout<<"HDF5_IO::end_save_seq() Warning: could not close file because none is open"<<std::endl;
+        return false;
+    }
     //H5close(); //test first, might break h5
     return true;
 
@@ -684,8 +715,7 @@ bool HDF5_IO::end_save_seq(const hid_t file_id)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_spectra_volume(const hid_t file_id,
-                                  const std::string path,
+bool HDF5_IO::save_spectra_volume(const std::string path,
                                   data_struct::xrf::Spectra_Volume * spectra_volume,
                                   real_t energy_offset,
                                   real_t energy_slope,
@@ -695,9 +725,15 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
                                   size_t col_idx_start,
                                   int col_idx_end)
 {
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
     std::cout<<"HDF5_IO::save_spectra_volume()"<<std::endl;
+
+    if(_cur_file_id < 0)
+    {
+        std::cout << "Error: hdf5 file was never initialized. Call start_save_seq() before this function." << std::endl;
+        return false;
+    }
 
 //herr_t (*old_func)(void*);
 //void *old_client_data;
@@ -770,9 +806,9 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
 
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-    maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
-        maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(maps_grp_id < 0)
     {
         std::cout<<"Error creating group MAPS"<<std::endl;
@@ -973,19 +1009,22 @@ bool HDF5_IO::save_spectra_volume(const hid_t file_id,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_element_fits(std::string full_path,
-                                std::string path,
+bool HDF5_IO::save_element_fits(std::string path,
                                 const data_struct::xrf::Fit_Count_Dict * const element_counts,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
                                 int col_idx_end)
 {
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
     std::cout<<"HDF5_IO::save_element_fits()"<<std::endl;
 
-    hid_t file_id = start_save_seq(full_path);
+    if(_cur_file_id < 0)
+    {
+        std::cout << "Error: hdf5 file was never initialized. Call start_save_seq() before this function." << std::endl;
+        return false;
+    }
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -1043,9 +1082,9 @@ bool HDF5_IO::save_element_fits(std::string full_path,
 
     H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
 
-    maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
-        maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(maps_grp_id < 0)
     {
         std::cout<<"Error creating group 'MAPS'"<<std::endl;
@@ -1165,8 +1204,6 @@ bool HDF5_IO::save_element_fits(std::string full_path,
     H5Gclose(xrf_grp_id);
     H5Gclose(maps_grp_id);
 
-    end_save_seq(file_id);
-
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
@@ -1179,14 +1216,13 @@ bool HDF5_IO::save_element_fits(std::string full_path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_quantification(const hid_t file_id,
-                                  data_struct::xrf::Quantification_Standard * quantification_standard,
+bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * quantification_standard,
                                   size_t row_idx_start,
                                   int row_idx_end,
                                   size_t col_idx_start,
                                   int col_idx_end)
 {
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
 
     std::cout<<"HDF5_IO::save_quantification()"<<std::endl;
 
@@ -1210,6 +1246,12 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
 //    hsize_t chunk_dims[3];
 
     hsize_t q_dims_out[2];
+
+    if(_cur_file_id < 0)
+    {
+        std::cout << "Error: hdf5 file was never initialized. Call start_save_seq() before this function." << std::endl;
+        return false;
+    }
 
 
     offset[0] = 0;
@@ -1236,9 +1278,9 @@ bool HDF5_IO::save_quantification(const hid_t file_id,
 
 //    H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-    maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
-        maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(maps_grp_id < 0)
     {
         std::cout<<"Error creating group 'MAPS'"<<std::endl;
@@ -2838,20 +2880,20 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_scan_scalers(const std::string filename,
-	size_t detector_num,
-	struct mda_file *mda_scalers,
-    data_struct::xrf::Params_Override * params_override,
-    bool hasNetcdf,
-	size_t row_idx_start,
-	int row_idx_end,
-	size_t col_idx_start,
-	int col_idx_end)
+bool HDF5_IO::save_scan_scalers(size_t detector_num,
+                                struct mda_file *mda_scalers,
+                                data_struct::xrf::Params_Override * params_override,
+                                bool hasNetcdf,
+                                size_t row_idx_start,
+                                int row_idx_end,
+                                size_t col_idx_start,
+                                int col_idx_end)
 {
-	std::chrono::time_point<std::chrono::system_clock> start, end;
-	start = std::chrono::system_clock::now();
 
-    //std::lock_guard<std::mutex> lock(hdf5_mutex);
+    std::lock_guard<std::mutex> lock(_mutex);
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
     hid_t scan_grp_id, maps_grp_id;
 
 	if (mda_scalers == nullptr)
@@ -2860,17 +2902,20 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 		return false;
     }
 
-    std::cout << "HDF5_IO::save_scan_scalers Saving scalers to hdf5: " << filename << std::endl;
+    if(_cur_file_id < 0)
+    {
+        std::cout << "Error: hdf5 file was never initialized. Call start_save_seq() before this function." << std::endl;
+        return false;
+    }
 
-	hid_t file_id = start_save_seq(filename);
+    std::cout << "HDF5_IO::save_scan_scalers Saving scalers to hdf5"<< std::endl;
 
-	maps_grp_id = H5Gopen(file_id, "MAPS", H5P_DEFAULT);
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
 	if (maps_grp_id < 0)
-		maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if (maps_grp_id < 0)
 	{
 		std::cout << "Error creating group 'MAPS'" << std::endl;
-        end_save_seq(file_id);
 		return false;
 	}
 
@@ -2880,7 +2925,6 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 	if (scan_grp_id < 0)
 	{
 		std::cout << "Error creating group MAPS/Scan" << std::endl;
-        end_save_seq(file_id);
 		return false;
 	}
 
@@ -2892,8 +2936,6 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);
-
-    end_save_seq(file_id);
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end - start;
@@ -2908,15 +2950,12 @@ bool HDF5_IO::save_scan_scalers(const std::string filename,
 
 bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
     std::cout << "HDF5_IO::generate_avg(): " << avg_filename << std::endl;
 
     hid_t ocpypl_id, status, src_maps_grp_id, src_analyzed_grp_id, dst_fit_grp_id;
     std::vector<hid_t> hdf5_file_ids;
     std::string group_name = "";
-
-    hid_t file_id = H5Fcreate(avg_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
-    hid_t dst_maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     for(auto& filename : files_to_avg)
     {
@@ -2931,6 +2970,10 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
     if(hdf5_file_ids.size() > 1)
     {
+        hid_t file_id = H5Fcreate(avg_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+        hid_t dst_maps_grp_id = H5Gcreate(file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
         ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         status = H5Pset_copy_object(ocpypl_id, H5O_COPY_MERGE_COMMITTED_DTYPE_FLAG);
 
@@ -2994,16 +3037,22 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
         if(src_maps_grp_id > -1)
             H5Gclose(src_maps_grp_id);
+
+        H5Gclose(dst_maps_grp_id);
+        H5Fflush(file_id, H5F_SCOPE_LOCAL);
+        H5Fclose(file_id);
     }
+    else
+    {
 
-
-    H5Gclose(dst_maps_grp_id);
+    }
 
     for(auto& f_id : hdf5_file_ids)
     {
         H5Fclose(f_id);
     }
-    end_save_seq(file_id);
+
+    std::cout<<"HDF5_IO::generate_avg() closing file"<<std::endl;
 
     return true;
 }
