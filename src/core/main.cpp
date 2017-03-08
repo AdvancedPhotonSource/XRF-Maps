@@ -598,6 +598,7 @@ bool load_spectra_volume(std::string dataset_directory,
 
     if(save_scalers)
     {
+        io::file::HDF5_IO::inst()->start_save_seq();
         io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
     }
 
@@ -947,7 +948,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
     data_struct::xrf::Spectra_Volume* tmp_spectra_volume = new data_struct::xrf::Spectra_Volume();
 
-    io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
+    io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
     //load the first one
     size_t detector_num = detector_num_start;
@@ -1038,7 +1039,7 @@ void process_dataset_file(std::string dataset_directory,
 
         std::string str_detector_num = std::to_string(detector_num);
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
+        io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
         //load spectra volume
         if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )

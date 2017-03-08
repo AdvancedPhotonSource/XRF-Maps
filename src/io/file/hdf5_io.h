@@ -156,7 +156,12 @@ public:
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
+
     bool start_save_seq(const std::string filename);
+
+    bool start_save_seq(){ return start_save_seq(_cur_filename);}
+
+    void set_filename(std::string fname) {_cur_filename = fname;}
 
     bool save_spectra_volume(const std::string path,
                              data_struct::xrf::Spectra_Volume * spectra_volume,
@@ -227,6 +232,7 @@ private:
     };
 
     hid_t _cur_file_id;
+    std::string _cur_filename;
 
     //void _parse_group_info(hid_t h5file, hid_t id);
     //void _parse_dataset_info(hid_t h5file, hid_t id);

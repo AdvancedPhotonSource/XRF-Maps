@@ -698,7 +698,8 @@ bool HDF5_IO::end_save_seq()
 
     if(_cur_file_id > 0)
     {
-        std::cout<<"HDF5_IO::end_save_seq() closing file"<<std::endl;
+        std::cout<<"HDF5_IO::end_save_seq() closing file\n";
+        std::cout<<"=========================================================\n\n";
         H5Fflush(_cur_file_id, H5F_SCOPE_LOCAL);
         H5Fclose(_cur_file_id);
         _cur_file_id = -1;
@@ -708,6 +709,7 @@ bool HDF5_IO::end_save_seq()
         std::cout<<"HDF5_IO::end_save_seq() Warning: could not close file because none is open"<<std::endl;
         return false;
     }
+    _cur_filename = "";
     //H5close(); //test first, might break h5
     return true;
 
