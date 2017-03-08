@@ -684,7 +684,7 @@ bool HDF5_IO::start_save_seq(const std::string filename)
     }
     if(_cur_file_id < 0)
     {
-        std::cout<<"HDF5_IO::start_save_seq Error opening file "<<filename<<std::endl;
+        std::cout<<"HDF5_IO::start_save_seq() Error opening file "<<filename<<std::endl;
         return false;
     }
 
@@ -2250,10 +2250,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     continue;
 
                 int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
+                scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
+                hdf_idx++;
                 if (mda_idx > -1)
                 {
-                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
-                    hdf_idx++;
                     if (itr.first == "US_IC")
                         us_ic_idx = mda_idx;
                     else if (itr.first == "DS_IC")
@@ -2278,8 +2278,22 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
                 if (mda_idx > -1)
                 {
-                    scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, true));
-                    hdf_idx++;
+                    bool found_scaler = false;
+                    for(auto& subitr : scalers)
+                    {
+                        if(subitr.hdf_name == itr.first)
+                        {
+                            subitr.mda_idx = mda_idx;
+                            subitr.normalize_by_time = true;
+                            found_scaler = true;
+                            break;
+                        }
+                    }
+                    if(found_scaler == false)
+                    {
+                        scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, true));
+                        hdf_idx++;
+                    }
                     if (itr.first == "US_IC")
                         us_ic_idx = mda_idx;
                     else if (itr.first == "DS_IC")
@@ -2344,7 +2358,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 else
                 {
                     std::cout << "Unsupported rank " << mda_scalers->header->data_rank << " . Skipping scalers" << std::endl;
-                    //TODO: return / throw exception
+                    return false;
                 }
                 dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
                 H5Pset_chunk(dcpl_id, 3, count_3d);
@@ -2395,6 +2409,18 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
                 for (auto &itr : scalers)
                 {
+
+                    offset[0] = itr.hdf_idx;
+                    char tmp_char[255] = {0};
+                    itr.hdf_name.copy(tmp_char, 254);
+                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)tmp_char);
+
+                    if(itr.mda_idx < 0)
+                    {
+                        continue;
+                    }
+
                     if (single_row_scan)
                     {
                         for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
@@ -2433,12 +2459,6 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
                     status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)scaler_mat.data());
 
-
-                    offset[0] = itr.hdf_idx;
-                    char tmp_char[255] = {0};
-                    itr.hdf_name.copy(tmp_char, 254);
-                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)tmp_char);
                 }
 
                 if (save_cfg_abs)
@@ -2568,6 +2588,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 					H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
 					status = H5Dwrite(dset_cps_id, H5T_NATIVE_DOUBLE, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)dia2_dpc_cfg_mat.data());
                 }
+            }
+            else
+            {
+                //params_override->scaler_pvs
             }
         }
 

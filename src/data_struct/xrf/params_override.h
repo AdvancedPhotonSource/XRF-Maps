@@ -47,7 +47,7 @@
 #define PARAMS_OVERRIDE_H
 
 
-#include <unordered_map>
+#include <map>
 #include <string>
 #include "defines.h"
 
@@ -111,9 +111,9 @@ public:
     Fit_Element_Map_Dict elements_to_fit;
     string time_scaler;
     string time_scaler_clock;
-    unordered_map< string, string > time_normalized_scalers;
+    map< string, string > time_normalized_scalers;
     string detector_element;
-    unordered_map< string, string > scaler_pvs;
+    map< string, string > scaler_pvs;
     real_t si_escape_factor;
     real_t ge_escape_factor;
     bool si_escape_enabled;

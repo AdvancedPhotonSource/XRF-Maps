@@ -194,7 +194,7 @@ bool save_results(std::string save_loc,
 
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s\n\n";
+    std::cout << "\nFitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s\n\n";
 
 
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
@@ -598,9 +598,6 @@ bool load_spectra_volume(std::string dataset_directory,
 
     if(save_scalers)
     {
-        std::string str_detector_num = std::to_string(detector_num);
-        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
         io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
     }
 
@@ -923,6 +920,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
                                         std::vector<Processing_Type> proc_types,
                                         ThreadPool* tp,
+                                        std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
                                         std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
                                         size_t detector_num_start,
                                         size_t detector_num_end)
@@ -949,9 +947,11 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
     data_struct::xrf::Spectra_Volume* tmp_spectra_volume = new data_struct::xrf::Spectra_Volume();
 
+    io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
+
     //load the first one
     size_t detector_num = detector_num_start;
-    if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, false) )
+    if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
     {
         std::cout<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
         delete spectra_volume;
@@ -996,7 +996,6 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     }
     delete tmp_spectra_volume;
 
-    io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
     proc_spectra(spectra_volume, proc_types, override_params, nullptr, tp);
 
 }
@@ -1033,13 +1032,13 @@ void process_dataset_file(std::string dataset_directory,
 
         data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
 
-        //data_struct::xrf::Fit_Parameters override_fit_params;
-
-        std::string str_detector_num = std::to_string(detector_num);
-        //std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
 
         //Spectra volume data
         data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
+
+        std::string str_detector_num = std::to_string(detector_num);
+        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+        io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
 
         //load spectra volume
         if (false == load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
@@ -1154,8 +1153,23 @@ bool perform_quantification(std::string dataset_directory,
             //load the quantification standard dataset
             if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
             {
-                std::cout<<"Error in perform_quantification loading dataset for detector"<<detector_num<<std::endl;
-                return false;
+                //legacy code would load mca files, check for mca and replace with mda
+                int std_str_len = standard_file_name.length();
+                if(standard_file_name[std_str_len - 4] == '.' && standard_file_name[std_str_len - 3] == 'm' && standard_file_name[std_str_len - 2] == 'c' && standard_file_name[std_str_len - 1] == 'a')
+                {
+                    standard_file_name[std_str_len - 2] = 'd';
+                    quantification_standard->standard_filename(standard_file_name);
+                    if(false == load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
+                    {
+                        std::cout<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                        return false;
+                    }
+                }
+                else
+                {
+                    std::cout<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                    return false;
+                }
             }
 
             //First we integrate the spectra and get the elemental counts
@@ -1230,13 +1244,32 @@ bool perform_quantification(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+void average_quantification(std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
+                            size_t detector_num_start,
+                            size_t detector_num_end)
+{
+    /*
+    data_struct::xrf::Quantification_Standard q_standard_0;
+    q_standard_0.
+
+
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
+        quantification_standard->
+    }
+    */
+}
+
+// ----------------------------------------------------------------------------
+
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
                           ThreadPool* tp,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {
-    std::cout << "\n\n generate_h5_averages()\n"<<std::endl;
+    std::cout << "generate_h5_averages()"<<std::endl;
 
     std::vector<std::string> hdf5_filenames;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -1259,7 +1292,7 @@ void generate_h5_averages(std::string dataset_directory,
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    std::cout << "\n\n generate_h5_averages elapsed time: " << elapsed_seconds.count() << "s\n\n\n";
+    std::cout << "generate_h5_averages elapsed time: " << elapsed_seconds.count() << "s\n\n";
 
 
 }
@@ -1671,20 +1704,27 @@ int main(int argc, char *argv[])
     {
         if (quant_standard_filename.length() > 0)
         {
-            perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+            bool quant = false;
+            quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+            //if it is quick and dirty, average quants and save in first
+            if( quant && quick_n_dirty)
+            {
+                average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
+            }
         }
 
         for(std::string dataset_file : dataset_files)
         {
             if(quick_n_dirty)
             {
-                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &fit_params_override_dict, detector_num_start, detector_num_end);
+                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
             }
             else
             {
                 process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
             }
-            generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+
         }
     }
     else
