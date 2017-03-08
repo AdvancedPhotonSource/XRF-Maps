@@ -98,7 +98,7 @@ void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> 
         delete _fitmatrix;
         _fitmatrix = nullptr;
     }
-    _fitmatrix = new nsNNLS::denseMatrix(energy_range.count(), element_models->size());
+    _fitmatrix = new nsNNLS::denseMatrix<real_t>(energy_range.count(), element_models->size());
 
     int i = 0;
     for(const auto& itr : *element_models)
@@ -122,14 +122,14 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
                                                                        const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
-    nsNNLS::nnls * solver;
-    nsNNLS::vector * result;
+    nsNNLS::nnls<real_t> * solver;
+    nsNNLS::vector<real_t> * result;
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
 
-    nsNNLS::vector rhs(spectra->size(), (real_t*)&(*spectra)[0]);
+    nsNNLS::vector<real_t> rhs(spectra->size(), (real_t*)&(*spectra)[0]);
 
-    solver = new nsNNLS::nnls(_fitmatrix, &rhs, _max_iter);
+    solver = new nsNNLS::nnls<real_t>(_fitmatrix, &rhs, _max_iter);
 
     num_iter = solver->optimize();
     if (num_iter < 0)

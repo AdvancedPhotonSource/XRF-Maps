@@ -35,13 +35,14 @@ INCLUDEPATH += src/fitting/optimizers
 INCLUDEPATH += src/support/mda_utils
 INCLUDEPATH += src/support/minpack
 INCLUDEPATH += src/support/cmpfit-1.3a
+INCLUDEPATH += src/support/lmfit_6.1
 INCLUDEPATH += src/support/nnls
 INCLUDEPATH += src/visual
 INCLUDEPATH += /usr/include/python2.7
 
 #define _REAL_FLOAT for float, _REAL_DOUBLE for double
-#DEFINES += _REAL_FLOAT
-DEFINES += _REAL_DOUBLE
+DEFINES += _REAL_FLOAT
+#DEFINES += _REAL_DOUBLE
 
 DESTDIR = ./bin
 MOC_DIR += ./generated
@@ -57,10 +58,6 @@ QMAKE_CXXFLAGS += -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -Wall
 
 #eigen
 INCLUDEPATH += /Users/aglowacki/lib/eigen/include/eigen3
-
-#lmfit
-INCLUDEPATH += /Users/aglowacki/lib/lmfit/include
-LIBS += -L/Users/aglowacki/lib/lmfit/lib -llmfit
 
 
 HDF_BASE=/Users/aglowacki/lib/libhdf5
@@ -93,9 +90,6 @@ LIBS += /local/aglowacki/libs/gflags/lib/libgflags.a
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lgomp
 
-#lmfit
-INCLUDEPATH += /local/aglowacki/libs/lmfit/include
-LIBS += -L/local/aglowacki/libs/lmfit/lib -llmfit
 
 INCLUDEPATH += /usr/include/hdf5/serial
 QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -D__cminpack_double__ -g
@@ -115,12 +109,9 @@ SOURCES += support/mda_utils/xdr_hack.c
 QMAKE_LIBS += -L"C:/Program Files/HDF_Group/HDF5/1.10.0/lib" -lszip -lzlib -lhdf5 -lhdf5_hl
 }
 
-SOURCES += \
-    src/support/nnls/nnls.cc \
-    src/support/nnls/denseMatrix.cc \
+SOURCES += \    
     src/support/mda_utils/mda_loader.c \
     src/support/minpack/minpack.cpp \
-    src/support/cmpfit-1.3a/mpfit.c \
     src/data_struct/xrf/element_info.cpp \
     src/data_struct/xrf/fit_parameters.cpp \
     src/data_struct/xrf/fit_element_map.cpp \
@@ -169,13 +160,8 @@ HEADERS += \
     #pybind11/typeid.h \
     #pybind11/numpy.h \
     src/core/defines.h \
-    src/support/nnls/nnls.h \
-    src/support/nnls/denseMatrix.h \
-    src/support/nnls/matrix.h \
-    src/support/nnls/vector.h \
     src/support/mda_utils/mda-load.h \
     src/support/minpack/minpack.hpp \
-    src/support/cmpfit-1.3a/mpfit.h \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \

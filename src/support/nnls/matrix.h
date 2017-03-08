@@ -26,9 +26,10 @@
 
 #include <cstring>
 
-#include "vector.h"
+#include "vector.hpp"
 
 namespace nsNNLS {
+template<typename _T>
   class matrix {
     size_t M;               /// Num of rows
     size_t N;               /// Num of colums
@@ -45,10 +46,8 @@ namespace nsNNLS {
     /// Create an empty (unallocated) matrix of specified size.
     matrix (size_t rows, size_t cols) { M = rows;   N = cols;   }
     
-    virtual ~matrix() {;}
+    virtual ~matrix() {}
 
-
-    virtual int load(const char* f, bool asbin) = 0;
 
     void setsize(size_t r, size_t c) { M = r; N = c;}
     /// Returns number of rows. 
@@ -61,47 +60,47 @@ namespace nsNNLS {
     void matrix_setsize(size_t m, size_t n) { M = m; N = n; }
 
     /// Get the (i,j) entry of the matrix
-    virtual double operator()   (size_t i, size_t j            ) = 0;
+    virtual _T operator()   (size_t i, size_t j            ) = 0;
     /// Get the (i,j) entry of the matrix
-    virtual double get          (size_t i, size_t j            ) = 0;
+    virtual _T get          (size_t i, size_t j            ) = 0;
     /// Set the (i,j) entry of the matrix. Not all matrices can support this.
-    virtual int set            (size_t i, size_t j, double val) = 0;
+    virtual void set            (size_t i, size_t j, _T val) = 0;
 
     /// Returns 'r'-th row as a vector
-    virtual int get_row (size_t, vector*&) = 0;
+    virtual int get_row (size_t, vector<_T>*&) = 0;
     /// Returns 'c'-th col as a vector
-    virtual int get_col (size_t, vector*&) = 0;
+    virtual int get_col (size_t, vector<_T>*&) = 0;
     /// Returns main or second diagonal (if p == true)
-    virtual int get_diag(bool p, vector*& d  ) = 0;
+    virtual int get_diag(bool p, vector<_T>*& d  ) = 0;
     
     /// Sets the specified row to the given vector
-    virtual int set_row(size_t r, vector*&) = 0;
+    virtual int set_row(size_t r, vector<_T>*&) = 0;
     /// Sets the specified col to the given vector
-    virtual int set_col(size_t c, vector*&) = 0;
+    virtual int set_col(size_t c, vector<_T>*&) = 0;
     /// Sets the specified diagonal to the given vector
-    virtual int set_diag(bool p, vector*&)  = 0;
+    virtual int set_diag(bool p, vector<_T>*&)  = 0;
 
     /// Vector l_p norms for this matrix, p > 0
-    virtual double norm (double p) = 0;
+    virtual _T norm (_T p) = 0;
     /// Vector l_p norms, p is 'l1', 'l2', 'fro', 'inf'
-    virtual double norm (const char*  p) = 0;
+    virtual _T norm (const char*  p) = 0;
 
     /// Apply an arbitrary function elementwise to this matrix. Changes the matrix.
-    virtual int apply (double (* fn)(double)) = 0;
+    virtual int apply (_T (* fn)(_T)) = 0;
 
     /// Scale the matrix so that x_ij := s * x_ij
-    virtual int scale (double s) = 0;
+    virtual int scale (_T s) = 0;
 
     /// Adds a const 's' so that x_ij := s + x_ij
-    virtual int add_const(double s) = 0;
+    virtual int add_const(_T s) = 0;
 
     /// r = a*row(i) + r
-    virtual int    row_daxpy(size_t i, double a, vector* r) = 0;
+    virtual int    row_daxpy(size_t i, _T a, vector<_T>* r) = 0;
     /// c = a*col(j) + c
-    virtual int  col_daxpy(size_t j, double a, vector* c) = 0;
+    virtual int  col_daxpy(size_t j, _T a, vector<_T>* c) = 0;
 
     /// Let r := this * x or  this^T * x depending on tranA
-    virtual int dot (bool transp, vector* x, vector*r) = 0;
+    virtual int dot (bool transp, vector<_T>* x, vector<_T>*r) = 0;
 
     /// get statistics about storage
     virtual size_t memoryUsage() = 0;

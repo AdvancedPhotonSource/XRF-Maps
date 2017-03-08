@@ -32,59 +32,60 @@
 // Does minimal error checking
 
 namespace nsNNLS {
+template<typename _T>
   class vector {
     size_t size;
-    double* data;
+    _T* data;
     bool external;
 #define forall(x) for (size_t x = 0; x < size; x++)
 
   public:
     vector() { external = true;}
 
-    vector(size_t sz, double* v) { external = true; size = sz; data = v;}
+    vector(size_t sz, _T* v) { external = true; size = sz; data = v;}
 
     // Create a new allocated vector
-    vector (size_t t) { external = false; size = t; data = new double[size]; memset(data, 0, sizeof(double)*size); }
+    vector (size_t t) { external = false; size = t; data = new _T[size]; memset(data, 0, sizeof(_T)*size); }
 
     ~vector() { if (!external) delete[] data;}
 
     void   setSize(size_t s) { size = s;}
     size_t length() const { return size;}
-    void   setAll(double c) { for (size_t i = 0; i < size; i++) data[i] = c;}
-    void   zeroOut() { memset(data, 0, sizeof(double)*size);}
-    double* getData() { return data;}
-    double operator ()(vector* v, size_t j) { return v->data[j];}
-    double  get(size_t j) { return data[j]; }
+    void   setAll(_T c) { for (size_t i = 0; i < size; i++) data[i] = c;}
+    void   zeroOut() { memset(data, 0, sizeof(_T)*size);}
+    _T* getData() { return data;}
+    _T operator ()(vector* v, size_t j) { return v->data[j];}
+    _T  get(size_t j) { return data[j]; }
 
-    void set(size_t j, double v) { data[j] = v;}
+    void set(size_t j, _T v) { data[j] = v;}
     // this'*b
-    double ddot(vector*b) { double *pb = b->getData(); double r = 0; forall(i) r += data[i]*pb[i]; return r;}
+    _T ddot(vector*b) { _T *pb = b->getData(); _T r = 0; forall(i) r += data[i]*pb[i]; return r;}
 
     // norm(this) --- not doing blas style that avoids overflow
-    double norm2() { double n = 0.0; forall(i) n += data[i]*data[i]; return sqrt(n);}
+    _T norm2() { _T n = 0.0; forall(i) n += data[i]*data[i]; return sqrt(n);}
 
-    double norm1() { double n = 0.0; forall(i) n += fabs(data[i]); return n;}
+    _T norm1() { _T n = 0.0; forall(i) n += fabs(data[i]); return n;}
 
-    double norminf() { double n = 0.0; double t; forall(i) {t = fabs(data[i]); if (t > n) n = t;} return n;}
+    _T norminf() { _T n = 0.0; _T t; forall(i) {t = fabs(data[i]); if (t > n) n = t;} return n;}
 
     // add: this = this + b
     void add(vector* b)
-    { double* bd = b->getData();
+    { _T* bd = b->getData();
       forall(i) data[i] += bd[i];
     }
 
     void sub(vector* b)
-    { double* pb = b->getData();
+    { _T* pb = b->getData();
       forall(i) data[i] -= pb[i];
     }
 
-    void copy(vector* b) { double* pb = b->getData(); memcpy(data, pb, sizeof(double)*size);}
+    void copy(vector* b) { _T* pb = b->getData(); memcpy(data, pb, sizeof(_T)*size);}
 
     // x = x + a*y (x == this is used)
-    void scalePlusAdd(double a, vector* y) 
+    void scalePlusAdd(_T a, vector* y)
     { if (a == 0) add(y); 
       else {
-        double* py = y->getData();
+        _T* py = y->getData();
         forall(i) data[i] = data[i] + a*py[i];
       }
     }

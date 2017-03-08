@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include "mpfit.h"
+#include "mpfit.hpp"
 #include <string.h>
 
 using namespace data_struct::xrf;
@@ -64,7 +64,7 @@ namespace fitting
 namespace optimizers
 {
 
-int residuals_mpfit(int m, int params_size, double *params, double *dy, double **dvec, void *usr_data)
+int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
     //Get user passed data
     User_Data* ud = static_cast<User_Data*>(usr_data);
@@ -84,7 +84,7 @@ int residuals_mpfit(int m, int params_size, double *params, double *dy, double *
 	return 0;
 }
 
-int gen_residuals_mpfit(int m, int params_size, double *params, double *dy, double **dvec, void *usr_data)
+int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
     //Get user passed data
     Gen_User_Data* ud = static_cast<Gen_User_Data*>(usr_data);
@@ -138,7 +138,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     //ud.weights = &weights;
 
     /////// init config ////////////
-    struct mp_config_struct mp_config;
+    struct mp_config<real_t> mp_config;
     mp_config.ftol = 1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     mp_config.xtol = 1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = 1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
@@ -166,7 +166,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 
     /////////////// init params limits /////////////////////////
-    struct mp_par_struct *mp_par = new struct mp_par_struct[fitp_arr.size()];
+    struct mp_par<real_t> *mp_par = new struct mp_par<real_t>[fitp_arr.size()];
 
     for(auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
     {
@@ -254,7 +254,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     }
 
 
-    mp_result result;
+    mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
@@ -331,7 +331,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     //ud.weights = &weights;
 
     /////// init config ////////////
-    struct mp_config_struct mp_config;
+    struct mp_config<real_t> mp_config;
     mp_config.ftol = 1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     mp_config.xtol = 1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = 1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
@@ -446,7 +446,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     }
 */
 
-    mp_result result;
+    mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, 0, (void *) &ud, &result);
@@ -454,7 +454,9 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], 0, (void *) &ud, &result);
 
-    info = mpfit(gen_residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], 0, &mp_config, (void *) &ud, &result);
+    struct mp_par<real_t> *mp_par = nullptr;
+
+    info = mpfit(gen_residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
     std::cout<<"*";
 
 

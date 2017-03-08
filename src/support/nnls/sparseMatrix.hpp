@@ -29,88 +29,122 @@
 #define forall(x) for (size_t x = 0; x < size; x++)
 
 namespace nsNNLS {
-  
-  class sparseMatrix : public matrix {
+  template<typename _T>
+  class sparseMatrix : public matrix<_T> {
   private:
-    double* data;
+    _T* data;
     size_t* ridx;
     size_t* cols;
     size_t size;
     size_t nnz;
     bool external;
   public:
-    sparseMatrix() {external = true;}
-    sparseMatrix (size_t r, size_t c, size_t nnz) : matrix(r, c) {
+    sparseMatrix() : matrix<_T>() {external = true;}
+    sparseMatrix (size_t r, size_t c, size_t nnz) : matrix<_T>(r, c) {
       assert (r > 0 && c > 0);
       this->nnz = nnz; this->size = nnz;
       cols = new size_t [c+1];
       ridx = new size_t [nnz];
-      data = new double [nnz];
+      data = new _T [nnz];
     }
 
-    sparseMatrix(size_t r, size_t c, size_t nnz, size_t* ridx, size_t* cptr, double* val) : matrix(r, c)
+    sparseMatrix(size_t r, size_t c, size_t nnz, size_t* ridx, size_t* cptr, _T* val) : matrix<_T>(r, c)
     { this->nnz = nnz; this->size = nnz; this->ridx = ridx; this->cols = cptr; this->data = val;}
-
-    int load(const char* fn, bool asbin);
 
     ~sparseMatrix () { if (!external) { delete [] ridx; delete[] cols; delete [] data;}}
 
-
-  private:
-    int load_as_bin(const char* fn);
-    int load_as_txt(const char* fn);
   public:
 
     /// Get the (i,j) entry of the matrix
-    double operator()   (size_t i, size_t j);
+    _T operator()   (size_t i, size_t j)
+    {
+      // size_t sz = cols[j+1]-cols[j];
+      // int idx = binary_search(m_rowindx + m_colptrs[j], i, sz);
+      // if (idx != -1)
+      //   return (m_val + m_colptrs[j])[idx];
+      return 0.0;
+    }
 
     /// Get the (i,j) entry of the matrix
-    double get (size_t i, size_t j);
+    _T get (size_t i, size_t j)
+    {
+      // size_t sz = cols[j+1]-cols[j];
+      // int idx = binary_search(m_rowindx + m_colptrs[j], i, sz);
+      // if (idx != -1)
+      //   return (m_val + m_colptrs[j])[idx];
+      return 0.0;
+    }
 
     size_t getNnz() const { return nnz;}
+
     /// Set the (i,j) entry of the matrix. If entry does not exist, function bombs.
-    int set (size_t i, size_t j, double val);
+    int set (size_t i, size_t j, _T val) {  return -1;  }
     
     /// Returns 'r'-th row into pre-alloced vector
-    int get_row (size_t, vector*&);
+    int get_row (size_t, vector<_T>*&){  return -1;  }
+
     /// Returns 'c'-th col as a vector
-    int get_col (size_t, vector*&);
+    int get_col (size_t, vector<_T>*&){  return -1;  }
+
     /// Returns main or second diagonal (if p == true)
-    int get_diag(bool p, vector*& d);
+    int get_diag(bool p, vector<_T>*& d){  return -1;  }
+
     
     /// Sets the specified row to the given vector
-    int set_row(size_t r, vector*&) { assert("Unsupported"); return -1;}
+    int set_row(size_t r, vector<_T>*&) { assert("Unsupported"); return -1;}
 
     /// Sets the specified col to the given vector
-    int set_col(size_t c, vector*&) { assert("Unsupported"); return -1;}
+    int set_col(size_t c, vector<_T>*&) { assert("Unsupported"); return -1;}
 
     /// Sets the specified diagonal to the given vector
-    int set_diag(bool p, vector*&) { assert("Unsupported"); return -1;}
+    int set_diag(bool p, vector<_T>*&) { assert("Unsupported"); return -1;}
 
     /// Vector l_p norms for this matrix, p > 0
-    double norm (double p);
+    _T norm (_T p){  return -1;  }
     /// Vector l_p norms, p is 'l1', 'l2', 'fro', 'inf'
-    double norm (const char*  p);
+    _T norm (const char*  p){  return -1;  }
 
     /// Apply an arbitrary function elementwise to this matrix. Changes the matrix.
-    int apply (double (* fn)(double)) { forall(i) data[i] = fn(data[i]); return 0;};
+    int apply (_T (* fn)(_T)) { forall(i) data[i] = fn(data[i]); return 0;};
 
     /// Scale the matrix so that x_ij := s * x_ij
-    int scale (double s) { forall(i) data[i] *= s; return 0;}
+    int scale (_T s) { forall(i) data[i] *= s; return 0;}
 
     /// Adds a const 's' so that x_ij := s + x_ij
-    int add_const(double s) { forall(i) data[i] += s; return 0;};
+    int add_const(_T s) { forall(i) data[i] += s; return 0;};
 
     /// r = a*row(i) + r
-    int    row_daxpy(size_t i, double a, vector* r);
+    int    row_daxpy(size_t i, _T a, vector<_T>* r){  return -1;  }
     /// c = a*col(j) + c
-    int  col_daxpy(size_t j, double a, vector* c);
+    int  col_daxpy(size_t j, _T a, vector<_T>* c){  return -1;  }
 
     /// Let r := this * x or  this^T * x depending on tranA
-    int dot (bool transp, vector* x, vector*r);
+    int dot (bool transp, vector<_T>* x, vector<_T>*r)
+    {
+      _T* px = x->getData();
+      _T* pr = r->getData();
+
+      if (!transp) {
+        r->zeroOut();
+        for (size_t i = 0; i < this->ncols(); i++) {
+          for (size_t j = cols[i]; j < cols[i+1]; j++)
+            pr[ridx[j]] += data[j] * px[i];
+        }
+      } else {
+        _T yi;
+        for (size_t i = 0; i < this->ncols(); i++) {
+          yi = 0;
+          for (size_t j = cols[i]; j < cols[i+1]; j++) {
+            yi += data[j] * px[ ridx[j] ];
+          }
+          pr[i] = yi;
+        }
+      }
+      return 0;
+    }
 
 
-    size_t memoryUsage() { memory = nnz*sizeof(double) + nnz*sizeof(size_t) + (ncols()+1)*sizeof(size_t); return memory;}
+    size_t memoryUsage() { this->memory = nnz*sizeof(_T) + nnz*sizeof(size_t) + (this->ncols()+1)*sizeof(size_t); return this->memory;}
   };
 }
 

@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "matrix_optimized_fit_routine.h"
 
-#include "nnls.h"
+#include "nnls.hpp"
 
 namespace fitting
 {
@@ -89,7 +89,7 @@ private:
 
     size_t _max_iter;
 
-    nsNNLS::matrix* _fitmatrix;
+    nsNNLS::matrix<real_t>* _fitmatrix;
 
     std::unordered_map<std::string, int> _element_row_index;
 

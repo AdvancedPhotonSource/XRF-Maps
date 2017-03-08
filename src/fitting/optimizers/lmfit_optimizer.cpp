@@ -51,7 +51,7 @@
 
 #include <string.h>
 
-#include "lmmin.h"
+#include "lmmin.hpp"
 
 
 using namespace data_struct::xrf;
@@ -62,9 +62,14 @@ namespace fitting
 namespace optimizers
 {
 
+const lm_control_struct<double> lm_control_double = {
+    LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL,
+    100., 100, 1, NULL, 0, -1, -1};
+const lm_control_struct<float> lm_control_float = {
+    1.e-7, 1.e-7, 1.e-7, 1.e-7,
+    100., 100, 1, NULL, 0, -1, -1};
 
-
-void residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
+void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
 
     User_Data* ud = (User_Data*)(data);
@@ -82,7 +87,7 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
 }
 
 
-void general_residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
+void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
 
     Gen_User_Data* ud = (Gen_User_Data*)(data);
@@ -102,7 +107,7 @@ void general_residuals_lmfit( const double *par, int m_dat, const void *data, do
 
 //-----------------------------------------------------------------------------
 
-void quantification_residuals( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
+void quantification_residuals( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
     ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
 
@@ -181,8 +186,17 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     */
 
 
-    lm_status_struct status;
-    lm_control_struct control = lm_control_double;
+    lm_status_struct<real_t> status;
+
+    /* Predefined control parameter sets (msgfile=NULL means stdout).
+
+        */
+
+#ifdef _REAL_DOUBLE
+    lm_control_struct<real_t> control = lm_control_double;
+#else
+    lm_control_struct<real_t> control = lm_control_float;
+#endif
 
     //control.ftol = 1.0e-10;
     /* Relative error desired in the sum of squares.
@@ -263,8 +277,12 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     //ud.weights = &weights;
 
 
-    lm_status_struct status;
-    lm_control_struct control = lm_control_double;
+    lm_status_struct<real_t> status;
+#ifdef _REAL_DOUBLE
+    lm_control_struct<real_t> control = lm_control_double;
+#else
+    lm_control_struct<real_t> control = lm_control_float;
+#endif
 
     lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, general_residuals_lmfit, &control, &status );
     printf(".");
@@ -292,8 +310,12 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     int info;
 
-    lm_status_struct status;
-    lm_control_struct control = lm_control_double;
+    lm_status_struct<real_t> status;
+#ifdef _REAL_DOUBLE
+    lm_control_struct<real_t> control = lm_control_double;
+#else
+    lm_control_struct<real_t> control = lm_control_float;
+#endif
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals, &control, &status );
     printf(".");
