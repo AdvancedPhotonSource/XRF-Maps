@@ -25,7 +25,6 @@
 #ifndef _MY_VECTOR_H
 #define _MY_VECTOR_H
 
-#include <cstring>
 #include <cmath>
 
 // Vectors are dense -- usu. faster this way
@@ -62,11 +61,11 @@ template<typename _T>
     _T ddot(vector*b) { _T *pb = b->getData(); _T r = 0; forall(i) r += data[i]*pb[i]; return r;}
 
     // norm(this) --- not doing blas style that avoids overflow
-    _T norm2() { _T n = 0.0; forall(i) n += data[i]*data[i]; return sqrt(n);}
+    _T norm2() { _T n = 0.0; forall(i) n += data[i]*data[i]; return std::sqrt(n);}
 
-    _T norm1() { _T n = 0.0; forall(i) n += fabs(data[i]); return n;}
+    _T norm1() { _T n = 0.0; forall(i) n += std::fabs(data[i]); return n;}
 
-    _T norminf() { _T n = 0.0; _T t; forall(i) {t = fabs(data[i]); if (t > n) n = t;} return n;}
+    _T norminf() { _T n = 0.0; _T t; forall(i) {t = std::fabs(data[i]); if (t > n) n = t;} return n;}
 
     // add: this = this + b
     void add(vector* b)

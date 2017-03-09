@@ -24,8 +24,6 @@
 #ifndef _MY_MATRIX_BASE_H
 #define _MY_MATRIX_BASE_H
 
-#include <cstring>
-
 #include "vector.hpp"
 
 namespace nsNNLS {
