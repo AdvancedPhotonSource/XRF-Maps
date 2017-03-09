@@ -295,7 +295,7 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         {
             real_t value =  fit_params.at(el_itr.first).value;
             //convert from log10
-            value = std::pow(10.0, value);
+            value = std::pow((real_t)10.0, value);
             counts_dict[el_itr.first] = value;
         }
 

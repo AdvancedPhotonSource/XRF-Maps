@@ -45,6 +45,11 @@
 template <typename _T>
 struct mp_par
 {
+	mp_par()
+	{
+		fixed = 1;        /* 1 = fixed; 0 = free */
+	}
+
   int fixed;        /* 1 = fixed; 0 = free */
   int limited[2];   /* 1 = low/upper limit; 0 = no limit */
   _T limits[2]; /* lower/upper limit boundary value */
@@ -173,15 +178,17 @@ typedef int (*mp_func)(int m, // Number of functions (elts of fvec)
   #define MP_MACHEP0 2.2204460e-16
   #define MP_DWARF   2.2250739e-308
   #define MP_GIANT   1.7976931e+308
+  #define MP_RDWARF  (sqrt(MP_DWARF*1.5)*10)
+  #define MP_RGIANT  (sqrt(MP_GIANT)*0.1)
 #else
 /* Float precision */
   #define MP_MACHEP0 1.19209e-07f
   #define MP_DWARF   1.17549e-38f
   #define MP_GIANT   3.40282e+38f
+  #define MP_RDWARF  (sqrt(MP_DWARF*1.5f)*10.0f)
+  #define MP_RGIANT  (sqrt(MP_GIANT)*0.1f)
 #endif
 
-#define MP_RDWARF  (sqrt(MP_DWARF*1.5)*10)
-#define MP_RGIANT  (sqrt(MP_GIANT)*0.1)
 
 
 /************************enorm.c*************************/
@@ -645,9 +652,9 @@ void mp_qrfac(int m, int n, _T *a, int lda,
 */
   int i,ij,jj,j,jp1,k,kmax,minmn;
   _T ajnorm,sum,temp;
-  const _T zero = 0.0;
-  const _T one = 1.0;
-  const _T p05 = 0.05;
+  const _T zero = (_T)0.0;
+  const _T one = (_T)1.0;
+  const _T p05 = (_T)0.05;
 
   lda = 0;      /* Prevent compiler warning */
   lipvt = 0;    /* Prevent compiler warning */
@@ -1100,10 +1107,10 @@ void mp_lmpar(int n, _T *r, int ldr, int *ipvt, int *ifree, _T *diag,
   int i,iter,ij,jj,j,jm1,jp1,k,l,nsing;
   _T dxnorm,fp,gnorm,parc,parl,paru;
   _T sum,temp;
-  const _T zero = 0.0;
+  const _T zero = (_T)0.0;
   /* const _T one = 1.0; */
-  const _T p1 = 0.1;
-  const _T p001 = 0.001;
+  const _T p1 = (_T)0.1;
+  const _T p001 = (_T)0.001;
 
   /*
    *     compute and store in x the gauss-newton direction. if the
@@ -1699,13 +1706,13 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   _T actred,delta,dirder,fnorm,fnorm1,gnorm, orignorm;
   _T par,pnorm,prered,ratio;
   _T sum,temp,temp1,temp2,temp3,xnorm, alpha;
-  const _T one = 1.0;
-  const _T p1 = 0.1;
-  const _T p5 = 0.5;
-  const _T p25 = 0.25;
-  const _T p75 = 0.75;
-  const _T p0001 = 1.0e-4;
-  const _T zero = 0.0;
+  const _T one = (_T)1.0;
+  const _T p1 = (_T)0.1;
+  const _T p5 = (_T)0.5;
+  const _T p25 = (_T)0.25;
+  const _T p75 = (_T)0.75;
+  const _T p0001 = (_T)1.0e-4;
+  const _T zero = (_T)0.0;
   int nfev = 0;
 
   _T *step = 0, *dstep = 0, *llim = 0, *ulim = 0;
@@ -1722,10 +1729,10 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   int ldfjac;
 
   /* Default configuration */
-  conf.ftol = 1e-10;
-  conf.xtol = 1e-10;
-  conf.gtol = 1e-10;
-  conf.stepfactor = 100.0;
+  conf.ftol = (real_t)1e-10;
+  conf.xtol = (real_t)1e-10;
+  conf.gtol = (real_t)1e-10;
+  conf.stepfactor = (real_t)100.0;
   conf.nprint = 1;
   conf.epsfcn = MP_MACHEP0;
   conf.maxiter = 200;
@@ -1768,10 +1775,10 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
     return MP_ERR_NFREE;
   }
 
-  fnorm = -1.0;
-  fnorm1 = -1.0;
-  xnorm = -1.0;
-  delta = 0.0;
+  fnorm = (_T)-1.0;
+  fnorm1 = (_T)-1.0;
+  xnorm = (_T)-1.0;
+  delta = (_T)0.0;
 
   /* FIXED parameters? */
   mp_malloc(pfixed, int, npar);

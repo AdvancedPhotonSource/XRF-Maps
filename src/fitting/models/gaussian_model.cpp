@@ -519,7 +519,7 @@ const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std:
         {
             temp_a = exp(delta_energy[i]/ (gamma * sigma));
         }
-        counts[i] = gain / 2. / gamma / sigma / exp(-0.5/pow(gamma, 2.0)) * temp_a * std::erfc( delta_energy[i]  /( M_SQRT2*sigma) + (1.0/(gamma*M_SQRT2) )  );
+        counts[i] = gain / 2. / gamma / sigma / exp((real_t)-0.5/pow(gamma, (real_t)2.0)) * temp_a * std::erfc( delta_energy[i]  /( M_SQRT2*sigma) + ((real_t)1.0/(gamma*M_SQRT2) )  );
     }
     return counts;
 }
@@ -529,7 +529,7 @@ const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std:
 const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t gain) const
 {
     std::valarray<real_t> counts((real_t)0.0, ev.size());
-    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / 2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
+    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (real_t)2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(std::isnan(sigma))
     {
         return counts;
@@ -538,7 +538,7 @@ const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * 
 
 
     // elastic peak, gaussian
-    real_t fvalue = 1.0;
+    real_t fvalue = (real_t)1.0;
 
     fvalue = fvalue * std::pow(10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
@@ -555,7 +555,7 @@ const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * 
 {
     std::valarray<real_t> counts((real_t)0.0, ev.size());
 
-    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / 511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
+    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (real_t)511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
 
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/2.3548), 62.0) + compton_E * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
     if(std::isnan(sigma))
@@ -567,9 +567,9 @@ const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * 
     std::valarray<real_t> delta_energy = ev - compton_E;
 
     // compton peak, gaussian
-    real_t faktor = 1.0 / (1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
+    real_t faktor = (real_t)1.0 / ((real_t)1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
 
-    faktor = faktor * std::pow( 10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
+    faktor = faktor * std::pow((real_t)10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
 
     std::valarray<real_t> value = faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
     counts = counts + value;

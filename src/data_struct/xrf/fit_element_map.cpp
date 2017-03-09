@@ -172,7 +172,7 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
     // This constant has wavelength in angstroms and then
     // they are converted to centimeters
 
-    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * M_PI);
+    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
 
     size_t hi_e_ind;
     size_t lo_e_ind;

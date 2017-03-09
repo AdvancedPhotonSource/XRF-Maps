@@ -179,7 +179,7 @@ void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
         // save values counts / second
 
         //convert from log10
-        value = std::pow(10.0, value);
+        value = std::pow((real_t)10.0, value);
 /*
         if(_save_counts_per_sec)
         {
@@ -250,7 +250,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
         {
             real_t value =  fit_params.at(el_itr.first).value;
             //convert from log10
-            value = std::pow(10.0, value);
+            value = std::pow((real_t)10.0, value);
             counts_dict[el_itr.first] = value;
         }
 
@@ -309,7 +309,7 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
             {
                 real_t value =  fit_params.at(el_itr.first).value;
                 //convert from log10
-                value = std::pow(10.0, value);
+                value = std::pow((real_t)10.0, value);
                 counts_dict[el_itr.first] = value;
             }
 

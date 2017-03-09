@@ -85,7 +85,7 @@ protected:
 
 private:
 
-    Eigen::MatrixXd _fitmatrix;
+    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
 
     std::unordered_map<std::string, int> _element_row_index;
 

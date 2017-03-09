@@ -178,7 +178,7 @@ struct DLL_EXPORT Fit_Param
         name = name_;
         min_val = std::numeric_limits<real_t>::min();
         max_val = std::numeric_limits<real_t>::max();
-        step_size = 0.000001;
+        step_size = (real_t)0.000001;
         value = val_;
         bound_type = E_Bound_Type::FIXED;
         opt_array_index = -1;

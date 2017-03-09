@@ -108,8 +108,8 @@ std::unordered_map<std::string, real_t> SVD_Fit_Routine::fit_spectra(const model
 {
 
     std::unordered_map<std::string, real_t> counts_dict;
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
-    Eigen::VectorXd rhs;
+    Eigen::JacobiSVD<Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
+    Eigen::Matrix<real_t, Eigen::Dynamic, 1> rhs;
     rhs.resize(spectra->size());
     //assert _fitmatrix.rows() == spectra->size()
 
@@ -118,7 +118,7 @@ std::unordered_map<std::string, real_t> SVD_Fit_Routine::fit_spectra(const model
         rhs[i] = (*spectra)[i];
     }
 
-    Eigen::VectorXd result = svd.solve(rhs);
+    Eigen::Matrix<real_t, Eigen::Dynamic, 1> result = svd.solve(rhs);
     //std::cout << "SVD Result : "<<std::endl<< result <<std::endl;
 
     for(const auto& itr : *elements_to_fit)

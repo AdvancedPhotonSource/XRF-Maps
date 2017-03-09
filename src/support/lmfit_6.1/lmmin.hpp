@@ -243,11 +243,11 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
                 kk = k + ldr * k;
                 if (std::fabs(r[kk]) < std::fabs(Sdiag[k])) {
                     _cot = r[kk] / Sdiag[k];
-                    _sin = 1 / hypot(1, _cot);
+                    _sin = 1 / std::hypot((_T)1, _cot);
                     _cos = _sin * _cot;
                 } else {
                     _tan = Sdiag[k] / r[kk];
-                    _cos = 1 / hypot(1, _tan);
+                    _cos = 1 / std::hypot((_T)1, _tan);
                     _sin = _cos * _tan;
                 }
 
@@ -379,7 +379,7 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     int i, iter, j, nsing;
     _T dxnorm, fp, fp_old, gnorm, parc, parl, paru;
     _T sum, temp;
-    static _T p1 = 0.1;
+    static _T p1 = (_T)0.1;
 
     /*** Compute and store in x the Gauss-Newton direction. If the Jacobian
          is rank-deficient, obtain a least-squares solution. ***/
@@ -463,7 +463,7 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
 
         /** Evaluate the function at the current value of par. **/
         if (*par == 0)
-            *par = MAX(LM_DWARF, 0.001 * paru);
+            *par = MAX(LM_DWARF, (_T)0.001 * paru);
         temp = sqrt(*par);
         for (j = 0; j < n; j++)
             aux[j] = temp * diag[j];
@@ -1073,10 +1073,10 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                 if (actred >= 0)
                     temp = 0.5;
                 else if (actred > -99) /* -99 = 1-1/0.1^2 */
-                    temp = MAX(dirder / (2*dirder + actred), 0.1);
+                    temp = MAX(dirder / ((_T)2*dirder + actred), (_T)0.1);
                 else
-                    temp = 0.1;
-                delta = temp * MIN(delta, pnorm / 0.1);
+                    temp = (_T)0.1;
+                delta = temp * MIN(delta, pnorm / (_T)0.1);
                 lmpar /= temp;
             } else if (ratio >= 0.75) {
                 delta = 2 * pnorm;

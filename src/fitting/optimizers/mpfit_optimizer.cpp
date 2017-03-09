@@ -139,12 +139,12 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
-    mp_config.ftol = 1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-    mp_config.xtol = 1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    mp_config.gtol = 1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
+    mp_config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    mp_config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    mp_config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = 0.1;   // Initial step bound                         Default: 100.0
-    mp_config.covtol = 1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    mp_config.stepfactor = (real_t)0.1;   // Initial step bound                         Default: 100.0
+    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     mp_config.maxiter = 2000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
@@ -166,7 +166,9 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 
     /////////////// init params limits /////////////////////////
-    struct mp_par<real_t> *mp_par = new struct mp_par<real_t>[fitp_arr.size()];
+	std::vector<struct mp_par<real_t> > mp_par;
+	mp_par.resize(fitp_arr.size());
+    //struct mp_par<real_t> *mp_par = new struct mp_par<real_t>[fitp_arr.size()];
 
     for(auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
     {
@@ -176,13 +178,13 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
             if(fit.value > fit.max_val)
             {
-                fit.max_val = fit.value + 1.0;
-                (*fit_params)[itr->first].max_val = fit.value + 1.0;
+                fit.max_val = fit.value + (real_t)1.0;
+                (*fit_params)[itr->first].max_val = fit.value + (real_t)1.0;
             }
             if(fit.value < fit.min_val)
             {
-                fit.min_val = fit.value - 1.0;
-                (*fit_params)[itr->first].min_val = fit.value - 1.0;
+                fit.min_val = fit.value - (real_t)1.0;
+                (*fit_params)[itr->first].min_val = fit.value - (real_t)1.0;
             }
             if(fit.bound_type == E_Bound_Type::LIMITED_HI
             || fit.bound_type == E_Bound_Type::LIMITED_LO
@@ -190,10 +192,10 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
             {
                 if(fit.max_val == fit.min_val)
                 {
-                    fit.max_val += 0.1;
-                    fit.min_val -= 0.1;
-                    (*fit_params)[itr->first].max_val += 1.0;
-                    (*fit_params)[itr->first].min_val -= 1.0;
+                    fit.max_val += (real_t)0.1;
+                    fit.min_val -= (real_t)0.1;
+                    (*fit_params)[itr->first].max_val += (real_t)1.0;
+                    (*fit_params)[itr->first].min_val -= (real_t)1.0;
                 }
             }
 
@@ -248,8 +250,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                        //  you want to compare the user-analytical one to
                        //  (0, 1, -1, or 2).
 
-            mp_par[fit.opt_array_index].deriv_reltol = 0.00001; // Relative tolerance for derivative debug printout
-            mp_par[fit.opt_array_index].deriv_abstol = 0.00001; // Absolute tolerance for derivative debug printout
+            mp_par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
+            mp_par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
         }
     }
 
@@ -309,7 +311,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
         (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = result.nfev;
     }
 
-    delete [] mp_par;
+    //delete [] mp_par;
 
 }
 
@@ -332,12 +334,12 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
-    mp_config.ftol = 1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-    mp_config.xtol = 1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    mp_config.gtol = 1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
+    mp_config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    mp_config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    mp_config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = 0.1;   // Initial step bound                         Default: 100.0
-    mp_config.covtol = 1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    mp_config.stepfactor = (real_t)0.1;   // Initial step bound                         Default: 100.0
+    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     mp_config.maxiter = 1000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input

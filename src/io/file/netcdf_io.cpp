@@ -194,7 +194,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)];
         unsigned short i2 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)+1];
         unsigned int ii = i1 | i2<<16;
-        elapsed_lifetime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
+        elapsed_lifetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if(elapsed_lifetime == 0)
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
@@ -208,7 +208,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)];
         i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
-        elapsed_realtime = ((float)ii) * 320e-9; // need to multiply by this value becuase of the way it is saved
+        elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if(elapsed_realtime == 0)
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.

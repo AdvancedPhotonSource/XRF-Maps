@@ -160,14 +160,14 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             //factor = quant_itr.second;
             real_t e_cal_factor = (itr.second.weight * (*quant_itr.second));
             real_t e_cal = e_cal_factor / element_counts->at(itr.first);
-            itr.second.e_cal_ratio = 1.0 / e_cal;
+            itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
             //initial guess: parinfo_value[0] = 100000.0 / factor
 
         }
 
         Fit_Parameters fit_params;
         fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
-        fit_params["quantifier"].value = 100000.0 / (*quant_itr.second);
+        fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
         real_t val = fit_params["quantifier"].value;
 

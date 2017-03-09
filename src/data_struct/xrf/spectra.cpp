@@ -232,7 +232,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 			{
 				hi_index = min_of_xmax;
 			}
-			real_t temp = (background[lo_index] + background[hi_index]) / 2.0;
+			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
 			if (background[k] > temp)
 			{
 				background[k] = temp;
@@ -254,7 +254,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 			{
 				hi_index = min_of_xmax;
 			}
-			real_t temp = (background[lo_index] + background[hi_index]) / 2.0;
+			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
 			if (background[k] > temp)
 			{
 				background[k] = temp;

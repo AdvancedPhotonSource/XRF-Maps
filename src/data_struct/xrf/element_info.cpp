@@ -63,115 +63,117 @@ Element_Info::Element_Info()
     density = 1.0;
     mass = 1.0;
 
-    xrf.emplace(std::make_pair("Ka1", 0.0));
-    xrf.emplace(std::make_pair("Ka2", 0.0));
-    xrf.emplace(std::make_pair("Kb1", 0.0));
-    xrf.emplace(std::make_pair("Kb2", 0.0));
+	real_t zero = (real_t)0.0;
 
-    xrf.emplace(std::make_pair("La1", 0.0));
-    xrf.emplace(std::make_pair("La2", 0.0));
-    xrf.emplace(std::make_pair("Lb1", 0.0));
-    xrf.emplace(std::make_pair("Lb2", 0.0));
-    xrf.emplace(std::make_pair("Lb3", 0.0));
-    xrf.emplace(std::make_pair("Lb4", 0.0));
-    xrf.emplace(std::make_pair("Lb5", 0.0));
+    xrf.emplace(std::make_pair("Ka1", zero));
+    xrf.emplace(std::make_pair("Ka2", zero));
+    xrf.emplace(std::make_pair("Kb1", zero));
+    xrf.emplace(std::make_pair("Kb2", zero));
 
-    xrf.emplace(std::make_pair("Lg1", 0.0));
-    xrf.emplace(std::make_pair("Lg2", 0.0));
-    xrf.emplace(std::make_pair("Lg3", 0.0));
-    xrf.emplace(std::make_pair("Lg4", 0.0));
-    xrf.emplace(std::make_pair("Ll", 0.0));
-    xrf.emplace(std::make_pair("Ln", 0.0));
+    xrf.emplace(std::make_pair("La1", zero));
+    xrf.emplace(std::make_pair("La2", zero));
+    xrf.emplace(std::make_pair("Lb1", zero));
+    xrf.emplace(std::make_pair("Lb2", zero));
+    xrf.emplace(std::make_pair("Lb3", zero));
+    xrf.emplace(std::make_pair("Lb4", zero));
+    xrf.emplace(std::make_pair("Lb5", zero));
 
-    xrf.emplace(std::make_pair("Ma1", 0.0));
-    xrf.emplace(std::make_pair("Ma2", 0.0));
-    xrf.emplace(std::make_pair("Mb", 0.0));
-    xrf.emplace(std::make_pair("Mg", 0.0));
+    xrf.emplace(std::make_pair("Lg1", zero));
+    xrf.emplace(std::make_pair("Lg2", zero));
+    xrf.emplace(std::make_pair("Lg3", zero));
+    xrf.emplace(std::make_pair("Lg4", zero));
+    xrf.emplace(std::make_pair("Ll", zero));
+    xrf.emplace(std::make_pair("Ln", zero));
 
-
-    xrf_abs_yield.emplace(std::make_pair("Ka1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Ka2", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Kb1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Kb2", 0.0));
-
-    xrf_abs_yield.emplace(std::make_pair("La1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("La2", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lb1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lb2", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lb3", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lb4", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lb5", 0.0));
-
-    xrf_abs_yield.emplace(std::make_pair("Lg1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lg2", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lg3", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Lg4", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Ll", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Ln", 0.0));
-
-    xrf_abs_yield.emplace(std::make_pair("Ma1", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Ma2", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Mb", 0.0));
-    xrf_abs_yield.emplace(std::make_pair("Mg", 0.0));
-
-    yieldD.emplace(std::make_pair("k", 0.0));
-    yieldD.emplace(std::make_pair("l1", 0.0));
-    yieldD.emplace(std::make_pair("l2", 0.0));
-    yieldD.emplace(std::make_pair("l3", 0.0));
-    yieldD.emplace(std::make_pair("m", 0.0));
-
-    bindingE.emplace(std::make_pair("K", 0.0));
-
-    bindingE.emplace(std::make_pair("L1", 0.0));
-    bindingE.emplace(std::make_pair("L2", 0.0));
-    bindingE.emplace(std::make_pair("L3", 0.0));
-
-    bindingE.emplace(std::make_pair("M1", 0.0));
-    bindingE.emplace(std::make_pair("M2", 0.0));
-    bindingE.emplace(std::make_pair("M3", 0.0));
-    bindingE.emplace(std::make_pair("M4", 0.0));
-    bindingE.emplace(std::make_pair("M5", 0.0));
-
-    bindingE.emplace(std::make_pair("N1", 0.0));
-    bindingE.emplace(std::make_pair("N2", 0.0));
-    bindingE.emplace(std::make_pair("N3", 0.0));
-    bindingE.emplace(std::make_pair("N4", 0.0));
-    bindingE.emplace(std::make_pair("N5", 0.0));
-    bindingE.emplace(std::make_pair("N6", 0.0));
-    bindingE.emplace(std::make_pair("N7", 0.0));
-
-    bindingE.emplace(std::make_pair("O1", 0.0));
-    bindingE.emplace(std::make_pair("O2", 0.0));
-    bindingE.emplace(std::make_pair("O3", 0.0));
-    bindingE.emplace(std::make_pair("O4", 0.0));
-    bindingE.emplace(std::make_pair("O5", 0.0));
-
-    bindingE.emplace(std::make_pair("P1", 0.0));
-    bindingE.emplace(std::make_pair("P2", 0.0));
-    bindingE.emplace(std::make_pair("P3", 0.0));
+    xrf.emplace(std::make_pair("Ma1", zero));
+    xrf.emplace(std::make_pair("Ma2", zero));
+    xrf.emplace(std::make_pair("Mb", zero));
+    xrf.emplace(std::make_pair("Mg", zero));
 
 
-    jump.emplace(std::make_pair("K", 0.0));
+    xrf_abs_yield.emplace(std::make_pair("Ka1", zero));
+    xrf_abs_yield.emplace(std::make_pair("Ka2", zero));
+    xrf_abs_yield.emplace(std::make_pair("Kb1", zero));
+    xrf_abs_yield.emplace(std::make_pair("Kb2", zero));
 
-    jump.emplace(std::make_pair("L1", 0.0));
-    jump.emplace(std::make_pair("L2", 0.0));
-    jump.emplace(std::make_pair("L3", 0.0));
+    xrf_abs_yield.emplace(std::make_pair("La1", zero));
+    xrf_abs_yield.emplace(std::make_pair("La2", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lb1", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lb2", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lb3", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lb4", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lb5", zero));
 
-    jump.emplace(std::make_pair("M1", 0.0));
-    jump.emplace(std::make_pair("M2", 0.0));
-    jump.emplace(std::make_pair("M3", 0.0));
-    jump.emplace(std::make_pair("M4", 0.0));
-    jump.emplace(std::make_pair("M5", 0.0));
+    xrf_abs_yield.emplace(std::make_pair("Lg1", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lg2", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lg3", zero));
+    xrf_abs_yield.emplace(std::make_pair("Lg4", zero));
+    xrf_abs_yield.emplace(std::make_pair("Ll", zero));
+    xrf_abs_yield.emplace(std::make_pair("Ln", zero));
 
-    jump.emplace(std::make_pair("N1", 0.0));
-    jump.emplace(std::make_pair("N2", 0.0));
-    jump.emplace(std::make_pair("N3", 0.0));
-    jump.emplace(std::make_pair("N4", 0.0));
-    jump.emplace(std::make_pair("N5", 0.0));
+    xrf_abs_yield.emplace(std::make_pair("Ma1", zero));
+    xrf_abs_yield.emplace(std::make_pair("Ma2", zero));
+    xrf_abs_yield.emplace(std::make_pair("Mb", zero));
+    xrf_abs_yield.emplace(std::make_pair("Mg", zero));
 
-    jump.emplace(std::make_pair("O1", 0.0));
-    jump.emplace(std::make_pair("O2", 0.0));
-    jump.emplace(std::make_pair("O3", 0.0));
+    yieldD.emplace(std::make_pair("k", zero));
+    yieldD.emplace(std::make_pair("l1", zero));
+    yieldD.emplace(std::make_pair("l2", zero));
+    yieldD.emplace(std::make_pair("l3", zero));
+    yieldD.emplace(std::make_pair("m", zero));
+
+    bindingE.emplace(std::make_pair("K", zero));
+
+    bindingE.emplace(std::make_pair("L1", zero));
+    bindingE.emplace(std::make_pair("L2", zero));
+    bindingE.emplace(std::make_pair("L3", zero));
+
+    bindingE.emplace(std::make_pair("M1", zero));
+    bindingE.emplace(std::make_pair("M2", zero));
+    bindingE.emplace(std::make_pair("M3", zero));
+    bindingE.emplace(std::make_pair("M4", zero));
+    bindingE.emplace(std::make_pair("M5", zero));
+
+    bindingE.emplace(std::make_pair("N1", zero));
+    bindingE.emplace(std::make_pair("N2", zero));
+    bindingE.emplace(std::make_pair("N3", zero));
+    bindingE.emplace(std::make_pair("N4", zero));
+    bindingE.emplace(std::make_pair("N5", zero));
+    bindingE.emplace(std::make_pair("N6", zero));
+    bindingE.emplace(std::make_pair("N7", zero));
+
+    bindingE.emplace(std::make_pair("O1", zero));
+    bindingE.emplace(std::make_pair("O2", zero));
+    bindingE.emplace(std::make_pair("O3", zero));
+    bindingE.emplace(std::make_pair("O4", zero));
+    bindingE.emplace(std::make_pair("O5", zero));
+
+    bindingE.emplace(std::make_pair("P1", zero));
+    bindingE.emplace(std::make_pair("P2", zero));
+    bindingE.emplace(std::make_pair("P3", zero));
+
+
+    jump.emplace(std::make_pair("K", zero));
+
+    jump.emplace(std::make_pair("L1", zero));
+    jump.emplace(std::make_pair("L2", zero));
+    jump.emplace(std::make_pair("L3", zero));
+
+    jump.emplace(std::make_pair("M1", zero));
+    jump.emplace(std::make_pair("M2", zero));
+    jump.emplace(std::make_pair("M3", zero));
+    jump.emplace(std::make_pair("M4", zero));
+    jump.emplace(std::make_pair("M5", zero));
+
+    jump.emplace(std::make_pair("N1", zero));
+    jump.emplace(std::make_pair("N2", zero));
+    jump.emplace(std::make_pair("N3", zero));
+    jump.emplace(std::make_pair("N4", zero));
+    jump.emplace(std::make_pair("N5", zero));
+
+    jump.emplace(std::make_pair("O1", zero));
+    jump.emplace(std::make_pair("O2", zero));
+    jump.emplace(std::make_pair("O3", zero));
 
     /*
     f1_atomic_scattering_real = nullptr;
@@ -272,7 +274,7 @@ real_t Element_Info::calc_beta(real_t density, real_t energy)
     real_t wavelength_angstroms = HC_ANGSTROMS / energy;
     // This constant has wavelength in angstroms and then
     // they are converted to centimeters.
-    real_t constant = RE * (1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / (2.0 * M_PI);
+    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
 
 
     for(size_t i=0; i< energies->size(); i++)
