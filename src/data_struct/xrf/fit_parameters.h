@@ -251,7 +251,7 @@ public:
 
     void print_non_fixed();
 
-    void update_value_by_idx(double * val, int idx);
+    void update_value_by_idx(real_t * val, int idx);
 
     const Fit_Param at(std::string name) const {return _params.at(name); }
 

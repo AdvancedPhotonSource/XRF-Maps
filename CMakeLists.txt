@@ -86,6 +86,15 @@ ENDIF()
 
 option(BUILD_WITH_VTK "Build with VTK")
 
+option(DOUBLE_PREC "Double Precision")
+
+
+IF (DOUBLE_PREC)
+  set(PREC _REAL_DOUBLE)
+ELSE()
+  set(PREC _REAL_FLOAT)
+ENDIF()
+
 IF (BUILD_WITH_VTK)
   add_definitions(-D_BUILD_WITH_VTK)
   find_package(VTK REQUIRED)
@@ -115,8 +124,8 @@ include(CheckCXXCompilerFlag)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D_REAL_DOUBLE -fPIC -g")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D_REAL_DOUBLE -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC")
 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
@@ -139,7 +148,7 @@ if(MSVC)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D_REAL_DOUBLE /DNOMINMAX")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX")
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
@@ -203,17 +212,16 @@ endif()
 set(libxrf_fit_HEADERS
     src/core/defines.h
     src/support/minpack/minpack.hpp
-    src/support/cmpfit-1.3a/mpfit.h
-    src/support/lmfit_6.1/lmstruct.h
-    src/support/lmfit_6.1/lmmin.h
-    src/support/lmfit_6.1/lmcurve_tyd.h
-    src/support/lmfit_6.1/lmcurve.h
-    src/support/nnls/nnls.h
-    src/support/nnls/vector.h
+    src/support/cmpfit-1.3a/mpfit.hpp
+    src/support/lmfit_6.1/lmstruct.hpp
+    src/support/lmfit_6.1/lmmin.hpp
+    src/support/lmfit_6.1/lmcurve_tyd.hpp
+    src/support/lmfit_6.1/lmcurve.hpp
+    src/support/nnls/nnls.hpp
+    src/support/nnls/vector.hpp
     src/support/nnls/matrix.h
-    src/support/nnls/denseMatrix.h
+    src/support/nnls/denseMatrix.hpp
     src/data_struct/base_dataset.h
-    #src/data_struct/ndarray.h
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h
     src/data_struct/xrf/element_info.h
@@ -246,13 +254,6 @@ set(libxrf_fit_HEADERS
 add_library(libxrf_fit SHARED
     #${PYBIND11_HEADERS}
     ${libxrf_fit_HEADERS}
-    src/support/minpack/minpack.cpp
-    src/support/cmpfit-1.3a/mpfit.c
-    src/support/lmfit_6.1/lmmin.c
-    src/support/lmfit_6.1/lmcurve_tyd.c
-    src/support/lmfit_6.1/lmcurve.c
-    src/support/nnls/nnls.cc
-    src/support/nnls/denseMatrix.cc
     src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp

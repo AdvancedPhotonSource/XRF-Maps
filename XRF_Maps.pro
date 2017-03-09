@@ -68,7 +68,7 @@ INCLUDEPATH += $${HDF_BASE}/include
 QMAKE_LIBS += -L$${HDF_BASE}/lib -lhdf5
 #QMAKE_LIBS += -L$${MPI_BASE}/lib -lmpi
 #QMAKE_CXXFLAGS += -std=c++14 -stdlib=libc++
-DEFINES += DARWIN __Unix__ __cminpack_double__
+DEFINES += DARWIN __Unix__
 }
 unix:!macx {
 #VTK
@@ -92,7 +92,7 @@ LIBS += -lgomp
 
 
 INCLUDEPATH += /usr/include/hdf5/serial
-QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -D__cminpack_double__ -g
+QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -g
 QMAKE_LIBS += -lhdf5
 
 
@@ -103,7 +103,7 @@ LIBS += -L/local/aglowacki/libs/netcdf-c/lib -lnetcdf
 
 win32{
 INCLUDEPATH += "C:/Program Files/HDF_Group/HDF5/1.10.0/include"
-DEFINES += XDR_HACK XDR_LE _USE_MATH_DEFINES H5_BUILT_AS_DYNAMIC_LIB __cminpack_double__
+DEFINES += XDR_HACK XDR_LE _USE_MATH_DEFINES H5_BUILT_AS_DYNAMIC_LIB
 HEADERS += support/mda_utils/xdr_hack.h
 SOURCES += support/mda_utils/xdr_hack.c
 QMAKE_LIBS += -L"C:/Program Files/HDF_Group/HDF5/1.10.0/lib" -lszip -lzlib -lhdf5 -lhdf5_hl
@@ -111,7 +111,6 @@ QMAKE_LIBS += -L"C:/Program Files/HDF_Group/HDF5/1.10.0/lib" -lszip -lzlib -lhdf
 
 SOURCES += \    
     src/support/mda_utils/mda_loader.c \
-    src/support/minpack/minpack.cpp \
     src/data_struct/xrf/element_info.cpp \
     src/data_struct/xrf/fit_parameters.cpp \
     src/data_struct/xrf/fit_element_map.cpp \
@@ -161,7 +160,6 @@ HEADERS += \
     #pybind11/numpy.h \
     src/core/defines.h \
     src/support/mda_utils/mda-load.h \
-    src/support/minpack/minpack.hpp \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \

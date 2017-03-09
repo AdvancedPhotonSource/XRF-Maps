@@ -233,8 +233,8 @@ _T mp_enorm(int n, _T *x)
   _T ans, temp;
   _T rdwarf = MP_RDWARF;
   _T rgiant = MP_RGIANT;
-  static _T zero = 0.0;
-  static _T one = 1.0;
+  const _T zero = 0.0;
+  const _T one = 1.0;
 
   s1 = zero;
   s2 = zero;
@@ -408,7 +408,7 @@ int mp_fdjac2(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *pri
   int i,j,ij;
   int iflag = 0;
   _T eps,h,temp;
-  static _T zero = 0.0;
+  const _T zero = 0.0;
   int has_analytical_deriv = 0, has_numerical_deriv = 0;
   int has_debug_deriv = 0;
 
@@ -645,9 +645,9 @@ void mp_qrfac(int m, int n, _T *a, int lda,
 */
   int i,ij,jj,j,jp1,k,kmax,minmn;
   _T ajnorm,sum,temp;
-  static _T zero = 0.0;
-  static _T one = 1.0;
-  static _T p05 = 0.05;
+  const _T zero = 0.0;
+  const _T one = 1.0;
+  const _T p05 = 0.05;
 
   lda = 0;      /* Prevent compiler warning */
   lipvt = 0;    /* Prevent compiler warning */
@@ -856,9 +856,9 @@ void mp_qrsolv(int n, _T *r, int ldr, int *ipvt, _T *diag,
 */
   int i,ij,ik,kk,j,jp1,k,kp1,l,nsing;
   _T cosx,cotan,qtbpj,sinx,sum,tanx,temp;
-  static _T zero = 0.0;
-  static _T p25 = 0.25;
-  static _T p5 = 0.5;
+  const _T zero = 0.0;
+  const _T p25 = 0.25;
+  const _T p5 = 0.5;
 
   /*
    *     copy r and (q transpose)*b to preserve input and initialize s.
@@ -1100,10 +1100,10 @@ void mp_lmpar(int n, _T *r, int ldr, int *ipvt, int *ifree, _T *diag,
   int i,iter,ij,jj,j,jm1,jp1,k,l,nsing;
   _T dxnorm,fp,gnorm,parc,parl,paru;
   _T sum,temp;
-  static _T zero = 0.0;
-  /* static _T one = 1.0; */
-  static _T p1 = 0.1;
-  static _T p001 = 0.001;
+  const _T zero = 0.0;
+  /* const _T one = 1.0; */
+  const _T p1 = 0.1;
+  const _T p001 = 0.001;
 
   /*
    *     compute and store in x the gauss-newton direction. if the
@@ -1699,13 +1699,13 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   _T actred,delta,dirder,fnorm,fnorm1,gnorm, orignorm;
   _T par,pnorm,prered,ratio;
   _T sum,temp,temp1,temp2,temp3,xnorm, alpha;
-  static _T one = 1.0;
-  static _T p1 = 0.1;
-  static _T p5 = 0.5;
-  static _T p25 = 0.25;
-  static _T p75 = 0.75;
-  static _T p0001 = 1.0e-4;
-  static _T zero = 0.0;
+  const _T one = 1.0;
+  const _T p1 = 0.1;
+  const _T p5 = 0.5;
+  const _T p25 = 0.25;
+  const _T p75 = 0.75;
+  const _T p0001 = 1.0e-4;
+  const _T zero = 0.0;
   int nfev = 0;
 
   _T *step = 0, *dstep = 0, *llim = 0, *ulim = 0;

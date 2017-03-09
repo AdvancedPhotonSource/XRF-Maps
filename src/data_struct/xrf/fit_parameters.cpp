@@ -145,7 +145,7 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     //std::cout<<std::endl;
 }
 
-void Fit_Parameters::update_value_by_idx(double * val, int idx)
+void Fit_Parameters::update_value_by_idx(real_t * val, int idx)
 {
     std::cout<<"idx "<<idx<<" val "<<*val<<std::endl;
     for(auto& itr : _params)
