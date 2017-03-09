@@ -15,8 +15,6 @@
 #ifndef LMSTRUCT_H
 #define LMSTRUCT_H
 
-#include <stdio.h>
-
 /* Collection of input parameters for fit control. */
 template <typename _T>
 struct lm_control_struct
@@ -64,7 +62,7 @@ struct lm_status_struct
 
 /* Preset message texts. */
 
-extern const char* lm_infmsg[];
-extern const char* lm_shortmsg[];
+//extern const char* lm_infmsg[];
+//extern const char* lm_shortmsg[];
 
 #endif /* LMSTRUCT_H */

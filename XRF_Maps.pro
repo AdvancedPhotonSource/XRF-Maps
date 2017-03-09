@@ -42,7 +42,6 @@ INCLUDEPATH += /usr/include/python2.7
 
 #define _REAL_FLOAT for float, _REAL_DOUBLE for double
 DEFINES += _REAL_FLOAT
-#DEFINES += _REAL_DOUBLE
 
 DESTDIR = ./bin
 MOC_DIR += ./generated
@@ -160,6 +159,9 @@ HEADERS += \
     #pybind11/numpy.h \
     src/core/defines.h \
     src/support/mda_utils/mda-load.h \
+    src/support/nnls/nnls.hpp \
+    src/support/lmfit_6.1/lmmin.hpp \
+    src/support/cmpfit-1.3a/mpfit.hpp \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \

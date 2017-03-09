@@ -1,9 +1,20 @@
+#ifndef MINPACK_H
+#define MINPACK_H
+
 # include <cstdlib>
 # include <iostream>
 # include <iomanip>
 # include <cmath>
 # include <ctime>
 using namespace std;
+
+#ifdef _REAL_DOUBLE
+  #define MINPACK_EPSILON   2.220446049250313E-016;
+  #define MINPACK_HUGE      1.0E+30;
+#else
+  #define MINPACK_EPSILON 2.220446049250313E-07;
+  #define MINPACK_HUGE      1.0E+15;
+#endif
 
 //****************************************************************************80
 //
@@ -46,79 +57,6 @@ _T enorm ( int n, _T x[] )
   return value;
 }
 
-
-//****************************************************************************80
-//
-//  Purpose:
-//
-//    R8_EPSILON returns the R8 roundoff unit.
-//
-//  Discussion:
-//
-//    The roundoff unit is a number R which is a power of 2 with the
-//    property that, to the precision of the computer's arithmetic,
-//      1 < 1 + R
-//    but
-//      1 = ( 1 + R / 2 )
-//
-//  Licensing:
-//
-//    This code is distributed under the GNU LGPL license.
-//
-//  Modified:
-//
-//    01 September 2012
-//
-//  Author:
-//
-//    John Burkardt
-//
-//  Parameters:
-//
-//    Output, _T R8_EPSILON, the R8 round-off unit.
-//
-template<typename _T>
-_T r8_epsilon(_T)
-{
-    return (_T)2.220446049250313E-07;
-    //    return 2.220446049250313E-016;
-}
-
-
-//****************************************************************************80
-//
-//  Purpose:
-//
-//    R8_HUGE returns a "huge" R8.
-//
-//  Discussion:
-//
-//    The value returned by this function is NOT required to be the
-//    maximum representable R8.  This value varies from machine to machine,
-//    from compiler to compiler, and may cause problems when being printed.
-//    We simply want a "very large" but non-infinite number.
-//
-//  Licensing:
-//
-//    This code is distributed under the GNU LGPL license.
-//
-//  Modified:
-//
-//    06 October 2007
-//
-//  Author:
-//
-//    John Burkardt
-//
-//  Parameters:
-//
-//    Output, _T R8_HUGE, a "huge" R8 value.
-//
-template<typename _T>
-_T r8_huge (_T )
-{
-    return (_T)1.0E+30;
-}
 
 //****************************************************************************80
 //
@@ -225,7 +163,7 @@ void chkder ( int m, int n, _T x[], _T fvec[], _T fjac[], int ldfjac, _T xp[], _
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch = MINPACK_EPSILON;
 //
   eps = sqrt ( epsmch );
 //
@@ -390,7 +328,7 @@ void dogleg ( int n, _T r[], int lr, _T diag[], _T qtb[], _T delta, _T x[], _T w
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch =  MINPACK_EPSILON;
 //
 //  Calculate the Gauss-Newton direction.
 //
@@ -620,7 +558,7 @@ void fdjac1 ( void fcn (void* usr_data, int n, _T x[], _T f[], int *iflag ), voi
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch = MINPACK_EPSILON;
 
   eps = sqrt ( std::max ( epsfcn, epsmch ) );
   msum = ml + mu + 1;
@@ -791,7 +729,7 @@ void fdjac2 ( void fcn ( int m, int n, _T x[], _T fvec[], int *iflag ), int m, i
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch = MINPACK_EPSILON;
   eps = sqrt ( std::max ( epsfcn, epsmch ) );
 
   for ( j = 0; j < n; j++ )
@@ -1036,7 +974,7 @@ void qrfac ( int m, int n, _T a[], int lda, bool pivot, int ipvt[],  int lipvt, 
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch = MINPACK_EPSILON;
 //
 //  Compute the initial column norms and initialize several arrays.
 //
@@ -1351,7 +1289,7 @@ bool r1updt ( int m, int n, _T s[], int ls, _T u[], _T v[], _T w[] )
 //
 //  GIANT is the largest magnitude.
 //
-  giant = r8_huge (temp );
+  giant = MINPACK_HUGE;
 //
 //  Initialize the diagonal element pointer.
 //
@@ -2028,7 +1966,7 @@ int hybrd ( void fcn (void* usr_data, int n, _T x[], _T fvec[], int *iflag ), vo
 //
 //  EPSMCH is the machine precision.
 //
-  epsmch = r8_epsilon (temp );
+  epsmch = MINPACK_EPSILON;
 
   info = 0;
   iflag = 0;
@@ -2610,3 +2548,6 @@ int hybrd1 ( void fcn (void* usr_data, int n, _T x[], _T fvec[], int *iflag ), v
   }
   return info;
 }
+
+
+#endif

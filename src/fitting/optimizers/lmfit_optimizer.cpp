@@ -62,12 +62,6 @@ namespace fitting
 namespace optimizers
 {
 
-const lm_control_struct<double> lm_control_double = {
-    LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL,
-    100., 100, 1, NULL, 0, -1, -1};
-const lm_control_struct<float> lm_control_float = {
-    1.e-7, 1.e-7, 1.e-7, 1.e-7,
-    100., 100, 1, NULL, 0, -1, -1};
 
 void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
@@ -192,11 +186,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
         */
 
-#ifdef _REAL_DOUBLE
-    lm_control_struct<real_t> control = lm_control_double;
-#else
-    lm_control_struct<real_t> control = lm_control_float;
-#endif
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
     //control.ftol = 1.0e-10;
     /* Relative error desired in the sum of squares.
@@ -278,11 +268,9 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
 
     lm_status_struct<real_t> status;
-#ifdef _REAL_DOUBLE
-    lm_control_struct<real_t> control = lm_control_double;
-#else
-    lm_control_struct<real_t> control = lm_control_float;
-#endif
+
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
+
 
     lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, general_residuals_lmfit, &control, &status );
     printf(".");
@@ -311,11 +299,8 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     int info;
 
     lm_status_struct<real_t> status;
-#ifdef _REAL_DOUBLE
-    lm_control_struct<real_t> control = lm_control_double;
-#else
-    lm_control_struct<real_t> control = lm_control_float;
-#endif
+
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals, &control, &status );
     printf(".");

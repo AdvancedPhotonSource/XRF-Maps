@@ -170,14 +170,14 @@ typedef int (*mp_func)(int m, // Number of functions (elts of fvec)
 
 /* Double precision numeric constants */
 #ifdef _REAL_DOUBLE
-#define MP_MACHEP0 2.2204460e-16
-#define MP_DWARF   2.2250739e-308
-#define MP_GIANT   1.7976931e+308
+  #define MP_MACHEP0 2.2204460e-16
+  #define MP_DWARF   2.2250739e-308
+  #define MP_GIANT   1.7976931e+308
 #else
 /* Float precision */
-#define MP_MACHEP0 1.19209e-07f
-#define MP_DWARF   1.17549e-38f
-#define MP_GIANT   3.40282e+38f
+  #define MP_MACHEP0 1.19209e-07f
+  #define MP_DWARF   1.17549e-38f
+  #define MP_GIANT   3.40282e+38f
 #endif
 
 #define MP_RDWARF  (sqrt(MP_DWARF*1.5)*10)

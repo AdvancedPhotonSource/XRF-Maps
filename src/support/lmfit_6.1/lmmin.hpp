@@ -17,9 +17,6 @@
 
 #include "lmstruct.hpp"
 #include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
 #include <float.h>
 
 /******************************************************************************/
@@ -27,12 +24,19 @@
 /******************************************************************************/
 
 /* Set machine-dependent constants to values from float.h. */
-#define LM_MACHEP DBL_EPSILON       /* resolution of arithmetic */
-#define LM_DWARF DBL_MIN            /* smallest nonzero number */
-#define LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
-#define LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
-#define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
-
+#ifdef _REAL_DOUBLE
+  #define LM_MACHEP DBL_EPSILON       /* resolution of arithmetic */
+  #define LM_DWARF DBL_MIN            /* smallest nonzero number */
+  #define LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
+  #define LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
+  #define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
+#else
+  #define LM_MACHEP FLT_EPSILON       /* resolution of arithmetic */
+  #define LM_DWARF FLT_MIN            /* smallest nonzero number */
+  #define LM_SQRT_DWARF sqrt(FLT_MIN) /* square should not underflow */
+  #define LM_SQRT_GIANT sqrt(FLT_MAX) /* square should not overflow */
+  #define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
+#endif
 /* If the above values do not work, the following seem good for an x86:
  LM_MACHEP     .555e-16
  LM_DWARF      9.9e-324
@@ -101,7 +105,7 @@ _T lm_enorm(int n, const _T* x)
 
     /** Sum squares. **/
     for (i = 0; i < n; i++) {
-        xabs = fabs(x[i]);
+        xabs = std::fabs(x[i]);
         if (xabs > LM_SQRT_DWARF) {
             if (xabs < agiant) {
                 s2 += SQR(xabs);
@@ -237,7 +241,7 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
                 if (Sdiag[k] == 0)
                     continue;
                 kk = k + ldr * k;
-                if (fabs(r[kk]) < fabs(Sdiag[k])) {
+                if (std::fabs(r[kk]) < std::fabs(Sdiag[k])) {
                     _cot = r[kk] / Sdiag[k];
                     _sin = 1 / hypot(1, _cot);
                     _cos = _sin * _cot;
@@ -476,7 +480,7 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
         /** If the function is small enough, accept the current value
             of par. Also test for the exceptional cases where parl
             is zero or the number of iterations has reached 10. **/
-        if (fabs(fp) <= p1 * delta ||
+        if (std::fabs(fp) <= p1 * delta ||
             (parl == 0 && fp <= fp_old && fp_old < 0) || iter == 10) {
 #ifdef LMFIT_DEBUG_MESSAGES
             printf("debug lmpar nsing=%d, iter=%d, "
@@ -629,7 +633,7 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
             /* No idea what happens here. */
             if (Rdiag[k] != 0) {
                 temp = A[m*k+j] / Rdiag[k];
-                if (fabs(temp) < 1) {
+                if (std::fabs(temp) < 1) {
                     Rdiag[k] *= sqrt(1 - SQR(temp));
                     temp = Rdiag[k] / W[k];
                 } else
@@ -874,7 +878,7 @@ void lmmin(const int n, _T* x, const int m, const void* data,
         /** Calculate the Jacobian. **/
         for (j = 0; j < n; j++) {
             temp = x[j];
-            step = MAX(eps * eps, eps * fabs(temp));
+            step = MAX(eps * eps, eps * std::fabs(temp));
             x[j] += step; /* replace temporarily */
             (*evaluate)(x, m, data, wf, &(S->userbreak));
             ++(S->nfev);
@@ -946,7 +950,7 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             sum = 0;
             for (i = 0; i <= j; i++)
                 sum += fjac[j*m+i] * qtf[i];
-            gnorm = MAX(gnorm, fabs(sum / wa2[Pivot[j]] / fnorm));
+            gnorm = MAX(gnorm, std::fabs(sum / wa2[Pivot[j]] / fnorm));
         }
 
         if (gnorm <= C->gtol) {
@@ -1111,7 +1115,7 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             if (fnorm <= LM_DWARF)
                 goto terminate; /* success: sum of squares almost zero */
             /* Test two criteria (both may be fulfilled). */
-            if (fabs(actred) <= C->ftol && prered <= C->ftol && ratio <= 2)
+            if (std::fabs(actred) <= C->ftol && prered <= C->ftol && ratio <= 2)
                 S->outcome = 1; /* success: x almost stable */
             if (delta <= C->xtol * xnorm)
                 S->outcome += 2; /* success: sum of squares almost stable */
@@ -1124,7 +1128,7 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                 S->outcome = 5;
                 goto terminate;
             }
-            if (fabs(actred) <= LM_MACHEP && prered <= LM_MACHEP &&
+            if (std::fabs(actred) <= LM_MACHEP && prered <= LM_MACHEP &&
                 ratio <= 2) {
                 S->outcome = 6;
                 goto terminate;
