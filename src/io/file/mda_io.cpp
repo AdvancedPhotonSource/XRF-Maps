@@ -117,16 +117,16 @@ void MDA_IO::lazy_load()
 
 	if (_mda_file_info == nullptr)
 	{
-        std::cout << "Error loading mda file:" << _filename;
+        logit_t << "Error loading mda file:" << _filename<<std::endl;
 		return;
 	}
 
-    std::cout<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
+    logit_t<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
     for(int16_t i = 0; i < _mda_file_info->data_rank; i++)
     {
-        std::cout<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
+        logit<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
     }
-    std::cout<<std::endl;
+    logit<<std::endl;
     std::fclose(fptr);
 
 }
@@ -143,12 +143,12 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
         return false;
     }
     _mda_file = mda_load(fptr);
-    std::cout<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logit_t<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
     //long total = 1;
 
     for(int16_t i = 0; i < _mda_file->header->data_rank; i++)
     {
-        std::cout<<" dims["<<i<<"]:"<<_mda_file->header->dimensions[i];
+        logit<<" dims["<<i<<"]:"<<_mda_file->header->dimensions[i];
         //total *= _mda_file->header->dimensions[i];
     }
 
@@ -157,9 +157,9 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
     {
 
     }
-    std::cout<<std::endl;
-    std::cout<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][0])<<std::endl;
-    std::cout<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][1])<<std::endl;
+    logit<<std::endl;
+    logit_t<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][0])<<std::endl;
+    logit_t<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][1])<<std::endl;
 
     std::fclose(fptr);
 
@@ -174,8 +174,8 @@ int MDA_IO::find_2d_detector_index(struct mda_file* mda_file, std::string det_na
 
     for(int k=0; k<mda_file->scan->number_detectors; k++)
     {
-        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
-        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
+        //logit_t<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
+        //logit_t<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
         if(strcmp(mda_file->scan->detectors[k]->name, det_name.c_str())  == 0)
         {
             val = mda_file->scan->detectors_data[k][detector_num];
@@ -185,8 +185,8 @@ int MDA_IO::find_2d_detector_index(struct mda_file* mda_file, std::string det_na
 
     for(int k=0; k<mda_file->scan->sub_scans[0]->number_detectors; k++)
     {
-        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
-        //std::cout<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
+        //logit_t<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->name << std::endl;
+        //logit_t<<"det name "<<_mda_file->scan->sub_scans[0]->detectors[k]->description << std::endl;
         if(strcmp(mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str())  == 0)
         {
             val = mda_file->scan->sub_scans[0]->detectors_data[k][detector_num];
@@ -249,10 +249,10 @@ bool MDA_IO::load_spectra_volume(std::string path,
         return false;
     }
 
-    std::cout<<"mda info ver:"<<header->version<<" data rank:"<<header->data_rank;
+    logit_t<<"mda info ver:"<<header->version<<" data rank:"<<header->data_rank;
     //long total = 1;
 
-    std::cout<<" cols "<< header->dimensions[0] << " rows " << header->dimensions[1] <<std::endl;
+    logit<<" cols "<< header->dimensions[0] << " rows " << header->dimensions[1] <<std::endl;
 
 
     _mda_file = mda_load(fptr);
@@ -301,7 +301,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     else
     {
-        std::cout<<" Error: no support for data rank "<< header->data_rank <<std::endl;
+        logit_t<<" Error: no support for data rank "<< header->data_rank <<std::endl;
         mda_header_unload(header);
         return false;
     }
@@ -350,7 +350,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         }
 
     }
-    std::cout<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
+    logit_t<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 
 
     try
@@ -397,22 +397,22 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 {
                     if(elt_idx > -1)
                     {
-                        //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
+                        //logit_t<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
                         (*vol)[i][j].elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
                     }
                     if(ert_idx > -1)
                     {
-                        //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
+                        //logit_t<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
                         (*vol)[i][j].elapsed_realtime(_mda_file->scan->detectors_data[ert_idx][j]);
                     }
                     if(incnt_idx > -1)
                     {
-                        //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
+                        //logit_t<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
                         (*vol)[i][j].input_counts(_mda_file->scan->detectors_data[incnt_idx][j]);
                     }
                     if(outcnt_idx > -1)
                     {
-                        //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
+                        //logit_t<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
                         (*vol)[i][j].output_counts(_mda_file->scan->detectors_data[outcnt_idx][j]);
                     }
                     if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
@@ -431,22 +431,22 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 {
                     if(elt_idx > -1)
                     {
-                        //std::cout<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
+                        //logit_t<<"eltm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]<< std::endl;
                         (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
                     }
                     if(ert_idx > -1)
                     {
-                        //std::cout<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
+                        //logit_t<<"elrm ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]<< std::endl;
                         (*vol)[i][j].elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
                     }
                     if(incnt_idx > -1)
                     {
-                        //std::cout<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
+                        //logit_t<<"incnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]<< std::endl;
                         (*vol)[i][j].input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
                     }
                     if(outcnt_idx > -1)
                     {
-                        //std::cout<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
+                        //logit_t<<"outcnt ["<<i<<"]["<<j<<"] = "<<_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]<< std::endl;
                         (*vol)[i][j].output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
                     }
                     if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
@@ -466,7 +466,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     catch(std::exception& e)
     {
-        std::cout<<"!!! Error Caught exception loading mda file."<<std::endl;
+        logit_t<<"!!! Error Caught exception loading mda file."<<std::endl;
         std::cerr << "Exception catched : " << e.what() << std::endl;
         return false;
     }
@@ -488,7 +488,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
 
     if (header == nullptr)
     {
-        std::cout<<"Unable to open mda file "<< path <<std::endl;
+        logit_t<<"Unable to open mda file "<< path <<std::endl;
         return f_size;
     }
     else if(header->data_rank == 1)
@@ -501,7 +501,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
     }
     else
     {
-        std::cout<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
+        logit_t<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
     }
 
     mda_header_unload(header);
@@ -521,7 +521,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
 
     if (header == nullptr)
     {
-        std::cout<<"Unable to open mda file "<< path <<std::endl;
+        logit_t<<"Unable to open mda file "<< path <<std::endl;
         return -1;
     }
     else if(header->data_rank == 1)
@@ -541,7 +541,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
     }
     else
     {
-        std::cout<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
+        logit_t<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<std::endl;
     }
     rank = header->data_rank;
 
@@ -558,7 +558,7 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
     if (false == fileStream.good())
     {
-        std::cout<<"Error opening file "<<filename<<std::endl;
+        logit_t<<"Error opening file "<<filename<<std::endl;
         return false;
     }
 

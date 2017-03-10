@@ -44,24 +44,16 @@ POSSIBILITY OF SUCH DAMAGE.
 ***/
 
 /// Initial Author <2016>: Arthur Glowacki
+#ifndef __DEFINES__
+#define __DEFINES__
+
+#include <chrono>
+#include <iomanip>
 
 
-
-
-//Defines for DLL export in windows env
-/*
-#if defined WIN32
-	#if defined DYNAMIC_LIB
-		#define DLL_EXPORT __declspec(dllexport)
-	#else
-		#define DLL_EXPORT 
-	#endif
-#elif defined (__Unix__) 
-	#define DLL_EXPORT 
-#elif defined DARWIN
-	#define DLL_EXPORT __attribute__ ((visibility("default"))
-#endif
-*/
+static std::time_t now_c;
+#define logit_t now_c=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());std::cout<<std::put_time(std::localtime(&now_c),"[%F_%T]\t")
+#define logit std::cout
 
 #if defined _REAL_FLOAT
   #define real_t float
@@ -98,3 +90,4 @@ POSSIBILITY OF SUCH DAMAGE.
   #endif
 #endif
 
+#endif

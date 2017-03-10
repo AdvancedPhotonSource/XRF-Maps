@@ -198,7 +198,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         total_jump_factor = element_info->jump.at("M1") * element_info->jump.at("M2") * element_info->jump.at("M3") * element_info->jump.at("M4");
         break;
     default:
-        std::cout<<"Unsupported shell. Currently only support for K, L, and M "<<std::endl;
+        logit_t<<"Unsupported shell. Currently only support for K, L, and M "<<std::endl;
         break;
     }
 

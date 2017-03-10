@@ -65,7 +65,7 @@ std::mutex NetCDF_IO::_mutex;
 NetCDF_IO* NetCDF_IO::_this_inst(0);
 
 
-#define ERR(e) {std::cout<<"Error: "<< nc_strerror(e)<<std::endl; return false;}
+#define ERR(e) {logit_t<<"Error: "<< nc_strerror(e)<<std::endl; return false;}
 
 #define ELAPSED_REALTIME_OFFSET 32
 #define ELAPSED_LIFETIME_OFFSET 34
@@ -160,7 +160,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
     {
-        std::cout<<"Error: NetCDF header not found! Stopping load : "<<path<<std::endl;
+        logit_t<<"Error: NetCDF header not found! Stopping load : "<<path<<std::endl;
         return false;
     }
 
@@ -171,7 +171,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     /*
     if( num_cols != spec_line->size() )
     {
-        std::cout<<"Warning: Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< std::endl;
+        logit_t<<"Warning: Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< std::endl;
     }
     */
     start[2] += header_size;
@@ -199,7 +199,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                std::cout<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                logit_t<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
                 elapsed_lifetime = 1.0;
             }
         }
@@ -213,7 +213,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                std::cout<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                logit_t<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
                 elapsed_realtime = 1.0;
             }
         }

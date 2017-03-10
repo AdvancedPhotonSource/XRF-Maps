@@ -183,10 +183,10 @@ bool APS_Fit_Params_Import::load(std::string path,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
-                //std::cout<<"tag : "<<tag<<std::endl;
+                //logit_t<<"tag : "<<tag<<std::endl;
                 if (tag == "VERSION" || tag == "DATE")
                 {
-                    std::cout << line << std::endl;
+                    //logit_t << line << std::endl;
                 }
                 else if (tag == "DETECTOR_ELEMENTS")
                 {
@@ -203,12 +203,12 @@ bool APS_Fit_Params_Import::load(std::string path,
                         // check if element_symb contains '_'
                         std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
 
-                        //std::cout<<"Element : "<<element_symb<<" : "<<base_element_symb<<std::endl;
+                        //logit_t<<"Element : "<<element_symb<<" : "<<base_element_symb<<std::endl;
 
                         data_struct::xrf::Element_Info* e_info = element_info_map->get_element(base_element_symb);
                         if(e_info == nullptr)
                         {
-                            std::cout<<"Can not find element "<<base_element_symb<<std::endl;
+                            logit_t<<"Can not find element "<<base_element_symb<<std::endl;
                         }
                         else
                         {
@@ -233,7 +233,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     while(std::getline(strstream, element_symb, ','))
                     {
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        std::cout<<"Element with pileup : "<<element_symb<<std::endl;
+                        logit_t<<"Element with pileup : "<<element_symb<<std::endl;
                         //data_struct::xrf::Element_Param* element_param = new data_struct::xrf::Element_Param();
                         //element_param->name = element_symb;
                         //params_override->fit_params.append_element(element_param);
@@ -368,7 +368,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     }
                     else
                     {
-                        std::cout<<"Error: Unknown detector element enumeration : "<<value<<::std::endl;
+                        logit_t<<"Error: Unknown detector element enumeration : "<<value<<::std::endl;
                     }
                 }
                 else if (tag == "ELT1")
@@ -639,7 +639,7 @@ bool APS_Fit_Params_Import::save(std::string path,
     std::string save_path = path+std::to_string(detector_num);
     std::ofstream out_stream(save_path);
 
-    std::cout<<"save_averaged_fit_params(): "<<save_path<<std::endl;
+    logit_t<<"save_averaged_fit_params(): "<<save_path<<std::endl;
 
     std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
     std::time_t tt;
@@ -721,7 +721,7 @@ bool APS_Fit_Params_Import::save(std::string path,
 
     }
 
-    std::cout<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<std::endl;
+    logit_t<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<std::endl;
     return false;
 }
 

@@ -142,27 +142,27 @@ void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
     switch(info)
     {
         case OPTIMIZER_INFO::IMPROPER_INPUT:
-            std::cout<<"!> Improper input parameters."<<std::endl;
+            logit_t<<"!> Improper input parameters."<<std::endl;
         break;
         case OPTIMIZER_INFO::MOST_TOL:
-            std::cout<<"> Algorithm estimates that the relative error in the sum of squares is at most tol. "<<std::endl;
+            logit_t<<"> Algorithm estimates that the relative error in the sum of squares is at most tol. "<<std::endl;
         break;
         case OPTIMIZER_INFO::EXCEED_CALL:
-            std::cout<<"> Number of calls to fcn has reached or exceeded 200*(n+1)."<<std::endl;
+            logit_t<<"> Number of calls to fcn has reached or exceeded 200*(n+1)."<<std::endl;
         break;
         case OPTIMIZER_INFO::TOL_TOO_SMALL:
-            std::cout<<">> Tol is too small. no further improvement in the approximate solution x is possible. "<<std::endl;
+            logit_t<<">> Tol is too small. no further improvement in the approximate solution x is possible. "<<std::endl;
         break;
         case OPTIMIZER_INFO::NO_PROGRESS:
-            std::cout<<"> Fiteration is not making good progress."<<std::endl;
+            logit_t<<"> Fiteration is not making good progress."<<std::endl;
         break;
         default:
-            std::cout<<"!> Unknown info status"<<std::endl;
+            logit_t<<"!> Unknown info status"<<std::endl;
         break;
     }
 
     delete [] wa;
-    std::cout<<"residuals count = "<<residuals_count_minpack<<std::endl;
+    logit_t<<"residuals count = "<<residuals_count_minpack<<std::endl;
     fit_params->from_array(fitp_arr);
 
 }
@@ -195,27 +195,27 @@ void MinPack_Optimizer::minimize_func(Fit_Parameters *fit_params,
     switch(info)
     {
         case OPTIMIZER_INFO::IMPROPER_INPUT:
-            std::cout<<"!> Improper input parameters."<<std::endl;
+            logit_t<<"!> Improper input parameters."<<std::endl;
         break;
         case OPTIMIZER_INFO::MOST_TOL:
-            std::cout<<"> Algorithm estimates that the relative error in the sum of squares is at most tol. "<<std::endl;
+            logit_t<<"> Algorithm estimates that the relative error in the sum of squares is at most tol. "<<std::endl;
         break;
         case OPTIMIZER_INFO::EXCEED_CALL:
-            std::cout<<"> Number of calls to fcn has reached or exceeded 200*(n+1)."<<std::endl;
+            logit_t<<"> Number of calls to fcn has reached or exceeded 200*(n+1)."<<std::endl;
         break;
         case OPTIMIZER_INFO::TOL_TOO_SMALL:
-            std::cout<<">> Tol is too small. no further improvement in the approximate solution x is possible. "<<std::endl;
+            logit_t<<">> Tol is too small. no further improvement in the approximate solution x is possible. "<<std::endl;
         break;
         case OPTIMIZER_INFO::NO_PROGRESS:
-            std::cout<<"> Fiteration is not making good progress."<<std::endl;
+            logit_t<<"> Fiteration is not making good progress."<<std::endl;
         break;
         default:
-            std::cout<<"!> Unknown info status"<<std::endl;
+            logit_t<<"!> Unknown info status"<<std::endl;
         break;
     }
 
     delete [] wa;
-    //std::cout<<"residuals count = "<<gen_residuals_count_minpack<<std::endl;
+    //logit_t<<"residuals count = "<<gen_residuals_count_minpack<<std::endl;
     fit_params->from_array(fitp_arr);
 /*
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
