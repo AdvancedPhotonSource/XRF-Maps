@@ -52,8 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 static std::time_t now_c;
-#define logit_t now_c=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());std::cout<<std::put_time(std::localtime(&now_c),"[%F_%T]\t")
-#define logit std::cout
+#define logit now_c=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());std::cout<<std::put_time(std::localtime(&now_c),"[%F_%T]\t")<<__FILE__<<"::"<<__FUNCTION__<<"()\t"
+#define logit_s std::cout
 
 #if defined _REAL_FLOAT
   #define real_t float

@@ -268,40 +268,40 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], &mp_config, (void *) &ud, &result);
 
-    logit<<"*";
+    logit_s<<"*";
 
 
     switch(info)
     {
         case 0:
-            logit_t<<"> Improper input parameters."<<std::endl;
+            logit<<"> Improper input parameters."<<std::endl;
         break;
         case 1:
-            logit_t<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<std::endl;
+            logit<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<std::endl;
         break;
         case 2:
-            logit_t<<"> Relative error between two consecutive iterates is at most xtol"<<std::endl;
+            logit<<"> Relative error between two consecutive iterates is at most xtol"<<std::endl;
         break;
         case 3:
-            logit_t<<"> Conditions for info = 1 and info = 2 both hold. "<<std::endl;
+            logit<<"> Conditions for info = 1 and info = 2 both hold. "<<std::endl;
         break;
         case 4:
-            logit_t<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<std::endl;
+            logit<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<std::endl;
         break;
         case 5:
-            logit_t<<"> Number of calls to fcn has reached or exceeded maxfev."<<std::endl;
+            logit<<"> Number of calls to fcn has reached or exceeded maxfev."<<std::endl;
         break;
         case 6:
-            logit_t<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<std::endl;
+            logit<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<std::endl;
         break;
         case 7:
-            logit_t<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<std::endl;
+            logit<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<std::endl;
         break;
         case 8:
-            logit_t<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<std::endl;
+            logit<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<std::endl;
         break;
         default:
-            logit_t<<"!> Unknown info status"<<std::endl;
+            logit<<"!> Unknown info status"<<std::endl;
         break;
     }
 
@@ -459,7 +459,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     struct mp_par<real_t> *mp_par = nullptr;
 
     info = mpfit(gen_residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
-    logit<<"*";
+    logit_s<<"*";
 
 
   //  delete [] mp_par;
@@ -467,34 +467,34 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     switch(info)
     {
         case 0:
-            logit_t<<"> Improper input parameters."<<std::endl;
+            logit<<"> Improper input parameters."<<std::endl;
         break;
         case 1:
-            logit_t<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<std::endl;
+            logit<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<std::endl;
         break;
         case 2:
-            logit_t<<"> Relative error between two consecutive iterates is at most xtol"<<std::endl;
+            logit<<"> Relative error between two consecutive iterates is at most xtol"<<std::endl;
         break;
         case 3:
-            logit_t<<"> Conditions for info = 1 and info = 2 both hold. "<<std::endl;
+            logit<<"> Conditions for info = 1 and info = 2 both hold. "<<std::endl;
         break;
         case 4:
-            logit_t<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<std::endl;
+            logit<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<std::endl;
         break;
         case 5:
-            logit_t<<"> Number of calls to fcn has reached or exceeded maxfev."<<std::endl;
+            logit<<"> Number of calls to fcn has reached or exceeded maxfev."<<std::endl;
         break;
         case 6:
-            logit_t<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<std::endl;
+            logit<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<std::endl;
         break;
         case 7:
-            logit_t<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<std::endl;
+            logit<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<std::endl;
         break;
         case 8:
-            logit_t<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<std::endl;
+            logit<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<std::endl;
         break;
         default:
-            logit_t<<"!> Unknown info status"<<std::endl;
+            logit<<"!> Unknown info status"<<std::endl;
         break;
     }
 */

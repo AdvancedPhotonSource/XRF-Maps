@@ -108,13 +108,13 @@ bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_
             {
                 std::getline(strstream, value, ',');
                 if (value != "1.2")
-                    logit_t<<"Warning: non expected version. Loader if for 1.2"<<std::endl;
+                    logit<<"Warning: non expected version. Loader if for 1.2"<<std::endl;
             }*/
             //if( std::stoi(value) > 0)
             if (value[0] >= 48 && value[0] <= 57) // 0 - 9
             {
 
-                //logit_t<< "value = "<< value<<std::endl;
+                //logit<< "value = "<< value<<std::endl;
                 data_struct::xrf::Element_Info* element = nullptr;
                 int element_number = std::stoi(value);
                 element = element_map->get_element(element_number);
@@ -132,7 +132,7 @@ bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_
                     element->number = element_number;
                     element->name = el_name;
                 }
-                //logit_t<< element->number << " : "<< element->name <<std::endl;
+                //logit<< element->number << " : "<< element->name <<std::endl;
                 std::getline(strstream, value, ',');
                 element->xrf["ka1"] = std::stof(value);
                 std::getline(strstream, value, ',');

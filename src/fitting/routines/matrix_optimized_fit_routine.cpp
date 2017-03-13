@@ -68,7 +68,7 @@ Matrix_Optimized_Fit_Routine::Matrix_Optimized_Fit_Routine() : Param_Optimized_F
 Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 {
 
-    logit_t<<"******** destroy element models *******"<<std::endl;
+    logit<<"******** destroy element models *******"<<std::endl;
     _element_models.clear();
 
 }
@@ -266,7 +266,7 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 {
 
     _element_models.clear();
-    logit_t<<"-------- Generating element models ---------"<<std::endl;
+    logit<<"-------- Generating element models ---------"<<std::endl;
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
 }

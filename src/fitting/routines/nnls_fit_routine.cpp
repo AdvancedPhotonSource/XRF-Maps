@@ -134,7 +134,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
     num_iter = solver->optimize();
     if (num_iter < 0)
     {
-        logit_t<<"Error  NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<std::endl;
+        logit<<"Error  NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<std::endl;
     }
 
     result = solver->getSolution();

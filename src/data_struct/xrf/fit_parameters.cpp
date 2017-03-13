@@ -130,24 +130,24 @@ void Fit_Parameters::from_array(std::vector<real_t> arr)
 
 void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
 {
-    //logit<<std::endl;
+    //logit_s<<std::endl;
     for(auto& itr : _params)
     {
         if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < arr_size)
         {
-            //logit<<" [ "<<_params[itr.first].value<<" : "<<arr[itr.second.opt_array_index]<< " ]  ";
-            //logit<<" [ "<<_params[itr.first].value - arr[itr.second.opt_array_index]<< " ]  ";
+            //logit_s<<" [ "<<_params[itr.first].value<<" : "<<arr[itr.second.opt_array_index]<< " ]  ";
+            //logit_s<<" [ "<<_params[itr.first].value - arr[itr.second.opt_array_index]<< " ]  ";
             itr.second.value = arr[itr.second.opt_array_index];
             //_params[itr.first].value = arr[itr.second.opt_array_index];
 
         }
     }
-    //logit<<std::endl;
+    //logit_s<<std::endl;
 }
 
 void Fit_Parameters::update_value_by_idx(real_t * val, int idx)
 {
-    //logit<<"idx "<<idx<<" val "<<*val<<std::endl;
+    //logit_s<<"idx "<<idx<<" val "<<*val<<std::endl;
     for(auto& itr : _params)
     {
         if (itr.second.opt_array_index == idx)
@@ -212,9 +212,9 @@ void Fit_Parameters::print()
 {
     for(const auto& itr : _params)
     {
-        logit<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
+        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
     }
-    logit<<std::endl;
+    logit_s<<std::endl;
 
 }
 
@@ -224,10 +224,10 @@ void Fit_Parameters::print_non_fixed()
     {
         if(itr.second.bound_type != E_Bound_Type::FIXED)
         {
-            logit<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
+            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
         }
     }
-    logit<<std::endl;
+    logit_s<<std::endl;
 
 }
 
