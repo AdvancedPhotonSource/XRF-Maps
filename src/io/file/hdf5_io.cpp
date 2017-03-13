@@ -398,7 +398,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
                  //logit<<"saved col "<<col<<std::endl;
              }
 
-            logit<<"read row "<<row<<std::endl;
+            //logit<<"read row "<<row<<std::endl;
          }
          else
          {
@@ -1233,17 +1233,13 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
     start = std::chrono::system_clock::now();
 
     hid_t    dset_id, memoryspace_id, filespace_id, dataspace_id, filetype, dataspace_ch_id, memtype,  dset_ch_id, q_int_spec_grp_id;
-//    hid_t   xrf_grp_id, fit_grp_id;
+    hid_t   memtype_label, filetype_label, q_memoryspace_label_id, q_dataspace_label_id;
     herr_t   error;
 
     hid_t q_dataspace_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_grp_id, q_fit_grp_id, maps_grp_id, status, scalers_grp_id, xrf_fits_grp_id;
-
-//    dset_id = -1;
-//    dset_ch_id = -1;
-//    hsize_t dims_out[3];
+    hid_t dset_labels_id;
     hsize_t offset[3];
     hsize_t count[3];
-//    hsize_t chunk_dims[3];
 
     hsize_t q_dims_out[2];
 
@@ -1292,6 +1288,11 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
     memtype = H5Tcopy (H5T_C_S1);
     status = H5Tset_size (memtype, 255);
 
+
+    filetype_label = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype_label, 10);
+    memtype_label = H5Tcopy(H5T_C_S1);
+    status = H5Tset_size(memtype_label, 10);
 
 
     //--                        save calibration curve                  --
@@ -1464,12 +1465,18 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         offset[2] = 0;
 
         count[0] = 1;
+        count[1] = 1;
+        count[2] = 0;
+
+        q_memoryspace_label_id = H5Screate_simple(2, count, NULL);
+
+        count[0] = 1;
         count[1] = q_dims_out[1];
         count[2] = 0;
 
         q_memoryspace_id = H5Screate_simple(2, count, NULL);
         q_filespace_id = H5Screate_simple(2, q_dims_out, NULL);
-
+        q_dataspace_label_id = H5Screate_simple (2, q_dims_out, NULL);
         q_dataspace_id = H5Screate_simple (2, q_dims_out, NULL);
         //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, NULL);
 
@@ -1541,13 +1548,18 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
             H5Sclose(dataspace_id);
 
 
+            dset_labels_id = H5Dopen (q_fit_grp_id, "Calibration_Curve_Labels", H5P_DEFAULT);
+            if(dset_labels_id < 0)
+                dset_labels_id = H5Dcreate (q_fit_grp_id, "Calibration_Curve_Labels", filetype_label, q_dataspace_label_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+
             for (size_t i =0; i< qitr.second.calib_curves.size(); i++)
             {
 
                 std::string q_dset_name = "Calibration_Curve_" + qitr.second.calib_curves[i].quantifier_name;
 
-                //dset_id = H5Dopen (fit_grp_id, "Calibration_Curve", H5P_DEFAULT);
-                //if(q_dset_id < 0)
+                q_dset_id = H5Dopen (q_fit_grp_id, q_dset_name.c_str(), H5P_DEFAULT);
+                if(q_dset_id < 0)
                     q_dset_id = H5Dcreate (q_fit_grp_id, q_dset_name.c_str(), H5T_INTEL_R, q_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                 if(q_dset_id < 0)
                 {
@@ -1559,26 +1571,45 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
                 //for(auto& shell_itr : quant_itr.second)
                 for(size_t j=0; j<3; j++)
                 {
+                    char label[10] = {0};
                     //int element_offset = 0;
                     //create dataset for different shell curves
                     std::vector<real_t> calibration_curve = qitr.second.calib_curves[i].shell_curves[j];
-
+                    std::vector<std::string> calibration_curve_labels = qitr.second.calib_curves[i].shell_curves_labels[j];
                     offset[0] = j;
                     offset[1] = 0;
 
+                    count[0] = 1;
+                    count[1] = q_dims_out[1];
                     //H5Sselect_hyperslab (q_dataspace_ch_id, H5S_SELECT_SET, offset, NULL, count, NULL);
                     //H5Sselect_hyperslab (q_dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], NULL, count, NULL);
                     //status = H5Dwrite (q_dset_ch_id, memtype, q_dataspace_ch_off_id, q_dataspace_ch_id, H5P_DEFAULT, (void*)(el_name.c_str()));
 
                     H5Sselect_hyperslab (q_filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-
                     status = H5Dwrite (q_dset_id, H5T_NATIVE_REAL, q_memoryspace_id, q_filespace_id, H5P_DEFAULT, (void*)&calibration_curve[0]);
+
+                    for(size_t k=0; k<calibration_curve_labels.size(); k++)
+                    {
+                        memset(label, 0, 10);
+                        calibration_curve_labels[k].copy(&label[0], 9);
+                        offset[1] = k;
+                        count[1] = 1;
+                        status = H5Sselect_hyperslab (q_filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                        status = H5Dwrite (dset_labels_id, memtype_label, q_memoryspace_label_id, q_filespace_id, H5P_DEFAULT, (void*)&label[0]);
+                    }
+
                 }
                 H5Dclose(q_dset_id);
             }
+
+            H5Dclose(dset_labels_id);
         }
 
         //H5Dclose(q_dset_ch_id);
+        H5Sclose(q_filespace_id);
+        H5Sclose(q_memoryspace_id);
+        H5Sclose(q_dataspace_label_id);
+        H5Sclose(q_memoryspace_label_id);
         H5Sclose(q_dataspace_id);
         //H5Sclose(q_dataspace_ch_id);
         H5Gclose(xrf_fits_grp_id);
@@ -1587,10 +1618,17 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         H5Gclose(q_fit_grp_id);
         H5Gclose(q_grp_id);
 
+
+
     }
 
     H5Tclose(filetype);
     H5Tclose(memtype);
+
+    H5Tclose(filetype_label);
+    H5Tclose(memtype_label);
+
+
 
 //    H5Dclose(dset_id);
 //    H5Dclose(dset_ch_id);
@@ -1660,18 +1698,25 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 				if (dset_id < 0)
 				{
                     logit << "Error creating dataset 'y_axis'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
 					return false;
 				}
 				H5Dclose(dset_id);
 				H5Sclose(dataspace_id);
 
-				count[0] = mda_scalers->scan->last_point;
+                if(mda_scalers->scan->last_point == 0)
+                    count[0] = 1;
+                else
+                    count[0] = mda_scalers->scan->last_point;
 				dataspace_id = H5Screate_simple(1, count, NULL);
 				filespace_id = H5Screate_simple(1, count, NULL);
                 dset_id = H5Dcreate(scan_grp_id, "x_axis", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				if (dset_id < 0)
 				{
                     logit << "Error creating dataset 'x_axis'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
 					return false;
 				}
 				count[0] = 1;
@@ -1685,17 +1730,60 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 				H5Dclose(dset_id);
 				H5Sclose(dataspace_id);
 				H5Sclose(filespace_id);
+
+
+                //save requested rows
+                count[0] = 1;
+                dataspace_id = H5Screate_simple(1, count, NULL);
+                filespace_id = H5Screate_simple(1, count, NULL);
+                dset_id = H5Dcreate(scan_grp_id, "requested_rows", H5T_INTEL_I32, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                if (dset_id < 0)
+                {
+                    logit << "Error creating dataset 'requested_rows'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
+                    return false;
+                }
+                int value = 1;
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&value);
+                H5Dclose(dset_id);
+                H5Sclose(dataspace_id);
+                H5Sclose(filespace_id);
+
+                //save requested cols
+                count[0] = 1;
+                dataspace_id = H5Screate_simple(1, count, NULL);
+                filespace_id = H5Screate_simple(1, count, NULL);
+                dset_id = H5Dcreate(scan_grp_id, "requested_cols", H5T_INTEL_I32, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                if (dset_id < 0)
+                {
+                    logit << "Error creating dataset 'requested_cols'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
+                    return false;
+                }
+                value = mda_scalers->header->dimensions[0];
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&value);
+                H5Dclose(dset_id);
+                H5Sclose(dataspace_id);
+                H5Sclose(filespace_id);
+
 			}
 			else
 			{
-				count[0] = mda_scalers->scan->last_point;
-
+                //save y axis
+                if(mda_scalers->scan->last_point == 0)
+                    count[0] = 1;
+                else
+                    count[0] = mda_scalers->scan->last_point;
 				dataspace_id = H5Screate_simple(1, count, NULL);
 				filespace_id = H5Screate_simple(1, count, NULL);
                 dset_id = H5Dcreate(scan_grp_id, "y_axis", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				if (dset_id < 0)
 				{
                     logit << "Error creating dataset 'y_axis'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
 					return false;
 				}
 				count[0] = 1;
@@ -1710,13 +1798,19 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 				H5Sclose(dataspace_id);
 				H5Sclose(filespace_id);
 
-				count[0] = mda_scalers->scan->sub_scans[0]->last_point;
+                //save x axis
+                if(mda_scalers->scan->sub_scans[0]->last_point == 0)
+                    count[0] = 1;
+                else
+                    count[0] = mda_scalers->scan->sub_scans[0]->last_point;
 				dataspace_id = H5Screate_simple(1, count, NULL);
 				filespace_id = H5Screate_simple(1, count, NULL);
                 dset_id = H5Dcreate(scan_grp_id, "x_axis", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 				if (dset_id < 0)
 				{
                     logit << "Error creating dataset 'x_axis'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
 					return false;
 				}
 				count[0] = 1;
@@ -1730,6 +1824,44 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 				H5Dclose(dset_id);
 				H5Sclose(dataspace_id);
 				H5Sclose(filespace_id);
+
+
+                //save requested rows
+                count[0] = 1;
+                dataspace_id = H5Screate_simple(1, count, NULL);
+                filespace_id = H5Screate_simple(1, count, NULL);
+                dset_id = H5Dcreate(scan_grp_id, "requested_rows", H5T_INTEL_I32, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                if (dset_id < 0)
+                {
+                    logit << "Error creating dataset 'requested_rows'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
+                    return false;
+                }
+                int value = mda_scalers->header->dimensions[0];
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&value);
+                H5Dclose(dset_id);
+                H5Sclose(dataspace_id);
+                H5Sclose(filespace_id);
+
+                //save requested cols
+                count[0] = 1;
+                dataspace_id = H5Screate_simple(1, count, NULL);
+                filespace_id = H5Screate_simple(1, count, NULL);
+                dset_id = H5Dcreate(scan_grp_id, "requested_cols", H5T_INTEL_I32, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                if (dset_id < 0)
+                {
+                    logit << "Error creating dataset 'requested_cols'" << std::endl;
+                    H5Sclose(dataspace_id);
+                    H5Sclose(filespace_id);
+                    return false;
+                }
+                value = mda_scalers->header->dimensions[1];
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&value);
+                H5Dclose(dset_id);
+                H5Sclose(dataspace_id);
+                H5Sclose(filespace_id);
+
 			}
 
 		}
@@ -2331,16 +2463,25 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     if(hasNetcdf)
                     {
                         count_3d[0] = 1;
-                        count_3d[1] = mda_scalers->header->dimensions[0];
-                        count_3d[2] = mda_scalers->header->dimensions[1];
+                        if(mda_scalers->scan->last_point == 0)
+                            count_3d[1] = 1;
+                        else
+                            count_3d[1] = mda_scalers->scan->last_point;
+                        if(mda_scalers->scan->sub_scans[0]->last_point == 0)
+                            count_3d[2] = 1;
+                        else
+                            count_3d[2] = mda_scalers->scan->sub_scans[0]->last_point;
                     }
                     else
                     {
-                        if (mda_scalers->header->dimensions[1] == 2000) // test if it is a single row scan
+                        if (mda_scalers->scan->last_point == 2000) // test if it is a single row scan
                         {
                             count_3d[0] = 1;
                             count_3d[1] = 1;
-                            count_3d[2] = mda_scalers->scan->last_point;
+                            if(mda_scalers->scan->last_point == 0)
+                                count_3d[2] = 1;
+                            else
+                                count_3d[2] = mda_scalers->scan->last_point;
                             single_row_scan = true;
                         }
                         else
@@ -2352,8 +2493,14 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 else if (mda_scalers->header->data_rank == 3)
                 {
                     count_3d[0] = 1;
-                    count_3d[1] = mda_scalers->header->dimensions[0];
-                    count_3d[2] = mda_scalers->header->dimensions[1];
+                    if(mda_scalers->scan->last_point == 0)
+                        count_3d[1] = 1;
+                    else
+                        count_3d[1] = mda_scalers->scan->last_point;
+                    if(mda_scalers->scan->sub_scans[0]->last_point == 0)
+                        count_3d[2] = 1;
+                    else
+                        count_3d[2] = mda_scalers->scan->sub_scans[0]->last_point;
                 }
                 else
                 {
@@ -2389,12 +2536,21 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 				if (single_row_scan)
 				{
 					count_2d[0] = 1;
-                    count_2d[1] = mda_scalers->header->dimensions[0];
+                    if(mda_scalers->scan->last_point == 0)
+                        count_2d[1] = 1;
+                    else
+                        count_2d[1] = mda_scalers->scan->last_point;
 				}
 				else
 				{
-                    count_2d[0] = mda_scalers->header->dimensions[0];
-                    count_2d[1] = mda_scalers->header->dimensions[1];
+                    if(mda_scalers->scan->last_point == 0)
+                        count_2d[0] = 1;
+                    else
+                        count_2d[0] = mda_scalers->scan->last_point;
+                    if(mda_scalers->scan->sub_scans[0]->last_point == 0)
+                        count_2d[1] = 1;
+                    else
+                        count_2d[1] = mda_scalers->scan->sub_scans[0]->last_point;
 				}
 				count_3d[1] = count_2d[0];
 				count_3d[2] = count_2d[1];

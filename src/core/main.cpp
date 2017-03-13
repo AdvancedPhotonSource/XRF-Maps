@@ -1408,38 +1408,38 @@ void check_and_create_dirs(std::string dataset_directory)
 
 void help()
 {
-    logit<<"Help: "<<std::endl;
-    logit<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
-    logit<<"Options: "<<std::endl;
-    logit<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
-    logit<<"--thread-affinity : Lock each thread to a logical core. "<<std::endl;
-    logit<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
-    logit<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
-    logit<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
-//    logit<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
-//    logit<<"    us = upstream ion chamber\n";
-//    logit<<"    ds = downstream ion chamber\n";
-//    logit<<"    sr = sr current. "<<std::endl;
-    logit<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
-    logit<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
+    logit_s<<"Help: "<<std::endl;
+    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
+    logit_s<<"Options: "<<std::endl;
+    logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
+    logit_s<<"--thread-affinity : Lock each thread to a logical core. "<<std::endl;
+    logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
+    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
+    logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
+//    logit_s<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
+//    logit_s<<"    us = upstream ion chamber\n";
+//    logit_s<<"    ds = downstream ion chamber\n";
+//    logit_s<<"    sr = sr current. "<<std::endl;
+    logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
+    logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
-    logit<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
-    logit<<"Fitting Routines: "<<std::endl;
-    logit<<"--roi : ROI "<<std::endl;
-    logit<<"--roi_plus : SVD method "<<std::endl;
-    logit<<"--nnls : Non-Negative Least Squares"<<std::endl;
-    logit<<"--tails : Fit with multiple parameters "<<std::endl;
-    logit<<"--matrix : Fit with locked parameters \n"<<std::endl;
-    logit<<"Dataset: "<<std::endl;
-    logit<<"--dir : Dataset directory "<<std::endl;
-    logit<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
-    logit<<"Examples: "<<std::endl;
-    logit<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
-    logit<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
-    logit<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<std::endl;
-    logit<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
-    logit<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<std::endl;
-    logit<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
+    logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
+    logit_s<<"Fitting Routines: "<<std::endl;
+    logit_s<<"--roi : ROI "<<std::endl;
+    logit_s<<"--roi_plus : SVD method "<<std::endl;
+    logit_s<<"--nnls : Non-Negative Least Squares"<<std::endl;
+    logit_s<<"--tails : Fit with multiple parameters "<<std::endl;
+    logit_s<<"--matrix : Fit with locked parameters \n"<<std::endl;
+    logit_s<<"Dataset: "<<std::endl;
+    logit_s<<"--dir : Dataset directory "<<std::endl;
+    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
+    logit_s<<"Examples: "<<std::endl;
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<std::endl;
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
+    logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<std::endl;
+    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
 }
 
 // ----------------------------------------------------------------------------

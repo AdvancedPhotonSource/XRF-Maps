@@ -76,11 +76,13 @@ struct Calibration_Curve
     Calibration_Curve()
     {
         shell_curves.resize(3);
+        shell_curves_labels.resize(3);
     }
 
     Calibration_Curve(size_t i)
     {
         shell_curves.resize(3);
+        shell_curves_labels.resize(3);
         resize(i);
     }
 
@@ -94,10 +96,8 @@ struct Calibration_Curve
 
     string quantifier_name;
     vector<vector<real_t> > shell_curves;
+    vector<vector<std::string> > shell_curves_labels;
 
-    //vector<real_t> K_shell_curve;
-    //vector<real_t> L_shell_curve;
-    //vector<real_t> M_shell_curve;
 };
 
 //-----------------------------------------------------------------------------

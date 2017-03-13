@@ -98,6 +98,39 @@ void Quantification_Standard::element_counts(string proc_type_str, unordered_map
 
 //-----------------------------------------------------------------------------
 
+std::string get_shell_element_label(int shell, int l)
+{
+    std::string shell_str = "";
+    switch(shell)
+    {
+    case quantification::models::K_SHELL:
+        shell_str = "_K";
+        break;
+    case quantification::models::L_SHELL:
+        shell_str = "_L";
+        break;
+    case quantification::models::M_SHELL:
+        shell_str = "_M";
+        break;
+    case quantification::models::N_SHELL:
+        shell_str = "_N";
+        break;
+    case quantification::models::O_SHELL:
+        shell_str = "_O";
+        break;
+    case quantification::models::P_SHELL:
+        shell_str = "_P";
+        break;
+    case quantification::models::Q_SHELL:
+        shell_str = "_Q";
+        break;
+    default:
+        break;
+    }
+
+    return Element_Symbols[l]+shell_str;
+}
+
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
                                         string proc_type_str,
                                         unordered_map<string, real_t>  *element_counts,
@@ -186,8 +219,10 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
             quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
             //change nan's to zeros
+            quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size());
             for(int l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
             {
+                quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell][l] = get_shell_element_label(shell, l);
                 if( std::isnan(quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l]) )
                 {
                     quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l] = 0.0;

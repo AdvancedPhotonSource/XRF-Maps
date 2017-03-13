@@ -235,78 +235,79 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     size_t cols = 1;
     size_t rows = 1;
-    size_t spectra = 1;
+    size_t samples = 1;
 
     if (fptr == nullptr)
     {
         return false;
     }
 
-    struct mda_header *header = mda_header_load(fptr);
-
-    if (header == nullptr)
-    {
-        return false;
-    }
-
-    logit<<"mda info ver:"<<header->version<<" data rank:"<<header->data_rank;
-    //long total = 1;
-
-    logit_s<<" cols "<< header->dimensions[0] << " rows " << header->dimensions[1] <<std::endl;
-
 
     _mda_file = mda_load(fptr);
     if (_mda_file == nullptr)
     {
-        if (header != nullptr)
-        {
-            mda_header_unload(header);
-        }
         return false;
     }
+    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
-
-    if (header->data_rank == 2)
+    if (_mda_file->header->data_rank == 2)
     {
+        logit_s<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
+                  " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<std::endl;
+
         if(hasNetCDF)
         {
-            vol->resize(header->dimensions[0], header->dimensions[1], 2048);
-            mda_header_unload(header);
+            if(_mda_file->scan->last_point == 0)
+                rows = 1;
+            else
+                rows = _mda_file->scan->last_point;
+            if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                cols = 1;
+            else
+                cols = _mda_file->scan->sub_scans[0]->last_point;
+            vol->resize(rows, cols, 2048);
             return true;
         }
         else
         {
-            if(header->dimensions[1] == 2000)
+            if(_mda_file->header->dimensions[1] == 2000)
             {
                 rows = 1;
-                cols = header->dimensions[0];
-                spectra = header->dimensions[1];
-                vol->resize(rows, cols, spectra);
+                if(_mda_file->scan->last_point == 0)
+                    cols = 1;
+                else
+                cols = _mda_file->scan->last_point;
+                samples = _mda_file->header->dimensions[1];
+                vol->resize(rows, cols, samples);
                 single_row_scan = true;
             }
             else
             {
                 //if not then we don't know what is dataset is.
-                mda_header_unload(header);
+                mda_unload(_mda_file);
                 return false;
             }
         }
     }
-    else if (header->data_rank == 3)
+    else if (_mda_file->header->data_rank == 3)
     {
-        rows = header->dimensions[0];
-        cols = header->dimensions[1];
-        spectra = header->dimensions[2];
-        vol->resize(header->dimensions[0], header->dimensions[1], header->dimensions[2]);
+        if(_mda_file->scan->last_point == 0)
+            rows = 1;
+        else
+            rows = _mda_file->scan->last_point;
+        if(_mda_file->scan->sub_scans[0]->last_point == 0)
+            cols = 1;
+        else
+            cols = _mda_file->scan->sub_scans[0]->last_point;
+        samples = _mda_file->header->dimensions[2];
+        vol->resize(rows, cols, samples);
     }
     else
     {
-        logit<<" Error: no support for data rank "<< header->data_rank <<std::endl;
-        mda_header_unload(header);
+        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<std::endl;
+        mda_unload(_mda_file);
         return false;
     }
-
-    mda_header_unload(header);
 
     //_load_detector_meta_data(detector);
 
@@ -359,14 +360,14 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
-                cols = _mda_file->scan->last_point + 1;
+                cols = _mda_file->scan->last_point;
             }
         }
         else
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
-                rows = _mda_file->scan->last_point + 1;
+                rows = _mda_file->scan->last_point;
                 //TODO: set a flag to return to tell that this is a bad scan
             }
         }
@@ -379,16 +380,16 @@ bool MDA_IO::load_spectra_volume(std::string path,
             {
                 if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
                 {
-                    cols = _mda_file->scan->sub_scans[i]->last_point + 1;
+                    cols = _mda_file->scan->sub_scans[i]->last_point;
                     //TODO: set a flag to return to tell that this is a bad scan
                 }
             }
             for(size_t j=0; j<cols; j++)
             {
-/* TODO: we might need to do the same check for spectra
-                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
+/* TODO: we might need to do the same check for samples size
+                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
                 {
-                    cols = _mda_file->scan->sub_scans[i]->last_point;
+                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
                 }
 */
 
@@ -421,7 +422,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                     }
 
 
-                    for(size_t k=0; k<spectra; k++)
+                    for(size_t k=0; k<samples; k++)
                     {
 
                         (*vol)[i][j][k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
@@ -455,7 +456,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                     }
 
 
-                    for(size_t k=0; k<spectra; k++)
+                    for(size_t k=0; k<samples; k++)
                     {
                         (*vol)[i][j][k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
                     }
