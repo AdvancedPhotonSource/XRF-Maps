@@ -2474,7 +2474,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     }
                     else
                     {
-                        if (mda_scalers->scan->last_point == 2000) // test if it is a single row scan
+                        if(mda_scalers->header->dimensions[1] == 2000)
                         {
                             count_3d[0] = 1;
                             count_3d[1] = 1;

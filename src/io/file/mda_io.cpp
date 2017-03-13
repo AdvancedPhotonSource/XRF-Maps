@@ -272,6 +272,13 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
+                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
+                {
+                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< std::endl;
+                    unload();
+                    return false;
+                }
+
                 rows = 1;
                 if(_mda_file->scan->last_point == 0)
                     cols = 1;
@@ -284,13 +291,21 @@ bool MDA_IO::load_spectra_volume(std::string path,
             else
             {
                 //if not then we don't know what is dataset is.
-                mda_unload(_mda_file);
+                unload();
                 return false;
             }
         }
     }
     else if (_mda_file->header->data_rank == 3)
     {
+
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+        {
+            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< std::endl;
+            unload();
+            return false;
+        }
+
         if(_mda_file->scan->last_point == 0)
             rows = 1;
         else
@@ -305,7 +320,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     else
     {
         logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<std::endl;
-        mda_unload(_mda_file);
+        unload();
         return false;
     }
 
