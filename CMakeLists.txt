@@ -71,7 +71,7 @@ ENDIF()
 
 find_package(NetCDF REQUIRED)
 
-#set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
+set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
 find_package (Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
@@ -80,9 +80,9 @@ find_package(HDF5 REQUIRED COMPONENTS C)
 IF( NOT EIGEN3_INCLUDE_DIR )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
 ENDIF()
-#IF( NOT SZip_LIB_DIR )
-#    MESSAGE( FATAL_ERROR "Please point the environment variable SZip_LIB_DIR to the include directory of your Eigen3 installation.")
-#ENDIF()
+IF( NOT SZip_LIB_DIR )
+    MESSAGE( FATAL_ERROR "Please point the environment variable SZip_LIB_DIR to the include directory of your Eigen3 installation.")
+ENDIF()
 
 option(BUILD_WITH_VTK "Build with VTK")
 
@@ -105,9 +105,8 @@ ELSE()
   set(VISUAL_INC )
 ENDIF()
 
-#link_directories( ${SZip_LIB_DIR} )
-
-link_directories(${HDF5_INCLUDE_DIRS}/../lib)
+link_directories( ${SZip_LIB_DIR} )
+#link_directories(${HDF5_INCLUDE_DIRS}/../lib)
 
 # Set a default build configuration if none is specified. 'Release' produces the smallest binaries
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
