@@ -107,6 +107,8 @@ ENDIF()
 
 #link_directories( ${SZip_LIB_DIR} )
 
+link_directories(${HDF5_INCLUDE_DIRS}/../lib)
+
 # Set a default build configuration if none is specified. 'Release' produces the smallest binaries
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
