@@ -1311,7 +1311,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 {
 
     io::file::MDA_IO mda_io;
-
+    logit<<dataset_directory<<" "<<dataset_files->size()<<" files"<<std::endl;
     std::list<file_name_size> f_list;
 
     for (auto &itr : *dataset_files)
@@ -1330,6 +1330,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
         dataset_files->push_back(itr.filename);
     }
 
+    logit<<"done"<<std::endl;
 }
 
 // ----------------------------------------------------------------------------
@@ -1337,7 +1338,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)
 {
     std::vector<std::string> dataset_files;
-
+    logit<<dataset_directory<<" searching for "<<search_str<<std::endl;
     DIR *dir;
     struct dirent *ent;
     size_t search_str_size = search_str.length();
@@ -1364,7 +1365,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
         logit<<"Error: could not open directory "<<dataset_directory<<std::endl;
     }
 
-
+    logit<<"done"<<std::endl;
     return dataset_files;
 }
 
@@ -1374,7 +1375,7 @@ void check_and_create_dirs(std::string dataset_directory)
 {
 
     bool found_img_dat = false;
-
+    logit<<dataset_directory<<std::endl;
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir (dataset_directory.c_str())) != NULL)
@@ -1401,6 +1402,7 @@ void check_and_create_dirs(std::string dataset_directory)
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
         system(cmd.c_str());
     }
+    logit<<"done"<<std::endl;
 
 }
 
