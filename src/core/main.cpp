@@ -1365,7 +1365,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
         logit<<"Error: could not open directory "<<dataset_directory<<std::endl;
     }
 
-    logit<<"done"<<std::endl;
+    logit<<"found "<<dataset_files.size()<<std::endl;
     return dataset_files;
 }
 

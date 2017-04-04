@@ -128,8 +128,12 @@ void HDF5_IO::lazy_load()
 
    //logit<<"lazy_load "<< _filename <<std::endl;
 
-   hid_t    file_id, dset_id, dataspace_id, memoryspace, datatype;
-   herr_t   error;
+   hid_t    file_id = -1;
+   hid_t    dset_id = -1;
+   hid_t    dataspace_id = -1;
+   hid_t    memoryspace = -1;
+   hid_t    datatype = -1;
+   herr_t   error = -1;
 
     H5T_class_t dtype_class;
    //H5T_order_t order;
@@ -423,6 +427,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     H5Sclose(dataspace_inct_id);
     H5Sclose(dataspace_outct_id);
     H5Sclose(dataspace_id);
+    H5Gclose(maps_grp_id);
     H5Fclose(file_id);
 
     end = std::chrono::system_clock::now();
@@ -653,6 +658,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
      H5Sclose(dataspace_inct_id);
      H5Sclose(dataspace_outct_id);
      H5Sclose(dataspace_id);
+     H5Gclose(maps_grp_id);
      H5Fclose(file_id);
 
      end = std::chrono::system_clock::now();
@@ -700,6 +706,70 @@ bool HDF5_IO::end_save_seq()
         logit<<"closing file\n";
         logit<<"=========================================================\n\n";
         H5Fflush(_cur_file_id, H5F_SCOPE_LOCAL);
+
+        ssize_t obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_DATASET | H5F_OBJ_LOCAL );
+        if(obj_cnt > 0)
+        {
+            logit<<" closing forgotten datasets: "<<obj_cnt<<std::endl;
+            hid_t* objs = new hid_t[obj_cnt];
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATASET, -1, objs ) > -1)
+            {
+                for(int i=0; i<obj_cnt; i++)
+                {
+                    H5Dclose(objs[i]);
+                }
+            }
+            delete [] objs;
+        }
+        obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_GROUP | H5F_OBJ_LOCAL );
+        if(obj_cnt > 0)
+        {
+            logit<<" closing forgotten groups: "<<obj_cnt<<std::endl;
+            hid_t* objs = new hid_t[obj_cnt];
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_GROUP, -1, objs ) > -1)
+            {
+                for(int i=0; i<obj_cnt; i++)
+                {
+                    H5Gclose(objs[i]);
+                }
+            }
+            delete [] objs;
+        }
+        obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_DATATYPE | H5F_OBJ_LOCAL );
+        if(obj_cnt > 0)
+        {
+            logit<<" closing forgotten datatypes: "<<obj_cnt<<std::endl;
+            hid_t* objs = new hid_t[obj_cnt];
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATATYPE, -1, objs ) > -1)
+            {
+                for(int i=0; i<obj_cnt; i++)
+                {
+                    H5Tclose(objs[i]);
+                }
+            }
+            delete [] objs;
+        }
+        obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_ATTR | H5F_OBJ_LOCAL );
+        if(obj_cnt > 0)
+        {
+            logit<<" closing forgotten attributes: "<<obj_cnt<<std::endl;
+            hid_t* objs = new hid_t[obj_cnt];
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_ATTR, -1, objs ) > -1)
+            {
+                for(int i=0; i<obj_cnt; i++)
+                {
+                    H5Aclose(objs[i]);
+                }
+            }
+            delete [] objs;
+        }
+        obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_ALL | H5F_OBJ_LOCAL );
+        if(obj_cnt > 1) //file is still open
+        {
+            logit<<"**** did not close total objects "<<obj_cnt<<std::endl;
+        }
+
+
         H5Fclose(_cur_file_id);
         _cur_file_id = -1;
     }
@@ -1603,6 +1673,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
             }
 
             H5Dclose(dset_labels_id);
+            H5Gclose(q_fit_grp_id);
         }
 
         //H5Dclose(q_dset_ch_id);
@@ -1615,7 +1686,6 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         H5Gclose(xrf_fits_grp_id);
         H5Gclose(scalers_grp_id);
         H5Gclose(q_int_spec_grp_id);
-        H5Gclose(q_fit_grp_id);
         H5Gclose(q_grp_id);
 
 
@@ -3056,6 +3126,10 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
         H5Sclose(memoryspace_id);
         memoryspace_id = -1;
     }
+
+
+    H5Tclose(filetype);
+    H5Tclose(memtype);
 }
 
 //-----------------------------------------------------------------------------
