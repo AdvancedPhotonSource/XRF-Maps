@@ -3211,6 +3211,9 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
     std::vector<hid_t> hdf5_file_ids;
     std::string group_name = "";
 
+    //save to restore later
+    hid_t saved_file_id = _cur_file_id;
+
     for(auto& filename : files_to_avg)
     {
         hid_t    rd_file_id;
@@ -3293,8 +3296,10 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
             H5Gclose(src_maps_grp_id);
 
         H5Gclose(dst_maps_grp_id);
-        H5Fflush(file_id, H5F_SCOPE_LOCAL);
-        H5Fclose(file_id);
+        //H5Fflush(file_id, H5F_SCOPE_LOCAL);
+        //H5Fclose(file_id);
+        _cur_file_id = file_id;
+        end_save_seq();
     }
     else
     {
@@ -3303,10 +3308,14 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
     for(auto& f_id : hdf5_file_ids)
     {
-        H5Fclose(f_id);
+        _cur_file_id = f_id;
+        end_save_seq();
+        //H5Fclose(f_id);
     }
 
     logit<<"closing file"<<std::endl;
+
+    _cur_file_id = saved_file_id;
 
     return true;
 }
