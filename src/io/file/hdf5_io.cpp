@@ -3385,7 +3385,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
         error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
 
-        for(int k=1; k<analysis_ids.size(); k++)
+        for(int k=0; k<analysis_ids.size(); k++)
         {
             H5Dclose(analysis_ids[k]);
         }

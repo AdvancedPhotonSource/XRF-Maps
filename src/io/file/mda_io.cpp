@@ -115,6 +115,8 @@ void MDA_IO::lazy_load()
 
     _mda_file_info = mda_info_load(fptr);
 
+    std::fclose(fptr);
+
 	if (_mda_file_info == nullptr)
 	{
         logit << "Error loading mda file:" << _filename<<std::endl;
@@ -127,7 +129,6 @@ void MDA_IO::lazy_load()
         logit_s<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
     }
     logit_s<<std::endl;
-    std::fclose(fptr);
 
 }
 
@@ -143,6 +144,7 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
         return false;
     }
     _mda_file = mda_load(fptr);
+    std::fclose(fptr);
     logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
     //long total = 1;
 
@@ -161,7 +163,6 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
     logit<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][0])<<std::endl;
     logit<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][1])<<std::endl;
 
-    std::fclose(fptr);
 
     return true;
 
@@ -244,6 +245,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
 
     _mda_file = mda_load(fptr);
+    std::fclose(fptr);
     if (_mda_file == nullptr)
     {
         return false;
@@ -478,7 +480,6 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 }
             }
         }
-        std::fclose(fptr);
     }
     catch(std::exception& e)
     {
@@ -578,7 +579,7 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
         return false;
     }
 
-    FILE* xdr_file = fopen(filename.c_str(), "rb");
+    std::FILE* xdr_file = fopen(filename.c_str(), "rb");
 
     XDR *xdrstream;
 #ifndef XDR_HACK
@@ -593,14 +594,23 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
     int num_energies;
     int num_extra_energies;
     if( xdr_int32_t( xdrstream, &num_elements) == 0)
+    {
+        std::fclose(xdr_file);
         return false;
+    }
     if( xdr_int32_t( xdrstream, &num_energies) == 0)
+    {
+        std::fclose(xdr_file);
         return false;
+    }
 
     element_map->_energies.resize(num_energies);
     //float *energy_arr = new float[num_energies];
     if( xdr_vector( xdrstream, (char *) &(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+    {
+        std::fclose(xdr_file);
         return false;
+    }
 
     //element_map->set_energies(energy_arr, num_energies);
 
@@ -622,13 +632,22 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
         //element_information.
         if( xdr_vector( xdrstream, (char *) &(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
         if( xdr_vector( xdrstream, (char *) &(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
     }
 
     if( xdr_int32_t( xdrstream, &num_extra_energies) == 0)
+    {
+        std::fclose(xdr_file);
         return false;
+    }
 
     for (int i=0; i<num_elements; i++)
     {
@@ -637,17 +656,29 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
         int element_n;
         if( xdr_int32_t( xdrstream, &element_n) == 0)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
 
         if( xdr_vector( xdrstream, (char *) &(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
         if( xdr_vector( xdrstream, (char *) &(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
         if( xdr_vector( xdrstream, (char *) &(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        {
+            std::fclose(xdr_file);
             return false;
+        }
     }
 
-    fclose(xdr_file);
+    std::fclose(xdr_file);
 
     return true;
 }
