@@ -47,6 +47,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "hl_file_io.h"
 
+#include <iostream>
+#include <sstream>
+#include <fstream>
+
 namespace io
 {
 

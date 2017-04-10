@@ -185,6 +185,7 @@ include_directories(src/fitting/routines)
 include_directories(src/fitting/optimizers)
 
 # Include libxrf_io Maps header files
+include_directories(src/io)
 include_directories(src/io/file)
 include_directories(src/io/file/aps)
 include_directories(src/workflow)
