@@ -290,6 +290,7 @@ set(XRF_IO_HEADERS
 	src/io/file/csv_io.h
         #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
+        src/io/hl_file_io.h
 )
 
 add_library(libxrf_io SHARED
@@ -301,7 +302,8 @@ add_library(libxrf_io SHARED
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
         #src/io/file/aps/aps_calibration_io.cpp
-	src/io/file/aps/aps_fit_params_import.cpp				 
+        src/io/file/aps/aps_fit_params_import.cpp
+        src/io/hl_file_io.cpp
 )
 
 #--------------- start xrf maps exec -----------------

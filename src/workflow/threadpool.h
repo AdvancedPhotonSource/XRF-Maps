@@ -114,7 +114,7 @@ inline ThreadPool::ThreadPool(size_t threads, bool setAffinity=false)
             CPU_SET(i, &set);
             if (pthread_setaffinity_np(workers[i].native_handle(), sizeof(cpu_set_t), &set) == -1)
             {
-               std::cout<<"Error setting thread affinity\n";
+               //logit<<"Error setting thread affinity\n";
             }
 
     #endif

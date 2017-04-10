@@ -27,6 +27,7 @@ INCLUDEPATH += src/data_struct/xrf/aps
 INCLUDEPATH += src/quantification/models
 INCLUDEPATH += src/workflow
 INCLUDEPATH += src/workflow/distributors
+INCLUDEPATH += src/io
 INCLUDEPATH += src/io/file
 INCLUDEPATH += src/io/file/aps
 INCLUDEPATH += src/fitting/models
@@ -144,6 +145,7 @@ SOURCES += \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
     src/io/file/csv_io.cpp \
+    src/io/hl_file_io.cpp \
     src/io/file/aps/aps_fit_params_import.cpp \
     #src/io/file/aps/aps_calibration_io.cpp \
     src/visual/vtk_graph.cpp \
@@ -201,6 +203,7 @@ HEADERS += \
     src/io/file/hdf5_io.h \
     src/io/file/netcdf_io.h \
     src/io/file/csv_io.h \
+    src/io/hl_file_io.h \
     src/io/file/aps/aps_fit_params_import.h \
     #src/io/file/aps/aps_calibration_io.h \
     src/visual/vtk_graph.h \
