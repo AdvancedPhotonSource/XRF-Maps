@@ -491,6 +491,275 @@ bool MDA_IO::load_spectra_volume(std::string path,
     return true;
 }
 
+
+
+
+//-----------------------------------------------------------------------------
+
+bool MDA_IO::load_spectra_volume_with_callback(std::string path,
+                                                 size_t detector_num,
+                                                 bool hasNetCDF,
+                                                 data_struct::xrf::Params_Override *override_values,
+                                                 data_struct::xrf::Quantification_Standard * quantification_standard,
+                                                 IO_Callback_Func_Def callback_func,
+                                                 void *user_data)
+{
+    //index per row and col
+    int elt_idx = -1;
+    int ert_idx = -1;
+    int incnt_idx = -1;
+    int outcnt_idx = -1;
+
+    bool single_row_scan = false;
+
+    std::FILE *fptr = std::fopen(path.c_str(), "rb");
+
+    size_t samples = 1;
+
+    if (fptr == nullptr)
+    {
+        return false;
+    }
+
+
+    _mda_file = mda_load(fptr);
+    std::fclose(fptr);
+    if (_mda_file == nullptr)
+    {
+        return false;
+    }
+    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+
+    if (_mda_file->header->data_rank == 2)
+    {
+        logit_s<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
+                  " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<std::endl;
+
+        if(hasNetCDF)
+        {
+            if(_mda_file->scan->last_point == 0)
+                _rows = 1;
+            else
+                _rows = _mda_file->scan->last_point;
+            if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                _cols = 1;
+            else
+                _cols = _mda_file->scan->sub_scans[0]->last_point;
+            return true;
+        }
+        else
+        {
+            if(_mda_file->header->dimensions[1] == 2000)
+            {
+                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
+                {
+                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< std::endl;
+                    unload();
+                    return false;
+                }
+
+                _rows = 1;
+                if(_mda_file->scan->last_point == 0)
+                    _cols = 1;
+                else
+                _cols = _mda_file->scan->last_point;
+                samples = _mda_file->header->dimensions[1];
+                single_row_scan = true;
+            }
+            else
+            {
+                //if not then we don't know what is dataset is.
+                unload();
+                return false;
+            }
+        }
+    }
+    else if (_mda_file->header->data_rank == 3)
+    {
+
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+        {
+            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< std::endl;
+            unload();
+            return false;
+        }
+
+        if(_mda_file->scan->last_point == 0)
+            _rows = 1;
+        else
+            _rows = _mda_file->scan->last_point;
+        if(_mda_file->scan->sub_scans[0]->last_point == 0)
+            _cols = 1;
+        else
+            _cols = _mda_file->scan->sub_scans[0]->last_point;
+        samples = _mda_file->header->dimensions[2];
+    }
+    else
+    {
+        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<std::endl;
+        unload();
+        return false;
+    }
+
+    //_load_detector_meta_data(detector);
+
+    if (override_values != nullptr)
+    {
+        real_t tmp_val;
+
+        if (override_values->elt_pv.length() > 0)
+        {
+            elt_idx = find_2d_detector_index(_mda_file, override_values->elt_pv, detector_num, tmp_val );
+        }
+        if (override_values->ert_pv.length() > 0)
+        {
+            ert_idx = find_2d_detector_index(_mda_file, override_values->ert_pv, detector_num, tmp_val );
+        }
+        if (override_values->in_cnt_pv.length() > 0)
+        {
+            incnt_idx = find_2d_detector_index(_mda_file, override_values->in_cnt_pv, detector_num, tmp_val );
+        }
+        if (override_values->out_cnt_pv.length() > 0)
+        {
+            outcnt_idx = find_2d_detector_index(_mda_file, override_values->out_cnt_pv, detector_num, tmp_val );
+        }
+        if(quantification_standard != nullptr)
+        {
+            if (override_values->scaler_pvs.count("SRCURRENT") > 0)
+            {
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), detector_num, tmp_val );
+                quantification_standard->sr_current(tmp_val);
+            }
+            if (override_values->scaler_pvs.count("US_IC") > 0)
+            {
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("US_IC"), detector_num, tmp_val );
+                quantification_standard->US_IC(tmp_val);
+            }
+            if (override_values->scaler_pvs.count("DS_IC") > 0)
+            {
+                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), detector_num, tmp_val );
+                quantification_standard->DS_IC(tmp_val);
+            }
+        }
+
+    }
+    logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
+
+
+    try
+    {
+        if( single_row_scan )
+        {
+            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
+            {
+                _cols = _mda_file->scan->last_point;
+            }
+        }
+        else
+        {
+            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
+            {
+                _rows = _mda_file->scan->last_point;
+                //TODO: set a flag to return to tell that this is a bad scan
+            }
+        }
+
+        for(size_t i=0; i<_rows; i++)
+        {
+            // update num rows if header is incorrect and not single row scan
+
+            if(false == single_row_scan)
+            {
+                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
+                {
+                    _cols = _mda_file->scan->sub_scans[i]->last_point;
+                    //TODO: set a flag to return to tell that this is a bad scan
+                }
+            }
+            for(size_t j=0; j<_cols; j++)
+            {
+/* TODO: we might need to do the same check for samples size
+                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
+                {
+                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
+                }
+*/
+
+                data_struct::xrf::Spectra* spectra = new data_struct::xrf::Spectra(samples);
+                if (single_row_scan)
+                {
+                    if(elt_idx > -1)
+                    {
+                        spectra->elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
+                    }
+                    if(ert_idx > -1)
+                    {
+                        spectra->elapsed_realtime(_mda_file->scan->detectors_data[ert_idx][j]);
+                    }
+                    if(incnt_idx > -1)
+                    {
+                        spectra->input_counts(_mda_file->scan->detectors_data[incnt_idx][j]);
+                    }
+                    if(outcnt_idx > -1)
+                    {
+                        spectra->output_counts(_mda_file->scan->detectors_data[outcnt_idx][j]);
+                    }
+                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                    {
+                        spectra->recalc_elapsed_lifetime();
+                    }
+
+
+                    for(size_t k=0; k<samples; k++)
+                    {
+
+                        (*spectra)[k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
+                    }
+                    callback_func(i, j, detector_num, spectra, user_data);
+                }
+                else
+                {
+                    if(elt_idx > -1)
+                    {
+                         spectra->elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                    }
+                    if(ert_idx > -1)
+                    {
+                        spectra->elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
+                    }
+                    if(incnt_idx > -1)
+                    {
+                        spectra->input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
+                    }
+                    if(outcnt_idx > -1)
+                    {
+                        spectra->output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
+                    }
+                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                    {
+                        spectra->recalc_elapsed_lifetime();
+                    }
+
+
+                    for(size_t k=0; k<samples; k++)
+                    {
+                        (*spectra)[k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                    }
+                    callback_func(i, j, detector_num, spectra, user_data);
+                }
+            }
+        }
+    }
+    catch(std::exception& e)
+    {
+        logit<<"!!! Error Caught exception loading mda file."<<std::endl;
+        std::cerr << "Exception catched : " << e.what() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 //-----------------------------------------------------------------------------
 
 int MDA_IO::get_multiplied_dims(std::string path)

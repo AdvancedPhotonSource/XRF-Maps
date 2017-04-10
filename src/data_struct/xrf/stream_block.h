@@ -43,79 +43,72 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
 
-#ifndef BASE_IO_H
-#define BASE_IO_H
-
-#include <string>
-#include <functional>
+#ifndef Stream_Block_H
+#define Stream_Block_H
 
 #include "defines.h"
+#include "element_info.h"
+#include "base_fit_routine.h"
+#include <vector>
+#include <string>
 
-#include "base_dataset.h"
-#include "spectra.h"
-
-namespace io
+namespace data_struct
 {
-namespace file
+namespace xrf
 {
 
-typedef std::function<void (size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
-
-class Base_File_IO
+///
+/// \brief The Stream_Fitting_Block struct
+///
+struct Stream_Fitting_Block
 {
+    fitting::routines::Base_Fit_Routine * fit_routine;
+    std::unordered_map<std::string, real_t> fit_counts;
+};
+
+//-----------------------------------------------------------------------------
+
+///
+/// \brief The Stream_Block class
+///
+class DLL_EXPORT Stream_Block
+{
+
 public:
 
-    enum LOADED_STATE {NOT_LOADED, LAZY_LOAD, FULL_LOAD, ERROR_LOADING};
+    Stream_Block(size_t row, size_t col, std::vector<fitting::routines::Base_Fit_Routine *> fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
 
-    /**
-     * @brief Base_File_IO
-     * @param filename
-     */
-    Base_File_IO()
-    {
+    ~Stream_Block();
 
-    }
+    const size_t& row() { return _row; }
 
-    /**
-     * Destructor
-     */
-    ~Base_File_IO(){}
+    const size_t& col() { return _col; }
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    DLL_EXPORT virtual void lazy_load() = 0;
+    std::vector<Stream_Fitting_Block> fitting_blocks;
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    DLL_EXPORT virtual bool load_dataset(std::string path, Base_Dataset* dset) = 0;
+    size_t detector_number;
 
-    /**
-     * @brief isLoaded: State of the dataset
-     */
-    DLL_EXPORT LOADED_STATE is_loaded() { return _is_loaded; }
+    Spectra * spectra;
+
+    Fit_Element_Map_Dict * elements_to_fit;
+
+    fitting::models::Base_Model * model;
 
 protected:
-    /**
-     * @brief _filename
-     */
-    std::string _filename;
 
-    /**
-     * @brief _is_loaded: has the file been loaded
-     */
-    LOADED_STATE _is_loaded;
+    size_t _row;
+
+    size_t _col;
 
 };
 
-}// end namespace FILE
-}// end namespace IO
 
-#endif // Base_IO_H
+} //namespace xrf
+
+} //namespace data_struct
+
+#endif // Stream_Block_H

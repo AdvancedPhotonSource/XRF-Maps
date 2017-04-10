@@ -94,6 +94,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "command_line_parser.h"
 
+#include "stream_block.h"
 
 using namespace std::placeholders; //for _1, _2,
 
@@ -107,6 +108,15 @@ const std::unordered_map<int, std::string> save_loc_map = {
     {GAUSS_MATRIX, "Fitted"},
     {SVD, "SVD"},
     {NNLS, "NNLS"}
+};
+
+struct Callback_Packet
+{
+    ThreadPool *thread_pool;
+    data_struct::xrf::Fit_Element_Map_Dict * elements_to_fit;
+    std::vector<fitting::routines::Base_Fit_Routine *> *fit_routines;
+    fitting::models::Base_Model * model;
+    std::queue<std::future<void> > job_queue;
 };
 
 //Optimizers for fitting models
@@ -319,8 +329,8 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
             continue;
         }
 
-		//Fit job queue
-		std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
+        //Fit job queue
+        std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
 
         //Allocate memeory to save fit counts
         data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
@@ -509,7 +519,7 @@ void process_dataset_file(std::string dataset_directory,
         if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
         {
             logit<<"Skipping detector "<<detector_num<<std::endl;
-			delete spectra_volume;
+            delete spectra_volume;
             continue;
         }
 
@@ -518,6 +528,95 @@ void process_dataset_file(std::string dataset_directory,
 
 }
 
+// ----------------------------------------------------------------------------
+
+void proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
+{
+
+    for(int i =0; i< stream_block->fitting_blocks.size(); i++)
+    {
+        std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
+        //save count / sec
+        for (auto& el_itr : *(stream_block->elements_to_fit))
+        {
+            stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_lifetime();
+        }
+        stream_block->fitting_blocks[i].fit_counts[data_struct::xrf::STR_NUM_ITR] = counts_dict[data_struct::xrf::STR_NUM_ITR];
+    }
+    //io::save_results( save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue, start );
+}
+
+// ----------------------------------------------------------------------------
+
+void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+{
+    struct Callback_Packet *cp = (struct Callback_Packet*)user_data;
+
+    data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, *(cp->fit_routines), cp->elements_to_fit);
+    stream_block->spectra = spectra;
+    stream_block->model = cp->model;
+    stream_block->detector_number = detector_num;
+
+    cp->job_queue.emplace( cp->thread_pool->enqueue(proc_spectra_block, stream_block) );
+}
+
+// ----------------------------------------------------------------------------
+
+void process_dataset_file_stream(std::string dataset_directory,
+                                 std::string dataset_file,
+                                 std::vector<Processing_Type> proc_types,
+                                 ThreadPool* tp,
+                                 std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
+                                 std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
+                                 size_t detector_num_start,
+                                 size_t detector_num_end)
+{
+    std::function<void( data_struct::xrf::Stream_Block* stream_block )> proc_func = std::bind(proc_spectra_block, std::placeholders::_1);
+
+    //initialize models and fit routines for all detectors
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
+
+        std::string str_detector_num = std::to_string(detector_num);
+        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+        io::file::HDF5_IO::inst()->set_filename(full_save_path);
+    }
+
+    struct Callback_Packet cp;
+    cp.thread_pool = tp;
+
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        data_struct::xrf::Params_Override * override_params = nullptr;
+        if(fit_params_override_dict->count(detector_num) > 0)
+        {
+           override_params = &fit_params_override_dict->at(detector_num);
+        }
+        if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
+        {
+           override_params = &fit_params_override_dict->at(-1);
+        }
+        if(override_params == nullptr)
+        {
+            logit<<"Skipping file "<<dataset_directory<<" dset "<< dataset_file << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
+            continue;
+        }
+
+        if (false == io::load_spectra_volume_with_callback(dataset_directory, dataset_file, detector_num, override_params, cb_load_spectra_data, (void*)&cp) )
+        {
+            logit<<"Skipping detector "<<detector_num<<std::endl;
+            continue;
+        }
+    }
+
+    while(!cp.job_queue.empty())
+    {
+        auto ret = std::move(cp.job_queue.front());
+        cp.job_queue.pop();
+    }
+
+}
 
 // ----------------------------------------------------------------------------
 
@@ -790,8 +889,8 @@ int main(int argc, char *argv[])
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
     //////// HENKE and ELEMENT INFO /////////////
-	std::string element_csv_filename = "../reference/xrf_library.csv";
-	std::string element_henke_filename = "../reference/henke.xdr";
+    std::string element_csv_filename = "../reference/xrf_library.csv";
+    std::string element_henke_filename = "../reference/henke.xdr";
 
     std::vector<data_struct::xrf::Quantification_Standard> quant_stand_list;
 
@@ -1069,7 +1168,7 @@ int main(int argc, char *argv[])
     {
         delete itr.second;
     }
-	data_struct::xrf::Element_Info_Map::inst()->clear();
+    data_struct::xrf::Element_Info_Map::inst()->clear();
 
     return 0;
     //return a.exec();

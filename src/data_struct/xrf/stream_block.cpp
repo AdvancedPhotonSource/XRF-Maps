@@ -43,79 +43,58 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
 
-#ifndef BASE_IO_H
-#define BASE_IO_H
+#include "stream_block.h"
 
-#include <string>
-#include <functional>
-
-#include "defines.h"
-
-#include "base_dataset.h"
-#include "spectra.h"
-
-namespace io
+namespace data_struct
 {
-namespace file
+namespace xrf
 {
 
-typedef std::function<void (size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
+//-----------------------------------------------------------------------------
 
-class Base_File_IO
+Stream_Block::Stream_Block(size_t row,
+                           size_t col,
+                           std::vector<fitting::routines::Base_Fit_Routine *> fit_routines,
+                           Fit_Element_Map_Dict * elements_to_fit_)
 {
-public:
 
-    enum LOADED_STATE {NOT_LOADED, LAZY_LOAD, FULL_LOAD, ERROR_LOADING};
+    _row = row;
+    _col = col;
+    elements_to_fit = elements_to_fit_;
 
-    /**
-     * @brief Base_File_IO
-     * @param filename
-     */
-    Base_File_IO()
+    if(elements_to_fit == nullptr)
     {
-
+        //throw Exception;
     }
 
-    /**
-     * Destructor
-     */
-    ~Base_File_IO(){}
+    fitting_blocks.resize(fit_routines.size());
+    int idx = 0;
+    for(auto fit_routine : fit_routines)
+    {
+        fitting_blocks[idx].fit_routine = fit_routine;
+        //fitting_blocks[idx].out_fit_counts
+        for(auto& e_itr : *elements_to_fit)
+        {
+            fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
+        }
+        fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
+        idx++;
+    }
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    DLL_EXPORT virtual void lazy_load() = 0;
+}
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    DLL_EXPORT virtual bool load_dataset(std::string path, Base_Dataset* dset) = 0;
+//-----------------------------------------------------------------------------
 
-    /**
-     * @brief isLoaded: State of the dataset
-     */
-    DLL_EXPORT LOADED_STATE is_loaded() { return _is_loaded; }
+Stream_Block::~Stream_Block()
+{
 
-protected:
-    /**
-     * @brief _filename
-     */
-    std::string _filename;
+}
 
-    /**
-     * @brief _is_loaded: has the file been loaded
-     */
-    LOADED_STATE _is_loaded;
+//-----------------------------------------------------------------------------
 
-};
-
-}// end namespace FILE
-}// end namespace IO
-
-#endif // Base_IO_H
+} //namespace xrf
+} //namespace data_struct

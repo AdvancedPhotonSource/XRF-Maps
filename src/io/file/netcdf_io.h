@@ -83,6 +83,8 @@ public:
 
     virtual bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
 
+    virtual bool load_spectra_line_with_callback(std::string path, size_t detector, int row, size_t row_size, IO_Callback_Func_Def callback_fun, void* user_data);
+
 private:
 
     NetCDF_IO();

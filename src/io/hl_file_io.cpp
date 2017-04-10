@@ -462,6 +462,99 @@ bool load_spectra_volume(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+bool load_spectra_volume_with_callback(std::string dataset_directory,
+                                       std::string dataset_file,
+                                       size_t detector_num,
+                                       data_struct::xrf::Params_Override * params_override,
+                                       file::IO_Callback_Func_Def callback_fun,
+                                       void* user_data)
+{
+    //Dataset importer
+    io::file::MDA_IO mda_io;
+    //data_struct::xrf::Detector detector;
+    std::string tmp_dataset_file = dataset_file;
+
+    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
+
+    //check if we have a netcdf file associated with this dataset.
+    tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
+    bool hasNetcdf = false;
+    bool hasHdf = false;
+    std::string file_middle = ""; //_2xfm3_ or dxpM...
+    for(auto &itr : netcdf_files)
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+            file_middle = itr.substr(tmp_dataset_file.length(), slen);
+            hasNetcdf = true;
+            break;
+        }
+    }
+    if (hasNetcdf == false)
+    {
+        for(auto &itr : hdf_files)
+        {
+            if (itr.find(tmp_dataset_file) == 0)
+            {
+                size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+                file_middle = itr.substr(tmp_dataset_file.length(), slen);
+                hasHdf = true;
+                break;
+            }
+        }
+    }
+
+    //load spectra
+    if (false == mda_io.load_spectra_volume_with_callback(dataset_directory+"mda/"+dataset_file,
+                                                        detector_num,
+                                                        hasNetcdf | hasHdf,
+                                                        params_override,
+                                                        nullptr,
+                                                        callback_fun,
+                                                        user_data) ) //todo: check if it does quant correctly
+    {
+        logit<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+        return false;
+    }
+    else
+    {
+        if(hasNetcdf)
+        {
+            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
+            if(file_io.is_open())
+            {
+                file_io.close();
+                std::string full_filename;
+                int row_size = mda_io.rows();
+                for(size_t i=0; i<row_size; i++)
+                {
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
+                    //todo: add verbose option
+                    //logit<<"Loading file "<<full_filename<<std::endl;
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num, i, row_size, callback_fun, user_data);
+                }
+            }
+            else
+            {
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
+                //return false;
+            }
+        }
+        else if (hasHdf)
+        {
+            io::file::HDF5_IO::inst()->load_spectra_volume_with_callback(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, callback_fun, user_data);
+        }
+
+    }
+
+    mda_io.unload();
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::xrf::Spectra *integrated_spectra,
