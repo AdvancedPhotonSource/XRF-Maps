@@ -532,7 +532,7 @@ bool load_spectra_volume_with_callback(std::string dataset_directory,
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logit<<"Loading file "<<full_filename<<std::endl;
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num, i, row_size, callback_fun, user_data);
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num, i, callback_fun, user_data);
                 }
             }
             else
@@ -547,6 +547,10 @@ bool load_spectra_volume_with_callback(std::string dataset_directory,
         }
 
     }
+
+    io::file::HDF5_IO::inst()->start_save_seq();
+    io::file::HDF5_IO::inst()->generate_stream_datasets(mda_io.cols(), mda_io.rows());
+    io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
 
     mda_io.unload();
     logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;

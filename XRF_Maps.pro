@@ -26,7 +26,7 @@ INCLUDEPATH += src/data_struct/xrf
 INCLUDEPATH += src/data_struct/xrf/aps
 INCLUDEPATH += src/quantification/models
 INCLUDEPATH += src/workflow
-INCLUDEPATH += src/workflow/distributors
+INCLUDEPATH += src/workflow/xrf
 INCLUDEPATH += src/io
 INCLUDEPATH += src/io/file
 INCLUDEPATH += src/io/file/aps
@@ -137,11 +137,11 @@ SOURCES += \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
     #src/workflow/task.cpp \
-    #src/workflow/task_queue.cpp \
-    #src/workflow/general_function_task.cpp \
-    #src/workflow/discretizer.cpp \
-    #src/workflow/distributor.cpp \
-    #src/workflow/distributors/threadpool_distributor.cpp \
+    src/workflow/sink.cpp \
+    src/workflow/distributor.cpp \
+    src/workflow/producer.cpp \
+    src/workflow/pipeline.cpp \
+    src/workflow/xrf/spectra_stream_producer.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
@@ -193,13 +193,12 @@ HEADERS += \
     src/fitting/optimizers/minpack_optimizer.h \
     src/quantification/models/quantification_model.h \
     #src/fitting/optimizers/ceres_optimizer.h \
-    #src/workflow/task.h \
-    #src/workflow/task_queue.h \
-    #src/workflow/general_function_task.h \
-    #src/workflow/discretizer.h \
-    #src/workflow/distributor.h \
-    #src/workflow/distributors/threadpool_distributor.h \
+    src/workflow/sink.h \
+    src/workflow/distributor.h \
+    src/workflow/producer.h \
+    src/workflow/pipeline.h \
     src/workflow/threadpool.h \
+    src/workflow/xrf/spectra_stream_producer.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \

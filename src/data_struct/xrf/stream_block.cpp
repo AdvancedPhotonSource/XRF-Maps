@@ -64,6 +64,7 @@ Stream_Block::Stream_Block(size_t row,
 
     _row = row;
     _col = col;
+    spectra = nullptr;
     elements_to_fit = elements_to_fit_;
 
     if(elements_to_fit == nullptr)
@@ -76,7 +77,6 @@ Stream_Block::Stream_Block(size_t row,
     for(auto fit_routine : fit_routines)
     {
         fitting_blocks[idx].fit_routine = fit_routine;
-        //fitting_blocks[idx].out_fit_counts
         for(auto& e_itr : *elements_to_fit)
         {
             fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
@@ -91,7 +91,15 @@ Stream_Block::Stream_Block(size_t row,
 
 Stream_Block::~Stream_Block()
 {
+    if(spectra != nullptr)
+    {
+        delete spectra;
+        spectra = nullptr;
+    }
 
+    elements_to_fit = nullptr;
+
+    model = nullptr;
 }
 
 //-----------------------------------------------------------------------------

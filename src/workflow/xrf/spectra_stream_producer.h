@@ -43,59 +43,41 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
 
-#ifndef NetCDF_IO_H
-#define NetCDF_IO_H
+#ifndef Spectra_Stream_Producer_H
+#define Spectra_Stream_Producer_H
 
-#include "base_file_io.h"
-#include "base_dataset.h"
-#include "spectra_volume.h"
-#include <netcdf.h>
-#include <mutex>
+#include "defines.h"
 
-namespace io
+#include "producer.h"
+#include "stream_block.h"
+
+namespace workflow
 {
-namespace file
+namespace xrf
 {
 
-class DLL_EXPORT NetCDF_IO : public Base_File_IO
+//-----------------------------------------------------------------------------
+
+class DLL_EXPORT Spectra_Stream_Producer : public Producer
 {
+
 public:
 
-    static NetCDF_IO* inst();
+    Spectra_Stream_Producer();
 
-    ~NetCDF_IO();
+    ~Spectra_Stream_Producer();
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    virtual void lazy_load();
+protected:
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    virtual bool load_dataset(std::string path, Base_Dataset* dset);
-
-    virtual bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
-
-    virtual bool load_spectra_line_with_callback(std::string path, size_t detector, int row, IO_Callback_Func_Def callback_fun, void* user_data);
-
-private:
-
-    NetCDF_IO();
-
-    static NetCDF_IO *_this_inst;
-
-    static std::mutex _mutex;
+    virtual void _execute();
 
 };
 
-}// end namespace file
-}// end namespace io
+} //namespace xrf
+} //namespace workflow
 
-#endif // NetCDF_IO_H
+#endif // Spectra_Stream_Producer_H

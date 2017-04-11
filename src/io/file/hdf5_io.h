@@ -52,10 +52,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <list>
 #include <mutex>
+#include <queue>
+#include <future>
 #include "base_file_io.h"
 #include "base_dataset.h"
 #include "spectra_volume.h"
 #include "fit_element_map.h"
+#include "stream_block.h"
 #include "hdf5.h"
 
 //Include mda data structures to save scalers
@@ -165,6 +168,10 @@ public:
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 
+    bool generate_stream_datasets(size_t width, size_t height);
+
+    void save_stream(std::queue<std::future<data_struct::xrf::Stream_Block*> > *job_queue);
+
     bool save_spectra_volume(const std::string path,
                              data_struct::xrf::Spectra_Volume * spectra_volume,
                              real_t energy_offset,
@@ -215,6 +222,8 @@ private:
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
+
+    void _save_stream_block(data_struct::xrf::Stream_Block* stream_block);
 
     //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 

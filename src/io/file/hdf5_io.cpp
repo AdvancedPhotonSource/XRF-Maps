@@ -3678,5 +3678,30 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::generate_stream_datasets(size_t width, size_t height)
+{
+
+    return false;
+}
+
+void HDF5_IO::save_stream(std::queue<std::future<data_struct::xrf::Stream_Block*> > *job_queue)
+{
+    while(!job_queue->empty())
+    {
+        auto ret = std::move(job_queue->front());
+        data_struct::xrf::Stream_Block* stream_block = ret.get();
+
+        _save_stream_block(stream_block);
+
+        delete stream_block;
+        job_queue->pop();
+    }
+}
+
+void HDF5_IO::_save_stream_block(data_struct::xrf::Stream_Block* stream_block)
+{
+
+}
+
 } //end namespace file
 }// end namespace io

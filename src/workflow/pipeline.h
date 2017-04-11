@@ -43,59 +43,54 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
 
-#ifndef NetCDF_IO_H
-#define NetCDF_IO_H
+#ifndef Pipeline_H
+#define Pipeline_H
 
-#include "base_file_io.h"
-#include "base_dataset.h"
-#include "spectra_volume.h"
-#include <netcdf.h>
-#include <mutex>
+#include "defines.h"
 
-namespace io
+#include <vector>
+
+#include "producer.h"
+#include "distributor.h"
+#include "sink.h"
+
+namespace workflow
 {
-namespace file
+
+//-----------------------------------------------------------------------------
+
+///
+/// \brief The Stream_Block class
+///
+class DLL_EXPORT Pipeline
 {
 
-class DLL_EXPORT NetCDF_IO : public Base_File_IO
-{
 public:
 
-    static NetCDF_IO* inst();
+    Pipeline();
 
-    ~NetCDF_IO();
+    ~Pipeline();
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    virtual void lazy_load();
+    bool append_distributor(Distributor* distributor);
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    virtual bool load_dataset(std::string path, Base_Dataset* dset);
+    bool set_producer(Producer* producer);
 
-    virtual bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
+    bool set_sink(Sink* sink);
 
-    virtual bool load_spectra_line_with_callback(std::string path, size_t detector, int row, IO_Callback_Func_Def callback_fun, void* user_data);
+    void run();
 
-private:
+protected:
 
-    NetCDF_IO();
-
-    static NetCDF_IO *_this_inst;
-
-    static std::mutex _mutex;
+    Producer * _producer;
+    std::vector<Distributor *> _distributor_list;
+    Sink * _sink;
 
 };
 
-}// end namespace file
-}// end namespace io
+} //namespace workflow
 
-#endif // NetCDF_IO_H
+#endif // Pipeline_H

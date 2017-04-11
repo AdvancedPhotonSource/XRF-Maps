@@ -267,7 +267,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
 //-----------------------------------------------------------------------------
 
-bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detector, int row, size_t row_size, IO_Callback_Func_Def callback_fun, void* user_data)
+bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detector, int row, IO_Callback_Func_Def callback_fun, void* user_data)
 {
 
     std::lock_guard<std::mutex> lock(_mutex);
@@ -326,7 +326,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detecto
 
     start[2] += header_size;
 
-    for(size_t j=0; j<row_size; j++)
+    for(size_t j=0; j<num_cols; j++)
     {
         data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(spectra_size);
 
@@ -347,7 +347,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detecto
         elapsed_lifetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if(elapsed_lifetime == 0)
         {
-            if(j < row_size - 2) // usually the last two are missing which spams the log ouput.
+            if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
             {
                 logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
                 elapsed_lifetime = 1.0;
@@ -361,7 +361,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detecto
         elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if(elapsed_realtime == 0)
         {
-            if(j < row_size - 2) // usually the last two are missing which spams the log ouput.
+            if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
             {
                 logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
                 elapsed_realtime = 1.0;

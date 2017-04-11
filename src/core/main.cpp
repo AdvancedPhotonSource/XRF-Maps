@@ -112,11 +112,18 @@ const std::unordered_map<int, std::string> save_loc_map = {
 
 struct Callback_Packet
 {
+    Callback_Packet()
+    {
+        thread_pool = nullptr;
+        elements_to_fit = nullptr;
+    }
     ThreadPool *thread_pool;
     data_struct::xrf::Fit_Element_Map_Dict * elements_to_fit;
-    std::vector<fitting::routines::Base_Fit_Routine *> *fit_routines;
-    fitting::models::Base_Model * model;
-    std::queue<std::future<void> > job_queue;
+    //by detector_number
+    std::unordered_map<int, std::vector<fitting::routines::Base_Fit_Routine *> > fit_routines;
+    //by detector_number
+    std::unordered_map<int, fitting::models::Base_Model*> models;
+    std::queue<std::future<data_struct::xrf::Stream_Block*> > job_queue;
 };
 
 //Optimizers for fitting models
@@ -530,7 +537,7 @@ void process_dataset_file(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-void proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
+data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
 {
 
     for(int i =0; i< stream_block->fitting_blocks.size(); i++)
@@ -544,6 +551,7 @@ void proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
         stream_block->fitting_blocks[i].fit_counts[data_struct::xrf::STR_NUM_ITR] = counts_dict[data_struct::xrf::STR_NUM_ITR];
     }
     //io::save_results( save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue, start );
+    return stream_block;
 }
 
 // ----------------------------------------------------------------------------
@@ -552,9 +560,9 @@ void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_stru
 {
     struct Callback_Packet *cp = (struct Callback_Packet*)user_data;
 
-    data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, *(cp->fit_routines), cp->elements_to_fit);
+    data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, cp->fit_routines[detector_num], cp->elements_to_fit);
     stream_block->spectra = spectra;
-    stream_block->model = cp->model;
+    stream_block->model = cp->models[detector_num];
     stream_block->detector_number = detector_num;
 
     cp->job_queue.emplace( cp->thread_pool->enqueue(proc_spectra_block, stream_block) );
@@ -563,7 +571,7 @@ void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_stru
 // ----------------------------------------------------------------------------
 
 void process_dataset_file_stream(std::string dataset_directory,
-                                 std::string dataset_file,
+                                 std::vector<std::string> dataset_files,
                                  std::vector<Processing_Type> proc_types,
                                  ThreadPool* tp,
                                  std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
@@ -573,21 +581,19 @@ void process_dataset_file_stream(std::string dataset_directory,
 {
     std::function<void( data_struct::xrf::Stream_Block* stream_block )> proc_func = std::bind(proc_spectra_block, std::placeholders::_1);
 
+    struct Callback_Packet cp;
+    cp.thread_pool = tp;
+    fitting::models::Range energy_range;
+    energy_range.min = 0;
+    energy_range.max = 2000;
+
+
+
     //initialize models and fit routines for all detectors
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
+        fitting::models::Gaussian_Model *model = new fitting::models::Gaussian_Model();
 
-        std::string str_detector_num = std::to_string(detector_num);
-        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        io::file::HDF5_IO::inst()->set_filename(full_save_path);
-    }
-
-    struct Callback_Packet cp;
-    cp.thread_pool = tp;
-
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-    {
         data_struct::xrf::Params_Override * override_params = nullptr;
         if(fit_params_override_dict->count(detector_num) > 0)
         {
@@ -599,23 +605,69 @@ void process_dataset_file_stream(std::string dataset_directory,
         }
         if(override_params == nullptr)
         {
-            logit<<"Skipping file "<<dataset_directory<<" dset "<< dataset_file << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
-            continue;
+            logit<<"Error. Could not find maps_fit_params_override.txt"<<std::endl;
+            return;
         }
-
-        if (false == io::load_spectra_volume_with_callback(dataset_directory, dataset_file, detector_num, override_params, cb_load_spectra_data, (void*)&cp) )
+        if (override_params->elements_to_fit.size() < 1)
         {
-            logit<<"Skipping detector "<<detector_num<<std::endl;
-            continue;
+            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+            return;
+        }
+
+        cp.models[detector_num] = model;
+        cp.elements_to_fit = &override_params->elements_to_fit;
+
+        for(auto proc_type : proc_types)
+        {
+            logit << "Generating model for "<< save_loc_map.at(proc_type)<<" detector "<<detector_num<<std::endl;
+
+            //Fitting models
+            fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
+            cp.fit_routines[detector_num].push_back(fit_routine);
+
+
+            //reset model fit parameters to defaults
+            model->reset_to_default_fit_params();
+            //Update fit parameters by override values
+            model->update_fit_params_values(override_params->fit_params);
+
+            //Initialize model
+            fit_routine->initialize(model, &override_params->elements_to_fit, energy_range);
         }
     }
 
-    while(!cp.job_queue.empty())
+    for(std::string dataset_file : dataset_files)
     {
-        auto ret = std::move(cp.job_queue.front());
-        cp.job_queue.pop();
-    }
+        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+        {
+            std::string str_detector_num = std::to_string(detector_num);
+            std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+            io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
+            data_struct::xrf::Params_Override * override_params = nullptr;
+            if(fit_params_override_dict->count(detector_num) > 0)
+            {
+               override_params = &fit_params_override_dict->at(detector_num);
+            }
+            if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
+            {
+               override_params = &fit_params_override_dict->at(-1);
+            }
+            if(override_params == nullptr)
+            {
+                logit<<"Skipping file "<<dataset_directory<<" dset "<< dataset_file << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
+                continue;
+            }
+
+            if (false == io::load_spectra_volume_with_callback(dataset_directory, dataset_file, detector_num, override_params, cb_load_spectra_data, (void*)&cp) )
+            {
+                logit<<"Skipping detector "<<detector_num<<std::endl;
+                continue;
+            }
+
+            io::file::HDF5_IO::inst()->save_stream(&(cp.job_queue));
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -876,6 +928,7 @@ int main(int argc, char *argv[])
     std::string whole_command_line = "";
     bool optimize_fit_override_params = false;
     bool quick_n_dirty = false;
+    bool stream_file = false;
 
     //dict for override info and elements to fit.
     std::unordered_map<int, data_struct::xrf::Params_Override> fit_params_override_dict;
@@ -979,6 +1032,15 @@ int main(int argc, char *argv[])
     if( clp.option_exists("--quick-and-dirty"))
     {
         quick_n_dirty = true;
+    }
+    if( clp.option_exists("--stream-file"))
+    {
+        stream_file = true;
+        if(quick_n_dirty)
+        {
+            logit<<"Cannot perform --stream-file and --quick-and-dirty, disableing --quick-and-dirty"<<std::endl;
+            quick_n_dirty = false;
+        }
     }
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
@@ -1134,18 +1196,24 @@ int main(int argc, char *argv[])
             }
         }
 
-        for(std::string dataset_file : dataset_files)
+        if (stream_file)
         {
-            if(quick_n_dirty)
+            process_dataset_file_stream(dataset_dir, dataset_files, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+        }
+        else
+        {
+            for(std::string dataset_file : dataset_files)
             {
-                process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                if(quick_n_dirty)
+                {
+                    process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                }
+                else
+                {
+                    process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                    io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+                }
             }
-            else
-            {
-                process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
-            }
-
         }
     }
     else
