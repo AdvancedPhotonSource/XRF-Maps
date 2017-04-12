@@ -47,26 +47,54 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "sink.h"
+#ifndef Global_Init_Struct_H
+#define Global_Init_Struct_H
 
-namespace workflow
+#include "defines.h"
+#include "element_info.h"
+#include "base_fit_routine.h"
+#include <vector>
+#include <string>
+#include "quantification_standard.h"
+#include "params_override.h"
+
+namespace data_struct
+{
+namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-/*
-Sink::Sink()
+
+enum Processing_Type { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+
+///
+/// \brief The Global_Init_Struct class
+///
+class DLL_EXPORT Global_Init_Struct
 {
 
+public:
 
-}
+    Global_Init_Struct();
 
-//-----------------------------------------------------------------------------
+    ~Global_Init_Struct();
 
-Sink::~Sink()
-{
+    //by Processing_Type
+    std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
 
-}
-*/
-//-----------------------------------------------------------------------------
+    fitting::models::Base_Model * model;
 
-} //namespace workflow
+    data_struct::xrf::Quantification_Standard quant_standard;
+
+    data_struct::xrf::Params_Override fit_params_override_dict;
+
+};
+
+//one for each detector
+typedef std::map<int, Global_Init_Struct> Global_Init_Struct_Dict;
+
+} //namespace xrf
+
+} //namespace data_struct
+
+#endif // Global_Init_Struct_H

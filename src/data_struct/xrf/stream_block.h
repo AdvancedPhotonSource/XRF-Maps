@@ -80,15 +80,18 @@ class DLL_EXPORT Stream_Block
 
 public:
 
-    Stream_Block(size_t row, size_t col, std::vector<fitting::routines::Base_Fit_Routine *> fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+    Stream_Block(size_t row, size_t col);
 
     ~Stream_Block();
+
+    void init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
 
     const size_t& row() { return _row; }
 
     const size_t& col() { return _col; }
 
-    std::vector<Stream_Fitting_Block> fitting_blocks;
+    //by Processing_Type
+    std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
 
     size_t detector_number;
 

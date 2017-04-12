@@ -53,7 +53,7 @@ namespace workflow
 {
 
 //-----------------------------------------------------------------------------
-
+/*
 Producer::Producer()
 {
 
@@ -81,10 +81,10 @@ void Producer::run()
     if(_distributor != nullptr)
     {
         _execute();
-        //_distributor.run();
+        //_distributor.call();
     }
 }
-
+*/
 //-----------------------------------------------------------------------------
 
 } //namespace workflow

@@ -47,26 +47,28 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "sink.h"
+#include "global_init_struct.h"
 
-namespace workflow
+namespace data_struct
+{
+namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-/*
-Sink::Sink()
+
+Global_Init_Struct::Global_Init_Struct()
 {
 
+}
+
+//-----------------------------------------------------------------------------
+
+Global_Init_Struct::~Global_Init_Struct()
+{
 
 }
 
 //-----------------------------------------------------------------------------
 
-Sink::~Sink()
-{
-
-}
-*/
-//-----------------------------------------------------------------------------
-
-} //namespace workflow
+} //namespace xrf
+} //namespace data_struct

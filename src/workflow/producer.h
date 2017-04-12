@@ -51,32 +51,60 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Producer_H
 
 #include "defines.h"
-#include "distributor.h"
+#include <functional>
 
 namespace workflow
 {
 
 //-----------------------------------------------------------------------------
-
+template<typename T_OUT>
 class DLL_EXPORT Producer
 {
 
+   typedef std::function<void (T_OUT)> Callback_Func_Def;
+ //  typedef std::function<void ( void*, Callback_Func_Def )> Producer_Func_Def;
+
 public:
 
-    Producer();
+    Producer()
+    {
 
-    ~Producer();
+    }
 
-    void run();
+    ~Producer()
+    {
 
-    void connect( Distributor* distributor);
+    }
 
+    void connect( Callback_Func_Def out_callback_func)
+    {
+        _output_callback_func = out_callback_func;
+    }
+/*
+    void set_function(Producer_Func_Def func)
+    {
+        _prod_func = func;
+    }
+*/
+    virtual void run() {}
+
+/*
+    template<class... Args>
+    virtual void run(Args&&... args)
+    {
+
+        auto task = std::make_shared< std::packaged_task<void> >(
+                std::bind(std::forward<Producer_Func_Def>(_prod_func), std::forward<Args>(args)...)
+            );
+
+        task();
+    }
+*/
 protected:
 
-    virtual void _execute() = 0;
+    Callback_Func_Def _output_callback_func;
 
-    Distributor* _distributor;
-
+  //  Producer_Func_Def _prod_func;
 };
 
 } //namespace workflow

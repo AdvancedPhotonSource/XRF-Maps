@@ -51,28 +51,63 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Distributor_H
 
 #include "defines.h"
-#include "element_info.h"
-#include "base_fit_routine.h"
-#include <vector>
-#include <string>
+#include "threadpool.h"
+#include <functional>
 
 namespace workflow
 {
 
 //-----------------------------------------------------------------------------
-
+template <typename T_IN, typename T_OUT>
 class DLL_EXPORT Distributor
 {
 
 public:
 
-    Distributor();
+    Distributor(size_t num_threads)
+    {
+        _thread_pool = new ThreadPool(num_threads);
+        _job_queue = nullptr;
+        _callback_func = std::bind(&Distributor::distribute, this, std::placeholders::_1);
+    }
 
-    ~Distributor();
+    ~Distributor()
+    {
+        delete _thread_pool;
+    }
 
+    void connect(std::queue<std::future<T_OUT> > *job_queue)
+    {
+        _job_queue = job_queue;
+    }
+
+    void distribute(T_IN input)
+    {
+        if(_job_queue != nullptr)
+        {
+            _job_queue->emplace( _thread_pool->enqueue(_dist_func, input) );
+        }
+    }
+
+    std::function<void (T_IN)> get_callback_func()
+    {
+        return _callback_func;
+    }
+
+    void set_function(std::function<T_OUT (T_IN)> dist_func)
+    {
+        _dist_func = dist_func;
+    }
 
 protected:
 
+    std::function<void (T_IN)> _callback_func;
+
+    std::function<T_OUT (T_IN)> _dist_func;
+
+    ThreadPool *_thread_pool;
+
+    std::queue<std::future<T_OUT> > *_job_queue;
 
 };
 

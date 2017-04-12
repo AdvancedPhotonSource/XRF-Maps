@@ -57,34 +57,11 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 Stream_Block::Stream_Block(size_t row,
-                           size_t col,
-                           std::vector<fitting::routines::Base_Fit_Routine *> fit_routines,
-                           Fit_Element_Map_Dict * elements_to_fit_)
+                           size_t col)
 {
-
     _row = row;
     _col = col;
     spectra = nullptr;
-    elements_to_fit = elements_to_fit_;
-
-    if(elements_to_fit == nullptr)
-    {
-        //throw Exception;
-    }
-
-    fitting_blocks.resize(fit_routines.size());
-    int idx = 0;
-    for(auto fit_routine : fit_routines)
-    {
-        fitting_blocks[idx].fit_routine = fit_routine;
-        for(auto& e_itr : *elements_to_fit)
-        {
-            fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
-        }
-        fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
-        idx++;
-    }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -102,6 +79,31 @@ Stream_Block::~Stream_Block()
     model = nullptr;
 }
 
+//-----------------------------------------------------------------------------
+
+void Stream_Block::init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines,
+                                       Fit_Element_Map_Dict * elements_to_fit_)
+{
+    elements_to_fit = elements_to_fit_;
+
+    if(elements_to_fit == nullptr)
+    {
+        //throw Exception;
+    }
+
+    int idx = 0;
+    for(auto &itr : *fit_routines)
+    {
+        fitting_blocks[itr.first] = Stream_Fitting_Block();
+        fitting_blocks[itr.first].fit_routine = itr.second;
+        for(auto& e_itr : *elements_to_fit)
+        {
+            fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
+        }
+        fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
+        idx++;
+    }
+}
 //-----------------------------------------------------------------------------
 
 } //namespace xrf

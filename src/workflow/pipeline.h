@@ -51,9 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Pipeline_H
 
 #include "defines.h"
-
-#include <vector>
-
 #include "producer.h"
 #include "distributor.h"
 #include "sink.h"
@@ -62,32 +59,52 @@ namespace workflow
 {
 
 //-----------------------------------------------------------------------------
-
-///
-/// \brief The Stream_Block class
-///
-class DLL_EXPORT Pipeline
+template <typename _T>
+class DLL_EXPORT Simple_Pipeline
 {
 
 public:
 
-    Pipeline();
+    Simple_Pipeline(int num_threads)
+    {
+        _distributor = new Distributor<_T, _T>(num_threads);
 
-    ~Pipeline();
+        _producer.connect(_distributor->get_callback_func());
+        _distributor->connect(_sink.get_job_queue());
+    }
 
-    bool append_distributor(Distributor* distributor);
+    ~Simple_Pipeline()
+    {
+        delete _distributor;
+    }
 
-    bool set_producer(Producer* producer);
+    void set_producer_func(std::function<_T (void*)> func)
+    {
+        _producer.set_function(func);
+    }
 
-    bool set_sink(Sink* sink);
+    void set_distributor_func(std::function<_T (_T)> func)
+    {
+        _distributor->set_function(func);
+    }
 
-    void run();
+    void set_sink_func(std::function<void (_T)> func)
+    {
+        _sink.set_function(func);
+    }
+
+    void run()
+    {
+        _sink.start();
+        _producer.run();
+        _sink.wait_and_stop();
+    }
 
 protected:
 
-    Producer * _producer;
-    std::vector<Distributor *> _distributor_list;
-    Sink * _sink;
+    Producer<_T> _producer;
+    Distributor<_T, _T> *_distributor;
+    Sink<_T> _sink;
 
 };
 

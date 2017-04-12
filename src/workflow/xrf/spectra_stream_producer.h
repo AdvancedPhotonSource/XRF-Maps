@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "producer.h"
 #include "stream_block.h"
+#include "global_init_struct.h"
 
 namespace workflow
 {
@@ -62,18 +63,26 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Stream_Producer : public Producer
+class DLL_EXPORT Spectra_Stream_Producer : public Producer<data_struct::xrf::Stream_Block*>
 {
 
 public:
 
-    Spectra_Stream_Producer();
+    Spectra_Stream_Producer(std::string dataset_directory,
+                            std::vector<std::string> dataset_files,
+                            data_struct::xrf::Global_Init_Struct_Dict* global_init_struct);
 
     ~Spectra_Stream_Producer();
 
+    void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
+
+    virtual void run();
+
 protected:
 
-    virtual void _execute();
+    std::string _dataset_directory;
+    std::vector<std::string> _dataset_files;
+    data_struct::xrf::Global_Init_Struct_Dict* _global_init_struct;
 
 };
 

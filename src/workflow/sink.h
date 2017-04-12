@@ -51,25 +51,92 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Sink_H
 
 #include "defines.h"
-#include "distributor.h"
+#include <functional>
+#include <future>
+#include <queue>
+#include <thread>
 
 namespace workflow
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Sink : public Distributor
+template<typename T_IN>
+class DLL_EXPORT Sink
 {
 
 public:
 
-    Sink();
+    Sink()
+    {
+        _thread = nullptr;
+        _running = false;
+    }
 
-    ~Sink();
+    ~Sink()
+    {
+
+    }
+
+    void set_function(std::function<void (T_IN)> func)
+    {
+        _callback_func = func;
+    }
+
+    std::queue<std::future<T_IN> >* get_job_queue(){ return &_job_queue; }
+
+    void start()
+    {
+        if(_thread == nullptr)
+        {
+            stop();
+        }
+        std::packaged_task<void(void)> task([this](){ this->_execute(); });
+        _running = true;
+        _thread = new std::thread(std::move(task));
+    }
+
+    void stop()
+    {
+        _running = false;
+        _thread->join();
+        delete _thread;
+    }
+
+    void wait_and_stop()
+    {
+        while(!_job_queue.empty())
+        {
+//wait to finish
+        }
+        stop();
+    }
 
 protected:
 
+    void _execute()
+    {
+        while(_running)
+        {
+            if(!_job_queue.empty())
+            {
+                auto ret = std::move(_job_queue.front());
+                T_IN input_block = ret.get();
 
+                _callback_func(input_block);
+
+                delete input_block;
+                _job_queue.pop();
+            }
+        }
+    }
+
+    std::queue<std::future<T_IN> > _job_queue;
+
+    std::function<void (T_IN)> _callback_func;
+
+    bool _running;
+
+    std::thread *_thread;
 };
 
 } //namespace workflow
