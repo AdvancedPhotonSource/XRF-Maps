@@ -91,17 +91,15 @@ void Stream_Block::init_fitting_blocks(std::unordered_map<int, fitting::routines
         //throw Exception;
     }
 
-    int idx = 0;
     for(auto &itr : *fit_routines)
     {
         fitting_blocks[itr.first] = Stream_Fitting_Block();
         fitting_blocks[itr.first].fit_routine = itr.second;
         for(auto& e_itr : *elements_to_fit)
         {
-            fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
+            fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
         }
-        fitting_blocks[idx].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
-        idx++;
+        fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
     }
 }
 //-----------------------------------------------------------------------------

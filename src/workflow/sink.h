@@ -86,7 +86,7 @@ public:
 
     void start()
     {
-        if(_thread == nullptr)
+        if(_thread != nullptr)
         {
             stop();
         }

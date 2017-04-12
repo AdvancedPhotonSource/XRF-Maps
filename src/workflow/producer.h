@@ -68,7 +68,7 @@ public:
 
     Producer()
     {
-
+        _output_callback_func = nullptr;
     }
 
     ~Producer()

@@ -522,11 +522,21 @@ void process_dataset_file(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+void save_stream_block( data_struct::xrf::Stream_Block* stream_block)
+{
+
+    delete stream_block;
+
+}
+
+// ----------------------------------------------------------------------------
+
 data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
 {
 
-    for(int i =0; i< stream_block->fitting_blocks.size(); i++)
+    for(auto itr : stream_block->fitting_blocks)
     {
+        int i = itr.first;
         std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
@@ -542,15 +552,29 @@ void run_stream_pipeline(std::string dataset_directory,
                          std::vector<std::string> dataset_files,
                          data_struct::xrf::Global_Init_Struct_Dict* gisd)
 {
-
+/*
     workflow::Simple_Pipeline<data_struct::xrf::Stream_Block*> simple_pipeline(1);
     workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(dataset_directory, dataset_files, gisd);
-//    simple_pipeline.set_producer(spectra_stream_producer);
-    //simple_pipeline.set_producer_func(process_dataset_file_stream);
+    simple_pipeline.set_producer(spectra_stream_producer);
+    ///simple_pipeline.set_producer_func(process_dataset_file_stream);
     simple_pipeline.set_distributor_func(proc_spectra_block);
-    //simple_pipeline.set_sink_func(save_stream_block);
+    simple_pipeline.set_sink_func(save_stream_block);
     simple_pipeline.run();
+*/
 
+
+    workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(dataset_directory, dataset_files, gisd);
+    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(1);
+    workflow::Sink<data_struct::xrf::Stream_Block*> sink;
+    sink.set_function(save_stream_block);
+    sink.start();
+
+    distributor.set_function(proc_spectra_block);
+    distributor.connect(sink.get_job_queue());
+
+    spectra_stream_producer.connect(distributor.get_callback_func());
+    spectra_stream_producer.run();
+    sink.wait_and_stop();
 }
 
 // ----------------------------------------------------------------------------
