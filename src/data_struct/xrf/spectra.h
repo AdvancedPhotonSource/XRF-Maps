@@ -92,6 +92,15 @@ public:
         }
     }
 
+    void add(const Spectra_T& spectra)
+    {
+        *this += spectra;
+        _elapsed_lifetime += spectra.elapsed_lifetime();
+        _elapsed_realtime += spectra.elapsed_realtime();
+        _input_counts += spectra.input_counts();
+        _output_counts += spectra.output_counts();
+    }
+
     void elapsed_lifetime(_T val) { _elapsed_lifetime = val; }
 
     const _T elapsed_lifetime() const { return _elapsed_lifetime; }

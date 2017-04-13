@@ -216,7 +216,7 @@ void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::xrf::Spectra_Volume* vol,
@@ -403,12 +403,12 @@ bool MDA_IO::load_spectra_volume(std::string path,
             }
             for(size_t j=0; j<cols; j++)
             {
-/* TODO: we might need to do the same check for samples size
-                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
-                {
-                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
-                }
-*/
+// TODO: we might need to do the same check for samples size
+//                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
+//                {
+//                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
+//                }
+//
 
 
                 if (single_row_scan)
@@ -490,9 +490,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     return true;
 }
-
-
-
+*/
 
 //-----------------------------------------------------------------------------
 
@@ -684,7 +682,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
                 }
 */
-
+//for detector_start to detector_end
                 data_struct::xrf::Spectra* spectra = new data_struct::xrf::Spectra(samples);
                 if (single_row_scan)
                 {

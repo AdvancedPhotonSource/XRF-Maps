@@ -597,6 +597,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
          {
              for(size_t col=0; col<count_row[1]; col++)
              {
+//for detector_start to detector_end
                  data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(dims_in[0]);
 
                  offset_meta[2] = col;

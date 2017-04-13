@@ -50,8 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <dirent.h>
 
-#include "threadpool.h"
-
 #include "netcdf_io.h"
 #include "mda_io.h"
 #include "hdf5_io.h"
@@ -112,20 +110,19 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-                          ThreadPool* tp,
                           size_t detector_num_start,
                           size_t detector_num_end);
 
 bool load_element_info(std::string element_henke_filename,
                        std::string element_csv_filename,
                        data_struct::xrf::Element_Info_Map *element_info_map);
-
+/*
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::xrf::Spectra *integrated_spectra,
                                        size_t detector_num,
                                        data_struct::xrf::Params_Override * params_override);
-
+*/
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::xrf::Params_Override *params_override);
@@ -134,7 +131,7 @@ bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
                                   std::string *standard_file_name,
                                   std::unordered_map<std::string, real_t> *element_standard_weights);
-
+/*
 bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
@@ -142,10 +139,11 @@ bool load_spectra_volume(std::string dataset_directory,
                          data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
                          bool save_scalers);
-
+*/
 bool load_spectra_volume_with_callback(std::string dataset_directory,
                                        std::string dataset_file,
-                                       size_t detector_num,
+                                       size_t detector_start,
+                                       size_t detector_end,
                                        data_struct::xrf::Params_Override * params_override,
                                        file::IO_Callback_Func_Def callback_fun,
                                        void* user_data);

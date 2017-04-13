@@ -47,28 +47,45 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "global_init_struct.h"
+#ifndef Sum_Detectors_Spectra_Stream_Producer_H
+#define Sum_Detectors_Spectra_Stream_Producer_H
 
-namespace data_struct
+#include "defines.h"
+
+#include "producer.h"
+#include "stream_block.h"
+#include "analysis_job.h"
+
+namespace workflow
 {
 namespace xrf
 {
 
 //-----------------------------------------------------------------------------
 
-Global_Init_Struct::Global_Init_Struct()
+class DLL_EXPORT Sum_Detectors_Spectra_Stream_Producer : public Producer<data_struct::xrf::Stream_Block*>
 {
 
-}
+public:
 
-//-----------------------------------------------------------------------------
+    Sum_Detectors_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job);
 
-Global_Init_Struct::~Global_Init_Struct()
-{
+    ~Sum_Detectors_Spectra_Stream_Producer();
 
-}
+    void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
-//-----------------------------------------------------------------------------
+    virtual void run();
+
+protected:
+
+    data_struct::xrf::Analysis_Job* _analysis_job;
+
+    size_t _detector_cntr;
+
+    data_struct::xrf::Spectra* _spectra;
+};
 
 } //namespace xrf
-} //namespace data_struct
+} //namespace workflow
+
+#endif // Sum_Detectors_Spectra_Stream_Producer_H

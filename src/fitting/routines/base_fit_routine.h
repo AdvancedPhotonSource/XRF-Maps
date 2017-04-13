@@ -95,6 +95,12 @@ public:
                                                                 const Fit_Element_Map_Dict * const elements_to_fit) = 0;
 
     /**
+     * @brief get_name : Returns fit routine name
+     * @return
+     */
+    virtual std::string get_name() = 0;
+
+    /**
      * @brief initialize : Initialize the model
      * @param fit_params
      * @param calibration

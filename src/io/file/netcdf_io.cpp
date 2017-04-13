@@ -325,9 +325,10 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path, size_t detecto
     spectra_size = data_in[0][0][20];
 
     start[2] += header_size;
-
     for(size_t j=0; j<num_cols; j++)
     {
+
+//for detector_start to detector_end
         data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(spectra_size);
 
         count[2] = header_size;

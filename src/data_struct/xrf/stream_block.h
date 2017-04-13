@@ -98,6 +98,7 @@ public:
     Spectra * spectra;
 
     Fit_Element_Map_Dict * elements_to_fit;
+    //data_struct::xrf::Params_Override *fit_params_override_dict;
 
     fitting::models::Base_Model * model;
 

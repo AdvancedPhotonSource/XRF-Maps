@@ -121,7 +121,7 @@ SOURCES += \
     src/data_struct/xrf/spectra_line.cpp \
     src/data_struct/xrf/spectra_volume.cpp \
     src/data_struct/xrf/stream_block.cpp \
-    src/data_struct/xrf/global_init_struct.cpp \
+    src/data_struct/xrf/analysis_job.cpp \
     #src/data_struct/xrf/aps/aps_fit_parameters.cpp \
     src/fitting/models/base_model.cpp \
     src/fitting/models/gaussian_model.cpp \
@@ -143,6 +143,8 @@ SOURCES += \
     src/workflow/producer.cpp \
     src/workflow/pipeline.cpp \
     src/workflow/xrf/spectra_stream_producer.cpp \
+    src/workflow/xrf/integrated_spectra_stream_producer.cpp \
+    src/workflow/xrf/sum_detectors_spectra_stream_producer.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
@@ -179,7 +181,7 @@ HEADERS += \
     src/data_struct/xrf/spectra_line.h \
     src/data_struct/xrf/spectra_volume.h \
     src/data_struct/xrf/stream_block.h \
-    src/data_struct/xrf/global_init_struct.h \
+    src/data_struct/xrf/analysis_job.h \
     #src/data_struct/xrf/aps/aps_fit_parameters.h \
     src/fitting/models/base_model.h \
     src/fitting/models/gaussian_model.h \
@@ -201,6 +203,8 @@ HEADERS += \
     src/workflow/pipeline.h \
     src/workflow/threadpool.h \
     src/workflow/xrf/spectra_stream_producer.h \
+    src/workflow/xrf/integrated_spectra_stream_producer.h \
+    src/workflow/xrf/sum_detectors_spectra_stream_producer.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \

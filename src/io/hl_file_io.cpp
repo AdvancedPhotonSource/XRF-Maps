@@ -367,7 +367,7 @@ bool load_override_params(std::string dataset_directory,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
@@ -459,12 +459,13 @@ bool load_spectra_volume(std::string dataset_directory,
     logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
     return true;
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 bool load_spectra_volume_with_callback(std::string dataset_directory,
                                        std::string dataset_file,
-                                       size_t detector_num,
+                                       size_t detector_start,
+                                       size_t detector_end,
                                        data_struct::xrf::Params_Override * params_override,
                                        file::IO_Callback_Func_Def callback_fun,
                                        void* user_data)
@@ -558,7 +559,7 @@ bool load_spectra_volume_with_callback(std::string dataset_directory,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::xrf::Spectra *integrated_spectra,
@@ -669,12 +670,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
     return ret_val;
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-                          ThreadPool* tp,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {

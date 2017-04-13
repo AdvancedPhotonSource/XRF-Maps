@@ -47,8 +47,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Global_Init_Struct_H
-#define Global_Init_Struct_H
+#ifndef Analysis_Job_H
+#define Analysis_Job_H
 
 #include "defines.h"
 #include "element_info.h"
@@ -57,6 +57,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include "quantification_standard.h"
 #include "params_override.h"
+#include "lmfit_optimizer.h"
+#include "mpfit_optimizer.h"
 
 namespace data_struct
 {
@@ -65,21 +67,14 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-enum Processing_Type { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+enum Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
 ///
-/// \brief The Global_Init_Struct class
+/// \brief The Analysis_Sub_Struct class
 ///
-class DLL_EXPORT Global_Init_Struct
+struct DLL_EXPORT Analysis_Sub_Struct
 {
 
-public:
-
-    Global_Init_Struct();
-
-    ~Global_Init_Struct();
-
-    //by Processing_Type
     std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
 
     fitting::models::Base_Model * model;
@@ -90,11 +85,71 @@ public:
 
 };
 
-//one for each detector
-typedef std::map<int, Global_Init_Struct> Global_Init_Struct_Dict;
+///
+/// \brief The Analysis_Job class
+///
+class DLL_EXPORT Analysis_Job
+{
+public:
+
+    Analysis_Job(size_t num_threads=1);
+
+    ~Analysis_Job();
+
+    const std::string& dataset_directory() { return _dataset_directory; }
+
+    const std::vector<std::string>& dataset_files() { return _dataset_files; }
+
+    struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
+
+    //truct Analysis_Sub_Struct* get_default_sub_struct() { return &_default_sub_struct; }
+
+    inline auto get_detector_begin() { return _detectors_meta_data.begin(); }
+
+    inline auto get_detector_end() { return _detectors_meta_data.begin(); }
+
+    bool load(std::string dataset_directory,
+              std::vector<std::string> dataset_files,
+              std::vector<Fitting_Routines> fitting_routines,
+              size_t detector_num_start,
+              size_t detector_num_end);
+
+    const size_t& num_threads() { return _num_threads; }
+
+    size_t get_num_detectors() { return _detectors_meta_data.size(); }
+
+    void set_optimizer(std::string optimizer);
+
+    const size_t& detector_num_start() { return _detector_num_start; }
+
+    const size_t& detector_num_end() { return _detector_num_end; }
+
+protected:
+
+    fitting::routines::Base_Fit_Routine* _generate_fit_routine(Fitting_Routines proc_type);
+
+    std::string _dataset_directory;
+
+    std::vector<std::string> _dataset_files;
+
+    std::vector<Fitting_Routines> _fitting_routines;
+
+    //struct Analysis_Sub_Struct _default_sub_struct;
+    std::map<int, struct Analysis_Sub_Struct> _detectors_meta_data;
+
+    //Optimizers for fitting models
+    fitting::optimizers::LMFit_Optimizer _lmfit_optimizer;
+    fitting::optimizers::MPFit_Optimizer _mpfit_optimizer;
+    fitting::optimizers::Optimizer *_optimizer;
+
+    size_t _detector_num_start;
+    size_t _detector_num_end;
+
+    size_t _num_threads;
+};
 
 } //namespace xrf
 
 } //namespace data_struct
 
-#endif // Global_Init_Struct_H
+#endif // Analysis_Job_H

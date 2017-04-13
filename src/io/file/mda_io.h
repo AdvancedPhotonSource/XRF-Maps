@@ -93,14 +93,14 @@ public:
      * @param filename
      */
     virtual bool load_dataset(std::string path, Base_Dataset* dset);
-
+/*
     virtual bool load_spectra_volume(std::string path,
                                      size_t detector_num,
                                      data_struct::xrf::Spectra_Volume* vol,
                                      bool hasNetCDF,
                                      data_struct::xrf::Params_Override *override_values,
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
-
+*/
     virtual bool load_spectra_volume_with_callback(std::string path,
                                                    size_t detector_num,
                                                    bool hasNetCDF,

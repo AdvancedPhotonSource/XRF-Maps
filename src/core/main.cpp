@@ -64,95 +64,27 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //#include "pybind11.h"
 
-#include <dirent.h>
-
-#include "threadpool.h"
-
 #include "hl_file_io.h"
-
-
-#include "spectra_volume.h"
-#include "detector.h"
-
-#include "gaussian_model.h"
-
 #include "element_info.h"
-
-#include "aps_fit_params_import.h"
-
-#include "roi_fit_routine.h"
-#include "svd_fit_routine.h"
-#include "nnls_fit_routine.h"
-
-#include "lmfit_optimizer.h"
-#include "mpfit_optimizer.h"
-
 #include "fit_element_map.h"
-#include "params_override.h"
-
-#include "global_init_struct.h"
-
+#include "analysis_job.h"
 #include "command_line_parser.h"
-
 #include "stream_block.h"
 #include "pipeline.h"
 #include "spectra_stream_producer.h"
+#include "integrated_spectra_stream_producer.h"
 
-
-using namespace std::placeholders; //for _1, _2,
+#include "param_optimized_fit_routine.h"
+#include "gaussian_model.h"
 
 // ----------------------------------------------------------------------------
-
-const std::unordered_map<int, std::string> save_loc_map = {
-    {data_struct::xrf::ROI, "ROI"},
-    {data_struct::xrf::GAUSS_TAILS, "Params"},
-    {data_struct::xrf::GAUSS_MATRIX, "Fitted"},
-    {data_struct::xrf::SVD, "SVD"},
-    {data_struct::xrf::NNLS, "NNLS"}
-};
-
-//Optimizers for fitting models
-fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
-fitting::optimizers::MPFit_Optimizer mpfit_optimizer;
-
-fitting::optimizers::Optimizer *optimizer = &lmfit_optimizer;
 
 //default mode for which parameters to fit when optimizing fit parameters
 fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
 
 // ----------------------------------------------------------------------------
-
-fitting::routines::Base_Fit_Routine * generate_fit_routine(data_struct::xrf::Processing_Type proc_type)
-{
-    //Fitting routines
-    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
-    switch(proc_type)
-    {
-        case data_struct::xrf::GAUSS_TAILS:
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
-            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
-            break;
-        case data_struct::xrf::GAUSS_MATRIX:
-            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
-            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
-            break;
-        case data_struct::xrf::ROI:
-            fit_routine = new fitting::routines::ROI_Fit_Routine();
-            break;
-        case data_struct::xrf::SVD:
-            fit_routine = new fitting::routines::SVD_Fit_Routine();
-            break;
-        case data_struct::xrf::NNLS:
-            fit_routine = new fitting::routines::NNLS_Fit_Routine();
-            break;
-        default:
-            break;
-    }
-    return fit_routine;
-}
-
 // ----------------------------------------------------------------------------
-
+/*
 //data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit, size_t width, size_t height )
 template<typename T>
 data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit, size_t width, size_t height )
@@ -188,114 +120,8 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
- struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
-                                                                std::string  dataset_filename,
-                                                                size_t detector_num)
-{
-
-    //return structure
-    struct io::file_name_fit_params ret_struct;
-
-    ret_struct.dataset_dir = dataset_directory;
-    ret_struct.dataset_filename = dataset_filename;
-    ret_struct.detector_num = detector_num;
-
-    fitting::models::Gaussian_Model model;
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-
-
-    data_struct::xrf::Params_Override params_override;
-
-    //load override parameters
-    io::load_override_params(dataset_directory, -1, &params_override);
-
-    ret_struct.elements_to_fit = params_override.elements_to_fit;
-
-    //load the quantification standard dataset
-    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &params_override) )
-    {
-        logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
-        ret_struct.success = false;
-        return ret_struct;
-    }
-
-    energy_range.max = ret_struct.spectra.size() -1;
-
-
-    //Fitting routines
-    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-    fit_routine.set_optimizer(optimizer);
-
-    //reset model fit parameters to defaults
-    model.reset_to_default_fit_params();
-    //Update fit parameters by override values
-    model.update_fit_params_values(params_override.fit_params);
-    model.set_fit_params_preset(optimize_fit_params_preset);
-    //Initialize the fit routine
-    fit_routine.initialize(&model, &ret_struct.elements_to_fit, energy_range);
-    //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct.fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct.spectra, &ret_struct.elements_to_fit);
-
-    ret_struct.success = true;
-
-    return ret_struct;
-
-}
-
-// ----------------------------------------------------------------------------
-
-void generate_optimal_params(std::string dataset_directory,
-                             std::vector<std::string> dataset_files,
-                             ThreadPool* tp,
-                             size_t detector_num_start,
-                             size_t detector_num_end)
-{
-    bool first = true;
-    std::queue<std::future<struct io::file_name_fit_params> > job_queue;
-
-    std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
-    fit_params_avgs.resize(detector_num_end - detector_num_start + 1);
-
-    for(auto &itr : dataset_files)
-    {
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-        {
-            //data_struct::xrf::Fit_Parameters out_fitp;
-            //out_fitp = optimize_integrated_fit_params(dataset_directory, itr, detector_num);
-            job_queue.emplace( tp->enqueue(optimize_integrated_fit_params, dataset_directory, itr, detector_num) );
-        }
-    }
-
-
-    while(!job_queue.empty())
-    {
-        auto ret = std::move(job_queue.front());
-        job_queue.pop();
-        struct io::file_name_fit_params f_struct = ret.get();
-        if(f_struct.success)
-        {
-            if(first)
-            {
-                fit_params_avgs[f_struct.detector_num] = f_struct.fit_params;
-            }
-            else
-            {
-                fit_params_avgs[f_struct.detector_num].moving_average_with(f_struct.fit_params);
-            }
-            io::save_optimized_fit_params(f_struct);
-        }
-    }
-    io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
-
-}
-
-// ----------------------------------------------------------------------------
-
 void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
-                  std::vector<data_struct::xrf::Processing_Type> proc_types,
+                  std::vector<data_struct::xrf::Fitting_Routines> proc_types,
                   data_struct::xrf::Params_Override * override_params,
                   data_struct::xrf::Quantification_Standard * quantification_standard,
                   ThreadPool* tp)
@@ -312,7 +138,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 
     for(auto proc_type : proc_types)
     {
-        logit << "Processing  "<< save_loc_map.at(proc_type)<<std::endl;
+////        logit << "Processing  "<< save_loc_map.at(proc_type)<<std::endl;
 
         start = std::chrono::system_clock::now();
         if (override_params->elements_to_fit.size() < 1)
@@ -385,7 +211,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 
 void process_dataset_file_quick_n_dirty(std::string dataset_directory,
                                         std::string dataset_file,
-                                        std::vector<data_struct::xrf::Processing_Type> proc_types,
+                                        std::vector<data_struct::xrf::Fitting_Routines> proc_types,
                                         ThreadPool* tp,
                                         std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
                                         std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
@@ -471,7 +297,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
 
 void process_dataset_file(std::string dataset_directory,
                           std::string dataset_file,
-                          std::vector<data_struct::xrf::Processing_Type> proc_types,
+                          std::vector<data_struct::xrf::Fitting_Routines> proc_types,
                           ThreadPool* tp,
                           std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
                           std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
@@ -519,16 +345,7 @@ void process_dataset_file(std::string dataset_directory,
     }
 
 }
-
-// ----------------------------------------------------------------------------
-
-void save_stream_block( data_struct::xrf::Stream_Block* stream_block)
-{
-
-    delete stream_block;
-
-}
-
+*/
 // ----------------------------------------------------------------------------
 
 data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
@@ -548,9 +365,19 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
     return stream_block;
 }
 
-void run_stream_pipeline(std::string dataset_directory,
-                         std::vector<std::string> dataset_files,
-                         data_struct::xrf::Global_Init_Struct_Dict* gisd)
+// ----------------------------------------------------------------------------
+
+void save_stream_block( data_struct::xrf::Stream_Block* stream_block)
+{
+
+    //io::save_stream_block(stream_block);
+    delete stream_block;
+
+}
+
+// ----------------------------------------------------------------------------
+
+void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
 /*
     workflow::Simple_Pipeline<data_struct::xrf::Stream_Block*> simple_pipeline(1);
@@ -563,8 +390,8 @@ void run_stream_pipeline(std::string dataset_directory,
 */
 
 
-    workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(dataset_directory, dataset_files, gisd);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(1);
+    workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(job);
+    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
     workflow::Sink<data_struct::xrf::Stream_Block*> sink;
     sink.set_function(save_stream_block);
     sink.start();
@@ -579,68 +406,105 @@ void run_stream_pipeline(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-bool init_global_structures(std::string dataset_directory,
-                            std::vector<data_struct::xrf::Processing_Type> proc_types,
-                            size_t detector_num_start,
-                            size_t detector_num_end,
-                            data_struct::xrf::Global_Init_Struct_Dict* gisd)
+struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xrf::Stream_Block* stream_block )
 {
+    struct io::file_name_fit_params* ret_struct = new struct io::file_name_fit_params();
+
     fitting::models::Range energy_range;
     energy_range.min = 0;
-    energy_range.max = 2000;
+    energy_range.max = ret_struct->spectra.size() -1;
 
-    //initialize models and fit routines for all detectors
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    fitting::models::Gaussian_Model model;
+    //Fitting routines
+    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
+    fit_routine.set_optimizer(optimizer);
+
+    //reset model fit parameters to defaults
+    model.reset_to_default_fit_params();
+    //Update fit parameters by override values
+    model.update_fit_params_values(params_override.fit_params);
+    model.set_fit_params_preset(optimize_fit_params_preset);
+    //Initialize the fit routine
+    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
+    //Fit the spectra saving the element counts in element_fit_count_dict
+    ret_struct->fit_params = fit_routine.fit_spectra_parameters(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
+
+    ret_struct->success = true;
+
+    delete stream_block;
+
+    return ret_struct;
+}
+
+// ----------------------------------------------------------------------------
+
+void save_optimal_params(struct io::file_name_fit_params* f_struct)
+{
+    static bool first = false;
+    if(f_struct->success)
     {
-        (*gisd)[detector_num] = data_struct::xrf::Global_Init_Struct();
-        data_struct::xrf::Global_Init_Struct* gis = &((*gisd)[detector_num]);
-        gis->model = new fitting::models::Gaussian_Model();
-        data_struct::xrf::Params_Override * override_params = &(gis->fit_params_override_dict);
-
-        override_params->dataset_directory = dataset_directory;
-        override_params->detector_num = detector_num;
-
-        if( false == io::load_override_params(dataset_directory, detector_num, override_params) )
+        if(first)
         {
-            if( false == io::load_override_params(dataset_directory, -1, override_params) )
-            {
-                return false;
-            }
+///            fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
+            first = false;
         }
-
-        if (override_params->elements_to_fit.size() < 1)
+        else
         {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
-            return false;
+///            fit_params_avgs[f_struct->detector_num].moving_average_with(f_struct->fit_params);
         }
-
-        for(auto proc_type : proc_types)
-        {
-            logit << "Generating model for "<< save_loc_map.at(proc_type)<<" detector "<<detector_num<<std::endl;
-
-            //Fitting models
-            fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
-            gis->fit_routines[proc_type] = fit_routine;
-
-
-            //reset model fit parameters to defaults
-            gis->model->reset_to_default_fit_params();
-            //Update fit parameters by override values
-            gis->model->update_fit_params_values(override_params->fit_params);
-
-            //Initialize model
-            fit_routine->initialize(gis->model, &override_params->elements_to_fit, energy_range);
-        }
+        io::save_optimized_fit_params(*f_struct);
     }
+    delete f_struct;
+}
 
-    return true;
+// ----------------------------------------------------------------------------
+
+void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
+{
+    /*
+    std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
+    fit_params_avgs.resize(detector_num_end - detector_num_start + 1);
+    */
+
+    workflow::xrf::Integrated_Spectra_Stream_Producer spectra_stream_producer(job);
+    workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
+    workflow::Sink<struct io::file_name_fit_params*> sink;
+    sink.set_function(save_optimal_params);
+    sink.start();
+
+    distributor.set_function(optimize_integrated_fit_params);
+    distributor.connect(sink.get_job_queue());
+
+    spectra_stream_producer.connect(distributor.get_callback_func());
+    spectra_stream_producer.run();
+    sink.wait_and_stop();
+    /*
+    io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
+    */
+}
+
+
+void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
+{
+    workflow::xrf::Sum_Detectors_Spectra_Stream_Producer sum_detectors_spectra_stream_producer(job);
+    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
+    workflow::Sink<data_struct::xrf::Stream_Block*> sink;
+    sink.set_function(save_stream_block);
+    sink.start();
+
+    distributor.set_function(proc_spectra_block);
+    distributor.connect(sink.get_job_queue());
+
+    sum_detectors_spectra_stream_producer.connect(distributor.get_callback_func());
+    sum_detectors_spectra_stream_producer.run();
+    sink.wait_and_stop();
 }
 
 // ----------------------------------------------------------------------------
 
 bool perform_quantification(std::string dataset_directory,
                             std::string quantification_info_file,
-                            std::vector<data_struct::xrf::Processing_Type> proc_types,
+                            std::vector<data_struct::xrf::Fitting_Routines> proc_types,
                             std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
                             std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
                             size_t detector_num_start,
@@ -790,7 +654,7 @@ bool perform_quantification(std::string dataset_directory,
 
                 //save for each proc
                 quantification_standard->quantifiy(optimizer,
-                                                   save_loc_map.at(proc_type),
+                                                   fit_routine->get_name(),
                                                   &counts_dict,
                                                   incident_energy,
                                                   detector_element,
@@ -822,25 +686,6 @@ bool perform_quantification(std::string dataset_directory,
 
     return true;
 
-}
-
-// ----------------------------------------------------------------------------
-
-void average_quantification(std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            size_t detector_num_start,
-                            size_t detector_num_end)
-{
-    /*
-    data_struct::xrf::Quantification_Standard q_standard_0;
-    q_standard_0.
-
-
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-    {
-        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
-        quantification_standard->
-    }
-    */
 }
 
 // ----------------------------------------------------------------------------
@@ -889,20 +734,16 @@ int main(int argc, char *argv[])
 
     std::string dataset_dir;
     std::vector<std::string> dataset_files;
-    std::vector<data_struct::xrf::Processing_Type> proc_types;
+    std::vector<data_struct::xrf::Fitting_Routines> proc_types;
     std::string quant_standard_filename = "";
     std::string whole_command_line = "";
     bool optimize_fit_override_params = false;
     bool quick_n_dirty = false;
-    bool stream_file = false;
-
-    //dict for override info and elements to fit.
-    std::unordered_map<int, data_struct::xrf::Params_Override> fit_params_override_dict;
+    std::string opt = "";
 
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
     size_t detector_num_end = 3;
-    //ThreadPool tp(1);
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -934,7 +775,7 @@ int main(int argc, char *argv[])
         thread_affinity = true;
     }
 
-    ThreadPool tp(num_threads, thread_affinity);
+    //ThreadPool tp(num_threads, thread_affinity);
 
 
     if ( clp.option_exists("--tails") )
@@ -982,11 +823,7 @@ int main(int argc, char *argv[])
 
     if( clp.option_exists("--optimizer"))
     {
-        std::string opt = clp.get_option("--optimizer");
-        if(opt == "mpfit")
-        {
-            optimizer = &mpfit_optimizer;
-        }
+        opt = clp.get_option("--optimizer");
         //lmfit by default
     }
 
@@ -998,15 +835,6 @@ int main(int argc, char *argv[])
     if( clp.option_exists("--quick-and-dirty"))
     {
         quick_n_dirty = true;
-    }
-    if( clp.option_exists("--stream-file"))
-    {
-        stream_file = true;
-        if(quick_n_dirty)
-        {
-            logit<<"Cannot perform --stream-file and --quick-and-dirty, disableing --quick-and-dirty"<<std::endl;
-            quick_n_dirty = false;
-        }
     }
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
@@ -1102,6 +930,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    data_struct::xrf::Analysis_Job analysis_job(num_threads);
+    analysis_job.set_optimizer(opt);
+
     if(optimize_fit_override_params)
     {
         std::vector<std::string> optim_dataset_files;
@@ -1124,29 +955,16 @@ int main(int argc, char *argv[])
                 optim_dataset_files.pop_back();
             }
         }
-        generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
-    }
 
-    //try to load maps fit params override txt files for each detector. -1 is general one
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-    {
-        data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
-        if( io::load_override_params(dataset_dir, detector_num, &params_override) )
+        if( analysis_job.load(dataset_dir, optim_dataset_files, proc_types, detector_num_start, detector_num_end) )
         {
-            fit_params_override_dict[detector_num] = params_override;
+            run_optimization_stream_pipeline(&analysis_job);
         }
-    }
-    data_struct::xrf::Params_Override params(dataset_dir, -1);
-    if( io::load_override_params(dataset_dir, -1, &params) )
-    {
-        fit_params_override_dict[-1] = params;
-    }
-
-    //check to make sure we have at least 1
-    if(fit_params_override_dict.size() == 0)
-    {
-        logit<<"Error loading any maps_fit_params_override.txt "<<std::endl;
-        return -1;
+        else
+        {
+            logit<<"Error initializing meta data. Exiting"<<std::endl;
+            return -1;
+        }
     }
 
     if(proc_types.size() > 0)
@@ -1161,27 +979,20 @@ int main(int argc, char *argv[])
                 average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
             }
         }
-
-        if (stream_file)
+        //relead to process all dataset files and in case optimizer changed fit parameters
+        if(false == analysis_job.load(dataset_dir, dataset_files, proc_types, detector_num_start, detector_num_end) )
         {
-            data_struct::xrf::Global_Init_Struct_Dict gisd;
-            init_global_structures(dataset_dir, proc_types, detector_num_start, detector_num_end, &gisd);
-            run_stream_pipeline(dataset_dir, dataset_files, &gisd);
+            logit<<"Error initializing meta data. Exiting"<<std::endl;
+            return -1;
+        }
+
+        if(quick_n_dirty)
+        {
+            run_quick_n_dirty_pipeline(&analysis_job);
         }
         else
         {
-            for(std::string dataset_file : dataset_files)
-            {
-                if(quick_n_dirty)
-                {
-                    process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                }
-                else
-                {
-                    process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                    io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
-                }
-            }
+            run_stream_pipeline(&analysis_job);
         }
     }
     else
@@ -1190,7 +1001,7 @@ int main(int argc, char *argv[])
         {
             for(std::string dataset_file : dataset_files)
             {
-                io::generate_h5_averages(dataset_dir, dataset_file, &tp, detector_num_start, detector_num_end);
+                io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
             }
         }
     }
@@ -1199,11 +1010,6 @@ int main(int argc, char *argv[])
     std::chrono::duration<double> elapsed_seconds = end-start;
     logit << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
 
-    //cleanup
-    for (auto & itr : params.elements_to_fit)
-    {
-        delete itr.second;
-    }
     data_struct::xrf::Element_Info_Map::inst()->clear();
 
     return 0;

@@ -47,8 +47,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "spectra_stream_producer.h"
-#include "hl_file_io.h"
+#ifndef Integrated_Spectra_Stream_Producer_H
+#define Integrated_Spectra_Stream_Producer_H
+
+#include "defines.h"
+
+#include "producer.h"
+#include "stream_block.h"
+#include "analysis_job.h"
 
 namespace workflow
 {
@@ -57,67 +63,28 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Producer::Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Producer<data_struct::xrf::Stream_Block*>()
-{
-    _analysis_job = analysis_job;
-}
-
-//-----------------------------------------------------------------------------
-
-Spectra_Stream_Producer::~Spectra_Stream_Producer()
+class DLL_EXPORT Integrated_Spectra_Stream_Producer : public Producer<data_struct::xrf::Stream_Block*>
 {
 
-}
+public:
 
-// ----------------------------------------------------------------------------
+    Integrated_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job);
 
-void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
-{
+    ~Integrated_Spectra_Stream_Producer();
 
-    struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+    void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
-    data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col);
-    stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-    stream_block->spectra = spectra;
-    stream_block->model = cp->model;
-    stream_block->detector_number = detector_num;
+    virtual void run();
 
-    if(_output_callback_func != nullptr)
-    {
-        _output_callback_func(stream_block);
-    }
+protected:
 
-}
+    data_struct::xrf::Analysis_Job* _analysis_job;
 
-// ----------------------------------------------------------------------------
+    data_struct::xrf::Spectra *_spectra;
 
-void Spectra_Stream_Producer::run()
-{
-    auto cb_func = std::bind(&Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
-
-    for(std::string dataset_file : _analysis_job->dataset_files())
-    {
-        for(auto itr = _analysis_job->get_detector_begin(); itr != _analysis_job->get_detector_end(); itr++)
-        {
-
-            size_t detector_num = itr->first;
-            /*
-            std::string str_detector_num = std::to_string(detector_num);
-            std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-            io::file::HDF5_IO::inst()->set_filename(full_save_path);
-            */
-
-            if (false == io::load_spectra_volume_with_callback(_analysis_job->dataset_directory(), dataset_file, detector_num, detector_num, &(itr->second.fit_params_override_dict), cb_func, nullptr) )
-            {
-                logit<<"Skipping detector "<<detector_num<<std::endl;
-                continue;
-            }
-        }
-    }
-}
-
-
-//-----------------------------------------------------------------------------
+};
 
 } //namespace xrf
 } //namespace workflow
+
+#endif // Integrated_Spectra_Stream_Producer_H
