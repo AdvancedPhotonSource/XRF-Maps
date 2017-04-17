@@ -103,11 +103,11 @@ public:
     struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
 
     //truct Analysis_Sub_Struct* get_default_sub_struct() { return &_default_sub_struct; }
-
+/*
     inline auto get_detector_begin() { return _detectors_meta_data.begin(); }
 
     inline auto get_detector_end() { return _detectors_meta_data.begin(); }
-
+*/
     bool load(std::string dataset_directory,
               std::vector<std::string> dataset_files,
               std::vector<Fitting_Routines> fitting_routines,

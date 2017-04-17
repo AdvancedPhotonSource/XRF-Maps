@@ -153,7 +153,11 @@ public:
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
-    bool load_spectra_volume_with_callback(std::string path, size_t detector_num, IO_Callback_Func_Def callback_func, void* user_data);
+    bool load_spectra_volume_with_callback(std::string path,
+                                           size_t detector_start,
+                                           size_t detector_end,
+                                           IO_Callback_Func_Def callback_func,
+                                           void* user_data);
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 

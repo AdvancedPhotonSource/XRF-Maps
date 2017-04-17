@@ -83,6 +83,7 @@ public:
 
     void distribute(T_IN input)
     {
+        //add logic to block on queue size or get ram mem size limiters
         if(_job_queue != nullptr)
         {
             _job_queue->emplace( _thread_pool->enqueue(_dist_func, input) );

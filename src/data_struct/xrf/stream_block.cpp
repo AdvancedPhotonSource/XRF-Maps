@@ -57,10 +57,14 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 Stream_Block::Stream_Block(size_t row,
-                           size_t col)
+                           size_t col,
+                           size_t height,
+                           size_t width)
 {
     _row = row;
     _col = col;
+    _height = height;
+    _width = width;
     spectra = nullptr;
 }
 

@@ -440,7 +440,11 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detector_num, IO_Callback_Func_Def callback_func, void* user_data)
+bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
+                                                size_t detector_num_start,
+                                                size_t detector_num_end,
+                                                IO_Callback_Func_Def callback_func,
+                                                void* user_data)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -448,7 +452,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
 
-   logit<< path <<" detector : "<<detector_num<<std::endl;
+   logit<< path <<" detectors : "<<detector_num_start<<":"<<detector_num_end<<std::endl;
 
    hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
@@ -460,7 +464,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
    hsize_t offset_meta[3] = {0,0,0};
    hsize_t count_meta[3] = {1,1,1};
 
-
+/* todo update to multi detector
    switch(detector_num)
    {
    case 0:
@@ -479,7 +483,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
        detector_path = "";
        break;
    }
-
+*/
     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if(file_id < 0)
     {
@@ -584,7 +588,6 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
     real_t in_cnt = 1.0;
     real_t out_cnt = 1.0;
 
-    offset_meta[0] = detector_num;
     for (size_t row=0; row < dims_in[1]; row++)
     {
          offset[1] = row;
@@ -597,32 +600,35 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path, size_t detecto
          {
              for(size_t col=0; col<count_row[1]; col++)
              {
-//for detector_start to detector_end
-                 data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(dims_in[0]);
-
                  offset_meta[2] = col;
-
-                 H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-                 error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-                 spectra->elapsed_lifetime(live_time);
-
-                 H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-                 error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
-                 spectra->elapsed_realtime(real_time);
-
-                 H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-                 error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
-                 spectra->input_counts(in_cnt);
-
-                 H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-                 error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
-                 spectra->output_counts(out_cnt);
-
-                 for(size_t s=0; s<count_row[0]; s++)
+//for detector_start to detector_end
+                 for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
                  {
-                     (*spectra)[s] = buffer[(count_row[1] * s) + col];
-                 }
-                 callback_func(row, col, detector_num, spectra, user_data);
+                     offset_meta[0] = detector_num;
+                     data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(dims_in[0]);
+
+                     H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                     error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
+                     spectra->elapsed_lifetime(live_time);
+
+                     H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                     error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+                     spectra->elapsed_realtime(real_time);
+
+                     H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                     error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
+                     spectra->input_counts(in_cnt);
+
+                     H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                     error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
+                     spectra->output_counts(out_cnt);
+
+                     for(size_t s=0; s<count_row[0]; s++)
+                     {
+                         (*spectra)[s] = buffer[(count_row[1] * s) + col];
+                     }
+                     callback_func(row, col, dims_in[1], count_row[1], detector_num, spectra, user_data);
+                }
                  //logit<<"saved col "<<col<<std::endl;
              }
 

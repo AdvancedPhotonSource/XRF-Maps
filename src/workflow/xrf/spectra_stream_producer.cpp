@@ -60,6 +60,7 @@ namespace xrf
 Spectra_Stream_Producer::Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Producer<data_struct::xrf::Stream_Block*>()
 {
     _analysis_job = analysis_job;
+    _cb_function = std::bind(&Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
@@ -71,19 +72,19 @@ Spectra_Stream_Producer::~Spectra_Stream_Producer()
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
 {
-
-    struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
-
-    data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col);
-    stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-    stream_block->spectra = spectra;
-    stream_block->model = cp->model;
-    stream_block->detector_number = detector_num;
 
     if(_output_callback_func != nullptr)
     {
+        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+
+        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+        stream_block->spectra = spectra;
+        stream_block->model = cp->model;
+        stream_block->detector_number = detector_num;
+
         _output_callback_func(stream_block);
     }
 
@@ -93,31 +94,115 @@ void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_
 
 void Spectra_Stream_Producer::run()
 {
-    auto cb_func = std::bind(&Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
+    _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF/", "_0.nc");
+    _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF.h5/", "_0.h5");
 
     for(std::string dataset_file : _analysis_job->dataset_files())
     {
-        for(auto itr = _analysis_job->get_detector_begin(); itr != _analysis_job->get_detector_end(); itr++)
+        if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory(), dataset_file, _analysis_job->detector_num_start(), _analysis_job->detector_num_end(), _cb_function, nullptr) )
         {
-
-            size_t detector_num = itr->first;
-            /*
-            std::string str_detector_num = std::to_string(detector_num);
-            std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-            io::file::HDF5_IO::inst()->set_filename(full_save_path);
-            */
-
-            if (false == io::load_spectra_volume_with_callback(_analysis_job->dataset_directory(), dataset_file, detector_num, detector_num, &(itr->second.fit_params_override_dict), cb_func, nullptr) )
-            {
-                logit<<"Skipping detector "<<detector_num<<std::endl;
-                continue;
-            }
+            logit<<"Skipping dataset_file "<<dataset_file<<std::endl;
+            continue;
         }
     }
 }
 
-
 //-----------------------------------------------------------------------------
+
+bool Spectra_Stream_Producer::_load_spectra_volume_with_callback(std::string dataset_directory,
+                                                                 std::string dataset_file,
+                                                                 size_t detector_num_start,
+                                                                 size_t detector_num_end,
+                                                                 io::file::IO_Callback_Func_Def callback_fun,
+                                                                 void* user_data)
+{
+    //Dataset importer
+    io::file::MDA_IO mda_io;
+    //data_struct::xrf::Detector detector;
+    std::string tmp_dataset_file = dataset_file;
+
+    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<std::endl;
+
+    //check if we have a netcdf file associated with this dataset.
+    tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
+    bool hasNetcdf = false;
+    bool hasHdf = false;
+    std::string file_middle = ""; //_2xfm3_ or dxpM...
+    for(auto &itr : _netcdf_files)
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+            file_middle = itr.substr(tmp_dataset_file.length(), slen);
+            hasNetcdf = true;
+            break;
+        }
+    }
+    if (hasNetcdf == false)
+    {
+        for(auto &itr : _hdf_files)
+        {
+            if (itr.find(tmp_dataset_file) == 0)
+            {
+                size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+                file_middle = itr.substr(tmp_dataset_file.length(), slen);
+                hasHdf = true;
+                break;
+            }
+        }
+    }
+
+    //load spectra
+    if (false == mda_io.load_spectra_volume_with_callback(dataset_directory+"mda/"+dataset_file,
+                                                        detector_num_start,
+                                                        detector_num_end,
+                                                        hasNetcdf | hasHdf,
+                                                        _analysis_job,
+                                                        callback_fun,
+                                                        user_data) ) //todo: check if it does quant correctly
+    {
+        logit<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+        return false;
+    }
+    else
+    {
+        if(hasNetcdf)
+        {
+            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
+            if(file_io.is_open())
+            {
+                file_io.close();
+                std::string full_filename;
+                int row_size = mda_io.rows();
+                for(size_t i=0; i<row_size; i++)
+                {
+                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
+                    //todo: add verbose option
+                    //logit<<"Loading file "<<full_filename<<std::endl;
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, callback_fun, user_data);
+                }
+            }
+            else
+            {
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
+                //return false;
+            }
+        }
+        else if (hasHdf)
+        {
+            io::file::HDF5_IO::inst()->load_spectra_volume_with_callback(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num_start, detector_num_end, callback_fun, user_data);
+        }
+
+    }
+
+//    io::file::HDF5_IO::inst()->start_save_seq();
+//    io::file::HDF5_IO::inst()->generate_stream_datasets(mda_io.cols(), mda_io.rows());
+//    io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
+
+    mda_io.unload();
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<std::endl;
+    return true;
+}
 
 } //namespace xrf
 } //namespace workflow

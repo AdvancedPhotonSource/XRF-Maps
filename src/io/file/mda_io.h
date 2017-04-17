@@ -52,9 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "base_file_io.h"
 #include "mda-load.h"
 #include "element_info.h"
-#include "spectra_volume.h"
-#include "quantification_standard.h"
-#include "params_override.h"
+#include "analysis_job.h"
 
 namespace io
 {
@@ -102,13 +100,16 @@ public:
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
 */
     virtual bool load_spectra_volume_with_callback(std::string path,
-                                                   size_t detector_num,
+                                                   size_t detector_num_start,
+                                                   size_t detector_num_end,
                                                    bool hasNetCDF,
-                                                   data_struct::xrf::Params_Override *override_values,
-                                                   data_struct::xrf::Quantification_Standard * quantification_standard,
+                                                   data_struct::xrf::Analysis_Job *analysis_job,
                                                    IO_Callback_Func_Def callback_func,
                                                    void *user_data);
 
+    void find_scaler_indexes(size_t detector_num_start,
+                             size_t detector_num_end,
+                             data_struct::xrf::Analysis_Job *analysis_job);
 
     int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);
 
@@ -121,6 +122,22 @@ public:
     int cols() { return _cols; }
 
 private:
+
+    struct spectra_scalers_indexes
+    {
+        spectra_scalers_indexes()
+        {
+            elt_idx = -1;
+            ert_idx = -1;
+            incnt_idx = -1;
+            outcnt_idx = -1;
+        }
+
+        int  elt_idx;
+        int  ert_idx;
+        int  incnt_idx;
+        int  outcnt_idx;
+    };
 
     void _load_detector_meta_data(data_struct::xrf::Detector * detector);
 
@@ -137,6 +154,8 @@ private:
     int _rows;
 
     int _cols;
+
+    std::map<size_t, struct spectra_scalers_indexes > _spectra_scalers_map;
 
 };
 

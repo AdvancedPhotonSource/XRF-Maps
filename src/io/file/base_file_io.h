@@ -63,7 +63,7 @@ namespace io
 namespace file
 {
 
-typedef std::function<void (size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
+typedef std::function<void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
 
 class Base_File_IO
 {

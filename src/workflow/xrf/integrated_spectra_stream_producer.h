@@ -52,9 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-#include "producer.h"
-#include "stream_block.h"
-#include "analysis_job.h"
+#include "spectra_stream_producer.h"
 
 namespace workflow
 {
@@ -63,7 +61,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Integrated_Spectra_Stream_Producer : public Producer<data_struct::xrf::Stream_Block*>
+class DLL_EXPORT Integrated_Spectra_Stream_Producer : public Spectra_Stream_Producer
 {
 
 public:
@@ -72,15 +70,11 @@ public:
 
     ~Integrated_Spectra_Stream_Producer();
 
-    void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
-
-    virtual void run();
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
 protected:
 
-    data_struct::xrf::Analysis_Job* _analysis_job;
-
-    data_struct::xrf::Spectra *_spectra;
+    std::map<int, data_struct::xrf::Stream_Block *> _stream_block_list;
 
 };
 

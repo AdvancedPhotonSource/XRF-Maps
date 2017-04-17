@@ -80,7 +80,7 @@ class DLL_EXPORT Stream_Block
 
 public:
 
-    Stream_Block(size_t row, size_t col);
+    Stream_Block(size_t row, size_t col, size_t height, size_t width);
 
     ~Stream_Block();
 
@@ -89,6 +89,12 @@ public:
     const size_t& row() { return _row; }
 
     const size_t& col() { return _col; }
+
+    const size_t& height() { return _height; }
+
+    const size_t& width() { return _width; }
+
+    inline bool is_last() { return (_row == _height && _col == _width); }
 
     //by Processing_Type
     std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
@@ -107,6 +113,10 @@ protected:
     size_t _row;
 
     size_t _col;
+
+    size_t _height;
+
+    size_t _width;
 
 };
 

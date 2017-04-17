@@ -55,6 +55,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "producer.h"
 #include "stream_block.h"
 #include "analysis_job.h"
+#include "netcdf_io.h"
+#include "mda_io.h"
+#include "hdf5_io.h"
+#include <functional>
 
 namespace workflow
 {
@@ -72,13 +76,26 @@ public:
 
     ~Spectra_Stream_Producer();
 
-    void cb_load_spectra_data(size_t row, size_t col, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
     virtual void run();
 
 protected:
 
+    virtual bool _load_spectra_volume_with_callback(std::string dataset_directory,
+                                                    std::string dataset_file,
+                                                    size_t detector_num_start,
+                                                    size_t detector_num_end,
+                                                    io::file::IO_Callback_Func_Def callback_fun,
+                                                    void* user_data);
+
     data_struct::xrf::Analysis_Job* _analysis_job;
+
+    std::vector<std::string> _netcdf_files;
+
+    std::vector<std::string> _hdf_files;
+
+    std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> _cb_function;
 
 };
 

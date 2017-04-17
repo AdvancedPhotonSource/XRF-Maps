@@ -199,23 +199,6 @@ int MDA_IO::find_2d_detector_index(struct mda_file* mda_file, std::string det_na
 }
 
 //-----------------------------------------------------------------------------
-
-void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
-{
-    detector->meta_array.resize(_mda_file->scan->number_detectors);
-
-    for(int k=0; k<_mda_file->scan->number_detectors; k++)
-    {
-        detector->meta_array[k].name = std::string(_mda_file->scan->detectors[k]->name);
-        detector->meta_array[k].description = std::string(_mda_file->scan->detectors[k]->description);
-        detector->meta_array[k].unit = std::string(_mda_file->scan->detectors[k]->unit);
-        detector->meta_array[k].number = _mda_file->scan->detectors[k]->number;
-        detector->meta_array[k].value = (real_t)(_mda_file->scan->detectors_data[k][0]);
-    }
-
-}
-
-//-----------------------------------------------------------------------------
 /*
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
@@ -492,13 +475,65 @@ bool MDA_IO::load_spectra_volume(std::string path,
 }
 */
 
+void MDA_IO::find_scaler_indexes(size_t detector_num_start,
+                                 size_t detector_num_end,
+                                 data_struct::xrf::Analysis_Job *analysis_job)
+{
+
+    _spectra_scalers_map.clear();
+
+//TODO: See if mda is 0 based or 1 for detector nums
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        //_spectra_scalers_map.insert( std::pair<size_t, struct spectra_scalers_indexes> (detector_num, struct spectra_scalers_indexes()) );
+
+        struct data_struct::xrf::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num);
+
+        real_t tmp_val;
+
+        if (detector_struct->fit_params_override_dict.elt_pv.length() > 0)
+        {
+            _spectra_scalers_map[detector_num].elt_idx = find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.elt_pv, detector_num, tmp_val );
+        }
+        if (detector_struct->fit_params_override_dict.ert_pv.length() > 0)
+        {
+            _spectra_scalers_map[detector_num].ert_idx = find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.ert_pv, detector_num, tmp_val );
+        }
+        if (detector_struct->fit_params_override_dict.in_cnt_pv.length() > 0)
+        {
+            _spectra_scalers_map[detector_num].incnt_idx = find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.in_cnt_pv, detector_num, tmp_val );
+        }
+        if (detector_struct->fit_params_override_dict.out_cnt_pv.length() > 0)
+        {
+            _spectra_scalers_map[detector_num].outcnt_idx = find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.out_cnt_pv, detector_num, tmp_val );
+        }
+
+
+        if (detector_struct->fit_params_override_dict.scaler_pvs.count("SRCURRENT") > 0)
+        {
+            find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("SRCURRENT"), detector_num, tmp_val );
+            detector_struct->quant_standard.sr_current(tmp_val);
+        }
+        if (detector_struct->fit_params_override_dict.scaler_pvs.count("US_IC") > 0)
+        {
+            find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("US_IC"), detector_num, tmp_val );
+            detector_struct->quant_standard.US_IC(tmp_val);
+        }
+        if (detector_struct->fit_params_override_dict.scaler_pvs.count("DS_IC") > 0)
+        {
+            find_2d_detector_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("DS_IC"), detector_num, tmp_val );
+            detector_struct->quant_standard.DS_IC(tmp_val);
+        }
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 bool MDA_IO::load_spectra_volume_with_callback(std::string path,
-                                                 size_t detector_num,
+                                                 size_t detector_num_start,
+                                                 size_t detector_num_end,
                                                  bool hasNetCDF,
-                                                 data_struct::xrf::Params_Override *override_values,
-                                                 data_struct::xrf::Quantification_Standard * quantification_standard,
+                                                 data_struct::xrf::Analysis_Job *analysis_job,
                                                  IO_Callback_Func_Def callback_func,
                                                  void *user_data)
 {
@@ -549,7 +584,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
-                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
+                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->number_detectors-1 > detector_num_end)
                 {
                     logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< std::endl;
                     unload();
@@ -575,7 +610,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 > detector_num_end)
         {
             logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< std::endl;
             unload();
@@ -601,45 +636,9 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
     //_load_detector_meta_data(detector);
 
-    if (override_values != nullptr)
+    if (analysis_job != nullptr)
     {
-        real_t tmp_val;
-
-        if (override_values->elt_pv.length() > 0)
-        {
-            elt_idx = find_2d_detector_index(_mda_file, override_values->elt_pv, detector_num, tmp_val );
-        }
-        if (override_values->ert_pv.length() > 0)
-        {
-            ert_idx = find_2d_detector_index(_mda_file, override_values->ert_pv, detector_num, tmp_val );
-        }
-        if (override_values->in_cnt_pv.length() > 0)
-        {
-            incnt_idx = find_2d_detector_index(_mda_file, override_values->in_cnt_pv, detector_num, tmp_val );
-        }
-        if (override_values->out_cnt_pv.length() > 0)
-        {
-            outcnt_idx = find_2d_detector_index(_mda_file, override_values->out_cnt_pv, detector_num, tmp_val );
-        }
-        if(quantification_standard != nullptr)
-        {
-            if (override_values->scaler_pvs.count("SRCURRENT") > 0)
-            {
-                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), detector_num, tmp_val );
-                quantification_standard->sr_current(tmp_val);
-            }
-            if (override_values->scaler_pvs.count("US_IC") > 0)
-            {
-                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("US_IC"), detector_num, tmp_val );
-                quantification_standard->US_IC(tmp_val);
-            }
-            if (override_values->scaler_pvs.count("DS_IC") > 0)
-            {
-                find_2d_detector_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), detector_num, tmp_val );
-                quantification_standard->DS_IC(tmp_val);
-            }
-        }
-
+        find_scaler_indexes(detector_num_start, detector_num_end, analysis_job);
     }
     logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<std::endl;
 
@@ -682,68 +681,71 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
                 }
 */
-//for detector_start to detector_end
-                data_struct::xrf::Spectra* spectra = new data_struct::xrf::Spectra(samples);
-                if (single_row_scan)
+
+                for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
                 {
-                    if(elt_idx > -1)
+                    data_struct::xrf::Spectra* spectra = new data_struct::xrf::Spectra(samples);
+                    if (single_row_scan)
                     {
-                        spectra->elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
-                    }
-                    if(ert_idx > -1)
-                    {
-                        spectra->elapsed_realtime(_mda_file->scan->detectors_data[ert_idx][j]);
-                    }
-                    if(incnt_idx > -1)
-                    {
-                        spectra->input_counts(_mda_file->scan->detectors_data[incnt_idx][j]);
-                    }
-                    if(outcnt_idx > -1)
-                    {
-                        spectra->output_counts(_mda_file->scan->detectors_data[outcnt_idx][j]);
-                    }
-                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
-                    {
-                        spectra->recalc_elapsed_lifetime();
-                    }
+                        if(elt_idx > -1)
+                        {
+                            spectra->elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
+                        }
+                        if(ert_idx > -1)
+                        {
+                            spectra->elapsed_realtime(_mda_file->scan->detectors_data[ert_idx][j]);
+                        }
+                        if(incnt_idx > -1)
+                        {
+                            spectra->input_counts(_mda_file->scan->detectors_data[incnt_idx][j]);
+                        }
+                        if(outcnt_idx > -1)
+                        {
+                            spectra->output_counts(_mda_file->scan->detectors_data[outcnt_idx][j]);
+                        }
+                        if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                        {
+                            spectra->recalc_elapsed_lifetime();
+                        }
 
 
-                    for(size_t k=0; k<samples; k++)
-                    {
+                        for(size_t k=0; k<samples; k++)
+                        {
 
-                        (*spectra)[k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
+                            (*spectra)[k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
+                        }
+                        callback_func(i, j, _rows, _cols, detector_num, spectra, user_data);
                     }
-                    callback_func(i, j, detector_num, spectra, user_data);
-                }
-                else
-                {
-                    if(elt_idx > -1)
+                    else
                     {
-                         spectra->elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
-                    }
-                    if(ert_idx > -1)
-                    {
-                        spectra->elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
-                    }
-                    if(incnt_idx > -1)
-                    {
-                        spectra->input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
-                    }
-                    if(outcnt_idx > -1)
-                    {
-                        spectra->output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
-                    }
-                    if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
-                    {
-                        spectra->recalc_elapsed_lifetime();
-                    }
+                        if(elt_idx > -1)
+                        {
+                             spectra->elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                        }
+                        if(ert_idx > -1)
+                        {
+                            spectra->elapsed_realtime(_mda_file->scan->sub_scans[i]->detectors_data[ert_idx][j]);
+                        }
+                        if(incnt_idx > -1)
+                        {
+                            spectra->input_counts(_mda_file->scan->sub_scans[i]->detectors_data[incnt_idx][j]);
+                        }
+                        if(outcnt_idx > -1)
+                        {
+                            spectra->output_counts(_mda_file->scan->sub_scans[i]->detectors_data[outcnt_idx][j]);
+                        }
+                        if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
+                        {
+                            spectra->recalc_elapsed_lifetime();
+                        }
 
 
-                    for(size_t k=0; k<samples; k++)
-                    {
-                        (*spectra)[k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                        for(size_t k=0; k<samples; k++)
+                        {
+                            (*spectra)[k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
+                        }
+                        callback_func(i, j, _rows, _cols, detector_num, spectra, user_data);
                     }
-                    callback_func(i, j, detector_num, spectra, user_data);
                 }
             }
         }
@@ -751,7 +753,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     catch(std::exception& e)
     {
         logit<<"!!! Error Caught exception loading mda file."<<std::endl;
-        std::cerr << "Exception catched : " << e.what() << std::endl;
+        logit << "Exception catched : " << e.what() << std::endl;
         return false;
     }
 

@@ -140,15 +140,6 @@ bool load_spectra_volume(std::string dataset_directory,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
                          bool save_scalers);
 */
-bool load_spectra_volume_with_callback(std::string dataset_directory,
-                                       std::string dataset_file,
-                                       size_t detector_start,
-                                       size_t detector_end,
-                                       data_struct::xrf::Params_Override * params_override,
-                                       file::IO_Callback_Func_Def callback_fun,
-                                       void* user_data);
-
-void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 void save_averaged_fit_params(std::string dataset_dir,
                               std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs,

@@ -73,6 +73,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "pipeline.h"
 #include "spectra_stream_producer.h"
 #include "integrated_spectra_stream_producer.h"
+#include "sum_detectors_spectra_stream_producer.h"
 
 #include "param_optimized_fit_routine.h"
 #include "gaussian_model.h"
@@ -370,8 +371,12 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
 void save_stream_block( data_struct::xrf::Stream_Block* stream_block)
 {
 
+//    std::string str_detector_num = std::to_string(detector_num);
+//    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+//    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+
     //io::save_stream_block(stream_block);
-    delete stream_block;
+//    delete stream_block;
 
 }
 
@@ -417,12 +422,12 @@ struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xr
     fitting::models::Gaussian_Model model;
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-    fit_routine.set_optimizer(optimizer);
+////    fit_routine.set_optimizer(optimizer);
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
     //Update fit parameters by override values
-    model.update_fit_params_values(params_override.fit_params);
+////    model.update_fit_params_values(params_override.fit_params);
     model.set_fit_params_preset(optimize_fit_params_preset);
     //Initialize the fit routine
     fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
@@ -510,7 +515,7 @@ bool perform_quantification(std::string dataset_directory,
                             size_t detector_num_start,
                             size_t detector_num_end)
 {
-
+/*
     bool air_path = false;
     real_t detector_chip_thickness = 0.0;
     real_t beryllium_window_thickness = 0.0;
@@ -683,7 +688,7 @@ bool perform_quantification(std::string dataset_directory,
     std::chrono::duration<double> elapsed_seconds = end-start;
 
     logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
-
+*/
     return true;
 
 }
@@ -909,8 +914,6 @@ int main(int argc, char *argv[])
         dataset_files.push_back(dset_file);
     }
 
-    io::populate_netcdf_hdf5_files(dataset_dir);
-
     //gen whole command line to save in hdf5 later
     for(int ic = 0; ic < argc; ic++)
     {
@@ -971,6 +974,7 @@ int main(int argc, char *argv[])
     {
         if (quant_standard_filename.length() > 0)
         {
+            /*
             bool quant = false;
             quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
             //if it is quick and dirty, average quants and save in first
@@ -978,6 +982,7 @@ int main(int argc, char *argv[])
             {
                 average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
             }
+            */
         }
         //relead to process all dataset files and in case optimizer changed fit parameters
         if(false == analysis_job.load(dataset_dir, dataset_files, proc_types, detector_num_start, detector_num_end) )
