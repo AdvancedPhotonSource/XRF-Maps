@@ -74,8 +74,6 @@ public:
 
 protected:
 
-    size_t _detector_cntr;
-
     data_struct::xrf::Spectra* _spectra;
 };
 

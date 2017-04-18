@@ -503,6 +503,7 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
     sum_detectors_spectra_stream_producer.connect(distributor.get_callback_func());
     sum_detectors_spectra_stream_producer.run();
     sink.wait_and_stop();
+
 }
 
 // ----------------------------------------------------------------------------

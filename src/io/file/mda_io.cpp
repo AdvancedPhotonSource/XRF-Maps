@@ -565,8 +565,8 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
     if (_mda_file->header->data_rank == 2)
     {
-        logit_s<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
-                  " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<std::endl;
+        logit_s<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+                  " acquired rows "<< _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point <<std::endl;
 
         if(hasNetCDF)
         {
@@ -634,7 +634,6 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         return false;
     }
 
-    //_load_detector_meta_data(detector);
 
     if (analysis_job != nullptr)
     {

@@ -91,6 +91,10 @@ public:
                                                  IO_Callback_Func_Def callback_fun,
                                                  void* user_data);
 
+protected:
+
+    int _read_data(int ncid, int varid, size_t *start, size_t* count, ptrdiff_t *stride, real_t* data_in);
+
 private:
 
     NetCDF_IO();

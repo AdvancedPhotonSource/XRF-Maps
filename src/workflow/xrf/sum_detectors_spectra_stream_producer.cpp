@@ -59,7 +59,7 @@ namespace xrf
 Sum_Detectors_Spectra_Stream_Producer::Sum_Detectors_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_Stream_Producer(analysis_job)
 {
     _cb_function = std::bind(&Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-    _detector_cntr = 0;
+    _spectra = new data_struct::xrf::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
 }
 
 //-----------------------------------------------------------------------------
@@ -80,10 +80,8 @@ void Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, siz
     }
 
     _spectra->add(*spectra);
-    delete spectra;
 
-    _detector_cntr++;
-    if(_detector_cntr == _analysis_job->get_num_detectors())
+    if(detector_num == _analysis_job->detector_num_end())
     {
         if(_output_callback_func != nullptr)
         {
@@ -93,14 +91,15 @@ void Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, siz
             stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
             stream_block->spectra = _spectra;
             stream_block->model = cp->model;
-            stream_block->detector_number = detector_num;
+            stream_block->detector_number = -1;
 
             _output_callback_func(stream_block);
         }
 
-        _spectra = new data_struct::xrf::Spectra(spectra->size());
-        _detector_cntr = 0;
+        _spectra = new data_struct::xrf::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
     }
+
+    delete spectra;
 
 }
 

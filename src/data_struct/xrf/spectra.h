@@ -80,6 +80,14 @@ public:
 		_output_counts = 1.0;
 	}
 
+    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : std::valarray<_T>(0.0, sample_size)
+    {
+        _elapsed_lifetime = elt;
+        _elapsed_realtime = ert;
+        _input_counts = incnt;
+        _output_counts = outcnt;
+    }
+
     void recalc_elapsed_lifetime()
     {
         if(_input_counts == 0 || _output_counts == 0)
@@ -94,7 +102,7 @@ public:
 
     void add(const Spectra_T& spectra)
     {
-        *this += spectra;
+        *this += (std::valarray<_T>)spectra;
         _elapsed_lifetime += spectra.elapsed_lifetime();
         _elapsed_realtime += spectra.elapsed_realtime();
         _input_counts += spectra.input_counts();

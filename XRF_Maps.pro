@@ -138,9 +138,6 @@ SOURCES += \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
     #src/workflow/task.cpp \
-    src/workflow/sink.cpp \
-    src/workflow/distributor.cpp \
-    src/workflow/producer.cpp \
     src/workflow/pipeline.cpp \
     src/workflow/xrf/spectra_stream_producer.cpp \
     src/workflow/xrf/integrated_spectra_stream_producer.cpp \

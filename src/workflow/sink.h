@@ -66,10 +66,11 @@ class DLL_EXPORT Sink
 
 public:
 
-    Sink()
+    Sink(bool delete_block = true)
     {
         _thread = nullptr;
         _running = false;
+        _delete_block = delete_block;
     }
 
     ~Sink()
@@ -106,7 +107,7 @@ public:
     {
         while(!_job_queue.empty())
         {
-//wait to finish
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
         stop();
     }
@@ -124,8 +125,15 @@ protected:
 
                 _callback_func(input_block);
 
-                delete input_block;
+                if(_delete_block)
+                {
+                    delete input_block;
+                }
                 _job_queue.pop();
+            }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
     }
@@ -137,6 +145,9 @@ protected:
     bool _running;
 
     std::thread *_thread;
+
+    bool _delete_block;
+
 };
 
 } //namespace workflow
