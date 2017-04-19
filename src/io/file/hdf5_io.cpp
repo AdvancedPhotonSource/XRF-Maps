@@ -3707,30 +3707,47 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::generate_stream_datasets(size_t width, size_t height)
+bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
+                                      std::string dataset_name,
+                                      int detector_num,
+                                      size_t height,
+                                      size_t width)
 {
+
+    //    std::string str_detector_num = std::to_string(detector_num);
+    //    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+    //    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+
 
     return false;
 }
 
-void HDF5_IO::save_stream(std::queue<std::future<data_struct::xrf::Stream_Block*> > *job_queue)
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_stream_row(size_t d_hash,
+                             size_t detector_num,
+                             size_t row,
+                             std::vector< data_struct::xrf::Spectra* >  *spectra_row)
 {
-    while(!job_queue->empty())
-    {
-        auto ret = std::move(job_queue->front());
-        data_struct::xrf::Stream_Block* stream_block = ret.get();
-
-        _save_stream_block(stream_block);
-
-        delete stream_block;
-        job_queue->pop();
-    }
+    return false;
 }
 
-void HDF5_IO::_save_stream_block(data_struct::xrf::Stream_Block* stream_block)
-{
+//-----------------------------------------------------------------------------
 
+bool HDF5_IO::save_itegrade_spectra(data_struct::xrf::Spectra * spectra)
+{
+    return false;
 }
+
+//-----------------------------------------------------------------------------
+
+
+bool HDF5_IO::close_dataset(size_t d_hash)
+{
+    return false;
+}
+
+//-----------------------------------------------------------------------------
 
 } //end namespace file
 }// end namespace io

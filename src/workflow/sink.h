@@ -78,7 +78,7 @@ public:
 
     }
 
-    void set_function(std::function<void (T_IN)> func)
+    virtual void set_function(std::function<void (T_IN)> func)
     {
         _callback_func = func;
     }

@@ -137,11 +137,10 @@ SOURCES += \
     src/fitting/optimizers/minpack_optimizer.cpp \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
-    #src/workflow/task.cpp \
-    src/workflow/pipeline.cpp \
     src/workflow/xrf/spectra_stream_producer.cpp \
     src/workflow/xrf/integrated_spectra_stream_producer.cpp \
     src/workflow/xrf/sum_detectors_spectra_stream_producer.cpp \
+    src/workflow/xrf/spectra_stream_saver.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
@@ -197,11 +196,11 @@ HEADERS += \
     src/workflow/sink.h \
     src/workflow/distributor.h \
     src/workflow/producer.h \
-    src/workflow/pipeline.h \
     src/workflow/threadpool.h \
     src/workflow/xrf/spectra_stream_producer.h \
     src/workflow/xrf/integrated_spectra_stream_producer.h \
     src/workflow/xrf/sum_detectors_spectra_stream_producer.h \
+    src/workflow/xrf/spectra_stream_saver.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \

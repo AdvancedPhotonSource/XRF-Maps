@@ -47,90 +47,79 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Stream_Block_H
-#define Stream_Block_H
+#ifndef Spectra_Stream_Saver_H
+#define Spectra_Stream_Saver_H
 
 #include "defines.h"
-#include "element_info.h"
-#include "base_fit_routine.h"
-#include <vector>
-#include <string>
 
-namespace data_struct
+#include "sink.h"
+#include "stream_block.h"
+#include "mda_io.h"
+#include "hdf5_io.h"
+#include <functional>
+
+namespace workflow
 {
 namespace xrf
 {
 
-///
-/// \brief The Stream_Fitting_Block struct
-///
-struct Stream_Fitting_Block
-{
-    fitting::routines::Base_Fit_Routine * fit_routine;
-    std::unordered_map<std::string, real_t> fit_counts;
-};
-
 //-----------------------------------------------------------------------------
 
-///
-/// \brief The Stream_Block class
-///
-class DLL_EXPORT Stream_Block
+class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::xrf::Stream_Block*>
 {
 
 public:
 
-    Stream_Block(size_t row, size_t col, size_t height, size_t width);
+    Spectra_Stream_Saver();
 
-    ~Stream_Block();
+    ~Spectra_Stream_Saver();
 
-    void init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+    void save_stream(data_struct::xrf::Stream_Block* stream_block);
 
-    const size_t& row() { return _row; }
-
-    const size_t& col() { return _col; }
-
-    const size_t& height() { return _height; }
-
-    const size_t& width() { return _width; }
-
-    inline bool is_end_of_row() { return (_col == _width); }
-
-    inline bool is_end_of_detector() { return (_row == _height && _col == _width); }
-
-    //by Processing_Type
-    std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
-
-    size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}
-
-    std::string *dataset_directory;
-
-    std::string *dataset_name;
-
-    size_t detector_number;
-
-    Spectra * spectra;
-
-    Fit_Element_Map_Dict * elements_to_fit;
-    //data_struct::xrf::Params_Override *fit_params_override_dict;
-
-    fitting::models::Base_Model * model;
+    virtual void set_function(std::function<void (data_struct::xrf::Stream_Block*)> func) { }
 
 protected:
 
-    size_t _row;
+    class Detector_Save
+    {
+    public:
+        Detector_Save(size_t width)
+        {
+            spectra_line.resize(width);
+        }
+        ~Detector_Save(){}
 
-    size_t _col;
+        data_struct::xrf::Spectra integrated_spectra;
+        std::vector< data_struct::xrf::Spectra* > spectra_line;
+    };
 
-    size_t _height;
+    class Dataset_Save
+    {
+    public:
+        Dataset_Save(){}
+        ~Dataset_Save(){}
 
-    size_t _width;
+        std::string *dataset_directory;
+        std::string *dataset_name;
+        //by detector_num
+        std::map<int, Detector_Save*> detector_map;
+    };
+
+
+
+    void _new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block);
+
+    void _new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block);
+
+
+    //by detector_dir + dataset hash
+    std::map<size_t, Dataset_Save*> _dataset_map;
 
 };
 
+//-----------------------------------------------------------------------------
 
 } //namespace xrf
+} //namespace workflow
 
-} //namespace data_struct
-
-#endif // Stream_Block_H
+#endif // Spectra_Stream_Saver_H

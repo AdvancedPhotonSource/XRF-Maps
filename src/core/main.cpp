@@ -75,6 +75,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "integrated_spectra_stream_producer.h"
 #include "sum_detectors_spectra_stream_producer.h"
 
+#include "spectra_stream_saver.h"
+
 #include "param_optimized_fit_routine.h"
 #include "gaussian_model.h"
 
@@ -229,37 +231,11 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
 
 // ----------------------------------------------------------------------------
 
-void save_stream_block( data_struct::xrf::Stream_Block* stream_block)
-{
-
-//    std::string str_detector_num = std::to_string(detector_num);
-//    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-//    io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
-    //io::save_stream_block(stream_block);
-//    delete stream_block;
-
-}
-
-// ----------------------------------------------------------------------------
-
 void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-/*
-    workflow::Simple_Pipeline<data_struct::xrf::Stream_Block*> simple_pipeline(1);
-    workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(dataset_directory, dataset_files, gisd);
-    simple_pipeline.set_producer(spectra_stream_producer);
-    ///simple_pipeline.set_producer_func(process_dataset_file_stream);
-    simple_pipeline.set_distributor_func(proc_spectra_block);
-    simple_pipeline.set_sink_func(save_stream_block);
-    simple_pipeline.run();
-*/
-
-
     workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::Sink<data_struct::xrf::Stream_Block*> sink;
-    sink.set_function(save_stream_block);
+    workflow::xrf::Spectra_Stream_Saver sink;
     sink.start();
 
     distributor.set_function(proc_spectra_block);
@@ -350,8 +326,7 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
 {
     workflow::xrf::Sum_Detectors_Spectra_Stream_Producer sum_detectors_spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::Sink<data_struct::xrf::Stream_Block*> sink;
-    sink.set_function(save_stream_block);
+    workflow::xrf::Spectra_Stream_Saver sink;
     sink.start();
 
     distributor.set_function(proc_spectra_block);
