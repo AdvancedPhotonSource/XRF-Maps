@@ -207,145 +207,6 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
     io::save_volume( quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad);
 
 }
-
-// ----------------------------------------------------------------------------
-
-void process_dataset_file_quick_n_dirty(std::string dataset_directory,
-                                        std::string dataset_file,
-                                        std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                                        ThreadPool* tp,
-                                        std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                                        std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                                        size_t detector_num_start,
-                                        size_t detector_num_end)
-{
-
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-
-    data_struct::xrf::Params_Override * override_params = nullptr;
-    if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
-    {
-       override_params = &fit_params_override_dict->at(-1);
-    }
-    if(override_params == nullptr)
-    {
-        logit<<"Quick and Dirty Skipping file "<<dataset_directory<<" dset "<< dataset_file << " because could not find maps_fit_params_override.txt"<<std::endl;
-        return;
-    }
-
-    //data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
-
-    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5";
-
-    //Spectra volume data
-    data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
-    data_struct::xrf::Spectra_Volume* tmp_spectra_volume = new data_struct::xrf::Spectra_Volume();
-
-    io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
-    //load the first one
-    size_t detector_num = detector_num_start;
-    if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
-    {
-        logit<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
-        delete spectra_volume;
-        delete tmp_spectra_volume;
-        return;
-    }
-
-    //load spectra volume
-    for(detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
-    {
-        if (false == io::load_spectra_volume(dataset_directory, dataset_file, tmp_spectra_volume, detector_num, override_params, nullptr, false) )
-        {
-            logit<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
-            delete spectra_volume;
-            delete tmp_spectra_volume;
-            return;
-        }
-        //add all detectors up
-        for(int j=0; j<spectra_volume->rows(); j++)
-        {
-            for(int k=0; k<spectra_volume->cols(); k++)
-            {
-                real_t elapsed_lifetime = (*spectra_volume)[j][k].elapsed_lifetime();
-                real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
-                real_t input_counts = (*spectra_volume)[j][k].input_counts();
-                real_t output_counts = (*spectra_volume)[j][k].output_counts();
-
-
-                (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
-
-                elapsed_lifetime += (*tmp_spectra_volume)[j][k].elapsed_lifetime();
-                elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
-                input_counts += (*tmp_spectra_volume)[j][k].input_counts();
-                output_counts += (*tmp_spectra_volume)[j][k].output_counts();
-
-                (*spectra_volume)[j][k].elapsed_lifetime(elapsed_lifetime);
-                (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
-                (*spectra_volume)[j][k].input_counts(input_counts);
-                (*spectra_volume)[j][k].output_counts(output_counts);
-            }
-        }
-    }
-    delete tmp_spectra_volume;
-
-    proc_spectra(spectra_volume, proc_types, override_params, nullptr, tp);
-
-}
-
-// ----------------------------------------------------------------------------
-
-void process_dataset_file(std::string dataset_directory,
-                          std::string dataset_file,
-                          std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                          ThreadPool* tp,
-                          std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                          std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                          size_t detector_num_start,
-                          size_t detector_num_end)
-{
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-    {
-        data_struct::xrf::Params_Override * override_params = nullptr;
-        if(fit_params_override_dict->count(detector_num) > 0)
-        {
-           override_params = &fit_params_override_dict->at(detector_num);
-        }
-        if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
-        {
-           override_params = &fit_params_override_dict->at(-1);
-        }
-        if(override_params == nullptr)
-        {
-            logit<<"Skipping file "<<dataset_directory<<" dset "<< dataset_file << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
-            continue;
-        }
-
-        data_struct::xrf::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
-
-
-        //Spectra volume data
-        data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
-
-        std::string str_detector_num = std::to_string(detector_num);
-        std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-        io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
-        //load spectra volume
-        if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
-        {
-            logit<<"Skipping detector "<<detector_num<<std::endl;
-            delete spectra_volume;
-            continue;
-        }
-
-        proc_spectra(spectra_volume, proc_types, override_params, quantification_standard, tp);
-    }
-
-}
 */
 // ----------------------------------------------------------------------------
 
@@ -466,11 +327,6 @@ void save_optimal_params(struct io::file_name_fit_params* f_struct)
 
 void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-    /*
-    std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
-    fit_params_avgs.resize(detector_num_end - detector_num_start + 1);
-    */
-
     workflow::xrf::Integrated_Spectra_Stream_Producer spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
     workflow::Sink<struct io::file_name_fit_params*> sink;
@@ -488,6 +344,7 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
     */
 }
 
+// ----------------------------------------------------------------------------
 
 void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
 {
@@ -503,7 +360,6 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
     sum_detectors_spectra_stream_producer.connect(distributor.get_callback_func());
     sum_detectors_spectra_stream_producer.run();
     sink.wait_and_stop();
-
 }
 
 // ----------------------------------------------------------------------------
@@ -758,8 +614,6 @@ int main(int argc, char *argv[])
     std::string element_csv_filename = "../reference/xrf_library.csv";
     std::string element_henke_filename = "../reference/henke.xdr";
 
-    std::vector<data_struct::xrf::Quantification_Standard> quant_stand_list;
-
     Command_Line_Parser clp(argc, argv);
 
     if( clp.option_exists("-h") )
@@ -769,7 +623,7 @@ int main(int argc, char *argv[])
     }
 
 
-    size_t num_threads = std::thread::hardware_concurrency();
+    size_t num_threads = std::thread::hardware_concurrency() - 1;
     bool thread_affinity = false;
     if ( clp.option_exists("--nthreads") )
     {
@@ -780,9 +634,6 @@ int main(int argc, char *argv[])
     {
         thread_affinity = true;
     }
-
-    //ThreadPool tp(num_threads, thread_affinity);
-
 
     if ( clp.option_exists("--tails") )
     {
@@ -864,10 +715,6 @@ int main(int argc, char *argv[])
             detector_num_start = detector_num_end = std::stoi(detector_range_str);
         }
     }
-
-    //quant_stand_list.resize( (detector_num_end - detector_num_start) + 1);
-    //TODO: don't assume we can only have 4 detectors. The code also assumes quant_stand_list[0] is always detector 0. Maybe resize to detecotr_num_end?
-    quant_stand_list.resize(4);
 
     dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)

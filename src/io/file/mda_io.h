@@ -53,6 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mda-load.h"
 #include "element_info.h"
 #include "analysis_job.h"
+#include "spectra_volume.h"
 
 namespace io
 {
@@ -91,14 +92,14 @@ public:
      * @param filename
      */
     virtual bool load_dataset(std::string path, Base_Dataset* dset);
-/*
+
     virtual bool load_spectra_volume(std::string path,
                                      size_t detector_num,
                                      data_struct::xrf::Spectra_Volume* vol,
                                      bool hasNetCDF,
                                      data_struct::xrf::Params_Override *override_values,
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
-*/
+
     virtual bool load_spectra_volume_with_callback(std::string path,
                                                    size_t detector_num_start,
                                                    size_t detector_num_end,
@@ -107,11 +108,7 @@ public:
                                                    IO_Callback_Func_Def callback_func,
                                                    void *user_data);
 
-    void find_scaler_indexes(size_t detector_num_start,
-                             size_t detector_num_end,
-                             data_struct::xrf::Analysis_Job *analysis_job);
-
-    int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);
+    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val);
 
     int get_multiplied_dims(std::string path);
 
@@ -121,25 +118,13 @@ public:
 
     int cols() { return _cols; }
 
+    inline bool is_single_row_scan() {return _is_single_row;}
+
 private:
 
-    struct spectra_scalers_indexes
-    {
-        spectra_scalers_indexes()
-        {
-            elt_idx = -1;
-            ert_idx = -1;
-            incnt_idx = -1;
-            outcnt_idx = -1;
-        }
-
-        int  elt_idx;
-        int  ert_idx;
-        int  incnt_idx;
-        int  outcnt_idx;
-    };
-
     void _load_detector_meta_data(data_struct::xrf::Detector * detector);
+
+    bool _is_single_row;
 
     /**
      * @brief _mda_file: mda helper structure
@@ -154,8 +139,6 @@ private:
     int _rows;
 
     int _cols;
-
-    std::map<size_t, struct spectra_scalers_indexes > _spectra_scalers_map;
 
 };
 

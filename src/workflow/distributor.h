@@ -64,11 +64,12 @@ class DLL_EXPORT Distributor
 
 public:
 
-    Distributor(size_t num_threads)
+    Distributor(size_t num_threads, size_t limit = -1)
     {
         _thread_pool = new ThreadPool(num_threads);
         _job_queue = nullptr;
         _callback_func = std::bind(&Distributor::distribute, this, std::placeholders::_1);
+        _limit = limit;
     }
 
     ~Distributor()
@@ -86,6 +87,10 @@ public:
         //add logic to block on queue size or get ram mem size limiters
         if(_job_queue != nullptr)
         {
+            while(_job_queue->size() > _limit)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
             _job_queue->emplace( _thread_pool->enqueue(_dist_func, input) );
         }
     }
@@ -101,6 +106,8 @@ public:
     }
 
 protected:
+
+    size_t _limit;
 
     std::function<void (T_IN)> _callback_func;
 

@@ -94,6 +94,14 @@ std::mutex HDF5_IO::_mutex;
 
 HDF5_IO* HDF5_IO::_this_inst(0);
 
+
+struct Detector_HDF5_Struct
+{
+    hid_t    dset_id;
+    hid_t    dataspace_id;
+    real_t * buffer;
+};
+
 //-----------------------------------------------------------------------------
 
 HDF5_IO::HDF5_IO() : Base_File_IO()
@@ -451,39 +459,19 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
    //_is_loaded = ERROR_LOADING;
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
+   std::map<size_t, struct Detector_HDF5_Struct> detector_hid_map;
 
    logit<< path <<" detectors : "<<detector_num_start<<":"<<detector_num_end<<std::endl;
 
-   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+   hid_t    file_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
    herr_t   error;
    std::string detector_path;
-   real_t * buffer;
    hsize_t offset_row[2] = {0,0};
    hsize_t count_row[2] = {0,0};
    hsize_t offset_meta[3] = {0,0,0};
    hsize_t count_meta[3] = {1,1,1};
 
-/* todo update to multi detector
-   switch(detector_num)
-   {
-   case 0:
-       detector_path = "data_a";
-       break;
-   case 1:
-       detector_path = "data_b";
-       break;
-   case 2:
-       detector_path = "data_c";
-       break;
-   case 3:
-       detector_path = "data_d";
-       break;
-   default:
-       detector_path = "";
-       break;
-   }
-*/
     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if(file_id < 0)
     {
@@ -501,13 +489,38 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
 
     logit<<"pre open dset "<<std::endl;
-    dset_id = H5Dopen2(maps_grp_id, detector_path.c_str(), H5P_DEFAULT);
-    if(dset_id < 0)
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        logit<<"Error opening dataset /MAPS_RAW/"<<detector_path<<std::endl;
-        return false;
+        detector_hid_map.insert( {detector_num, Detector_HDF5_Struct()} );
+
+        switch(detector_num)
+        {
+        case 0:
+            detector_path = "data_a";
+            break;
+        case 1:
+            detector_path = "data_b";
+            break;
+        case 2:
+            detector_path = "data_c";
+            break;
+        case 3:
+            detector_path = "data_d";
+            break;
+        default:
+            detector_path = "";
+            break;
+        }
+
+
+        detector_hid_map[detector_num].dset_id = H5Dopen2(maps_grp_id, detector_path.c_str(), H5P_DEFAULT);
+        if(detector_hid_map[detector_num].dset_id < 0)
+        {
+            logit<<"Error opening dataset /MAPS_RAW/"<<detector_path<<std::endl;
+            return false;
+        }
+        detector_hid_map[detector_num].dataspace_id = H5Dget_space(detector_hid_map[detector_num].dset_id);
     }
-    dataspace_id = H5Dget_space(dset_id);
 
     dset_lt_id = H5Dopen2(maps_grp_id, "livetime", H5P_DEFAULT);
     if(dset_lt_id < 0)
@@ -542,7 +555,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     dataspace_outct_id = H5Dget_space(dset_outcnt_id);
 
 
-    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+    int rank = H5Sget_simple_extent_ndims(detector_hid_map[detector_num_start].dataspace_id);
     if (rank != 3)
     {
         logit<<"Dataset /MAPS_RAW/"<<detector_path<<" rank != 3. rank = "<<rank<<". Can't load dataset. returning"<<std::endl;
@@ -553,7 +566,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< std::endl;
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    unsigned int status_n = H5Sget_simple_extent_dims(detector_hid_map[detector_num_start].dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
          logit<<"Error getting dataset rank for MAPS_RAW/"<< detector_path<<std::endl;
@@ -567,7 +580,10 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
        count[i] = dims_in[i];
     }
 
-    buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        detector_hid_map[detector_num].buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+    }
     count_row[0] = dims_in[0];
     count_row[1] = dims_in[2];
 
@@ -593,15 +609,18 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
          offset[1] = row;
          offset_meta[1] = row;
 
-         H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-         error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+         {
+            H5Sselect_hyperslab (detector_hid_map[detector_num].dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+            error = H5Dread(detector_hid_map[detector_num].dset_id, H5T_NATIVE_REAL, memoryspace_id, detector_hid_map[detector_num].dataspace_id, H5P_DEFAULT, detector_hid_map[detector_num].buffer);
+         }
 
          if (error > -1 )
          {
              for(size_t col=0; col<count_row[1]; col++)
              {
                  offset_meta[2] = col;
-//for detector_start to detector_end
+
                  for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
                  {
                      offset_meta[0] = detector_num;
@@ -625,14 +644,12 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
                      for(size_t s=0; s<count_row[0]; s++)
                      {
-                         (*spectra)[s] = buffer[(count_row[1] * s) + col];
+                         (*spectra)[s] = detector_hid_map[detector_num].buffer[(count_row[1] * s) + col];
                      }
                      callback_func(row, col, dims_in[1], count_row[1], detector_num, spectra, user_data);
                 }
-                 //logit<<"saved col "<<col<<std::endl;
              }
 
-            //logit<<"read row "<<row<<std::endl;
          }
          else
          {
@@ -643,9 +660,15 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     delete [] dims_in;
     delete [] offset;
     delete [] count;
-    delete [] buffer;
 
-    H5Dclose(dset_id);
+
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        delete [] detector_hid_map[detector_num].buffer;
+        H5Sclose(detector_hid_map[detector_num].dataspace_id);
+        H5Dclose(detector_hid_map[detector_num].dset_id);
+    }
+
     H5Dclose(dset_incnt_id);
     H5Dclose(dset_outcnt_id);
     H5Dclose(dset_rt_id);
@@ -656,7 +679,6 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     H5Sclose(dataspace_rt_id);
     H5Sclose(dataspace_inct_id);
     H5Sclose(dataspace_outct_id);
-    H5Sclose(dataspace_id);
     H5Gclose(maps_grp_id);
     H5Fclose(file_id);
 
@@ -2680,7 +2702,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 if (s_itr != ignore_scaler_strings.end())
                     continue;
 
-                int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
+                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
                 scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
                 hdf_idx++;
                 if (mda_idx > -1)
@@ -2706,7 +2728,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 if (s_itr != ignore_scaler_strings.end())
                     continue;
 
-                int mda_idx = mda_io.find_2d_detector_index(mda_scalers, itr.second, detector_num, val);
+                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
                 if (mda_idx > -1)
                 {
                     bool found_scaler = false;
@@ -2741,7 +2763,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
             }
 
             //search for time scaler index
-            mda_time_scaler_idx = mda_io.find_2d_detector_index(mda_scalers, params_override->time_scaler, detector_num, val);
+            mda_time_scaler_idx = mda_io.find_scaler_index(mda_scalers, params_override->time_scaler, val);
 
             scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
             if (scalers_grp_id < 0)
@@ -3150,14 +3172,14 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
     status = H5Tset_size(memtype, 255);
 
     real_t us_amp_sens_num_val = params_override->us_amp_sens_num;
-    mda_io.find_2d_detector_index(mda_scalers, params_override->us_amp_sens_num_pv, 0, us_amp_sens_num_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_num_pv, us_amp_sens_num_val);
     real_t us_amp_sens_unit_val = params_override->us_amp_sens_unit;
-    mda_io.find_2d_detector_index(mda_scalers, params_override->us_amp_sens_unit_pv, 0, us_amp_sens_unit_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_unit_pv, us_amp_sens_unit_val);
 
     real_t ds_amp_sens_num_val = params_override->ds_amp_sens_num;
-    mda_io.find_2d_detector_index(mda_scalers, params_override->ds_amp_sens_num_pv, 0, ds_amp_sens_num_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_num_pv, ds_amp_sens_num_val);
     real_t ds_amp_sens_unit_val = params_override->ds_amp_sens_unit;
-    mda_io.find_2d_detector_index(mda_scalers, params_override->ds_amp_sens_unit_pv, 0, ds_amp_sens_unit_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_unit_pv, ds_amp_sens_unit_val);
 
     real_t trans_us_amp_sens_num_val;
     std::string trans_us_amp_sens_unit;
