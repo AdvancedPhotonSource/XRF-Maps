@@ -80,7 +80,13 @@ class DLL_EXPORT Stream_Block
 
 public:
 
+	Stream_Block();
+
     Stream_Block(size_t row, size_t col, size_t height, size_t width);
+
+	Stream_Block(const Stream_Block& stream_block);
+
+	Stream_Block& operator=(const Stream_Block&);
 
     ~Stream_Block();
 
