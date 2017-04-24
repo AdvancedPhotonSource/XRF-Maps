@@ -54,6 +54,15 @@ namespace data_struct
 namespace xrf
 {
 
+Stream_Block::Stream_Block()
+{
+	_row = 0;
+	_col = 0;
+	_height = 0;
+	_width = 0;
+	spectra = nullptr;
+}
+
 //-----------------------------------------------------------------------------
 
 Stream_Block::Stream_Block(size_t row,
@@ -81,6 +90,38 @@ Stream_Block::~Stream_Block()
     elements_to_fit = nullptr;
 
     model = nullptr;
+}
+
+Stream_Block::Stream_Block(const Stream_Block& stream_block)
+{
+	this->_col = stream_block._col;
+	this->_row = stream_block._row;
+	this->_height = stream_block._height;
+	this->_width = stream_block._width;
+	this->dataset_directory = stream_block.dataset_directory;
+	this->dataset_name = stream_block.dataset_name;
+	this->fitting_blocks = stream_block.fitting_blocks;
+	this->detector_number = stream_block.detector_number;
+	this->spectra = stream_block.spectra;
+	this->elements_to_fit = stream_block.elements_to_fit;
+	this->model = stream_block.model;
+}
+
+
+Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
+{
+	this->_col = stream_block._col;
+	this->_row = stream_block._row;
+	this->_height = stream_block._height;
+	this->_width = stream_block._width;
+	this->dataset_directory = stream_block.dataset_directory;
+	this->dataset_name = stream_block.dataset_name;
+	this->fitting_blocks = stream_block.fitting_blocks;
+	this->detector_number = stream_block.detector_number;
+	this->spectra = stream_block.spectra;
+	this->elements_to_fit = stream_block.elements_to_fit;
+	this->model = stream_block.model;
+	return *this;
 }
 
 //-----------------------------------------------------------------------------

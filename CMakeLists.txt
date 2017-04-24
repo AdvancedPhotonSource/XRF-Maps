@@ -189,6 +189,7 @@ include_directories(src/io)
 include_directories(src/io/file)
 include_directories(src/io/file/aps)
 include_directories(src/workflow)
+include_directories(src/workflow/xrf)
 
 # Include XRF-Maps Maps header files
 include_directories(src/core)
@@ -234,6 +235,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/xrf/spectra.h
     src/data_struct/xrf/spectra_line.h
     src/data_struct/xrf/spectra_volume.h
+	src/data_struct/xrf/stream_block.h
     src/quantification/models/quantification_model.h
     src/fitting/models/base_model.h
     src/fitting/models/gaussian_model.h
@@ -264,6 +266,7 @@ add_library(libxrf_fit SHARED
     src/data_struct/xrf/spectra.cpp
     src/data_struct/xrf/spectra_line.cpp
     src/data_struct/xrf/spectra_volume.cpp
+	src/data_struct/xrf/stream_block.cpp
     src/quantification/models/quantification_model.cpp
     src/fitting/models/base_model.cpp
     src/fitting/models/gaussian_model.cpp
@@ -289,9 +292,17 @@ set(XRF_IO_HEADERS
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
-        #src/io/file/aps/aps_calibration_io.h
+   #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
-        src/io/hl_file_io.h
+    src/io/hl_file_io.h
+	src/data_struct/xrf/analysis_job.h
+	src/workflow/producer.h
+	src/workflow/distributor.h
+	src/workflow/sink.h
+	src/workflow/xrf/spectra_stream_producer.h
+	src/workflow/xrf/integrated_spectra_stream_producer.h
+	src/workflow/xrf/sum_detectors_spectra_stream_producer.h
+	src/workflow/xrf/spectra_stream_saver.h
 )
 
 add_library(libxrf_io SHARED
@@ -302,9 +313,14 @@ add_library(libxrf_io SHARED
 	src/io/file/hdf5_io.cpp
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
-        #src/io/file/aps/aps_calibration_io.cpp
-        src/io/file/aps/aps_fit_params_import.cpp
-        src/io/hl_file_io.cpp
+   #src/io/file/aps/aps_calibration_io.cpp
+    src/io/file/aps/aps_fit_params_import.cpp
+    src/io/hl_file_io.cpp
+	src/data_struct/xrf/analysis_job.cpp
+	src/workflow/xrf/spectra_stream_producer.cpp
+	src/workflow/xrf/integrated_spectra_stream_producer.cpp
+	src/workflow/xrf/sum_detectors_spectra_stream_producer.cpp
+	src/workflow/xrf/spectra_stream_saver.cpp
 )
 
 #--------------- start xrf maps exec -----------------

@@ -59,6 +59,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "mda_io.h"
 #include "hdf5_io.h"
 #include <functional>
+#include <iostream>
+#include <fstream>
 
 namespace workflow
 {

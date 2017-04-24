@@ -65,7 +65,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::xrf::Stream_Block*>
+class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::xrf::Stream_Block* >
 {
 
 public:

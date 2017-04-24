@@ -66,12 +66,23 @@ class DLL_EXPORT Sink
 
 public:
 
+	
     Sink(bool delete_block = true)
     {
         _thread = nullptr;
         _running = false;
         _delete_block = delete_block;
     }
+
+	Sink(const Sink &)
+	{
+
+	}
+
+	Sink& operator=(const Sink&)
+	{
+		return *this;
+	}
 
     ~Sink()
     {
@@ -139,7 +150,7 @@ protected:
         }
     }
 
-    std::queue<std::future<T_IN> > _job_queue;
+    std::queue<std::future< T_IN > > _job_queue;
 
     std::function<void (T_IN)> _callback_func;
 

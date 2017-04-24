@@ -59,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "params_override.h"
 #include "lmfit_optimizer.h"
 #include "mpfit_optimizer.h"
+#include <iostream>
 
 namespace data_struct
 {
