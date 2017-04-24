@@ -87,7 +87,10 @@ protected:
         {
             spectra_line.resize(width);
         }
-        ~Detector_Save(){}
+        ~Detector_Save()
+        {
+            spectra_line.resize(1);
+        }
 
         data_struct::xrf::Spectra integrated_spectra;
         std::vector< data_struct::xrf::Spectra* > spectra_line;
@@ -97,7 +100,16 @@ protected:
     {
     public:
         Dataset_Save(){}
-        ~Dataset_Save(){}
+        ~Dataset_Save()
+        {
+            delete dataset_directory;
+            delete dataset_name;
+            for(auto& itr : detector_map)
+            {
+                delete itr.second;
+            }
+            detector_map.clear();
+        }
 
         std::string *dataset_directory;
         std::string *dataset_name;

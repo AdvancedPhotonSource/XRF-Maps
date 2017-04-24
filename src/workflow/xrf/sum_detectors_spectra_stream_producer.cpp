@@ -91,6 +91,8 @@ void Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, siz
             stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
             stream_block->spectra = _spectra;
             stream_block->model = cp->model;
+            stream_block->dataset_directory = _current_dataset_directory;
+            stream_block->dataset_name = _current_dataset_name;
             stream_block->detector_number = -1;
 
             _output_callback_func(stream_block);

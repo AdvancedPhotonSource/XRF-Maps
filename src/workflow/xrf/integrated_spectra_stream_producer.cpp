@@ -82,6 +82,8 @@ void Integrated_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t
         stream_block->spectra = spectra;
         stream_block->model = cp->model;
         stream_block->detector_number = detector_num;
+        stream_block->dataset_directory = _current_dataset_directory;
+        stream_block->dataset_name = _current_dataset_name;
         _stream_block_list.insert({detector_num, stream_block});
     }
     else

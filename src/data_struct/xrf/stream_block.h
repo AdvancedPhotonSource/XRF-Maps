@@ -61,6 +61,8 @@ namespace data_struct
 namespace xrf
 {
 
+//-----------------------------------------------------------------------------
+
 ///
 /// \brief The Stream_Fitting_Block struct
 ///
@@ -94,9 +96,9 @@ public:
 
     const size_t& width() { return _width; }
 
-    inline bool is_end_of_row() { return (_col == _width); }
+    inline bool is_end_of_row() { return (_col == _width-1); }
 
-    inline bool is_end_of_detector() { return (_row == _height && _col == _width); }
+    inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
 
     //by Processing_Type
     std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;

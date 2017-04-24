@@ -121,6 +121,7 @@ protected:
             if(!_job_queue.empty())
             {
                 auto ret = std::move(_job_queue.front());
+                ret.wait();
                 T_IN input_block = ret.get();
 
                 _callback_func(input_block);

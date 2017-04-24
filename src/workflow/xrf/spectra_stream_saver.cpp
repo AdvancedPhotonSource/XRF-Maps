@@ -97,6 +97,15 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
             stream_block->spectra = nullptr;
         }
 
+        if(detector_num == 0 && stream_block->col() == 99)
+        {
+         int bk = 1;
+        }
+        if(detector_num == 0)
+        {
+         int bk = 1;
+        }
+
         if(stream_block->is_end_of_row())
         {
             //save row of data to hdf5
@@ -118,8 +127,16 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
             io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
             io::file::HDF5_IO::inst()->close_dataset(d_hash);
             ///delete stream_block->mda_io;
-            //delete dataset->dataset_directory;
-            //delete dataset->dataset_name;
+
+            delete detector;
+            dataset->detector_map.erase(detector_num);
+        }
+
+        if(dataset->detector_map.size() == 0)
+        {
+            //done with dataset
+            delete dataset;
+            _dataset_map.erase(d_hash);
         }
     }
 
