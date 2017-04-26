@@ -179,12 +179,13 @@ bool Spectra_Stream_Producer::_load_spectra_volume_with_callback(std::string dat
                 file_io.close();
                 std::string full_filename;
                 int row_size = mda_io.rows();
+                int col_size = mda_io.cols();
                 for(size_t i=0; i<row_size; i++)
                 {
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logit<<"Loading file "<<full_filename<<std::endl;
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else

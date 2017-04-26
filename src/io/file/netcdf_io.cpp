@@ -314,6 +314,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                                                 size_t detector_num_end,
                                                 int row,
                                                 size_t max_rows,
+                                                size_t max_cols,
                                                 IO_Callback_Func_Def callback_fun,
                                                 void* user_data)
 {
@@ -334,8 +335,6 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     int rh_ndims;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
     int rh_natts;
-
-    size_t max_cols = 0;
 
     real_t elapsed_lifetime;
     real_t elapsed_realtime;
@@ -388,7 +387,8 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         nc_close(ncid);
         return false;
     }
-    max_cols = (124 * (dim2size[0] - 1) ) + data_in[0][0][8];
+    //can't read from file because it can change inbetween rows ...
+    //max_cols = (124 * (dim2size[0] - 1) ) + data_in[0][0][8];
 
 
     //loop through col sectors
@@ -436,7 +436,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
             header_size = data_in[0][0][2];
 
-            for(size_t detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
+            for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
             {
                 spectra_size = data_in[0][0][8 + detector_num];
 

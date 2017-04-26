@@ -85,6 +85,7 @@ protected:
     public:
         Detector_Save(size_t width)
         {
+            last_row = -1;
             spectra_line.resize(width);
             for(int i=0;i<width; i++)
             {
@@ -96,6 +97,7 @@ protected:
             spectra_line.resize(1);
         }
 
+        int last_row;
         data_struct::xrf::Spectra integrated_spectra;
         std::vector< data_struct::xrf::Spectra* > spectra_line;
     };
@@ -120,8 +122,6 @@ protected:
         //by detector_num
         std::map<int, Detector_Save*> detector_map;
     };
-
-
 
     void _new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block);
 

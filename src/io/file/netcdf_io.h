@@ -88,6 +88,7 @@ public:
                                                  size_t detector_num_end,
                                                  int row,
                                                  size_t max_rows,
+                                                 size_t max_cols,
                                                  IO_Callback_Func_Def callback_fun,
                                                  void* user_data);
 

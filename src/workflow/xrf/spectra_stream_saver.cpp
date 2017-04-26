@@ -76,6 +76,8 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
 
     size_t d_hash = stream_block->dataset_hash();
     size_t detector_num = stream_block->detector_number;
+
+
     //is new one
     if(_dataset_map.count(d_hash) < 1)
     {
@@ -92,36 +94,31 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
         {
             Detector_Save *detector = dataset->detector_map.at(detector_num);
 
+            if(detector->last_row > -1 && stream_block->row() > detector->last_row)
+            {
+                io::file::HDF5_IO::inst()->save_stream_row(d_hash, detector_num, detector->last_row, &detector->spectra_line);
+                for(int i=0; i<detector->spectra_line.size(); i++)
+                {
+                    if(detector->spectra_line[i] != nullptr)
+                    {
+                        delete detector->spectra_line[i];
+                        detector->spectra_line[i] = nullptr;
+                    }
+                }
+            }
+
+            detector->last_row = stream_block->row();
             detector->integrated_spectra.add(*stream_block->spectra);
+            //TODO: add limit checks to spectra_line
+            if (detector->spectra_line[stream_block->col()]  != nullptr)
+            {
+                delete detector->spectra_line[stream_block->col()];
+            }
             detector->spectra_line[stream_block->col()] = stream_block->spectra;
             stream_block->spectra = nullptr;
         }
 
-        if(detector_num == 0 && stream_block->col() == 99)
-        {
-         int bk = 1;
-        }
-        if(detector_num == 0)
-        {
-         int bk = 1;
-        }
-
-        if(stream_block->is_end_of_row())
-        {
-            //save row of data to hdf5
-            Detector_Save *detector = dataset->detector_map.at(detector_num);
-
-            io::file::HDF5_IO::inst()->save_stream_row(d_hash, detector_num, stream_block->row(), &detector->spectra_line);
-            for(int i=0; i<detector->spectra_line.size(); i++)
-            {
-                if(detector->spectra_line[i] != nullptr)
-                {
-                    delete detector->spectra_line[i];
-                    detector->spectra_line[i] = nullptr;
-                }
-            }
-        }
-
+        //TODO: this won't work because netcdf lines may be corrupt and last row/col won't match height/width
         if(stream_block->is_end_of_detector())
         {
             Detector_Save *detector = dataset->detector_map.at(detector_num);
@@ -142,6 +139,7 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
             delete dataset;
             _dataset_map.erase(d_hash);
         }
+
     }
 
 }
