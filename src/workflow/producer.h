@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include <functional>
+#include "distributor.h"
 
 namespace workflow
 {
@@ -76,11 +77,18 @@ public:
 
     }
 
+    template<typename _T>
+    void connect(Distributor<T_OUT, _T> *distributor)
+    {
+        _output_callback_func = std::bind(&Distributor<T_OUT, _T>::distribute, distributor, std::placeholders::_1);
+    }
+
+/*
     void connect( Callback_Func_Def out_callback_func)
     {
         _output_callback_func = out_callback_func;
     }
-/*
+
     void set_function(Producer_Func_Def func)
     {
         _prod_func = func;
@@ -104,7 +112,6 @@ protected:
 
     Callback_Func_Def _output_callback_func;
 
-  //  Producer_Func_Def _prod_func;
 };
 
 } //namespace workflow

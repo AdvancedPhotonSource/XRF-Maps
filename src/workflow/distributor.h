@@ -67,31 +67,40 @@ public:
     Distributor(size_t num_threads, size_t limit = -1)
     {
         _thread_pool = new ThreadPool(num_threads);
-        _job_queue = nullptr;
         _callback_func = std::bind(&Distributor::distribute, this, std::placeholders::_1);
         _limit = limit;
+    }
+
+    Distributor(const Distributor &)
+    {
+
+    }
+
+    Distributor& operator=(const Distributor&)
+    {
+        return *this;
     }
 
     ~Distributor()
     {
         delete _thread_pool;
     }
-
+/*
     void connect(std::queue<std::future<T_OUT> > *job_queue)
     {
         _job_queue = job_queue;
     }
-
+*/
     void distribute(T_IN input)
     {
         //add logic to block on queue size or get ram mem size limiters
-        if(_job_queue != nullptr)
+        while(_job_queue.size() > _limit)
         {
-            while(_job_queue->size() > _limit)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            _job_queue->emplace( _thread_pool->enqueue(_dist_func, input) );
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        {
+            std::unique_lock<std::mutex> lock(_queue_mutex);
+            _job_queue.emplace( _thread_pool->enqueue(_dist_func, input) );
         }
     }
 
@@ -105,6 +114,16 @@ public:
         _dist_func = dist_func;
     }
 
+    inline bool is_queue_empty() { return _job_queue.empty(); }
+
+    T_OUT front_pop()
+    {
+        std::unique_lock<std::mutex> lock(_queue_mutex);
+        auto ret = std::move(_job_queue.front());
+        _job_queue.pop();
+        return ret.get();
+    }
+
 protected:
 
     size_t _limit;
@@ -115,7 +134,8 @@ protected:
 
     ThreadPool *_thread_pool;
 
-    std::queue<std::future<T_OUT> > *_job_queue;
+    std::mutex _queue_mutex;
+    std::queue<std::future<T_OUT> > _job_queue;
 
 };
 

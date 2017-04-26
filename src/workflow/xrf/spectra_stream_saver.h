@@ -86,6 +86,10 @@ protected:
         Detector_Save(size_t width)
         {
             spectra_line.resize(width);
+            for(int i=0;i<width; i++)
+            {
+                spectra_line[i] = nullptr;
+            }
         }
         ~Detector_Save()
         {

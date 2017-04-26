@@ -112,9 +112,13 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
             Detector_Save *detector = dataset->detector_map.at(detector_num);
 
             io::file::HDF5_IO::inst()->save_stream_row(d_hash, detector_num, stream_block->row(), &detector->spectra_line);
-            for(auto &spectra : detector->spectra_line)
+            for(int i=0; i<detector->spectra_line.size(); i++)
             {
-                delete spectra;
+                if(detector->spectra_line[i] != nullptr)
+                {
+                    delete detector->spectra_line[i];
+                    detector->spectra_line[i] = nullptr;
+                }
             }
         }
 

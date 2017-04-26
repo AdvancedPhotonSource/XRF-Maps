@@ -58,8 +58,8 @@ Stream_Block::Stream_Block()
 {
 	_row = 0;
 	_col = 0;
-	_height = 0;
-	_width = 0;
+    _height = -1;
+    _width = -1;
 	spectra = nullptr;
 }
 

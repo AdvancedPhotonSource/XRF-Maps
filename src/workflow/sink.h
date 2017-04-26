@@ -53,8 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include <functional>
 #include <future>
-#include <queue>
 #include <thread>
+#include "distributor.h"
 
 namespace workflow
 {
@@ -89,12 +89,17 @@ public:
 
     }
 
+    template<typename _T>
+    void connect(Distributor<_T, T_IN> *distributor)
+    {
+        _check_func = std::bind(&Distributor<_T, T_IN>::is_queue_empty, distributor);
+        _get_func = std::bind(&Distributor<_T, T_IN>::front_pop, distributor);
+    }
+
     virtual void set_function(std::function<void (T_IN)> func)
     {
         _callback_func = func;
     }
-
-    std::queue<std::future<T_IN> >* get_job_queue(){ return &_job_queue; }
 
     void start()
     {
@@ -116,11 +121,18 @@ public:
 
     void wait_and_stop()
     {
+        while( _check_func() == false)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+        }
+        stop();
+        /*
         while(!_job_queue.empty())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
         stop();
+        */
     }
 
 protected:
@@ -129,10 +141,25 @@ protected:
     {
         while(_running)
         {
+            if( _check_func() == false)
+            {
+                T_IN input_block = _get_func();
+                _callback_func(input_block);
+
+                if(_delete_block)
+                {
+                    delete input_block;
+                }
+            }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            /*
             if(!_job_queue.empty())
             {
                 auto ret = std::move(_job_queue.front());
-                ret.wait();
                 T_IN input_block = ret.get();
 
                 _callback_func(input_block);
@@ -147,10 +174,14 @@ protected:
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+            */
         }
     }
 
-    std::queue<std::future< T_IN > > _job_queue;
+  //  std::queue<std::future< T_IN > > _job_queue;
+
+    std::function<bool (void)> _check_func;
+    std::function<T_IN (void)> _get_func;
 
     std::function<void (T_IN)> _callback_func;
 

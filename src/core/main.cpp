@@ -236,12 +236,12 @@ void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
     workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
     workflow::xrf::Spectra_Stream_Saver sink;
-    sink.start();
 
     distributor.set_function(proc_spectra_block);
-    distributor.connect(sink.get_job_queue());
+    spectra_stream_producer.connect(&distributor);
+    sink.connect(&distributor);
 
-    spectra_stream_producer.connect(distributor.get_callback_func());
+    sink.start();
     spectra_stream_producer.run();
     sink.wait_and_stop();
 }
@@ -307,12 +307,14 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
     workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
     workflow::Sink<struct io::file_name_fit_params*> sink;
     sink.set_function(save_optimal_params);
-    sink.start();
+
 
     distributor.set_function(optimize_integrated_fit_params);
-    distributor.connect(sink.get_job_queue());
+    sink.connect(&distributor);
+    spectra_stream_producer.connect(&distributor);
 
-    spectra_stream_producer.connect(distributor.get_callback_func());
+
+    sink.start();
     spectra_stream_producer.run();
     sink.wait_and_stop();
     /*
@@ -327,12 +329,13 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
     workflow::xrf::Sum_Detectors_Spectra_Stream_Producer sum_detectors_spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
     workflow::xrf::Spectra_Stream_Saver sink;
-    sink.start();
+
 
     distributor.set_function(proc_spectra_block);
-    distributor.connect(sink.get_job_queue());
+    sink.connect(&distributor);
+    sum_detectors_spectra_stream_producer.connect(&distributor);
 
-    sum_detectors_spectra_stream_producer.connect(distributor.get_callback_func());
+    sink.start();
     sum_detectors_spectra_stream_producer.run();
     sink.wait_and_stop();
 }
