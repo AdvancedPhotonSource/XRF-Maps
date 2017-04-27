@@ -85,12 +85,7 @@ public:
     {
         delete _thread_pool;
     }
-/*
-    void connect(std::queue<std::future<T_OUT> > *job_queue)
-    {
-        _job_queue = job_queue;
-    }
-*/
+
     void distribute(T_IN input)
     {
         //add logic to block on queue size or get ram mem size limiters
@@ -124,6 +119,16 @@ public:
         return ret.get();
     }
 
+    void front_chunk(std::queue<std::future<T_OUT> > *queue)
+    {
+        std::unique_lock<std::mutex> lock(_queue_mutex);
+        while(! _job_queue.empty() )
+        {
+            queue->emplace( std::move(_job_queue.front()) );
+            _job_queue.pop();
+        }
+    }
+
 protected:
 
     size_t _limit;
@@ -135,6 +140,7 @@ protected:
     ThreadPool *_thread_pool;
 
     std::mutex _queue_mutex;
+
     std::queue<std::future<T_OUT> > _job_queue;
 
 };

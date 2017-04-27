@@ -416,6 +416,12 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         num_cols = data_in[0][0][8];
         spectra_size = data_in[0][0][20];
 
+        if(num_cols > max_cols)
+        {
+            logit<<"Adjusting number of cols from Netcdf cols "<<num_cols<< " to MDA cols "<<max_cols<<std::endl;
+            num_cols = max_cols;
+        }
+
         start[2] = header_size;
         count[2] = header_size + (spectra_size * num_detectors);
         for(size_t j=0; j<num_cols; j++)

@@ -601,7 +601,7 @@ int main(int argc, char *argv[])
     }
 
 
-    size_t num_threads = std::thread::hardware_concurrency() - 1;
+    size_t num_threads = std::thread::hardware_concurrency() - 2;
     bool thread_affinity = false;
     if ( clp.option_exists("--nthreads") )
     {

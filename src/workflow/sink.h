@@ -93,7 +93,8 @@ public:
     void connect(Distributor<_T, T_IN> *distributor)
     {
         _check_func = std::bind(&Distributor<_T, T_IN>::is_queue_empty, distributor);
-        _get_func = std::bind(&Distributor<_T, T_IN>::front_pop, distributor);
+        _get_func = std::bind(&Distributor<_T, T_IN>::front_chunk, distributor, std::placeholders::_1);
+        //_get_func = std::bind(&Distributor<_T, T_IN>::front_pop, distributor);
     }
 
     virtual void set_function(std::function<void (T_IN)> func)
@@ -121,18 +122,11 @@ public:
 
     void wait_and_stop()
     {
-        while( _check_func() == false)
+        while( _check_func() == false || !_job_queue.empty())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
         stop();
-        /*
-        while(!_job_queue.empty())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(400));
-        }
-        stop();
-        */
     }
 
 protected:
@@ -143,47 +137,37 @@ protected:
         {
             if( _check_func() == false)
             {
-                T_IN input_block = _get_func();
-                _callback_func(input_block);
-
-                if(_delete_block)
+                _get_func(&_job_queue);
+                while(! _job_queue.empty())
                 {
-                    delete input_block;
+                    auto ret = std::move(_job_queue.front());
+                    _job_queue.pop();
+                    T_IN input_block = ret.get();
+
+                    _callback_func(input_block);
+
+                    if(_delete_block)
+                    {
+                        delete input_block;
+                    }
                 }
             }
             else
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
-
-            /*
-            if(!_job_queue.empty())
-            {
-                auto ret = std::move(_job_queue.front());
-                T_IN input_block = ret.get();
-
-                _callback_func(input_block);
-
-                if(_delete_block)
-                {
-                    delete input_block;
-                }
-                _job_queue.pop();
-            }
-            else
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            */
         }
     }
 
-  //  std::queue<std::future< T_IN > > _job_queue;
 
     std::function<bool (void)> _check_func;
-    std::function<T_IN (void)> _get_func;
+
+    std::function<void (std::queue<std::future<T_IN> > *)> _get_func;
+    //std::function<T_IN (void)> _get_func;
 
     std::function<void (T_IN)> _callback_func;
+
+    std::queue<std::future<T_IN> > _job_queue;
 
     bool _running;
 

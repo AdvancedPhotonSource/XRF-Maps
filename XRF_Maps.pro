@@ -9,13 +9,12 @@ QT       += core
 QT       -= gui
 
 TARGET = XRF_Maps
-#CONFIG   += console
 CONFIG   -= app_bundle
 CONFIG += c++14
 
 TEMPLATE = app
-CONFIG += debug
-#CONFIG += release
+#CONFIG += debug
+CONFIG += release
 CONFIG += console
 
 QMAKE_EXT_CPP += .c
