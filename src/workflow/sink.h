@@ -86,7 +86,11 @@ public:
 
     ~Sink()
     {
-
+        if(_thread != nullptr)
+        {
+            delete _thread;
+        }
+        _thread = nullptr;
     }
 
     template<typename _T>

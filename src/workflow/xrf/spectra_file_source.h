@@ -47,7 +47,20 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "sum_detectors_spectra_stream_producer.h"
+#ifndef Spectra_File_Source_H
+#define Spectra_File_Source_H
+
+#include "defines.h"
+
+#include "source.h"
+#include "stream_block.h"
+#include "analysis_job.h"
+#include "netcdf_io.h"
+#include "mda_io.h"
+#include "hdf5_io.h"
+#include <functional>
+#include <iostream>
+#include <fstream>
 
 namespace workflow
 {
@@ -56,57 +69,41 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Sum_Detectors_Spectra_Stream_Producer::Sum_Detectors_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_Stream_Producer(analysis_job)
-{
-    _cb_function = std::bind(&Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-    _spectra = new data_struct::xrf::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
-}
-
-//-----------------------------------------------------------------------------
-
-Sum_Detectors_Spectra_Stream_Producer::~Sum_Detectors_Spectra_Stream_Producer()
+class DLL_EXPORT Spectra_File_Source : public Source<data_struct::xrf::Stream_Block*>
 {
 
-}
+public:
 
-// ----------------------------------------------------------------------------
+    Spectra_File_Source(data_struct::xrf::Analysis_Job* analysis_job);
 
-void Sum_Detectors_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
-{
+    ~Spectra_File_Source();
 
-    if(_spectra->size() < spectra->size())
-    {
-        _spectra->resize( spectra->size() );
-    }
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
-    _spectra->add(*spectra);
+    virtual void run();
 
-    if(detector_num == _analysis_job->detector_num_end())
-    {
-        if(_output_callback_func != nullptr)
-        {
-            struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+protected:
 
-            data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
-            stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-            stream_block->spectra = _spectra;
-            stream_block->model = cp->model;
-            stream_block->dataset_directory = _current_dataset_directory;
-            stream_block->dataset_name = _current_dataset_name;
-            stream_block->detector_number = -1;
+    virtual bool _load_spectra_volume_with_callback(std::string dataset_directory,
+                                                    std::string dataset_file,
+                                                    size_t detector_num_start,
+                                                    size_t detector_num_end,
+                                                    io::file::IO_Callback_Func_Def callback_fun);
 
-            _output_callback_func(stream_block);
-        }
+    std::string *_current_dataset_directory;
+    std::string *_current_dataset_name;
 
-        _spectra = new data_struct::xrf::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
-    }
+    data_struct::xrf::Analysis_Job* _analysis_job;
 
-    delete spectra;
+    std::vector<std::string> _netcdf_files;
 
-}
+    std::vector<std::string> _hdf_files;
 
+    std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> _cb_function;
 
-//-----------------------------------------------------------------------------
+};
 
 } //namespace xrf
 } //namespace workflow
+
+#endif // Spectra_File_Source_H

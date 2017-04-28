@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "integrated_spectra_stream_producer.h"
+#include "detector_sum_spectra_source.h"
 
 namespace workflow
 {
@@ -56,57 +56,55 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Integrated_Spectra_Stream_Producer::Integrated_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_Stream_Producer(analysis_job)
+Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
 {
-    _cb_function = std::bind(&Integrated_Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _spectra = new data_struct::xrf::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
 }
 
 //-----------------------------------------------------------------------------
 
-Integrated_Spectra_Stream_Producer::~Integrated_Spectra_Stream_Producer()
+Detector_Sum_Spectra_Source::~Detector_Sum_Spectra_Source()
 {
-    _stream_block_list.clear();
+
 }
 
 // ----------------------------------------------------------------------------
 
-void Integrated_Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
 {
 
-    if(_stream_block_list.count(detector_num) == 0)
+    if(_spectra->size() < spectra->size())
     {
-        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
-
-        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
-        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-        stream_block->spectra = spectra;
-        stream_block->model = cp->model;
-        stream_block->detector_number = detector_num;
-        stream_block->dataset_directory = _current_dataset_directory;
-        stream_block->dataset_name = _current_dataset_name;
-        _stream_block_list.insert({detector_num, stream_block});
+        _spectra->resize( spectra->size() );
     }
-    else
+
+    _spectra->add(*spectra);
+
+    if(detector_num == _analysis_job->detector_num_end())
     {
-        data_struct::xrf::Stream_Block * stream_block = _stream_block_list.at(detector_num);
-
-        stream_block->spectra->add(*spectra);
-        delete spectra;
-
-        if(col == width && row == height)
+        if(_output_callback_func != nullptr)
         {
-            if(_output_callback_func != nullptr)
-            {
-                _output_callback_func(stream_block);
-            }
-            else
-            {
-                delete stream_block;
-            }
-            _stream_block_list.erase(detector_num);
+            struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+
+            data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+            stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+            stream_block->spectra = _spectra;
+            stream_block->model = cp->model;
+            stream_block->dataset_directory = _current_dataset_directory;
+            stream_block->dataset_name = _current_dataset_name;
+            stream_block->detector_number = -1;
+
+            _output_callback_func(stream_block);
         }
+
+        _spectra = new data_struct::xrf::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
     }
+
+    delete spectra;
+
 }
+
 
 //-----------------------------------------------------------------------------
 

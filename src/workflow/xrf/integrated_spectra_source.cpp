@@ -47,12 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Sum_Detectors_Spectra_Stream_Producer_H
-#define Sum_Detectors_Spectra_Stream_Producer_H
-
-#include "defines.h"
-
-#include "spectra_stream_producer.h"
+#include "integrated_spectra_source.h"
 
 namespace workflow
 {
@@ -61,23 +56,59 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Sum_Detectors_Spectra_Stream_Producer : public Spectra_Stream_Producer
+Integrated_Spectra_Source::Integrated_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
+{
+    _cb_function = std::bind(&Integrated_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+}
+
+//-----------------------------------------------------------------------------
+
+Integrated_Spectra_Source::~Integrated_Spectra_Source()
+{
+    _stream_block_list.clear();
+}
+
+// ----------------------------------------------------------------------------
+
+void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
 {
 
-public:
+    if(_stream_block_list.count(detector_num) == 0)
+    {
+        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
-    Sum_Detectors_Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job);
+        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+        stream_block->spectra = spectra;
+        stream_block->model = cp->model;
+        stream_block->detector_number = detector_num;
+        stream_block->dataset_directory = _current_dataset_directory;
+        stream_block->dataset_name = _current_dataset_name;
+        _stream_block_list.insert({detector_num, stream_block});
+    }
+    else
+    {
+        data_struct::xrf::Stream_Block * stream_block = _stream_block_list.at(detector_num);
 
-    ~Sum_Detectors_Spectra_Stream_Producer();
+        stream_block->spectra->add(*spectra);
+        delete spectra;
 
-    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
+        if(col == width && row == height)
+        {
+            if(_output_callback_func != nullptr)
+            {
+                _output_callback_func(stream_block);
+            }
+            else
+            {
+                delete stream_block;
+            }
+            _stream_block_list.erase(detector_num);
+        }
+    }
+}
 
-protected:
-
-    data_struct::xrf::Spectra* _spectra;
-};
+//-----------------------------------------------------------------------------
 
 } //namespace xrf
 } //namespace workflow
-
-#endif // Sum_Detectors_Spectra_Stream_Producer_H

@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Pipeline_H
 
 #include "defines.h"
-#include "producer.h"
+#include "source.h"
 #include "distributor.h"
 #include "sink.h"
 
@@ -102,7 +102,7 @@ public:
 
 protected:
 
-    Producer<_T> _producer;
+    Source<_T> _producer;
     Distributor<_T, _T> *_distributor;
     Sink<_T> _sink;
 

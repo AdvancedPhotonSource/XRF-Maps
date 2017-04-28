@@ -57,14 +57,16 @@ namespace data_struct
 namespace xrf
 {
 
+using namespace std;
+
 template<typename _T>
-class Spectra_T : public std::valarray< _T >
+class Spectra_T : public valarray< _T >
 {
 public:
     /**
      * @brief Spectra : Constructor
      */
-	Spectra_T() : std::valarray<_T>()
+    Spectra_T() : valarray<_T>()
 	{
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -72,7 +74,7 @@ public:
 		_output_counts = 1.0;
 	}
 
-	Spectra_T(size_t sample_size) : std::valarray<_T>(0.0, sample_size)
+    Spectra_T(size_t sample_size) : valarray<_T>(0.0, sample_size)
 	{
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -80,12 +82,16 @@ public:
 		_output_counts = 1.0;
 	}
 
-    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : std::valarray<_T>(0.0, sample_size)
+    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : valarray<_T>(0.0, sample_size)
     {
         _elapsed_lifetime = elt;
         _elapsed_realtime = ert;
         _input_counts = incnt;
         _output_counts = outcnt;
+    }
+
+    ~Spectra_T()
+    {
     }
 
     void recalc_elapsed_lifetime()
@@ -102,7 +108,7 @@ public:
 
     void add(const Spectra_T& spectra)
     {
-        *this += (std::valarray<_T>)spectra;
+        *this += (valarray<_T>)spectra;
         _elapsed_lifetime += spectra.elapsed_lifetime();
         _elapsed_realtime += spectra.elapsed_realtime();
         _input_counts += spectra.input_counts();
@@ -138,9 +144,9 @@ private:
 template DLL_EXPORT class Spectra_T<real_t>;
 typedef Spectra_T<real_t> Spectra;
 
-std::valarray<real_t> convolve1d(std::valarray<real_t> arr, size_t boxcar_size);
-std::valarray<real_t> convolve1d(std::valarray<real_t> arr, std::valarray<real_t> boxcar);
-std::valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
+valarray<real_t> convolve1d(valarray<real_t> arr, size_t boxcar_size);
+valarray<real_t> convolve1d(valarray<real_t> arr, valarray<real_t> boxcar);
+valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 } //namespace xrf
 } //namespace data_struct

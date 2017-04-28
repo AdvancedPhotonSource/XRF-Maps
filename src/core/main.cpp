@@ -71,9 +71,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "command_line_parser.h"
 #include "stream_block.h"
 #include "pipeline.h"
-#include "spectra_stream_producer.h"
-#include "integrated_spectra_stream_producer.h"
-#include "sum_detectors_spectra_stream_producer.h"
+#include "spectra_file_source.h"
+#include "integrated_spectra_source.h"
+#include "detector_sum_spectra_source.h"
 
 #include "spectra_stream_saver.h"
 
@@ -233,7 +233,7 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
 
 void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-    workflow::xrf::Spectra_Stream_Producer spectra_stream_producer(job);
+    workflow::xrf::Spectra_File_Source spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
     workflow::xrf::Spectra_Stream_Saver sink;
 
@@ -303,7 +303,7 @@ void save_optimal_params(struct io::file_name_fit_params* f_struct)
 
 void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-    workflow::xrf::Integrated_Spectra_Stream_Producer spectra_stream_producer(job);
+    workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
     workflow::Sink<struct io::file_name_fit_params*> sink;
     sink.set_function(save_optimal_params);
@@ -326,7 +326,7 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 
 void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-    workflow::xrf::Sum_Detectors_Spectra_Stream_Producer sum_detectors_spectra_stream_producer(job);
+    workflow::xrf::Detector_Sum_Spectra_Source sum_detectors_spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
     workflow::xrf::Spectra_Stream_Saver sink;
 

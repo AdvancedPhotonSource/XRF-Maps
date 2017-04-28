@@ -47,73 +47,37 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Producer_H
-#define Producer_H
+#ifndef Detector_Sum_Spectra_Source_H
+#define Detector_Sum_Spectra_Source_H
 
 #include "defines.h"
-#include <functional>
-#include "distributor.h"
+
+#include "spectra_file_source.h"
 
 namespace workflow
 {
-
-//-----------------------------------------------------------------------------
-template<typename T_OUT>
-class DLL_EXPORT Producer
+namespace xrf
 {
 
-   typedef std::function<void (T_OUT)> Callback_Func_Def;
- //  typedef std::function<void ( void*, Callback_Func_Def )> Producer_Func_Def;
+//-----------------------------------------------------------------------------
+
+class DLL_EXPORT Detector_Sum_Spectra_Source : public Spectra_File_Source
+{
 
 public:
 
-    Producer()
-    {
-        _output_callback_func = nullptr;
-    }
+    Detector_Sum_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job);
 
-    ~Producer()
-    {
+    ~Detector_Sum_Spectra_Source();
 
-    }
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
-    template<typename _T>
-    void connect(Distributor<T_OUT, _T> *distributor)
-    {
-        _output_callback_func = std::bind(&Distributor<T_OUT, _T>::distribute, distributor, std::placeholders::_1);
-    }
-
-/*
-    void connect( Callback_Func_Def out_callback_func)
-    {
-        _output_callback_func = out_callback_func;
-    }
-
-    void set_function(Producer_Func_Def func)
-    {
-        _prod_func = func;
-    }
-*/
-    virtual void run() {}
-
-/*
-    template<class... Args>
-    virtual void run(Args&&... args)
-    {
-
-        auto task = std::make_shared< std::packaged_task<void> >(
-                std::bind(std::forward<Producer_Func_Def>(_prod_func), std::forward<Args>(args)...)
-            );
-
-        task();
-    }
-*/
 protected:
 
-    Callback_Func_Def _output_callback_func;
-
+    data_struct::xrf::Spectra* _spectra;
 };
 
+} //namespace xrf
 } //namespace workflow
 
-#endif // Producer_H
+#endif // Detector_Sum_Spectra_Source_H

@@ -13,8 +13,8 @@ CONFIG   -= app_bundle
 CONFIG += c++14
 
 TEMPLATE = app
-#CONFIG += debug
-CONFIG += release
+CONFIG += debug
+#CONFIG += release
 CONFIG += console
 
 QMAKE_EXT_CPP += .c
@@ -136,9 +136,9 @@ SOURCES += \
     src/fitting/optimizers/minpack_optimizer.cpp \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
-    src/workflow/xrf/spectra_stream_producer.cpp \
-    src/workflow/xrf/integrated_spectra_stream_producer.cpp \
-    src/workflow/xrf/sum_detectors_spectra_stream_producer.cpp \
+    src/workflow/xrf/spectra_file_source.cpp \
+    src/workflow/xrf/integrated_spectra_source.cpp \
+    src/workflow/xrf/detector_sum_spectra_source.cpp \
     src/workflow/xrf/spectra_stream_saver.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
@@ -194,11 +194,11 @@ HEADERS += \
     #src/fitting/optimizers/ceres_optimizer.h \
     src/workflow/sink.h \
     src/workflow/distributor.h \
-    src/workflow/producer.h \
+    src/workflow/source.h \
     src/workflow/threadpool.h \
-    src/workflow/xrf/spectra_stream_producer.h \
-    src/workflow/xrf/integrated_spectra_stream_producer.h \
-    src/workflow/xrf/sum_detectors_spectra_stream_producer.h \
+    src/workflow/xrf/spectra_file_source.h \
+    src/workflow/xrf/integrated_spectra_source.h \
+    src/workflow/xrf/detector_sum_spectra_source.h \
     src/workflow/xrf/spectra_stream_saver.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \

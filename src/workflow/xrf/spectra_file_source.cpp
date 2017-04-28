@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "spectra_stream_producer.h"
+#include "spectra_file_source.h"
 #include "hl_file_io.h"
 
 namespace workflow
@@ -57,22 +57,22 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Producer::Spectra_Stream_Producer(data_struct::xrf::Analysis_Job* analysis_job) : Producer<data_struct::xrf::Stream_Block*>()
+Spectra_File_Source::Spectra_File_Source(data_struct::xrf::Analysis_Job* analysis_job) : Source<data_struct::xrf::Stream_Block*>()
 {
     _analysis_job = analysis_job;
-    _cb_function = std::bind(&Spectra_Stream_Producer::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Producer::~Spectra_Stream_Producer()
+Spectra_File_Source::~Spectra_File_Source()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
 {
 
     if(_output_callback_func != nullptr)
@@ -94,7 +94,7 @@ void Spectra_Stream_Producer::cb_load_spectra_data(size_t row, size_t col, size_
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Producer::run()
+void Spectra_File_Source::run()
 {
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF/", "_0.nc");
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF.h5/", "_0.h5");
@@ -111,7 +111,7 @@ void Spectra_Stream_Producer::run()
 
 //-----------------------------------------------------------------------------
 
-bool Spectra_Stream_Producer::_load_spectra_volume_with_callback(std::string dataset_directory,
+bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset_directory,
                                                                  std::string dataset_file,
                                                                  size_t detector_num_start,
                                                                  size_t detector_num_end,
