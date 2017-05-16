@@ -278,6 +278,7 @@ void generate_optimal_params(std::string dataset_directory,
             if(first)
             {
                 fit_params_avgs[f_struct.detector_num] = f_struct.fit_params;
+                first = false;
             }
             else
             {

@@ -3416,6 +3416,7 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
                 hid_t dst_fit_grp_id = H5Gcreate(dst_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                 //copy channel names
                 hid_t status = H5Ocopy(src_fit_grp_id, "Channel_Names", dst_fit_grp_id, "Channel_Names", ocpypl_id, H5P_DEFAULT);
+                status = H5Ocopy(src_fit_grp_id, "Calibration_Curve_Labels", dst_fit_grp_id, "Calibration_Curve_Labels", ocpypl_id, H5P_DEFAULT);
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_Current", "Calibration_Curve_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
