@@ -296,12 +296,12 @@ set(XRF_IO_HEADERS
 	src/io/file/aps/aps_fit_params_import.h
     src/io/hl_file_io.h
 	src/data_struct/xrf/analysis_job.h
-	src/workflow/producer.h
+	src/workflow/source.h
 	src/workflow/distributor.h
 	src/workflow/sink.h
-	src/workflow/xrf/spectra_stream_producer.h
-	src/workflow/xrf/integrated_spectra_stream_producer.h
-	src/workflow/xrf/sum_detectors_spectra_stream_producer.h
+	src/workflow/xrf/spectra_file_source.h
+	src/workflow/xrf/integrated_spectra_source.h
+	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
 )
 
@@ -317,9 +317,9 @@ add_library(libxrf_io SHARED
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/hl_file_io.cpp
 	src/data_struct/xrf/analysis_job.cpp
-	src/workflow/xrf/spectra_stream_producer.cpp
-	src/workflow/xrf/integrated_spectra_stream_producer.cpp
-	src/workflow/xrf/sum_detectors_spectra_stream_producer.cpp
+	src/workflow/xrf/spectra_file_source.cpp
+	src/workflow/xrf/integrated_spectra_source.cpp
+	src/workflow/xrf/detector_sum_spectra_source.cpp
 	src/workflow/xrf/spectra_stream_saver.cpp
 )
 
