@@ -104,7 +104,7 @@ inline ThreadPool::ThreadPool(size_t threads, bool setAffinity=false)
              int res = SetThreadAffinityMask(workers[i].native_handle(), aff_mask);
              if(res == 0)
              {
-                std::cout<<"Error setting thread affinity\n";
+                //logit<<"Error setting thread affinity\n";
              }
              aff_mask *= 2;
 #else
