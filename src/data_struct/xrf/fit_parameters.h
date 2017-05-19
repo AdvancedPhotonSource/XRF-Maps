@@ -82,6 +82,7 @@ namespace xrf
     const std::string STR_COMPTON_HI_GAMMA = "COMPTON_HI_GAMMA";
 
     const std::string STR_SNIP_WIDTH = "SNIP_WIDTH";
+    const std::string STR_FIT_SNIP_WIDTH = "FIT_SNIP_WIDTH";
     const std::string STR_SI_ESCAPE = "SI_ESCAPE";
     const std::string STR_GE_ESCAPE = "GE_ESCAPE";
     const std::string STR_ESCAPE_LINEAR = "ESCAPE_LINEAR";

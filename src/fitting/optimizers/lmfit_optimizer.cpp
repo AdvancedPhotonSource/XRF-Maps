@@ -72,6 +72,7 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
+    ud->spectra_model += ud->spectra_background;
     //Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
@@ -90,6 +91,7 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
     ud->fit_parameters->from_array(par, m_dat);
     //Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    ud->spectra_model += ud->spectra_background;
     //Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
@@ -156,29 +158,6 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
-    //ud.weights = &weights;
-
-
-    /*
-        if(_snip_background)
-        {
-            //We will save the background now once because _fit_spectra may call model_spectra multiple times on same spectra
-            _snip_background = false;
-
-            if(_background_counts.size() != spectra->size())
-            {
-                _background_counts.resize(spectra->size());
-            }
-
-            //zero out
-            //_background_counts *= 0.0;
-            real_t spectral_binning = 0.0;
-            ud.spectra_background = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
-        }
-    */
-
 
     lm_status_struct<real_t> status;
 
@@ -262,10 +241,6 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
-    //ud.weights = &weights;
-
 
     lm_status_struct<real_t> status;
 

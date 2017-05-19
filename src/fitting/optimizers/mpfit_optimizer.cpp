@@ -74,6 +74,7 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 
     //Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
+    ud->spectra_model += ud->spectra_background;
 
     //Calculate residuals
     for (int i=0; i<m; i++)
@@ -94,6 +95,7 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
 
     //Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    ud->spectra_model += ud->spectra_background;
 
     //Calculate residuals
     for (int i=0; i<m; i++)
@@ -132,10 +134,6 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-
-    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
-    //ud.weights = &weights;
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
@@ -328,9 +326,6 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     std::vector<real_t> perror(fitp_arr.size());
 
     int info;
-
-    //std::valarray<real_t> weights = std::sqrt( *(spectra->buffer()) );
-    //ud.weights = &weights;
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
