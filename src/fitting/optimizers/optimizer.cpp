@@ -83,6 +83,18 @@ namespace optimizers
 		ud.weights = std::abs(ud.weights);
 		ud.weights /= ud.weights.max();
 
+        std::valarray<real_t> background((real_t)0.0, spectra->size());
+        if(fit_params->contains(STR_FIT_SNIP_WIDTH))
+        {
+            Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);
+            if(fit_snip_width.value > 0.0)
+            {
+                real_t spectral_binning = 0.0;
+                background = snip_background(spectra, fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value, fit_params->at(STR_ENERGY_QUADRATIC).value, spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+            }
+        }
+        ud.spectra_background = background;
+
 		ud.spectra_model.resize(spectra->size());
 	}
 
@@ -105,6 +117,18 @@ namespace optimizers
 		ud.weights = convolve1d(ud.weights, 5);
 		ud.weights = std::abs(ud.weights);
 		ud.weights /= ud.weights.max();
+
+        std::valarray<real_t> background((real_t)0.0, spectra->size());
+        if(fit_params->contains(STR_FIT_SNIP_WIDTH))
+        {
+            Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);
+            if(fit_snip_width.value > 0.0)
+            {
+                real_t spectral_binning = 0.0;
+                background = snip_background(spectra, fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value, fit_params->at(STR_ENERGY_QUADRATIC).value, spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+            }
+        }
+        ud.spectra_background = background;
 
 		ud.spectra_model.resize(spectra->size());
 	}

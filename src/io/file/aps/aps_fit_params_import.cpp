@@ -301,22 +301,20 @@ bool APS_Fit_Params_Import::load(std::string path,
                         }
                     }
                 }
-                else if (tag == "FIT_SNIP_WIDTH")
+                else if (tag == data_struct::xrf::STR_FIT_SNIP_WIDTH)
                 {
                     std::string str_value;
                     std::getline(strstream, str_value, ':');
                     float fvalue = std::stof(str_value);
                     params_override->fit_snip_width = fvalue;
-                    //TODO add to fit params
-                    /*
-                    data_struct::xrf::Fit_Param* fit_param = params_override->fit_params.get_fit_param(data_struct::xrf::STR_SNIP_WIDTH);
-                    if (fit_param == nullptr)
+
+                    if( false == params_override->fit_params.contains(tag))
                     {
-                        fit_param = new data_struct::xrf::Fit_Param(data_struct::xrf::STR_SNIP_WIDTH);
-                        params_override->fit_params.append_fit_param(fit_param);
+                        params_override->fit_params.add_parameter(tag, data_struct::xrf::Fit_Param(tag));
                     }
-                    fit_param->bound_type = data_struct::xrf::LIMITED_LO_HI;
-                    */
+
+                    params_override->fit_params[data_struct::xrf::STR_FIT_SNIP_WIDTH].bound_type = data_struct::xrf::FIXED;
+                    params_override->fit_params[data_struct::xrf::STR_FIT_SNIP_WIDTH].value = fvalue;
                 }
                 else if (tag == "TIME_SCALER_PV")
                 {

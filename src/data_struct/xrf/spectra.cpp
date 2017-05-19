@@ -186,7 +186,9 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	{
 		boxcar[i] = 1.0;
 	}
+    background = convolve1d(background, boxcar);
 	//convolve 1d
+    /*
 	for (size_t i = 0; i< background.size(); i++)
 	{
 		new_background[i] = 0.0;
@@ -197,6 +199,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		}
 	}
 	background = new_background / real_t(boxcar.size());
+    */
 	//clear out
 	new_background.resize(1);
 	boxcar.resize(1);
