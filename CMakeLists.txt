@@ -75,13 +75,12 @@ set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
 find_package (Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(ZMQ)
 
+#if (NOT ZMQ_INCLUDE_DIRS)
 
 IF( NOT EIGEN3_INCLUDE_DIR )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
-ENDIF()
-IF( NOT SZip_LIB_DIR )
-    MESSAGE( FATAL_ERROR "Please point the environment variable SZip_LIB_DIR to the include directory of your Eigen3 installation.")
 ENDIF()
 
 option(BUILD_WITH_VTK "Build with VTK")
@@ -159,6 +158,9 @@ endif()
 # Include path for pybind11 header files
 #include_directories(pybind11)
 
+#zeromq include
+include_directories(${ZMQ_INCLUDE_DIRS})
+
 #hdf5 include
 include_directories(${HDF5_INCLUDE_DIRS})
 
@@ -174,6 +176,7 @@ include_directories(src/support/mdautils-1.4.1)
 include_directories(src/support/cmpfit-1.3a)
 include_directories(src/support/lmfit_6.1)
 include_directories(src/support/nnls)
+include_directories(src/support/zmq)
 include_directories(src/data_struct)
 include_directories(src/data_struct/xrf)
 include_directories(src/data_struct/xrf/aps)
@@ -224,6 +227,7 @@ set(libxrf_fit_HEADERS
     src/support/nnls/vector.hpp
     src/support/nnls/matrix.h
     src/support/nnls/denseMatrix.hpp
+    src/support/zmq/zmq.hpp
     src/data_struct/base_dataset.h
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h

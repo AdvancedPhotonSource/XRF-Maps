@@ -37,6 +37,7 @@ INCLUDEPATH += src/support/minpack
 INCLUDEPATH += src/support/cmpfit-1.3a
 INCLUDEPATH += src/support/lmfit_6.1
 INCLUDEPATH += src/support/nnls
+INCLUDEPATH += src/support/zmq
 INCLUDEPATH += src/visual
 INCLUDEPATH += /usr/include/python2.7
 
@@ -89,6 +90,10 @@ LIBS += /local/aglowacki/libs/gflags/lib/libgflags.a
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lgomp
 
+#zmq
+INCLUDEPATH += /local/aglowacki/libs/zmq/include
+LIBS += /local/aglowacki/libs/zmq/lib/libzmq.a
+
 
 INCLUDEPATH += /usr/include/hdf5/serial
 QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -g
@@ -137,6 +142,7 @@ SOURCES += \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
     src/workflow/xrf/spectra_file_source.cpp \
+    src/workflow/xrf/spectra_net_source.cpp \
     src/workflow/xrf/integrated_spectra_source.cpp \
     src/workflow/xrf/detector_sum_spectra_source.cpp \
     src/workflow/xrf/spectra_stream_saver.cpp \
@@ -163,6 +169,7 @@ HEADERS += \
     src/support/nnls/nnls.hpp \
     src/support/lmfit_6.1/lmmin.hpp \
     src/support/cmpfit-1.3a/mpfit.hpp \
+    src/support/zmq/zmq.hpp \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \
@@ -197,6 +204,7 @@ HEADERS += \
     src/workflow/source.h \
     src/workflow/threadpool.h \
     src/workflow/xrf/spectra_file_source.h \
+    src/workflow/xrf/spectra_net_source.h \
     src/workflow/xrf/integrated_spectra_source.h \
     src/workflow/xrf/detector_sum_spectra_source.h \
     src/workflow/xrf/spectra_stream_saver.h \
