@@ -444,7 +444,8 @@ bool load_spectra_volume(std::string dataset_directory,
         }
         else if (hasHdf)
         {
-            io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
+            //io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
+            io::file::HDF5_IO::inst()->load_spectra_volume_xpress3(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
         }
 
     }

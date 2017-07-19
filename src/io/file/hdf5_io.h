@@ -150,6 +150,8 @@ public:
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
+    bool load_spectra_volume_xpress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
+
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
