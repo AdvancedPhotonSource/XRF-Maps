@@ -127,6 +127,7 @@ protected:
 
     void _new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block);
 
+    void _finalize_dataset(Dataset_Save *dataset);
 
     //by detector_dir + dataset hash
     std::map<size_t, Dataset_Save*> _dataset_map;

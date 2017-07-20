@@ -78,13 +78,22 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
     size_t detector_num = stream_block->detector_number;
 
 
-    //is new one
+    // Is this a new dataset
     if(_dataset_map.count(d_hash) < 1)
     {
+        // Close any open datasets because we should not get any more data from them
+        for (auto itr : _dataset_map)
+        {
+            _finalize_dataset(itr.second);
+        }
+        _dataset_map.clear();
+
+        //insert new dataset
         _new_dataset(d_hash, stream_block);
     }
     else
     {
+        // Get dataset and check if we have detector for it
         Dataset_Save *dataset = _dataset_map.at(d_hash);
         if(dataset->detector_map.count(detector_num) < 1)
         {
@@ -121,6 +130,7 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
         //TODO: this won't work because netcdf lines may be corrupt and last row/col won't match height/width
         if(stream_block->is_end_of_detector())
         {
+            //_finalize_dataset();
             Detector_Save *detector = dataset->detector_map.at(detector_num);
 
             //save and close hdf5 for this detector
@@ -169,6 +179,28 @@ void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::xrf
     stream_block->spectra = nullptr;
 
     io::file::HDF5_IO::inst()->generate_stream_dataset(*dataset->dataset_directory, *dataset->dataset_name, stream_block->detector_number, stream_block->height(), stream_block->width());
+}
+
+// ----------------------------------------------------------------------------
+
+void Spectra_Stream_Saver::_finalize_dataset(Dataset_Save *dataset)
+{
+    for(auto itr : dataset->detector_map)
+    {
+        Detector_Save *detector = itr.second;
+
+        //save and close hdf5 for this detector
+        ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
+        io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
+        io::file::HDF5_IO::inst()->close_dataset(d_hash);
+        ///delete stream_block->mda_io;
+
+        delete detector;
+    }
+
+    dataset->detector_map.clear();
+
+    delete dataset;
 }
 
 // ----------------------------------------------------------------------------
