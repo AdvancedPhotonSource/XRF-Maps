@@ -395,6 +395,8 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
                  error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
                  spectra->output_counts(out_cnt);
 
+                 spectra->recalc_elapsed_lifetime();
+
                  for(size_t s=0; s<count_row[0]; s++)
                  {
                      (*spectra)[s] = buffer[(count_row[1] * s) + col];
@@ -439,7 +441,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 }
 
 
-bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
+bool HDF5_IO::load_spectra_line_xpress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -449,15 +451,19 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
 
    logit<< path <<" detector : "<<detector_num<<std::endl;
 
-   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
    herr_t   error;
    std::string detector_path;
    real_t * buffer;
    hsize_t offset_row[3] = {0,0,0};
    hsize_t count_row[3] = {0,0,0};
-   //hsize_t offset_meta[3] = {0,0,0};
-   //hsize_t count_meta[3] = {1,1,1};
+   hsize_t offset_meta[1] = {0};
+   hsize_t count_meta[1] = {1};
+
+   std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "SCA0";
+   //std::string real_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "EventWidth";
+
 
     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if(file_id < 0)
@@ -474,6 +480,13 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
         return false;
     }
 
+    scaler_grp_id = H5Gopen(file_id, "/entry/instrument/NDAttributes", H5P_DEFAULT);
+    if(scaler_grp_id < 0)
+    {
+        logit<<"Error opening group /entry/instrument/NDAttributes"<<std::endl;
+        return false;
+    }
+
     logit<<"pre open dset "<<std::endl;
     dset_id = H5Dopen2(maps_grp_id, "data", H5P_DEFAULT);
     if(dset_id < 0)
@@ -482,15 +495,15 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
         return false;
     }
     dataspace_id = H5Dget_space(dset_id);
-/*
-    dset_lt_id = H5Dopen2(maps_grp_id, "livetime", H5P_DEFAULT);
+
+    dset_lt_id = H5Dopen2(scaler_grp_id, live_time_dataset_name.c_str(), H5P_DEFAULT);
     if(dset_lt_id < 0)
     {
-        logit<<"Error opening dataset /MAPS_RAW/livetime"<<std::endl;
+        logit<<"Error opening dataset /entry/instrument/NDAttributes/"<<live_time_dataset_name<<std::endl;
         return false;
     }
     dataspace_lt_id = H5Dget_space(dset_lt_id);
-
+/*
     dset_rt_id = H5Dopen2(maps_grp_id, "realtime", H5P_DEFAULT);
     if(dset_rt_id < 0)
     {
@@ -546,13 +559,13 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
     count_row[1] = 1;
     count_row[2] = dims_in[2];
 
-    if(spec_vol->rows() < dims_in[1] || spec_vol->cols() < dims_in[0] || spec_vol->samples_size() < dims_in[2])
+    if( spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
     {
-        spec_vol->resize(1, dims_in[0], dims_in[2]);
+        spec_row->resize(dims_in[0], dims_in[2]);
     }
 
     memoryspace_id = H5Screate_simple(3, count_row, NULL);
-    //memoryspace_meta_id = H5Screate_simple(1, count_meta, NULL);
+    memoryspace_meta_id = H5Screate_simple(1, count_meta, NULL);
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, NULL, count_row, NULL);
     //H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
 
@@ -562,7 +575,6 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
     real_t out_cnt = 1.0;
 
     //offset[1] = row;
-    //offset_meta[1] = row;
 
     offset_row[1] = detector_num;
 
@@ -572,19 +584,16 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
 
     if (error > -1 )
     {
-        //TODO: pass row into func
-        size_t row = 0;
 
-        //offset_meta[0] = detector_num;
         for(size_t col=0; col < dims_in[0]; col++)
         {
-            //offset_meta[2] = col;
-            data_struct::xrf::Spectra *spectra = &((*spec_vol)[row][col]);
-            /*
+            offset_meta[0] = col;
+            data_struct::xrf::Spectra *spectra = &((*spec_row)[col]);
+
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-            spectra->elapsed_lifetime(live_time);
-
+            spectra->elapsed_lifetime(live_time * 0.000000125 );
+/*
             H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
             spectra->elapsed_realtime(real_time);
@@ -596,7 +605,11 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
             H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
             spectra->output_counts(out_cnt);
+
+            spectra->recalc_elapsed_lifetime();
             */
+
+
             for(size_t s=0; s<count_row[2]; s++) // num samples
             {
                 //(*spectra)[s] = buffer[(count_row[1] * s) + col];
@@ -605,7 +618,6 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
             //logit<<"saved col "<<col<<std::endl;
         }
     }
-    //logit<<"read row "<<row<<std::endl;
 
     delete [] dims_in;
     delete [] offset;
@@ -616,14 +628,15 @@ bool HDF5_IO::load_spectra_volume_xpress3(std::string path, size_t detector_num,
     //H5Dclose(dset_incnt_id);
     //H5Dclose(dset_outcnt_id);
     //H5Dclose(dset_rt_id);
-    //H5Dclose(dset_lt_id);
-    //H5Sclose(memoryspace_meta_id);
+    H5Dclose(dset_lt_id);
+    H5Sclose(memoryspace_meta_id);
     H5Sclose(memoryspace_id);
-    //H5Sclose(dataspace_lt_id);
+    H5Sclose(dataspace_lt_id);
     //H5Sclose(dataspace_rt_id);
     //H5Sclose(dataspace_inct_id);
     //H5Sclose(dataspace_outct_id);
     H5Sclose(dataspace_id);
+    H5Gclose(scaler_grp_id);
     H5Gclose(maps_grp_id);
     H5Fclose(file_id);
 
