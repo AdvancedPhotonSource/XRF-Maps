@@ -468,7 +468,7 @@ bool load_spectra_volume(std::string dataset_directory,
             for(size_t i=0; i<spectra_volume->rows(); i++)
             {
                 full_filename = dataset_directory + "flyXspress/" + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
-                io::file::HDF5_IO::inst()->load_spectra_line_xpress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
             }
         }
 
@@ -476,8 +476,8 @@ bool load_spectra_volume(std::string dataset_directory,
 
     if(save_scalers)
     {
-        io::file::HDF5_IO::inst()->start_save_seq();
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf);
+        io::file::HDF5_IO::inst()->start_save_seq(true);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();

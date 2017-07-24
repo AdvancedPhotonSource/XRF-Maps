@@ -346,6 +346,12 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     count_row[0] = dims_in[0];
     count_row[1] = dims_in[2];
 
+/* TODO: maybe use greatest size (like xpress) becaue x_axis and y_axis will be diff than images size
+    size_t greater_rows = std::max(spec_vol->rows() , dims_in[1]);
+    size_t greater_cols = std::max(spec_vol->cols() , dims_in[2]);
+    size_t greater_channels = std::max(spec_vol->samples_size() , dims_in[0]);
+*/
+
     if(spec_vol->rows() < dims_in[1] || spec_vol->cols() < dims_in[2] || spec_vol->samples_size() < dims_in[0])
     {
         spec_vol->resize(dims_in[1], dims_in[2], dims_in[0]);
@@ -441,7 +447,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 }
 
 
-bool HDF5_IO::load_spectra_line_xpress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row)
+bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -559,9 +565,12 @@ bool HDF5_IO::load_spectra_line_xpress3(std::string path, size_t detector_num, d
     count_row[1] = 1;
     count_row[2] = dims_in[2];
 
+    size_t greater_cols = std::max(spec_row->size() , (size_t)dims_in[0]);
+    size_t greater_channels = std::max(spec_row[0].size() , (size_t)dims_in[2]);
+
     if( spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
     {
-        spec_row->resize(dims_in[0], dims_in[2]);
+        spec_row->resize(greater_cols, greater_channels);
     }
 
     memoryspace_id = H5Screate_simple(3, count_row, NULL);
@@ -881,7 +890,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::start_save_seq(const std::string filename)
+bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
 {
 
     if (_cur_file_id > -1)
@@ -890,7 +899,8 @@ bool HDF5_IO::start_save_seq(const std::string filename)
         end_save_seq();
     }
 
-    _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if(false == force_new_file)
+        _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (_cur_file_id < 1)
     {
         logit<<"Creating file "<<filename<<std::endl;

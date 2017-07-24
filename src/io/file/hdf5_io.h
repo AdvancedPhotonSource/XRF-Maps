@@ -150,7 +150,7 @@ public:
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
-    bool load_spectra_line_xpress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
+    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
@@ -159,9 +159,9 @@ public:
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
 
-    bool start_save_seq(const std::string filename);
+    bool start_save_seq(const std::string filename, bool force_new_file=false);
 
-    bool start_save_seq(){ return start_save_seq(_cur_filename);}
+    bool start_save_seq(bool force_new_file=false){ return start_save_seq(_cur_filename, force_new_file);}
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 
