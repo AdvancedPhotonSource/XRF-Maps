@@ -297,7 +297,8 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
                   std::vector<Processing_Type> proc_types,
                   data_struct::xrf::Params_Override * override_params,
                   data_struct::xrf::Quantification_Standard * quantification_standard,
-                  ThreadPool* tp)
+                  ThreadPool* tp,
+                  bool save_spectra_vol)
 {
     //Model
     fitting::models::Gaussian_Model model;
@@ -376,7 +377,14 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
         energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
     }
 
-    io::save_volume( quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad);
+    if(save_spectra_vol)
+    {
+        io::save_volume( quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad);
+    }
+    else
+    {
+        io::file::HDF5_IO::inst()->end_save_seq();
+    }
 
 }
 
@@ -417,7 +425,8 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
 
     //load the first one
     size_t detector_num = detector_num_start;
-    if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
+    bool is_loaded_from_analyzed_h5;
+    if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, &is_loaded_from_analyzed_h5, true) )
     {
         logit<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
         delete spectra_volume;
@@ -428,7 +437,8 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     //load spectra volume
     for(detector_num = detector_num_start+1; detector_num <= detector_num_end; detector_num++)
     {
-        if (false == io::load_spectra_volume(dataset_directory, dataset_file, tmp_spectra_volume, detector_num, override_params, nullptr, false) )
+
+        if (false == io::load_spectra_volume(dataset_directory, dataset_file, tmp_spectra_volume, detector_num, override_params, nullptr, &is_loaded_from_analyzed_h5, false) )
         {
             logit<<"Error loading all detectors for "<<dataset_directory<<"/"<<dataset_file<<std::endl;
             delete spectra_volume;
@@ -462,7 +472,7 @@ void process_dataset_file_quick_n_dirty(std::string dataset_directory,
     }
     delete tmp_spectra_volume;
 
-    proc_spectra(spectra_volume, proc_types, override_params, nullptr, tp);
+    proc_spectra(spectra_volume, proc_types, override_params, nullptr, tp, !is_loaded_from_analyzed_h5);
 
 }
 
@@ -506,15 +516,16 @@ void process_dataset_file(std::string dataset_directory,
         std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
         io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
+        bool loaded_from_analyzed_hdf5 = false;
         //load spectra volume
-        if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, true) )
+        if (false == io::load_spectra_volume(dataset_directory, dataset_file, spectra_volume, detector_num, override_params, nullptr, &loaded_from_analyzed_hdf5, true) )
         {
             logit<<"Skipping detector "<<detector_num<<std::endl;
 			delete spectra_volume;
             continue;
         }
 
-        proc_spectra(spectra_volume, proc_types, override_params, quantification_standard, tp);
+        proc_spectra(spectra_volume, proc_types, override_params, quantification_standard, tp, !loaded_from_analyzed_hdf5);
     }
 
 }
@@ -616,8 +627,9 @@ bool perform_quantification(std::string dataset_directory,
             }
 
             data_struct::xrf::Spectra_Volume spectra_volume;
+            bool is_loaded_from_analyzed_h5;
             //load the quantification standard dataset
-            if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
+            if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
             {
                 //legacy code would load mca files, check for mca and replace with mda
                 int std_str_len = standard_file_name.length();
@@ -625,7 +637,7 @@ bool perform_quantification(std::string dataset_directory,
                 {
                     standard_file_name[std_str_len - 2] = 'd';
                     quantification_standard->standard_filename(standard_file_name);
-                    if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
+                    if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
                     {
                         logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
                         return false;

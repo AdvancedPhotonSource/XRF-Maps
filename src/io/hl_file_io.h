@@ -146,6 +146,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          size_t detector_num,
                          data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
+                         bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,

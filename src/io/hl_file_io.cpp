@@ -376,6 +376,7 @@ bool load_spectra_volume(std::string dataset_directory,
                          size_t detector_num,
                          data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
+                         bool *is_loaded_from_analyazed_h5,
                          bool save_scalers)
 {
 
@@ -427,6 +428,18 @@ bool load_spectra_volume(std::string dataset_directory,
                 break;
             }
         }
+    }
+
+    //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
+    if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(dataset_directory+"img.dat/"+dataset_file, detector_num, spectra_volume))
+    {
+        *is_loaded_from_analyazed_h5 = true;
+        io::file::HDF5_IO::inst()->start_save_seq(false);
+        return true;
+    }
+    else
+    {
+        *is_loaded_from_analyazed_h5 = false;
     }
 
     //load spectra
