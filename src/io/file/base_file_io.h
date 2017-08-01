@@ -52,9 +52,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "base_dataset.h"
+#include "data_struct/base_dataset.h"
 
 namespace io
 {

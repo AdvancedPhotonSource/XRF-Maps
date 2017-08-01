@@ -49,9 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Fit_Element_Map_H
 #define Fit_Element_Map_H
 
-#include "defines.h"
-#include "fit_parameters.h"
-#include "element_info.h"
+#include "core/defines.h"
+#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/xrf/element_info.h"
 
 namespace data_struct
 {

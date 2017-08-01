@@ -25,7 +25,7 @@ freely, subject to the following restrictions:
 
 
 #include <valarray>
-#include "defines.h"
+#include "core/defines.h"
 
 #define vtkDomainsChemistry_AUTOINIT 1(vtkDomainsChemistryOpenGL2)
 #define vtkRenderingContext2D_AUTOINIT 1(vtkRenderingContextOpenGL2)

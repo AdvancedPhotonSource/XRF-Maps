@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SPECTRAVOLUME_H
 #define SPECTRAVOLUME_H
 
-#include "spectra_line.h"
+#include "data_struct/xrf/spectra_line.h"
 
 //#include "base_dataset.h"
 

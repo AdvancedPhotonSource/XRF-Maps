@@ -49,12 +49,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MDA_IO_H
 #define MDA_IO_H
 
-#include "base_file_io.h"
-#include "mda-load.h"
-#include "element_info.h"
-#include "spectra_volume.h"
-#include "quantification_standard.h"
-#include "params_override.h"
+#include "io/file/base_file_io.h"
+#include "support/mda_utils/mda-load.h"
+#include "data_struct/xrf/element_info.h"
+#include "data_struct/xrf/spectra_volume.h"
+#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/xrf/params_override.h"
 
 namespace io
 {
@@ -109,7 +109,7 @@ public:
 
 private:
 
-    void _load_detector_meta_data(data_struct::xrf::Detector * detector);
+    //void _load_detector_meta_data(data_struct::xrf::Detector * detector);
 
     /**
      * @brief _mda_file: mda helper structure

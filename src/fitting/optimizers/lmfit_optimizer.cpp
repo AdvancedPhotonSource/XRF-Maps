@@ -51,7 +51,7 @@
 
 #include <string.h>
 
-#include "lmmin.hpp"
+#include "support/lmfit_6.1/lmmin.hpp"
 
 
 using namespace data_struct::xrf;

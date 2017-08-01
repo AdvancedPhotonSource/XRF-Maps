@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef NNLS_Fit_Routine_H
 #define NNLS_Fit_Routine_H
 
-#include "matrix_optimized_fit_routine.h"
+#include "fitting/routines/matrix_optimized_fit_routine.h"
 
-#include "nnls.hpp"
+#include "support/nnls/nnls.hpp"
 
 namespace fitting
 {

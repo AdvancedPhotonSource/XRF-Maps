@@ -60,28 +60,23 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" 
 include_directories(GCC_INCLUDE_DIR)
 
 IF(MSVC)
-  set(EIGEN3_INCLUDE_DIR "" CACHE PATH "Eigen include folder")
+  set(EIGEN3_INCLUDES "" CACHE PATH "Eigen include folder")
   #set(NETCDF_INCLUDES "" CACHE PATH "NetCDF include folder")
   #set(NETCDF_LIBRARIES "" CACHE FILEPATH "NetCDF library")
   #set(HDF5_INCLUDES "" CACHE PATH "HDF5 include folder")
   set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
-  set(EIGEN3_INCLUDE_DIR "/usr/include/eigen3" CACHE PATH "Eigen include folder")
+  set(EIGEN3_INCLUDES "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 ENDIF()
 
 find_package(NetCDF REQUIRED)
-
-set(SZip_LIB_DIR "" CACHE PATH "SZip lib folder")
 
 find_package (Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
 
-IF( NOT EIGEN3_INCLUDE_DIR )
-    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDE_DIR to the include directory of your Eigen3 installation.")
-ENDIF()
-IF( NOT SZip_LIB_DIR )
-    MESSAGE( FATAL_ERROR "Please point the environment variable SZip_LIB_DIR to the include directory of your Eigen3 installation.")
+IF( NOT EIGEN3_INCLUDES )
+    MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
 ENDIF()
 
 option(BUILD_WITH_VTK "Build with VTK")
@@ -104,9 +99,6 @@ IF (BUILD_WITH_VTK)
 ELSE()
   set(VISUAL_INC )
 ENDIF()
-
-link_directories( ${SZip_LIB_DIR} )
-#link_directories(${HDF5_INCLUDE_DIRS}/../lib)
 
 # Set a default build configuration if none is specified. 'Release' produces the smallest binaries
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -163,32 +155,33 @@ endif()
 include_directories(${HDF5_INCLUDE_DIRS})
 
 # Include Eigen 
-include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${EIGEN3_INCLUDES})
 
 # Include NetCDF 
 include_directories(${NETCDF_INCLUDES})
 
 # Include libxrf header files
-include_directories(src/support/minpack)
-include_directories(src/support/mdautils-1.4.1)
-include_directories(src/support/cmpfit-1.3a)
-include_directories(src/support/lmfit_6.1)
-include_directories(src/support/nnls)
-include_directories(src/data_struct)
-include_directories(src/data_struct/xrf)
-include_directories(src/data_struct/xrf/aps)
-include_directories(src/quantification)
-include_directories(src/quantification/models)
-include_directories(src/fitting)
-include_directories(src/fitting/models)
-include_directories(src/fitting/routines)
-include_directories(src/fitting/optimizers)
+include_directories(src)
+#include_directories(src/support/minpack)
+#include_directories(src/support/mdautils-1.4.1)
+#include_directories(src/support/cmpfit-1.3a)
+#include_directories(src/support/lmfit_6.1)
+#include_directories(src/support/nnls)
+#include_directories(src/data_struct)
+#include_directories(src/data_struct/xrf)
+#include_directories(src/data_struct/xrf/aps)
+#include_directories(src/quantification)
+#include_directories(src/quantification/models)
+#include_directories(src/fitting)
+#include_directories(src/fitting/models)
+#include_directories(src/fitting/routines)
+#include_directories(src/fitting/optimizers)
 
-# Include libxrf_io Maps header files
-include_directories(src/io)
-include_directories(src/io/file)
-include_directories(src/io/file/aps)
-include_directories(src/workflow)
+## Include libxrf_io Maps header files
+#include_directories(src/io)
+#include_directories(src/io/file)
+#include_directories(src/io/file/aps)
+#include_directories(src/workflow)
 
 # Include XRF-Maps Maps header files
 include_directories(src/core)
@@ -230,7 +223,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/xrf/fit_parameters.h
     src/data_struct/xrf/fit_element_map.h
     src/data_struct/xrf/params_override.h
-    src/data_struct/xrf/detector.h
+    #src/data_struct/xrf/detector.h
     src/data_struct/xrf/spectra.h
     src/data_struct/xrf/spectra_line.h
     src/data_struct/xrf/spectra_volume.h
@@ -260,7 +253,7 @@ add_library(libxrf_fit SHARED
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
     src/data_struct/xrf/fit_element_map.cpp
-    src/data_struct/xrf/detector.cpp
+    #src/data_struct/xrf/detector.cpp
     src/data_struct/xrf/spectra.cpp
     src/data_struct/xrf/spectra_line.cpp
     src/data_struct/xrf/spectra_volume.cpp
@@ -336,17 +329,13 @@ if (WIN32)
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Ox /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /Qansi-alias")
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
 	endif()
-    
-
-#	set(NETCDF_LIBRARIES netcdf.lib)
-	set(SZIP_LIB szip.lib)
   endif()
 
   # .PYD file extension on Windows
   #set_target_properties(libxrf_fit PROPERTIES SUFFIX ".pyd")
  
-  target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 elseif (UNIX)
   # It's quite common to have multiple copies of the same Python version
@@ -362,11 +351,8 @@ elseif (UNIX)
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
 
-  #set(NETCDF_LIB netcdf)
-  set(SZIP_LIB sz)
-
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3 -mavx")
+    set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
   endif()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
@@ -399,9 +385,9 @@ endif()
 #endif()
 
 IF (BUILD_WITH_VTK)
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
 ELSE()
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${SZIP_LIB} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()

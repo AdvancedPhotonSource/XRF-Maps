@@ -52,17 +52,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <list>
 #include <mutex>
-#include "base_file_io.h"
-#include "base_dataset.h"
-#include "spectra_volume.h"
-#include "fit_element_map.h"
+#include "io/file/base_file_io.h"
+#include "data_struct/base_dataset.h"
+#include "data_struct/xrf/spectra_volume.h"
+#include "data_struct/xrf/fit_element_map.h"
 #include "hdf5.h"
 
 //Include mda data structures to save scalers
-#include "mda_io.h"
+#include "io/file/mda_io.h"
 
-#include "quantification_standard.h"
-#include "params_override.h"
+#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/xrf/params_override.h"
 
 namespace io
 {

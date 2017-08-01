@@ -20,26 +20,7 @@ CONFIG += console
 
 QMAKE_EXT_CPP += .c
 
-INCLUDEPATH += src/core
-INCLUDEPATH += src/data_struct
-INCLUDEPATH += src/data_struct/xrf
-INCLUDEPATH += src/data_struct/xrf/aps
-INCLUDEPATH += src/quantification/models
-INCLUDEPATH += src/workflow
-INCLUDEPATH += src/workflow/distributors
-INCLUDEPATH += src/io
-INCLUDEPATH += src/io/file
-INCLUDEPATH += src/io/file/aps
-INCLUDEPATH += src/fitting/models
-INCLUDEPATH += src/fitting/routines
-INCLUDEPATH += src/fitting/optimizers
-INCLUDEPATH += src/support/mda_utils
-INCLUDEPATH += src/support/minpack
-INCLUDEPATH += src/support/cmpfit-1.3a
-INCLUDEPATH += src/support/lmfit_6.1
-INCLUDEPATH += src/support/nnls
-INCLUDEPATH += src/visual
-INCLUDEPATH += /usr/include/python2.7
+INCLUDEPATH += src
 
 #define _REAL_FLOAT for float, _REAL_DOUBLE for double
 DEFINES += _REAL_FLOAT
@@ -116,7 +97,6 @@ SOURCES += \
     src/data_struct/xrf/fit_element_map.cpp \
     src/data_struct/xrf/quantification_standard.cpp \
     #src/data_struct/xrf/element_quant.cpp \
-    src/data_struct/xrf/detector.cpp \
     src/data_struct/xrf/spectra.cpp \
     src/data_struct/xrf/spectra_line.cpp \
     src/data_struct/xrf/spectra_volume.cpp \
@@ -170,7 +150,6 @@ HEADERS += \
     src/data_struct/xrf/params_override.h \
     src/data_struct/xrf/element_quant.h \
     src/data_struct/xrf/quantification_standard.h \
-    src/data_struct/xrf/detector.h \
     src/data_struct/base_dataset.h \
     #src/data_struct/ndarray.h \
     src/data_struct/xrf/spectra.h \

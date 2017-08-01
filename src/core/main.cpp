@@ -66,33 +66,32 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <dirent.h>
 
-#include "threadpool.h"
+#include "workflow/threadpool.h"
 
-#include "hl_file_io.h"
+#include "io/hl_file_io.h"
 
 
-#include "spectra_volume.h"
-#include "detector.h"
+#include "data_struct/xrf/spectra_volume.h"
 
-#include "gaussian_model.h"
+#include "fitting/models/gaussian_model.h"
 
-#include "element_info.h"
+#include "data_struct/xrf/element_info.h"
 
-#include "aps_fit_params_import.h"
+#include "io/file/aps/aps_fit_params_import.h"
 
-#include "roi_fit_routine.h"
-#include "svd_fit_routine.h"
-#include "nnls_fit_routine.h"
+#include "fitting/routines/roi_fit_routine.h"
+#include "fitting/routines/svd_fit_routine.h"
+#include "fitting/routines/nnls_fit_routine.h"
 
-#include "lmfit_optimizer.h"
-#include "mpfit_optimizer.h"
+#include "fitting/optimizers/lmfit_optimizer.h"
+#include "fitting/optimizers/mpfit_optimizer.h"
 
-#include "fit_element_map.h"
-#include "params_override.h"
+#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/xrf/params_override.h"
 
-#include "quantification_standard.h"
+#include "data_struct/xrf/quantification_standard.h"
 
-#include "command_line_parser.h"
+#include "core/command_line_parser.h"
 
 
 using namespace std::placeholders; //for _1, _2,

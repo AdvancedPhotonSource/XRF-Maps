@@ -199,7 +199,7 @@ int MDA_IO::find_2d_detector_index(struct mda_file* mda_file, std::string det_na
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
 {
     detector->meta_array.resize(_mda_file->scan->number_detectors);
@@ -214,6 +214,7 @@ void MDA_IO::_load_detector_meta_data(data_struct::xrf::Detector * detector)
     }
 
 }
+*/
 
 //-----------------------------------------------------------------------------
 

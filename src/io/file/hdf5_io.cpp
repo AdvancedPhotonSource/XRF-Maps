@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <mutex>
 
-#include "element_info.h"
+#include "data_struct/xrf/element_info.h"
 
 #define HDF5_SAVE_VERSION 10.0
 

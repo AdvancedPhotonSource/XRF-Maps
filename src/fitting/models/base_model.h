@@ -49,10 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Base_Model_H
 #define Base_Model_H
 
-#include "spectra.h"
-#include "fit_parameters.h"
-#include "fit_element_map.h"
-#include "detector.h"
+#include "data_struct/xrf/spectra.h"
+#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/xrf/fit_element_map.h"
 #include <valarray>
 
 namespace fitting

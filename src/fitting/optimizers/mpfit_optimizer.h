@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MPFit_Optimizer_H
 #define MPFit_Optimizer_H
 
-#include "optimizer.h"
+#include "fitting/optimizers/optimizer.h"
 
 namespace fitting
 {

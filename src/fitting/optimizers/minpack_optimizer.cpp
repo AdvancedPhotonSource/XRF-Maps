@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include "minpack.hpp"
+#include "support/minpack/minpack.hpp"
 
 #include <string.h>
 
