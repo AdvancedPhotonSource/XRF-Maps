@@ -141,8 +141,9 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     mp_config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = (real_t)0.1;   // Initial step bound                         Default: 100.0
+    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    //mp_config.maxiter = MP_NO_ITER;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
     mp_config.maxiter = 2000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input

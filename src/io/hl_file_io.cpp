@@ -520,6 +520,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
     bool hasNetcdf = false;
     bool hasHdf = false;
+    bool hasXspress = false;
     std::string file_middle = ""; //_2xfm3_ or dxpM...
     for(auto &itr : netcdf_files)
     {
@@ -544,6 +545,26 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
         }
     }
+    if (hasNetcdf == false && hasHdf == false)
+    {
+        for(auto &itr : hdf_xspress_files)
+        {
+            if (itr.find(tmp_dataset_file) == 0)
+            {
+                size_t slen = (itr.length()-4) - tmp_dataset_file.length();
+                file_middle = itr.substr(tmp_dataset_file.length(), slen);
+                hasXspress = true;
+                break;
+            }
+        }
+    }
+
+    //  try to load from a pre analyzed file because they should contain the integrated spectra
+    if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(dataset_directory+"img.dat/"+dataset_file, detector_num, integrated_spectra))
+    {
+        return true;
+    }
+
 
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
@@ -603,6 +624,23 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         else if (hasHdf)
         {
             ret_val = io::file::HDF5_IO::inst()->load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, integrated_spectra);
+        }
+        else if (hasXspress)
+        {
+            std::string full_filename;
+            data_struct::xrf::Spectra_Line spectra_line;
+            spectra_line.resize(dims[1], integrated_spectra->size());
+            for(size_t i=0; i<dims[0]; i++)
+            {
+                full_filename = dataset_directory + "flyXspress/" + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
+                if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line))
+                {
+                    for(int k=0; k<spectra_line.size(); k++)
+                    {
+                        *integrated_spectra += spectra_line[k];
+                    }
+                }
+            }
         }
 
     }

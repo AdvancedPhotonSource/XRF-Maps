@@ -317,16 +317,8 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
         e_val += 1.0;
     }
 
-    //real_t gain = detector->energy_slope();
     std::valarray<real_t> ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + std::pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
 
-/* move outside
-    if( _snip_background )
-    {
-        real_t spectral_binning = 0.0;
-        background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
-    }
-*/
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;

@@ -89,46 +89,39 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
 {
 
 
-    real_t this_factor = (real_t)14.0; //used to be 10.0
+    real_t this_factor = (real_t)10.0; //used to be 10.0
 
     for (auto el_itr : *elements_to_fit)
     {
+        real_t e_guess = (real_t)1.0e-10;
+
+        data_struct::xrf::Fit_Element_Map *element = el_itr.second;
+        std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
         if( false == fit_params->contains(el_itr.first) )
         {
-            real_t e_guess = (real_t)1.0e-10;
-            data_struct::xrf::Fit_Element_Map *element = el_itr.second;
+            data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
+            (*fit_params)[el_itr.first] = fp;
+        }
+        if(spectra != nullptr  && energies.size() > 0)
+        {
+            real_t e_energy = element->energy_ratios()[0].energy;
+            real_t min_e =  e_energy - (real_t)0.1;
+            real_t max_e =  e_energy + (real_t)0.1;
 
-            //element->init_energy_ratio_for_detector_element( detector->get_element() );
-            std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
+            struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
 
-            //if element counts is not in fit params structure, add it
-            if( false == fit_params->contains(el_itr.first) )
-            {
-                data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
-                (*fit_params)[el_itr.first] = fp;
-            }
+            real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
+            sum /= energy_range.count();
+            e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
+            //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
+            e_guess = std::log10(e_guess);
 
-            if(spectra != nullptr  && energies.size() > 0)
-            {
-                real_t e_energy = element->energy_ratios()[0].energy;
-                real_t min_e =  e_energy - (real_t)0.1;
-                real_t max_e =  e_energy + (real_t)0.1;
-
-                struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
-
-                real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
-                sum /= energy_range.count();
-                e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
-                //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
-                e_guess = std::log10(e_guess);
-
-                (*fit_params)[el_itr.first].value = e_guess;
-            }
-            else
-            {
-                e_guess = std::log10(e_guess);
-                (*fit_params)[el_itr.first].value = e_guess;
-            }
+            (*fit_params)[el_itr.first].value = e_guess;
+        }
+        else
+        {
+            e_guess = std::log10(e_guess);
+            (*fit_params)[el_itr.first].value = e_guess;
         }
     }
 
@@ -150,7 +143,7 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
     //STR_COHERENT_SCT_AMPLITUDE
     real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
     real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)35.0; //was 8.0 in MAPS, this gets closer though
+    real_t this_factor = (real_t)8.0; //was 8.0 in MAPS, this gets closer though
     fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->at(STR_ENERGY_OFFSET).value, fitp->at(STR_ENERGY_SLOPE).value);
     size_t e_size = (energy_range.max + 1) - energy_range.min;
     real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();

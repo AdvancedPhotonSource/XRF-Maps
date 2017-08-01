@@ -167,33 +167,33 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
-    //control.ftol = 1.0e-10;
-    /* Relative error desired in the sum of squares.
-                         Termination occurs when both the actual and
-                         predicted relative reductions in the sum of squares
-                         are at most ftol. */
-    //control.xtol = 1.0e-10;
-    /* Relative error between last two approximations.
-                         Termination occurs when the relative error between
-                         two consecutive iterates is at most xtol. */
-    //control.gtol = 1.0e-10;
-    /* Orthogonality desired between fvec and its derivs.
-                         Termination occurs when the cosine of the angle
-                         between fvec and any column of the Jacobian is at
-                         most gtol in absolute value. */
-    //control.epsilon = 2.2204460e-4;
-    //control.epsilon = 1.0e-5;
-    /* Step used to calculate the Jacobian, should be
-                         slightly larger than the relative error in the
-                         user-supplied functions. */
-    //control.stepbound = 100.0;
-    /* Used in determining the initial step bound. This
-                         bound is set to the product of stepbound and the
-                         Euclidean norm of diag*x if nonzero, or else to
-                         stepbound itself. In most cases stepbound should lie
-                         in the interval (0.1,100.0). Generally, the value
-                         100.0 is recommended. */
-    //control.patience = 1000;
+//    control.ftol = 1.0e-10;
+//    /* Relative error desired in the sum of squares.
+//                         Termination occurs when both the actual and
+//                         predicted relative reductions in the sum of squares
+//                         are at most ftol. */
+//    control.xtol = 1.0e-10;
+//    /* Relative error between last two approximations.
+//                         Termination occurs when the relative error between
+//                         two consecutive iterates is at most xtol. */
+//    control.gtol = 1.0e-10;
+//    /* Orthogonality desired between fvec and its derivs.
+//                         Termination occurs when the cosine of the angle
+//                         between fvec and any column of the Jacobian is at
+//                         most gtol in absolute value. */
+//    control.epsilon = 2.2204460e-4;
+//    control.epsilon = 1.0e-5;
+//    /* Step used to calculate the Jacobian, should be
+//                         slightly larger than the relative error in the
+//                         user-supplied functions. */
+//    control.stepbound = 100.0;
+//    /* Used in determining the initial step bound. This
+//                         bound is set to the product of stepbound and the
+//                         Euclidean norm of diag*x if nonzero, or else to
+//                         stepbound itself. In most cases stepbound should lie
+//                         in the interval (0.1,100.0). Generally, the value
+//                         100.0 is recommended. */
+//    control.patience = 1000;
     /* Used to set the maximum number of function evaluations
                          to patience*(number_of_parameters+1). */
     //control.scale_diag;
