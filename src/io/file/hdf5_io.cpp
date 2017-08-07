@@ -1142,21 +1142,14 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
     std::lock_guard<std::mutex> lock(_mutex);
 
    //_is_loaded = ERROR_LOADING;
-   std::chrono::time_point<std::chrono::system_clock> start, end;
-   start = std::chrono::system_clock::now();
+   //std::chrono::time_point<std::chrono::system_clock> start, end;
+   //start = std::chrono::system_clock::now();
 
    logit<< path <<" detector : "<<detector_num<<std::endl;
 
    path += ".h5" + std::to_string(detector_num);
 
-   hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
-   hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
-   herr_t   error;
-   hsize_t dims_in[1] = {0};
-   hsize_t offset[1] = {0};
-   hsize_t count[1] = {1};
-   hsize_t offset_time[1] = {0};
-   hsize_t count_time[1] = {1};
+   hid_t    file_id;
 
     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if(file_id < 0)
@@ -1165,6 +1158,21 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
         logit<<"Error opening file "<<path<<std::endl;
         return false;
     }
+
+    return load_integrated_spectra_analyzed_h5(file_id, spectra);
+}
+
+bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra)
+{
+
+    hid_t    dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
+    herr_t   error;
+    hsize_t dims_in[1] = {0};
+    hsize_t offset[1] = {0};
+    hsize_t count[1] = {1};
+    hsize_t offset_time[1] = {0};
+    hsize_t count_time[1] = {1};
 
     spec_grp_id = H5Gopen(file_id, "/MAPS/Spectra/Integrated_Spectra", H5P_DEFAULT);
     if(spec_grp_id < 0)
@@ -1340,11 +1348,11 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
     H5Gclose(spec_grp_id);
     H5Fclose(file_id);
 
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    //end = std::chrono::system_clock::now();
+    //std::chrono::duration<double> elapsed_seconds = end-start;
+    ////std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    //logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
 
     return true;
 }

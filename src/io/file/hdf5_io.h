@@ -164,6 +164,8 @@ public:
 
     bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
+    bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra);
+
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
