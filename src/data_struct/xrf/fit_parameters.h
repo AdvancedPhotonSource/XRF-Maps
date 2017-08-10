@@ -238,6 +238,8 @@ public:
 
     std::vector<real_t> to_array();
 
+    std::vector<std::string> names_to_array();
+
     void from_array(std::vector<real_t> arr);
 
     void from_array(const real_t* arr, size_t arr_size);
@@ -257,6 +259,8 @@ public:
     const Fit_Param at(std::string name) const {return _params.at(name); }
 
     void pow10values();
+
+    size_t size() const { return _params.size(); }
 
 private:
 
