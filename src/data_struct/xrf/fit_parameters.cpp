@@ -116,11 +116,8 @@ std::vector<std::string> Fit_Parameters::names_to_array()
     std::vector<std::string> arr;
     for(const auto& itr : _params)
     {
-        if (itr.second.bound_type > E_Bound_Type::FIXED)
-        {
-            _params[itr.first].opt_array_index = arr.size();
-            arr.push_back(itr.first);
-        }
+        _params[itr.first].opt_array_index = arr.size();
+        arr.push_back(itr.first);
     }
     return arr;
 }
