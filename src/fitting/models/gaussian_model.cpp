@@ -93,8 +93,8 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
     Fit_Parameters fit_params;
     //                                                        name                     min               max             val              step              use
     fit_params.add_parameter(STR_ENERGY_OFFSET,    Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_OFFSET,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::FIXED));
+    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_QUADRATIC,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::FIXED));
 
     fit_params.add_parameter(STR_FWHM_OFFSET,    Fit_Param(STR_FWHM_OFFSET,        (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(STR_FWHM_FANOPRIME, Fit_Param(STR_FWHM_FANOPRIME,     (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
