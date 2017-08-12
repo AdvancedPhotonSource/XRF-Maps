@@ -48,8 +48,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef HL_FILE_IO_H
 #define HL_FILE_IO_H
 
+#if defined _WIN32 
+#include "support/direct/dirent.h"
+#else
 #include <dirent.h>
-
+#endif
 #include "workflow/threadpool.h"
 
 #include "io/file/netcdf_io.h"
