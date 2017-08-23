@@ -45,6 +45,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /// Initial Author <2016>: Arthur Glowacki
 
+#ifndef Command_Line_Parser_H
+#define Command_Line_Parser_H
+
 #include <algorithm>
 
 
@@ -78,3 +81,5 @@ class Command_Line_Parser
     private:
         std::vector <std::string> tokens;
 };
+
+#endif

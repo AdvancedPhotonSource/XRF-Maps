@@ -46,487 +46,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
-//#include <QCoreApplication>
+#include "core/process_streaming.h"
+#include "core/process_whole.h"
 
-#include <iostream>
-#include <queue>
-#include <string>
-#include <array>
-#include <vector>
-#include <unordered_map>
-#include <chrono>
-#include <ctime>
-#include <limits>
-#include <sstream>
-#include <fstream>
-
-#include <stdlib.h>
-
-//#include "pybind11.h"
-
-#include "io/hl_file_io.h"
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/fit_element_map.h"
-#include "data_struct/xrf/analysis_job.h"
-#include "core/command_line_parser.h"
-#include "data_struct/xrf/stream_block.h"
-#include "workflow/pipeline.h"
-#include "workflow/xrf/spectra_file_source.h"
-#include "workflow/xrf/integrated_spectra_source.h"
-#include "workflow/xrf/detector_sum_spectra_source.h"
-
-#include "workflow/xrf/spectra_stream_saver.h"
-
-#include "fitting/routines/param_optimized_fit_routine.h"
-#include "fitting/models/gaussian_model.h"
-
-// ----------------------------------------------------------------------------
-
-//default mode for which parameters to fit when optimizing fit parameters
-fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
-
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-/*
-//data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(data_struct::xrf::Fit_Element_Map_Dict *elements_to_fit, size_t width, size_t height )
-template<typename T>
-data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit, size_t width, size_t height )
-{
-    data_struct::xrf::Fit_Count_Dict* element_fit_counts_dict = new data_struct::xrf::Fit_Count_Dict();
-    for(auto& e_itr : *elements_to_fit)
-    {
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(e_itr.first, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ()) );
-        element_fit_counts_dict->at(e_itr.first).resize(width, height);
-    }
-    return element_fit_counts_dict;
-}
-
-// ----------------------------------------------------------------------------
-
-bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
-                        const fitting::models::Base_Model * const model,
-                        const data_struct::xrf::Spectra * const spectra,
-                        const data_struct::xrf::Fit_Element_Map_Dict * const elements_to_fit,
-                        data_struct::xrf::Fit_Count_Dict * out_fit_counts,
-                        size_t i,
-                        size_t j)
-{
-    std::unordered_map<std::string, real_t> counts_dict = fit_routine->fit_spectra(model, spectra, elements_to_fit);
-    //save count / sec
-    for (auto& el_itr : *elements_to_fit)
-    {
-        (*out_fit_counts)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_lifetime();
-    }
-    (*out_fit_counts)[data_struct::xrf::STR_NUM_ITR](i,j) = counts_dict[data_struct::xrf::STR_NUM_ITR];
-    return true;
-}
-
-// ----------------------------------------------------------------------------
-
-void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
-                  std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                  data_struct::xrf::Params_Override * override_params,
-                  data_struct::xrf::Quantification_Standard * quantification_standard,
-                  ThreadPool* tp)
-{
-    //Model
-    fitting::models::Gaussian_Model model;
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra_volume->samples_size() -1;
-
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-
-    for(auto proc_type : proc_types)
-    {
-////        logit << "Processing  "<< save_loc_map.at(proc_type)<<std::endl;
-
-        start = std::chrono::system_clock::now();
-        if (override_params->elements_to_fit.size() < 1)
-        {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
-            continue;
-        }
-
-        //Fit job queue
-        std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
-
-        //Allocate memeory to save fit counts
-        data_struct::xrf::Fit_Count_Dict  *element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols());
-
-        //Fitting models
-        fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
-
-        //for now we default to true to save iter count, in the future if we change the hdf5 layout we can store it per analysis.
-        bool alloc_iter_count = true;
-
-        //reset model fit parameters to defaults
-        model.reset_to_default_fit_params();
-        //Update fit parameters by override values
-        model.update_fit_params_values(override_params->fit_params);
-
-        if (alloc_iter_count)
-        {
-            //Allocate memeory to save number of fit iterations
-            element_fit_count_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(data_struct::xrf::STR_NUM_ITR, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>() ));
-            element_fit_count_dict->at(data_struct::xrf::STR_NUM_ITR).resize(spectra_volume->rows(), spectra_volume->cols());
-        }
-
-        //Initialize model
-        fit_routine->initialize(&model, &override_params->elements_to_fit, energy_range);
-
-        for(size_t i=0; i<spectra_volume->rows(); i++)
-        {
-            for(size_t j=0; j<spectra_volume->cols(); j++)
-            {
-                //logit<< i<<" "<<j<<std::endl;
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
-            }
-        }
-
-        io::save_results( save_loc_map.at(proc_type), element_fit_count_dict, fit_routine, fit_job_queue, start );
-    }
-
-    real_t energy_offset = 0.0;
-    real_t energy_slope = 0.0;
-    real_t energy_quad = 0.0;
-    data_struct::xrf::Fit_Parameters fit_params = model.fit_parameters();
-    if(fit_params.contains(fitting::models::STR_ENERGY_OFFSET))
-    {
-        energy_offset = fit_params[fitting::models::STR_ENERGY_OFFSET].value;
-    }
-    if(fit_params.contains(fitting::models::STR_ENERGY_SLOPE))
-    {
-        energy_slope = fit_params[fitting::models::STR_ENERGY_SLOPE].value;
-    }
-    if(fit_params.contains(fitting::models::STR_ENERGY_QUADRATIC))
-    {
-        energy_quad = fit_params[fitting::models::STR_ENERGY_QUADRATIC].value;
-    }
-
-    io::save_volume( quantification_standard, spectra_volume, energy_offset, energy_slope, energy_quad);
-
-}
-*/
-// ----------------------------------------------------------------------------
-
-data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
-{
-
-    for(auto itr : stream_block->fitting_blocks)
-    {
-        int i = itr.first;
-        std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
-        //make count / sec
-        for (auto& el_itr : *(stream_block->elements_to_fit))
-        {
-            stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_lifetime();
-        }
-        stream_block->fitting_blocks[i].fit_counts[data_struct::xrf::STR_NUM_ITR] = counts_dict[data_struct::xrf::STR_NUM_ITR];
-    }
-    return stream_block;
-}
-
-// ----------------------------------------------------------------------------
-
-void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
-{
-    workflow::xrf::Spectra_File_Source spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::xrf::Spectra_Stream_Saver sink;
-
-    distributor.set_function(proc_spectra_block);
-    spectra_stream_producer.connect(&distributor);
-    sink.connect(&distributor);
-
-    sink.start();
-    spectra_stream_producer.run();
-    sink.wait_and_stop();
-}
-
-// ----------------------------------------------------------------------------
-
-struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xrf::Stream_Block* stream_block )
-{
-    struct io::file_name_fit_params* ret_struct = new struct io::file_name_fit_params();
-
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = ret_struct->spectra.size() -1;
-
-    fitting::models::Gaussian_Model model;
-    //Fitting routines
-    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-////    fit_routine.set_optimizer(optimizer);
-
-    //reset model fit parameters to defaults
-    model.reset_to_default_fit_params();
-    //Update fit parameters by override values
-////    model.update_fit_params_values(params_override.fit_params);
-    model.set_fit_params_preset(optimize_fit_params_preset);
-    //Initialize the fit routine
-    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
-    //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct->fit_params = fit_routine.fit_spectra_parameters(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
-
-    ret_struct->success = true;
-
-    delete stream_block;
-
-    return ret_struct;
-}
-
-// ----------------------------------------------------------------------------
-
-void save_optimal_params(struct io::file_name_fit_params* f_struct)
-{
-    static bool first = false;
-    if(f_struct->success)
-    {
-        if(first)
-        {
-///            fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
-            first = false;
-        }
-        else
-        {
-///            fit_params_avgs[f_struct->detector_num].moving_average_with(f_struct->fit_params);
-        }
-        io::save_optimized_fit_params(*f_struct);
-    }
-    delete f_struct;
-}
-
-// ----------------------------------------------------------------------------
-
-void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
-{
-    workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
-    workflow::Sink<struct io::file_name_fit_params*> sink;
-    sink.set_function(save_optimal_params);
-
-
-    distributor.set_function(optimize_integrated_fit_params);
-    sink.connect(&distributor);
-    spectra_stream_producer.connect(&distributor);
-
-
-    sink.start();
-    spectra_stream_producer.run();
-    sink.wait_and_stop();
-    /*
-    io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
-    */
-}
-
-// ----------------------------------------------------------------------------
-
-void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
-{
-    workflow::xrf::Detector_Sum_Spectra_Source sum_detectors_spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::xrf::Spectra_Stream_Saver sink;
-
-
-    distributor.set_function(proc_spectra_block);
-    sink.connect(&distributor);
-    sum_detectors_spectra_stream_producer.connect(&distributor);
-
-    sink.start();
-    sum_detectors_spectra_stream_producer.run();
-    sink.wait_and_stop();
-}
-
-// ----------------------------------------------------------------------------
-
-bool perform_quantification(std::string dataset_directory,
-                            std::string quantification_info_file,
-                            std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                            std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                            size_t detector_num_start,
-                            size_t detector_num_end)
-{
-/*
-    bool air_path = false;
-    real_t detector_chip_thickness = 0.0;
-    real_t beryllium_window_thickness = 0.0;
-    real_t germanium_dead_layer = 0.0;
-    real_t incident_energy = 10.0;
-
-    fitting::models::Gaussian_Model model;
-
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
-
-    logit << "Perform_quantification()"<<std::endl;
-
-    data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-
-    std::string standard_file_name;
-    std::unordered_map<std::string, real_t> element_standard_weights;
-    //data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[0];
-
-    if( io::load_quantification_standard(dataset_directory, quantification_info_file, &standard_file_name, &element_standard_weights) )
-    {
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-        {
-            data_struct::xrf::Params_Override * override_params = nullptr;
-            if(fit_params_override_dict->count(detector_num) > 0)
-            {
-               override_params = &fit_params_override_dict->at(detector_num);
-            }
-            if(override_params == nullptr && fit_params_override_dict->count(-1) > 0)
-            {
-               override_params = &fit_params_override_dict->at(-1);
-            }
-            if(override_params == nullptr)
-            {
-                logit<<"Skipping file "<<dataset_directory << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
-                continue;
-            }
-
-
-            data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[detector_num];
-            quantification_standard->standard_filename(standard_file_name);
-            for(auto& itr : element_standard_weights)
-            {
-                quantification_standard->append_element(itr.first, itr.second);
-            }
-
-            //Parameters for calibration curve
-
-            if (override_params->detector_element.length() > 0)
-            {
-                // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-                detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(override_params->detector_element);
-            }
-            if (override_params->be_window_thickness.length() > 0)
-            {
-                beryllium_window_thickness = std::stof(override_params->be_window_thickness);
-            }
-            if (override_params->ge_dead_layer.length() > 0)
-            {
-                germanium_dead_layer = std::stof(override_params->ge_dead_layer);
-            }
-            if (override_params->det_chip_thickness.length() > 0)
-            {
-                detector_chip_thickness = std::stof(override_params->det_chip_thickness);
-            }
-
-            if(override_params->fit_params.contains(data_struct::xrf::STR_COHERENT_SCT_ENERGY))
-            {
-                incident_energy = override_params->fit_params.at(data_struct::xrf::STR_COHERENT_SCT_ENERGY).value;
-            }
-
-            //Output of fits for elements specified
-            std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
-            for(auto& itr : element_standard_weights)
-            {
-                data_struct::xrf::Element_Info* e_info = data_struct::xrf::Element_Info_Map::inst()->get_element(itr.first);
-                elements_to_fit[itr.first] = new data_struct::xrf::Fit_Element_Map(itr.first, e_info);
-                elements_to_fit[itr.first]->init_energy_ratio_for_detector_element( detector_element );
-            }
-
-            data_struct::xrf::Spectra_Volume spectra_volume;
-            //load the quantification standard dataset
-            if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
-            {
-                //legacy code would load mca files, check for mca and replace with mda
-                int std_str_len = standard_file_name.length();
-                if(standard_file_name[std_str_len - 4] == '.' && standard_file_name[std_str_len - 3] == 'm' && standard_file_name[std_str_len - 2] == 'c' && standard_file_name[std_str_len - 1] == 'a')
-                {
-                    standard_file_name[std_str_len - 2] = 'd';
-                    quantification_standard->standard_filename(standard_file_name);
-                    if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
-                    {
-                        logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
-                        return false;
-                    }
-                }
-                else
-                {
-                    logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
-                    return false;
-                }
-            }
-
-            //First we integrate the spectra and get the elemental counts
-            data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
-            energy_range.max = integrated_spectra.size() -1;
-
-
-            for(auto proc_type : proc_types)
-            {
-
-                //Fitting routines
-                fitting::routines::Base_Fit_Routine *fit_routine = generate_fit_routine(proc_type);
-
-                //reset model fit parameters to defaults
-                model.reset_to_default_fit_params();
-                //Update fit parameters by override values
-                model.update_fit_params_values(override_params->fit_params);
-                //Initialize the fit routine
-                fit_routine->initialize(&model, &elements_to_fit, energy_range);
-                //Fit the spectra
-                std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model,
-                                                                                              &integrated_spectra,
-                                                                                              &elements_to_fit);
-
-                if (fit_routine != nullptr)
-                {
-                    delete fit_routine;
-                    fit_routine = nullptr;
-                }
-
-                for (auto& itr : elements_to_fit)
-                {
-                    counts_dict[itr.first] /= integrated_spectra.elapsed_lifetime();
-                }
-                quantification_standard->integrated_spectra(integrated_spectra);
-
-                //save for each proc
-                quantification_standard->quantifiy(optimizer,
-                                                   fit_routine->get_name(),
-                                                  &counts_dict,
-                                                  incident_energy,
-                                                  detector_element,
-                                                  air_path,
-                                                  detector_chip_thickness,
-                                                  beryllium_window_thickness,
-                                                  germanium_dead_layer);
-
-            }
-
-            //cleanup
-            for(auto &itr : elements_to_fit)
-            {
-                delete itr.second;
-            }
-
-        }
-    }
-    else
-    {
-        logit<<"Error loading quantification standard "<<quantification_info_file<<std::endl;
-        return false;
-    }
-
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-
-    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
-*/
-    return true;
-
-}
 
 // ----------------------------------------------------------------------------
 
@@ -536,7 +58,6 @@ void help()
     logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
     logit_s<<"Options: "<<std::endl;
     logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
-    logit_s<<"--thread-affinity : Lock each thread to a logical core. "<<std::endl;
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
     logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
@@ -581,6 +102,9 @@ int main(int argc, char *argv[])
     bool quick_n_dirty = false;
     std::string opt = "";
 
+    //default mode for which parameters to fit when optimizing fit parameters
+    fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
     size_t detector_num_end = 3;
@@ -602,15 +126,9 @@ int main(int argc, char *argv[])
 
 
     size_t num_threads = std::thread::hardware_concurrency() - 2;
-    bool thread_affinity = false;
     if ( clp.option_exists("--nthreads") )
     {
         num_threads = std::stoi(clp.get_option("--nthreads"));
-    }
-
-    if ( clp.option_exists("--thread-affinity") )
-    {
-        thread_affinity = true;
     }
 
     if ( clp.option_exists("--tails") )
@@ -658,8 +176,13 @@ int main(int argc, char *argv[])
 
     if( clp.option_exists("--optimizer"))
     {
-        opt = clp.get_option("--optimizer");
-        //lmfit by default
+        std::string opt = clp.get_option("--optimizer");
+        /* TODO: connect to process_stream and process_whole
+        if(opt == "mpfit")
+        {
+            optimizer = &mpfit_optimizer;
+        }
+        */
     }
 
 
@@ -759,81 +282,183 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    data_struct::xrf::Analysis_Job analysis_job(num_threads);
-    analysis_job.set_optimizer(opt);
+    io::populate_netcdf_hdf5_files(dataset_dir);
 
-    if(optimize_fit_override_params)
+    if( clp.option_exists("--streaming"))
     {
-        std::vector<std::string> optim_dataset_files;
-        if (dataset_files.size() == 0)
-        {
-            logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
-            return -1;
-        }
-        for (auto& itr : dataset_files)
-        {
-            optim_dataset_files.push_back(itr);
-        }
+        data_struct::xrf::Analysis_Job analysis_job(num_threads);
+        analysis_job.set_optimizer(opt);
 
-        io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
-        //if no files were specified only take the 8 largest datasets
-        if (dset_file.length() < 1)
+        if(optimize_fit_override_params)
         {
-            while (optim_dataset_files.size() > 9)
+            std::vector<std::string> optim_dataset_files;
+            if (dataset_files.size() == 0)
             {
-                optim_dataset_files.pop_back();
+                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
+                return -1;
+            }
+            for (auto& itr : dataset_files)
+            {
+                optim_dataset_files.push_back(itr);
+            }
+
+            io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
+            //if no files were specified only take the 8 largest datasets
+            if (dset_file.length() < 1)
+            {
+                while (optim_dataset_files.size() > 9)
+                {
+                    optim_dataset_files.pop_back();
+                }
+            }
+
+            if( analysis_job.load(dataset_dir, optim_dataset_files, proc_types, detector_num_start, detector_num_end) )
+            {
+                run_optimization_stream_pipeline(&analysis_job);
+            }
+            else
+            {
+                logit<<"Error initializing meta data. Exiting"<<std::endl;
+                return -1;
             }
         }
 
-        if( analysis_job.load(dataset_dir, optim_dataset_files, proc_types, detector_num_start, detector_num_end) )
+        if(proc_types.size() > 0)
         {
-            run_optimization_stream_pipeline(&analysis_job);
-        }
-        else
-        {
-            logit<<"Error initializing meta data. Exiting"<<std::endl;
-            return -1;
-        }
-    }
-
-    if(proc_types.size() > 0)
-    {
-        if (quant_standard_filename.length() > 0)
-        {
-            /*
-            bool quant = false;
-            quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-            //if it is quick and dirty, average quants and save in first
-            if( quant && quick_n_dirty)
+            if (quant_standard_filename.length() > 0)
             {
-                average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
+                /*
+                bool quant = false;
+                quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                //if it is quick and dirty, average quants and save in first
+                if( quant && quick_n_dirty)
+                {
+                    average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
+                }
+                */
             }
-            */
-        }
-        //relead to process all dataset files and in case optimizer changed fit parameters
-        if(false == analysis_job.load(dataset_dir, dataset_files, proc_types, detector_num_start, detector_num_end) )
-        {
-            logit<<"Error initializing meta data. Exiting"<<std::endl;
-            return -1;
-        }
+            //relead to process all dataset files and in case optimizer changed fit parameters
+            if(false == analysis_job.load(dataset_dir, dataset_files, proc_types, detector_num_start, detector_num_end) )
+            {
+                logit<<"Error initializing meta data. Exiting"<<std::endl;
+                return -1;
+            }
 
-        if(quick_n_dirty)
-        {
-            run_quick_n_dirty_pipeline(&analysis_job);
+            if(quick_n_dirty)
+            {
+                run_quick_n_dirty_pipeline(&analysis_job);
+            }
+            else
+            {
+                run_stream_pipeline(&analysis_job);
+            }
         }
         else
         {
-            run_stream_pipeline(&analysis_job);
+            if(clp.option_exists("--generate-avg-h5"))
+            {
+                for(std::string dataset_file : dataset_files)
+                {
+                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
+                }
+            }
         }
     }
     else
     {
-        if(clp.option_exists("--generate-avg-h5"))
-        {
-            for(std::string dataset_file : dataset_files)
+        //dict for override info and elements to fit.
+        std::unordered_map<int, data_struct::xrf::Params_Override> fit_params_override_dict;
+        ThreadPool tp(num_threads);
+        std::vector<data_struct::xrf::Quantification_Standard> quant_stand_list(4);
+
+        if(optimize_fit_override_params)
             {
-                io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
+                std::vector<std::string> optim_dataset_files;
+                if (dataset_files.size() == 0)
+                {
+                    logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
+                    return -1;
+                }
+                for (auto& itr : dataset_files)
+                {
+                    optim_dataset_files.push_back(itr);
+                }
+
+                io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
+                //if no files were specified only take the 8 largest datasets
+                if (dset_file.length() < 1)
+                {
+                    while (optim_dataset_files.size() > 9)
+                    {
+                        optim_dataset_files.pop_back();
+                    }
+                }
+                generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
             }
+
+            //try to load maps fit params override txt files for each detector. -1 is general one
+            for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+            {
+                data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
+                if( io::load_override_params(dataset_dir, detector_num, &params_override) )
+                {
+                    fit_params_override_dict[detector_num] = params_override;
+                }
+            }
+            data_struct::xrf::Params_Override params(dataset_dir, -1);
+            if( io::load_override_params(dataset_dir, -1, &params) )
+            {
+                fit_params_override_dict[-1] = params;
+            }
+
+            //check to make sure we have at least 1
+            if(fit_params_override_dict.size() == 0)
+            {
+                logit<<"Error loading any maps_fit_params_override.txt "<<std::endl;
+                return -1;
+            }
+
+            if(proc_types.size() > 0)
+            {
+                if (quant_standard_filename.length() > 0)
+                {
+                    bool quant = false;
+                    quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                    //if it is quick and dirty, average quants and save in first
+                    if( quant && quick_n_dirty)
+                    {
+                        average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
+                    }
+                }
+
+                for(std::string dataset_file : dataset_files)
+                {
+                    if(quick_n_dirty)
+                    {
+                        process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                    }
+                    else
+                    {
+                        process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                        io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
+                    }
+
+                }
+            }
+            else
+            {
+                if(clp.option_exists("--generate-avg-h5"))
+                {
+                    for(std::string dataset_file : dataset_files)
+                    {
+                        io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
+                    }
+                }
+            }
+        //cleanup
+        for (auto & itr : params.elements_to_fit)
+        {
+            delete itr.second;
         }
     }
 

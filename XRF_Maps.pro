@@ -133,6 +133,8 @@ SOURCES += \
     src/io/file/aps/aps_fit_params_import.cpp \
     #src/io/file/aps/aps_calibration_io.cpp \
     src/visual/vtk_graph.cpp \
+    src/core/process_streaming.cpp \
+    src/core/process_whole.cpp \
     src/core/main.cpp
 
 HEADERS += \
@@ -195,6 +197,8 @@ HEADERS += \
     src/io/file/aps/aps_fit_params_import.h \
     #src/io/file/aps/aps_calibration_io.h \
     src/visual/vtk_graph.h \
+    src/core/process_streaming.h \
+    src/core/process_whole.h \
     src/core/command_line_parser.h
 
 
