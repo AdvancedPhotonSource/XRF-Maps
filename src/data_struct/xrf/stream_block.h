@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Stream_Block_H
 #define Stream_Block_H
 
-#include "defines.h"
-#include "element_info.h"
-#include "base_fit_routine.h"
+#include "core/defines.h"
+#include "data_struct/xrf/element_info.h"
+#include "fitting/routines/base_fit_routine.h"
 #include <vector>
 #include <string>
 

@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Element_Quant_H
 #define Element_Quant_H
 
-#include "defines.h"
+#include "core/defines.h"
 
 namespace data_struct
 {

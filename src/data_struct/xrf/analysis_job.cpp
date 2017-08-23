@@ -49,13 +49,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "analysis_job.h"
 
-#include "roi_fit_routine.h"
-#include "svd_fit_routine.h"
-#include "nnls_fit_routine.h"
+#include "fitting/routines/roi_fit_routine.h"
+#include "fitting/routines/svd_fit_routine.h"
+#include "fitting/routines/nnls_fit_routine.h"
 
-#include "gaussian_model.h"
+#include "fitting/models/gaussian_model.h"
 
-#include "hl_file_io.h"
+#include "io/hl_file_io.h"
 
 namespace data_struct
 {

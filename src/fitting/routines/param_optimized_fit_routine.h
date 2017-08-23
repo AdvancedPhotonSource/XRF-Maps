@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Param_Optimized_Fit_Routine_H
 #define Param_Optimized_Fit_Routine_H
 
-#include "base_fit_routine.h"
-#include "optimizer.h"
-#include "fit_parameters.h"
+#include "fitting/routines/base_fit_routine.h"
+#include "fitting/optimizers/optimizer.h"
+#include "data_struct/xrf/fit_parameters.h"
 #include <valarray>
 
 namespace fitting

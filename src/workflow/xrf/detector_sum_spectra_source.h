@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Detector_Sum_Spectra_Source_H
 #define Detector_Sum_Spectra_Source_H
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "spectra_file_source.h"
+#include "workflow/xrf/spectra_file_source.h"
 
 namespace workflow
 {

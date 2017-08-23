@@ -93,8 +93,8 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
     Fit_Parameters fit_params;
     //                                                        name                     min               max             val              step              use
     fit_params.add_parameter(STR_ENERGY_OFFSET,    Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_OFFSET,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::FIXED));
+    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_QUADRATIC,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::FIXED));
 
     fit_params.add_parameter(STR_FWHM_OFFSET,    Fit_Param(STR_FWHM_OFFSET,        (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(STR_FWHM_FANOPRIME, Fit_Param(STR_FWHM_FANOPRIME,     (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
@@ -316,16 +316,8 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
         e_val += 1.0;
     }
 
-    //real_t gain = detector->energy_slope();
     std::valarray<real_t> ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + std::pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
 
-/* move outside
-    if( _snip_background )
-    {
-        real_t spectral_binning = 0.0;
-        background_counts = snip_background(spectra, detector->energy_offset(), detector->energy_slope(), detector->energy_quadratic(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
-    }
-*/
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;

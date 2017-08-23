@@ -48,32 +48,36 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef HL_FILE_IO_H
 #define HL_FILE_IO_H
 
+#if defined _WIN32
+#include "support/direct/dirent.h"
+#else
 #include <dirent.h>
+#endif
 
-#include "netcdf_io.h"
-#include "mda_io.h"
-#include "hdf5_io.h"
-#include "csv_io.h"
+#include "io/file/netcdf_io.h"
+#include "io/file/mda_io.h"
+#include "io/file/hdf5_io.h"
+#include "io/file/csv_io.h"
 
-#include "spectra_volume.h"
+#include "data_struct/xrf/spectra_volume.h"
 
-#include "gaussian_model.h"
+#include "fitting/models/gaussian_model.h"
 
-#include "element_info.h"
+#include "data_struct/xrf/element_info.h"
 
-#include "aps_fit_params_import.h"
+#include "io/file/aps/aps_fit_params_import.h"
 
-#include "base_fit_routine.h"
+#include "fitting/routines/base_fit_routine.h"
 
-#include "fit_element_map.h"
-#include "params_override.h"
+#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/xrf/params_override.h"
 
-#include "quantification_standard.h"
+#include "data_struct/xrf/quantification_standard.h"
 
-#include "stream_block.h"
+#include "data_struct/xrf/stream_block.h"
 
 #ifdef _BUILD_WITH_VTK
-  #include "vtk_graph.h"
+  #include "visual/vtk_graph.h"
 #endif
 
 
@@ -116,13 +120,13 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
                        std::string element_csv_filename,
                        data_struct::xrf::Element_Info_Map *element_info_map);
-/*
-bool load_and_integrate_spectra_volume(std::string dataset_directory,
+
+DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::xrf::Spectra *integrated_spectra,
                                        size_t detector_num,
                                        data_struct::xrf::Params_Override * params_override);
-*/
+
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::xrf::Params_Override *params_override);
@@ -131,15 +135,14 @@ DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
                                   std::string *standard_file_name,
                                   std::unordered_map<std::string, real_t> *element_standard_weights);
-/*
-bool load_spectra_volume(std::string dataset_directory,
+
+DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
                          data_struct::xrf::Spectra_Volume *spectra_volume,
                          size_t detector_num,
                          data_struct::xrf::Params_Override * params_override,
                          data_struct::xrf::Quantification_Standard * quantification_standard,
                          bool save_scalers);
-*/
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
                               std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs,

@@ -54,17 +54,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <queue>
 #include <future>
-#include "base_file_io.h"
-#include "base_dataset.h"
-#include "spectra_volume.h"
-#include "fit_element_map.h"
+#include "io/file/base_file_io.h"
+#include "data_struct/base_dataset.h"
+#include "data_struct/xrf/spectra_volume.h"
+#include "data_struct/xrf/fit_element_map.h"
 #include "hdf5.h"
 
 //Include mda data structures to save scalers
-#include "mda_io.h"
+#include "io/file/mda_io.h"
 
-#include "quantification_standard.h"
-#include "params_override.h"
+#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/xrf/params_override.h"
 
 namespace io
 {
@@ -158,7 +158,21 @@ public:
                                            IO_Callback_Func_Def callback_func,
                                            void* user_data);
 
+    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
+
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
+
+    bool load_spectra_vol_analyzed_h5(std::string path,
+                                          size_t detector_num,
+                                          data_struct::xrf::Spectra_Volume* spectra_volume,
+                                          int row_idx_start = 0,
+                                          int row_idx_end = -1,
+                                          int col_idx_start = 0,
+                                          int col_idx_end = -1);
+
+    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
+
+    bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
@@ -180,9 +194,9 @@ public:
 
     bool close_dataset(size_t d_hash);
 
-    bool start_save_seq(const std::string filename);
+    bool start_save_seq(const std::string filename, bool force_new_file=false);
 
-    bool start_save_seq(){ return start_save_seq(_cur_filename);}
+    bool start_save_seq(bool force_new_file=false){ return start_save_seq(_cur_filename, force_new_file);}
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 

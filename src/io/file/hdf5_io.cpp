@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <mutex>
 
-#include "element_info.h"
+#include "data_struct/xrf/element_info.h"
 
 #define HDF5_SAVE_VERSION 10.0
 
@@ -403,6 +403,8 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
                  error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
                  spectra->output_counts(out_cnt);
 
+                 spectra->recalc_elapsed_lifetime();
+
                  for(size_t s=0; s<count_row[0]; s++)
                  {
                      (*spectra)[s] = buffer[(count_row[1] * s) + col];
@@ -444,6 +446,217 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
 
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   std::chrono::time_point<std::chrono::system_clock> start, end;
+   start = std::chrono::system_clock::now();
+
+   logit<< path <<" detector : "<<detector_num<<std::endl;
+
+   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+   hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
+   herr_t   error;
+   std::string detector_path;
+   real_t * buffer;
+   hsize_t offset_row[3] = {0,0,0};
+   hsize_t count_row[3] = {0,0,0};
+   hsize_t offset_meta[1] = {0};
+   hsize_t count_meta[1] = {1};
+
+   std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "SCA0";
+   //std::string real_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "EventWidth";
+
+
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if(file_id < 0)
+    {
+
+        logit<<"Error opening file "<<path<<std::endl;
+        return false;
+    }
+
+    maps_grp_id = H5Gopen(file_id, "/entry/data", H5P_DEFAULT);
+    if(maps_grp_id < 0)
+    {
+        logit<<"Error opening group /entry/data"<<std::endl;
+        return false;
+    }
+
+    scaler_grp_id = H5Gopen(file_id, "/entry/instrument/NDAttributes", H5P_DEFAULT);
+    if(scaler_grp_id < 0)
+    {
+        logit<<"Error opening group /entry/instrument/NDAttributes"<<std::endl;
+        return false;
+    }
+
+    logit<<"pre open dset "<<std::endl;
+    dset_id = H5Dopen2(maps_grp_id, "data", H5P_DEFAULT);
+    if(dset_id < 0)
+    {
+        logit<<"Error opening dataset /entry/data/data"<<std::endl;
+        return false;
+    }
+    dataspace_id = H5Dget_space(dset_id);
+
+    dset_lt_id = H5Dopen2(scaler_grp_id, live_time_dataset_name.c_str(), H5P_DEFAULT);
+    if(dset_lt_id < 0)
+    {
+        logit<<"Error opening dataset /entry/instrument/NDAttributes/"<<live_time_dataset_name<<std::endl;
+        return false;
+    }
+    dataspace_lt_id = H5Dget_space(dset_lt_id);
+/*
+    dset_rt_id = H5Dopen2(maps_grp_id, "realtime", H5P_DEFAULT);
+    if(dset_rt_id < 0)
+    {
+        logit<<"Error opening dataset /MAPS_RAW/realtime"<<std::endl;
+        return false;
+    }
+    dataspace_rt_id = H5Dget_space(dset_rt_id);
+
+    dset_incnt_id = H5Dopen2(maps_grp_id, "inputcounts", H5P_DEFAULT);
+    if(dset_incnt_id < 0)
+    {
+        logit<<"Error opening dataset /MAPS_RAW/inputcounts"<<std::endl;
+        return false;
+    }
+    dataspace_inct_id = H5Dget_space(dset_incnt_id);
+
+    dset_outcnt_id = H5Dopen2(maps_grp_id, "ouputcounts", H5P_DEFAULT);
+    if(dset_outcnt_id < 0)
+    {
+        logit<<"Error opening dataset /MAPS_RAW/ouputcounts"<<std::endl;
+        return false;
+    }
+    dataspace_outct_id = H5Dget_space(dset_outcnt_id);
+*/
+
+    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+    if (rank != 3)
+    {
+        logit<<"Dataset /MAPS_RAW/"<<detector_path<<" rank != 3. rank = "<<rank<<". Can't load dataset. returning"<<std::endl;
+        return false;
+       //throw exception ("Dataset is not a volume");
+    }
+    hsize_t* dims_in = new hsize_t[rank];
+    hsize_t* offset = new hsize_t[rank];
+    hsize_t* count = new hsize_t[rank];
+    logit<<"rank = "<<rank<< std::endl;
+    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    if(status_n < 0)
+    {
+         logit<<"Error getting dataset rank for MAPS_RAW/"<< detector_path<<std::endl;
+         return false;
+    }
+
+    for (int i=0; i < rank; i++)
+    {
+       logit<<"dims ["<<i<<"] ="<<dims_in[i]<< std::endl;
+       offset[i] = 0;
+       count[i] = dims_in[i];
+    }
+
+    buffer = new real_t [dims_in[0] * dims_in[2]]; // cols x spectra_size
+    count_row[0] = dims_in[0];
+    count_row[1] = 1;
+    count_row[2] = dims_in[2];
+
+    size_t greater_cols = std::max(spec_row->size() , (size_t)dims_in[0]);
+    size_t greater_channels = std::max(spec_row[0].size() , (size_t)dims_in[2]);
+
+    if( spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
+    {
+        spec_row->resize(greater_cols, greater_channels);
+    }
+
+    memoryspace_id = H5Screate_simple(3, count_row, NULL);
+    memoryspace_meta_id = H5Screate_simple(1, count_meta, NULL);
+    H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, NULL, count_row, NULL);
+    //H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+
+    real_t live_time = 1.0;
+    real_t real_time = 1.0;
+    real_t in_cnt = 1.0;
+    real_t out_cnt = 1.0;
+
+    //offset[1] = row;
+
+    offset_row[1] = detector_num;
+
+    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset_row, NULL, count_row, NULL);
+    error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+
+
+    if (error > -1 )
+    {
+
+        for(size_t col=0; col < dims_in[0]; col++)
+        {
+            offset_meta[0] = col;
+            data_struct::xrf::Spectra *spectra = &((*spec_row)[col]);
+
+            H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
+            spectra->elapsed_lifetime(live_time * 0.000000125 );
+/*
+            H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+            spectra->elapsed_realtime(real_time);
+
+            H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
+            spectra->input_counts(in_cnt);
+
+            H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
+            spectra->output_counts(out_cnt);
+
+            spectra->recalc_elapsed_lifetime();
+            */
+
+
+            for(size_t s=0; s<count_row[2]; s++) // num samples
+            {
+                //(*spectra)[s] = buffer[(count_row[1] * s) + col];
+                (*spectra)[s] = buffer[(count_row[2] * col) + s];
+            }
+            //logit<<"saved col "<<col<<std::endl;
+        }
+    }
+
+    delete [] dims_in;
+    delete [] offset;
+    delete [] count;
+    delete [] buffer;
+
+    H5Dclose(dset_id);
+    //H5Dclose(dset_incnt_id);
+    //H5Dclose(dset_outcnt_id);
+    //H5Dclose(dset_rt_id);
+    H5Dclose(dset_lt_id);
+    H5Sclose(memoryspace_meta_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_lt_id);
+    //H5Sclose(dataspace_rt_id);
+    //H5Sclose(dataspace_inct_id);
+    //H5Sclose(dataspace_outct_id);
+    H5Sclose(dataspace_id);
+    H5Gclose(scaler_grp_id);
+    H5Gclose(maps_grp_id);
+    H5Fclose(file_id);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -923,7 +1136,480 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::start_save_seq(const std::string filename)
+
+bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
+                                           size_t detector_num,
+                                           data_struct::xrf::Spectra_Volume* spectra_volume,
+                                           int row_idx_start,
+                                           int row_idx_end,
+                                           int col_idx_start,
+                                           int col_idx_end)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   std::chrono::time_point<std::chrono::system_clock> start, end;
+   start = std::chrono::system_clock::now();
+
+   logit<< path <<" detector : "<<detector_num<<std::endl;
+
+   path += ".h5" + std::to_string(detector_num);
+
+   hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+   hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
+   herr_t   error;
+   hsize_t dims_in[3] = {0,0,0};
+   hsize_t offset[3] = {0,0,0};
+   hsize_t count[3] = {1,1,1};
+   hsize_t offset_time[2] = {0,0};
+   hsize_t count_time[2] = {1,1};
+
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if(file_id < 0)
+    {
+
+        logit<<"Error opening file "<<path<<std::endl;
+        return false;
+    }
+
+    spec_grp_id = H5Gopen(file_id, "/MAPS/Spectra", H5P_DEFAULT);
+    if(spec_grp_id < 0)
+    {
+        H5Fclose(file_id);
+        logit<<"Error opening group /MAPS/Spectra"<<std::endl;
+        return false;
+    }
+
+    logit<<"pre open dset "<<std::endl;
+    dset_id = H5Dopen2(spec_grp_id, "mca_arr", H5P_DEFAULT);
+    if(dset_id < 0)
+    {
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/mca_arr"<<std::endl;
+        return false;
+    }
+    dataspace_id = H5Dget_space(dset_id);
+
+    dset_lt_id = H5Dopen2(spec_grp_id, "Elapsed_Livetime", H5P_DEFAULT);
+    if(dset_lt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Elapsed_Livetime"<<std::endl;
+        return false;
+    }
+    dataspace_lt_id = H5Dget_space(dset_lt_id);
+
+    dset_rt_id = H5Dopen2(spec_grp_id, "Elapsed_Realtime", H5P_DEFAULT);
+    if(dset_rt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Elapsed_Realtime"<<std::endl;
+        return false;
+    }
+    dataspace_rt_id = H5Dget_space(dset_rt_id);
+
+    dset_incnt_id = H5Dopen2(spec_grp_id, "Input_Counts", H5P_DEFAULT);
+    if(dset_incnt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Input_Counts"<<std::endl;
+        return false;
+    }
+    dataspace_inct_id = H5Dget_space(dset_incnt_id);
+
+    dset_outcnt_id = H5Dopen2(spec_grp_id, "Output_Counts", H5P_DEFAULT);
+    if(dset_outcnt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Ouput_Counts"<<std::endl;
+        return false;
+    }
+    dataspace_outct_id = H5Dget_space(dset_outcnt_id);
+
+
+    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+    if (rank != 3)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Dclose(dset_outcnt_id);
+        H5Sclose(dataspace_outct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Dataset /MAPS/Spectra/mca_arr  rank != 3. rank = "<<rank<<". Can't load dataset. returning"<<std::endl;
+        return false;
+       //throw exception ("Dataset is not a volume");
+    }
+    logit<<"rank = "<<rank<< std::endl;
+    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    if(status_n < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Dclose(dset_outcnt_id);
+        H5Sclose(dataspace_outct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+         logit<<"Error getting dataset dims for /MAPS/Spectra/mca_arr"<<std::endl;
+         return false;
+    }
+
+    for (int i=0; i < rank; i++)
+    {
+       logit<<"dims ["<<i<<"] ="<<dims_in[i]<< std::endl;
+       offset[i] = 0;
+       count[i] = dims_in[i];
+    }
+
+    if(row_idx_end < row_idx_start)
+    {
+        row_idx_end = dims_in[1];
+    }
+
+    if(col_idx_end < col_idx_start)
+    {
+        col_idx_end = dims_in[2];
+    }
+
+    spectra_volume->resize(dims_in[1], dims_in[2], dims_in[0]);
+
+    //buffer = new real_t [dims_in[0] * dims_in[2]]; // cols x spectra_size
+    count[0] = dims_in[0];
+    count[1] = 1;
+    count[2] = 1;
+
+    memoryspace_id = H5Screate_simple(3, count, NULL);
+    memoryspace_meta_id = H5Screate_simple(2, count_time, NULL);
+    H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+
+    real_t live_time = 1.0;
+    real_t real_time = 1.0;
+    real_t in_cnt = 1.0;
+    real_t out_cnt = 1.0;
+
+    //offset[1] = row;
+
+    for(size_t row=row_idx_start; row < row_idx_end; row++)
+    {
+        offset[1] = row;
+        offset_time[0] = row;
+        for(size_t col=col_idx_start; col < col_idx_end; col++)
+        {
+            data_struct::xrf::Spectra *spectra = &((*spectra_volume)[row][col]);
+            offset[2] = col;
+            offset_time[1] = col;
+            H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+            error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+
+            H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+            H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+            H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+            H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+
+            error = H5Dread (dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, (void*)&real_time);
+            error = H5Dread (dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, (void*)&live_time);
+            error = H5Dread (dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
+            error = H5Dread (dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
+
+            spectra->elapsed_lifetime(live_time);
+            spectra->elapsed_realtime(real_time);
+            spectra->input_counts(in_cnt);
+            spectra->output_counts(out_cnt);
+        }
+    }
+
+    H5Dclose(dset_id);
+    H5Dclose(dset_incnt_id);
+    H5Dclose(dset_outcnt_id);
+    H5Dclose(dset_rt_id);
+    H5Dclose(dset_lt_id);
+    H5Sclose(memoryspace_meta_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_lt_id);
+    H5Sclose(dataspace_rt_id);
+    H5Sclose(dataspace_inct_id);
+    H5Sclose(dataspace_outct_id);
+    H5Sclose(dataspace_id);
+    H5Gclose(spec_grp_id);
+    H5Fclose(file_id);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
+                                           size_t detector_num,
+                                           data_struct::xrf::Spectra* spectra)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   //std::chrono::time_point<std::chrono::system_clock> start, end;
+   //start = std::chrono::system_clock::now();
+
+   logit<< path <<" detector : "<<detector_num<<std::endl;
+
+   path += ".h5" + std::to_string(detector_num);
+
+   hid_t    file_id;
+
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if(file_id < 0)
+    {
+
+        logit<<"Error opening file "<<path<<std::endl;
+        return false;
+    }
+
+    return load_integrated_spectra_analyzed_h5(file_id, spectra);
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra)
+{
+
+    hid_t    dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
+    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
+    herr_t   error;
+    hsize_t dims_in[1] = {0};
+    hsize_t offset[1] = {0};
+    hsize_t count[1] = {1};
+    hsize_t offset_time[1] = {0};
+    hsize_t count_time[1] = {1};
+
+    spec_grp_id = H5Gopen(file_id, "/MAPS/Spectra/Integrated_Spectra", H5P_DEFAULT);
+    if(spec_grp_id < 0)
+    {
+        H5Fclose(file_id);
+        logit<<"Error opening group /MAPS/Spectra/Integrated_Spectra"<<std::endl;
+        return false;
+    }
+
+    logit<<"pre open dset "<<std::endl;
+    dset_id = H5Dopen2(spec_grp_id, "Spectra", H5P_DEFAULT);
+    if(dset_id < 0)
+    {
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Integrated_Spectra/Spectra"<<std::endl;
+        return false;
+    }
+    dataspace_id = H5Dget_space(dset_id);
+
+    dset_lt_id = H5Dopen2(spec_grp_id, "Elapsed_Livetime", H5P_DEFAULT);
+    if(dset_lt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Integrated_Spectra/Elapsed_Livetime"<<std::endl;
+        return false;
+    }
+    dataspace_lt_id = H5Dget_space(dset_lt_id);
+
+    dset_rt_id = H5Dopen2(spec_grp_id, "Elapsed_Realtime", H5P_DEFAULT);
+    if(dset_rt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Integrated_Spectra/Elapsed_Realtime"<<std::endl;
+        return false;
+    }
+    dataspace_rt_id = H5Dget_space(dset_rt_id);
+
+    dset_incnt_id = H5Dopen2(spec_grp_id, "Input_Counts", H5P_DEFAULT);
+    if(dset_incnt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Integrated_Spectra/Input_Counts"<<std::endl;
+        return false;
+    }
+    dataspace_inct_id = H5Dget_space(dset_incnt_id);
+
+    dset_outcnt_id = H5Dopen2(spec_grp_id, "Output_Counts", H5P_DEFAULT);
+    if(dset_outcnt_id < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Error opening dataset /MAPS/Spectra/Integrated_Spectra/Ouput_Counts"<<std::endl;
+        return false;
+    }
+    dataspace_outct_id = H5Dget_space(dset_outcnt_id);
+
+
+    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+    if (rank != 1)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Dclose(dset_outcnt_id);
+        H5Sclose(dataspace_outct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+        logit<<"Dataset /MAPS/Spectra/mca_arr  rank != 3. rank = "<<rank<<". Can't load dataset. returning"<<std::endl;
+        return false;
+       //throw exception ("Dataset is not a volume");
+    }
+    logit<<"rank = "<<rank<< std::endl;
+    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    if(status_n < 0)
+    {
+        H5Dclose(dset_id);
+        H5Sclose(dataspace_id);
+        H5Dclose(dset_lt_id);
+        H5Sclose(dataspace_lt_id);
+        H5Dclose(dset_rt_id);
+        H5Sclose(dataspace_rt_id);
+        H5Dclose(dset_incnt_id);
+        H5Sclose(dataspace_inct_id);
+        H5Dclose(dset_outcnt_id);
+        H5Sclose(dataspace_outct_id);
+        H5Gclose(spec_grp_id);
+        H5Fclose(file_id);
+         logit<<"Error getting dataset dims for /MAPS/Spectra/mca_arr"<<std::endl;
+         return false;
+    }
+
+    for (int i=0; i < rank; i++)
+    {
+       logit<<"dims ["<<i<<"] ="<<dims_in[i]<< std::endl;
+       offset[i] = 0;
+       count[i] = dims_in[i];
+    }
+
+    spectra->resize(dims_in[0]);
+
+    count[0] = dims_in[0];
+
+    memoryspace_id = H5Screate_simple(1, count, NULL);
+    memoryspace_meta_id = H5Screate_simple(1, count_time, NULL);
+    H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+    H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+
+    real_t live_time = 1.0;
+    real_t real_time = 1.0;
+    real_t in_cnt = 1.0;
+    real_t out_cnt = 1.0;
+
+    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+    error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+
+    H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+    H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+    H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+    H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
+
+    error = H5Dread (dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, (void*)&real_time);
+    error = H5Dread (dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, (void*)&live_time);
+    error = H5Dread (dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
+    error = H5Dread (dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
+
+    spectra->elapsed_lifetime(live_time);
+    spectra->elapsed_realtime(real_time);
+    spectra->input_counts(in_cnt);
+    spectra->output_counts(out_cnt);
+
+    H5Dclose(dset_id);
+    H5Dclose(dset_incnt_id);
+    H5Dclose(dset_outcnt_id);
+    H5Dclose(dset_rt_id);
+    H5Dclose(dset_lt_id);
+    H5Sclose(memoryspace_meta_id);
+    H5Sclose(memoryspace_id);
+    H5Sclose(dataspace_lt_id);
+    H5Sclose(dataspace_rt_id);
+    H5Sclose(dataspace_inct_id);
+    H5Sclose(dataspace_outct_id);
+    H5Sclose(dataspace_id);
+    H5Gclose(spec_grp_id);
+    H5Fclose(file_id);
+
+    //end = std::chrono::system_clock::now();
+    //std::chrono::duration<double> elapsed_seconds = end-start;
+    ////std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    //logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
 {
 
     if (_cur_file_id > -1)
@@ -932,7 +1618,8 @@ bool HDF5_IO::start_save_seq(const std::string filename)
         end_save_seq();
     }
 
-    _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if(false == force_new_file)
+        _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (_cur_file_id < 1)
     {
         logit<<"Creating file "<<filename<<std::endl;

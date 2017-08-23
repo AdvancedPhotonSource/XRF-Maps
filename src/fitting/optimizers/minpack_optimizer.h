@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MinPack_Optimizer_H
 #define MinPack_Optimizer_H
 
-#include "optimizer.h"
+#include "fitting/optimizers/optimizer.h"
 
 namespace fitting
 {

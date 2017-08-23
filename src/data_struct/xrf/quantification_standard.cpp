@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <cmath>
 
-#include "quantification_model.h"
+#include "quantification/models/quantification_model.h"
 
 namespace data_struct
 {

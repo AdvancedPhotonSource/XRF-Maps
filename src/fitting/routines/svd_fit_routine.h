@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SVD_Fit_Routine_H
 #define SVD_Fit_Routine_H
 
-#include "matrix_optimized_fit_routine.h"
+#include "fitting/routines/matrix_optimized_fit_routine.h"
 
 #include <Eigen/Core>
 

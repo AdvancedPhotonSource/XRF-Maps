@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "spectra_stream_saver.h"
-#include "hl_file_io.h"
+#include "io/hl_file_io.h"
 
 namespace workflow
 {
@@ -192,7 +192,7 @@ void Spectra_Stream_Saver::_finalize_dataset(Dataset_Save *dataset)
         //save and close hdf5 for this detector
         ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
         io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-        io::file::HDF5_IO::inst()->close_dataset(d_hash);
+//        io::file::HDF5_IO::inst()->close_dataset(d_hash);
         ///delete stream_block->mda_io;
 
         delete detector;

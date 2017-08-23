@@ -50,8 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef CSV_IO_H
 #define CSV_IO_H
 
-#include "element_info.h"
-#include "fit_parameters.h"
+#include "data_struct/xrf/element_info.h"
+#include "data_struct/xrf/fit_parameters.h"
 
 namespace io
 {

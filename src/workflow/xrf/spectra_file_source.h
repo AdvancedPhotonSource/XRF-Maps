@@ -50,14 +50,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Spectra_File_Source_H
 #define Spectra_File_Source_H
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "source.h"
-#include "stream_block.h"
-#include "analysis_job.h"
-#include "netcdf_io.h"
-#include "mda_io.h"
-#include "hdf5_io.h"
+#include "workflow/source.h"
+#include "data_struct/xrf/stream_block.h"
+#include "data_struct/xrf/analysis_job.h"
+#include "io/file/netcdf_io.h"
+#include "io/file/mda_io.h"
+#include "io/file/hdf5_io.h"
 #include <functional>
 #include <iostream>
 #include <fstream>

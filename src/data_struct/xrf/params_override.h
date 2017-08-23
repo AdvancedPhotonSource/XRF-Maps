@@ -49,10 +49,10 @@
 
 #include <map>
 #include <string>
-#include "defines.h"
+#include "core/defines.h"
 
-#include "fit_parameters.h"
-#include "fit_element_map.h"
+#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/xrf/fit_element_map.h"
 
 namespace data_struct
 {

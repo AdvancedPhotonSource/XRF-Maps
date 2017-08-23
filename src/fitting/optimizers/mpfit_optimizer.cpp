@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include "mpfit.hpp"
+#include "support/cmpfit-1.3a/mpfit.hpp"
 #include <string.h>
 
 using namespace data_struct::xrf;

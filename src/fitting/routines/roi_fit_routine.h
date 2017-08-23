@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROI_Fit_Routine_H
 #define ROI_Fit_Routine_H
 
-#include "base_fit_routine.h"
+#include "fitting/routines/base_fit_routine.h"
 
 namespace fitting
 {

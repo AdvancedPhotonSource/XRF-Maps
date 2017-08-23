@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Source_H
 #define Source_H
 
-#include "defines.h"
+#include "core/defines.h"
 #include <functional>
-#include "distributor.h"
+#include "workflow/distributor.h"
 
 namespace workflow
 {

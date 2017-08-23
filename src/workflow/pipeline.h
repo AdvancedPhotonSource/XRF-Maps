@@ -50,10 +50,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Pipeline_H
 #define Pipeline_H
 
-#include "defines.h"
-#include "source.h"
-#include "distributor.h"
-#include "sink.h"
+#include "core/defines.h"
+#include "workflow/source.h"
+#include "workflow/distributor.h"
+#include "workflow/sink.h"
 
 namespace workflow
 {

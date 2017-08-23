@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Gaussian_Model_H
 #define Gaussian_Model_H
 
-#include "base_model.h"
-#include "optimizer.h"
-#include "fit_parameters.h"
+#include "fitting/models/base_model.h"
+#include "fitting/optimizers/optimizer.h"
+#include "data_struct/xrf/fit_parameters.h"
 #include <valarray>
 
 namespace fitting

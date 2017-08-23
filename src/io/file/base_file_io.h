@@ -53,10 +53,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <functional>
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "base_dataset.h"
-#include "spectra.h"
+#include "data_struct/base_dataset.h"
+#include "data_struct/xrf/spectra.h"
 
 namespace io
 {

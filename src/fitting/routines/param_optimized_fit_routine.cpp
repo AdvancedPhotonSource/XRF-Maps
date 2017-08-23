@@ -89,7 +89,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
 {
 
 
-    real_t this_factor = (real_t)14.0; //used to be 10.0
+    real_t this_factor = (real_t)10.0;
 
     for (auto el_itr : *elements_to_fit)
     {

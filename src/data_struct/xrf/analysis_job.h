@@ -50,15 +50,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Analysis_Job_H
 #define Analysis_Job_H
 
-#include "defines.h"
-#include "element_info.h"
-#include "base_fit_routine.h"
+#include "core/defines.h"
+#include "data_struct/xrf/element_info.h"
+#include "fitting/routines/base_fit_routine.h"
 #include <vector>
 #include <string>
-#include "quantification_standard.h"
-#include "params_override.h"
-#include "lmfit_optimizer.h"
-#include "mpfit_optimizer.h"
+#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/xrf/params_override.h"
+#include "fitting/optimizers/lmfit_optimizer.h"
+#include "fitting/optimizers/mpfit_optimizer.h"
 #include <iostream>
 
 namespace data_struct

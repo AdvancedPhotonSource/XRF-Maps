@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "spectra_file_source.h"
-#include "hl_file_io.h"
+#include "io/hl_file_io.h"
 
 namespace workflow
 {

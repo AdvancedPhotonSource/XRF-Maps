@@ -111,6 +111,17 @@ std::vector<real_t> Fit_Parameters::to_array()
     return arr;
 }
 
+std::vector<std::string> Fit_Parameters::names_to_array()
+{
+    std::vector<std::string> arr;
+    for(const auto& itr : _params)
+    {
+        _params[itr.first].opt_array_index = arr.size();
+        arr.push_back(itr.first);
+    }
+    return arr;
+}
+
 void Fit_Parameters::moving_average_with(Fit_Parameters fit_params)
 {
     for(const auto &itr : _params)

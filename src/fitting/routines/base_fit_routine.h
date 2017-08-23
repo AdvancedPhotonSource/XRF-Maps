@@ -51,10 +51,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <unordered_map>
 
-#include "spectra.h"
-#include "base_model.h"
-#include "fit_element_map.h"
-#include "detector.h"
+#include "data_struct/xrf/spectra.h"
+#include "fitting/models/base_model.h"
+#include "data_struct/xrf/fit_element_map.h"
 
 namespace fitting
 {

@@ -50,14 +50,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Quantification_Standard_H
 #define Quantification_Standard_H
 
-#include "defines.h"
+#include "core/defines.h"
 
 #include <string>
 #include <unordered_map>
 
-#include "element_info.h"
-#include "element_quant.h"
-#include "optimizer.h"
+#include "data_struct/xrf/element_info.h"
+#include "data_struct/xrf/element_quant.h"
+#include "fitting/optimizers/optimizer.h"
 
 
 namespace data_struct

@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SPECTRALINE_H
 #define SPECTRALINE_H
 
-#include "spectra.h"
+#include "data_struct/xrf/spectra.h"
 #include <vector>
 
 namespace data_struct

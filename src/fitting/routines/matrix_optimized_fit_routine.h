@@ -50,8 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Matrix_Optimized_Fit_Routine_H
 #define Matrix_Optimized_Fit_Routine_H
 
-#include "param_optimized_fit_routine.h"
-#include "fit_parameters.h"
+#include "fitting/routines/param_optimized_fit_routine.h"
+#include "data_struct/xrf/fit_parameters.h"
 
 namespace fitting
 {

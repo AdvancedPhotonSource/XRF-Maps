@@ -49,10 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef APS_FIT_PARAMS_IMPORT_H
 #define APS_FIT_PARAMS_IMPORT_H
 
-#include "defines.h"
-#include "params_override.h"
-#include "element_info.h"
-#include "detector.h"
+#include "core/defines.h"
+#include "data_struct/xrf/params_override.h"
+#include "data_struct/xrf/element_info.h"
 
 namespace io
 {

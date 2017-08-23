@@ -52,10 +52,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <functional>
 
-#include "fit_parameters.h"
-#include "detector.h"
-#include "base_model.h"
-#include "quantification_model.h"
+#include "data_struct/xrf/fit_parameters.h"
+#include "fitting/models/base_model.h"
+#include "quantification/models/quantification_model.h"
 
 
 namespace fitting

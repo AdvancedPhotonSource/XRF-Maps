@@ -49,8 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef SPECTRA_H
 #define SPECTRA_H
 
-#include "defines.h"
+#include "core/defines.h"
 #include <valarray>
+#include <vector>
 
 namespace data_struct
 {
@@ -58,6 +59,18 @@ namespace xrf
 {
 
 using namespace std;
+
+/**
+ * @brief The Range struct to determine size of spectra we want to fit or model
+ */
+struct Range
+{
+    Range() {min = 0; max = 0;}
+    Range(int rmin, int rmax) {min = rmin; max = rmax;}
+    size_t count() const  {return (max - min) + 1;}
+    int min;
+    int max;
+};
 
 template<typename _T>
 class Spectra_T : public valarray< _T >
@@ -147,6 +160,20 @@ typedef Spectra_T<real_t> Spectra;
 valarray<real_t> convolve1d(valarray<real_t> arr, size_t boxcar_size);
 valarray<real_t> convolve1d(valarray<real_t> arr, valarray<real_t> boxcar);
 valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
+
+
+/**
+ * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
+ * @param min_energy
+ * @param max_energy
+ * @param spectra_size
+ * @param calibration: energy calibration
+ * @return Range structure with the min energy and max enegry of the spectra to fit.
+ */
+DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
+
+
+DLL_EXPORT void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec);
 
 } //namespace xrf
 } //namespace data_struct

@@ -50,12 +50,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Spectra_Net_Source_H
 #define Spectra_Net_Source_H
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "source.h"
-#include "stream_block.h"
-#include "analysis_job.h"
-#include "zmq.hpp"
+#include "workflow/source.h"
+#include "data_struct/xrf/stream_block.h"
+#include "data_struct/xrf/analysis_job.h"
+#include "support/zmq/zmq.hpp"
 
 namespace workflow
 {

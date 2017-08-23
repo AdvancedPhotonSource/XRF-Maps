@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Distributor_H
 #define Distributor_H
 
-#include "defines.h"
+#include "core/defines.h"
 #include "threadpool.h"
 #include <functional>
 

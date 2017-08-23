@@ -50,9 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef NetCDF_IO_H
 #define NetCDF_IO_H
 
-#include "base_file_io.h"
-#include "base_dataset.h"
-#include "spectra_volume.h"
+#include "io/file/base_file_io.h"
+#include "data_struct/base_dataset.h"
+#include "data_struct/xrf/spectra_volume.h"
 #include <netcdf.h>
 #include <mutex>
 

@@ -50,12 +50,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Spectra_Stream_Saver_H
 #define Spectra_Stream_Saver_H
 
-#include "defines.h"
+#include "core/defines.h"
 
-#include "sink.h"
-#include "stream_block.h"
-#include "mda_io.h"
-#include "hdf5_io.h"
+#include "workflow/sink.h"
+#include "data_struct/xrf/stream_block.h"
+#include "io/file/mda_io.h"
+#include "io/file/hdf5_io.h"
 #include <functional>
 
 namespace workflow

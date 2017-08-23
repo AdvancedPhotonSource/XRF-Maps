@@ -50,11 +50,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Sink_H
 #define Sink_H
 
-#include "defines.h"
+#include "core/defines.h"
 #include <functional>
 #include <future>
 #include <thread>
-#include "distributor.h"
+#include "workflow/distributor.h"
 
 namespace workflow
 {

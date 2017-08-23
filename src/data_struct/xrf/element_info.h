@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "defines.h"
+#include "core/defines.h"
 
 namespace data_struct
 {

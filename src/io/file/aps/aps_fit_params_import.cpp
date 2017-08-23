@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 #include <chrono>
 #include <ctime>
-#include "base_model.h"
+#include "fitting/models/base_model.h"
 
 
 namespace io

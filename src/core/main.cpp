@@ -64,21 +64,21 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //#include "pybind11.h"
 
-#include "hl_file_io.h"
-#include "element_info.h"
-#include "fit_element_map.h"
-#include "analysis_job.h"
-#include "command_line_parser.h"
-#include "stream_block.h"
-#include "pipeline.h"
-#include "spectra_file_source.h"
-#include "integrated_spectra_source.h"
-#include "detector_sum_spectra_source.h"
+#include "io/hl_file_io.h"
+#include "data_struct/xrf/element_info.h"
+#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/xrf/analysis_job.h"
+#include "core/command_line_parser.h"
+#include "data_struct/xrf/stream_block.h"
+#include "workflow/pipeline.h"
+#include "workflow/xrf/spectra_file_source.h"
+#include "workflow/xrf/integrated_spectra_source.h"
+#include "workflow/xrf/detector_sum_spectra_source.h"
 
-#include "spectra_stream_saver.h"
+#include "workflow/xrf/spectra_stream_saver.h"
 
-#include "param_optimized_fit_routine.h"
-#include "gaussian_model.h"
+#include "fitting/routines/param_optimized_fit_routine.h"
+#include "fitting/models/gaussian_model.h"
 
 // ----------------------------------------------------------------------------
 

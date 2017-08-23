@@ -50,13 +50,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Quantification_Model_H
 #define Quantification_Model_H
 
-#include "defines.h"
+#include "core/defines.h"
 
 #include <string>
 #include <unordered_map>
 
-#include "element_info.h"
-#include "element_quant.h"
+#include "data_struct/xrf/element_info.h"
+#include "data_struct/xrf/element_quant.h"
 
 namespace quantification
 {
