@@ -102,9 +102,6 @@ int main(int argc, char *argv[])
     bool quick_n_dirty = false;
     std::string opt = "";
 
-    //default mode for which parameters to fit when optimizing fit parameters
-    fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
-
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
     size_t detector_num_end = 3;
@@ -372,89 +369,89 @@ int main(int argc, char *argv[])
         std::vector<data_struct::xrf::Quantification_Standard> quant_stand_list(4);
 
         if(optimize_fit_override_params)
+        {
+            std::vector<std::string> optim_dataset_files;
+            if (dataset_files.size() == 0)
             {
-                std::vector<std::string> optim_dataset_files;
-                if (dataset_files.size() == 0)
-                {
-                    logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
-                    return -1;
-                }
-                for (auto& itr : dataset_files)
-                {
-                    optim_dataset_files.push_back(itr);
-                }
-
-                io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
-                //if no files were specified only take the 8 largest datasets
-                if (dset_file.length() < 1)
-                {
-                    while (optim_dataset_files.size() > 9)
-                    {
-                        optim_dataset_files.pop_back();
-                    }
-                }
-                generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
-            }
-
-            //try to load maps fit params override txt files for each detector. -1 is general one
-            for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-            {
-                data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
-                if( io::load_override_params(dataset_dir, detector_num, &params_override) )
-                {
-                    fit_params_override_dict[detector_num] = params_override;
-                }
-            }
-            data_struct::xrf::Params_Override params(dataset_dir, -1);
-            if( io::load_override_params(dataset_dir, -1, &params) )
-            {
-                fit_params_override_dict[-1] = params;
-            }
-
-            //check to make sure we have at least 1
-            if(fit_params_override_dict.size() == 0)
-            {
-                logit<<"Error loading any maps_fit_params_override.txt "<<std::endl;
+                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
                 return -1;
             }
-
-            if(proc_types.size() > 0)
+            for (auto& itr : dataset_files)
             {
-                if (quant_standard_filename.length() > 0)
+                optim_dataset_files.push_back(itr);
+            }
+
+            io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
+            //if no files were specified only take the 8 largest datasets
+            if (dset_file.length() < 1)
+            {
+                while (optim_dataset_files.size() > 9)
                 {
-                    bool quant = false;
-                    quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                    //if it is quick and dirty, average quants and save in first
-                    if( quant && quick_n_dirty)
-                    {
-                        average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
-                    }
+                    optim_dataset_files.pop_back();
+                }
+            }
+            generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
+        }
+
+        //try to load maps fit params override txt files for each detector. -1 is general one
+        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+        {
+            data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
+            if( io::load_override_params(dataset_dir, detector_num, &params_override) )
+            {
+                fit_params_override_dict[detector_num] = params_override;
+            }
+        }
+        data_struct::xrf::Params_Override params(dataset_dir, -1);
+        if( io::load_override_params(dataset_dir, -1, &params) )
+        {
+            fit_params_override_dict[-1] = params;
+        }
+
+        //check to make sure we have at least 1
+        if(fit_params_override_dict.size() == 0)
+        {
+            logit<<"Error loading any maps_fit_params_override.txt "<<std::endl;
+            return -1;
+        }
+
+        if(proc_types.size() > 0)
+        {
+            if (quant_standard_filename.length() > 0)
+            {
+                bool quant = false;
+                quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                //if it is quick and dirty, average quants and save in first
+                if( quant && quick_n_dirty)
+                {
+                    average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
+                }
+            }
+
+            for(std::string dataset_file : dataset_files)
+            {
+                if(quick_n_dirty)
+                {
+                    process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                }
+                else
+                {
+                    process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
+                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
                 }
 
+            }
+        }
+        else
+        {
+            if(clp.option_exists("--generate-avg-h5"))
+            {
                 for(std::string dataset_file : dataset_files)
                 {
-                    if(quick_n_dirty)
-                    {
-                        process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                    }
-                    else
-                    {
-                        process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                        io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
-                    }
-
+                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
                 }
             }
-            else
-            {
-                if(clp.option_exists("--generate-avg-h5"))
-                {
-                    for(std::string dataset_file : dataset_files)
-                    {
-                        io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
-                    }
-                }
-            }
+        }
         //cleanup
         for (auto & itr : params.elements_to_fit)
         {

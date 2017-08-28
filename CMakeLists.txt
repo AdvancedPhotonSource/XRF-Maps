@@ -189,6 +189,7 @@ include_directories(src/workflow)
 include_directories(src/workflow/xrf)
 
 # Include XRF-Maps Maps header files
+include_directories(src)
 include_directories(src/core)
 
 # Visual Studio specific include and source
@@ -321,8 +322,12 @@ add_library(libxrf_io SHARED
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
-	${VISUAL_INC}
-	src/core/command_line_parser.h
+    ${VISUAL_INC}
+    src/core/command_line_parser.h
+    src/core/process_streaming.h
+    src/core/process_streaming.cpp
+    src/core/process_whole.h
+    src/core/process_whole.cpp
     src/core/main.cpp
 )
 
