@@ -128,6 +128,8 @@ const std::vector<std::string> m_elements {"Au_M", "Pb_M", "U_M", "noise", "Pt_M
 
 //-----------------------------------------------------------------------------
 
+enum Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+
 enum E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
 
 //-----------------------------------------------------------------------------

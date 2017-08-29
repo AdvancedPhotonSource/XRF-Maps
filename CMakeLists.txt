@@ -304,6 +304,8 @@ add_library(libxrf_io SHARED
 add_executable(xrf_maps
 	${VISUAL_INC}
 	src/core/command_line_parser.h
+        src/core/process_whole.h
+        src/core/process_whole.cpp
     src/core/main.cpp
 )
 

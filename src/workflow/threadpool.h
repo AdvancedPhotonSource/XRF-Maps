@@ -48,7 +48,7 @@ freely, subject to the following restrictions:
 
 class ThreadPool {
 public:
-    ThreadPool(size_t, bool);
+    ThreadPool(size_t);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args)
         -> std::future<typename std::result_of<F(Args...)>::type>;
@@ -69,7 +69,7 @@ private:
 };
 
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads, bool setAffinity=false)
+inline ThreadPool::ThreadPool(size_t threads)
     :   stop(false)
 {
     for(size_t i = 0;i<threads;++i)
@@ -94,32 +94,6 @@ inline ThreadPool::ThreadPool(size_t threads, bool setAffinity=false)
                 }
             }
         );
-    //set processor affinity
-    if(setAffinity)
-    {
-        int aff_mask = 1;
-        for(size_t i = 0;i<threads;++i)
-        {
-#if defined _WIN32 || defined __CYGWIN__
-             int res = SetThreadAffinityMask(workers[i].native_handle(), aff_mask);
-             if(res == 0)
-             {
-                //logit<<"Error setting thread affinity\n";
-             }
-             aff_mask *= 2;
-#else
-            cpu_set_t set;
-            CPU_ZERO(&set);
-            //CPU_SET(aff_mask, &set);
-            CPU_SET(i, &set);
-            if (pthread_setaffinity_np(workers[i].native_handle(), sizeof(cpu_set_t), &set) == -1)
-            {
-               //logit<<"Error setting thread affinity\n";
-            }
-
-    #endif
-        }
-    }
 }
 
 // add new work item to the pool
