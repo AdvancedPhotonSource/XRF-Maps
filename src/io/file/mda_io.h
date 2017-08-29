@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/xrf/spectra_volume.h"
 #include "data_struct/xrf/quantification_standard.h"
 #include "data_struct/xrf/params_override.h"
+#include "data_struct/xrf/analysis_job.h"
 
 namespace io
 {
@@ -101,15 +102,30 @@ public:
                                      data_struct::xrf::Params_Override *override_values,
                                      data_struct::xrf::Quantification_Standard * quantification_standard);
 
-    int find_2d_detector_index(struct mda_file* mda_file, std::string det_name, int detector_num, real_t& val);
+    virtual bool load_spectra_volume_with_callback(std::string path,
+                                                   size_t detector_num_start,
+                                                   size_t detector_num_end,
+                                                   bool hasNetCDF,
+                                                   data_struct::xrf::Analysis_Job *analysis_job,
+                                                   IO_Callback_Func_Def callback_func,
+                                                   void *user_data);
+
+    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val);
 
     int get_multiplied_dims(std::string path);
 
     int get_rank_and_dims(std::string path, int* dims);
 
+    int rows() { return _rows; }
+
+    int cols() { return _cols; }
+
+    inline bool is_single_row_scan() {return _is_single_row;}
+
 private:
 
     //void _load_detector_meta_data(data_struct::xrf::Detector * detector);
+    bool _is_single_row;
 
     /**
      * @brief _mda_file: mda helper structure
@@ -120,6 +136,10 @@ private:
      * @brief _mda_file_info: lazy load struct
      */
     mda_fileinfo *_mda_file_info;
+
+    int _rows;
+
+    int _cols;
 
 };
 

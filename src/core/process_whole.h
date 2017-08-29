@@ -103,7 +103,7 @@ using namespace std::placeholders; //for _1, _2,
 //Optimizers for fitting models
 static fitting::optimizers::Optimizer *optimizer;
 
-////default mode for which parameters to fit when optimizing fit parameters
+//default mode for which parameters to fit when optimizing fit parameters
 static fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
 
 // ----------------------------------------------------------------------------

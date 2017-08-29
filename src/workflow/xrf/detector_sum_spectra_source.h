@@ -43,84 +43,41 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
-#ifndef Base_Fit_Routine_H
-#define Base_Fit_Routine_H
 
-#include <unordered_map>
+#ifndef Detector_Sum_Spectra_Source_H
+#define Detector_Sum_Spectra_Source_H
 
-#include "data_struct/xrf/spectra.h"
-#include "fitting/models/base_model.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "core/defines.h"
 
-namespace fitting
+#include "workflow/xrf/spectra_file_source.h"
+
+namespace workflow
 {
-namespace routines
+namespace xrf
 {
 
-using namespace data_struct::xrf;
-using namespace std;
+//-----------------------------------------------------------------------------
 
-
-/**
- * @brief The Base_Fit_Routine class: base class for modeling spectra and fitting elements
- */
-class DLL_EXPORT Base_Fit_Routine
+class DLL_EXPORT Detector_Sum_Spectra_Source : public Spectra_File_Source
 {
+
 public:
-    /**
-     * @brief Base_Fit_Routine : Constructor
-     */
-    Base_Fit_Routine();
 
-    /**
-     * @brief ~Base_Fit_Routine : Destructor
-     */
-    virtual ~Base_Fit_Routine();
+    Detector_Sum_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job);
 
-    /**
-     * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
-     * @param fit_params : Fitting parameters required by the routine
-     * @param spectra : Pointer to the spectra we are fitting to
-     * @param calibration : Energy calibration
-     * @param elements_to_fit : List of elemetns to fit to the spectra. This is an out variable also. Must be allocated to saved fitted value to using row_idx and col_idx
-     * @param row_idx : row index used to save the fitted value back into elements_to_fit class
-     * @param col_idx : column index used to save the fitted value back into elements_to_fit class
-     */
-    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
-                                                                const Spectra * const spectra,
-                                                                const Fit_Element_Map_Dict * const elements_to_fit) = 0;
+    ~Detector_Sum_Spectra_Source();
 
-    /**
-     * @brief get_name : Returns fit routine name
-     * @return
-     */
-    virtual std::string get_name() = 0;
-
-    /**
-     * @brief initialize : Initialize the model
-     * @param fit_params
-     * @param calibration
-     * @param elements_to_fit
-     * @param energy_range
-     */
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range) = 0;
-
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
 protected:
 
-
-private:
-
-
+    data_struct::xrf::Spectra* _spectra;
 };
 
-} //namespace routines
+} //namespace xrf
+} //namespace workflow
 
-} //namespace fitting
-
-#endif // Base_Fit_Routine_H
+#endif // Detector_Sum_Spectra_Source_H

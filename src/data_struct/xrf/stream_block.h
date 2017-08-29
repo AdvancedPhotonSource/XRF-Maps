@@ -43,84 +43,104 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
-#ifndef Base_Fit_Routine_H
-#define Base_Fit_Routine_H
 
-#include <unordered_map>
+#ifndef Stream_Block_H
+#define Stream_Block_H
 
-#include "data_struct/xrf/spectra.h"
-#include "fitting/models/base_model.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "core/defines.h"
+#include "data_struct/xrf/element_info.h"
+#include "fitting/routines/base_fit_routine.h"
+#include <vector>
+#include <string>
 
-namespace fitting
+namespace data_struct
 {
-namespace routines
+namespace xrf
 {
 
-using namespace data_struct::xrf;
-using namespace std;
+//-----------------------------------------------------------------------------
 
-
-/**
- * @brief The Base_Fit_Routine class: base class for modeling spectra and fitting elements
- */
-class DLL_EXPORT Base_Fit_Routine
+///
+/// \brief The Stream_Fitting_Block struct
+///
+struct Stream_Fitting_Block
 {
+    fitting::routines::Base_Fit_Routine * fit_routine;
+    std::unordered_map<std::string, real_t> fit_counts;
+};
+
+//-----------------------------------------------------------------------------
+
+///
+/// \brief The Stream_Block class
+///
+class DLL_EXPORT Stream_Block
+{
+
 public:
-    /**
-     * @brief Base_Fit_Routine : Constructor
-     */
-    Base_Fit_Routine();
 
-    /**
-     * @brief ~Base_Fit_Routine : Destructor
-     */
-    virtual ~Base_Fit_Routine();
+	Stream_Block();
 
-    /**
-     * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
-     * @param fit_params : Fitting parameters required by the routine
-     * @param spectra : Pointer to the spectra we are fitting to
-     * @param calibration : Energy calibration
-     * @param elements_to_fit : List of elemetns to fit to the spectra. This is an out variable also. Must be allocated to saved fitted value to using row_idx and col_idx
-     * @param row_idx : row index used to save the fitted value back into elements_to_fit class
-     * @param col_idx : column index used to save the fitted value back into elements_to_fit class
-     */
-    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
-                                                                const Spectra * const spectra,
-                                                                const Fit_Element_Map_Dict * const elements_to_fit) = 0;
+    Stream_Block(size_t row, size_t col, size_t height, size_t width);
 
-    /**
-     * @brief get_name : Returns fit routine name
-     * @return
-     */
-    virtual std::string get_name() = 0;
+	Stream_Block(const Stream_Block& stream_block);
 
-    /**
-     * @brief initialize : Initialize the model
-     * @param fit_params
-     * @param calibration
-     * @param elements_to_fit
-     * @param energy_range
-     */
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range) = 0;
+	Stream_Block& operator=(const Stream_Block&);
 
+    ~Stream_Block();
+
+    void init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+
+    const size_t& row() { return _row; }
+
+    const size_t& col() { return _col; }
+
+    const size_t& height() { return _height; }
+
+    const size_t& width() { return _width; }
+
+    inline bool is_end_of_row() { return (_col == _width-1); }
+
+    inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
+
+    //by Processing_Type
+    std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
+
+    size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}
+
+    std::string *dataset_directory;
+
+    std::string *dataset_name;
+
+    size_t detector_number;
+
+    Spectra * spectra;
+
+    Fit_Element_Map_Dict * elements_to_fit;
+    //data_struct::xrf::Params_Override *fit_params_override_dict;
+
+    fitting::models::Fit_Params_Preset optimize_fit_params_preset;
+
+    fitting::models::Base_Model * model;
 
 protected:
 
+    size_t _row;
 
-private:
+    size_t _col;
 
+    size_t _height;
+
+    size_t _width;
 
 };
 
-} //namespace routines
 
-} //namespace fitting
+} //namespace xrf
 
-#endif // Base_Fit_Routine_H
+} //namespace data_struct
+
+#endif // Stream_Block_H

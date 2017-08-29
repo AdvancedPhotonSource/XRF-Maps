@@ -328,7 +328,6 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     int info;
 
-
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
     mp_config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10

@@ -51,15 +51,19 @@ POSSIBILITY OF SUCH DAMAGE.
 #define BASE_IO_H
 
 #include <string>
+#include <functional>
 
 #include "core/defines.h"
 
 #include "data_struct/base_dataset.h"
+#include "data_struct/xrf/spectra.h"
 
 namespace io
 {
 namespace file
 {
+
+typedef std::function<void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
 
 class Base_File_IO
 {

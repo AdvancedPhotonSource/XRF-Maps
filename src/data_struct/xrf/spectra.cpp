@@ -186,20 +186,9 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	{
 		boxcar[i] = 1.0;
 	}
-    background = convolve1d(background, boxcar);
+
 	//convolve 1d
-    /*
-	for (size_t i = 0; i< background.size(); i++)
-	{
-		new_background[i] = 0.0;
-		for (size_t j = 0; j<boxcar.size(); j++)
-		{
-			if ((i - j) >= 0)
-				new_background[i] += background[i - j] * boxcar[j];
-		}
-	}
-	background = new_background / real_t(boxcar.size());
-    */
+    background = convolve1d(background, boxcar);
 	//clear out
 	new_background.resize(1);
 	boxcar.resize(1);
@@ -280,7 +269,6 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	return background;
 
 }
-
 
 Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope)
 {

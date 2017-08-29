@@ -75,6 +75,8 @@ public:
                                                                 const Spectra * const spectra,
                                                                 const Fit_Element_Map_Dict * const elements_to_fit);
 
+    virtual std::string get_name() { return "Fitted"; }
+
     virtual void initialize(models::Base_Model * const model,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);

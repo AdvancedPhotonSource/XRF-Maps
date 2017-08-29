@@ -67,6 +67,15 @@ const string STR_ENERGY_OFFSET          = "ENERGY_OFFSET";
 const string STR_ENERGY_SLOPE           = "ENERGY_SLOPE";
 const string STR_ENERGY_QUADRATIC       = "ENERGY_QUADRATIC";
 
+/*
+ 1 batch_a: matrix batch fit
+ 2 batch_b: batch_fit_wo_tails
+ 3 batch_c: batch_fit_w_tails
+ 4 batch fit with free E, everything else fixed
+ */
+enum Fit_Params_Preset { MATRIX_BATCH_FIT, BATCH_FIT_NO_TAILS, BATCH_FIT_WITH_TAILS, BATCH_FIT_WITH_FREE_ENERGY };
+
+
 /**
  * @brief The Base_Model class: base class for modeling spectra and fitting elements
  */

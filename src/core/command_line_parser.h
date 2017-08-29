@@ -49,6 +49,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Command_Line_Parser_H
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 
 class Command_Line_Parser
@@ -81,6 +83,5 @@ class Command_Line_Parser
     private:
         std::vector <std::string> tokens;
 };
-
 
 #endif

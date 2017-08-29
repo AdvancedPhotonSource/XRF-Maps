@@ -70,10 +70,11 @@ ELSE()
 ENDIF()
 
 find_package(NetCDF REQUIRED)
-
-find_package (Threads)
+find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(ZMQ)
 
+#if (NOT ZMQ_INCLUDE_DIRS)
 
 IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
@@ -151,6 +152,9 @@ endif()
 # Include path for pybind11 header files
 #include_directories(pybind11)
 
+#zeromq include
+include_directories(${ZMQ_INCLUDE_DIRS})
+
 #hdf5 include
 include_directories(${HDF5_INCLUDE_DIRS})
 
@@ -162,29 +166,6 @@ include_directories(${NETCDF_INCLUDES})
 
 # Include libxrf header files
 include_directories(src)
-#include_directories(src/support/minpack)
-#include_directories(src/support/mdautils-1.4.1)
-#include_directories(src/support/cmpfit-1.3a)
-#include_directories(src/support/lmfit_6.1)
-#include_directories(src/support/nnls)
-#include_directories(src/data_struct)
-#include_directories(src/data_struct/xrf)
-#include_directories(src/data_struct/xrf/aps)
-#include_directories(src/quantification)
-#include_directories(src/quantification/models)
-#include_directories(src/fitting)
-#include_directories(src/fitting/models)
-#include_directories(src/fitting/routines)
-#include_directories(src/fitting/optimizers)
-
-## Include libxrf_io Maps header files
-#include_directories(src/io)
-#include_directories(src/io/file)
-#include_directories(src/io/file/aps)
-#include_directories(src/workflow)
-
-# Include XRF-Maps Maps header files
-include_directories(src/core)
 
 # Visual Studio specific include and source
 if(MSVC)
@@ -216,6 +197,7 @@ set(libxrf_fit_HEADERS
     src/support/nnls/vector.hpp
     src/support/nnls/matrix.h
     src/support/nnls/denseMatrix.hpp
+    src/support/zmq/zmq.hpp
     src/data_struct/base_dataset.h
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h
@@ -223,10 +205,10 @@ set(libxrf_fit_HEADERS
     src/data_struct/xrf/fit_parameters.h
     src/data_struct/xrf/fit_element_map.h
     src/data_struct/xrf/params_override.h
-    #src/data_struct/xrf/detector.h
     src/data_struct/xrf/spectra.h
     src/data_struct/xrf/spectra_line.h
     src/data_struct/xrf/spectra_volume.h
+    src/data_struct/xrf/stream_block.h
     src/quantification/models/quantification_model.h
     src/fitting/models/base_model.h
     src/fitting/models/gaussian_model.h
@@ -253,10 +235,10 @@ add_library(libxrf_fit SHARED
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
     src/data_struct/xrf/fit_element_map.cpp
-    #src/data_struct/xrf/detector.cpp
     src/data_struct/xrf/spectra.cpp
     src/data_struct/xrf/spectra_line.cpp
     src/data_struct/xrf/spectra_volume.cpp
+    src/data_struct/xrf/stream_block.cpp
     src/quantification/models/quantification_model.cpp
     src/fitting/models/base_model.cpp
     src/fitting/models/gaussian_model.cpp
@@ -282,9 +264,17 @@ set(XRF_IO_HEADERS
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
-        #src/io/file/aps/aps_calibration_io.h
+   #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
-        src/io/hl_file_io.h
+    src/io/hl_file_io.h
+	src/data_struct/xrf/analysis_job.h
+	src/workflow/source.h
+	src/workflow/distributor.h
+	src/workflow/sink.h
+	src/workflow/xrf/spectra_file_source.h
+	src/workflow/xrf/integrated_spectra_source.h
+	src/workflow/xrf/detector_sum_spectra_source.h
+	src/workflow/xrf/spectra_stream_saver.h
 )
 
 add_library(libxrf_io SHARED
@@ -295,17 +285,24 @@ add_library(libxrf_io SHARED
 	src/io/file/hdf5_io.cpp
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
-        #src/io/file/aps/aps_calibration_io.cpp
-        src/io/file/aps/aps_fit_params_import.cpp
-        src/io/hl_file_io.cpp
+   #src/io/file/aps/aps_calibration_io.cpp
+    src/io/file/aps/aps_fit_params_import.cpp
+    src/io/hl_file_io.cpp
+	src/data_struct/xrf/analysis_job.cpp
+	src/workflow/xrf/spectra_file_source.cpp
+	src/workflow/xrf/integrated_spectra_source.cpp
+	src/workflow/xrf/detector_sum_spectra_source.cpp
+	src/workflow/xrf/spectra_stream_saver.cpp
 )
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
-	${VISUAL_INC}
-	src/core/command_line_parser.h
-        src/core/process_whole.h
-        src/core/process_whole.cpp
+    ${VISUAL_INC}
+    src/core/command_line_parser.h
+    src/core/process_streaming.h
+    src/core/process_streaming.cpp
+    src/core/process_whole.h
+    src/core/process_whole.cpp
     src/core/main.cpp
 )
 
@@ -352,7 +349,6 @@ elseif (UNIX)
   # link against the Python library. The resulting shared library will have
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
-
   if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
   endif()

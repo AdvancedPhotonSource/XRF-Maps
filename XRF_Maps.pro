@@ -9,7 +9,6 @@ QT       += core
 QT       -= gui
 
 TARGET = XRF_Maps
-#CONFIG   += console
 CONFIG   -= app_bundle
 CONFIG += c++14
 
@@ -71,6 +70,10 @@ LIBS += /local/aglowacki/libs/gflags/lib/libgflags.a
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lgomp
 
+#zmq
+INCLUDEPATH += /local/aglowacki/libs/zmq/include
+LIBS += /local/aglowacki/libs/zmq/lib/libzmq.a
+
 
 INCLUDEPATH += /usr/include/hdf5/serial
 QMAKE_CXXFLAGS += -D__Unix__ -std=c++14 -g
@@ -100,6 +103,8 @@ SOURCES += \
     src/data_struct/xrf/spectra.cpp \
     src/data_struct/xrf/spectra_line.cpp \
     src/data_struct/xrf/spectra_volume.cpp \
+    src/data_struct/xrf/stream_block.cpp \
+    src/data_struct/xrf/analysis_job.cpp \
     #src/data_struct/xrf/aps/aps_fit_parameters.cpp \
     src/fitting/models/base_model.cpp \
     src/fitting/models/gaussian_model.cpp \
@@ -115,12 +120,11 @@ SOURCES += \
     src/fitting/optimizers/minpack_optimizer.cpp \
     src/quantification/models/quantification_model.cpp \
     #src/fitting/optimizers/ceres_optimizer.cpp \
-    #src/workflow/task.cpp \
-    #src/workflow/task_queue.cpp \
-    #src/workflow/general_function_task.cpp \
-    #src/workflow/discretizer.cpp \
-    #src/workflow/distributor.cpp \
-    #src/workflow/distributors/threadpool_distributor.cpp \
+    src/workflow/xrf/spectra_file_source.cpp \
+    src/workflow/xrf/spectra_net_source.cpp \
+    src/workflow/xrf/integrated_spectra_source.cpp \
+    src/workflow/xrf/detector_sum_spectra_source.cpp \
+    src/workflow/xrf/spectra_stream_saver.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
@@ -129,6 +133,7 @@ SOURCES += \
     src/io/file/aps/aps_fit_params_import.cpp \
     #src/io/file/aps/aps_calibration_io.cpp \
     src/visual/vtk_graph.cpp \
+    src/core/process_streaming.cpp \
     src/core/process_whole.cpp \
     src/core/main.cpp
 
@@ -145,6 +150,7 @@ HEADERS += \
     src/support/nnls/nnls.hpp \
     src/support/lmfit_6.1/lmmin.hpp \
     src/support/cmpfit-1.3a/mpfit.hpp \
+    src/support/zmq/zmq.hpp \
     src/data_struct/xrf/element_info.h \
     src/data_struct/xrf/fit_parameters.h \
     src/data_struct/xrf/fit_element_map.h \
@@ -156,6 +162,8 @@ HEADERS += \
     src/data_struct/xrf/spectra.h \
     src/data_struct/xrf/spectra_line.h \
     src/data_struct/xrf/spectra_volume.h \
+    src/data_struct/xrf/stream_block.h \
+    src/data_struct/xrf/analysis_job.h \
     #src/data_struct/xrf/aps/aps_fit_parameters.h \
     src/fitting/models/base_model.h \
     src/fitting/models/gaussian_model.h \
@@ -171,13 +179,15 @@ HEADERS += \
     src/fitting/optimizers/minpack_optimizer.h \
     src/quantification/models/quantification_model.h \
     #src/fitting/optimizers/ceres_optimizer.h \
-    #src/workflow/task.h \
-    #src/workflow/task_queue.h \
-    #src/workflow/general_function_task.h \
-    #src/workflow/discretizer.h \
-    #src/workflow/distributor.h \
-    #src/workflow/distributors/threadpool_distributor.h \
+    src/workflow/sink.h \
+    src/workflow/distributor.h \
+    src/workflow/source.h \
     src/workflow/threadpool.h \
+    src/workflow/xrf/spectra_file_source.h \
+    src/workflow/xrf/spectra_net_source.h \
+    src/workflow/xrf/integrated_spectra_source.h \
+    src/workflow/xrf/detector_sum_spectra_source.h \
+    src/workflow/xrf/spectra_stream_saver.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \
@@ -187,6 +197,7 @@ HEADERS += \
     src/io/file/aps/aps_fit_params_import.h \
     #src/io/file/aps/aps_calibration_io.h \
     src/visual/vtk_graph.h \
+    src/core/process_streaming.h \
     src/core/process_whole.h \
     src/core/command_line_parser.h
 

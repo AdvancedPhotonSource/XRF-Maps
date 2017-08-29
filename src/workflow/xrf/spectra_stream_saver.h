@@ -43,84 +43,100 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
-#ifndef Base_Fit_Routine_H
-#define Base_Fit_Routine_H
 
-#include <unordered_map>
+#ifndef Spectra_Stream_Saver_H
+#define Spectra_Stream_Saver_H
 
-#include "data_struct/xrf/spectra.h"
-#include "fitting/models/base_model.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "core/defines.h"
 
-namespace fitting
+#include "workflow/sink.h"
+#include "data_struct/xrf/stream_block.h"
+#include "io/file/mda_io.h"
+#include "io/file/hdf5_io.h"
+#include <functional>
+
+namespace workflow
 {
-namespace routines
+namespace xrf
 {
 
-using namespace data_struct::xrf;
-using namespace std;
+//-----------------------------------------------------------------------------
 
-
-/**
- * @brief The Base_Fit_Routine class: base class for modeling spectra and fitting elements
- */
-class DLL_EXPORT Base_Fit_Routine
+class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::xrf::Stream_Block* >
 {
+
 public:
-    /**
-     * @brief Base_Fit_Routine : Constructor
-     */
-    Base_Fit_Routine();
 
-    /**
-     * @brief ~Base_Fit_Routine : Destructor
-     */
-    virtual ~Base_Fit_Routine();
+    Spectra_Stream_Saver();
 
-    /**
-     * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
-     * @param fit_params : Fitting parameters required by the routine
-     * @param spectra : Pointer to the spectra we are fitting to
-     * @param calibration : Energy calibration
-     * @param elements_to_fit : List of elemetns to fit to the spectra. This is an out variable also. Must be allocated to saved fitted value to using row_idx and col_idx
-     * @param row_idx : row index used to save the fitted value back into elements_to_fit class
-     * @param col_idx : column index used to save the fitted value back into elements_to_fit class
-     */
-    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
-                                                                const Spectra * const spectra,
-                                                                const Fit_Element_Map_Dict * const elements_to_fit) = 0;
+    ~Spectra_Stream_Saver();
 
-    /**
-     * @brief get_name : Returns fit routine name
-     * @return
-     */
-    virtual std::string get_name() = 0;
+    void save_stream(data_struct::xrf::Stream_Block* stream_block);
 
-    /**
-     * @brief initialize : Initialize the model
-     * @param fit_params
-     * @param calibration
-     * @param elements_to_fit
-     * @param energy_range
-     */
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range) = 0;
-
+    virtual void set_function(std::function<void (data_struct::xrf::Stream_Block*)> func) { }
 
 protected:
 
+    class Detector_Save
+    {
+    public:
+        Detector_Save(size_t width)
+        {
+            last_row = -1;
+            spectra_line.resize(width);
+            for(int i=0;i<width; i++)
+            {
+                spectra_line[i] = nullptr;
+            }
+        }
+        ~Detector_Save()
+        {
+            spectra_line.resize(1);
+        }
 
-private:
+        int last_row;
+        data_struct::xrf::Spectra integrated_spectra;
+        std::vector< data_struct::xrf::Spectra* > spectra_line;
+    };
 
+    class Dataset_Save
+    {
+    public:
+        Dataset_Save(){}
+        ~Dataset_Save()
+        {
+            delete dataset_directory;
+            delete dataset_name;
+            for(auto& itr : detector_map)
+            {
+                delete itr.second;
+            }
+            detector_map.clear();
+        }
+
+        std::string *dataset_directory;
+        std::string *dataset_name;
+        //by detector_num
+        std::map<int, Detector_Save*> detector_map;
+    };
+
+    void _new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block);
+
+    void _new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block);
+
+    void _finalize_dataset(Dataset_Save *dataset);
+
+    //by detector_dir + dataset hash
+    std::map<size_t, Dataset_Save*> _dataset_map;
 
 };
 
-} //namespace routines
+//-----------------------------------------------------------------------------
 
-} //namespace fitting
+} //namespace xrf
+} //namespace workflow
 
-#endif // Base_Fit_Routine_H
+#endif // Spectra_Stream_Saver_H

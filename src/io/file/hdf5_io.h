@@ -52,6 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <list>
 #include <mutex>
+#include <queue>
+#include <future>
 #include "io/file/base_file_io.h"
 #include "data_struct/base_dataset.h"
 #include "data_struct/xrf/spectra_volume.h"
@@ -150,6 +152,12 @@ public:
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
+    bool load_spectra_volume_with_callback(std::string path,
+                                           size_t detector_start,
+                                           size_t detector_end,
+                                           IO_Callback_Func_Def callback_func,
+                                           void* user_data);
+
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
@@ -170,6 +178,21 @@ public:
 
     //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
+    bool generate_stream_dataset(std::string dataset_directory,
+                                 std::string dataset_name,
+                                 int detector_num,
+                                 size_t height,
+                                 size_t width);
+
+    bool save_stream_row(size_t d_hash,
+                         size_t detector_num,
+                         size_t row,
+                         std::vector< data_struct::xrf::Spectra* >  *spectra_row);
+
+
+    bool save_itegrade_spectra(data_struct::xrf::Spectra * spectra);
+
+    bool close_dataset(size_t d_hash);
 
     bool start_save_seq(const std::string filename, bool force_new_file=false);
 

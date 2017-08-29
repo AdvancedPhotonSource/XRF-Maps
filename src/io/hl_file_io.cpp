@@ -565,12 +565,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         return true;
     }
 
-
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
         data_struct::xrf::Spectra_Volume spectra_volume;
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf, params_override, nullptr);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, nullptr);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();
@@ -653,7 +652,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-                          ThreadPool* tp,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {
