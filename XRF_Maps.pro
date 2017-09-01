@@ -125,13 +125,14 @@ SOURCES += \
     src/workflow/xrf/integrated_spectra_source.cpp \
     src/workflow/xrf/detector_sum_spectra_source.cpp \
     src/workflow/xrf/spectra_stream_saver.cpp \
+    src/workflow/xrf/spectra_net_streamer.cpp \
     src/io/file/mda_io.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
     src/io/file/csv_io.cpp \
-    src/io/hl_file_io.cpp \
+    src/io/file/hl_file_io.cpp \
     src/io/file/aps/aps_fit_params_import.cpp \
-    #src/io/file/aps/aps_calibration_io.cpp \
+    src/io/net/zmq_io.cpp \
     src/visual/vtk_graph.cpp \
     src/core/process_streaming.cpp \
     src/core/process_whole.cpp \
@@ -188,14 +189,15 @@ HEADERS += \
     src/workflow/xrf/integrated_spectra_source.h \
     src/workflow/xrf/detector_sum_spectra_source.h \
     src/workflow/xrf/spectra_stream_saver.h \
+    src/workflow/xrf/spectra_net_streamer.h \
     src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \
     src/io/file/netcdf_io.h \
     src/io/file/csv_io.h \
-    src/io/hl_file_io.h \
+    src/io/file/hl_file_io.h \
     src/io/file/aps/aps_fit_params_import.h \
-    #src/io/file/aps/aps_calibration_io.h \
+    src/io/net/zmq_io.h \
     src/visual/vtk_graph.h \
     src/core/process_streaming.h \
     src/core/process_whole.h \

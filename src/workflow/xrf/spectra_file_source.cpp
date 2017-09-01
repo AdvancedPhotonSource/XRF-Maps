@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "spectra_file_source.h"
-#include "io/hl_file_io.h"
+#include "io/file/hl_file_io.h"
 
 namespace workflow
 {
@@ -95,7 +95,7 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::run()
+void Spectra_File_Source::load()
 {
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF/", "_0.nc");
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory() + "flyXRF.h5/", "_0.h5");

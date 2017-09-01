@@ -80,7 +80,7 @@ public:
 
     virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
 
-    virtual void run();
+    virtual void load();
 
 protected:
 

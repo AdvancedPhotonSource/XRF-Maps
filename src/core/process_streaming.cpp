@@ -79,7 +79,7 @@ void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
     sink.connect(&distributor);
 
     sink.start();
-    spectra_stream_producer.run();
+    spectra_stream_producer.load();
     sink.wait_and_stop();
 }
 
@@ -156,7 +156,7 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 
 
     sink.start();
-    spectra_stream_producer.run();
+    spectra_stream_producer.load();
     sink.wait_and_stop();
     /*
     io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
@@ -177,7 +177,7 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
     sum_detectors_spectra_stream_producer.connect(&distributor);
 
     sink.start();
-    sum_detectors_spectra_stream_producer.run();
+    sum_detectors_spectra_stream_producer.load();
     sink.wait_and_stop();
 }
 

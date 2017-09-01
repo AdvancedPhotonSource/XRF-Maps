@@ -47,7 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "spectra_stream_saver.h"
+#include "spectra_net_streamer.h"
 
 namespace workflow
 {
@@ -56,23 +56,23 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Saver::Spectra_Stream_Saver() : Sink<data_struct::xrf::Stream_Block*>()
+Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::xrf::Stream_Block*>()
 {
-    _callback_func = std::bind(&Spectra_Stream_Saver::save_stream, this, std::placeholders::_1);
+    _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Saver::~Spectra_Stream_Saver()
+Spectra_Net_Streamer::~Spectra_Net_Streamer()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_block)
+void Spectra_Net_Streamer::stream(data_struct::xrf::Stream_Block* stream_block)
 {
-
+/*
     size_t d_hash = stream_block->dataset_hash();
     size_t detector_num = stream_block->detector_number;
 
@@ -150,56 +150,7 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
         }
 
     }
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block)
-{
-    Dataset_Save *dataset = new Dataset_Save();
-    dataset->dataset_directory = stream_block->dataset_directory;
-    dataset->dataset_name = stream_block->dataset_name;
-    _dataset_map.insert( {d_hash, dataset} );
-    _new_detector(dataset, stream_block);
-}
-
-// ----------------------------------------------------------------------------
-
-void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block)
-{
-    Detector_Save *detector = new Detector_Save(stream_block->width());
-    dataset->detector_map.insert( { stream_block->detector_number, detector } );
-
-    detector->integrated_spectra = *stream_block->spectra;
-    detector->spectra_line[stream_block->col()] = stream_block->spectra;
-
-    //release ownership
-    stream_block->spectra = nullptr;
-
-    io::file::HDF5_IO::inst()->generate_stream_dataset(*dataset->dataset_directory, *dataset->dataset_name, stream_block->detector_number, stream_block->height(), stream_block->width());
-}
-
-// ----------------------------------------------------------------------------
-
-void Spectra_Stream_Saver::_finalize_dataset(Dataset_Save *dataset)
-{
-    for(auto itr : dataset->detector_map)
-    {
-        Detector_Save *detector = itr.second;
-
-        //save and close hdf5 for this detector
-        ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
-        io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-//        io::file::HDF5_IO::inst()->close_dataset(d_hash);
-        ///delete stream_block->mda_io;
-
-        delete detector;
-    }
-
-    dataset->detector_map.clear();
-
-    delete dataset;
+*/
 }
 
 // ----------------------------------------------------------------------------

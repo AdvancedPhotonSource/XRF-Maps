@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fitting/models/gaussian_model.h"
 
-#include "io/hl_file_io.h"
+#include "io/file/hl_file_io.h"
 
 namespace data_struct
 {

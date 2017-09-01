@@ -72,7 +72,8 @@ ENDIF()
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
-find_package(ZMQ)
+
+FIND_LIBRARY(ZMQ_LIB libzmq)
 
 #if (NOT ZMQ_INCLUDE_DIRS)
 
@@ -264,9 +265,9 @@ set(XRF_IO_HEADERS
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
-   #src/io/file/aps/aps_calibration_io.h
 	src/io/file/aps/aps_fit_params_import.h
-    src/io/hl_file_io.h
+        src/io/file/hl_file_io.h
+        src/io/net/zmq_io.h
 	src/data_struct/xrf/analysis_job.h
 	src/workflow/source.h
 	src/workflow/distributor.h
@@ -285,9 +286,9 @@ add_library(libxrf_io SHARED
 	src/io/file/hdf5_io.cpp
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
-   #src/io/file/aps/aps_calibration_io.cpp
-    src/io/file/aps/aps_fit_params_import.cpp
-    src/io/hl_file_io.cpp
+        src/io/file/aps/aps_fit_params_import.cpp
+        src/io/file/hl_file_io.cpp
+        src/io/net/zmq_io.cpp
 	src/data_struct/xrf/analysis_job.cpp
 	src/workflow/xrf/spectra_file_source.cpp
 	src/workflow/xrf/integrated_spectra_source.cpp

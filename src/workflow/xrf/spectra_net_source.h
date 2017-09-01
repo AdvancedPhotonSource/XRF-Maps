@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/source.h"
 #include "data_struct/xrf/stream_block.h"
 #include "data_struct/xrf/analysis_job.h"
-#include "support/zmq/zmq.hpp"
+#include "io/net/zmq_io.h"
 
 namespace workflow
 {
@@ -72,30 +72,20 @@ public:
     Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job);
 
     ~Spectra_Net_Source();
-
-    //virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
-
-    virtual void run();
-
-protected:
 /*
-    virtual bool _load_spectra_volume_with_callback(std::string dataset_directory,
-                                                    std::string dataset_file,
-                                                    size_t detector_num_start,
-                                                    size_t detector_num_end,
-                                                    io::file::IO_Callback_Func_Def callback_fun);
+    virtual void cb_load_spectra_data(size_t row,
+                                      size_t col,
+                                      size_t height,
+                                      size_t width,
+                                      size_t detector_num,
+                                      data_struct::xrf::Spectra* spectra,
+                                      void* user_data);
 */
-    zmq::context_t _context;
-
-    zmq::socket_t *_receiver;
-
-    std::string *_current_dataset_directory;
-    std::string *_current_dataset_name;
+protected:
 
     data_struct::xrf::Analysis_Job* _analysis_job;
 
-    bool _running;
-//    std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> _cb_function;
+    //io::net::Zmq_IO _zmq;
 
 };
 

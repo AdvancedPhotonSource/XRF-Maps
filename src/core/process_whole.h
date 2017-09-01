@@ -73,7 +73,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "workflow/threadpool.h"
 
-#include "io/hl_file_io.h"
+#include "io/file/hl_file_io.h"
 
 
 #include "data_struct/xrf/spectra_volume.h"

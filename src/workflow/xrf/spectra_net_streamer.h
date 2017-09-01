@@ -47,7 +47,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#include "spectra_net_source.h"
+#ifndef Spectra_Net_Streamer_H
+#define Spectra_Net_Streamer_H
+
+#include "core/defines.h"
+
+#include "workflow/sink.h"
+#include "data_struct/xrf/stream_block.h"
+#include "io/net/zmq_io.h"
 
 namespace workflow
 {
@@ -56,43 +63,26 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Source::Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job) : Source<data_struct::xrf::Stream_Block*>()
+class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::xrf::Stream_Block* >
 {
-    _analysis_job = analysis_job;
-//    _cb_function = std::bind(&Spectra_Net_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-}
+
+public:
+
+    Spectra_Net_Streamer();
+
+    ~Spectra_Net_Streamer();
+
+    void stream(data_struct::xrf::Stream_Block* stream_block);
+
+    //virtual void set_function(std::function<void (data_struct::xrf::Stream_Block*)> func) { }
+
+protected:
+
+};
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Source::~Spectra_Net_Source()
-{
-
-}
-
-// ----------------------------------------------------------------------------
-/*
-void Spectra_Net_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
-{
-
-    if(_output_callback_func != nullptr)
-    {
-        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
-
-        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
-        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-        stream_block->spectra = spectra;
-        stream_block->model = cp->model;
-        stream_block->optimize_fit_params_preset = _analysis_job->fit_params_preset();
-        stream_block->dataset_directory = _current_dataset_directory;
-        stream_block->dataset_name = _current_dataset_name;
-        stream_block->detector_number = detector_num;
-
-        _output_callback_func(stream_block);
-    }
-
-}
-*/
-// ----------------------------------------------------------------------------
-
 } //namespace xrf
 } //namespace workflow
+
+#endif // Spectra_Net_Streamer_H

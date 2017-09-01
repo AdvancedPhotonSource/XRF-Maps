@@ -64,7 +64,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "core/defines.h"
 
-#include "io/hl_file_io.h"
+#include "io/file/hl_file_io.h"
 #include "data_struct/xrf/element_info.h"
 #include "data_struct/xrf/fit_element_map.h"
 #include "data_struct/xrf/analysis_job.h"
