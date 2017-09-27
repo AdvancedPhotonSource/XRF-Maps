@@ -72,10 +72,7 @@ ENDIF()
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
-
-FIND_LIBRARY(ZMQ_LIB libzmq)
-
-#if (NOT ZMQ_INCLUDE_DIRS)
+find_package(ZeroMQ)
 
 IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
@@ -154,7 +151,7 @@ endif()
 #include_directories(pybind11)
 
 #zeromq include
-include_directories(${ZMQ_INCLUDE_DIRS})
+include_directories(${ZeroMQ_INCLUDE_DIR})
 
 #hdf5 include
 include_directories(${HDF5_INCLUDE_DIRS})
@@ -198,7 +195,6 @@ set(libxrf_fit_HEADERS
     src/support/nnls/vector.hpp
     src/support/nnls/matrix.h
     src/support/nnls/denseMatrix.hpp
-    src/support/zmq/zmq.hpp
     src/data_struct/base_dataset.h
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h
@@ -273,6 +269,7 @@ set(XRF_IO_HEADERS
 	src/workflow/distributor.h
 	src/workflow/sink.h
 	src/workflow/xrf/spectra_file_source.h
+	src/workflow/xrf/spectra_net_source.h
 	src/workflow/xrf/integrated_spectra_source.h
 	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
@@ -281,6 +278,7 @@ set(XRF_IO_HEADERS
 add_library(libxrf_io SHARED
 	${XRF_IO_HEADERS}
 	${XDR_HACK}
+	src/support/zmq/zmq.hpp
 	src/support/mdautils-1.4.1/mda_loader.c
 	src/io/file/mda_io.cpp
 	src/io/file/hdf5_io.cpp
@@ -291,6 +289,7 @@ add_library(libxrf_io SHARED
         src/io/net/zmq_io.cpp
 	src/data_struct/xrf/analysis_job.cpp
 	src/workflow/xrf/spectra_file_source.cpp
+	src/workflow/xrf/spectra_net_source.cpp
 	src/workflow/xrf/integrated_spectra_source.cpp
 	src/workflow/xrf/detector_sum_spectra_source.cpp
 	src/workflow/xrf/spectra_stream_saver.cpp
@@ -325,6 +324,7 @@ if (WIN32)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
+	set_target_properties(xrf_maps libxrf_io PROPERTIES COMPILE_FLAGS "/D_WINSOCKAPI_")
 	if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Ox /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /Qansi-alias")
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
@@ -333,9 +333,15 @@ if (WIN32)
 
   # .PYD file extension on Windows
   #set_target_properties(libxrf_fit PROPERTIES SUFFIX ".pyd")
- 
-  target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  
+  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+    string(REGEX REPLACE "mt-s" "mt" ZeroMQ_STATIC_LIBRARY "${ZeroMQ_STATIC_LIBRARY}")
+  else()
+	string(REGEX REPLACE "sgd" "gd" ZeroMQ_STATIC_LIBRARY "${ZeroMQ_STATIC_LIBRARY}")
+  endif()
+
+  target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${ZeroMQ_STATIC_LIBRARY} optimized ws2_32.lib ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${ZeroMQ_STATIC_LIBRARY} debug ws2_32.lib ${CMAKE_THREAD_LIBS_INIT} )
 
 elseif (UNIX)
   # It's quite common to have multiple copies of the same Python version
@@ -384,9 +390,9 @@ endif()
 #endif()
 
 IF (BUILD_WITH_VTK)
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${VTK_LIBRARIES} )
 ELSE()
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
