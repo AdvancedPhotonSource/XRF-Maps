@@ -71,62 +71,26 @@ namespace io
 namespace file
 {
 
-struct HDF5_Spectra_Layout
+enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
+
+struct H5_Spectra_Layout
 {
-   HDF5_Spectra_Layout()
-   {
-      spectrum_dim = 0;
-      row_dim = 1;
-      col_dim = 2;
-   }
 
-   HDF5_Spectra_Layout(unsigned int row, unsigned int col, unsigned int spectrum)
-   {
-      row_dim = row;
-      col_dim = col;
-      spectrum_dim = spectrum;
-   }
+    H5_Spectra_Layout() {}
 
-   unsigned int row_dim;
-   unsigned int col_dim;
-   unsigned int spectrum_dim;
+    size_t detector_num;
+
+    std::string spectra_path;
+
+    std::string elt_path;
+    std::string ert_path;
+    std::string incnt_path;
+    std::string outcnt_path;
+
+    bool is_line;
 };
 
-
-struct HDF5_Range
-{
-    HDF5_Range()
-    {
-        offset = nullptr;
-        count = nullptr;
-    }
-
-    HDF5_Range(unsigned int rank)
-    {
-        this->rank = rank;
-        offset = new unsigned long[rank];
-        count = new unsigned long[rank];
-        for (unsigned int i=0; i < rank; i++)
-        {
-            offset[i] = 0;
-            count[i] = 0;
-        }
-    }
-
-    ~HDF5_Range()
-    {
-        if(offset != nullptr)
-            delete [] offset;
-        offset = nullptr;
-
-        if(count != nullptr)
-            delete [] count;
-        count = nullptr;
-    }
-    unsigned int rank;
-    unsigned long* offset;
-    unsigned long* count;
-};
+H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num);
 
 class DLL_EXPORT HDF5_IO : public Base_File_IO
 {
@@ -148,8 +112,6 @@ public:
      */
     virtual bool load_dataset(std::string path, Base_Dataset* dset);
 
-    //void load_dataset2(std::string path, HDF5_Spectra_Layout layout, HDF5_Range range, data_struct::xrf::Spectra_Volume* spec_vol);
-
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
     bool load_spectra_volume_with_callback(std::string path,
@@ -159,6 +121,8 @@ public:
                                            void* user_data);
 
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
+
+    //bool load_spectra_volume_confocal();
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
@@ -175,8 +139,6 @@ public:
     bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
-
-    //DLL_EXPORT void load_spectra_volume(std::string path, HDF5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol);
 
     bool generate_stream_dataset(std::string dataset_directory,
                                  std::string dataset_name,

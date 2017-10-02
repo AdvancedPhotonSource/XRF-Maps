@@ -57,6 +57,7 @@ namespace io
 std::vector<std::string> netcdf_files;
 std::vector<std::string> hdf_files;
 std::vector<std::string> hdf_xspress_files;
+std::vector<std::string> hdf_confocal_files;
 
 // ----------------------------------------------------------------------------
 
@@ -73,6 +74,7 @@ void populate_netcdf_hdf5_files(std::string dataset_dir)
     netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "_0.nc");
     hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5/", "_0.h5");
     hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress/", "_0.h5");
+    hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
 }
 
 // ----------------------------------------------------------------------------
