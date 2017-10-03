@@ -103,23 +103,12 @@ struct Detector_HDF5_Struct
 };
 
 
-
-struct H5_Spectra_Layout
+/*
+int Find_Index(hid_t file_id, loc)
 {
 
-    H5_Spectra_Layout() {}
-
-    size_t detector_num;
-
-    std::string spectra_path;
-
-    std::string elt_path;
-    std::string ert_path;
-    std::string incnt_path;
-    std::string outcnt_path;
-
-    bool is_line;
-};
+}
+*/
 
 H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num)
 {
@@ -132,65 +121,82 @@ H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector
         switch(detector_num)
         {
         case 0:
-            layout.spectra_path = "/MAPS_RAW/data_a"; // Samples x Rows x Cols
+            layout.spectra.path = "/MAPS_RAW/data_a";
             break;
         case 1:
-            layout.spectra_path = "/MAPS_RAW/data_b";
+            layout.spectra.path = "/MAPS_RAW/data_b";
             break;
         case 2:
-            layout.spectra_path = "/MAPS_RAW/data_c";
+            layout.spectra.path = "/MAPS_RAW/data_c";
             break;
         case 3:
-            layout.spectra_path = "/MAPS_RAW/data_d";
+            layout.spectra.path = "/MAPS_RAW/data_d";
             break;
         default:
-            layout.spectra_path = "";
+            layout.spectra.path = "";
             break;
         }
+        layout.spectra.set_order(Sample, Row, Col);
 
-        layout.elt_path = "/MAPS_RAW/livetime"; // Detector_num x Rows x Cols
-        layout.ert_path = "/MAPS_RAW/realtime"; // Detector_num x Rows x Cols
-        layout.incnt_path = "/MAPS_RAW/inputcounts"; // Detector_num x Rows x Cols
-        layout.outcnt_path = "/MAPS_RAW/ouputcounts"; // Detector_num x Rows x Cols
+        layout.elt.path = "/MAPS_RAW/livetime";
+        layout.elt.set_order(Detector, Row, Col);
+        layout.ert.path = "/MAPS_RAW/realtime";
+        layout.ert.set_order(Detector, Row, Col);
+        layout.incnt.path = "/MAPS_RAW/inputcounts";
+        layout.incnt.set_order(Detector, Row, Col);
+        layout.outcnt.path = "/MAPS_RAW/ouputcounts";
+        layout.outcnt.set_order(Detector, Row, Col);
 
     }
     else if (layout_def == MAPS_V9)
     {
-        layout.is_line = false;
-        layout.spectra_path = "/MAPS/mca_arr"; // Samples x Rows x Cols
-        layout.elt_path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ELT1"
-        layout.ert_path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ERT1"
-        layout.incnt_path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ICR1"
-        layout.outcnt_path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "OCR1"
+        layout.spectra.path = "/MAPS/mca_arr";
+        layout.spectra.set_order(Sample, Row, Col);
+        layout.elt.path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ELT1"
+        layout.elt.set_order(Row, Col);
+        layout.ert.path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ERT1"
+        layout.ert.set_order(Row, Col);
+        layout.incnt.path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "ICR1"
+        layout.incnt.set_order(Row, Col);
+        layout.outcnt.path = "/MAPS/scalers"; //index from attributes /MAPS/scalers_names "OCR1"
+        layout.outcnt.set_order(Row, Col);
     }
     else if (layout_def == MAPS_V10)
     {
-        layout.is_line = false;
-        layout.spectra_path = "/MAPS/Spectra/mca_arr"; // Samples x Rows x Cols
-        layout.elt_path = "/MAPS/Spectra/Elapsed_Livetime";
-        layout.ert_path = "/MAPS/Spectra/Elapsed_Realtime";
-        layout.incnt_path = "/MAPS/Spectra/Input_Counts";
-        layout.outcnt_path = "/MAPS/Spectra/Output_Counts";
+        layout.spectra.path = "/MAPS/Spectra/mca_arr";
+        layout.spectra.set_order(Sample, Row, Col);
+        layout.elt.path = "/MAPS/Spectra/Elapsed_Livetime";
+        layout.elt.set_order(Row, Col);
+        layout.ert.path = "/MAPS/Spectra/Elapsed_Realtime";
+        layout.ert.set_order(Row, Col);
+        layout.incnt.path = "/MAPS/Spectra/Input_Counts";
+        layout.incnt.set_order(Row, Col);
+        layout.outcnt.path = "/MAPS/Spectra/Output_Counts";
+        layout.outcnt.set_order(Row, Col);
     }
     else if (layout_def == XSPRESS)
     {
         std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "SCA0";
 
-        layout.is_line = true;
-        layout.spectra_path = "/entry/data/data"; // Cols x Detector_Num x Samples
-        layout.elt_path = "/entry/instrument/NDAttributes/"+live_time_dataset_name;
-        layout.ert_path = "";
-        layout.incnt_path = "";
-        layout.outcnt_path = "";
+        layout.spectra.path = "/entry/data/data";
+        layout.spectra.set_order(Col, Detector, Sample);
+        layout.elt.path = "/entry/instrument/NDAttributes/"+live_time_dataset_name;
+        layout.elt.set_order(Col);
+        //layout.ert.path = "";
+        //layout.incnt.path = "";
+        //layout.outcnt.path = "";
     }
     else if (layout_def == APS_SEC20)
     {
-        layout.is_line = false;
-        layout.spectra_path = "/2D Scan/MCA "+ std::to_string(detector_num+1); // Rows x Cols x Samples
-        layout.elt_path = "/2D Scan/Detectors"; //index from attributes "Timer"
-        layout.ert_path = "";
-        layout.incnt_path = "/2D Scan/Detectors"; //index from attributes  "ICR Ch 1"
-        layout.outcnt_path = "/2D Scan/Detectors"; //index from attributes "OCR Ch 1"
+        layout.spectra.path = "/2D Scan/MCA "+ std::to_string(detector_num+1);
+        layout.spectra.set_order(Row, Col, Sample);
+        layout.elt.path = "/2D Scan/Detectors"; //index from attributes "Timer"
+        layout.spectra.set_order(Row, Col);
+        //layout.ert.path = "";
+        layout.incnt.path = "/2D Scan/Detectors"; //index from attributes  "ICR Ch 1"
+        layout.incnt.set_order(Row, Col);
+        layout.outcnt.path = "/2D Scan/Detectors"; //index from attributes "OCR Ch 1"
+        layout.outcnt.set_order(Row, Col);
     }
     else
     {

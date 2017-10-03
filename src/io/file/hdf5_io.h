@@ -73,21 +73,54 @@ namespace file
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
+enum H5_Order {Row, Col, Sample, Detector};
+
+struct H5_Layout_Item
+{
+    void set_order(H5_Order o1)
+    {
+        order[0] = o1;
+        order_size = 1;
+    }
+    void set_order(H5_Order o1, H5_Order o2)
+    {
+        order[0] = o1;
+        order[1] = o2;
+        order_size = 2;
+    }
+
+    void set_order(H5_Order o1, H5_Order o2, H5_Order o3)
+    {
+        order[0] = o1;
+        order[1] = o2;
+        order[2] = o3;
+        order_size = 3;
+    }
+
+    void set_order(H5_Order o1, H5_Order o2, H5_Order o3, H5_Order o4)
+    {
+        order[0] = o1;
+        order[1] = o2;
+        order[2] = o3;
+        order[3] = o4;
+        order_size = 4;
+    }
+
+    std::string path;
+    //index
+    H5_Order order[4];
+    size_t order_size; // min 2 , max 3
+    size_t index;
+};
+
 struct H5_Spectra_Layout
 {
-
-    H5_Spectra_Layout() {}
-
     size_t detector_num;
-
-    std::string spectra_path;
-
-    std::string elt_path;
-    std::string ert_path;
-    std::string incnt_path;
-    std::string outcnt_path;
-
-    bool is_line;
+    H5_Layout_Item spectra;
+    H5_Layout_Item elt;
+    H5_Layout_Item ert;
+    H5_Layout_Item incnt;
+    H5_Layout_Item outcnt;
 };
 
 H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num);
