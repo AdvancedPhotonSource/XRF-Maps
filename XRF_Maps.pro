@@ -133,6 +133,8 @@ SOURCES += \
     src/io/file/hl_file_io.cpp \
     src/io/file/aps/aps_fit_params_import.cpp \
     src/io/net/zmq_io.cpp \
+    src/io/net/zmq_publisher.cpp \
+    src/io/net/zmq_subscriber.cpp \
     src/visual/vtk_graph.cpp \
     src/core/process_streaming.cpp \
     src/core/process_whole.cpp \
@@ -198,6 +200,8 @@ HEADERS += \
     src/io/file/hl_file_io.h \
     src/io/file/aps/aps_fit_params_import.h \
     src/io/net/zmq_io.h \
+    src/io/net/zmq_publisher.h \
+    src/io/net/zmq_subscriber.h \
     src/visual/vtk_graph.h \
     src/core/process_streaming.h \
     src/core/process_whole.h \

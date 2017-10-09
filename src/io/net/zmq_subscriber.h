@@ -43,46 +43,35 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2017>: Arthur Glowacki
+/// Initial Author <2016>: Arthur Glowacki
 
 
 
-#ifndef Spectra_Net_Streamer_H
-#define Spectra_Net_Streamer_H
+#ifndef ZMQ_SUBSCRIBER_H
+#define ZMQ_SUBSCRIBER_H
 
-#include "core/defines.h"
+#include "io/net/zmq_io.h"
 
-#include "workflow/sink.h"
-#include "data_struct/xrf/stream_block.h"
-#include "io/net/zmq_publisher.h"
-
-namespace workflow
+namespace io
 {
-namespace xrf
+namespace net
 {
 
-//-----------------------------------------------------------------------------
-
-class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::xrf::Stream_Block* >
+class DLL_EXPORT Zmq_Subscriber : public Zmq_IO
 {
-
 public:
 
-    Spectra_Net_Streamer();
+    Zmq_Subscriber(std::string conn_str);
 
-    ~Spectra_Net_Streamer();
+    ~Zmq_Subscriber(){}
 
-    void stream(data_struct::xrf::Stream_Block* stream_block);
+    void get_counts();
 
-protected:
-
-    io::net::Zmq_Publisher *_publisher;
+    void get_spectra();
 
 };
 
-//-----------------------------------------------------------------------------
+}// end namespace net
+}// end namespace io
 
-} //namespace xrf
-} //namespace workflow
-
-#endif // Spectra_Net_Streamer_H
+#endif // ZMQ_SUBSCRIBER_H

@@ -58,7 +58,8 @@ namespace xrf
 
 Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::xrf::Stream_Block*>()
 {
-    _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
+    //_callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
+    _publisher = new io::net::Zmq_Publisher("tcp://*:5556");
 }
 
 //-----------------------------------------------------------------------------
@@ -72,6 +73,12 @@ Spectra_Net_Streamer::~Spectra_Net_Streamer()
 
 void Spectra_Net_Streamer::stream(data_struct::xrf::Stream_Block* stream_block)
 {
+
+
+    //_publisher->send_counts(
+
+
+
 /*
     size_t d_hash = stream_block->dataset_hash();
     size_t detector_num = stream_block->detector_number;

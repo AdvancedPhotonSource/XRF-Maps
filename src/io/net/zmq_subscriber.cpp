@@ -46,43 +46,45 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 
+#include "io/net/zmq_subscriber.h"
 
-#ifndef Spectra_Net_Streamer_H
-#define Spectra_Net_Streamer_H
+#include <iostream>
+#include <string>
 
-#include "core/defines.h"
 
-#include "workflow/sink.h"
-#include "data_struct/xrf/stream_block.h"
-#include "io/net/zmq_publisher.h"
-
-namespace workflow
+namespace io
 {
-namespace xrf
+namespace net
 {
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::xrf::Stream_Block* >
+Zmq_Subscriber::Zmq_Subscriber(std::string conn_str) : Zmq_IO(ZMQ_SUB)
 {
-
-public:
-
-    Spectra_Net_Streamer();
-
-    ~Spectra_Net_Streamer();
-
-    void stream(data_struct::xrf::Stream_Block* stream_block);
-
-protected:
-
-    io::net::Zmq_Publisher *_publisher;
-
-};
+    _zmq_socket->connect(conn_str);
+/*
+    srandom ((unsigned) time (NULL));
+    char subscription [5];
+    sprintf (subscription, "%03d", random ());
+*/
+    _zmq_socket->setsockopt(ZMQ_SUBSCRIBE, "", 0);
+}
 
 //-----------------------------------------------------------------------------
 
-} //namespace xrf
-} //namespace workflow
+void Zmq_Subscriber::get_counts()
+{
 
-#endif // Spectra_Net_Streamer_H
+}
+
+//-----------------------------------------------------------------------------
+
+void Zmq_Subscriber::get_spectra()
+{
+
+}
+
+//-----------------------------------------------------------------------------
+
+} //end namespace net
+}// end namespace io
