@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <queue>
 #include <future>
+#include <stack>
 #include "io/file/base_file_io.h"
 #include "data_struct/base_dataset.h"
 #include "data_struct/xrf/spectra_volume.h"
@@ -71,17 +72,27 @@ namespace io
 namespace file
 {
 
+
+enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET};
+
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
-enum H5_Order {Row, Col, Sample, Detector};
+enum H5_Order {ROW, COL, SAMPLE, DETECTOR};
 
 struct H5_Layout_Item
 {
+    H5_Layout_Item()
+    {
+        order_size = 0;
+        path = "";
+    }
+
     void set_order(H5_Order o1)
     {
         order[0] = o1;
         order_size = 1;
     }
+
     void set_order(H5_Order o1, H5_Order o2)
     {
         order[0] = o1;
@@ -106,11 +117,21 @@ struct H5_Layout_Item
         order_size = 4;
     }
 
+    int get_order_index(H5_Order o)
+    {
+        for (int i=0; i < order_size; i++)
+        {
+            if(order[i] == o)
+                return i;
+        }
+        return -1;
+    }
+
     std::string path;
     //index
     H5_Order order[4];
     size_t order_size; // min 2 , max 3
-    size_t index;
+    //size_t index;
 };
 
 struct H5_Spectra_Layout
@@ -245,6 +266,9 @@ private:
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
+
+    bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2);
+    void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
 
     //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 
