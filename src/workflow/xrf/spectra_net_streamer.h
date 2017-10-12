@@ -74,9 +74,17 @@ public:
 
     void stream(data_struct::xrf::Stream_Block* stream_block);
 
+    void set_send_counts(bool val) {_send_counts = val;}
+
+    void set_send_spectra(bool val) {_send_spectra = val;}
+
 protected:
 
     io::net::Zmq_Publisher *_publisher;
+
+    bool _send_counts;
+
+    bool _send_spectra;
 
 };
 

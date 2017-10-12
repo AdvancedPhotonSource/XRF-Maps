@@ -59,6 +59,7 @@ namespace xrf
 Spectra_Net_Source::Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job) : Source<data_struct::xrf::Stream_Block*>()
 {
     _analysis_job = analysis_job;
+    _subscriber = new io::net::Zmq_Subscriber("tcp://127.0.0.1:5556");
 //    _cb_function = std::bind(&Spectra_Net_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
@@ -66,7 +67,22 @@ Spectra_Net_Source::Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_
 
 Spectra_Net_Source::~Spectra_Net_Source()
 {
+    if(_subscriber != nullptr)
+    {
+        delete _subscriber;
+        _subscriber = nullptr;
+    }
+}
 
+void Spectra_Net_Source::run()
+{
+    _running = true;
+    data_struct::xrf::Stream_Block *stream_block;
+    while (_running)
+    {
+        _subscriber->get_spectra(stream_block);
+        _output_callback_func(stream_block);
+    }
 }
 
 // ----------------------------------------------------------------------------

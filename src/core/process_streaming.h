@@ -74,7 +74,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/xrf/spectra_file_source.h"
 #include "workflow/xrf/integrated_spectra_source.h"
 #include "workflow/xrf/detector_sum_spectra_source.h"
-
+#include "workflow/xrf/spectra_net_streamer.h"
 #include "workflow/xrf/spectra_stream_saver.h"
 
 #include "fitting/routines/param_optimized_fit_routine.h"

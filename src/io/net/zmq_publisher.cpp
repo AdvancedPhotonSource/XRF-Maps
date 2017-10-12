@@ -66,14 +66,49 @@ Zmq_Publisher::Zmq_Publisher(std::string conn_str) : Zmq_IO(ZMQ_PUB)
 
 //-----------------------------------------------------------------------------
 
-void Zmq_Publisher::send_counts()
+void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
 {
 
+    std::string raw_msg = "";
+    char *tmp_real = new char[sizeof(real_t)];
+    char *tmp_ushort = new char[sizeof(unsigned short)];
+    char *tmp_uint = new char[sizeof(unsigned int)];
+
+    //TODO:
+    // add something to distinguish between counts and spectra
+    // add something to tell if 4 or 8 byte real
+
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->detector_number, 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->row(), 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->col(), 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->height(), 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->width(), 4);
+
+
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->fitting_blocks.size(), 4);
+
+    // iterate through fitting routine
+    for( auto& itr : stream_block->fitting_blocks)
+    {
+        _convert_var_to_bytes(&raw_msg, tmp_uint, itr.second.fit_counts.size(), 4);
+        // iterate through elements counts
+        for(auto &itr2 : itr.second.fit_counts)
+        {
+            raw_msg += itr2.first;
+            raw_msg += '\0';
+            _convert_var_to_bytes(&raw_msg, tmp_real, itr2.second, sizeof(real_t));
+        }
+    }
+
+    delete [] tmp_real;
+    delete [] tmp_ushort;
+    delete [] tmp_uint;
+    send(raw_msg);
 }
 
 //-----------------------------------------------------------------------------
 
-void Zmq_Publisher::send_spectra()
+void Zmq_Publisher::send_spectra(data_struct::xrf::Stream_Block* stream_block)
 {
 
 }

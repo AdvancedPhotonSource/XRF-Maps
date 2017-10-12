@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define ZMQ_SUBSCRIBER_H
 
 #include "io/net/zmq_io.h"
+#include "data_struct/xrf/stream_block.h"
 
 namespace io
 {
@@ -65,9 +66,9 @@ public:
 
     ~Zmq_Subscriber(){}
 
-    void get_counts();
+    void get_counts(data_struct::xrf::Stream_Block* out_stream_block);
 
-    void get_spectra();
+    void get_spectra(data_struct::xrf::Stream_Block* out_stream_block);
 
 };
 

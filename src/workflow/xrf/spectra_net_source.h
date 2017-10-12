@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/source.h"
 #include "data_struct/xrf/stream_block.h"
 #include "data_struct/xrf/analysis_job.h"
-#include "io/net/zmq_io.h"
+#include "io/net/zmq_subscriber.h"
 
 namespace workflow
 {
@@ -72,6 +72,8 @@ public:
     Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job);
 
     ~Spectra_Net_Source();
+
+    virtual void run();
 /*
     virtual void cb_load_spectra_data(size_t row,
                                       size_t col,
@@ -83,9 +85,11 @@ public:
 */
 protected:
 
+    bool _running;
+
     data_struct::xrf::Analysis_Job* _analysis_job;
 
-    //io::net::Zmq_IO _zmq;
+    io::net::Zmq_Subscriber* _subscriber;
 
 };
 

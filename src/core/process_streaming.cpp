@@ -169,8 +169,8 @@ void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
 {
     workflow::xrf::Detector_Sum_Spectra_Source sum_detectors_spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::xrf::Spectra_Stream_Saver sink;
-
+    //workflow::xrf::Spectra_Stream_Saver sink;
+    workflow::xrf::Spectra_Net_Streamer sink;
 
     distributor.set_function(proc_spectra_block);
     sink.connect(&distributor);

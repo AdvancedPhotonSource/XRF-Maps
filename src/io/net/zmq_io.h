@@ -74,6 +74,14 @@ public:
 
 protected:
 
+    template <typename T>
+    void _convert_var_to_bytes(std::string * str, char* bytes_temp, T variable, size_t size)
+    {
+        memcpy(bytes_temp, (char*) (&variable), size);
+        for(int i =0; i < size; i++)
+            *str += bytes_temp[i];
+    }
+
     bool _running;
 
     zmq::context_t _context;

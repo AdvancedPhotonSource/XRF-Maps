@@ -94,7 +94,7 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
             stream_block->optimize_fit_params_preset = _analysis_job->fit_params_preset();
             stream_block->dataset_directory = _current_dataset_directory;
             stream_block->dataset_name = _current_dataset_name;
-            stream_block->detector_number = -1;
+            stream_block->detector_number = 0;
 
             _output_callback_func(stream_block);
         }
