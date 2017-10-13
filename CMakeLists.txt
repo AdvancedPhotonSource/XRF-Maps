@@ -72,7 +72,10 @@ ENDIF()
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
-find_package(ZeroMQ)
+
+IF( NOT ZeroMQ_INCLUDE_DIR AND NOT ZeroMQ_STATIC_LIBRARY)
+    find_package(ZeroMQ)
+ENDIF()
 
 IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
@@ -262,8 +265,10 @@ set(XRF_IO_HEADERS
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
 	src/io/file/aps/aps_fit_params_import.h
-        src/io/file/hl_file_io.h
-        src/io/net/zmq_io.h
+	src/io/file/hl_file_io.h
+	src/io/net/zmq_io.h
+	src/io/net/zmq_publisher.h
+	src/io/net/zmq_subscriber.h
 	src/data_struct/xrf/analysis_job.h
 	src/workflow/source.h
 	src/workflow/distributor.h
@@ -273,6 +278,7 @@ set(XRF_IO_HEADERS
 	src/workflow/xrf/integrated_spectra_source.h
 	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
+	src/workflow/xrf/spectra_net_streamer.h
 )
 
 add_library(libxrf_io SHARED
@@ -284,15 +290,18 @@ add_library(libxrf_io SHARED
 	src/io/file/hdf5_io.cpp
 	src/io/file/netcdf_io.cpp
 	src/io/file/csv_io.cpp
-        src/io/file/aps/aps_fit_params_import.cpp
-        src/io/file/hl_file_io.cpp
-        src/io/net/zmq_io.cpp
+	src/io/file/aps/aps_fit_params_import.cpp
+	src/io/file/hl_file_io.cpp
+	src/io/net/zmq_io.cpp
+	src/io/net/zmq_publisher.cpp
+	src/io/net/zmq_subscriber.cpp
 	src/data_struct/xrf/analysis_job.cpp
 	src/workflow/xrf/spectra_file_source.cpp
 	src/workflow/xrf/spectra_net_source.cpp
 	src/workflow/xrf/integrated_spectra_source.cpp
 	src/workflow/xrf/detector_sum_spectra_source.cpp
 	src/workflow/xrf/spectra_stream_saver.cpp
+	src/workflow/xrf/spectra_net_streamer.cpp
 )
 
 #--------------- start xrf maps exec -----------------
