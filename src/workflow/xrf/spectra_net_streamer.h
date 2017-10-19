@@ -81,8 +81,6 @@ public:
 
 protected:
 
-	void _init_socket();
-
 	zmq::context_t *_context;
 
 	zmq::socket_t *_zmq_socket;
