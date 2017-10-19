@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/source.h"
 #include "data_struct/xrf/stream_block.h"
 #include "data_struct/xrf/analysis_job.h"
-#include "io/net/zmq_subscriber.h"
+#include "support/zmq/zmq.hpp"
 
 namespace workflow
 {
@@ -89,7 +89,9 @@ protected:
 
     data_struct::xrf::Analysis_Job* _analysis_job;
 
-    io::net::Zmq_Subscriber* _subscriber;
+	zmq::context_t *_context;
+
+	zmq::socket_t *_zmq_socket;
 
 };
 

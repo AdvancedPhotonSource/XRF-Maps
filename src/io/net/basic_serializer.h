@@ -46,72 +46,42 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 
-#include "io/net/zmq_io.h"
 
-#include <iostream>
-#include <string>
+#ifndef BASIC_SERIALIZER_H
+#define BASIC_SERIALIZER_H
 
+#include "core/defines.h"
+#include "data_struct/xrf/stream_block.h"
 
 namespace io
 {
 namespace net
 {
 
-//-----------------------------------------------------------------------------
-
-Zmq_IO::Zmq_IO(int type)
+class DLL_EXPORT Basic_Serializer
 {
-    _zmq_socket = new zmq::socket_t(_context, type);
-}
+public:
 
-//-----------------------------------------------------------------------------
+    Basic_Serializer();
 
-Zmq_IO::~Zmq_IO()
-{
-    if (_zmq_socket != nullptr)
-    {
-        _zmq_socket->close();
-        delete _zmq_socket;
-    }
-    _zmq_socket = nullptr;
-}
+    ~Basic_Serializer();
 
-//-----------------------------------------------------------------------------
+    std::string encode_counts(data_struct::xrf::Stream_Block* in_stream_block);
 
-void Zmq_IO::get(char* msg, int &len)
-{
+	data_struct::xrf::Stream_Block* decode_counts(char* message, int message_len);
 
-    zmq::message_t message;
-    //int workload;           //  Workload in msecs
+protected:
+	template <typename T>
+	void _convert_var_to_bytes(std::string * str, char* bytes_temp, T variable, size_t size)
+	{
+		memcpy(bytes_temp, (char*)(&variable), size);
+		for (int i = 0; i < size; i++)
+			*str += bytes_temp[i];
+	}
 
-    if(_zmq_socket->recv(&message))
-    {
-        msg = static_cast<char*>(message.data());
-        len = message.size();
-    }
-}
+};
 
-//-----------------------------------------------------------------------------
-
-void Zmq_IO::send(std::string data)
-{
-    send((unsigned char*)data.c_str(), data.length());
-}
-
-//-----------------------------------------------------------------------------
-
-void Zmq_IO::send(unsigned char* data, int len)
-{
-    zmq::message_t message(data, len);
-    logit<< "Message size = "<<message.size()<<std::endl;
-    bool val = _zmq_socket->send(message);
-    if (val == false)
-    {
-        logit<<"noooooo";
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-} //end namespace net
+}// end namespace net
 }// end namespace io
+
+#endif // Basic_Serializer_H

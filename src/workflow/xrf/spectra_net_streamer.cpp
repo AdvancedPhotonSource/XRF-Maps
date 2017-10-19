@@ -64,32 +64,71 @@ Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::xrf::Stream_Blo
 
     _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
 
-    _publisher = new io::net::Zmq_Publisher("tcp://127.0.0.1:43434");
+	
+	_context = nullptr;
+	_zmq_socket = nullptr;
+
 }
 
 //-----------------------------------------------------------------------------
 
 Spectra_Net_Streamer::~Spectra_Net_Streamer()
 {
-    if(_publisher != nullptr)
+    if(_zmq_socket != nullptr)
     {
-        delete _publisher;
+		_zmq_socket->close();
+        delete _zmq_socket;
     }
+	if (_context != nullptr)
+	{
+		_context->close();
+		delete _context;
+	}
+	_zmq_socket = nullptr;
+	_context = nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+void Spectra_Net_Streamer::_init_socket()
+{
+	std::string conn_str = "tcp://*:43434";
+	_context = new zmq::context_t(1);
+	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
+	_zmq_socket->bind(conn_str);
 }
 
 // ----------------------------------------------------------------------------
 
 void Spectra_Net_Streamer::stream(data_struct::xrf::Stream_Block* stream_block)
 {
+	
+	if (_zmq_socket == nullptr)
+	{
+		_init_socket();
+	}
+
+	std::string data;
 
     if(_send_counts)
     {
-        _publisher->send_counts(stream_block);
+		data = _serializer.encode_counts(stream_block);
     }
-    if(_send_spectra)
+    else if(_send_spectra)
     {
-        _publisher->send_spectra(stream_block);
+		//data = _serializer.encode_spectra(stream_block);
     }
+
+	zmq::message_t topic("XRF-Counts", 10);
+	zmq::message_t message(data.c_str(), data.length());
+	//logit << "Message size = " << message.size() << std::endl;
+	
+	_zmq_socket->send(topic, ZMQ_SNDMORE);
+	bool val = _zmq_socket->send(message, 0);
+	if (val == false)
+	{
+		logit << "noooooo";
+	}
 
 }
 

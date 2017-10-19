@@ -266,9 +266,7 @@ set(XRF_IO_HEADERS
 	src/io/file/csv_io.h
 	src/io/file/aps/aps_fit_params_import.h
 	src/io/file/hl_file_io.h
-	src/io/net/zmq_io.h
-	src/io/net/zmq_publisher.h
-	src/io/net/zmq_subscriber.h
+	src/io/net/basic_serializer.h
 	src/data_struct/xrf/analysis_job.h
 	src/workflow/source.h
 	src/workflow/distributor.h
@@ -292,9 +290,7 @@ add_library(libxrf_io SHARED
 	src/io/file/csv_io.cpp
 	src/io/file/aps/aps_fit_params_import.cpp
 	src/io/file/hl_file_io.cpp
-	src/io/net/zmq_io.cpp
-	src/io/net/zmq_publisher.cpp
-	src/io/net/zmq_subscriber.cpp
+	src/io/net/basic_serializer.cpp
 	src/data_struct/xrf/analysis_job.cpp
 	src/workflow/xrf/spectra_file_source.cpp
 	src/workflow/xrf/spectra_net_source.cpp

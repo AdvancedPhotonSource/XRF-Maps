@@ -46,7 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 
-#include "io/net/zmq_publisher.h"
+#include "io/net/basic_serializer.h"
 
 #include <iostream>
 #include <string>
@@ -59,19 +59,19 @@ namespace net
 
 //-----------------------------------------------------------------------------
 
-Zmq_Publisher::Zmq_Publisher(std::string conn_str) : Zmq_IO(ZMQ_PUB)
+Basic_Serializer::Basic_Serializer()
 {
-    _zmq_socket->bind(conn_str);
+
 }
 
-Zmq_Publisher::~Zmq_Publisher()
+Basic_Serializer::~Basic_Serializer()
 {
-    //_zmq_socket->unbind();
+
 }
 
 //-----------------------------------------------------------------------------
 
-void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
+std::string Basic_Serializer::encode_counts(data_struct::xrf::Stream_Block* stream_block)
 {
 
     std::string raw_msg = "";
@@ -95,6 +95,7 @@ void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
     // iterate through fitting routine
     for( auto& itr : stream_block->fitting_blocks)
     {
+		_convert_var_to_bytes(&raw_msg, tmp_uint, itr.first, 4);
         _convert_var_to_bytes(&raw_msg, tmp_uint, itr.second.fit_counts.size(), 4);
         // iterate through elements counts
         for(auto &itr2 : itr.second.fit_counts)
@@ -108,14 +109,82 @@ void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
     delete [] tmp_real;
     delete [] tmp_ushort;
     delete [] tmp_uint;
-    send("XRF-Counts");
-    send(raw_msg);
+
+	return raw_msg;
 }
 
 //-----------------------------------------------------------------------------
 
-void Zmq_Publisher::send_spectra(data_struct::xrf::Stream_Block* stream_block)
+data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, int message_len)
 {
+
+	int idx = 0;
+	int idx2 = 0;
+	int detector_number = 0;
+	size_t row = 0;
+	size_t col = 0;
+	size_t height = 0;
+	size_t width = 0;
+	size_t proc_type_count = 0;
+	size_t proc_type = 0;
+	size_t fit_block_size = 0;
+	char name[256] = { 0 };
+	real_t val = 0.0;
+
+	memcpy(&detector_number, message + idx, 4);
+	idx += 4;
+	memcpy(&row, message + idx, 4);
+	idx += 4;
+	memcpy(&col, message + idx, 4);
+	idx += 4;
+	memcpy(&height, message + idx, 4);
+	idx += 4;
+	memcpy(&width, message + idx, 4);
+	idx += 4;
+
+	data_struct::xrf::Stream_Block* out_stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+	out_stream_block->detector_number = detector_number;
+
+
+	memcpy(&proc_type_count, message + idx, 4);
+	idx += 4;
+	for (int proc_type_itr = 0; proc_type_itr < proc_type_count; proc_type_itr++)
+	{
+		memcpy(&proc_type, message + idx, 4);
+		idx += 4;
+		out_stream_block->fitting_blocks[proc_type] = data_struct::xrf::Stream_Fitting_Block();
+
+		//get fit_block[proc_type] size
+		memcpy(&fit_block_size, message + idx, 4);
+		idx += 4;
+		for (int i = 0; i < fit_block_size; i++)
+		{
+			idx2 = idx;
+			// find null term
+			while (idx2 < message_len && message[idx2] != '\0')
+			{
+				idx2++;
+			}
+
+            if (idx2 >= message_len)
+                break;
+
+			memset(&name[0], 0, 255);
+			if (idx2 - idx > 255)
+			{
+				memcpy(&name[0], message + idx, 255);
+			}
+			else
+			{
+				memcpy(&name[0], message + idx, idx2 - idx);
+			}
+			idx = idx2 + 1;
+			memcpy(&val, message + idx, sizeof(real_t));
+			idx += 4;
+			out_stream_block->fitting_blocks[proc_type].fit_counts[std::string(name)] = val;
+		}
+	}
+	return out_stream_block;
 
 }
 

@@ -54,7 +54,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "workflow/sink.h"
 #include "data_struct/xrf/stream_block.h"
-#include "io/net/zmq_publisher.h"
+#include "io/net/basic_serializer.h"
+#include "support/zmq/zmq.hpp"
 
 namespace workflow
 {
@@ -80,7 +81,13 @@ public:
 
 protected:
 
-    io::net::Zmq_Publisher *_publisher;
+	void _init_socket();
+
+	zmq::context_t *_context;
+
+	zmq::socket_t *_zmq_socket;
+
+	io::net::Basic_Serializer _serializer;
 
     bool _send_counts;
 
