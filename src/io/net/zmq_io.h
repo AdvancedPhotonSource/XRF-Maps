@@ -66,7 +66,7 @@ public:
 
     virtual ~Zmq_IO();
 
-    void get();
+    void get(char* msg, int &len);
 
     void send(std::string data);
 

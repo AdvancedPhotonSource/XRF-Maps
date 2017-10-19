@@ -70,6 +70,7 @@ Zmq_IO::~Zmq_IO()
 {
     if (_zmq_socket != nullptr)
     {
+        _zmq_socket->close();
         delete _zmq_socket;
     }
     _zmq_socket = nullptr;
@@ -77,7 +78,7 @@ Zmq_IO::~Zmq_IO()
 
 //-----------------------------------------------------------------------------
 
-void Zmq_IO::get()
+void Zmq_IO::get(char* msg, int &len)
 {
 
     zmq::message_t message;
@@ -85,7 +86,8 @@ void Zmq_IO::get()
 
     if(_zmq_socket->recv(&message))
     {
-        //std::string smessage(static_cast<char*>(message.data()), message.size());
+        msg = static_cast<char*>(message.data());
+        len = message.size();
     }
 }
 
@@ -101,7 +103,12 @@ void Zmq_IO::send(std::string data)
 void Zmq_IO::send(unsigned char* data, int len)
 {
     zmq::message_t message(data, len);
-    _zmq_socket->send(message);
+    logit<< "Message size = "<<message.size()<<std::endl;
+    bool val = _zmq_socket->send(message);
+    if (val == false)
+    {
+        logit<<"noooooo";
+    }
 }
 
 //-----------------------------------------------------------------------------

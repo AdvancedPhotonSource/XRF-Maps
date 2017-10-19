@@ -88,6 +88,7 @@ public:
     {
         if(_thread != nullptr)
         {
+            _thread->join();
             delete _thread;
         }
         _thread = nullptr;
@@ -122,6 +123,7 @@ public:
         _running = false;
         _thread->join();
         delete _thread;
+        _thread = nullptr;
     }
 
     void wait_and_stop()

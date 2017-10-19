@@ -64,7 +64,7 @@ public:
 
     Zmq_Publisher(std::string conn_str);
 
-    ~Zmq_Publisher(){}
+    ~Zmq_Publisher();
 
     void send_counts(data_struct::xrf::Stream_Block* stream_block);
 

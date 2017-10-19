@@ -64,6 +64,11 @@ Zmq_Publisher::Zmq_Publisher(std::string conn_str) : Zmq_IO(ZMQ_PUB)
     _zmq_socket->bind(conn_str);
 }
 
+Zmq_Publisher::~Zmq_Publisher()
+{
+    //_zmq_socket->unbind();
+}
+
 //-----------------------------------------------------------------------------
 
 void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
@@ -103,6 +108,7 @@ void Zmq_Publisher::send_counts(data_struct::xrf::Stream_Block* stream_block)
     delete [] tmp_real;
     delete [] tmp_ushort;
     delete [] tmp_uint;
+    send("XRF-Counts");
     send(raw_msg);
 }
 

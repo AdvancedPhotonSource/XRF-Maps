@@ -85,6 +85,8 @@ void Zmq_Subscriber::get_counts(data_struct::xrf::Stream_Block* out_stream_block
     char *message;
     int message_len;
 
+    get(message, message_len);
+
     memcpy(&out_stream_block->detector_number, message+idx, 4);
     idx+=4;
     memcpy(&row, message+idx, 4);
