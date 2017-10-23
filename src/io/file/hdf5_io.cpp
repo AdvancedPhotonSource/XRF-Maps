@@ -415,6 +415,14 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
                 logit<<"Warning: could not close h5 dataset id "<<obj.first<<std::endl;
             }
         }
+        else if(obj.second == H5O_ATTRIBUTE)
+        {
+            err = H5Aclose(obj.first);
+            if (err > 0)
+            {
+                logit<<"Warning: could not close h5 dataset id "<<obj.first<<std::endl;
+            }
+        }
     }
 }
 
@@ -610,6 +618,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    return true;
 
 }
 
@@ -768,10 +777,240 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
     //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   std::chrono::time_point<std::chrono::system_clock> start, end;
+   start = std::chrono::system_clock::now();
+
+   std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+   logit<< path <<" detector : "<<detector_num<<std::endl;
+
+   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_xpos_id, dset_ypos_id, dset_detectors_id;
+   hid_t    dataspace_detectors_id, dataspace_xpos_id, dataspace_ypos_id;
+   hid_t    attr_detector_names_id, attr_timebase_id;
+   herr_t   error;
+   std::string detector_path;
+   char* detector_names[256];
+   real_t * buffer;
+   hsize_t offset_row[2] = {0,0};
+   hsize_t count_row[2] = {0,0};
+   hsize_t offset_meta[3] = {0,0,0};
+   hsize_t count_meta[3] = {1,1,1};
+   std::unordered_map<std::string, int> detector_lookup;
+    std::string incnt_str = "ICR Ch ";
+    std::string outcnt_str = "OCR Ch ";
+
+   switch(detector_num)
+   {
+   case 0:
+       detector_path = "MCA 1";
+       incnt_str += "1";
+       outcnt_str += "1";
+       break;
+   case 1:
+       detector_path = "MCA 2";
+       incnt_str += "2";
+       outcnt_str += "2";
+       break;
+   case 2:
+       detector_path = "MCA 3";
+       incnt_str += "3";
+       outcnt_str += "3";
+       break;
+   case 3:
+       detector_path = "MCA 4";
+       incnt_str += "4";
+       outcnt_str += "4";
+       break;
+   default:
+       detector_path = "";
+       break;
+   }
+
+    if ( false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1) )
+        return false;
+
+    if ( false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "2D Scan", file_id) )
+       return false;
+
+    if ( false == _open_h5_object(dset_id, H5O_DATASET, close_map, detector_path, maps_grp_id) )
+       return false;
+    dataspace_id = H5Dget_space(dset_id);
+    close_map.push({dataspace_id, H5O_DATASPACE});
+
+    if ( false == _open_h5_object(dset_detectors_id, H5O_DATASET, close_map, "Detectors", maps_grp_id) )
+       return false;
+    dataspace_detectors_id = H5Dget_space(dset_detectors_id);
+    close_map.push({dataspace_detectors_id, H5O_DATASPACE});
+    attr_detector_names_id=H5Aopen(dset_detectors_id, "Detector Names", H5P_DEFAULT);
+    close_map.push({dataspace_detectors_id, H5O_ATTRIBUTE});
+    attr_timebase_id=H5Aopen(dset_detectors_id, "TIMEBASE", H5P_DEFAULT);
+    close_map.push({dataspace_detectors_id, H5O_ATTRIBUTE});
+
+    if ( false == _open_h5_object(dset_xpos_id, H5O_DATASET, close_map, "X Positions", maps_grp_id) )
+       return false;
+    dataspace_xpos_id = H5Dget_space(dset_xpos_id);
+    close_map.push({dataspace_xpos_id, H5O_DATASPACE});
+
+    if ( false == _open_h5_object(dset_ypos_id, H5O_DATASET, close_map, "Y Positions", maps_grp_id) )
+       return false;
+    dataspace_ypos_id = H5Dget_space(dset_ypos_id);
+    close_map.push({dataspace_ypos_id, H5O_DATASPACE});
+
+    int rank = H5Sget_simple_extent_ndims(dataspace_id);
+    if (rank != 3)
+    {
+        _close_h5_objects(close_map);
+        logit<<"Dataset /MAPS_RAW/"<<detector_path<<" rank != 3. rank = "<<rank<<". Can't load dataset. returning"<<std::endl;
+        return false;
+       //throw exception ("Dataset is not a volume");
+    }
+    hsize_t* dims_in = new hsize_t[rank];
+    hsize_t* offset = new hsize_t[rank];
+    hsize_t* count = new hsize_t[rank];
+    logit<<"rank = "<<rank<< std::endl;
+    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    if(status_n < 0)
+    {
+        _close_h5_objects(close_map);
+         logit<<"Error getting dataset rank for MAPS_RAW/"<< detector_path<<std::endl;
+         return false;
+    }
+
+    for (int i=0; i < rank; i++)
+    {
+       logit<<"dims ["<<i<<"] ="<<dims_in[i]<< std::endl;
+       offset[i] = 0;
+       count[i] = dims_in[i];
+    }
+
+
+    //chunking is 1 x col x samples
+    buffer = new real_t [dims_in[1] * dims_in[2]]; //  cols x spectra_size
+    count_row[0] = dims_in[1];
+    count_row[1] = dims_in[2];
+
+// TODO: maybe use greatest size (like xpress) becaue x_axis and y_axis will be diff than images size
+//    size_t greater_rows = std::max(spec_vol->rows() , dims_in[1]);
+//    size_t greater_cols = std::max(spec_vol->cols() , dims_in[2]);
+//    size_t greater_channels = std::max(spec_vol->samples_size() , dims_in[0]);
+
+
+    if(spec_vol->rows() < dims_in[0] || spec_vol->cols() < dims_in[1] || spec_vol->samples_size() < dims_in[2])
+    {
+        spec_vol->resize(dims_in[0], dims_in[1], dims_in[2]);
+    }
+
+
+
+    int det_rank = H5Sget_simple_extent_ndims(dataspace_detectors_id);
+    hsize_t* det_dims_in = new hsize_t[det_rank];
+    H5Sget_simple_extent_dims(dataspace_detectors_id, &det_dims_in[0], NULL);
+
+    hid_t ftype = H5Aget_type(attr_detector_names_id);
+    hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+    error = H5Aread(attr_detector_names_id, type, detector_names);
+    if(error == 0)
+    {
+        //generate lookup map
+        for(int z = 0; z < det_dims_in[2]; z++)
+        {
+            detector_lookup[std::string(detector_names[z])] = z;
+            free(detector_names[z]);
+        }
+    }
+    delete [] det_dims_in;
+
+
+    count[0] = 1; //1 row
+
+    memoryspace_id = H5Screate_simple(2, count_row, NULL);
+    close_map.push({memoryspace_id, H5O_DATASPACE});
+    memoryspace_meta_id = H5Screate_simple(1, count_meta, NULL);
+    close_map.push({memoryspace_meta_id, H5O_DATASPACE});
+    H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, NULL, count_row, NULL);
+    H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+
+    real_t live_time = 1.0;
+    real_t real_time = 1.0;
+    real_t in_cnt = 1.0;
+    real_t out_cnt = 1.0;
+
+
+    for (size_t row=0; row < dims_in[0]; row++)
+    {
+         offset[0] = row;
+         offset_meta[0] = row;
+
+         H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+         error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+
+         if (error > -1 )
+         {
+             for(size_t col=0; col<dims_in[1]; col++)
+             {
+                 offset_meta[1] = col;
+
+                 data_struct::xrf::Spectra *spectra = &((*spec_vol)[row][col]);
+
+                 offset_meta[2] = detector_lookup["Timer"];
+                 H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                 error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &live_time);
+                 spectra->elapsed_lifetime(live_time);
+
+//                 H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+//                 error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+//                 spectra->elapsed_realtime(real_time);
+
+                 offset_meta[2] = detector_lookup[incnt_str];
+                 H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                 error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &in_cnt);
+                 spectra->input_counts(in_cnt);
+
+                 offset_meta[2] = detector_lookup[outcnt_str];
+                 H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+                 error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &out_cnt);
+                 spectra->output_counts(out_cnt);
+
+//                 spectra->recalc_elapsed_lifetime();
+
+                 for(size_t s=0; s<dims_in[2]; s++)
+                 {
+                     (*spectra)[s] = buffer[(col * dims_in[2] ) + s];
+                 }
+             }
+         }
+         else
+         {
+            logit<<"Error: reading row "<<row<<std::endl;
+         }
+    }
+
+    delete [] dims_in;
+    delete [] offset;
+    delete [] count;
+    delete [] buffer;
+
+    _close_h5_objects(close_map);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    return true;
+}
+
+/*
 bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -885,11 +1124,11 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
     }
 
 
-/*
-    buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
-    count_row[0] = dims_in[0];
-    count_row[1] = dims_in[2];
-*/
+
+//    buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+//    count_row[0] = dims_in[0];
+//    count_row[1] = dims_in[2];
+
 
 
     if(spec_vol->rows() < dims_in[spec_row_idx] || spec_vol->cols() < dims_in[spec_col_idx] || spec_vol->samples_size() < dims_in[spec_sample_idx])
@@ -971,7 +1210,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
 
 }
-
+*/
 //-----------------------------------------------------------------------------
 
 

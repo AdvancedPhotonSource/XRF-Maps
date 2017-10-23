@@ -73,7 +73,7 @@ namespace file
 {
 
 
-enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET};
+enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
@@ -176,7 +176,7 @@ public:
 
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
 
-    //bool load_spectra_volume_confocal();
+    bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
 
