@@ -85,7 +85,7 @@ Spectra_Net_Streamer::~Spectra_Net_Streamer()
 		_context->close();
 		delete _context;
 	}
-	_zmq_socket = nullptr;
+    _zmq_socket = nullptr;
 	_context = nullptr;
 }
 
