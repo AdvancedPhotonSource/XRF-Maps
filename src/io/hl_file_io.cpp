@@ -436,9 +436,12 @@ bool load_spectra_volume(std::string dataset_directory,
     //  Test load confocal dataset
     if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
     {
-//        *is_loaded_from_analyazed_h5 = false;
-//        *is_loaded_from_analyazed_h5 = true;
-        //io::file::HDF5_IO::inst()->start_save_seq(false);
+        *is_loaded_from_analyazed_h5 = false;
+        if(save_scalers)
+        {
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+"/"+dataset_file, detector_num);
+        }
         return true;
     }
 

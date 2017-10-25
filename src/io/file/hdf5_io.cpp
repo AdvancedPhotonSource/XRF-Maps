@@ -4409,22 +4409,22 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
     logit << "Saving scalers to hdf5"<< std::endl;
 
     maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
-	if (maps_grp_id < 0)
+    if (maps_grp_id < 0)
         maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (maps_grp_id < 0)
-	{
+    if (maps_grp_id < 0)
+    {
         logit << "Error creating group 'MAPS'" << std::endl;
-		return false;
-	}
+        return false;
+    }
 
-	scan_grp_id = H5Gopen(maps_grp_id, "Scan", H5P_DEFAULT);
-	if (scan_grp_id < 0)
-		scan_grp_id = H5Gcreate(maps_grp_id, "Scan", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (scan_grp_id < 0)
-	{
+    scan_grp_id = H5Gopen(maps_grp_id, "Scan", H5P_DEFAULT);
+    if (scan_grp_id < 0)
+        scan_grp_id = H5Gcreate(maps_grp_id, "Scan", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (scan_grp_id < 0)
+    {
         logit << "Error creating group MAPS/Scan" << std::endl;
-		return false;
-	}
+        return false;
+    }
 
     _save_scan_meta_data(scan_grp_id, mda_scalers);
 	
@@ -4439,6 +4439,172 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	std::chrono::duration<double> elapsed_seconds = end - start;
 	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_scan_scalers_confocal(std::string path,
+                                size_t detector_num,
+                                size_t row_idx_start,
+                                int row_idx_end,
+                                size_t col_idx_start,
+                                int col_idx_end)
+{
+
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error, ocpypl_id;
+    hid_t    file_id, src_maps_grp_id;
+    hid_t    dataspace_detectors_id, dset_detectors_id, attr_detector_names_id;
+    hid_t   xpos_dataspace_id, xpos_id, ypos_dataspace_id, ypos_id;
+    hid_t dataspace_id, dataset_id;
+    char* detector_names[256];
+    int det_rank;
+    hsize_t* det_dims_in;
+    hsize_t n_offset[1] = {0};
+    hsize_t n_count[1] = {1};
+    hsize_t x_offset[3] = {0,0,0};
+    hsize_t x_count[3] = {1,1,1};
+    hsize_t y_offset[2] = {0,0};
+    hsize_t y_count[2] = {1,1};
+    void *f_data;
+
+    if(_cur_file_id < 0)
+    {
+        logit << "Error: hdf5 file was never initialized. Call start_save_seq() before this function." << std::endl;
+        return false;
+    }
+
+    logit << "Saving scalers to hdf5"<< std::endl;
+
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
+    if (maps_grp_id < 0)
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (maps_grp_id < 0)
+    {
+        logit << "Error creating group 'MAPS'" << std::endl;
+        return false;
+    }
+
+    scan_grp_id = H5Gopen(maps_grp_id, "Scan", H5P_DEFAULT);
+    if (scan_grp_id < 0)
+        scan_grp_id = H5Gcreate(maps_grp_id, "Scan", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (scan_grp_id < 0)
+    {
+        H5Gclose(maps_grp_id);
+        logit << "Error creating group MAPS/Scan" << std::endl;
+        return false;
+    }
+
+    scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
+    if (scalers_grp_id < 0)
+        scalers_grp_id = H5Gcreate(maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (scalers_grp_id < 0)
+    {
+        H5Gclose(scan_grp_id);
+        H5Gclose(scalers_grp_id);
+        H5Gclose(maps_grp_id);
+        logit << "Error creating group MAPS/Scalers" << std::endl;
+        return false;
+    }
+
+    if ( false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1) )
+        return false;
+
+    if ( false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "2D Scan", file_id) )
+       return false;
+
+    //_save_scan_meta_data(scan_grp_id, mda_scalers);
+    if ( false == _open_h5_object(xpos_id, H5O_DATASET, close_map, "X Positions", src_maps_grp_id) )
+       return false;
+    xpos_dataspace_id = H5Dget_space(xpos_id);
+    close_map.push({xpos_dataspace_id, H5O_DATASPACE});
+
+    if ( false == _open_h5_object(ypos_id, H5O_DATASET, close_map, "Y Positions", src_maps_grp_id) )
+       return false;
+    ypos_dataspace_id = H5Dget_space(ypos_id);
+    close_map.push({ypos_dataspace_id, H5O_DATASPACE});
+
+    hid_t xy_type = H5Dget_type(xpos_id);
+    det_rank = H5Sget_simple_extent_ndims(xpos_dataspace_id);
+    det_dims_in = new hsize_t[det_rank];
+    H5Sget_simple_extent_dims(xpos_dataspace_id, &det_dims_in[0], NULL);
+
+    dataspace_id = H5Screate_simple (1, &det_dims_in[1], NULL);
+    dataset_id = H5Dcreate(scan_grp_id, "x_axis", xy_type, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    x_count[1] = det_dims_in[1];
+    f_data = malloc(sizeof(float) * det_dims_in[1]);
+    H5Sselect_hyperslab (xpos_dataspace_id, H5S_SELECT_SET, x_offset, NULL, x_count, NULL);
+    status = H5Dread (xpos_id, xy_type, dataspace_id, xpos_dataspace_id, H5P_DEFAULT, f_data);
+    status = H5Dwrite (dataset_id, xy_type, H5S_ALL, dataspace_id, H5P_DEFAULT, f_data);
+    H5Sclose(dataspace_id);
+    H5Dclose(dataset_id);
+    free(f_data);
+
+
+    dataspace_id = H5Screate_simple (1, &det_dims_in[0], NULL);
+    dataset_id = H5Dcreate(scan_grp_id, "y_axis", xy_type, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    y_count[1] = det_dims_in[0];
+    f_data = malloc(sizeof(float) * det_dims_in[0]);
+    H5Sselect_hyperslab (ypos_dataspace_id, H5S_SELECT_SET, y_offset, NULL, y_count, NULL);
+    status = H5Dread (ypos_id, xy_type, dataspace_id, ypos_dataspace_id, H5P_DEFAULT, f_data);
+    status = H5Dwrite (dataset_id, xy_type, H5S_ALL, dataspace_id, H5P_DEFAULT, f_data);
+    H5Sclose(dataspace_id);
+    H5Dclose(dataset_id);
+    free(f_data);
+    delete [] det_dims_in;
+
+    //Save scalers
+    ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+    status = H5Ocopy(src_maps_grp_id, "Detectors", scalers_grp_id, "Values", ocpypl_id, H5P_DEFAULT);
+
+    //save the scalers names
+    if ( false == _open_h5_object(dset_detectors_id, H5O_DATASET, close_map, "Detectors", src_maps_grp_id) )
+       return false;
+    dataspace_detectors_id = H5Dget_space(dset_detectors_id);
+    close_map.push({dataspace_detectors_id, H5O_DATASPACE});
+    attr_detector_names_id=H5Aopen(dset_detectors_id, "Detector Names", H5P_DEFAULT);
+    close_map.push({dataspace_detectors_id, H5O_ATTRIBUTE});
+
+    det_rank = H5Sget_simple_extent_ndims(dataspace_detectors_id);
+    det_dims_in = new hsize_t[det_rank];
+    H5Sget_simple_extent_dims(dataspace_detectors_id, &det_dims_in[0], NULL);
+
+    hid_t ftype = H5Aget_type(attr_detector_names_id);
+    hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+    error = H5Aread(attr_detector_names_id, type, detector_names);
+
+    if(error == 0)
+    {
+        dataspace_id = H5Screate_simple (1, &det_dims_in[2], NULL);
+        hid_t dataset_id = H5Dcreate(scalers_grp_id, "Names", type, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        status = H5Dwrite (dataset_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, detector_names);
+        H5Sclose(dataspace_id);
+        H5Dclose(dataset_id);
+        for(int z = 0; z < det_dims_in[2]; z++)
+        {
+            free(detector_names[z]);
+        }
+    }
+    delete [] det_dims_in;
+
+
+    _close_h5_objects(close_map);
+
+    H5Gclose(scan_grp_id);
+    H5Gclose(scalers_grp_id);
+    H5Gclose(maps_grp_id);
+
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
 
     return true;
