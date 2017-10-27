@@ -113,7 +113,10 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine * generate_fit_routine(data_struc
 // ----------------------------------------------------------------------------
 
 template<typename T>
-data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit, size_t width, size_t height );
+data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit,
+                                                          size_t height,
+                                                          size_t width,
+                                                          bool alloc_iter_count);
 
 // ----------------------------------------------------------------------------
 
@@ -133,52 +136,22 @@ DLL_EXPORT struct io::file_name_fit_params optimize_integrated_fit_params(std::s
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void generate_optimal_params(std::string dataset_directory,
-                             std::vector<std::string> dataset_files,
-                             ThreadPool* tp,
-                             size_t detector_num_start,
-                             size_t detector_num_end);
+DLL_EXPORT void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
-                  std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                  data_struct::xrf::Params_Override * override_params,
-                  data_struct::xrf::Quantification_Standard * quantification_standard,
-                  ThreadPool* tp,
-                  bool save_spectra_vol);
+                             data_struct::xrf::Analysis_Sub_Struct* detector_struct,
+                             ThreadPool* tp,
+                             bool save_spec_vol);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void process_dataset_file_quick_n_dirty(std::string dataset_directory,
-                                        std::string dataset_file,
-                                        std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                                        ThreadPool* tp,
-                                        std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                                        std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                                        size_t detector_num_start,
-                                        size_t detector_num_end);
+DLL_EXPORT void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void process_dataset_file(std::string dataset_directory,
-                          std::string dataset_file,
-                          std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                          ThreadPool* tp,
-                          std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                          std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                          size_t detector_num_start,
-                          size_t detector_num_end);
-
-// ----------------------------------------------------------------------------
-
-DLL_EXPORT bool perform_quantification(std::string dataset_directory,
-                            std::string quantification_info_file,
-                            std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                            std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
-                            size_t detector_num_start,
-                            size_t detector_num_end);
+DLL_EXPORT bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 

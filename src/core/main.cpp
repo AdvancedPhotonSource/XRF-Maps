@@ -77,6 +77,7 @@ void help()
     logit_s<<"Dataset: "<<std::endl;
     logit_s<<"--dir : Dataset directory "<<std::endl;
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
+    logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<std::endl;
     logit_s<<"Examples: "<<std::endl;
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
     logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
@@ -92,12 +93,10 @@ int main(int argc, char *argv[])
 {
     std::string dataset_dir;
     std::vector<std::string> dataset_files;
-    std::vector<data_struct::xrf::Fitting_Routines> proc_types;
+    std::vector<std::string> optimize_dataset_files;
     std::string quant_standard_filename = "";
     std::string whole_command_line = "";
-    bool optimize_fit_override_params = false;
-    bool quick_n_dirty = false;
-    std::string opt = "";
+    bool is_confocal = false;
 
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
@@ -109,10 +108,6 @@ int main(int argc, char *argv[])
     //////// HENKE and ELEMENT INFO /////////////
     std::string element_csv_filename = "../reference/xrf_library.csv";
     std::string element_henke_filename = "../reference/henke.xdr";
-
-    //Optimizers for fitting models
-    fitting::optimizers::LMFit_Optimizer lmfit_optimizer;
-    fitting::optimizers::MPFit_Optimizer mpfit_optimizer;
 
     Command_Line_Parser clp(argc, argv);
 
@@ -129,76 +124,92 @@ int main(int argc, char *argv[])
         num_threads = std::stoi(clp.get_option("--nthreads"));
     }
 
+    //main structure for analysis job information
+    data_struct::xrf::Analysis_Job analysis_job(num_threads);
+
+    //Look for which analysis types we want to run
     if ( clp.option_exists("--tails") )
     {
-        proc_types.push_back(data_struct::xrf::GAUSS_TAILS);
+        analysis_job.append_fit_routine(data_struct::xrf::GAUSS_TAILS);
     }
     if ( clp.option_exists("--matrix") )
     {
-        proc_types.push_back(data_struct::xrf::GAUSS_MATRIX);
+        analysis_job.append_fit_routine(data_struct::xrf::GAUSS_MATRIX);
     }
     if ( clp.option_exists("--roi") )
     {
-        proc_types.push_back(data_struct::xrf::ROI);
+        analysis_job.append_fit_routine(data_struct::xrf::ROI);
     }
     if ( clp.option_exists("--roi_plus") )
     {
-        proc_types.push_back(data_struct::xrf::SVD);
+        analysis_job.append_fit_routine(data_struct::xrf::SVD);
     }
     if ( clp.option_exists("--nnls") )
     {
-        proc_types.push_back(data_struct::xrf::NNLS);
+        analysis_job.append_fit_routine(data_struct::xrf::NNLS);
     }
 
+    //Check if we want to quantifiy with a standard
     if ( clp.option_exists("--quantify-with") )
     {
-        quant_standard_filename = clp.get_option("--quantify-with");
+        analysis_job.quantificaiton_standard_filename(clp.get_option("--quantify-with"));
     }
 
+    //Do we want to optimize our fitting parameters
     if( clp.option_exists("--optimize-fit-override-params") )
     {
-        optimize_fit_override_params = true;
+        analysis_job.optimize_fit_override_params(true);
 
         std::string opt = clp.get_option("--optimize-fit-override-params");
         if(opt == "1")
-            optimize_fit_params_preset = fitting::models::MATRIX_BATCH_FIT;
+            analysis_job.fit_params_preset(fitting::models::MATRIX_BATCH_FIT);
         else if(opt == "2")
-            optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_NO_TAILS);
         else if(opt == "3")
-            optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_TAILS;
+            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_WITH_TAILS);
         else if(opt == "4")
-            optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_FREE_ENERGY;
+            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_WITH_FREE_ENERGY);
         else
             logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<std::endl;
     }
 
+    //Which optimizer do we want to pick. Default is lmfit
     if( clp.option_exists("--optimizer"))
     {
-        std::string opt = clp.get_option("--optimizer");
-        /* TODO: connect to process_stream and process_whole
-        if(opt == "mpfit")
-        {
-            optimizer = &mpfit_optimizer;
-        }
-        else
-        {
-            optimizer = &lmfit_optimizer;
-        }
-        */
+        analysis_job.set_optimizer(clp.get_option("--optimizer"));
     }
 
-
+    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
     if( clp.option_exists("--add-exchange"))
     {
         //TODO:
     }
+
+    //Should we sum up all the detectors and process it as one?
     if( clp.option_exists("--quick-and-dirty"))
     {
-        quick_n_dirty = true;
+        analysis_job.quick_and_dirty(true);
+        analysis_job.generate_average_h5(false);
     }
+    //Should create an averaged file of all detectors processed
+    else if(clp.option_exists("--generate-avg-h5"))
+    {
+        analysis_job.generate_average_h5(true);
+    }
+
+
+    else if(clp.option_exists("--confocal"))
+    {
+        is_confocal = true;
+    }
+
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
+    //What detector range should we process. Usually there are 4 detectors.
+    // 0:3 will do the first 4 detectors
+    // 0:1 will do the first 2 detectors
+    // 2:3 will do the last 2 detectors
     if ( clp.option_exists("--detector-range") )
     {
         std::string detector_range_str = clp.get_option("--detector-range");
@@ -219,35 +230,64 @@ int main(int argc, char *argv[])
         }
     }
 
+    //Get the dataset directory you want to process
     dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
     {
         help();
         return -1;
     }
+    //add a slash if missing at the end
     if (dataset_dir.back() != '/' && dataset_dir.back() != '\\')
     {
         dataset_dir += "/";
     }
 
+    //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
     io::check_and_create_dirs(dataset_dir);
 
-    if (proc_types.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
+
+    //Check to make sure we have something to do. If not then show the help screen
+    if (analysis_job.fit_routine_size() == 0 && analysis_job.optimize_fit_override_params() == false && clp.option_exists("--generate-avg-h5") == false)
     {
         help();
         return -1;
     }
 
+
+    //Look if files were specified
     std::string dset_file = clp.get_option("--files");
+    //if they were not then look for them in $dataset_directory/mda
     if (dset_file.length() < 1)
     {
-        // find all files in the dataset
-        dataset_files = io::find_all_dataset_files(dataset_dir + "mda/", ".mda");
+        if(is_confocal)
+        {
+            dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
+        }
+        else
+        {
+            // find all files in the dataset
+            dataset_files = io::find_all_dataset_files(dataset_dir + "mda/", ".mda");
+        }
         if (dataset_files.size() == 0)
         {
             logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
             return -1;
         }
+
+        for (auto& itr : dataset_files)
+        {
+            optimize_dataset_files.push_back(itr);
+        }
+
+        io::sort_dataset_files_by_size(dataset_dir, &optimize_dataset_files);
+        //if no files were specified only take the 8 largest datasets
+
+        while (optimize_dataset_files.size() > 9)
+        {
+            optimize_dataset_files.pop_back();
+        }
+
     }
     else if (dset_file.find(',') != std::string::npos )
     {
@@ -258,11 +298,13 @@ int main(int argc, char *argv[])
         while (std::getline(ss, item, ','))
         {
             dataset_files.push_back(item);
+            optimize_dataset_files.push_back(item);
         }
     }
     else
     {
         dataset_files.push_back(dset_file);
+        optimize_dataset_files.push_back(dset_file);
     }
 
     //gen whole command line to save in hdf5 later
@@ -270,9 +312,8 @@ int main(int argc, char *argv[])
     {
         whole_command_line += " " + std::string(argv[ic]);
     }
-
+    analysis_job.command_line(whole_command_line);
     logit<<"whole command line : "<<whole_command_line<<std::endl;
-
     logit << "Processing detectors " << detector_num_start << " - "<< detector_num_end <<std::endl;
 
     start = std::chrono::system_clock::now();
@@ -284,185 +325,53 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    io::populate_netcdf_hdf5_files(dataset_dir);
-
-    if( clp.option_exists("--streaming"))
+    if(analysis_job.optimize_fit_override_params())
     {
-        data_struct::xrf::Analysis_Job analysis_job(num_threads);
-        analysis_job.fit_params_preset(optimize_fit_params_preset);
-        analysis_job.set_optimizer(opt);
+        analysis_job.set_optimize_dataset_files(optimize_dataset_files);
+    }
 
-        if(optimize_fit_override_params)
+    analysis_job.set_dataset_directory(dataset_dir);
+    analysis_job.set_dataset_files(dataset_files);
+
+    // init our job and run
+    if(analysis_job.init(detector_num_start, detector_num_end) )
+    {
+        if(analysis_job.optimize_fit_override_params())
         {
-            std::vector<std::string> optim_dataset_files;
-            if (dataset_files.size() == 0)
-            {
-                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
-                return -1;
-            }
-            for (auto& itr : dataset_files)
-            {
-                optim_dataset_files.push_back(itr);
-            }
-
-            io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
-            //if no files were specified only take the 8 largest datasets
-            if (dset_file.length() < 1)
-            {
-                while (optim_dataset_files.size() > 9)
-                {
-                    optim_dataset_files.pop_back();
-                }
-            }
-
-            if( analysis_job.load(dataset_dir, optim_dataset_files, proc_types, detector_num_start, detector_num_end) )
-            {
-                run_optimization_stream_pipeline(&analysis_job);
-            }
-            else
-            {
-                logit<<"Error initializing meta data. Exiting"<<std::endl;
-                return -1;
-            }
+            analysis_job.set_dataset_files(optimize_dataset_files);
+            //run_optimization_stream_pipeline(&analysis_job);
+//            io::populate_netcdf_hdf5_files(dataset_dir);
+            generate_optimal_params(&analysis_job);
+            analysis_job.set_dataset_files(dataset_files);
         }
 
-        if(proc_types.size() > 0)
+        if (analysis_job.quantificaiton_standard_filename().length() > 0)
         {
-            if (quant_standard_filename.length() > 0)
-            {
-                /*
-                bool quant = false;
-                quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                //if it is quick and dirty, average quants and save in first
-                if( quant && quick_n_dirty)
-                {
-                    average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
-                }
-                */
-            }
-            //relead to process all dataset files and in case optimizer changed fit parameters
-            if(false == analysis_job.load(dataset_dir, dataset_files, proc_types, detector_num_start, detector_num_end) )
-            {
-                logit<<"Error initializing meta data. Exiting"<<std::endl;
-                return -1;
-            }
+            perform_quantification(&analysis_job);
+        }
 
-            if(quick_n_dirty)
-            {
-                run_quick_n_dirty_pipeline(&analysis_job);
-            }
-            else
-            {
-                run_stream_pipeline(&analysis_job);
-            }
+        if( clp.option_exists("--stream"))
+        {
+            run_stream_pipeline(&analysis_job);
         }
         else
         {
-            if(clp.option_exists("--generate-avg-h5"))
+            io::populate_netcdf_hdf5_files(dataset_dir);
+            process_dataset_files(&analysis_job);
+        }
+
+        //average all detectors to one files
+        if(analysis_job.generate_average_h5())
+        {
+            for(std::string dataset_file : analysis_job.dataset_files())
             {
-                for(std::string dataset_file : dataset_files)
-                {
-                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
-                }
+                io::generate_h5_averages(analysis_job.dataset_directory(), dataset_file, analysis_job.detector_num_start(), analysis_job.detector_num_end());
             }
         }
     }
     else
     {
-        //dict for override info and elements to fit.
-        std::unordered_map<int, data_struct::xrf::Params_Override> fit_params_override_dict;
-        ThreadPool tp(num_threads);
-        std::vector<data_struct::xrf::Quantification_Standard> quant_stand_list(4);
-
-        if(optimize_fit_override_params)
-        {
-            std::vector<std::string> optim_dataset_files;
-            if (dataset_files.size() == 0)
-            {
-                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
-                return -1;
-            }
-            for (auto& itr : dataset_files)
-            {
-                optim_dataset_files.push_back(itr);
-            }
-
-            io::sort_dataset_files_by_size(dataset_dir, &optim_dataset_files);
-            //if no files were specified only take the 8 largest datasets
-            if (dset_file.length() < 1)
-            {
-                while (optim_dataset_files.size() > 9)
-                {
-                    optim_dataset_files.pop_back();
-                }
-            }
-            generate_optimal_params(dataset_dir, optim_dataset_files, &tp, detector_num_start, detector_num_end);
-        }
-
-        //try to load maps fit params override txt files for each detector. -1 is general one
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-        {
-            data_struct::xrf::Params_Override params_override(dataset_dir, detector_num);
-            if( io::load_override_params(dataset_dir, detector_num, &params_override) )
-            {
-                fit_params_override_dict[detector_num] = params_override;
-            }
-        }
-        data_struct::xrf::Params_Override params(dataset_dir, -1);
-        if( io::load_override_params(dataset_dir, -1, &params) )
-        {
-            fit_params_override_dict[-1] = params;
-        }
-
-        //check to make sure we have at least 1
-        if(fit_params_override_dict.size() == 0)
-        {
-            logit<<"Error loading any maps_fit_params_override.txt "<<std::endl;
-            return -1;
-        }
-
-        if(proc_types.size() > 0)
-        {
-            if (quant_standard_filename.length() > 0)
-            {
-                bool quant = false;
-                quant = perform_quantification(dataset_dir, quant_standard_filename, proc_types, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                //if it is quick and dirty, average quants and save in first
-                if( quant && quick_n_dirty)
-                {
-                    average_quantification(&quant_stand_list, detector_num_start, detector_num_end);
-                }
-            }
-
-            for(std::string dataset_file : dataset_files)
-            {
-                if(quick_n_dirty)
-                {
-                    process_dataset_file_quick_n_dirty(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                }
-                else
-                {
-                    process_dataset_file(dataset_dir, dataset_file, proc_types, &tp, &quant_stand_list, &fit_params_override_dict, detector_num_start, detector_num_end);
-                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
-                }
-
-            }
-        }
-        else
-        {
-            if(clp.option_exists("--generate-avg-h5"))
-            {
-                for(std::string dataset_file : dataset_files)
-                {
-                    io::generate_h5_averages(dataset_dir, dataset_file, detector_num_start, detector_num_end);
-                }
-            }
-        }
-        //cleanup
-        for (auto & itr : params.elements_to_fit)
-        {
-            delete itr.second;
-        }
+        logit<<"Error initializing analysis job"<<std::endl;
     }
 
     end = std::chrono::system_clock::now();

@@ -72,6 +72,10 @@ Analysis_Job::Analysis_Job(size_t num_threads)
     _detector_num_end = 0;
     //default mode for which parameters to fit when optimizing fit parameters
     _optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+    _quick_and_dirty = false;
+    _optimize_fit_override_params = false;
+    _generate_average_h5 = false;
+    _command_line = "";
 }
 
 //-----------------------------------------------------------------------------
@@ -126,16 +130,9 @@ struct Analysis_Sub_Struct* Analysis_Job::get_sub_struct(int detector_num)
 
 //-----------------------------------------------------------------------------
 
-bool Analysis_Job::load(std::string dataset_directory,
-                        std::vector<std::string> dataset_files,
-                        std::vector<Fitting_Routines> fitting_routines,
-                        size_t detector_num_start,
-                        size_t detector_num_end)
+bool Analysis_Job::init(size_t detector_num_start, size_t detector_num_end)
 {
 
-    _dataset_directory = dataset_directory;
-    _dataset_files = dataset_files;
-    _fitting_routines = fitting_routines;
     _detector_num_start = detector_num_start;
     _detector_num_end = detector_num_end;
 
@@ -145,7 +142,7 @@ bool Analysis_Job::load(std::string dataset_directory,
 
     /*
     _default_sub_struct.
-    if( false == io::load_override_params(dataset_directory, -1, override_params) )
+    if( false == io::load_override_params(_dataset_directory, -1, override_params) )
     {
         return false;
     }
@@ -162,12 +159,12 @@ bool Analysis_Job::load(std::string dataset_directory,
         sub_struct->model = new fitting::models::Gaussian_Model();
         data_struct::xrf::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
 
-        override_params->dataset_directory = dataset_directory;
+        override_params->dataset_directory = _dataset_directory;
         override_params->detector_num = detector_num;
 
-        if( false == io::load_override_params(dataset_directory, detector_num, override_params) )
+        if( false == io::load_override_params(_dataset_directory, detector_num, override_params) )
         {
-            if( false == io::load_override_params(dataset_directory, -1, override_params) )
+            if( false == io::load_override_params(_dataset_directory, -1, override_params) )
             {
                 return false;
             }
@@ -179,7 +176,7 @@ bool Analysis_Job::load(std::string dataset_directory,
             return false;
         }
 
-        for(auto proc_type : fitting_routines)
+        for(auto proc_type : _fitting_routines)
         {
             //Fitting models
             fitting::routines::Base_Fit_Routine *fit_routine = _generate_fit_routine(proc_type);

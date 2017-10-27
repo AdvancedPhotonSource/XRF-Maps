@@ -101,23 +101,31 @@ public:
 
     struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
 
+    size_t dataset_files_size() {return _dataset_files.size();}
+
     //truct Analysis_Sub_Struct* get_default_sub_struct() { return &_default_sub_struct; }
 /*
     inline auto get_detector_begin() { return _detectors_meta_data.begin(); }
 
     inline auto get_detector_end() { return _detectors_meta_data.begin(); }
 */
-    bool load(std::string dataset_directory,
-              std::vector<std::string> dataset_files,
-              std::vector<Fitting_Routines> fitting_routines,
-              size_t detector_num_start,
-              size_t detector_num_end);
+    void append_fit_routine(Fitting_Routines fit_routine) {_fitting_routines.push_back(fit_routine); }
+
+    size_t fit_routine_size() { return _fitting_routines.size(); }
+
+    bool init(size_t detector_num_start, size_t detector_num_end);
 
     const size_t& num_threads() { return _num_threads; }
 
     size_t get_num_detectors() { return _detectors_meta_data.size(); }
 
+    void set_dataset_directory(std::string dataset_directory) {_dataset_directory = dataset_directory;}
+
+    void set_dataset_files(std::vector<std::string> file_names) {_dataset_files = file_names;}
+
     void set_optimizer(std::string optimizer);
+
+    void set_optimize_dataset_files(std::vector<std::string> dataset_files){_optimize_dataset_files = dataset_files;}
 
     const size_t& detector_num_start() { return _detector_num_start; }
 
@@ -127,13 +135,39 @@ public:
 
     const fitting::models::Fit_Params_Preset& fit_params_preset() {return _optimize_fit_params_preset;}
 
+    void command_line(std::string val) {_command_line = val;}
+
+    const std::string &command_line() {return _command_line;}
+
+    void quantificaiton_standard_filename(std::string val) {_quantificaiton_standard_filename = val;}
+
+    const std::string &quantificaiton_standard_filename() {return _quantificaiton_standard_filename;}
+
+    void quick_and_dirty(bool val) {_quick_and_dirty = val;}
+
+    const bool &quick_and_dirty() {return _quick_and_dirty;}
+
+    void optimize_fit_override_params(bool val) {_optimize_fit_override_params = val;}
+
+    const bool &optimize_fit_override_params() {return _optimize_fit_override_params;}
+
+    void generate_average_h5(bool val) {_generate_average_h5 = val;}
+
+    const bool &generate_average_h5() {return _generate_average_h5;}
+
 protected:
 
     fitting::routines::Base_Fit_Routine* _generate_fit_routine(Fitting_Routines proc_type);
 
+    std::string _command_line;
+
     std::string _dataset_directory;
 
+    std::string _quantificaiton_standard_filename;
+
     std::vector<std::string> _dataset_files;
+
+    std::vector<std::string> _optimize_dataset_files;
 
     std::vector<Fitting_Routines> _fitting_routines;
 
@@ -151,6 +185,13 @@ protected:
     size_t _detector_num_end;
 
     size_t _num_threads;
+
+    bool _quick_and_dirty;
+
+    bool _optimize_fit_override_params;
+
+    bool _generate_average_h5;
+
 };
 
 } //namespace xrf

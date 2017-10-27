@@ -144,11 +144,11 @@ void save_optimal_params(struct io::file_name_fit_params* f_struct)
 
 void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
+    //TODO: Run only on 8 largest files if no files are specified
     workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
     workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
     workflow::Sink<struct io::file_name_fit_params*> sink;
     sink.set_function(save_optimal_params);
-
 
     distributor.set_function(optimize_integrated_fit_params);
     sink.connect(&distributor);
