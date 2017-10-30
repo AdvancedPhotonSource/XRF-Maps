@@ -392,8 +392,13 @@ endif()
 #    install(FILES ${PYBIND11_HEADERS} DESTINATION include/pybind11)
 #endif()
 
-target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} optimized ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
-target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} debug ${ZeroMQ_STATIC_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+
+IF (BUILD_WITH_ZMQ)
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} optimized ws2_32.lib )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} debug ws2_32.lib )
+ENDIF()
 
 IF (BUILD_WITH_VTK)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${VTK_LIBRARIES} )
