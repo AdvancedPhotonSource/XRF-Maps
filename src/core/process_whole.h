@@ -104,11 +104,7 @@ using namespace std::placeholders; //for _1, _2,
 static fitting::optimizers::Optimizer *optimizer;
 
 //default mode for which parameters to fit when optimizing fit parameters
-static fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
-
-// ----------------------------------------------------------------------------
-
-DLL_EXPORT fitting::routines::Base_Fit_Routine * generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type);
+//static fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
 
 // ----------------------------------------------------------------------------
 
@@ -132,7 +128,8 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_rou
 
 DLL_EXPORT struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
-                                                                size_t detector_num);
+                                                                size_t detector_num,
+																fitting::models::Fit_Params_Preset);
 
 // ----------------------------------------------------------------------------
 

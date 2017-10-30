@@ -50,46 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
-
-const static std::unordered_map<int, std::string> save_loc_map = {
-    {data_struct::xrf::ROI, "ROI"},
-    {data_struct::xrf::GAUSS_TAILS, "Params"},
-    {data_struct::xrf::GAUSS_MATRIX, "Fitted"},
-    {data_struct::xrf::SVD, "SVD"},
-    {data_struct::xrf::NNLS, "NNLS"}
-};
-
-// ----------------------------------------------------------------------------
-
-fitting::routines::Base_Fit_Routine * generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type)
-{
-    //Fitting routines
-    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
-    switch(proc_type)
-    {
-        case data_struct::xrf::GAUSS_TAILS:
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
-            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
-            break;
-        case data_struct::xrf::GAUSS_MATRIX:
-            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
-            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
-            break;
-        case data_struct::xrf::ROI:
-            fit_routine = new fitting::routines::ROI_Fit_Routine();
-            break;
-        case data_struct::xrf::SVD:
-            fit_routine = new fitting::routines::SVD_Fit_Routine();
-            break;
-        case data_struct::xrf::NNLS:
-            fit_routine = new fitting::routines::NNLS_Fit_Routine();
-            break;
-        default:
-            break;
-    }
-    return fit_routine;
-}
-
 // ----------------------------------------------------------------------------
 
 template<typename T>
@@ -136,7 +96,8 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
  struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
-                                                                size_t detector_num)
+                                                                size_t detector_num,
+																fitting::models::Fit_Params_Preset optimize_fit_params_preset)
 {
 
     //return structure
@@ -208,7 +169,7 @@ void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job)
         {
             //data_struct::xrf::Fit_Parameters out_fitp;
             //out_fitp = optimize_integrated_fit_params(analysis_job->dataset_directory(), itr, detector_num);
-            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory(), itr, detector_num) );
+            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory(), itr, detector_num, analysis_job->fit_params_preset()) );
         }
     }
 
@@ -244,9 +205,6 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 {
     data_struct::xrf::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
-    //Model
-    fitting::models::Gaussian_Model model;
-
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
     energy_range.min = 0;
@@ -278,7 +236,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
             for(size_t j=0; j<spectra_volume->cols(); j++)
             {
                 //logit<< i<<" "<<j<<std::endl;
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, &model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector_struct->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
             }
         }
 
