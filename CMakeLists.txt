@@ -222,6 +222,7 @@ set(libxrf_fit_HEADERS
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
+    src/data_struct/xrf/analysis_job.h
     src/workflow/threadpool.h
 )
 
@@ -246,6 +247,7 @@ set(libxrf_fit_SOURCE
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/lmfit_optimizer.cpp
+    src/data_struct/xrf/analysis_job.cpp
 )
 
 #--------------- start xrf io lib -----------------
@@ -259,7 +261,6 @@ set(XRF_IO_HEADERS
 	src/io/file/aps/aps_fit_params_import.h
 	src/io/file/hl_file_io.h
 	src/io/net/basic_serializer.h
-	src/data_struct/xrf/analysis_job.h
 	src/workflow/source.h
 	src/workflow/distributor.h
 	src/workflow/sink.h
@@ -281,7 +282,6 @@ set(XRF_IO_SOURCE
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/hl_file_io.cpp
     src/io/net/basic_serializer.cpp
-    src/data_struct/xrf/analysis_job.cpp
     src/workflow/xrf/spectra_file_source.cpp
     src/workflow/xrf/spectra_net_source.cpp
     src/workflow/xrf/integrated_spectra_source.cpp
