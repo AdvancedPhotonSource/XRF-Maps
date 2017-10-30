@@ -70,17 +70,44 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
 
 void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
-    workflow::xrf::Spectra_File_Source spectra_stream_producer(job);
+    workflow::Source<data_struct::xrf::Stream_Block*> *source;
     workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    workflow::xrf::Spectra_Stream_Saver sink;
+    workflow::Sink<data_struct::xrf::Stream_Block*> *sink;
+
+    //setup input
+    if(job->quick_and_dirty())
+    {
+        source = new workflow::xrf::Detector_Sum_Spectra_Source(job);
+    }
+    else if(job->is_network_source())
+    {
+        source = new workflow::xrf::Spectra_Net_Source(job);
+    }
+    else
+    {
+        source = new workflow::xrf::Spectra_File_Source(job);
+    }
+
+    //setup output
+    if(job->stream_over_network())
+    {
+        sink = new workflow::xrf::Spectra_Net_Streamer();
+    }
+    else
+    {
+        sink = new workflow::xrf::Spectra_Stream_Saver();
+    }
 
     distributor.set_function(proc_spectra_block);
-    spectra_stream_producer.connect(&distributor);
-    sink.connect(&distributor);
+    source->connect(&distributor);
+    sink->connect(&distributor);
 
-    sink.start();
-    spectra_stream_producer.load();
-    sink.wait_and_stop();
+    sink->start();
+    source->run();
+    sink->wait_and_stop();
+
+    delete source;
+    delete sink;
 }
 
 // ----------------------------------------------------------------------------
@@ -156,29 +183,11 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 
 
     sink.start();
-    spectra_stream_producer.load();
+    spectra_stream_producer.run();
     sink.wait_and_stop();
     /*
     io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
     */
-}
-
-// ----------------------------------------------------------------------------
-
-void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job)
-{
-    workflow::xrf::Detector_Sum_Spectra_Source sum_detectors_spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
-    //workflow::xrf::Spectra_Stream_Saver sink;
-    workflow::xrf::Spectra_Net_Streamer sink;
-
-    distributor.set_function(proc_spectra_block);
-    sink.connect(&distributor);
-    sum_detectors_spectra_stream_producer.connect(&distributor);
-
-    sink.start();
-    sum_detectors_spectra_stream_producer.load();
-    sink.wait_and_stop();
 }
 
 // ----------------------------------------------------------------------------

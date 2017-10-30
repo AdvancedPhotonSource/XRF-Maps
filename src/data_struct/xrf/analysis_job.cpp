@@ -75,6 +75,8 @@ Analysis_Job::Analysis_Job(size_t num_threads)
     _quick_and_dirty = false;
     _optimize_fit_override_params = false;
     _generate_average_h5 = false;
+    _is_network_source = false;
+    _stream_over_network = false;
     _command_line = "";
 }
 

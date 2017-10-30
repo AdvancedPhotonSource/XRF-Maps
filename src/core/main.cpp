@@ -281,9 +281,10 @@ int main(int argc, char *argv[])
             optimize_dataset_files.push_back(itr);
         }
 
-        io::sort_dataset_files_by_size(dataset_dir, &optimize_dataset_files);
-        //if no files were specified only take the 8 largest datasets
+        if(!is_confocal)
+            io::sort_dataset_files_by_size(dataset_dir, &optimize_dataset_files);
 
+        //if no files were specified only take the 8 largest datasets
         while (optimize_dataset_files.size() > 9)
         {
             optimize_dataset_files.pop_back();
@@ -353,6 +354,7 @@ int main(int argc, char *argv[])
 
         if( clp.option_exists("--stream"))
         {
+            analysis_job.stream_over_network(true);
             run_stream_pipeline(&analysis_job);
         }
         else

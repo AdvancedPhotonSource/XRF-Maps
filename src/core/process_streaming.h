@@ -75,6 +75,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/xrf/integrated_spectra_source.h"
 #include "workflow/xrf/detector_sum_spectra_source.h"
 #include "workflow/xrf/spectra_stream_saver.h"
+#include "workflow/xrf/spectra_net_source.h"
 #include "workflow/xrf/spectra_net_streamer.h"
 #include "fitting/routines/param_optimized_fit_routine.h"
 #include "fitting/models/gaussian_model.h"
@@ -88,8 +89,6 @@ DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params( data
 DLL_EXPORT void save_optimal_params(struct io::file_name_fit_params* f_struct);
 
 DLL_EXPORT void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job);
-
-DLL_EXPORT void run_quick_n_dirty_pipeline(data_struct::xrf::Analysis_Job* job);
 
 DLL_EXPORT bool perform_quantification_streaming(std::string dataset_directory,
                             std::string quantification_info_file,

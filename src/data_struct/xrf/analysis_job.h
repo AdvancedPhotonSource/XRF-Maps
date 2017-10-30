@@ -155,6 +155,14 @@ public:
 
     const bool &generate_average_h5() {return _generate_average_h5;}
 
+    void is_network_source(bool val) {_is_network_source = val;}
+
+    const bool &is_network_source() {return _is_network_source;}
+
+    void stream_over_network(bool val) {_stream_over_network = val;}
+
+    const bool &stream_over_network() {return _stream_over_network;}
+
 protected:
 
     fitting::routines::Base_Fit_Routine* _generate_fit_routine(Fitting_Routines proc_type);
@@ -191,6 +199,10 @@ protected:
     bool _optimize_fit_override_params;
 
     bool _generate_average_h5;
+
+    bool _is_network_source;
+
+    bool _stream_over_network;
 
 };
 

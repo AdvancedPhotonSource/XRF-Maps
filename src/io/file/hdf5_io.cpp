@@ -794,20 +794,23 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 
    logit<< path <<" detector : "<<detector_num<<std::endl;
 
-   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_xpos_id, dset_ypos_id, dset_detectors_id;
-   hid_t    dataspace_detectors_id, dataspace_xpos_id, dataspace_ypos_id;
+   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id;
+   //hid_t    dset_xpos_id, dset_ypos_id, dataspace_xpos_id, dataspace_ypos_id;
+   hid_t    dataspace_detectors_id;
    hid_t    attr_detector_names_id, attr_timebase_id;
    herr_t   error;
    std::string detector_path;
    char* detector_names[256];
+   real_t time_base = 1.0f;
+   real_t el_time = 1.0f;
    real_t * buffer;
    hsize_t offset_row[2] = {0,0};
    hsize_t count_row[2] = {0,0};
    hsize_t offset_meta[3] = {0,0,0};
    hsize_t count_meta[3] = {1,1,1};
    std::unordered_map<std::string, int> detector_lookup;
-    std::string incnt_str = "ICR Ch ";
-    std::string outcnt_str = "OCR Ch ";
+   std::string incnt_str = "ICR Ch ";
+   std::string outcnt_str = "OCR Ch ";
 
    switch(detector_num)
    {
@@ -856,15 +859,15 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     attr_timebase_id=H5Aopen(dset_detectors_id, "TIMEBASE", H5P_DEFAULT);
     close_map.push({dataspace_detectors_id, H5O_ATTRIBUTE});
 
-    if ( false == _open_h5_object(dset_xpos_id, H5O_DATASET, close_map, "X Positions", maps_grp_id) )
-       return false;
-    dataspace_xpos_id = H5Dget_space(dset_xpos_id);
-    close_map.push({dataspace_xpos_id, H5O_DATASPACE});
+//    if ( false == _open_h5_object(dset_xpos_id, H5O_DATASET, close_map, "X Positions", maps_grp_id) )
+//       return false;
+//    dataspace_xpos_id = H5Dget_space(dset_xpos_id);
+//    close_map.push({dataspace_xpos_id, H5O_DATASPACE});
 
-    if ( false == _open_h5_object(dset_ypos_id, H5O_DATASET, close_map, "Y Positions", maps_grp_id) )
-       return false;
-    dataspace_ypos_id = H5Dget_space(dset_ypos_id);
-    close_map.push({dataspace_ypos_id, H5O_DATASPACE});
+//    if ( false == _open_h5_object(dset_ypos_id, H5O_DATASET, close_map, "Y Positions", maps_grp_id) )
+//       return false;
+//    dataspace_ypos_id = H5Dget_space(dset_ypos_id);
+//    close_map.push({dataspace_ypos_id, H5O_DATASPACE});
 
     int rank = H5Sget_simple_extent_ndims(dataspace_id);
     if (rank != 3)
@@ -931,6 +934,8 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     delete [] det_dims_in;
 
 
+    error = H5Aread(attr_timebase_id, H5T_NATIVE_REAL, &time_base);
+
     count[0] = 1; //1 row
 
     memoryspace_id = H5Screate_simple(2, count_row, NULL);
@@ -965,7 +970,8 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
                  offset_meta[2] = detector_lookup["Timer"];
                  H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &live_time);
-                 spectra->elapsed_lifetime(live_time);
+                 el_time = live_time/time_base;
+                 spectra->elapsed_lifetime(el_time);
 
 //                 H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
 //                 error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -974,12 +980,12 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
                  offset_meta[2] = detector_lookup[incnt_str];
                  H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &in_cnt);
-                 spectra->input_counts(in_cnt);
+                 spectra->input_counts(in_cnt*1000.0);
 
                  offset_meta[2] = detector_lookup[outcnt_str];
                  H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &out_cnt);
-                 spectra->output_counts(out_cnt);
+                 spectra->output_counts(out_cnt*1000.0);
 
 //                 spectra->recalc_elapsed_lifetime();
 

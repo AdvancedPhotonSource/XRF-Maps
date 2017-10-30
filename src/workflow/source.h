@@ -94,7 +94,7 @@ public:
         _prod_func = func;
     }
 */
-    virtual void run() {}
+    virtual void run() = 0;
 
 /*
     template<class... Args>
