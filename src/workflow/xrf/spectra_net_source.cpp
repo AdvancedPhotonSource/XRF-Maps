@@ -58,6 +58,7 @@ namespace xrf
 
 Spectra_Net_Source::Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job) : Source<data_struct::xrf::Stream_Block*>()
 {
+#ifdef _BUILD_WITH_ZMQ
     _analysis_job = analysis_job;
     
 	std::string conn_str = "tcp://127.0.0.1:43434";
@@ -66,12 +67,14 @@ Spectra_Net_Source::Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_
 	_zmq_socket->connect(conn_str);
 
 //    _cb_function = std::bind(&Spectra_Net_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+#endif
 }
 
 //-----------------------------------------------------------------------------
 
 Spectra_Net_Source::~Spectra_Net_Source()
 {
+#ifdef _BUILD_WITH_ZMQ
 	if (_zmq_socket != nullptr)
 	{
 		_zmq_socket->close();
@@ -84,10 +87,12 @@ Spectra_Net_Source::~Spectra_Net_Source()
 	}
 	_zmq_socket = nullptr;
 	_context = nullptr;
+#endif
 }
 
 void Spectra_Net_Source::run()
 {
+#ifdef _BUILD_WITH_ZMQ
     _running = true;
     data_struct::xrf::Stream_Block *stream_block;
     while (_running)
@@ -95,6 +100,7 @@ void Spectra_Net_Source::run()
         //_subscriber->get_spectra(stream_block);
         _output_callback_func(stream_block);
     }
+#endif
 }
 
 // ----------------------------------------------------------------------------

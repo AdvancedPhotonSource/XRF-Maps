@@ -55,8 +55,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/sink.h"
 #include "data_struct/xrf/stream_block.h"
 #include "io/net/basic_serializer.h"
+#ifdef _BUILD_WITH_ZMQ
 #include "support/zmq/zmq.hpp"
-
+#endif
 namespace workflow
 {
 namespace xrf
@@ -80,11 +81,11 @@ public:
     void set_send_spectra(bool val) {_send_spectra = val;}
 
 protected:
-
+#ifdef _BUILD_WITH_ZMQ
 	zmq::context_t *_context;
 
 	zmq::socket_t *_zmq_socket;
-
+#endif
 	io::net::Basic_Serializer _serializer;
 
     bool _send_counts;

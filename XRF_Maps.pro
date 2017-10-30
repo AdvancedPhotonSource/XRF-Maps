@@ -22,7 +22,7 @@ QMAKE_EXT_CPP += .c
 INCLUDEPATH += src
 
 #define _REAL_FLOAT for float, _REAL_DOUBLE for double
-DEFINES += _REAL_FLOAT
+DEFINES += _REAL_FLOAT _BUILD_WITH_ZMQ
 
 DESTDIR = ./bin
 MOC_DIR += ./generated
