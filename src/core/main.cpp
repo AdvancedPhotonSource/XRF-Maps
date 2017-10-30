@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
     std::string quant_standard_filename = "";
     std::string whole_command_line = "";
     bool is_confocal = false;
+    bool generated_avg = false;
 
     //Default is to process detectors 0 through 3
     size_t detector_num_start = 0;
@@ -358,10 +359,15 @@ int main(int argc, char *argv[])
         {
             io::populate_netcdf_hdf5_files(dataset_dir);
             process_dataset_files(&analysis_job);
+            for(std::string dataset_file : analysis_job.dataset_files())
+            {
+                io::generate_h5_averages(analysis_job.dataset_directory(), dataset_file, analysis_job.detector_num_start(), analysis_job.detector_num_end());
+            }
+            generated_avg=true;
         }
 
         //average all detectors to one files
-        if(analysis_job.generate_average_h5())
+        if(analysis_job.generate_average_h5() && generated_avg==false)
         {
             for(std::string dataset_file : analysis_job.dataset_files())
             {

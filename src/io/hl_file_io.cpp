@@ -432,19 +432,6 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-
-    //  Test load confocal dataset
-    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
-    {
-        *is_loaded_from_analyazed_h5 = false;
-        if(save_scalers)
-        {
-            io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+"/"+dataset_file, detector_num);
-        }
-        return true;
-    }
-
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(dataset_directory+"img.dat/"+dataset_file, detector_num, spectra_volume))
     {
@@ -455,6 +442,18 @@ bool load_spectra_volume(std::string dataset_directory,
     else
     {
         *is_loaded_from_analyazed_h5 = false;
+    }
+
+    //try loading confocal dataset
+    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
+    {
+        *is_loaded_from_analyazed_h5 = false;
+        if(save_scalers)
+        {
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+"/"+dataset_file, detector_num);
+        }
+        return true;
     }
 
     //load spectra
@@ -527,6 +526,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
 
+    data_struct::xrf::Spectra_Volume spectra_volume;
+
     logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
 
     //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
@@ -580,10 +581,17 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         return true;
     }
 
+
+    //try loading confocal dataset
+    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, &spectra_volume))
+    {
+        *integrated_spectra = spectra_volume.integrate();
+        return true;
+    }
+
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
-        data_struct::xrf::Spectra_Volume spectra_volume;
         ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, nullptr);
         if(ret_val)
         {
