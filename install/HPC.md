@@ -3,7 +3,6 @@
 --------------
 module rm darshan/3.1.4
 module swap craype-haswell craype-mic-knl
-module add craype-mic-knl
 module add gcc/6.3.0
 module add eigen3/3.3.3
 module add netcdf/4.4.1
