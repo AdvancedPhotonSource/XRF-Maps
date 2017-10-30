@@ -73,8 +73,10 @@ find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
-
-option(BUILD_WITH_ZMQ "Build with ZeroMQ")
+option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
+option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
+option(BUILD_WITH_VTK "Build with VTK" OFF)
+option(DOUBLE_PREC "Double Precision" OFF)
 
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
@@ -86,11 +88,6 @@ ENDIF()
 IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
 ENDIF()
-
-option(BUILD_WITH_VTK "Build with VTK")
-
-option(DOUBLE_PREC "Double Precision")
-
 
 IF (DOUBLE_PREC)
   set(PREC _REAL_DOUBLE)
@@ -123,10 +120,15 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
 include(CheckCXXCompilerFlag)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC")
+
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Intel" AND BUILD_FOR_PHI)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic ")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic ")
+  endif()
 
   # Enable link time optimization and set the default symbol
   # visibility to hidden (very important to obtain small binaries)
@@ -150,7 +152,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX")
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
@@ -223,10 +225,7 @@ set(libxrf_fit_HEADERS
     src/workflow/threadpool.h
 )
 
-# Create the binding library
-add_library(libxrf_fit SHARED
-    #${PYBIND11_HEADERS}
-    ${libxrf_fit_HEADERS}
+set(libxrf_fit_SOURCE
     src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
@@ -270,28 +269,48 @@ set(XRF_IO_HEADERS
 	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
 	src/workflow/xrf/spectra_net_streamer.h
-)
+   )
 
-add_library(libxrf_io SHARED
-	${XRF_IO_HEADERS}
-	${XDR_HACK}
-	src/support/zmq/zmq.hpp
-	src/support/mdautils-1.4.1/mda_loader.c
-	src/io/file/mda_io.cpp
-	src/io/file/hdf5_io.cpp
-	src/io/file/netcdf_io.cpp
-	src/io/file/csv_io.cpp
-	src/io/file/aps/aps_fit_params_import.cpp
-	src/io/file/hl_file_io.cpp
-	src/io/net/basic_serializer.cpp
-	src/data_struct/xrf/analysis_job.cpp
-	src/workflow/xrf/spectra_file_source.cpp
-	src/workflow/xrf/spectra_net_source.cpp
-	src/workflow/xrf/integrated_spectra_source.cpp
-	src/workflow/xrf/detector_sum_spectra_source.cpp
-	src/workflow/xrf/spectra_stream_saver.cpp
-	src/workflow/xrf/spectra_net_streamer.cpp
-)
+set(XRF_IO_SOURCE
+    src/support/zmq/zmq.hpp
+    src/support/mdautils-1.4.1/mda_loader.c
+    src/io/file/mda_io.cpp
+    src/io/file/hdf5_io.cpp
+    src/io/file/netcdf_io.cpp
+    src/io/file/csv_io.cpp
+    src/io/file/aps/aps_fit_params_import.cpp
+    src/io/file/hl_file_io.cpp
+    src/io/net/basic_serializer.cpp
+    src/data_struct/xrf/analysis_job.cpp
+    src/workflow/xrf/spectra_file_source.cpp
+    src/workflow/xrf/spectra_net_source.cpp
+    src/workflow/xrf/integrated_spectra_source.cpp
+    src/workflow/xrf/detector_sum_spectra_source.cpp
+    src/workflow/xrf/spectra_stream_saver.cpp
+    src/workflow/xrf/spectra_net_streamer.cpp
+    )
+
+IF(BUILD_FOR_PHI)
+  add_library(libxrf_fit STATIC
+              ${libxrf_fit_HEADERS}
+              ${libxrf_fit_SOURCE}
+              )
+  add_library(libxrf_io STATIC
+              ${XRF_IO_HEADERS}
+              ${XDR_HACK}
+              ${XRF_IO_SOURCE}
+              )
+ELSE()
+  add_library(libxrf_fit SHARED
+              ${libxrf_fit_HEADERS}
+              ${libxrf_fit_SOURCE}
+              )
+  add_library(libxrf_io SHARED
+             ${XRF_IO_HEADERS}
+             ${XDR_HACK}
+             ${XRF_IO_SOURCE}
+             )
+ENDIF()
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
@@ -343,6 +362,8 @@ if (WIN32)
     ENDIF()
     target_link_libraries(libxrf_io optimized ${ZeroMQ_STATIC_LIBRARY} optimized ws2_32.lib )
     target_link_libraries(libxrf_io debug ${ZeroMQ_STATIC_LIBRARY} debug ws2_32.lib )
+    target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} optimized ws2_32.lib )
+    target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} debug ws2_32.lib )
   ENDIF()
 
 
@@ -363,6 +384,13 @@ elseif (UNIX)
     set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
   endif()
 
+  IF (BUILD_WITH_ZMQ)
+    target_link_libraries(libxrf_io optimized ${ZeroMQ_STATIC_LIBRARY} )
+    target_link_libraries(libxrf_io debug ${ZeroMQ_STATIC_LIBRARY} )
+    target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} )
+    target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} )
+  ENDIF()
+
   # Strip unnecessary sections of the binary on Linux/Mac OS
   if(APPLE)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".dylib")
@@ -374,10 +402,13 @@ elseif (UNIX)
       add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_io.dylib)
     endif()
   else()
-    set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
-    if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-      add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
-      add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
+    #if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    if(NOT BUILD_FOR_PHI)
+      set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
+      if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+        add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
+        add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
+      endif()
     endif()
   endif()
 endif()
@@ -394,11 +425,6 @@ endif()
 
 target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxrf_io optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-
-IF (BUILD_WITH_ZMQ)
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} optimized ws2_32.lib )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} debug ws2_32.lib )
-ENDIF()
 
 IF (BUILD_WITH_VTK)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${VTK_LIBRARIES} )

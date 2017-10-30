@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2015-11-22T16:42:59
+# THIS IS FOR DEVELOPMENT TESTING ONLY. DO NOT USE THIS TO BUILD THE PROJECT! USE CMAKE instead.
 #
 #-------------------------------------------------
 
