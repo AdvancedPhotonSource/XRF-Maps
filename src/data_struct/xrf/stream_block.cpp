@@ -60,6 +60,7 @@ Stream_Block::Stream_Block()
 	_col = 0;
     _height = -1;
     _width = -1;
+    theta = 0;
 	spectra = nullptr;
     optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
 }
@@ -75,6 +76,7 @@ Stream_Block::Stream_Block(size_t row,
     _col = col;
     _height = height;
     _width = width;
+    theta = 0;
     spectra = nullptr;
 }
 

@@ -494,6 +494,11 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
+    if(analysis_job->theta_pv.length() > 0)
+    {
+        _find_theta(analysis_job->theta_pv, &analysis_job->theta);
+    }
+
     if (_mda_file->header->data_rank == 2)
     {
         logit_s<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
@@ -726,6 +731,42 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
+{
+    float *tmpf;
+    double *tmpd;
+    for (int16_t i = 0; i < _mda_file->extra->number_pvs; i++)
+    {
+        struct mda_pv * pv = _mda_file->extra->pvs[i];
+        if(pv == nullptr)
+        {
+            continue;
+        }
+        if(strncmp( pv->name, pv_name.c_str(), pv_name.length()) ==0 )
+        {
+
+            switch (pv->type)
+            {
+            case EXTRA_PV_FLOAT:
+                tmpf = (float*)pv->values;
+                *theta_out = *tmpf;
+                break;
+            case EXTRA_PV_DOUBLE:
+                tmpd = (double*)pv->values;
+                *theta_out = *tmpd;
+                break;
+            default:
+                *theta_out = 0.0f;
+                break;
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------

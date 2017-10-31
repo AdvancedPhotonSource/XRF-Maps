@@ -126,6 +126,8 @@ public:
 
     fitting::models::Base_Model * model;
 
+    float theta;
+
 protected:
 
     size_t _row;

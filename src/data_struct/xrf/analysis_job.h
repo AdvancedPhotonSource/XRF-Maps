@@ -113,6 +113,10 @@ public:
 
     std::string quantificaiton_standard_filename;
 
+    std::string theta_pv;
+
+    float theta;
+
     std::vector<std::string> dataset_files;
 
     std::vector<std::string> optimize_dataset_files;

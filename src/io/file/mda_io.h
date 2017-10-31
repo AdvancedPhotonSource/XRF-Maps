@@ -124,6 +124,8 @@ public:
 
 private:
 
+    bool _find_theta(std::string pv_name, float* theta_out);
+
     //void _load_detector_meta_data(data_struct::xrf::Detector * detector);
     bool _is_single_row;
 

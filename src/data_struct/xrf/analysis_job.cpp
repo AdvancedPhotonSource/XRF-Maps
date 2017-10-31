@@ -71,6 +71,8 @@ Analysis_Job::Analysis_Job()
     is_network_source = false;
     stream_over_network = false;
     command_line = "";
+    theta_pv = "";
+    theta = 0.f;
 }
 
 //-----------------------------------------------------------------------------

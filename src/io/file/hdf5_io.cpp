@@ -946,7 +946,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
 
     real_t live_time = 1.0;
-    real_t real_time = 1.0;
+    //real_t real_time = 1.0;
     real_t in_cnt = 1.0;
     real_t out_cnt = 1.0;
 
@@ -1016,7 +1016,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     return true;
 }
 
-/*
+/* TODO: make generic lookup for spectra data in hdf5
 bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);

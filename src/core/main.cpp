@@ -341,6 +341,8 @@ int main(int argc, char *argv[])
         if( clp.option_exists("--stream"))
         {
             analysis_job.stream_over_network = true;
+            //analysis_job.theta_pv = "2xfm:m53.VAL";
+            analysis_job.theta_pv = clp.get_option("--theta_pv");
             run_stream_pipeline(&analysis_job);
         }
         else
