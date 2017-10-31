@@ -49,14 +49,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "analysis_job.h"
 
-#include "fitting/routines/roi_fit_routine.h"
-#include "fitting/routines/svd_fit_routine.h"
-#include "fitting/routines/nnls_fit_routine.h"
-
-#include "fitting/models/gaussian_model.h"
-
-#include "io/file/hl_file_io.h"
-
 namespace data_struct
 {
 namespace xrf
@@ -64,20 +56,21 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Analysis_Job::Analysis_Job(size_t num_threads)
+Analysis_Job::Analysis_Job()
 {
     _optimizer = &_lmfit_optimizer;
-    _num_threads = num_threads;
-    _detector_num_start = 0;
-    _detector_num_end = 0;
+    _last_init_sample_size = 0;
+    num_threads = 1;
+    detector_num_start = 0;
+    detector_num_end = 0;
     //default mode for which parameters to fit when optimizing fit parameters
-    _optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
-    _quick_and_dirty = false;
-    _optimize_fit_override_params = false;
-    _generate_average_h5 = false;
-    _is_network_source = false;
-    _stream_over_network = false;
-    _command_line = "";
+    optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+    quick_and_dirty = false;
+    optimize_fit_override_params = false;
+    generate_average_h5 = false;
+    is_network_source = false;
+    stream_over_network = false;
+    command_line = "";
 }
 
 //-----------------------------------------------------------------------------
@@ -85,37 +78,27 @@ Analysis_Job::Analysis_Job(size_t num_threads)
 Analysis_Job::~Analysis_Job()
 {
 
-}
-
-//-----------------------------------------------------------------------------
-
-fitting::routines::Base_Fit_Routine* Analysis_Job::_generate_fit_routine(Fitting_Routines proc_type)
-{
-    //Fitting routines
-    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
-    switch(proc_type)
+    for(auto& itr : detectors_meta_data)
     {
-        case GAUSS_TAILS:
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
-            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(_optimizer);
-            break;
-        case GAUSS_MATRIX:
-            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
-            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(_optimizer);
-            break;
-        case ROI:
-            fit_routine = new fitting::routines::ROI_Fit_Routine();
-            break;
-        case SVD:
-            fit_routine = new fitting::routines::SVD_Fit_Routine();
-            break;
-        case NNLS:
-            fit_routine = new fitting::routines::NNLS_Fit_Routine();
-            break;
-        default:
-            break;
+        Analysis_Sub_Struct *sub = &itr.second;
+        if (sub->model != nullptr)
+        {
+            delete sub->model;
+            sub->model = nullptr;
+        }
+        for(auto &itr2 : sub->fit_routines)
+        {
+            fitting::routines::Base_Fit_Routine *fit_routine = itr2.second;
+            if(fit_routine != nullptr)
+            {
+                delete fit_routine;
+                itr2.second = nullptr;
+            }
+        }
+        sub->fit_routines.clear();
     }
-    return fit_routine;
+    detectors_meta_data.clear();
+
 }
 
 //-----------------------------------------------------------------------------
@@ -123,81 +106,40 @@ fitting::routines::Base_Fit_Routine* Analysis_Job::_generate_fit_routine(Fitting
 struct Analysis_Sub_Struct* Analysis_Job::get_sub_struct(int detector_num)
 {
        struct Analysis_Sub_Struct* sub_struct = nullptr;
-       if(_detectors_meta_data.count(detector_num) > 0)
+       if(detectors_meta_data.count(detector_num) > 0)
        {
-            sub_struct = &(_detectors_meta_data.at(detector_num));
+            sub_struct = &(detectors_meta_data.at(detector_num));
        }
        return sub_struct;
 }
 
 //-----------------------------------------------------------------------------
 
-bool Analysis_Job::init(size_t detector_num_start, size_t detector_num_end)
+void Analysis_Job::init_fit_routines(size_t spectra_samples)
 {
-
-    _detector_num_start = detector_num_start;
-    _detector_num_end = detector_num_end;
-
     fitting::models::Range energy_range;
     energy_range.min = 0;
-    energy_range.max = 2000;
+    energy_range.max = spectra_samples - 1;
 
-    /*
-    _default_sub_struct.
-    if( false == io::load_override_params(_dataset_directory, -1, override_params) )
+    if(_last_init_sample_size != spectra_samples)
     {
-        return false;
-    }
-    */
-
-    _detectors_meta_data.clear();
-
-    //initialize models and fit routines for all detectors
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-    {
-        _detectors_meta_data[detector_num] = Analysis_Sub_Struct();
-        Analysis_Sub_Struct *sub_struct = &_detectors_meta_data[detector_num];
-
-        sub_struct->model = new fitting::models::Gaussian_Model();
-        data_struct::xrf::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
-
-        override_params->dataset_directory = _dataset_directory;
-        override_params->detector_num = detector_num;
-
-        if( false == io::load_override_params(_dataset_directory, detector_num, override_params) )
+        _last_init_sample_size = spectra_samples;
+        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            if( false == io::load_override_params(_dataset_directory, -1, override_params) )
+            data_struct::xrf::Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
+
+            for(auto &proc_type : fitting_routines)
             {
-                return false;
+                //Fitting models
+                fitting::routines::Base_Fit_Routine *fit_routine = sub_struct->fit_routines[proc_type];
+                logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<std::endl;
+
+                Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
+                //Initialize model
+                fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
             }
         }
-
-        if (override_params->elements_to_fit.size() < 1)
-        {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
-            return false;
-        }
-
-        for(auto proc_type : _fitting_routines)
-        {
-            //Fitting models
-            fitting::routines::Base_Fit_Routine *fit_routine = _generate_fit_routine(proc_type);
-            sub_struct->fit_routines[proc_type] = fit_routine;
-
-            logit << "Generating model for "<< fit_routine->get_name() <<" detector "<<detector_num<<std::endl;
-
-
-            //reset model fit parameters to defaults
-            sub_struct->model->reset_to_default_fit_params();
-            //Update fit parameters by override values
-            sub_struct->model->update_fit_params_values(override_params->fit_params);
-
-            //Initialize model
-            fit_routine->initialize(sub_struct->model, &override_params->elements_to_fit, energy_range);
-        }
     }
-
-    return true;
 }
 
 //-----------------------------------------------------------------------------

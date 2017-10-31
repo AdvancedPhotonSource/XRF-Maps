@@ -77,6 +77,92 @@ void populate_netcdf_hdf5_files(std::string dataset_dir)
     hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
 }
 
+//-----------------------------------------------------------------------------
+
+fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type, fitting::optimizers::Optimizer* optimizer)
+{
+    //Fitting routines
+    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
+    switch(proc_type)
+    {
+        case data_struct::xrf::GAUSS_TAILS:
+            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
+            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
+            break;
+        case data_struct::xrf::GAUSS_MATRIX:
+            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
+            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
+            break;
+        case data_struct::xrf::ROI:
+            fit_routine = new fitting::routines::ROI_Fit_Routine();
+            break;
+        case data_struct::xrf::SVD:
+            fit_routine = new fitting::routines::SVD_Fit_Routine();
+            break;
+        case data_struct::xrf::NNLS:
+            fit_routine = new fitting::routines::NNLS_Fit_Routine();
+            break;
+        default:
+            break;
+    }
+    return fit_routine;
+}
+
+// ----------------------------------------------------------------------------
+
+bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
+{
+
+//    _default_sub_struct.
+//    if( false == io::load_override_params(_dataset_directory, -1, override_params) )
+//    {
+//        return false;
+//    }
+
+
+    analysis_job->detectors_meta_data.clear();
+
+    //initialize models and fit routines for all detectors
+    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+    {
+        analysis_job->detectors_meta_data[detector_num] = data_struct::xrf::Analysis_Sub_Struct();
+        data_struct::xrf::Analysis_Sub_Struct *sub_struct = &analysis_job->detectors_meta_data[detector_num];
+
+        sub_struct->model = new fitting::models::Gaussian_Model();
+        data_struct::xrf::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
+
+        override_params->dataset_directory = analysis_job->dataset_directory;
+        override_params->detector_num = detector_num;
+
+        if( false == io::load_override_params(analysis_job->dataset_directory, detector_num, override_params) )
+        {
+            if( false == io::load_override_params(analysis_job->dataset_directory, -1, override_params) )
+            {
+                return false;
+            }
+        }
+
+        if (override_params->elements_to_fit.size() < 1)
+        {
+            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+            return false;
+        }
+
+        for(auto proc_type : analysis_job->fitting_routines)
+        {
+            //Fitting models
+            sub_struct->fit_routines[proc_type] = generate_fit_routine(proc_type, analysis_job->optimizer());
+
+            //reset model fit parameters to defaults
+            sub_struct->model->reset_to_default_fit_params();
+            //Update fit parameters by override values
+            sub_struct->model->update_fit_params_values(override_params->fit_params);
+        }
+    }
+
+    return true;
+}
+
 // ----------------------------------------------------------------------------
 
 bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::xrf::Element_Info_Map *element_info_map)
@@ -101,7 +187,6 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 bool save_results(std::string save_loc,
                   const data_struct::xrf::Fit_Count_Dict * const element_counts,
-                  fitting::routines::Base_Fit_Routine* fit_routine,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start)
 {
@@ -122,7 +207,6 @@ bool save_results(std::string save_loc,
 
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
 
-    delete fit_routine;
     delete job_queue;
     delete element_counts;
 

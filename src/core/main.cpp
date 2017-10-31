@@ -92,16 +92,8 @@ void help()
 int main(int argc, char *argv[])
 {
     std::string dataset_dir;
-    std::vector<std::string> dataset_files;
-    std::vector<std::string> optimize_dataset_files;
-    std::string quant_standard_filename = "";
     std::string whole_command_line = "";
     bool is_confocal = false;
-    bool generated_avg = false;
-
-    //Default is to process detectors 0 through 3
-    size_t detector_num_start = 0;
-    size_t detector_num_end = 3;
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -109,6 +101,9 @@ int main(int argc, char *argv[])
     //////// HENKE and ELEMENT INFO /////////////
     std::string element_csv_filename = "../reference/xrf_library.csv";
     std::string element_henke_filename = "../reference/henke.xdr";
+
+    //main structure for analysis job information
+    data_struct::xrf::Analysis_Job analysis_job;
 
     Command_Line_Parser clp(argc, argv);
 
@@ -118,58 +113,57 @@ int main(int argc, char *argv[])
        return 0;
     }
 
+    analysis_job.detector_num_start = 0;
+    analysis_job.detector_num_end = 3;
 
-    size_t num_threads = std::thread::hardware_concurrency() - 2;
+    analysis_job.num_threads = std::thread::hardware_concurrency() - 2;
     if ( clp.option_exists("--nthreads") )
     {
-        num_threads = std::stoi(clp.get_option("--nthreads"));
+        analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
     }
-
-    //main structure for analysis job information
-    data_struct::xrf::Analysis_Job analysis_job(num_threads);
 
     //Look for which analysis types we want to run
     if ( clp.option_exists("--tails") )
     {
-        analysis_job.append_fit_routine(data_struct::xrf::GAUSS_TAILS);
+        analysis_job.fitting_routines.push_back(data_struct::xrf::GAUSS_TAILS);
     }
     if ( clp.option_exists("--matrix") )
     {
-        analysis_job.append_fit_routine(data_struct::xrf::GAUSS_MATRIX);
+        analysis_job.fitting_routines.push_back(data_struct::xrf::GAUSS_MATRIX);
     }
     if ( clp.option_exists("--roi") )
     {
-        analysis_job.append_fit_routine(data_struct::xrf::ROI);
+        analysis_job.fitting_routines.push_back(data_struct::xrf::ROI);
     }
     if ( clp.option_exists("--roi_plus") )
     {
-        analysis_job.append_fit_routine(data_struct::xrf::SVD);
+        analysis_job.fitting_routines.push_back(data_struct::xrf::SVD);
     }
     if ( clp.option_exists("--nnls") )
     {
-        analysis_job.append_fit_routine(data_struct::xrf::NNLS);
+        analysis_job.fitting_routines.push_back(data_struct::xrf::NNLS);
     }
 
     //Check if we want to quantifiy with a standard
     if ( clp.option_exists("--quantify-with") )
     {
-        analysis_job.quantificaiton_standard_filename(clp.get_option("--quantify-with"));
+        analysis_job.quantificaiton_standard_filename = clp.get_option("--quantify-with");
     }
 
     //Do we want to optimize our fitting parameters
     if( clp.option_exists("--optimize-fit-override-params") )
     {
-        analysis_job.optimize_fit_override_params(true);
+        analysis_job.optimize_fit_override_params = true;
 
         std::string opt = clp.get_option("--optimize-fit-override-params");
         if(opt == "1")
-            analysis_job.fit_params_preset(fitting::models::MATRIX_BATCH_FIT);
+            analysis_job.optimize_fit_params_preset = fitting::models::MATRIX_BATCH_FIT;
         else if(opt == "2")
-            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_NO_TAILS);
+            analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
         else if(opt == "3")
-            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_WITH_TAILS);
+            analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_TAILS;
         else if(opt == "4")
-            analysis_job.fit_params_preset(fitting::models::BATCH_FIT_WITH_FREE_ENERGY);
+            analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_FREE_ENERGY;
         else
             logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<std::endl;
     }
@@ -189,13 +183,13 @@ int main(int argc, char *argv[])
     //Should we sum up all the detectors and process it as one?
     if( clp.option_exists("--quick-and-dirty"))
     {
-        analysis_job.quick_and_dirty(true);
-        analysis_job.generate_average_h5(false);
+        analysis_job.quick_and_dirty = true;
+        analysis_job.generate_average_h5 = false;
     }
     //Should create an averaged file of all detectors processed
     else if(clp.option_exists("--generate-avg-h5"))
     {
-        analysis_job.generate_average_h5(true);
+        analysis_job.generate_average_h5 = true;
     }
 
 
@@ -221,13 +215,13 @@ int main(int argc, char *argv[])
             ss.str(detector_range_str);
             std::string item;
             std::getline(ss, item, ':');
-            detector_num_start = std::stoi(item);
+            analysis_job.detector_num_start = std::stoi(item);
             std::getline(ss, item, ':');
-            detector_num_end = std::stoi(item);
+            analysis_job.detector_num_end = std::stoi(item);
         }
         else
         {
-            detector_num_start = detector_num_end = std::stoi(detector_range_str);
+            analysis_job.detector_num_start = analysis_job.detector_num_end = std::stoi(detector_range_str);
         }
     }
 
@@ -249,7 +243,7 @@ int main(int argc, char *argv[])
 
 
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fit_routine_size() == 0 && analysis_job.optimize_fit_override_params() == false && clp.option_exists("--generate-avg-h5") == false)
+    if (analysis_job.fitting_routines.size() == 0 && analysis_job.optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
     {
         help();
         return -1;
@@ -263,31 +257,31 @@ int main(int argc, char *argv[])
     {
         if(is_confocal)
         {
-            dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
+            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
         }
         else
         {
             // find all files in the dataset
-            dataset_files = io::find_all_dataset_files(dataset_dir + "mda/", ".mda");
+            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda/", ".mda");
         }
-        if (dataset_files.size() == 0)
+        if (analysis_job.dataset_files.size() == 0)
         {
             logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
             return -1;
         }
 
-        for (auto& itr : dataset_files)
+        for (auto& itr : analysis_job.dataset_files)
         {
-            optimize_dataset_files.push_back(itr);
+            analysis_job.optimize_dataset_files.push_back(itr);
         }
 
         if(!is_confocal)
-            io::sort_dataset_files_by_size(dataset_dir, &optimize_dataset_files);
+            io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
 
         //if no files were specified only take the 8 largest datasets
-        while (optimize_dataset_files.size() > 9)
+        while (analysis_job.optimize_dataset_files.size() > 9)
         {
-            optimize_dataset_files.pop_back();
+            analysis_job.optimize_dataset_files.pop_back();
         }
 
     }
@@ -299,14 +293,14 @@ int main(int argc, char *argv[])
         std::string item;
         while (std::getline(ss, item, ','))
         {
-            dataset_files.push_back(item);
-            optimize_dataset_files.push_back(item);
+            analysis_job.dataset_files.push_back(item);
+            analysis_job.optimize_dataset_files.push_back(item);
         }
     }
     else
     {
-        dataset_files.push_back(dset_file);
-        optimize_dataset_files.push_back(dset_file);
+        analysis_job.dataset_files.push_back(dset_file);
+        analysis_job.optimize_dataset_files.push_back(dset_file);
     }
 
     //gen whole command line to save in hdf5 later
@@ -314,9 +308,9 @@ int main(int argc, char *argv[])
     {
         whole_command_line += " " + std::string(argv[ic]);
     }
-    analysis_job.command_line(whole_command_line);
+    analysis_job.command_line = whole_command_line;
     logit<<"whole command line : "<<whole_command_line<<std::endl;
-    logit << "Processing detectors " << detector_num_start << " - "<< detector_num_end <<std::endl;
+    logit << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<std::endl;
 
     start = std::chrono::system_clock::now();
 
@@ -327,53 +321,41 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if(analysis_job.optimize_fit_override_params())
-    {
-        analysis_job.set_optimize_dataset_files(optimize_dataset_files);
-    }
-
-    analysis_job.set_dataset_directory(dataset_dir);
-    analysis_job.set_dataset_files(dataset_files);
+    analysis_job.dataset_directory = dataset_dir;
 
     // init our job and run
-    if(analysis_job.init(detector_num_start, detector_num_end) )
+    if(io::init_analysis_job_detectors(&analysis_job))
     {
-        if(analysis_job.optimize_fit_override_params())
+        if(analysis_job.optimize_fit_override_params)
         {
-            analysis_job.set_dataset_files(optimize_dataset_files);
             //run_optimization_stream_pipeline(&analysis_job);
 //            io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
-            analysis_job.set_dataset_files(dataset_files);
         }
 
-        if (analysis_job.quantificaiton_standard_filename().length() > 0)
+        if (analysis_job.quantificaiton_standard_filename.length() > 0)
         {
             perform_quantification(&analysis_job);
         }
 
         if( clp.option_exists("--stream"))
         {
-            analysis_job.stream_over_network(true);
+            analysis_job.stream_over_network = true;
             run_stream_pipeline(&analysis_job);
         }
         else
         {
             io::populate_netcdf_hdf5_files(dataset_dir);
             process_dataset_files(&analysis_job);
-            for(std::string dataset_file : analysis_job.dataset_files())
-            {
-                io::generate_h5_averages(analysis_job.dataset_directory(), dataset_file, analysis_job.detector_num_start(), analysis_job.detector_num_end());
-            }
-            generated_avg=true;
+            analysis_job.generate_average_h5 = true;
         }
 
         //average all detectors to one files
-        if(analysis_job.generate_average_h5() && generated_avg==false)
+        if(analysis_job.generate_average_h5)
         {
-            for(std::string dataset_file : analysis_job.dataset_files())
+            for(std::string dataset_file : analysis_job.dataset_files)
             {
-                io::generate_h5_averages(analysis_job.dataset_directory(), dataset_file, analysis_job.detector_num_start(), analysis_job.detector_num_end());
+                io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
             }
         }
     }

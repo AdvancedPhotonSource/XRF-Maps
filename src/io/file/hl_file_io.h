@@ -76,6 +76,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_struct/xrf/stream_block.h"
 
+#include "fitting/routines/roi_fit_routine.h"
+#include "fitting/routines/svd_fit_routine.h"
+#include "fitting/routines/nnls_fit_routine.h"
+
+#include "fitting/models/gaussian_model.h"
+
 #ifdef _BUILD_WITH_VTK
   #include "visual/vtk_graph.h"
 #endif
@@ -117,6 +123,11 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
                           size_t detector_num_start,
                           size_t detector_num_end);
 
+DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type,
+                                                                     fitting::optimizers::Optimizer* optimizer);
+
+DLL_EXPORT bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job);
+
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
                        std::string element_csv_filename,
                        data_struct::xrf::Element_Info_Map *element_info_map);
@@ -154,7 +165,6 @@ DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
 
 DLL_EXPORT bool save_results(std::string save_loc,
                   const data_struct::xrf::Fit_Count_Dict * const element_counts,
-                  fitting::routines::Base_Fit_Routine* fit_routine,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start);
 

@@ -110,13 +110,14 @@ void Spectra_Net_Source::cb_load_spectra_data(size_t row, size_t col, size_t hei
 
     if(_output_callback_func != nullptr)
     {
+        analysis_job->init_fit_routines(spectra->size());
         struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
         data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;
         stream_block->model = cp->model;
-        stream_block->optimize_fit_params_preset = _analysis_job->fit_params_preset();
+        stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
         stream_block->detector_number = detector_num;

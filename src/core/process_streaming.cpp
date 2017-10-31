@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
 {
 
-    for(auto itr : stream_block->fitting_blocks)
+    for(auto &itr : stream_block->fitting_blocks)
     {
         int i = itr.first;
         std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
@@ -71,15 +71,15 @@ data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Blo
 void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
     workflow::Source<data_struct::xrf::Stream_Block*> *source;
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads());
+    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads);
     workflow::Sink<data_struct::xrf::Stream_Block*> *sink;
 
     //setup input
-    if(job->quick_and_dirty())
+    if(job->quick_and_dirty)
     {
         source = new workflow::xrf::Detector_Sum_Spectra_Source(job);
     }
-    else if(job->is_network_source())
+    else if(job->is_network_source)
     {
         source = new workflow::xrf::Spectra_Net_Source(job);
     }
@@ -89,7 +89,7 @@ void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
     }
 
     //setup output
-    if(job->stream_over_network())
+    if(job->stream_over_network)
     {
         sink = new workflow::xrf::Spectra_Net_Streamer();
     }
@@ -173,7 +173,7 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 {
     //TODO: Run only on 8 largest files if no files are specified
     workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads());
+    workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads);
     workflow::Sink<struct io::file_name_fit_params*> sink;
     sink.set_function(save_optimal_params);
 

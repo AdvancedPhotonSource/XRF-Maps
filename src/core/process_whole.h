@@ -100,13 +100,6 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
-//Optimizers for fitting models
-static fitting::optimizers::Optimizer *optimizer;
-
-//default mode for which parameters to fit when optimizing fit parameters
-//static fitting::models::Fit_Params_Preset optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
-
-// ----------------------------------------------------------------------------
 
 template<typename T>
 data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit,
@@ -129,7 +122,8 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_rou
 DLL_EXPORT struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
                                                                 size_t detector_num,
-																fitting::models::Fit_Params_Preset);
+                                                                fitting::models::Fit_Params_Preset,
+                                                                fitting::optimizers::Optimizer *optimizer);
 
 // ----------------------------------------------------------------------------
 

@@ -97,7 +97,8 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
  struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
                                                                 size_t detector_num,
-																fitting::models::Fit_Params_Preset optimize_fit_params_preset)
+                                                                fitting::models::Fit_Params_Preset optimize_fit_params_preset,
+                                                                fitting::optimizers::Optimizer *optimizer)
 {
 
     //return structure
@@ -158,18 +159,18 @@ void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job)
 {
     bool first = true;
     std::queue<std::future<struct io::file_name_fit_params> > job_queue;
-    ThreadPool tp(analysis_job->num_threads());
+    ThreadPool tp(analysis_job->num_threads);
 
     std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
-    fit_params_avgs.resize(analysis_job->detector_num_end() - analysis_job->detector_num_start() + 1);
+    fit_params_avgs.resize(analysis_job->detector_num_end - analysis_job->detector_num_start + 1);
 
-    for(auto &itr : analysis_job->dataset_files())
+    for(auto &itr : analysis_job->optimize_dataset_files)
     {
-        for(size_t detector_num = analysis_job->detector_num_start(); detector_num <= analysis_job->detector_num_end(); detector_num++)
+        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
             //data_struct::xrf::Fit_Parameters out_fitp;
             //out_fitp = optimize_integrated_fit_params(analysis_job->dataset_directory(), itr, detector_num);
-            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory(), itr, detector_num, analysis_job->fit_params_preset()) );
+            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()) );
         }
     }
 
@@ -192,7 +193,7 @@ void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job)
             io::save_optimized_fit_params(f_struct);
         }
     }
-    io::save_averaged_fit_params(analysis_job->dataset_directory(), fit_params_avgs, analysis_job->detector_num_start(), analysis_job->detector_num_end());
+    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
 
 }
 
@@ -240,7 +241,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
             }
         }
 
-        io::save_results( fit_routine->get_name(), element_fit_count_dict, fit_routine, fit_job_queue, start );
+        io::save_results( fit_routine->get_name(), element_fit_count_dict, fit_job_queue, start );
     }
 
     real_t energy_offset = 0.0;
@@ -275,14 +276,14 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
 
 void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
 {
-    ThreadPool tp(analysis_job->num_threads());
+    ThreadPool tp(analysis_job->num_threads);
 
-    for(auto &dataset_file : analysis_job->dataset_files())
+    for(auto &dataset_file : analysis_job->dataset_files)
     {
         //if quick and dirty then sum all detectors to 1 spectra volume and process it
-        if(analysis_job->quick_and_dirty())
+        if(analysis_job->quick_and_dirty)
         {
-            std::string full_save_path = analysis_job->dataset_directory()+"/img.dat/"+dataset_file+".h5";
+            std::string full_save_path = analysis_job->dataset_directory+"/img.dat/"+dataset_file+".h5";
 
             data_struct::xrf::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(0);
             //Spectra volume data
@@ -292,23 +293,23 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
             io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
             //load the first one
-            size_t detector_num = analysis_job->detector_num_start();
+            size_t detector_num = analysis_job->detector_num_start;
             bool is_loaded_from_analyzed_h5;
-            if (false == io::load_spectra_volume(analysis_job->dataset_directory(), dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, true) )
+            if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, true) )
             {
-                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory()<<"/"<<dataset_file<<std::endl;
+                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<std::endl;
                 delete spectra_volume;
                 delete tmp_spectra_volume;
                 return;
             }
 
             //load spectra volume
-            for(detector_num = analysis_job->detector_num_start()+1; detector_num <= analysis_job->detector_num_end(); detector_num++)
+            for(detector_num = analysis_job->detector_num_start+1; detector_num <= analysis_job->detector_num_end; detector_num++)
             {
 
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory(), dataset_file, tmp_spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, false) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, tmp_spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, false) )
                 {
-                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory()<<"/"<<dataset_file<<std::endl;
+                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<std::endl;
                     delete spectra_volume;
                     delete tmp_spectra_volume;
                     return;
@@ -340,12 +341,14 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
             }
             delete tmp_spectra_volume;
 
+            analysis_job->init_fit_routines(spectra_volume->samples_size());
+
             proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
         }
         //otherwise process each detector separately
         else
         {
-            for(size_t detector_num = analysis_job->detector_num_start(); detector_num <= analysis_job->detector_num_end(); detector_num++)
+            for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
             {
 
                 data_struct::xrf::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num);
@@ -354,18 +357,19 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
                 data_struct::xrf::Spectra_Volume* spectra_volume = new data_struct::xrf::Spectra_Volume();
 
                 std::string str_detector_num = std::to_string(detector_num);
-                std::string full_save_path = analysis_job->dataset_directory()+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+                std::string full_save_path = analysis_job->dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
                 io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory(), dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &loaded_from_analyzed_hdf5, true) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &loaded_from_analyzed_hdf5, true) )
                 {
                     logit<<"Skipping detector "<<detector_num<<std::endl;
                     delete spectra_volume;
                     continue;
                 }
 
+                analysis_job->init_fit_routines(spectra_volume->samples_size());
                 proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5);
             }
         }
@@ -400,9 +404,9 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
     std::string standard_file_name;
     std::unordered_map<std::string, real_t> element_standard_weights;
 
-    if( io::load_quantification_standard(analysis_job->dataset_directory(), analysis_job->quantificaiton_standard_filename(), &standard_file_name, &element_standard_weights) )
+    if( io::load_quantification_standard(analysis_job->dataset_directory, analysis_job->quantificaiton_standard_filename, &standard_file_name, &element_standard_weights) )
     {
-        for(size_t detector_num = analysis_job->detector_num_start(); detector_num <= analysis_job->detector_num_end(); detector_num++)
+        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
 
             data_struct::xrf::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num);
@@ -453,7 +457,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
             data_struct::xrf::Spectra_Volume spectra_volume;
             bool is_loaded_from_analyzed_h5;
             //load the quantification standard dataset
-            if(false == io::load_spectra_volume(analysis_job->dataset_directory(), quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
+            if(false == io::load_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
             {
                 //legacy code would load mca files, check for mca and replace with mda
                 int std_str_len = standard_file_name.length();
@@ -461,7 +465,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                 {
                     standard_file_name[std_str_len - 2] = 'd';
                     quantification_standard->standard_filename(standard_file_name);
-                    if(false == io::load_spectra_volume(analysis_job->dataset_directory(), quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
+                    if(false == io::load_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
                     {
                         logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
                         return false;
@@ -473,6 +477,8 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                     return false;
                 }
             }
+
+            analysis_job->init_fit_routines(spectra_volume.samples_size());
 
             //First we integrate the spectra and get the elemental counts
             data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
@@ -494,12 +500,6 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                                                                                               &integrated_spectra,
                                                                                               &elements_to_fit);
 
-                if (fit_routine != nullptr)
-                {
-                    delete fit_routine;
-                    fit_routine = nullptr;
-                }
-
                 for (auto& itr : elements_to_fit)
                 {
                     counts_dict[itr.first] /= integrated_spectra.elapsed_lifetime();
@@ -507,7 +507,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                 quantification_standard->integrated_spectra(integrated_spectra);
 
                 //save for each proc
-                quantification_standard->quantifiy(optimizer,
+                quantification_standard->quantifiy(analysis_job->optimizer(),
                                                    fit_routine->get_name(),
                                                    &counts_dict,
                                                    incident_energy,
@@ -529,11 +529,11 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
     }
     else
     {
-        logit<<"Error loading quantification standard "<<analysis_job->quantificaiton_standard_filename()<<std::endl;
+        logit<<"Error loading quantification standard "<<analysis_job->quantificaiton_standard_filename<<std::endl;
         return false;
     }
 
-    if(analysis_job->quick_and_dirty())
+    if(analysis_job->quick_and_dirty)
     {
         ////average_quantification(quant_stand_list, analysis_job->detector_num_start(), analysis_job->detector_num_end());
     }
