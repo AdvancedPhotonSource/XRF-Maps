@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
         if(analysis_job.optimize_fit_override_params)
         {
             //run_optimization_stream_pipeline(&analysis_job);
-//            io::populate_netcdf_hdf5_files(dataset_dir);
+            io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
         }
 
