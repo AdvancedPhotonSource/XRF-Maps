@@ -97,6 +97,7 @@ ENDIF()
 
 IF (BUILD_WITH_VTK)
   add_definitions(-D_BUILD_WITH_VTK)
+  cmake_policy(SET CMP0054 OLD)
   find_package(VTK REQUIRED)
   include(${VTK_USE_FILE})
   set(VISUAL_INC src/visual/vtk_graph.h src/visual/vtk_graph.cpp )
