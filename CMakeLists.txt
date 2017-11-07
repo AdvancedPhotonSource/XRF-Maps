@@ -274,6 +274,7 @@ set(XRF_IO_HEADERS
    )
 
 set(XRF_IO_SOURCE
+    ${VISUAL_INC}
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp
@@ -315,7 +316,6 @@ ENDIF()
 
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
-    ${VISUAL_INC}
     src/core/command_line_parser.h
     src/core/process_streaming.h
     src/core/process_streaming.cpp
@@ -428,6 +428,9 @@ target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_fit optimized libxr
 target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_fit debug libxrf_io debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 IF (BUILD_WITH_VTK)
+  target_link_libraries (libxrf_io LINK_PUBLIC optimized ${VTK_LIBRARIES} )
+  target_link_libraries (libxrf_io LINK_PUBLIC debug ${VTK_LIBRARIES} )
+
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${VTK_LIBRARIES} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug ${VTK_LIBRARIES} )
 ELSE()
