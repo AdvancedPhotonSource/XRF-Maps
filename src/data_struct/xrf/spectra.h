@@ -144,6 +144,18 @@ public:
 
     const _T output_counts() const { return _output_counts; }
 
+	Spectra_T sub_spectra(Range range)
+	{
+		Spectra_T spec(range.count());
+		int j = 0;
+		for (int i = range.min; i < range.max; i++)
+		{
+			spec[j] = (*this)[i];
+			j++;
+		}
+		return spec;
+	}
+
 private:
 
     _T _elapsed_lifetime;
