@@ -159,8 +159,6 @@ protected:
 
 private:
 
-    bool _snip_background;
-
     Optimizer *_optimizer;
 
 };

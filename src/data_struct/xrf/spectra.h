@@ -95,6 +95,22 @@ public:
 		_output_counts = 1.0;
 	}
 
+    Spectra_T(const valarray< _T >& arr) : valarray<_T>(arr)
+    {
+        _elapsed_lifetime = 1.0;
+        _elapsed_realtime = 1.0;
+        _input_counts = 1.0;
+        _output_counts = 1.0;
+    }
+
+    Spectra_T(valarray<_T>&& arr) : valarray<_T>(arr)
+    {
+        _elapsed_lifetime = 1.0;
+        _elapsed_realtime = 1.0;
+        _input_counts = 1.0;
+        _output_counts = 1.0;
+    }
+
     Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : valarray<_T>(0.0, sample_size)
     {
         _elapsed_lifetime = elt;
