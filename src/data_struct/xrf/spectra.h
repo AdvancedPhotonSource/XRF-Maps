@@ -185,9 +185,9 @@ private:
 template DLL_EXPORT class Spectra_T<real_t>;
 typedef Spectra_T<real_t> Spectra;
 
-valarray<real_t> convolve1d(valarray<real_t> arr, size_t boxcar_size);
-valarray<real_t> convolve1d(valarray<real_t> arr, valarray<real_t> boxcar);
-valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
+DLL_EXPORT valarray<real_t> convolve1d(valarray<real_t> arr, size_t boxcar_size);
+DLL_EXPORT valarray<real_t> convolve1d(valarray<real_t> arr, valarray<real_t> boxcar);
+DLL_EXPORT valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 
 /**
