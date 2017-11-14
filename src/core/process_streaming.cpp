@@ -120,6 +120,13 @@ struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xr
     energy_range.min = 0;
     energy_range.max = ret_struct->spectra.size() -1;
 
+//    fitting::models::Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
+//                                                           sub_struct->fit_params_override_dict.min_energy,
+//                                                           spectra_samples,
+//                                                           sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_OFFSET].value,
+//                                                           sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_SLOPE].value);
+
+
     fitting::models::Gaussian_Model model;
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;

@@ -114,14 +114,15 @@ MinPack_Optimizer::~MinPack_Optimizer()
 }
 
 void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
-                                const Spectra * const spectra,
-                                const Fit_Element_Map_Dict * const elements_to_fit,
-                                const Base_Model * const model)
+                                 const Spectra * const spectra,
+                                 const Fit_Element_Map_Dict * const elements_to_fit,
+                                 const Base_Model * const model,
+                                 const Range energy_range)
 {
     //const int params_size = 12;
     User_Data ud;
 
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model);
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> fvec;
@@ -169,11 +170,12 @@ void MinPack_Optimizer::minimize(Fit_Parameters *fit_params,
 
 void MinPack_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                       const Spectra * const spectra,
+                                      const Range energy_range,
                                       Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
 
-    fill_gen_user_data(ud, fit_params, spectra, gen_func);
+    fill_gen_user_data(ud, fit_params, spectra, energy_range, gen_func);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> fvec;

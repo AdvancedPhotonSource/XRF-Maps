@@ -74,10 +74,12 @@ public:
     virtual void minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
                           const Fit_Element_Map_Dict * const elements_to_fit,
-                          const Base_Model * const model);
+                          const Base_Model * const model,
+                          const Range energy_range);
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
+                               const Range energy_range,
                                Gen_Func_Def gen_func);
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,

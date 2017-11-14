@@ -547,7 +547,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
+                    params_override->max_energy = std::stof(value);
                 }
                 else if (tag == "MIN_ENERGY_TO_FIT")
                 {
@@ -556,7 +556,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
+                    params_override->min_energy = std::stof(value);
                 }
                 else if (tag == "LINEAR_ESCAPE_FACTOR")
                 {

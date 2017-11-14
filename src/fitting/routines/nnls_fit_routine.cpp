@@ -127,7 +127,8 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
 
-    nsNNLS::vector<real_t> rhs(spectra->size(), (real_t*)&(*spectra)[0]);
+    //nsNNLS::vector<real_t> rhs(spectra->size(), (real_t*)&(*spectra)[0]);
+    nsNNLS::vector<real_t> rhs(_energy_range.count(), (real_t*)&(*spectra)[_energy_range.min]);
 
     solver = new nsNNLS::nnls<real_t>(_fitmatrix, &rhs, _max_iter);
 
@@ -162,6 +163,7 @@ void NNLS_Fit_Routine::initialize(models::Base_Model * const model,
                                   const struct Range energy_range)
 {
 
+    _energy_range = energy_range;
     unordered_map<string, Spectra> element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
     _generate_fitmatrix(&element_models, energy_range);

@@ -56,20 +56,19 @@ namespace optimizers
 {
 
 	void fill_user_data(User_Data &ud,
-		Fit_Parameters *fit_params,
-		const Spectra * const spectra,
-		const Fit_Element_Map_Dict * const elements_to_fit,
-		const Base_Model * const model)
+                        Fit_Parameters *fit_params,
+                        const Spectra * const spectra,
+                        const Fit_Element_Map_Dict * const elements_to_fit,
+                        const Base_Model * const model,
+                        const Range energy_range)
 	{
 		ud.fit_model = (Base_Model*)model;
 		// set spectra to fit
 		ud.spectra = (Spectra*)spectra;
 		ud.fit_parameters = fit_params;
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
-
-		//fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
-		ud.energy_range.min = 0;
-		ud.energy_range.max = spectra->size() - 1;
+        ud.energy_range.min = energy_range.min;
+        ud.energy_range.max = energy_range.max;
 		
 
 		std::vector<real_t> fitp_arr = fit_params->to_array();
@@ -90,7 +89,14 @@ namespace optimizers
             if(fit_snip_width.value > 0.0)
             {
                 real_t spectral_binning = 0.0;
-                background = snip_background(spectra, fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value, fit_params->at(STR_ENERGY_QUADRATIC).value, spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+                background = snip_background(spectra,
+                                             fit_params->at(STR_ENERGY_OFFSET).value,
+                                             fit_params->at(STR_ENERGY_SLOPE).value,
+                                             fit_params->at(STR_ENERGY_QUADRATIC).value,
+                                             spectral_binning,
+                                             fit_params->at(STR_SNIP_WIDTH).value,
+                                             energy_range.min,
+                                             energy_range.max);
             }
         }
         ud.spectra_background = background;
@@ -99,18 +105,17 @@ namespace optimizers
 	}
 
 	void fill_gen_user_data(Gen_User_Data &ud,
-		Fit_Parameters *fit_params,
-		const Spectra * const spectra,
-		Gen_Func_Def gen_func)
+                            Fit_Parameters *fit_params,
+                            const Spectra * const spectra,
+                            const Range energy_range,
+                            Gen_Func_Def gen_func)
 	{
 		ud.func = gen_func;
 		// set spectra to fit
 		ud.spectra = (Spectra*)spectra;
 		ud.fit_parameters = fit_params;
-
-		//fitting::models::Range energy_range = fitting::models::get_energy_range(1.0, 11.0, spectra->size(), detector);
-		ud.energy_range.min = 0;
-		ud.energy_range.max = spectra->size() - 1;
+        ud.energy_range.min = energy_range.min;
+        ud.energy_range.max = energy_range.max;
 
 		ud.weights.resize(spectra->size());
 		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
@@ -125,7 +130,14 @@ namespace optimizers
             if(fit_snip_width.value > 0.0)
             {
                 real_t spectral_binning = 0.0;
-                background = snip_background(spectra, fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value, fit_params->at(STR_ENERGY_QUADRATIC).value, spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, 0, 2000); //TODO, may need to pass in energy_range
+                background = snip_background(spectra,
+                                             fit_params->at(STR_ENERGY_OFFSET).value,
+                                             fit_params->at(STR_ENERGY_SLOPE).value,
+                                             fit_params->at(STR_ENERGY_QUADRATIC).value,
+                                             spectral_binning,
+                                             fit_params->at(STR_SNIP_WIDTH).value,
+                                             energy_range.min,
+                                             energy_range.max);
             }
         }
         ud.spectra_background = background;

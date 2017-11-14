@@ -106,15 +106,17 @@ struct Quant_User_Data
 };
 
 void fill_user_data(User_Data &ud,
-	Fit_Parameters *fit_params,
-	const Spectra * const spectra,
-	const Fit_Element_Map_Dict * const elements_to_fit,
-	const Base_Model * const model);
+                    Fit_Parameters *fit_params,
+                    const Spectra * const spectra,
+                    const Fit_Element_Map_Dict * const elements_to_fit,
+                    const Base_Model * const model,
+                    const Range energy_range);
 
-	void fill_gen_user_data(Gen_User_Data &ud,
-		Fit_Parameters *fit_params,
-		const Spectra * const spectra,
-		Gen_Func_Def gen_func);
+void fill_gen_user_data(Gen_User_Data &ud,
+                        Fit_Parameters *fit_params,
+                        const Spectra * const spectra,
+                        const Range energy_range,
+                        Gen_Func_Def gen_func);
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
@@ -129,11 +131,13 @@ public:
     virtual void minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
                           const Fit_Element_Map_Dict * const elements_to_fit,
-                          const Base_Model * const model) = 0;
+                          const Base_Model * const model,
+                          const Range energy_range) = 0;
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
-								Gen_Func_Def gen_func) = 0;
+                               const Range energy_range,
+                               Gen_Func_Def gen_func) = 0;
 
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,

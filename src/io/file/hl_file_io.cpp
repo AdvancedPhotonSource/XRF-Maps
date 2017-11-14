@@ -119,8 +119,9 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
 //        return false;
 //    }
 
-
     analysis_job->detectors_meta_data.clear();
+
+
 
     //initialize models and fit routines for all detectors
     for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
@@ -157,7 +158,12 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
             sub_struct->model->reset_to_default_fit_params();
             //Update fit parameters by override values
             sub_struct->model->update_fit_params_values(override_params->fit_params);
-        }
+
+            //Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
+            //Initialize model
+            //fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
+
+        }        
     }
 
     return true;

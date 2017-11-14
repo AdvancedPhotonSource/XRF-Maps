@@ -71,6 +71,8 @@ Param_Optimized_Fit_Routine::Param_Optimized_Fit_Routine() : Base_Fit_Routine()
 {
 
     _optimizer = nullptr;
+    _energy_range.min = 0;
+    _energy_range.max = 1999;
 
 }
 
@@ -213,9 +215,6 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     // fitp.g.xmin = MIN_ENERGY_TO_FIT
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
-    /*
-    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
-    */
 
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
@@ -239,7 +238,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 
     if(_optimizer != nullptr)
     {
-        _optimizer->minimize(&fit_params, spectra, elements_to_fit, model);
+        _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
 
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -272,9 +271,6 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     // fitp.g.xmin = MIN_ENERGY_TO_FIT
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
-    /*
-    Range energy_range = get_energy_range(1, 11,spectra_volume->samples_size(), detector);
-    */
 
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
@@ -298,7 +294,7 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
     {
         if(_optimizer != nullptr)
         {
-            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model);
+            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
 
             //Save the counts from fit parameters into fit count dict for each element
             for (auto el_itr : *elements_to_fit)
@@ -329,7 +325,7 @@ void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
                                              const Fit_Element_Map_Dict * const elements_to_fit,
                                              const struct Range energy_range)
 {
-
+    _energy_range = energy_range;
 }
 
 // ----------------------------------------------------------------------------

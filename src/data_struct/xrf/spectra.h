@@ -66,6 +66,7 @@ using namespace std;
 struct Range
 {
     Range() {min = 0; max = 0;}
+    Range(const Range& r) {min = r.min; max = r.max;}
     Range(int rmin, int rmax) {min = rmin; max = rmax;}
     size_t count() const  {return (max - min) + 1;}
     int min;
@@ -110,6 +111,14 @@ public:
         _input_counts = 1.0;
         _output_counts = 1.0;
     }
+
+//    Spectra_T operator[]( std::slice slicearr ) const
+//    {
+//        return ((valarray<_T>)*this)[slicearr];
+//    }
+
+    //std::slice_array<T>    operator[]( std::slice slicearr );
+
 
     Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : valarray<_T>(0.0, sample_size)
     {
@@ -160,16 +169,16 @@ public:
 
     const _T output_counts() const { return _output_counts; }
 
-	Spectra_T sub_spectra(Range range)
+    Spectra_T sub_spectra(Range range) const
 	{
-		Spectra_T spec(range.count());
-		int j = 0;
-		for (int i = range.min; i < range.max; i++)
-		{
-			spec[j] = (*this)[i];
-			j++;
-		}
-		return spec;
+        //Spectra_T ret_spec = ((valarray<_T>)*this)[std::slice(range.min, range.count(), 1)];
+        valarray<_T> ret_spec = ((valarray<_T>)*this)[std::slice(range.min, range.count(), 1)];
+//        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
+//        ret_spec.elapsed_realtime(this->_elapsed_realtime);
+//        ret_spec.input_counts(this->_input_counts);
+//        ret_spec.output_counts(this->_output_counts);
+
+        return ret_spec;
 	}
 
 private:

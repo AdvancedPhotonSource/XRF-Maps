@@ -107,6 +107,8 @@ protected:
 
     Optimizer *_optimizer;
 
+    Range _energy_range;
+
 private:
 
 

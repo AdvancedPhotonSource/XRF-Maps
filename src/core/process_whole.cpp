@@ -110,11 +110,6 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
     fitting::models::Gaussian_Model model;
 
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-
-
     data_struct::xrf::Params_Override params_override;
 
     //load override parameters
@@ -130,8 +125,12 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
         return ret_struct;
     }
 
-    energy_range.max = ret_struct.spectra.size() -1;
-
+    //Range of energy in spectra to fit
+    fitting::models::Range energy_range = data_struct::xrf::get_energy_range(params_override.min_energy,
+                                                                             params_override.max_energy,
+                                                                             ret_struct.spectra.size(),
+                                                                             params_override.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
+                                                                             params_override.fit_params[fitting::models::STR_ENERGY_SLOPE].value);
 
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
@@ -207,9 +206,11 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
     data_struct::xrf::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra_volume->samples_size() -1;
+    fitting::models::Range energy_range = data_struct::xrf::get_energy_range(detector_struct->fit_params_override_dict.min_energy,
+                                                                             detector_struct->fit_params_override_dict.max_energy,
+                                                                             spectra_volume->samples_size(),
+                                                                             detector_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
+                                                                             detector_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_SLOPE].value);
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
 

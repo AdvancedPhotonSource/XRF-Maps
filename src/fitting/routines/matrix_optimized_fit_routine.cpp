@@ -265,6 +265,7 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
                                               const struct Range energy_range)
 {
 
+    _energy_range = energy_range;
     _element_models.clear();
     logit<<"-------- Generating element models ---------"<<std::endl;
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
@@ -288,8 +289,9 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
     if(_optimizer != nullptr)
     {
+        Spectra sub_spectra = spectra->sub_spectra(_energy_range);
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        _optimizer->minimize_func(&fit_params, spectra, gen_func);
+        _optimizer->minimize_func(&fit_params, &sub_spectra, _energy_range, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {

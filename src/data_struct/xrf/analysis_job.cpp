@@ -120,17 +120,19 @@ struct Analysis_Sub_Struct* Analysis_Job::get_sub_struct(int detector_num)
 
 void Analysis_Job::init_fit_routines(size_t spectra_samples)
 {
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = spectra_samples - 1;
-
-    if(_first_init && _last_init_sample_size != spectra_samples)
+    if(_first_init)// && _last_init_sample_size != spectra_samples)
     {
 		_first_init = false;
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
             data_struct::xrf::Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
+
+            fitting::models::Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
+                                                                   sub_struct->fit_params_override_dict.max_energy,
+                                                                   spectra_samples,
+                                                                   sub_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
+                                                                   sub_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_SLOPE].value);
 
             for(auto &proc_type : fitting_routines)
             {

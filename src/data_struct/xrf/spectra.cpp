@@ -273,13 +273,9 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope)
 {
 
-    real_t MIN_ENERGY_TO_FIT = min_energy;
-    real_t MAX_ENERGY_TO_FIT = max_energy;
-
-
-    struct Range energy_range;
-    energy_range.min = (int)ceil( (MIN_ENERGY_TO_FIT - energy_offset) / energy_slope );
-    energy_range.max = (int)ceil( (MAX_ENERGY_TO_FIT - energy_offset) / energy_slope );
+   struct Range energy_range;
+    energy_range.min = (int)ceil( (min_energy - energy_offset) / energy_slope );
+    energy_range.max = (int)ceil( (max_energy - energy_offset) / energy_slope );
     //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
     if ( (energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min) )
     {
