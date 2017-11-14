@@ -60,6 +60,7 @@ Analysis_Job::Analysis_Job()
 {
     _optimizer = &_lmfit_optimizer;
     _last_init_sample_size = 0;
+	_first_init = true;
     num_threads = 1;
     detector_num_start = 0;
     detector_num_end = 0;
@@ -123,8 +124,9 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
     energy_range.min = 0;
     energy_range.max = spectra_samples - 1;
 
-    if(_last_init_sample_size != spectra_samples)
+    if(_first_init && _last_init_sample_size != spectra_samples)
     {
+		_first_init = false;
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {

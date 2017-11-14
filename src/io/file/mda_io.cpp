@@ -746,7 +746,7 @@ bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
         {
             continue;
         }
-        if(strncmp( pv->name, pv_name.c_str(), pv_name.length()) ==0 )
+        if(strcmp( pv->name, pv_name.c_str()) ==0 )
         {
 
             switch (pv->type)

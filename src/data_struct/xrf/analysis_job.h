@@ -152,6 +152,9 @@ protected:
 
     size_t _last_init_sample_size;
 
+private:
+	bool _first_init;
+
 };
 
 } //namespace xrf

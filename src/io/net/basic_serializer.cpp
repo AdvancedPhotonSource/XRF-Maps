@@ -88,7 +88,7 @@ std::string Basic_Serializer::encode_counts(data_struct::xrf::Stream_Block* stre
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->col(), 4);
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->height(), 4);
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->width(), 4);
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->theta, 4);
+    _convert_var_to_bytes(&raw_msg, tmp_real, stream_block->theta, sizeof(real_t));
 
 
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->fitting_blocks.size(), 4);
@@ -143,8 +143,8 @@ data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, i
 	idx += 4;
 	memcpy(&width, message + idx, 4);
 	idx += 4;
-    memcpy(&theta, message + idx, 4);
-    idx += 4;
+    memcpy(&theta, message + idx, sizeof(real_t));
+    idx += sizeof(real_t);
 
 	data_struct::xrf::Stream_Block* out_stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
 	out_stream_block->detector_number = detector_number;
@@ -184,7 +184,7 @@ data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, i
 			}
 			idx = idx2 + 1;
 			memcpy(&val, message + idx, sizeof(real_t));
-			idx += 4;
+			idx += sizeof(real_t);
 			out_stream_block->fitting_blocks[proc_type].fit_counts[std::string(name)] = val;
 		}
 	}
