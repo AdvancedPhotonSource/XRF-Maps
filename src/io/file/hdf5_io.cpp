@@ -1412,6 +1412,13 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     delete [] offset;
     delete [] count;
 
+    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    {
+        delete [] detector_hid_map[detector_num].buffer;
+    }
+
+    detector_hid_map.clear();
+
     _close_h5_objects(close_map);
 
     end = std::chrono::system_clock::now();
