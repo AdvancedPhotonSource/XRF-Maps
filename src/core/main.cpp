@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     analysis_job.detector_num_start = 0;
     analysis_job.detector_num_end = 3;
 
-    analysis_job.num_threads = std::thread::hardware_concurrency() - 2;
+    analysis_job.num_threads = std::thread::hardware_concurrency();
     if ( clp.option_exists("--nthreads") )
     {
         analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
@@ -340,6 +340,8 @@ int main(int argc, char *argv[])
 
         if( clp.option_exists("--stream"))
         {
+            //if we are streaming we use 1 thread for loading and 1 for saving
+            analysis_job.num_threads = std::thread::hardware_concurrency() - 2;
             analysis_job.stream_over_network = true;
             //analysis_job.theta_pv = "2xfm:m53.VAL";
             analysis_job.theta_pv = clp.get_option("--theta_pv");

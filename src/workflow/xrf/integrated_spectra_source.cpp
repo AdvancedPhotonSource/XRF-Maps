@@ -82,6 +82,7 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;
         stream_block->model = cp->model;
+        stream_block->theta = _analysis_job->theta;
         stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
         stream_block->detector_number = detector_num;
         stream_block->dataset_directory = _current_dataset_directory;
