@@ -60,6 +60,12 @@ namespace file
 namespace aps
 {
 
+#ifdef _REAL_DOUBLE
+	#define str_to_real std::stod
+#else
+	#define str_to_real std::stof
+#endif
+
 class DLL_EXPORT APS_Fit_Params_Import
 {
 public:

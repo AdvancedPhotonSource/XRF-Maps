@@ -65,7 +65,7 @@ namespace file
 
 typedef std::function<void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
 
-class Base_File_IO
+class DLL_EXPORT Base_File_IO
 {
 public:
 
@@ -89,18 +89,18 @@ public:
      * @brief lazy_load : Only load in the meta info, not the actual datasets
      * @param filename
      */
-    DLL_EXPORT virtual void lazy_load() = 0;
+    virtual void lazy_load() = 0;
 
     /**
      * @brief load : Load the full dataset
      * @param filename
      */
-    DLL_EXPORT virtual bool load_dataset(std::string path, Base_Dataset* dset) = 0;
+    virtual bool load_dataset(std::string path, Base_Dataset* dset) = 0;
 
     /**
      * @brief isLoaded: State of the dataset
      */
-    DLL_EXPORT LOADED_STATE is_loaded() { return _is_loaded; }
+    LOADED_STATE is_loaded() { return _is_loaded; }
 
 protected:
     /**

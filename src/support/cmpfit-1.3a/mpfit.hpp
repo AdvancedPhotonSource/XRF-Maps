@@ -248,7 +248,7 @@ _T mp_enorm(int n, _T *x)
   s3 = zero;
   x1max = zero;
   x3max = zero;
-  floatn = n;
+  floatn = static_cast<real_t>(n);
   agiant = rgiant/floatn;
 
   for (i=0; i<n; i++) {

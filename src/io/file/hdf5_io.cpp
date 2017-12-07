@@ -635,8 +635,10 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
    logit<< path <<" detector : "<<detector_num<<std::endl;
 
    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
-   hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
+   hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, memoryspace_id, memoryspace_meta_id, dset_lt_id;
+   //hid_t    dset_incnt_id, dset_outcnt_id, dset_rt_id;
+   hid_t    dataspace_lt_id;
+  //hid_t dataspace_inct_id, dataspace_outct_id;
    herr_t   error;
    std::string detector_path;
    real_t * buffer;
@@ -716,9 +718,9 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
     //H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
 
     real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    //real_t real_time = 1.0;
+    //real_t in_cnt = 1.0;
+    //real_t out_cnt = 1.0;
 
     //offset[1] = row;
 
@@ -739,21 +741,21 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
             spectra->elapsed_lifetime(live_time * 0.000000125 );
-            /*
-            H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-            error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
-            spectra->elapsed_realtime(real_time);
+            
+            //H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            //error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+            //spectra->elapsed_realtime(real_time);
 
-            H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-            error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
-            spectra->input_counts(in_cnt);
+            //H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            //error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
+            //spectra->input_counts(in_cnt);
 
-            H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
-            error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
-            spectra->output_counts(out_cnt);
+            //H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
+            //error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
+            //spectra->output_counts(out_cnt);
 
-            spectra->recalc_elapsed_lifetime();
-            */
+            //spectra->recalc_elapsed_lifetime();
+            
 
 
             for(size_t s=0; s<count_row[2]; s++) // num samples
@@ -1426,6 +1428,8 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2073,7 +2077,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     hid_t    dset_id, spec_grp_id, int_spec_grp_id, dataspace_id, memoryspace_id, memoryspace_time_id, dataspace_time_id, file_time_id, filespace_id, status, maps_grp_id, dcpl_id;
     hid_t   dset_rt_id, dset_lt_id, incnt_dset_id, outcnt_dset_id;
-    herr_t   error;
+    //herr_t   error;
 
     hsize_t chunk_dims[3];
     hsize_t dims_out[3];
@@ -2093,7 +2097,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     }
 
     //get one element
-    data_struct::xrf::Fit_Element_Map* element;
+    //data_struct::xrf::Fit_Element_Map* element;
 
     //H5T_FLOAT
     dims_out[0] = spectra_volume->samples_size();
@@ -2361,7 +2365,7 @@ bool HDF5_IO::save_element_fits(std::string path,
     hid_t   filetype, memtype, status;
     hid_t   dcpl_id;
     hid_t   xrf_grp_id, fit_grp_id, maps_grp_id;
-    herr_t   error;
+    //herr_t   error;
 
     //hid_t q_dataspace_id, q_dataspace_ch_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_dset_ch_id, q_grp_id, q_fit_grp_id;
 
@@ -2561,7 +2565,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
 
     hid_t    dset_id, memoryspace_id, filespace_id, dataspace_id, filetype, dataspace_ch_id, memtype,  dset_ch_id, q_int_spec_grp_id;
     hid_t   memtype_label, filetype_label, q_memoryspace_label_id, q_dataspace_label_id;
-    herr_t   error;
+    //herr_t   error;
 
     hid_t q_dataspace_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_grp_id, q_fit_grp_id, maps_grp_id, status, scalers_grp_id, xrf_fits_grp_id;
     hid_t dset_labels_id;
@@ -2861,7 +2865,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
                 real_t val = element_counts.at(el_name);
 
                 H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                char tmp_char[255] = {0};
+                std::memset(&tmp_char[0], 0, 255);
                 el_name.copy(tmp_char, 254);
                 status = H5Dwrite (dset_ch_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)tmp_char);
                 status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&val);
@@ -3908,7 +3912,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     {
                         for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
                         {
-							real_t val = mda_scalers->scan->detectors_data[itr.mda_idx][i];
+							val = mda_scalers->scan->detectors_data[itr.mda_idx][i];
                             if(itr.normalize_by_time && mda_time_scaler_idx > -1)
                             {
                                 real_t scaler_time_normalizer = 1.0;
@@ -3925,7 +3929,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         {
                             for (int32_t j = 0; j < mda_scalers->scan->sub_scans[0]->last_point; j++)
                             {
-								real_t val = mda_scalers->scan->sub_scans[i]->detectors_data[itr.mda_idx][j];
+								val = mda_scalers->scan->sub_scans[i]->detectors_data[itr.mda_idx][j];
                                 if(itr.normalize_by_time && mda_time_scaler_idx > -1)
                                 {
                                     real_t scaler_time_normalizer = 1.0;
@@ -4481,8 +4485,8 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     char* detector_names[256];
     int det_rank;
     hsize_t* det_dims_in;
-    hsize_t n_offset[1] = {0};
-    hsize_t n_count[1] = {1};
+    //hsize_t n_offset[1] = {0};
+    //hsize_t n_count[1] = {1};
     hsize_t x_offset[3] = {0,0,0};
     hsize_t x_count[3] = {1,1,1};
     hsize_t y_offset[2] = {0,0};
@@ -4597,7 +4601,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     if(error == 0)
     {
         dataspace_id = H5Screate_simple (1, &det_dims_in[2], NULL);
-        hid_t dataset_id = H5Dcreate(scalers_grp_id, "Names", type, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dataset_id = H5Dcreate(scalers_grp_id, "Names", type, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         status = H5Dwrite (dataset_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, detector_names);
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
@@ -4748,7 +4752,8 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
 {
     std::vector<hid_t> analysis_ids;
-    hid_t error, status;
+	hid_t error;
+	//hid_t status;
 
 //    status = H5Ocopy(src_fit_grp_id, dataset_name.c_str(), dst_fit_grp_id, dataset_name.c_str(), ocpypl_id, H5P_DEFAULT);
 

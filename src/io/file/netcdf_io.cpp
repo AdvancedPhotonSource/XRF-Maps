@@ -134,21 +134,21 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
 
-    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) )
+    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         return false;
     }
 
 
-    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) )
+    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
         return false;
     }
 
-    if( retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) )
+    if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
@@ -157,28 +157,20 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     for (int i=0; i <  rh_ndims; i++)
     {
-        if( retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) )
+        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
         {
             logit<<"Error: "<< nc_strerror(retval)<<std::endl;
             nc_close(ncid);
             return false;
         }
     }
-#ifdef _REAL_DOUBLE
-    if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+
+    if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
         return false;
     }
-#else
-    if( retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]) )
-    {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
-        nc_close(ncid);
-        return false;
-    }
-#endif
 
     if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
     {
@@ -205,21 +197,13 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         count[2] = header_size;
         //read header
-#ifdef _REAL_DOUBLE
-        if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logit<<"Error: "<< nc_strerror(retval)<<std::endl;
             nc_close(ncid);
             return false;
         }
-#else
-        if( retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]) )
-        {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
-            nc_close(ncid);
-            return false;
-        }
-#endif
+
         header_size = data_in[0][0][2];
 
         unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)];
@@ -268,21 +252,14 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         start[2] += header_size + (spectra_size * detector);
         count[2] = spectra_size;
-#ifdef _REAL_DOUBLE
-        if( retval = nc_get_vars_double(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+
+        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logit<<"Error: "<< nc_strerror(retval)<<std::endl;
             nc_close(ncid);
             return false;
         }
-#else
-        if( retval = nc_get_vars_float(ncid, varid, start, count, stride, &data_in[0][0][0]) )
-        {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
-            nc_close(ncid);
-            return false;
-        }
-#endif
+
         for(size_t k=0; k<spectra_size; k++)
         {
             (*spec_line)[j][k] = data_in[0][0][k];
@@ -305,6 +282,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         return false;
     }
 
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -349,20 +327,20 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         return false;
     }
 
-    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) )
+    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0 )
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         return false;
     }
 
-    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) )
+    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
         return false;
     }
 
-    if( retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) )
+    if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
@@ -371,7 +349,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
     for (int i=0; i <  rh_ndims; i++)
     {
-        if( retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) )
+        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
         {
             logit<<"Error: "<< nc_strerror(retval)<<std::endl;
             nc_close(ncid);
@@ -381,7 +359,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
     //read in last col sector to get total number of cols
     start[0] = dim2size[0] - 1;
-    if( retval = _read_data(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+    if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         nc_close(ncid);
@@ -399,7 +377,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         start[2] = 0;
         count[2] = header_size;
         //read header
-        if( retval = _read_data(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logit<<"Error: "<< nc_strerror(retval)<<std::endl;
             nc_close(ncid);
@@ -427,7 +405,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         for(size_t j=0; j<num_cols; j++)
         {
             //read sub header and spectra data
-            if( retval = _read_data(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+            if( retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) )
             {
                 logit<<"Error: "<< nc_strerror(retval)<<std::endl;
                 nc_close(ncid);
@@ -506,7 +484,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         }
     }
 
-    if ((retval = nc_close(ncid)))
+    if((retval = nc_close(ncid)) != 0)
     {
         logit<<"Error: "<< nc_strerror(retval)<<std::endl;
         return false;
@@ -517,16 +495,6 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 }
 
 //-----------------------------------------------------------------------------
-
-int NetCDF_IO::_read_data(int ncid, int varid, size_t *start, size_t* count, ptrdiff_t *stride, real_t* data_in)
-{
-#ifdef _REAL_DOUBLE
-        return nc_get_vars_double(ncid, varid, start, count, stride, data_in);
-
-#else
-        return nc_get_vars_float(ncid, varid, start, count, stride, data_in);
-#endif
-}
 
 } //end namespace file
 }// end namespace io

@@ -257,7 +257,7 @@ void Element_Info::get_energies_between(real_t energy, real_t* out_low, real_t* 
     }
 }
 
-real_t Element_Info::calc_beta(real_t density, real_t energy)
+real_t Element_Info::calc_beta(real_t density_val, real_t energy)
 {
     real_t beta = 0.0;
     real_t molecules_per_cc = 0.0;
@@ -268,7 +268,7 @@ real_t Element_Info::calc_beta(real_t density, real_t energy)
     ////z = wo+1
     if (atwt != 0.0)
     {
-        molecules_per_cc = density * AVOGADRO / atwt;
+        molecules_per_cc = density_val * AVOGADRO / atwt;
     }
 
     real_t wavelength_angstroms = HC_ANGSTROMS / energy;

@@ -307,7 +307,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
     std::valarray<real_t> energy((real_t)0.0, energy_range.count());
     //std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
-    real_t e_val = energy_range.min;
+    real_t e_val = static_cast<real_t>(energy_range.min);
     for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
     {
         energy[i] = e_val;

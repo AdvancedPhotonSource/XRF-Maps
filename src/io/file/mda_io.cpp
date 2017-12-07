@@ -155,7 +155,8 @@ bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
     }
 
     //dset->alloc(_mda_file->header->data_rank, _mda_file->header->dimensions);
-    for(unsigned int j = 0; j < _mda_file->header->data_rank; j++)
+	int data_rank = static_cast<int>(_mda_file->header->data_rank);
+    for(int j = 0; j < data_rank; j++)
     {
 
     }

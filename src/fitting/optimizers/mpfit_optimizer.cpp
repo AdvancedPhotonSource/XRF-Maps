@@ -500,7 +500,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = result.nfev;
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
     }
 
 }

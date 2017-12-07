@@ -112,7 +112,7 @@ std::unordered_map<std::string, Element_Quant> Quantification_Model::generate_qu
 std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incident_energy,
                                                                    Element_Info* detector_element,
                                                                    Electron_Shell shell,
-                                                                   bool airpath,
+                                                                   real_t airpath,
                                                                    real_t detector_chip_thickness,
                                                                    real_t beryllium_window_thickness,
                                                                    real_t germanium_dead_layer,
@@ -145,7 +145,7 @@ std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incid
 Element_Quant Quantification_Model::generate_element_quant(real_t incident_energy,
                                                               Element_Info* detector_element,
                                                               Electron_Shell shell,
-                                                              bool airpath,
+                                                              real_t airpath,
                                                               real_t detector_chip_thickness,
                                                               real_t beryllium_window_thickness,
                                                               real_t germanium_dead_layer,
@@ -198,7 +198,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         total_jump_factor = element_info->jump.at("M1") * element_info->jump.at("M2") * element_info->jump.at("M3") * element_info->jump.at("M4");
         break;
     default:
-        logit<<"Unsupported shell. Currently only support for K, L, and M "<<std::endl;
+        throw "Unsupported shell. Currently only support for K, L, and M ";
         break;
     }
 

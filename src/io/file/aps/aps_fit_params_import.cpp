@@ -448,7 +448,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_num = std::stod(value);
+                    params_override->us_amp_sens_num = str_to_real(value);
                 }
                 else if (tag == "US_AMP_SENS_UNIT")
                 {
@@ -457,7 +457,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_unit = std::stod(value);
+                    params_override->us_amp_sens_unit = str_to_real(value);
                 }
                 else if (tag == "DS_AMP_SENS_NUM")
                 {
@@ -466,7 +466,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_num = std::stod(value);
+                    params_override->ds_amp_sens_num = str_to_real(value);
                 }
                 else if (tag == "DS_AMP_SENS_UNIT")
                 {
@@ -475,7 +475,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_unit = std::stod(value);
+                    params_override->ds_amp_sens_unit = str_to_real(value);
                 }
                 else if (tag == "BE_WINDOW_THICKNESS")
                 {

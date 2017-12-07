@@ -92,14 +92,14 @@ namespace io
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT struct file_name_size
+struct DLL_EXPORT file_name_size
 {
     file_name_size(std::string name, int size) { filename = name; total_rank_size = size;}
     std::string filename;
     int total_rank_size;
 };
 
-DLL_EXPORT struct file_name_fit_params
+struct DLL_EXPORT file_name_fit_params
 {
     std::string dataset_dir;
     std::string dataset_filename;

@@ -74,8 +74,6 @@ namespace optimizers
 		std::vector<real_t> fitp_arr = fit_params->to_array();
 		std::vector<real_t> perror(fitp_arr.size());
 
-		int info;
-
 		ud.weights.resize(spectra->size());
 		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
 		ud.weights = convolve1d(ud.weights, 5);

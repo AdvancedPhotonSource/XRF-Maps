@@ -189,7 +189,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
     valarray<real_t> energy(start_val, energy_range.count());
-    real_t e_val = energy_range.min;
+    real_t e_val = static_cast<real_t>(energy_range.min);
     for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
     {
         energy[i] = e_val;
@@ -198,7 +198,6 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 
     valarray<real_t> ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
-    int i = 0;
     for(const auto& itr : (*elements_to_fit))
     {
         Fit_Element_Map* element = itr.second;

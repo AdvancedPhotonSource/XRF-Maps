@@ -501,9 +501,9 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                                                                                               &integrated_spectra,
                                                                                               &elements_to_fit);
 
-                for (auto& itr : elements_to_fit)
+                for (auto& itr2 : elements_to_fit)
                 {
-                    counts_dict[itr.first] /= integrated_spectra.elapsed_lifetime();
+                    counts_dict[itr2.first] /= integrated_spectra.elapsed_lifetime();
                 }
                 quantification_standard->integrated_spectra(integrated_spectra);
 
@@ -521,9 +521,9 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
             }
 
             //cleanup
-            for(auto &itr : elements_to_fit)
+            for(auto &itr3 : elements_to_fit)
             {
-                delete itr.second;
+                delete itr3.second;
             }
 
         }

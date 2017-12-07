@@ -158,8 +158,6 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 
-    int info;
-
     lm_status_struct<real_t> status;
 
     /* Predefined control parameter sets (msgfile=NULL means stdout).
@@ -223,7 +221,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
 
 }
@@ -241,8 +239,6 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
-
-    int info;
 
     lm_status_struct<real_t> status;
 
@@ -273,8 +269,6 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 
-    int info;
-
     lm_status_struct<real_t> status;
 
     lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
@@ -285,7 +279,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
+        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
 }
 
