@@ -146,15 +146,7 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     {
         if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < arr_size)
         {
-            //logit_s<<" [ "<<_params[itr.first].value<<" : "<<arr[itr.second.opt_array_index]<< " ]  ";
-            //logit_s<<" [ "<<_params[itr.first].value - arr[itr.second.opt_array_index]<< " ]  ";
-			if (itr.second.value != arr[itr.second.opt_array_index])
-			{
-				logit << "changed " << itr.second.name << " from " << itr.second.value << " to " << arr[itr.second.opt_array_index] << std::endl;
-			}
             itr.second.value = arr[itr.second.opt_array_index];
-            //_params[itr.first].value = arr[itr.second.opt_array_index];
-
         }
     }
     //logit_s<<std::endl;

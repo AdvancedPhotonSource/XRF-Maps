@@ -52,7 +52,6 @@
 #include <string.h>
 
 #include "support/lmfit_6.1/lmmin.hpp"
-#include "visual/vtk_graph.h"
 
 using namespace data_struct::xrf;
 
