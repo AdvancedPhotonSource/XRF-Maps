@@ -53,7 +53,6 @@
 
 #include "support/lmfit_6.1/lmmin.hpp"
 
-
 using namespace data_struct::xrf;
 
 
@@ -65,7 +64,6 @@ namespace optimizers
 
 void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
-
     User_Data* ud = (User_Data*)(data);
 
     //Update fit parameters from optimizer
@@ -76,7 +74,7 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     //Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+		fvec[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
     }
 
 }
@@ -208,7 +206,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     /* perform the fit */
     //printf( "Fitting:\n" );
-    lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, residuals_lmfit, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
 	printf(".");
     /* print results */
     //printf( "\nResults:\n" );
@@ -245,7 +243,7 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
 
-    lmmin( fitp_arr.size(), &fitp_arr[0], spectra->size(), (const void*) &ud, general_residuals_lmfit, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &control, &status );
     printf(".");
     fit_params->from_array(fitp_arr);
 

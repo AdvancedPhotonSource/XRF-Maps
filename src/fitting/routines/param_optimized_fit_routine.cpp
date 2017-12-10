@@ -103,7 +103,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
             {
-                data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
+                data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.1, data_struct::xrf::E_Bound_Type::FIT);
                 (*fit_params)[el_itr.first] = fp;
             }
             if(spectra != nullptr  && energies.size() > 0)

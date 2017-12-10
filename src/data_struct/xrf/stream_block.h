@@ -106,7 +106,7 @@ public:
 
     inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
 
-    //by Processing_Type
+    //by Fitting_Routines
     std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
 
     size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}

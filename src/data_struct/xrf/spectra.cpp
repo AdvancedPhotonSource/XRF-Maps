@@ -59,14 +59,14 @@ namespace xrf
 {
 
 template<typename T>
-std::vector<T> conv_valid(std::vector<T> const &f, std::vector<T> const &g)
+std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g)
 {
 	size_t const nf = f.size();
 	size_t const ng = g.size();
-	std::vector<T> const &min_v = (nf < ng)? f : g;
-	std::vector<T> const &max_v = (nf < ng)? g : f;
+	std::valarray<T> const &min_v = (nf < ng)? f : g;
+	std::valarray<T> const &max_v = (nf < ng)? g : f;
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
-	std::vector<T> out(n, T());
+	std::valarray<T> out(0.0, n);
 	for(auto i(0); i < n; ++i)
 	{
         for(int j(min_v.size() - 1), k(i); j >= 0; --j)
@@ -103,12 +103,12 @@ std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_
             ++k;
         }
     }
-    for(size_t i=0; i< arr.size(); i++)
+	real_t norm = 1 / real_t(boxcar.size());
+	int j = min_v.size() / 2;
+    for(size_t i=0; i< n; i++)
     {
-        if( out[i] != (real_t)0.0)
-        {
-            new_background[i] = out[i] / real_t(boxcar.size());
-        }
+        new_background[j] = out[i] * norm;
+		j++;
     }
 
 

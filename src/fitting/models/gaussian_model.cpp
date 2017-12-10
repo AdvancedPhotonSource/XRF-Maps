@@ -302,8 +302,6 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 {
 
     Spectra agr_spectra(energy_range.count());
-    Spectra spectra_model;
-
 
     std::valarray<real_t> energy((real_t)0.0, energy_range.count());
     //std::valarray<real_t> background_counts((real_t)0.0, energy_range.count());
@@ -319,8 +317,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-        spectra_model = model_spectrum_element(fit_params, itr.second, ev, energy);
-        agr_spectra += spectra_model;
+		agr_spectra += model_spectrum_element(fit_params, itr.second, ev, energy);
     }
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
@@ -388,7 +385,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const std::valarray<real_t> &ev, std::valarray<real_t> energy)
 {
     Spectra spectra_model(energy.size());
-    std::valarray<real_t> peak_counts(0.0, energy.size());
+    //std::valarray<real_t> peak_counts(0.0, energy.size());
 
     //real_t gain = detector->energy_slope();
     //std::valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
