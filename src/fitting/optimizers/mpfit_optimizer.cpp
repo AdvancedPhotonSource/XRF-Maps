@@ -56,8 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "support/cmpfit-1.3a/mpfit.hpp"
 #include <string.h>
 
-#include "visual/vtk_graph.h"
-
 using namespace data_struct::xrf;
 
 
@@ -68,7 +66,6 @@ namespace optimizers
 
 int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
-	static int iteration = 0;
     //Get user passed data
     User_Data* ud = static_cast<User_Data*>(usr_data);
 
@@ -82,14 +79,9 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-        dy[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+		dy[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
     }
 	
-	std::string str_path = "c:/temp/fit_" + std::to_string(iteration) + ".png";
-	visual::SavePlotSpectras(str_path, *(ud->spectra), ud->spectra_model, true);
-	//visual::PlotSpectras(*(ud->spectra), ud->spectra_model, true);
-	iteration++;
-
 	return 0;
 }
 
@@ -273,7 +265,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 	//struct mp_par<real_t> * par2 = nullptr;
     //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], par2, config2, (void *) &ud, &result);
 
-    info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
 
     logit_s<<"*";
 
@@ -456,14 +448,10 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, 0, (void *) &ud, &result);
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, &mp_config, (void *) &ud, &result);
-
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], 0, (void *) &ud, &result);
 
     struct mp_par<real_t> *mp_par = nullptr;
 
-    info = mpfit(gen_residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
+    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
     logit_s<<"*";
 
 

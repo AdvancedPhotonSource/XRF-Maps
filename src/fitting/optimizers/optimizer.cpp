@@ -64,25 +64,22 @@ namespace optimizers
 	{
 		ud.fit_model = (Base_Model*)model;
 		// set spectra to fit
-		ud.spectra = (Spectra*)spectra;
+		ud.spectra = spectra->sub_spectra(energy_range);
 		ud.fit_parameters = fit_params;
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
-        //ud.energy_range.min = energy_range.min;
-        //ud.energy_range.max = energy_range.max;
-		ud.energy_range.min = 0;
-		ud.energy_range.max = 2047;
-
+        ud.energy_range.min = energy_range.min;
+        ud.energy_range.max = energy_range.max;
 
 		std::vector<real_t> fitp_arr = fit_params->to_array();
 		std::vector<real_t> perror(fitp_arr.size());
 
 		int info;
 
-		ud.weights.resize(spectra->size());
-		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
-		ud.weights = convolve1d(ud.weights, 5);
-		ud.weights = std::abs(ud.weights);
-		ud.weights /= ud.weights.max();
+		std::valarray<real_t> weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+		weights = convolve1d(weights, 5);
+		weights = std::abs(weights);
+		weights /= weights.max();
+		ud.weights = weights[std::slice(energy_range.min, energy_range.count(), 1)];
 
         std::valarray<real_t> background((real_t)0.0, spectra->size());
         if(fit_params->contains(STR_FIT_SNIP_WIDTH))
@@ -101,7 +98,7 @@ namespace optimizers
                                              energy_range.max);
             }
         }
-        ud.spectra_background = background;
+        ud.spectra_background = background[std::slice(energy_range.min, energy_range.count(), 1)];
 
 		ud.spectra_model.resize(spectra->size());
 	}

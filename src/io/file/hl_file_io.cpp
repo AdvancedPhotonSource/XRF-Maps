@@ -263,7 +263,26 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     energy_range.min = 0;
     energy_range.max = file_and_fit_params.spectra.size() -1;
 
+	std::valarray<real_t> background(0.0, file_and_fit_params.spectra.size());
+	if (file_and_fit_params.fit_params.contains(data_struct::xrf::STR_FIT_SNIP_WIDTH))
+	{
+		data_struct::xrf::Fit_Param fit_snip_width = file_and_fit_params.fit_params[data_struct::xrf::STR_FIT_SNIP_WIDTH];
+		if (fit_snip_width.value > 0.0)
+		{
+			real_t spectral_binning = 0.0;
+			background = data_struct::xrf::snip_background(&file_and_fit_params.spectra,
+				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
+				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_SLOPE].value,
+				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_QUADRATIC].value,
+				spectral_binning,
+				file_and_fit_params.fit_params[data_struct::xrf::STR_SNIP_WIDTH].value,
+				energy_range.min,
+				energy_range.max);
+		}
+	}
+
     data_struct::xrf::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
+	model_spectra += background;
     std::string str_path = file_and_fit_params.dataset_dir+"/output/fit_"+file_and_fit_params.dataset_filename+"_det"+std::to_string(file_and_fit_params.detector_num)+".png";
     visual::SavePlotSpectras(str_path, file_and_fit_params.spectra, model_spectra, true);
 #endif

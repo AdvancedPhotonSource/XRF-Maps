@@ -78,7 +78,7 @@ typedef std::function<void(const Fit_Parameters * const, const Range * const, Sp
 struct User_Data
 {
     Base_Model* fit_model;
-    Spectra *spectra;
+    Spectra spectra;
     std::valarray<real_t> weights;
     Fit_Parameters *fit_parameters;
     std::valarray<real_t> spectra_background;

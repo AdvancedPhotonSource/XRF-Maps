@@ -24,6 +24,7 @@ freely, subject to the following restrictions:
 ***/
 
 #include "vtk_graph.h"
+#include <algorithm>
 
 namespace visual
 {
