@@ -67,9 +67,11 @@ namespace optimizers
 		ud.spectra = (Spectra*)spectra;
 		ud.fit_parameters = fit_params;
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
-        ud.energy_range.min = energy_range.min;
-        ud.energy_range.max = energy_range.max;
-		
+        //ud.energy_range.min = energy_range.min;
+        //ud.energy_range.max = energy_range.max;
+		ud.energy_range.min = 0;
+		ud.energy_range.max = 2047;
+
 
 		std::vector<real_t> fitp_arr = fit_params->to_array();
 		std::vector<real_t> perror(fitp_arr.size());

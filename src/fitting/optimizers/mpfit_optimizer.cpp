@@ -56,6 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "support/cmpfit-1.3a/mpfit.hpp"
 #include <string.h>
 
+#include "visual/vtk_graph.h"
+
 using namespace data_struct::xrf;
 
 
@@ -66,6 +68,7 @@ namespace optimizers
 
 int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
+	static int iteration = 0;
     //Get user passed data
     User_Data* ud = static_cast<User_Data*>(usr_data);
 
@@ -81,6 +84,11 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     {
         dy[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
+	
+	std::string str_path = "c:/temp/fit_" + std::to_string(iteration) + ".png";
+	visual::SavePlotSpectras(str_path, *(ud->spectra), ud->spectra_model, true);
+	//visual::PlotSpectras(*(ud->spectra), ud->spectra_model, true);
+	iteration++;
 
 	return 0;
 }
@@ -137,38 +145,39 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     int info;
 
     /////// init config ////////////
-    struct mp_config<real_t> mp_config;
-    mp_config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-    mp_config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    mp_config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
-    mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
-    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    //mp_config.maxiter = MP_NO_ITER;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
-    mp_config.maxiter = 2000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    struct mp_config<real_t> config;
+    config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
+	//config.epsfcn = 1.0;  
+    config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
+    config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    //config.maxiter = MP_NO_ITER;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = 200;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
                                     //    Default: 200
 
-    //mp_config.maxfev = 0;
-    mp_config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
+    config.maxfev = 0;
+    //config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
                                        // Default: 0 (no limit)
-    mp_config.nprint = 0;           // Default: 1
-    mp_config.douserscale = 0;      // Scale variables by user values?
+    config.nprint = 0;           // Default: 1
+    config.douserscale = 0;      // Scale variables by user values?
                                     //    1 = yes, user scale values in diag;
                                     //    0 = no, variables scaled internally (Default)
-    mp_config.nofinitecheck = 1;    // Disable check for infinite quantities from user?
+    config.nofinitecheck = 0;    // Disable check for infinite quantities from user?
                                     //    0 = do not perform check (Default)
                                     //    1 = perform check
 
-    mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
+    config.iterproc = 0;         // Placeholder pointer - must set to 0
 
 
     /////////////// init params limits /////////////////////////
-	std::vector<struct mp_par<real_t> > mp_par;
-	mp_par.resize(fitp_arr.size());
-    //struct mp_par<real_t> *mp_par = new struct mp_par<real_t>[fitp_arr.size()];
+	std::vector<struct mp_par<real_t> > par;
+	par.resize(fitp_arr.size());
+    //struct mp_par<real_t> *par = new struct mp_par<real_t>[fitp_arr.size()];
 
     for(auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
     {
@@ -200,46 +209,46 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
             }
 
 
-            mp_par[fit.opt_array_index].fixed = 0;              // 1 = fixed; 0 = free
+            par[fit.opt_array_index].fixed = 0;              // 1 = fixed; 0 = free
             switch (fit.bound_type)
             {
             case E_Bound_Type::LIMITED_HI:
-                mp_par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 1;
-                mp_par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = fit.max_val;
+                par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
+                par[fit.opt_array_index].limited[1] = 1;
+                par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
+                par[fit.opt_array_index].limits[1] = fit.max_val;
                 break;
             case E_Bound_Type::LIMITED_LO:
-                mp_par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 0;
-                mp_par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+                par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
+                par[fit.opt_array_index].limited[1] = 0;
+                par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
+                par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
                 break;
             case E_Bound_Type::LIMITED_LO_HI:
-                mp_par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 1;
-                mp_par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = fit.max_val;
+                par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
+                par[fit.opt_array_index].limited[1] = 1;
+                par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
+                par[fit.opt_array_index].limits[1] = fit.max_val;
                 break;
             default:
-                mp_par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 0;
-                mp_par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+                par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
+                par[fit.opt_array_index].limited[1] = 0;
+                par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
+                par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
                 break;
             }
 
-            mp_par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
-            mp_par[fit.opt_array_index].parname = 0;
-            mp_par[fit.opt_array_index].relstep = fit.step_size;   // Relative step size for finite difference
-            mp_par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative
+			par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
+            par[fit.opt_array_index].parname = 0;
+			par[fit.opt_array_index].relstep = fit.step_size * 0.1;   // Relative step size for finite difference
+            par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative
                      //     0 - one-sided derivative computed automatically
                      //     1 - one-sided derivative (f(x+h) - f(x)  )/h
                      //    -1 - one-sided derivative (f(x)   - f(x-h))/h
                      //     2 - two-sided derivative (f(x+h) - f(x-h))/(2*h)
                      // 3 - user-computed analytical derivatives
 
-            mp_par[fit.opt_array_index].deriv_debug = 0;  // Derivative debug mode: 1 = Yes; 0 = No;
+            par[fit.opt_array_index].deriv_debug = 0;  // Derivative debug mode: 1 = Yes; 0 = No;
 
                            //      If yes, compute both analytical and numerical
                            //      derivatives and print them to the console for
@@ -250,8 +259,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                        //  you want to compare the user-analytical one to
                        //  (0, 1, -1, or 2).
 
-            mp_par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
-            mp_par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
+            par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
+            par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
         }
     }
 
@@ -260,13 +269,11 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, 0, (void *) &ud, &result);
+	//struct mp_config<real_t> *config2 = nullptr;
+	//struct mp_par<real_t> * par2 = nullptr;
+    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], par2, config2, (void *) &ud, &result);
 
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], 0, &mp_config, (void *) &ud, &result);
-
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], 0, (void *) &ud, &result);
-
-    info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &mp_par[0], &mp_config, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit, spectra->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
 
     logit_s<<"*";
 

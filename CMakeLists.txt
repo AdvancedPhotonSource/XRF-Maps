@@ -228,6 +228,7 @@ set(libxrf_fit_HEADERS
 )
 
 set(libxrf_fit_SOURCE
+ ${VISUAL_INC}
     src/data_struct/xrf/quantification_standard.cpp
     src/data_struct/xrf/element_info.cpp
     src/data_struct/xrf/fit_parameters.cpp
@@ -428,6 +429,10 @@ target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf
 target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 IF (BUILD_WITH_VTK)
+
+  target_link_libraries (libxrf_fit LINK_PUBLIC optimized ${VTK_LIBRARIES} )
+  target_link_libraries (libxrf_fit LINK_PUBLIC debug ${VTK_LIBRARIES} )
+
   target_link_libraries (libxrf_io LINK_PUBLIC optimized ${VTK_LIBRARIES} )
   target_link_libraries (libxrf_io LINK_PUBLIC debug ${VTK_LIBRARIES} )
 
