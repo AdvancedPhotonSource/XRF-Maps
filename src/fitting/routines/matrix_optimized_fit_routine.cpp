@@ -111,22 +111,6 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
     }
 */
 
-#ifdef WIN32
-	//TODO: test this on linux to see if it give a perf gain also
-	for (const auto& itr : _element_models)
-	{
-		if (fit_params->contains(itr.first))
-		{
-			Fit_Param param = fit_params->at(itr.first);
-			const real_t val = pow((real_t)10.0, param.value);
-			for (int i = 0; i < spectra_model->size(); i++)
-			{
-				(*spectra_model)[i] += val * itr.second[i];
-			}
-		}
-	}
-
-#else
 
     for(const auto& itr : _element_models)
     {
@@ -136,8 +120,6 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
             (*spectra_model) += pow((real_t)10.0, param.value) * itr.second;
         }
     }
-#endif
-
 
 
     /*
