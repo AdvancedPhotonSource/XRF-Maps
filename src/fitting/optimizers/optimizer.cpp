@@ -75,13 +75,13 @@ namespace optimizers
 
 		int info;
 
-		std::valarray<real_t> weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+		ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
 		weights = convolve1d(weights, 5);
-		weights = std::abs(weights);
-		weights /= weights.max();
-		ud.weights = weights[std::slice(energy_range.min, energy_range.count(), 1)];
+		weights = Eigen::abs(weights);
+		weights /= weights.maxCoeff();
+		ud.weights = weights.segment(energy_range.min, energy_range.count());
 
-        std::valarray<real_t> background((real_t)0.0, spectra->size());
+        ArrayXr background(spectra->size());
         if(fit_params->contains(STR_FIT_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);
@@ -98,7 +98,7 @@ namespace optimizers
                                              energy_range.max);
             }
         }
-        ud.spectra_background = background[std::slice(energy_range.min, energy_range.count(), 1)];
+        ud.spectra_background = background.segment(energy_range.min, energy_range.count());
 
 		ud.spectra_model.resize(spectra->size());
 	}
@@ -119,10 +119,10 @@ namespace optimizers
 		ud.weights.resize(spectra->size());
 		ud.weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
 		ud.weights = convolve1d(ud.weights, 5);
-		ud.weights = std::abs(ud.weights);
-		ud.weights /= ud.weights.max();
+		ud.weights = Eigen::abs(ud.weights);
+		ud.weights /= ud.weights.maxCoeff();
 
-        std::valarray<real_t> background((real_t)0.0, spectra->size());
+        ArrayXr background(spectra->size());
         if(fit_params->contains(STR_FIT_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);

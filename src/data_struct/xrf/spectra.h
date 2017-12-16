@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPECTRA_H
 
 #include "core/defines.h"
-#include <valarray>
+#include <Eigen/Core>
 #include <vector>
 
 namespace data_struct
@@ -73,14 +73,16 @@ struct Range
     int max;
 };
 
+typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
+
 template<typename _T>
-class Spectra_T : public valarray< _T >
+class Spectra_T : public Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>
 {
 public:
     /**
      * @brief Spectra : Constructor
      */
-    Spectra_T() : valarray<_T>()
+    Spectra_T() : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>()
 	{
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -88,15 +90,16 @@ public:
 		_output_counts = 1.0;
 	}
 
-    Spectra_T(size_t sample_size) : valarray<_T>(0.0, sample_size)
+    Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
 	{
+		*this << Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>::Zero(sample_size);
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
 		_input_counts = 1.0;
 		_output_counts = 1.0;
 	}
 
-    Spectra_T(const valarray< _T >& arr) : valarray<_T>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_lifetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -104,7 +107,7 @@ public:
         _output_counts = 1.0;
     }
 
-    Spectra_T(valarray<_T>&& arr) : valarray<_T>(arr)
+    Spectra_T(Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_lifetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -112,16 +115,9 @@ public:
         _output_counts = 1.0;
     }
 
-//    Spectra_T operator[]( std::slice slicearr ) const
-//    {
-//        return ((valarray<_T>)*this)[slicearr];
-//    }
-
-    //std::slice_array<T>    operator[]( std::slice slicearr );
-
-
-    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : valarray<_T>(0.0, sample_size)
+    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
     {
+		*this << Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>::Zero(sample_size);
         _elapsed_lifetime = elt;
         _elapsed_realtime = ert;
         _input_counts = incnt;
@@ -146,7 +142,7 @@ public:
 
     void add(const Spectra_T& spectra)
     {
-        *this += (valarray<_T>)spectra;
+        *this += (Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>)spectra;
         _elapsed_lifetime += spectra.elapsed_lifetime();
         _elapsed_realtime += spectra.elapsed_realtime();
         _input_counts += spectra.input_counts();
@@ -171,14 +167,15 @@ public:
 
     Spectra_T sub_spectra(Range range) const
 	{
-        //Spectra_T ret_spec = ((valarray<_T>)*this)[std::slice(range.min, range.count(), 1)];
-        valarray<_T> ret_spec = ((valarray<_T>)*this)[std::slice(range.min, range.count(), 1)];
+		return this->segment(range.min, range.count());
+		//Eigen::Map<Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> > ret_spec((float*)(this->data())+range.min, range.count());
+		
 //        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
 //        ret_spec.elapsed_realtime(this->_elapsed_realtime);
 //        ret_spec.input_counts(this->_input_counts);
 //        ret_spec.output_counts(this->_output_counts);
 
-        return ret_spec;
+        //return ret_spec;
 	}
 
 private:
@@ -194,9 +191,9 @@ private:
 template DLL_EXPORT class Spectra_T<real_t>;
 typedef Spectra_T<real_t> Spectra;
 
-DLL_EXPORT valarray<real_t> convolve1d(valarray<real_t> arr, size_t boxcar_size);
-DLL_EXPORT valarray<real_t> convolve1d(valarray<real_t> arr, valarray<real_t> boxcar);
-DLL_EXPORT valarray<real_t> snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
+DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, size_t boxcar_size);
+DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, ArrayXr boxcar);
+DLL_EXPORT ArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 
 /**

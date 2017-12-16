@@ -182,13 +182,13 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     //n_pileup = 9
     //valarray<real_t> value(0.0, energy_range.count());
     real_t start_val = (real_t)0.0;
-    valarray<real_t> counts(start_val, energy_range.count());
+    Spectra counts(energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    valarray<real_t> energy(start_val, energy_range.count());
+	Spectra energy(energy_range.count());
     real_t e_val = static_cast<real_t>(energy_range.min);
     for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
     {
@@ -196,7 +196,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         e_val += 1.0;
     }
 
-    valarray<real_t> ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
+	Spectra ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
     for(const auto& itr : (*elements_to_fit))
     {
