@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
         if( clp.option_exists("--stream"))
         {
             //if we are streaming we use 1 thread for loading and 1 for saving
-            analysis_job.num_threads = std::thread::hardware_concurrency() - 2;
+            analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
             analysis_job.stream_over_network = true;
             //analysis_job.theta_pv = "2xfm:m53.VAL";
             analysis_job.theta_pv = clp.get_option("--theta_pv");
@@ -368,11 +368,12 @@ int main(int argc, char *argv[])
         logit<<"Error initializing analysis job"<<std::endl;
     }
 
+    data_struct::xrf::Element_Info_Map::inst()->clear();
+
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     logit << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
 
-    data_struct::xrf::Element_Info_Map::inst()->clear();
 
     return 0;
 }

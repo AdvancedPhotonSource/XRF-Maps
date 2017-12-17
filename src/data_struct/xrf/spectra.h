@@ -183,7 +183,7 @@ public:
 
     Spectra_T sub_spectra(Range range) const
 	{
-		return this->segment(range.min, range.count());
+		return Spectra_T(this->segment(range.min, range.count()));
 //        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
 //        ret_spec.elapsed_realtime(this->_elapsed_realtime);
 //        ret_spec.input_counts(this->_input_counts);

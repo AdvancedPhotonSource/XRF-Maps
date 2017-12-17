@@ -235,7 +235,7 @@ ArrayXr snip_background(const Spectra* const spectra,
 	}
 
 	background = Eigen::exp(Eigen::exp(background) - (real_t)1.0) - (real_t)1.0;
-	background = background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : 0.0; });
+	background = background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 	
 	return background;
 
