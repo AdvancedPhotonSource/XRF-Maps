@@ -309,7 +309,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-		agr_spectra += model_spectrum_element(fit_params, itr.second, ev, energy.size());
+		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
     }
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
@@ -372,9 +372,9 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const ArrayXr &ev, size_t energy_size)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const ArrayXr &ev)
 {
-    Spectra spectra_model(energy_size);
+    Spectra spectra_model(ev.size());
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {

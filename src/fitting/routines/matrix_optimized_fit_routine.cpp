@@ -186,7 +186,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, energy.size());
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev);
     }
 
     //i = elements_to_fit->size();

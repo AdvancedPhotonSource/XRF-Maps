@@ -114,8 +114,7 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const ArrayXr &ev,
-												 size_t energy_size);
+                                                 const ArrayXr &ev);
 
     void set_fit_params_preset(Fit_Params_Preset lock_macro);
 
