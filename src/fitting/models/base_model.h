@@ -114,7 +114,7 @@ public:
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
                                                  const ArrayXr &ev,
-                                                 const ArrayXr &energy) = 0;
+                                                 size_t energy_size) = 0;
 
     virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const = 0;
 

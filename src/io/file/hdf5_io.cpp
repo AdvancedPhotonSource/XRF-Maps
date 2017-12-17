@@ -1756,7 +1756,12 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
             offset_time[1] = col;
             H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-            error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+            //error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+			error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra->data());
+			if (error > 0)
+			{
+				logit << "Warnging: counld not read row " << row << " col " << col << std::endl;
+			}
 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
             H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);

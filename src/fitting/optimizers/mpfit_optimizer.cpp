@@ -100,7 +100,7 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-        dy[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+        dy[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
     return 0;

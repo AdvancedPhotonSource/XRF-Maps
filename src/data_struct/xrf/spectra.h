@@ -90,9 +90,25 @@ public:
 		_output_counts = 1.0;
 	}
 
+	Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(spectra)
+	{
+		_elapsed_lifetime = spectra._elapsed_lifetime;
+		_elapsed_realtime = spectra._elapsed_realtime;
+		_input_counts = spectra._input_counts;
+		_output_counts = spectra._output_counts;
+	}
+	/*
+	Spectra_T(Spectra_T &&spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(std::move(spectra))
+	{
+		//_elapsed_lifetime = spectra._elapsed_lifetime;
+		//_elapsed_realtime = spectra._elapsed_realtime;
+		//_input_counts = spectra._input_counts;
+		//_output_counts = spectra._output_counts;
+	}
+	*/
     Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
 	{
-		*this << Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>::Zero(sample_size);
+		this->setZero();
 		_elapsed_lifetime = 1.0;
 		_elapsed_realtime = 1.0;
 		_input_counts = 1.0;
@@ -107,7 +123,7 @@ public:
         _output_counts = 1.0;
     }
 
-    Spectra_T(Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_lifetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -117,7 +133,7 @@ public:
 
     Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
     {
-		*this << Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>::Zero(sample_size);
+		this->setZero();		
         _elapsed_lifetime = elt;
         _elapsed_realtime = ert;
         _input_counts = incnt;
@@ -168,14 +184,10 @@ public:
     Spectra_T sub_spectra(Range range) const
 	{
 		return this->segment(range.min, range.count());
-		//Eigen::Map<Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> > ret_spec((float*)(this->data())+range.min, range.count());
-		
 //        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
 //        ret_spec.elapsed_realtime(this->_elapsed_realtime);
 //        ret_spec.input_counts(this->_input_counts);
 //        ret_spec.output_counts(this->_output_counts);
-
-        //return ret_spec;
 	}
 
 private:

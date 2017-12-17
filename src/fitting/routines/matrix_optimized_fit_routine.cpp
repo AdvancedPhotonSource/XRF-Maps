@@ -80,7 +80,7 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
 												  Spectra* spectra_model)
 {
     //Spectra spectra_model(energy_range->count());
-    (*spectra_model) *= (real_t)0.0;
+	spectra_model->setZero();
 
 //    valarray<real_t> energy((real_t)0.0, energy_range.count());
 //    real_t e_val = energy_range.min;
@@ -117,10 +117,9 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
         if(fit_params->contains(itr.first))
         {
             Fit_Param param = fit_params->at(itr.first);
-            (*spectra_model) += pow((real_t)10.0, param.value) * itr.second;
+            (*spectra_model) += (pow((real_t)10.0, param.value) * itr.second);
         }
     }
-
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
@@ -164,21 +163,15 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     //n_pileup = 9
     //valarray<real_t> value(0.0, energy_range.count());
     real_t start_val = (real_t)0.0;
-    Spectra counts(energy_range.count());
+    //Spectra counts(energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-	Spectra energy(energy_range.count());
-    real_t e_val = static_cast<real_t>(energy_range.min);
-    for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
-    {
-        energy[i] = e_val;
-        e_val += 1.0;
-    }
+	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
 
-	Spectra ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
+	ArrayXr ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
     for(const auto& itr : (*elements_to_fit))
     {
@@ -193,7 +186,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, energy);
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, energy.size());
     }
 
     //i = elements_to_fit->size();
@@ -270,9 +263,9 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
     if(_optimizer != nullptr)
     {
-        Spectra sub_spectra = spectra->sub_spectra(_energy_range);
+        //Spectra sub_spectra = spectra->sub_spectra(_energy_range);
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        _optimizer->minimize_func(&fit_params, &sub_spectra, _energy_range, gen_func);
+        _optimizer->minimize_func(&fit_params, spectra, _energy_range, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {

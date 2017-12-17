@@ -303,27 +303,17 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
     Spectra agr_spectra(energy_range.count());
 
-	ArrayXr energy(energy_range.count());
-    //Spectra background_counts((real_t)0.0, energy_range.count());
-    real_t e_val = static_cast<real_t>(energy_range.min);
-    for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
-    {
-        energy[i] = e_val;
-        e_val += 1.0;
-    }
-	
-	ArrayXr ev = (energy.array() + fit_params->at(STR_ENERGY_OFFSET).value) * (fit_params->at(STR_ENERGY_SLOPE).value + energy.pow((real_t)2.0)) * fit_params->at(STR_ENERGY_QUADRATIC).value;
+	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+	ArrayXr ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
 
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-		agr_spectra += model_spectrum_element(fit_params, itr.second, ev, energy);
+		agr_spectra += model_spectrum_element(fit_params, itr.second, ev, energy.size());
     }
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-
-    //agr_spectra += background_counts;
 
 /*
     // pileup
@@ -382,13 +372,9 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const ArrayXr &ev, const ArrayXr& energy)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const ArrayXr &ev, size_t energy_size)
 {
-    Spectra spectra_model(energy.size());
-    //Spectra peak_counts(0.0, energy.size());
-
-    //real_t gain = detector->energy_slope();
-    //Spectra ev = detector->energy_offset() + energy * detector->energy_slope() + std::pow(energy, (real_t)2.0) * detector->energy_quadratic();
+    Spectra spectra_model(energy_size);
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {
@@ -416,7 +402,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
             continue;
 
         // gaussian peak shape
-		ArrayXr delta_energy = ev.array() - er_struct.energy;
+		ArrayXr delta_energy = ev - er_struct.energy;
 
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
         if (er_struct.ptype == Element_Param_Type::Kb_Line)
@@ -486,11 +472,11 @@ const ArrayXr Gaussian_Model::peak(real_t gain, real_t sigma, const ArrayXr& del
 
 const ArrayXr Gaussian_Model::step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const
 {
-    Spectra counts(delta_energy.size());
-    for (unsigned int i=0; i<delta_energy.size(); i++)
-    {
-        counts[i] = gain / (real_t)2.0 /  peak_E * std::erfc(delta_energy[i]/(M_SQRT2 * sigma));
-    }
+	ArrayXr counts(delta_energy.size());
+	for (unsigned int i = 0; i < delta_energy.size(); i++)
+	{
+		counts[i] = gain / (real_t)2.0 / peak_E * std::erfc(delta_energy[i] / (M_SQRT2 * sigma));
+	}
     return counts;
 }
 
@@ -517,6 +503,7 @@ const ArrayXr Gaussian_Model::tail(real_t gain, real_t sigma, const ArrayXr& del
 const ArrayXr Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const
 {
     Spectra counts(ev.size());
+	counts.setZero();
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (real_t)2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(std::isnan(sigma))
     {
@@ -542,6 +529,7 @@ const ArrayXr Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, co
 const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t  gain) const
 {
 	ArrayXr counts(ev.size());
+	counts.setZero();
 
     real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (real_t)511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
 

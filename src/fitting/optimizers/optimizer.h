@@ -89,7 +89,7 @@ struct User_Data
 
 struct Gen_User_Data
 {
-    Spectra *spectra;
+    Spectra spectra;
 	ArrayXr weights;
     Fit_Parameters *fit_parameters;
 	ArrayXr spectra_background;

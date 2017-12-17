@@ -89,6 +89,7 @@ ArrayXr convolve1d( ArrayXr arr, size_t boxcar_size)
 ArrayXr convolve1d( ArrayXr arr, ArrayXr boxcar)
 {
     ArrayXr new_background(arr.size());
+	new_background.setZero();
     //convolve 1d
 
     size_t const nf = arr.size();
@@ -97,6 +98,7 @@ ArrayXr convolve1d( ArrayXr arr, ArrayXr boxcar)
     ArrayXr const &max_v = (nf < ng)? boxcar : arr;
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
     ArrayXr out(n);
+	out.setZero();
     for(auto i(0); i < n; ++i)
     {
         for(int j(min_v.size() - 1), k(i); j >= 0; --j)
@@ -113,19 +115,6 @@ ArrayXr convolve1d( ArrayXr arr, ArrayXr boxcar)
 		j++;
     }
 
-
-    /*
-    for(size_t i=0; i< arr.size(); i++)
-    {
-        new_background[i] = 0.0;
-        for (size_t j=0; j<boxcar.size(); j++)
-        {
-            if( (i-j) >= 0 )
-                new_background[i] += arr[i-j] * boxcar[j];
-        }
-    }
-    new_background /= real_t(boxcar.size());
-    */
     return new_background;
 }
 
@@ -138,14 +127,10 @@ ArrayXr snip_background(const Spectra* const spectra,
 									  real_t xmin,
 									  real_t xmax)
 {
-	ArrayXr energy;
-	ArrayXr index;
-	ArrayXr background;
-	size_t buffer_size = spectra->size();
-	energy.resize(buffer_size);
-	index.resize(buffer_size);
-	background.resize(buffer_size);
-	for (size_t i = 0; i < buffer_size; i++)
+	ArrayXr energy(spectra->size());
+	ArrayXr index(spectra->size());
+	ArrayXr background(spectra->size());
+	for (size_t i = 0; i < spectra->size(); i++)
 	{
 		background[i] = (*spectra)[i];
 		energy[i] = real_t(i);
@@ -172,8 +157,6 @@ ArrayXr snip_background(const Spectra* const spectra,
 
 
 	ArrayXr boxcar;
-	ArrayXr new_background;
-	new_background.resize(background.size());
 	// smooth the background
 	if (spectral_binning > 0)
 	{
@@ -183,17 +166,10 @@ ArrayXr snip_background(const Spectra* const spectra,
 	{
 		boxcar.resize(5);
 	}
-
-	for (size_t i = 0; i<boxcar.size(); i++)
-	{
-		boxcar[i] = 1.0;
-	}
+	boxcar.setConstant(1.0);
 
 	//convolve 1d
     background = convolve1d(background, boxcar);
-	//clear out
-	new_background.resize(1);
-	boxcar.resize(1);
 	//fwhm
 	current_width = width * current_width / energy_linear;  // in channels
 	if (spectral_binning > 0)
@@ -211,7 +187,7 @@ ArrayXr snip_background(const Spectra* const spectra,
 	}
 
 	real_t max_of_xmin = (std::max)(xmin, (real_t)0.0);
-	real_t min_of_xmax = (std::min)(xmax, real_t(buffer_size - 1));
+	real_t min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));
 	for (int j = 0; j<no_iterations; j++)
 	{
 		for (size_t k = 0; k<background.size(); k++)
@@ -259,15 +235,8 @@ ArrayXr snip_background(const Spectra* const spectra,
 	}
 
 	background = Eigen::exp(Eigen::exp(background) - (real_t)1.0) - (real_t)1.0;
-
-	for (size_t i = 0; i<background.size(); i++)
-	{
-		if (std::isnan(background[i]))
-		{
-			background[i] = 0.0;
-		}
-	}
-
+	background = background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : 0.0; });
+	
 	return background;
 
 }
