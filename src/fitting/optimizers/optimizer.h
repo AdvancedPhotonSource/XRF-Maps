@@ -89,7 +89,7 @@ struct User_Data
 
 struct Gen_User_Data
 {
-    Spectra *spectra;
+    Spectra spectra;
     std::valarray<real_t> weights;
     Fit_Parameters *fit_parameters;
     std::valarray<real_t> spectra_background;

@@ -317,7 +317,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-		agr_spectra += model_spectrum_element(fit_params, itr.second, ev, energy);
+		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
     }
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
@@ -382,9 +382,9 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const std::valarray<real_t> &ev, std::valarray<real_t> energy)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const std::valarray<real_t> &ev)
 {
-    Spectra spectra_model(energy.size());
+    Spectra spectra_model(ev.size());
     //std::valarray<real_t> peak_counts(0.0, energy.size());
 
     //real_t gain = detector->energy_slope();
@@ -476,7 +476,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy) const
+const std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, const std::valarray<real_t>& delta_energy) const
 {
     // gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
     return gain / ( sigma * SQRT_2xPI ) *  std::exp((real_t)-0.5 * std::pow((delta_energy / sigma), (real_t)2.0) );
@@ -484,7 +484,7 @@ const std::valarray<real_t> Gaussian_Model::peak(real_t gain, real_t sigma, std:
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t peak_E) const
+const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, const std::valarray<real_t>& delta_energy, real_t peak_E) const
 {
     std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
     for (unsigned int i=0; i<delta_energy.size(); i++)
@@ -496,7 +496,7 @@ const std::valarray<real_t> Gaussian_Model::step(real_t gain, real_t sigma, std:
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std::valarray<real_t>& delta_energy, real_t gamma) const
+const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, const std::valarray<real_t>& delta_energy, real_t gamma) const
 {
     std::valarray<real_t> counts((real_t)0.0, delta_energy.size());
 
@@ -514,7 +514,7 @@ const std::valarray<real_t> Gaussian_Model::tail(real_t gain, real_t sigma, std:
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t gain) const
+const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, const std::valarray<real_t> &ev, real_t gain) const
 {
     std::valarray<real_t> counts((real_t)0.0, ev.size());
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (real_t)2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
@@ -539,7 +539,7 @@ const std::valarray<real_t> Gaussian_Model::elastic_peak(const Fit_Parameters * 
 
 // ----------------------------------------------------------------------------
 
-const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, std::valarray<real_t> ev, real_t  gain) const
+const std::valarray<real_t> Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, const std::valarray<real_t> &ev, real_t  gain) const
 {
     std::valarray<real_t> counts((real_t)0.0, ev.size());
 

@@ -93,7 +93,7 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
     //Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+        fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
 
 }

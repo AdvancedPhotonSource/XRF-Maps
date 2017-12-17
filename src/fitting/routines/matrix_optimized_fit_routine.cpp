@@ -211,7 +211,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, energy);
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev);
     }
 
     //i = elements_to_fit->size();
@@ -288,9 +288,9 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
     if(_optimizer != nullptr)
     {
-        Spectra sub_spectra = spectra->sub_spectra(_energy_range);
+        //Spectra sub_spectra = spectra->sub_spectra(_energy_range);
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        _optimizer->minimize_func(&fit_params, &sub_spectra, _energy_range, gen_func);
+        _optimizer->minimize_func(&fit_params, spectra, _energy_range, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
