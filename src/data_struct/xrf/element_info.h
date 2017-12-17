@@ -108,12 +108,6 @@ public:
 
 	~Element_Info_Map();
 
-    //std::valarray<real_t>& operator [](size_t idx) { return _fit_counts[idx]; }
-
-    //const Element_Info& operator [](size_t z) const { return _number_element_info_map[z]; }
-
-    //const Element_Info& operator [](std::string symb) const { return _name_element_info_map[symb]; }
-
 	void clear();
 
 	void generate_default_elements(int start_element, int end_element);

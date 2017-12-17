@@ -80,7 +80,7 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
 												  Spectra* spectra_model)
 {
     //Spectra spectra_model(energy_range->count());
-    (*spectra_model) *= (real_t)0.0;
+	spectra_model->setZero();
 
 //    valarray<real_t> energy((real_t)0.0, energy_range.count());
 //    real_t e_val = energy_range.min;
@@ -111,34 +111,15 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
     }
 */
 
-#ifdef WIN32
-	//TODO: test this on linux to see if it give a perf gain also
-	for (const auto& itr : _element_models)
-	{
-		if (fit_params->contains(itr.first))
-		{
-			Fit_Param param = fit_params->at(itr.first);
-			const real_t val = pow((real_t)10.0, param.value);
-			for (int i = 0; i < spectra_model->size(); i++)
-			{
-				(*spectra_model)[i] += val * itr.second[i];
-			}
-		}
-	}
-
-#else
 
     for(const auto& itr : _element_models)
     {
         if(fit_params->contains(itr.first))
         {
             Fit_Param param = fit_params->at(itr.first);
-            (*spectra_model) += pow((real_t)10.0, param.value) * itr.second;
+            (*spectra_model) += (pow((real_t)10.0, param.value) * itr.second);
         }
     }
-#endif
-
-
 
     /*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
@@ -182,21 +163,15 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     //n_pileup = 9
     //valarray<real_t> value(0.0, energy_range.count());
     real_t start_val = (real_t)0.0;
-    valarray<real_t> counts(start_val, energy_range.count());
+    //Spectra counts(energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    valarray<real_t> energy(start_val, energy_range.count());
-    real_t e_val = static_cast<real_t>(energy_range.min);
-    for(int i=0, t_len = (energy_range.max - energy_range.min )+1; i < t_len; i++)
-    {
-        energy[i] = e_val;
-        e_val += 1.0;
-    }
+	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
 
-    valarray<real_t> ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
+	ArrayXr ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
 
     for(const auto& itr : (*elements_to_fit))
     {

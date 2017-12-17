@@ -57,7 +57,7 @@ namespace data_struct
 {
 namespace xrf
 {
-
+/*
 template<typename T>
 std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g)
 {
@@ -77,24 +77,28 @@ std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g
 	}
 	return out;
 }
+*/
 
-std::valarray<real_t> convolve1d( std::valarray<real_t> arr, size_t boxcar_size)
+ArrayXr convolve1d( ArrayXr arr, size_t boxcar_size)
 {
-    std::valarray<real_t> boxcar(1.0, boxcar_size);
+    ArrayXr boxcar(boxcar_size);
+	boxcar.setConstant(1.0);
     return convolve1d(arr, boxcar);
 }
 
-std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_t> boxcar)
+ArrayXr convolve1d( ArrayXr arr, ArrayXr boxcar)
 {
-    std::valarray<real_t> new_background((real_t)0.0, arr.size());
+    ArrayXr new_background(arr.size());
+	new_background.setZero();
     //convolve 1d
 
     size_t const nf = arr.size();
 	size_t const ng = boxcar.size();
-    std::valarray<real_t> const &min_v = (nf < ng)? arr : boxcar;
-    std::valarray<real_t> const &max_v = (nf < ng)? boxcar : arr;
+    ArrayXr const &min_v = (nf < ng)? arr : boxcar;
+    ArrayXr const &max_v = (nf < ng)? boxcar : arr;
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
-    std::valarray<real_t> out((real_t)0.0, n);
+    ArrayXr out(n);
+	out.setZero();
     for(auto i(0); i < n; ++i)
     {
         for(int j(min_v.size() - 1), k(i); j >= 0; --j)
@@ -111,23 +115,10 @@ std::valarray<real_t> convolve1d( std::valarray<real_t> arr, std::valarray<real_
 		j++;
     }
 
-
-    /*
-    for(size_t i=0; i< arr.size(); i++)
-    {
-        new_background[i] = 0.0;
-        for (size_t j=0; j<boxcar.size(); j++)
-        {
-            if( (i-j) >= 0 )
-                new_background[i] += arr[i-j] * boxcar[j];
-        }
-    }
-    new_background /= real_t(boxcar.size());
-    */
     return new_background;
 }
 
-std::valarray<real_t> snip_background(const Spectra* const spectra,
+ArrayXr snip_background(const Spectra* const spectra,
 									  real_t energy_offset,
 									  real_t energy_linear,
 									  real_t energy_quadratic,
@@ -136,14 +127,10 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 									  real_t xmin,
 									  real_t xmax)
 {
-	std::valarray<real_t> energy;
-	std::valarray<real_t> index;
-	std::valarray<real_t> background;
-	size_t buffer_size = spectra->size();
-	energy.resize(buffer_size);
-	index.resize(buffer_size);
-	background.resize(buffer_size);
-	for (size_t i = 0; i < buffer_size; i++)
+	ArrayXr energy(spectra->size());
+	ArrayXr index(spectra->size());
+	ArrayXr background(spectra->size());
+	for (size_t i = 0; i < spectra->size(); i++)
 	{
 		background[i] = (*spectra)[i];
 		energy[i] = real_t(i);
@@ -155,9 +142,9 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		energy = energy * spectral_binning;
 	}
 
-	energy = energy_offset + energy * energy_linear + std::pow(energy, (real_t)2.0) * energy_quadratic;
+	energy = energy_offset + energy * energy_linear + Eigen::pow(energy, (real_t)2.0) * energy_quadratic;
 
-	std::valarray<real_t> tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
+	ArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
 	for (size_t i = 0; i<tmp.size(); i++)
 	{
 		if (tmp[i] < 0.0)
@@ -165,13 +152,11 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 			tmp[i] = 0.0;
 		}
 	}
-	//std::valarray<real_t> fwhm = 2.35 * std::sqrt(tmp);
-	std::valarray<real_t> current_width = (real_t)2.35 * std::sqrt(tmp);
+	//ArrayXr fwhm = 2.35 * std::sqrt(tmp);
+	ArrayXr current_width = (real_t)2.35 * Eigen::sqrt(tmp);
 
 
-	std::valarray<real_t> boxcar;
-	std::valarray<real_t> new_background;
-	new_background.resize(background.size());
+	ArrayXr boxcar;
 	// smooth the background
 	if (spectral_binning > 0)
 	{
@@ -181,17 +166,10 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	{
 		boxcar.resize(5);
 	}
-
-	for (size_t i = 0; i<boxcar.size(); i++)
-	{
-		boxcar[i] = 1.0;
-	}
+	boxcar.setConstant(1.0);
 
 	//convolve 1d
     background = convolve1d(background, boxcar);
-	//clear out
-	new_background.resize(1);
-	boxcar.resize(1);
 	//fwhm
 	current_width = width * current_width / energy_linear;  // in channels
 	if (spectral_binning > 0)
@@ -199,7 +177,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		current_width = current_width / (real_t)2.0;
 	}
 
-	background = std::log(std::log(background + (real_t)1.0) + (real_t)1.0);
+	background = Eigen::log(Eigen::log(background + (real_t)1.0) + (real_t)1.0);
 
 	// FIRST SNIPPING
 	int no_iterations = 2;
@@ -209,7 +187,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 	}
 
 	real_t max_of_xmin = (std::max)(xmin, (real_t)0.0);
-	real_t min_of_xmax = (std::min)(xmax, real_t(buffer_size - 1));
+	real_t min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));
 	for (int j = 0; j<no_iterations; j++)
 	{
 		for (size_t k = 0; k<background.size(); k++)
@@ -232,7 +210,7 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		}
 	}
 
-	while (current_width.max() >= 0.5)
+	while (current_width.maxCoeff() >= 0.5)
 	{
 		for (size_t k = 0; k<background.size(); k++)
 		{
@@ -256,16 +234,9 @@ std::valarray<real_t> snip_background(const Spectra* const spectra,
 		current_width = current_width / real_t(M_SQRT2); // window_rf
 	}
 
-	background = std::exp(std::exp(background) - (real_t)1.0) - (real_t)1.0;
-
-	for (size_t i = 0; i<background.size(); i++)
-	{
-		if (false == std::isfinite(background[i]))
-		{
-			background[i] = 0.0;
-		}
-	}
-
+	background = Eigen::exp(Eigen::exp(background) - (real_t)1.0) - (real_t)1.0;
+	background = background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : 0.0; });
+	
 	return background;
 
 }

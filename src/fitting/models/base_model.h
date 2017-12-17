@@ -52,7 +52,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/xrf/spectra.h"
 #include "data_struct/xrf/fit_parameters.h"
 #include "data_struct/xrf/fit_element_map.h"
-#include <valarray>
 
 namespace fitting
 {
@@ -114,17 +113,17 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const std::valarray<real_t> &ev) = 0;
+                                                 const ArrayXr &ev) = 0;
 
-    virtual const std::valarray<real_t> peak(real_t gain, real_t sigma, const valarray<real_t>& delta_energy) const = 0;
+    virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const = 0;
 
-    virtual const std::valarray<real_t> step(real_t gain, real_t sigma, const valarray<real_t>& delta_energy, real_t peak_E) const = 0;
+    virtual const ArrayXr step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const = 0;
 
-    virtual const std::valarray<real_t> tail(real_t gain, real_t sigma, const valarray<real_t>& delta_energy, real_t gamma) const = 0;
+    virtual const ArrayXr tail(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t gamma) const = 0;
 
-    virtual const std::valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, const valarray<real_t> &ev, real_t gain) const = 0;
+    virtual const ArrayXr elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const = 0;
 
-    virtual const std::valarray<real_t> compton_peak(const Fit_Parameters * const fitp, const valarray<real_t> &ev, real_t gain) const = 0;
+    virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const = 0;
 
     virtual void reset_to_default_fit_params() = 0;
 

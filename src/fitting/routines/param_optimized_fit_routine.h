@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/base_fit_routine.h"
 #include "fitting/optimizers/optimizer.h"
 #include "data_struct/xrf/fit_parameters.h"
-#include <valarray>
 
 namespace fitting
 {

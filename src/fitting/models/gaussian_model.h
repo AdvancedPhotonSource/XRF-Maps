@@ -53,7 +53,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/models/base_model.h"
 #include "fitting/optimizers/optimizer.h"
 #include "data_struct/xrf/fit_parameters.h"
-#include <valarray>
 
 namespace fitting
 {
@@ -115,7 +114,7 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const std::valarray<real_t> &ev);
+                                                 const ArrayXr &ev);
 
     void set_fit_params_preset(Fit_Params_Preset lock_macro);
 
@@ -128,7 +127,7 @@ public:
      * @param delta_energy
      * @return
      */
-    virtual const valarray<real_t> peak(real_t gain, real_t sigma, const valarray<real_t>& delta_energy) const;
+    virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const;
 
     /**
      * @brief gauss_step : gain / 2.0 /  peak_E * erfc(delta_energy/(M_SQRT2 * sigma));
@@ -138,13 +137,13 @@ public:
      * @param peak_E
      * @return
      */
-    virtual const valarray<real_t> step(real_t gain, real_t sigma, const valarray<real_t>& delta_energy, real_t peak_E) const;
+    virtual const ArrayXr step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const;
 
-    virtual const valarray<real_t> tail(real_t gain, real_t sigma, const valarray<real_t>& delta_energy, real_t gamma) const;
+    virtual const ArrayXr tail(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t gamma) const;
 
-    virtual const valarray<real_t> elastic_peak(const Fit_Parameters * const fitp, const valarray<real_t> &ev, real_t gain) const;
+    virtual const ArrayXr elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
 
-    virtual const valarray<real_t> compton_peak(const Fit_Parameters * const fitp, const valarray<real_t> &ev, real_t gain) const;
+    virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
 
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 

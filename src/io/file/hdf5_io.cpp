@@ -1756,7 +1756,12 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
             offset_time[1] = col;
             H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-            error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+            //error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+			error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra->data());
+			if (error > 0)
+			{
+				logit << "Warnging: counld not read row " << row << " col " << col << std::endl;
+			}
 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
             H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
@@ -4787,13 +4792,13 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 analysis_ids.push_back(det_analysis_dset_id);
         }
 
-        std::valarray<real_t> buffer1(total);
-        std::valarray<real_t> buffer2(total);
+        data_struct::xrf::ArrayXr buffer1(total);
+		data_struct::xrf::ArrayXr buffer2(total);
         float divisor = 1.0;
-        error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+        error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
         for(int k=0; k<analysis_ids.size(); k++)
         {
-            error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer2[0]);
+            error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
             if(error > -1)
             {
                 buffer1 += buffer2;
@@ -4811,7 +4816,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         }
 
         //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-        error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, &buffer1[0]);
+        error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
 
         for(int k=0; k<analysis_ids.size(); k++)
         {

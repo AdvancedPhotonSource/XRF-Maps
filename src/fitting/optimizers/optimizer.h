@@ -79,9 +79,9 @@ struct User_Data
 {
     Base_Model* fit_model;
     Spectra spectra;
-    std::valarray<real_t> weights;
+	ArrayXr weights;
     Fit_Parameters *fit_parameters;
-    std::valarray<real_t> spectra_background;
+	ArrayXr spectra_background;
     Fit_Element_Map_Dict *elements;
     Range energy_range;
     Spectra  spectra_model;
@@ -90,9 +90,9 @@ struct User_Data
 struct Gen_User_Data
 {
     Spectra spectra;
-    std::valarray<real_t> weights;
+	ArrayXr weights;
     Fit_Parameters *fit_parameters;
-    std::valarray<real_t> spectra_background;
+	ArrayXr spectra_background;
     Range energy_range;
 	Gen_Func_Def func;
 	Spectra  spectra_model;

@@ -114,7 +114,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
 
                 struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
 
-                real_t sum = (*spectra)[std::slice(energy_range.min, energy_range.count(), 1)].sum();
+                real_t sum = spectra->segment(energy_range.min, energy_range.count()).sum();
                 sum /= energy_range.count();
                 e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
                 //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
@@ -151,7 +151,7 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
     real_t this_factor = (real_t)8.0; //was 8.0 in MAPS, this gets closer though
     fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->at(STR_ENERGY_OFFSET).value, fitp->at(STR_ENERGY_SLOPE).value);
     size_t e_size = (energy_range.max + 1) - energy_range.min;
-    real_t sum = (*spectra)[std::slice(energy_range.min, e_size, 1)].sum();
+    real_t sum = spectra->segment(energy_range.min, e_size).sum();
     sum /= energy_range.count();
     real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
     real_t logval = std::log10(e_guess);
