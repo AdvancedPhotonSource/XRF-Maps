@@ -174,16 +174,6 @@ Element_Info::Element_Info()
     jump.emplace(std::make_pair("O1", zero));
     jump.emplace(std::make_pair("O2", zero));
     jump.emplace(std::make_pair("O3", zero));
-
-    /*
-    f1_atomic_scattering_real = nullptr;
-    f2_atomic_scattering_imaginary = nullptr; 
-    atomic_scattering_len = -1;
-    extra_energies = nullptr;
-    extra_f1 = nullptr;
-    extra_f2 = nullptr;
-    extra_energies_len = -1;
-    */
 }
 
 Element_Info::~Element_Info()
@@ -199,25 +189,6 @@ Element_Info::~Element_Info()
     extra_energies.clear();
     extra_f1.clear();
     extra_f2.clear();
-
-    /*
-    if(f1_atomic_scattering_real != nullptr)
-        delete [] f1_atomic_scattering_real;
-    if(f2_atomic_scattering_imaginary != nullptr)
-         delete [] f2_atomic_scattering_imaginary;
-    f1_atomic_scattering_real = nullptr;
-    f2_atomic_scattering_imaginary = nullptr;
-
-    if(extra_energies != nullptr)
-        delete [] extra_energies;
-    if(extra_f1 != nullptr)
-        delete [] extra_f1;
-    if(extra_f2 != nullptr)
-        delete [] extra_f2;
-    extra_energies = nullptr;
-    extra_f1 = nullptr;
-    extra_f2 = nullptr;
-    */
 }
 
 void Element_Info::init_f_energies(int len)
@@ -277,7 +248,7 @@ real_t Element_Info::calc_beta(real_t density_val, real_t energy)
     real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
 
 
-    for(size_t i=0; i< energies->size(); i++)
+    for(size_t i=1; i< energies->size(); i++)
     {
         if( (*energies)[i] > energy)
         {
@@ -336,20 +307,9 @@ Element_Info_Map::~Element_Info_Map()
 
 void Element_Info_Map::clear()
 {
-    /*
-    for(auto itr : _number_element_info_map)
-    {
-        Element_Info* element = _number_element_info_map[itr.first];
-        if (element != nullptr)
-            delete element;
-        element = nullptr;
-        _number_element_info_map[itr.first] = nullptr;
-    }
-    */
 	for (auto &itr : _name_element_info_map)
 	{
 		delete itr.second;
-		//delete _name_element_info_map[itr.first];
 	}
     _number_element_info_map.clear();
     _name_element_info_map.clear();
@@ -360,8 +320,8 @@ void Element_Info_Map::add_element(Element_Info* element)
     // set global energies pointer
     element->energies = &_energies;
     // TODO: check if it exists
-    _number_element_info_map.insert(std::pair<int, Element_Info*>(element->number, element));
-    _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name, element));
+    _number_element_info_map[element->number] = element;
+    _name_element_info_map[element->name] = element;
 }
 
 real_t Element_Info_Map::calc_beta(std::string element_name, real_t density, real_t energy)
@@ -380,16 +340,12 @@ real_t Element_Info_Map::calc_beta(std::string element_name, real_t density, rea
 
 Element_Info* Element_Info_Map::get_element(int element_number)
 {
-    if (_number_element_info_map.count(element_number) > 0)
-        return _number_element_info_map[element_number];
-    return nullptr;
+    return _number_element_info_map[element_number];
 }
 
 Element_Info* Element_Info_Map::get_element(std::string element_name)
 {
-    if (_name_element_info_map.count(element_name) > 0)
-        return _name_element_info_map[element_name];
-    return nullptr;
+    return _name_element_info_map[element_name];
 }
 
 void Element_Info_Map::generate_default_elements(int start_element, int end_element)
@@ -403,17 +359,6 @@ void Element_Info_Map::generate_default_elements(int start_element, int end_elem
        _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name, element));
     }
 }
-/*
-void Element_Info_Map::set_energies(float* energy_arr, int num_energies)
-{
 
-    _energies.resize(num_energies);
-    for(int i=0; i<num_energies; i++)
-    {
-        _energies[i] = energy_arr[i];
-    }
-
-}
-*/
 } //namespace data_struct
 } //namespace xrf

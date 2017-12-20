@@ -73,7 +73,7 @@ namespace file
 
 //-----------------------------------------------------------------------------
 
-MDA_IO::MDA_IO() : Base_File_IO()
+MDA_IO::MDA_IO()
 {
 
     _mda_file = nullptr;
@@ -107,7 +107,7 @@ void MDA_IO::unload()
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 void MDA_IO::lazy_load()
 {
 
@@ -131,43 +131,7 @@ void MDA_IO::lazy_load()
     logit_s<<std::endl;
 
 }
-
-//-----------------------------------------------------------------------------
-
-bool MDA_IO::load_dataset(std::string path, Base_Dataset *dset)
-{
-
-    std::FILE *fptr = std::fopen(path.c_str(), "r");
-
-    if (fptr == nullptr)
-    {
-        return false;
-    }
-    _mda_file = mda_load(fptr);
-    std::fclose(fptr);
-    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
-    //long total = 1;
-
-    for(int16_t i = 0; i < _mda_file->header->data_rank; i++)
-    {
-        logit_s<<" dims["<<i<<"]:"<<_mda_file->header->dimensions[i];
-        //total *= _mda_file->header->dimensions[i];
-    }
-
-    //dset->alloc(_mda_file->header->data_rank, _mda_file->header->dimensions);
-	int data_rank = static_cast<int>(_mda_file->header->data_rank);
-    for(int j = 0; j < data_rank; j++)
-    {
-
-    }
-    logit_s<<std::endl;
-    logit<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][0])<<std::endl;
-    logit<<"d "<<(_mda_file->scan->sub_scans[0]->sub_scans[0]->detectors_data[0][1])<<std::endl;
-
-
-    return true;
-
-}
+*/
 
 //-----------------------------------------------------------------------------
 
@@ -469,7 +433,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                                                  size_t detector_num_end,
                                                  bool hasNetCDF,
                                                  data_struct::xrf::Analysis_Job *analysis_job,
-                                                 IO_Callback_Func_Def callback_func,
+												 data_struct::xrf::IO_Callback_Func_Def callback_func,
                                                  void *user_data)
 {
     int elt_idx = -1;

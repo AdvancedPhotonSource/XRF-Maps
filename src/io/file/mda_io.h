@@ -49,7 +49,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MDA_IO_H
 #define MDA_IO_H
 
-#include "io/file/base_file_io.h"
 #include "support/mda_utils/mda-load.h"
 #include "data_struct/xrf/element_info.h"
 #include "data_struct/xrf/spectra_volume.h"
@@ -62,7 +61,7 @@ namespace io
 namespace file
 {
 
-class DLL_EXPORT MDA_IO : public Base_File_IO
+class DLL_EXPORT MDA_IO
 {
 public:
 
@@ -83,32 +82,20 @@ public:
 
     struct mda_file* get_scan_ptr() { return _mda_file; }
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    virtual void lazy_load();
+    bool load_spectra_volume(std::string path,
+                            size_t detector_num,
+                            data_struct::xrf::Spectra_Volume* vol,
+                            bool hasNetCDF,
+                            data_struct::xrf::Params_Override *override_values,
+                            data_struct::xrf::Quantification_Standard * quantification_standard);
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    virtual bool load_dataset(std::string path, Base_Dataset* dset);
-
-    virtual bool load_spectra_volume(std::string path,
-                                     size_t detector_num,
-                                     data_struct::xrf::Spectra_Volume* vol,
-                                     bool hasNetCDF,
-                                     data_struct::xrf::Params_Override *override_values,
-                                     data_struct::xrf::Quantification_Standard * quantification_standard);
-
-    virtual bool load_spectra_volume_with_callback(std::string path,
-                                                   size_t detector_num_start,
-                                                   size_t detector_num_end,
-                                                   bool hasNetCDF,
-                                                   data_struct::xrf::Analysis_Job *analysis_job,
-                                                   IO_Callback_Func_Def callback_func,
-                                                   void *user_data);
+    bool load_spectra_volume_with_callback(std::string path,
+                                        size_t detector_num_start,
+                                        size_t detector_num_end,
+                                        bool hasNetCDF,
+                                        data_struct::xrf::Analysis_Job *analysis_job,
+										data_struct::xrf::IO_Callback_Func_Def callback_func,
+                                        void *user_data);
 
     int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val);
 

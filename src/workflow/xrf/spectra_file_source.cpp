@@ -118,7 +118,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                                                                  std::string dataset_file,
                                                                  size_t detector_num_start,
                                                                  size_t detector_num_end,
-                                                                 io::file::IO_Callback_Func_Def callback_fun)
+																 data_struct::xrf::IO_Callback_Func_Def callback_fun)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;

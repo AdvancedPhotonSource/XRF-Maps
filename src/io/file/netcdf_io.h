@@ -50,8 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef NetCDF_IO_H
 #define NetCDF_IO_H
 
-#include "io/file/base_file_io.h"
-#include "data_struct/base_dataset.h"
 #include "data_struct/xrf/spectra_volume.h"
 #include <netcdf.h>
 #include <mutex>
@@ -67,7 +65,7 @@ namespace file
 	#define nc_get_vars_real nc_get_vars_float
 #endif
 
-class DLL_EXPORT NetCDF_IO : public Base_File_IO
+class DLL_EXPORT NetCDF_IO
 {
 public:
 
@@ -75,28 +73,16 @@ public:
 
     ~NetCDF_IO();
 
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    virtual void lazy_load();
+    bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
 
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    virtual bool load_dataset(std::string path, Base_Dataset* dset);
-
-    virtual bool load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line);
-
-    virtual bool load_spectra_line_with_callback(std::string path,
-                                                 size_t detector_num_start,
-                                                 size_t detector_num_end,
-                                                 int row,
-                                                 size_t max_rows,
-                                                 size_t max_cols,
-                                                 IO_Callback_Func_Def callback_fun,
-                                                 void* user_data);
+    bool load_spectra_line_with_callback(std::string path,
+                                        size_t detector_num_start,
+                                        size_t detector_num_end,
+                                        int row,
+                                        size_t max_rows,
+                                        size_t max_cols,
+                                        data_struct::xrf::IO_Callback_Func_Def callback_fun,
+                                        void* user_data);
 
 private:
 

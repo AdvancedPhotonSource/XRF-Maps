@@ -174,17 +174,17 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
 bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::xrf::Element_Info_Map *element_info_map)
 {
 
-    if (io::file::load_element_info_from_csv(element_csv_filename, element_info_map) == false)
-    {
-        logit<<"error loading "<< element_csv_filename<<std::endl;
-        return false;
-    }
+	if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
+	{
+		logit << "error loading " << element_henke_filename << std::endl;
+		return false;
+	}
 
-    if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
-    {
-        logit<<"error loading "<< element_henke_filename<<std::endl;
-        return false;
-    }
+	if (io::file::load_element_info_from_csv(element_csv_filename, element_info_map) == false)
+	{
+		logit << "error loading " << element_csv_filename << std::endl;
+		return false;
+	}
 
     return true;
 }
@@ -226,22 +226,11 @@ bool save_volume(data_struct::xrf::Quantification_Standard * quantification_stan
                  real_t energy_offset,
                  real_t energy_slope,
                  real_t energy_quad)
-                 //std::queue<std::future<bool> >* job_queue)
 {
-	/*
-    //wait for queue to finish processing
-    while(!job_queue->empty())
-    {
-        auto ret = std::move(job_queue->front());
-        job_queue->pop();
-        ret.get();
-    }*/
-
     io::file::HDF5_IO::inst()->save_quantification(quantification_standard);
     io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
     io::file::HDF5_IO::inst()->end_save_seq();
 
-    //delete job_queue;
     delete spectra_volume;
 
     return true;

@@ -208,7 +208,7 @@ H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector
 
 //-----------------------------------------------------------------------------
 
-HDF5_IO::HDF5_IO() : Base_File_IO()
+HDF5_IO::HDF5_IO()
 {
 	//disable hdf print to std err
 	hid_t status;
@@ -230,7 +230,7 @@ HDF5_IO* HDF5_IO::inst()
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 void HDF5_IO::lazy_load()
 {
    std::lock_guard<std::mutex> lock(_mutex);
@@ -292,14 +292,7 @@ void HDF5_IO::lazy_load()
     //error = H5Dread(dset_id, H5T_NATIVE_USHORT, memoryspace, dataspace_id, H5P_DEFAULT, buffer);
     error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace, dataspace_id, H5P_DEFAULT, buffer);
     printf("read in: error = %d \n", error);
-/*
-    for(unsigned long i=0; i<total; i++)
-    {
-       logit<<buffer[i]<<" ";
-       if( i%2048 == 1)
-          logit<<std::endl;
-    }
-*/
+
     delete [] dims_out;
     delete [] offset;
     delete [] count;
@@ -320,14 +313,7 @@ void HDF5_IO::lazy_load()
 
     _is_loaded = LAZY_LOAD;
 }
-
-//-----------------------------------------------------------------------------
-
-bool HDF5_IO::load_dataset(std::string path, Base_Dataset *dset)
-{
-    return false;
-
-}
+*/
 
 //-----------------------------------------------------------------------------
 
@@ -1225,7 +1211,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
 bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
                                                 size_t detector_num_start,
                                                 size_t detector_num_end,
-                                                IO_Callback_Func_Def callback_func,
+												data_struct::xrf::IO_Callback_Func_Def callback_func,
                                                 void* user_data)
 {
     std::lock_guard<std::mutex> lock(_mutex);

@@ -55,8 +55,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <future>
 #include <stack>
-#include "io/file/base_file_io.h"
-#include "data_struct/base_dataset.h"
 #include "data_struct/xrf/spectra_volume.h"
 #include "data_struct/xrf/fit_element_map.h"
 #include "hdf5.h"
@@ -146,7 +144,7 @@ struct H5_Spectra_Layout
 
 H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num);
 
-class DLL_EXPORT HDF5_IO : public Base_File_IO
+class DLL_EXPORT HDF5_IO
 {
 public:
 
@@ -158,20 +156,14 @@ public:
      * @brief lazy_load : Only load in the meta info, not the actual datasets
      * @param filename
      */
-    virtual void lazy_load();
-
-    /**
-     * @brief load : Load the full dataset
-     * @param filename
-     */
-    virtual bool load_dataset(std::string path, Base_Dataset* dset);
+    //void lazy_load();
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
 
     bool load_spectra_volume_with_callback(std::string path,
                                            size_t detector_start,
                                            size_t detector_end,
-                                           IO_Callback_Func_Def callback_func,
+										   data_struct::xrf::IO_Callback_Func_Def callback_func,
                                            void* user_data);
 
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);

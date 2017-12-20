@@ -200,7 +200,6 @@ set(libxrf_fit_HEADERS
     src/support/nnls/vector.hpp
     src/support/nnls/matrix.h
     src/support/nnls/denseMatrix.hpp
-    src/data_struct/base_dataset.h
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h
     src/data_struct/xrf/element_info.h
@@ -254,7 +253,6 @@ set(libxrf_fit_SOURCE
 #--------------- start xrf io lib -----------------
 set(XRF_IO_HEADERS
 	src/support/mdautils-1.4.1/mda-load.h
-	src/io/file/base_file_io.h
 	src/io/file/mda_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h

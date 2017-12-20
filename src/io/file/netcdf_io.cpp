@@ -74,7 +74,7 @@ NetCDF_IO* NetCDF_IO::_this_inst(0);
 
 //-----------------------------------------------------------------------------
 
-NetCDF_IO::NetCDF_IO() : Base_File_IO()
+NetCDF_IO::NetCDF_IO()
 {
 
 }
@@ -90,21 +90,6 @@ NetCDF_IO* NetCDF_IO::inst()
         _this_inst = new NetCDF_IO();
     }
     return _this_inst;
-}
-
-//-----------------------------------------------------------------------------
-
-void NetCDF_IO::lazy_load()
-{
-
-}
-
-//-----------------------------------------------------------------------------
-
-bool NetCDF_IO::load_dataset(std::string path, Base_Dataset *dset)
-{
-    return false;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -293,7 +278,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                                                 int row,
                                                 size_t max_rows,
                                                 size_t max_cols,
-                                                IO_Callback_Func_Def callback_fun,
+												data_struct::xrf::IO_Callback_Func_Def callback_fun,
                                                 void* user_data)
 {
 

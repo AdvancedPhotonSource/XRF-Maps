@@ -162,51 +162,6 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::_save_counts(Fit_Parameters *fit_params,
-                                               const Spectra * const spectra,
-                                               const Fit_Element_Map_Dict * const elements_to_fit,
-                                               Fit_Count_Dict * out_counts_dic,
-                                               size_t row_idx,
-                                               size_t col_idx)
-{
-    //Save the counts from fit parameters into fit count dict for each element
-    for (auto el_itr : *elements_to_fit)
-    {
-        //data_struct::xrf::Fit_Element_Map *element = el_itr.second;
-        real_t value =  fit_params->at(el_itr.first).value;
-        // save values counts / second
-
-        //convert from log10
-        value = std::pow((real_t)10.0, value);
-/*
-        if(_save_counts_per_sec)
-        {
-            real_t counts_per_sec = value / spectra->elapsed_lifetime();
-            // if val is not nan then save it , otherwise leave it as 0.
-            if(false == std::isnan(counts_per_sec))
-            {
-                out_counts_dic->at(el_itr.first).counts[row_idx][col_idx] = counts_per_sec;
-            }
-        }
-
-        else
-        {
-        */
-            out_counts_dic->at(el_itr.first)(row_idx, col_idx) = value;
-       // }
-
-    }
-
-    //check if we are saving the number of iterations and save if so
-    if(fit_params->contains(data_struct::xrf::STR_NUM_ITR) && out_counts_dic->count(data_struct::xrf::STR_NUM_ITR) > 0)
-    {
-        out_counts_dic->at(data_struct::xrf::STR_NUM_ITR)(row_idx, col_idx) = fit_params->at(data_struct::xrf::STR_NUM_ITR).value;
-    }
-
-}
-
-// ----------------------------------------------------------------------------
-
 std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                                                                  const Spectra * const spectra,
                                                                                  const Fit_Element_Map_Dict * const elements_to_fit)

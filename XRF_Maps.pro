@@ -158,7 +158,6 @@ HEADERS += \
     src/data_struct/xrf/params_override.h \
     src/data_struct/xrf/element_quant.h \
     src/data_struct/xrf/quantification_standard.h \
-    src/data_struct/base_dataset.h \
     #src/data_struct/ndarray.h \
     src/data_struct/xrf/spectra.h \
     src/data_struct/xrf/spectra_line.h \
@@ -190,7 +189,6 @@ HEADERS += \
     src/workflow/xrf/detector_sum_spectra_source.h \
     src/workflow/xrf/spectra_stream_saver.h \
     src/workflow/xrf/spectra_net_streamer.h \
-    src/io/file/base_file_io.h \
     src/io/file/mda_io.h \
     src/io/file/hdf5_io.h \
     src/io/file/netcdf_io.h \

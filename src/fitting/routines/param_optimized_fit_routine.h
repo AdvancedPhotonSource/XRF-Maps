@@ -96,14 +96,6 @@ protected:
     void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
                                              const Spectra * const spectra);
 
-
-    virtual void _save_counts(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               Fit_Count_Dict *out_counts_dic,
-                               size_t row_idx,
-                               size_t col_idx);
-
     Optimizer *_optimizer;
 
     Range _energy_range;

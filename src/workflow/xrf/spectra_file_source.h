@@ -88,7 +88,7 @@ protected:
                                                     std::string dataset_file,
                                                     size_t detector_num_start,
                                                     size_t detector_num_end,
-                                                    io::file::IO_Callback_Func_Def callback_fun);
+													data_struct::xrf::IO_Callback_Func_Def callback_fun);
 
     std::string *_current_dataset_directory;
     std::string *_current_dataset_name;
