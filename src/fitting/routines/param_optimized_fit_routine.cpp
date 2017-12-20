@@ -90,7 +90,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
                                                                   const Fit_Element_Map_Dict * const elements_to_fit)
 {
 
-    real_t this_factor = (real_t)10.0;
+    real_t this_factor = (real_t)8.0;
 
     for (auto el_itr : *elements_to_fit)
     {
@@ -148,7 +148,7 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
     //STR_COHERENT_SCT_AMPLITUDE
     real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
     real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)8.0; //was 8.0 in MAPS, this gets closer though
+    real_t this_factor = (real_t)8.0;
     fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->at(STR_ENERGY_OFFSET).value, fitp->at(STR_ENERGY_SLOPE).value);
     size_t e_size = (energy_range.max + 1) - energy_range.min;
     real_t sum = spectra->segment(energy_range.min, e_size).sum();

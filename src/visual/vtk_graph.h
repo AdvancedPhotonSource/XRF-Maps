@@ -26,6 +26,7 @@ freely, subject to the following restrictions:
 
 #include <valarray>
 #include "core/defines.h"
+#include "data_struct\xrf\spectra.h"
 
 #define vtkDomainsChemistry_AUTOINIT 1(vtkDomainsChemistryOpenGL2)
 #define vtkRenderingContext2D_AUTOINIT 1(vtkRenderingContextOpenGL2)
@@ -53,7 +54,7 @@ freely, subject to the following restrictions:
 namespace visual
 {
 
-void PlotSpectras(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, bool log_them=false);
-void SavePlotSpectras(std::string path, std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, bool log_them);
+void PlotSpectras(data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them=false);
+void SavePlotSpectras(std::string path, data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them);
 
 }

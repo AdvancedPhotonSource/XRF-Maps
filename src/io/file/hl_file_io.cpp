@@ -263,7 +263,8 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     energy_range.min = 0;
     energy_range.max = file_and_fit_params.spectra.size() -1;
 
-	std::valarray<real_t> background(0.0, file_and_fit_params.spectra.size());
+	data_struct::xrf::ArrayXr background(file_and_fit_params.spectra.size());
+	background.setZero();
 	if (file_and_fit_params.fit_params.contains(data_struct::xrf::STR_FIT_SNIP_WIDTH))
 	{
 		data_struct::xrf::Fit_Param fit_snip_width = file_and_fit_params.fit_params[data_struct::xrf::STR_FIT_SNIP_WIDTH];

@@ -30,7 +30,7 @@ namespace visual
 {
 
 
-void PlotSpectras(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, bool log_them)
+void PlotSpectras(data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them)
 {
     // Create a table with some points in it
     vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -49,24 +49,10 @@ void PlotSpectras(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2
 
     if(log_them)
     {
-        spectra1 = std::log10(spectra1);
-        spectra2 = std::log10(spectra2);
-
-        for (size_t i=0; i<spectra1.size(); i++)
-        {
-            /*
-            if(std::isnan( spectra1[i] ) || std::isinf( spectra1[i])  )
-            {
-                spectra1[i] = 0.0;
-            }
-            if(std::isnan( spectra2[i] ) || std::isinf( spectra2[i])  )
-            {
-                spectra2[i] = 0.0;
-            }
-            */
-            spectra1[i] = std::max(spectra1[i], (real_t)0.0);
-            spectra2[i] = std::max(spectra2[i], (real_t)0.0);
-        }
+        spectra1 = spectra1.log10();
+        spectra2 = spectra2.log10();
+		spectra1 = spectra1.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
+		spectra2 = spectra2.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
     }
 
 
@@ -119,7 +105,7 @@ void PlotSpectras(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2
 }
 
 
-void SavePlotSpectras(std::string path, std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, bool log_them)
+void SavePlotSpectras(std::string path, data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them)
 {
     // Setup offscreen rendering
     vtkSmartPointer<vtkGraphicsFactory> graphics_factory = vtkSmartPointer<vtkGraphicsFactory>::New();
@@ -147,14 +133,10 @@ void SavePlotSpectras(std::string path, std::valarray<real_t> spectra1, std::val
 
     if(log_them)
     {
-        spectra1 = std::log10(spectra1);
-        spectra2 = std::log10(spectra2);
-
-        for (size_t i=0; i<spectra1.size(); i++)
-        {
-            spectra1[i] = std::max(spectra1[i], (real_t)0.0);
-            spectra2[i] = std::max(spectra2[i], (real_t)0.0);
-        }
+		spectra1 = spectra1.log10();
+		spectra2 = spectra2.log10();
+		spectra1 = spectra1.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
+		spectra2 = spectra2.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
     }
 
 

@@ -55,6 +55,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 
+#include <omp.h>
+
 #define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
 
 using namespace data_struct::xrf;
@@ -305,13 +307,29 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
 	ArrayXr ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
+	/*
+	std::vector<std::string> keys;
+	for (const auto& itr : (*elements_to_fit))
+		keys.push_back(itr.first);
 
-    for(const auto& itr : (*elements_to_fit))
+#pragma omp parallel for
+		for (int i=0; i < keys.size(); i++) 
+    //for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
-		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+		Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
+#pragma omp critical 
+		{
+			agr_spectra += tmp;
+		}
     }
-
+	*/
+	
+	for(const auto& itr : (*elements_to_fit))
+	{
+		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+	}
+	
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
