@@ -59,7 +59,6 @@ namespace routines
 NNLS_Fit_Routine::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 {
 
-    _fitmatrix = nullptr;
     _max_iter = 100;
 
 }
@@ -69,7 +68,6 @@ NNLS_Fit_Routine::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 NNLS_Fit_Routine::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routine()
 {
 
-    _fitmatrix = nullptr;
     _max_iter = max_iter;
 
 }
@@ -79,11 +77,6 @@ NNLS_Fit_Routine::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routi
 NNLS_Fit_Routine::~NNLS_Fit_Routine()
 {
     _element_row_index.clear();
-    if(_fitmatrix != nullptr)
-    {
-        delete _fitmatrix;
-        _fitmatrix = nullptr;
-    }
 }
 
 // ----------------------------------------------------------------------------
@@ -93,12 +86,7 @@ void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> 
 {
 
     _element_row_index.clear();
-    if(_fitmatrix != nullptr)
-    {
-        delete _fitmatrix;
-        _fitmatrix = nullptr;
-    }
-    _fitmatrix = new nsNNLS::denseMatrix<real_t>(energy_range.count(), element_models->size());
+    _fitmatrix.resize(energy_range.count(), element_models->size());
 
     int i = 0;
     for(const auto& itr : *element_models)
@@ -106,7 +94,7 @@ void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> 
         //Spectra element_model = itr.second;
         for (int j=0; j<itr.second.size(); j++)
         {
-            _fitmatrix->set(j,i,itr.second[j]);
+            _fitmatrix(j,i) = itr.second[j];
         }
         //save element index for later
         _element_row_index[itr.first] = i;
@@ -121,36 +109,27 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
                                                                        const Spectra * const spectra,
                                                                        const Fit_Element_Map_Dict * const elements_to_fit)
 {
-
-    nsNNLS::nnls<real_t> * solver;
-    nsNNLS::vector<real_t> * result;
+	Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor>* result;
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
 
-    //nsNNLS::vector<real_t> rhs(spectra->size(), (real_t*)&(*spectra)[0]);
-    nsNNLS::vector<real_t> rhs(_energy_range.count(), (real_t*)&(*spectra)[_energy_range.min]);
+	ArrayXr rhs = spectra->sub_spectra(_energy_range);
+	nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
 
-    solver = new nsNNLS::nnls<real_t>(_fitmatrix, &rhs, _max_iter);
-
-    num_iter = solver->optimize();
+    num_iter = solver.optimize();
     if (num_iter < 0)
     {
         logit<<"Error  NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<std::endl;
     }
 
-    result = solver->getSolution();
-
-    real_t *result_p = result->getData();
+    result = solver.getSolution();
 
     for(const auto& itr : *elements_to_fit)
     {
-        //Fit_Param param = (*fit_params)[itr.first];
-        counts_dict[itr.first] = result_p[_element_row_index[itr.first]];
+        counts_dict[itr.first] = (*result)[_element_row_index[itr.first]];
     }
 
     counts_dict[data_struct::xrf::STR_NUM_ITR] = static_cast<real_t>(num_iter);
-
-    delete solver;
 
     return counts_dict;
 

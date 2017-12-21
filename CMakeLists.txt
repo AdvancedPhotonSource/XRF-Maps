@@ -197,9 +197,6 @@ set(libxrf_fit_HEADERS
     src/support/lmfit_6.1/lmcurve_tyd.hpp
     src/support/lmfit_6.1/lmcurve.hpp
     src/support/nnls/nnls.hpp
-    src/support/nnls/vector.hpp
-    src/support/nnls/matrix.h
-    src/support/nnls/denseMatrix.hpp
     src/data_struct/xrf/quantification_standard.h
     src/data_struct/xrf/element_quant.h
     src/data_struct/xrf/element_info.h
