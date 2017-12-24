@@ -156,57 +156,23 @@ namespace nsNNLS
 			_T npg;                // inf-norm of projected gradient
 		} out;
 
-
-		inline void dotMat(bool trans, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> *vec1, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> *vec2)
-		{
-			vec2->setZero();
-			const size_t ncols = A->cols();
-			const size_t nrows = A->rows();
-			if (!trans)
-			{	
-				for (size_t i = 0; i < nrows; i++)
-				{
-					for (size_t j = 0; j < ncols; j++)
-					{
-						(*vec2)[i] += (*A)(i, j) * (*vec1)[j];
-					}
-				}
-			}
-			else
-			{                      // M'*x
-				for (size_t i = 0; i < nrows; i++) 
-				{
-					for (size_t j = 0; j < ncols; j++) 
-					{
-						(*vec2)[j] += (*A)(i, j) * (*vec1)[i];
-					}
-				}
-			}
-		}
-
 		// The helper functions used by the solver                      
 		int initialize()
 		{
 			size_t n = A->cols();
 			x.resize(n);
-			x.setZero();
 			gradient.resize(n);
-			gradient.setZero();
 			refx.resize(n);
-			refx.setZero();
 			refg.resize(n);
-			refg.setZero();
+			
 			oldx.resize(n);
 			oldx.setZero();
 			oldg.resize(n);
-			oldg.setZero();
+
 			xdelta.resize(n);
-			xdelta.setZero();
 			gdelta.resize(n);
-			gdelta.setZero();
 			
 			ax.resize(A->rows());
-			ax.setZero();
 
 			fset = (size_t*) malloc(sizeof(size_t)*n);
 
@@ -219,22 +185,23 @@ namespace nsNNLS
 
 			if (x0) 
 			{
+				oldg.setZero();
 				x = (*x0);
-				dotMat(false, &x, &ax);
+				ax = (*A) * x.matrix();
 				ax -= (*b);
-				dotMat(true, &ax, &gradient);
+				gradient = A->transpose() * ax.matrix();
 			}
 			else
 			{
 				// Initial gradient = A'(0 - b), since x0 = 0
-				dotMat(true, b, &oldg);
+				oldg = A->transpose() * b->matrix();
 				oldg *= -1.0;
 			}
 
 			// old gradient = A'*(ax - b)
-			dotMat(false, &x, &ax); 
+			ax = (*A) * x.matrix();
 			ax -= (*b);
-			dotMat(true, &ax, &gradient);
+			gradient = A->transpose() * ax.matrix();
 
 			// Set the reference iterations
 			refx = x;
@@ -300,12 +267,12 @@ namespace nsNNLS
 
 		void computeObjGrad()
 		{
-			dotMat(false, &x, &ax);
+			ax = (*A) * x.matrix();
 			ax -= (*b);        // ax = ax - b
 			_T d = (ax*ax).sum();
 			d = std::sqrt(d);
 			out.obj[out.iter] =  (0.5 * d * d);
-			dotMat(true, &ax, &gradient);          // A'(ax)
+			gradient = A->transpose() * ax.matrix(); // A'(ax)
 		}
 
 		_T computeBBStep()
