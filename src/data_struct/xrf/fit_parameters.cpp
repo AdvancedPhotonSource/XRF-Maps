@@ -97,6 +97,14 @@ void Fit_Parameters::add_parameter(std::string name, Fit_Param param)
     _params[name] = param;
 }
 
+void Fit_Parameters::append_and_update(Fit_Parameters* fit_params)
+{
+	for (auto& itr : *(fit_params->Params()))
+	{
+		_params[itr.first] = itr.second;	
+	}
+}
+
 std::vector<real_t> Fit_Parameters::to_array()
 {
     std::vector<real_t> arr;
@@ -134,7 +142,7 @@ void Fit_Parameters::moving_average_with(Fit_Parameters fit_params)
     }
 }
 
-void Fit_Parameters::from_array(std::vector<real_t> arr)
+void Fit_Parameters::from_array(std::vector<real_t> &arr)
 {
     from_array(&arr[0], arr.size());
 }
@@ -150,20 +158,6 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
         }
     }
     //logit_s<<std::endl;
-}
-
-void Fit_Parameters::update_value_by_idx(real_t * val, int idx)
-{
-    //logit_s<<"idx "<<idx<<" val "<<*val<<std::endl;
-    for(auto& itr : _params)
-    {
-        if (itr.second.opt_array_index == idx)
-        {
-            //_params[itr.first].value = *val;
-            itr.second.value = *val;
-            break;
-        }
-    }
 }
 
 void Fit_Parameters::set_all_value(real_t value, data_struct::xrf::E_Bound_Type btype)
@@ -185,31 +179,27 @@ void Fit_Parameters::set_all(data_struct::xrf::E_Bound_Type btype)
     }
 }
 
-void Fit_Parameters::update_values(Fit_Parameters override_fit_params)
+void Fit_Parameters::update_values(Fit_Parameters *override_fit_params)
 {
     for(auto& itr : _params)
     {
-        if(override_fit_params.contains(itr.first))
+        if(override_fit_params->contains(itr.first))
         {
-            if( false == std::isnan(override_fit_params[itr.first].value) )
+            if( std::isfinite(override_fit_params->at(itr.first).value) )
             {
-                //_params[itr.first].value = override_fit_params[itr.first].value;
-                itr.second.value = override_fit_params[itr.first].value;
+                itr.second.value = override_fit_params->at(itr.first).value;
             }
-            if( false == std::isnan(override_fit_params[itr.first].min_val) )
+            if( std::isfinite(override_fit_params->at(itr.first).min_val) )
             {
-                //_params[itr.first].min_val = override_fit_params[itr.first].min_val;
-                itr.second.min_val = override_fit_params[itr.first].min_val;
+                itr.second.min_val = override_fit_params->at(itr.first).min_val;
             }
-            if( false == std::isnan(override_fit_params[itr.first].max_val) )
+            if( std::isfinite(override_fit_params->at(itr.first).max_val) )
             {
-                //_params[itr.first].max_val = override_fit_params[itr.first].max_val;
-                itr.second.max_val = override_fit_params[itr.first].max_val;
+                itr.second.max_val = override_fit_params->at(itr.first).max_val;
             }
-            if( override_fit_params[itr.first].bound_type != E_Bound_Type::NOT_INIT)
+            if( override_fit_params->at(itr.first).bound_type != E_Bound_Type::NOT_INIT)
             {
-                //_params[itr.first].bound_type = override_fit_params[itr.first].bound_type;
-                itr.second.bound_type = override_fit_params[itr.first].bound_type;
+                itr.second.bound_type = override_fit_params->at(itr.first).bound_type;
             }
         }
     }
@@ -236,20 +226,6 @@ void Fit_Parameters::print_non_fixed()
     }
     logit_s<<std::endl;
 
-}
-
-void Fit_Parameters::pow10values()
-{
-    /* this messes with the fit parameters for next fitting
-    for (auto itr : _params)
-    {
-        if(_params[itr.first].bound_type != E_Bound_Type::FIXED)
-        {
-            real_t val = _params[itr.first].value;
-            _params[itr.first].value = std::pow(10.0, val);
-        }
-    }
-    */
 }
 
 } //namespace xrf

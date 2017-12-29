@@ -229,6 +229,8 @@ public:
 
     void add_parameter(std::string name, Fit_Param param);
 
+	void append_and_update(Fit_Parameters* fit_params);
+
     inline auto begin() { return _params.begin(); }
 
     inline auto end() { return _params.end(); }
@@ -241,7 +243,7 @@ public:
 
     std::vector<std::string> names_to_array();
 
-    void from_array(std::vector<real_t> arr);
+    void from_array(std::vector<real_t> &arr);
 
     void from_array(const real_t* arr, size_t arr_size);
 
@@ -249,19 +251,17 @@ public:
 
     void set_all(data_struct::xrf::E_Bound_Type btype);
 
-    void update_values(Fit_Parameters override_fit_params);
+    void update_values(Fit_Parameters *override_fit_params);
 
     void print();
 
     void print_non_fixed();
 
-    void update_value_by_idx(real_t * val, int idx);
-
-    const Fit_Param at(std::string name) const {return _params.at(name); }
-
-    void pow10values();
+    const Fit_Param& at(std::string name) const {return _params.at(name); }
 
     size_t size() const { return _params.size(); }
+	
+	std::unordered_map<std::string, Fit_Param>* Params() { return &_params; }
 
 private:
 

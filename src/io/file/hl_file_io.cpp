@@ -157,7 +157,7 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
             //reset model fit parameters to defaults
             sub_struct->model->reset_to_default_fit_params();
             //Update fit parameters by override values
-            sub_struct->model->update_fit_params_values(override_params->fit_params);
+            sub_struct->model->update_fit_params_values(&(override_params->fit_params));
 
             //Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
             //Initialize model

@@ -127,7 +127,7 @@ public:
 
     virtual void reset_to_default_fit_params() = 0;
 
-    virtual void update_fit_params_values(Fit_Parameters fit_params) = 0;
+    virtual void update_fit_params_values(Fit_Parameters *fit_params) = 0;
 
 protected:
 

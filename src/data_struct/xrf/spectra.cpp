@@ -127,16 +127,10 @@ ArrayXr snip_background(const Spectra* const spectra,
 									  real_t xmin,
 									  real_t xmax)
 {
-	ArrayXr energy(spectra->size());
-	ArrayXr index(spectra->size());
-	ArrayXr background(spectra->size());
-	for (size_t i = 0; i < spectra->size(); i++)
-	{
-		background[i] = (*spectra)[i];
-		energy[i] = real_t(i);
-		index = real_t(i);
-	}
-
+	ArrayXr energy = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
+	ArrayXr index = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
+	ArrayXr background = *spectra;
+	
 	if (spectral_binning > 0)
 	{
 		energy = energy * spectral_binning;
@@ -145,16 +139,10 @@ ArrayXr snip_background(const Spectra* const spectra,
 	energy = energy_offset + energy * energy_linear + Eigen::pow(energy, (real_t)2.0) * energy_quadratic;
 
 	ArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
-	for (size_t i = 0; i<tmp.size(); i++)
-	{
-		if (tmp[i] < 0.0)
-		{
-			tmp[i] = 0.0;
-		}
-	}
+	tmp = tmp.unaryExpr([](real_t r) { return r < 0.0 ? (real_t)0.0 : r;  });
+	
 	//ArrayXr fwhm = 2.35 * std::sqrt(tmp);
 	ArrayXr current_width = (real_t)2.35 * Eigen::sqrt(tmp);
-
 
 	ArrayXr boxcar;
 	// smooth the background

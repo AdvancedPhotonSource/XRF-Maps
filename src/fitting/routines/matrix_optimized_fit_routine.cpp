@@ -68,7 +68,7 @@ Matrix_Optimized_Fit_Routine::Matrix_Optimized_Fit_Routine() : Param_Optimized_F
 Matrix_Optimized_Fit_Routine::~Matrix_Optimized_Fit_Routine()
 {
 
-    logit<<"******** destroy element models *******"<<std::endl;
+    //logit<<"******** destroy element models *******"<<std::endl;
     _element_models.clear();
 
 }
