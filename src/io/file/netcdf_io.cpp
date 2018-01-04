@@ -121,21 +121,21 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         return false;
     }
 
 
     if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
 
     if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
@@ -144,7 +144,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     {
         if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
         {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+            logit<<"Error: "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
             return false;
         }
@@ -152,14 +152,14 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
 
     if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
     {
-        logit<<"Error: NetCDF header not found! Stopping load : "<<path<<std::endl;
+        logit<<"Error: NetCDF header not found! Stopping load : "<<path<<"\n";
         nc_close(ncid);
         return false;
     }
@@ -171,7 +171,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     /*
     if( num_cols != spec_line->size() )
     {
-        logit<<"Warning: Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< std::endl;
+        logit<<"Warning: Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< "\n";
     }
     */
     start[2] += header_size;
@@ -184,7 +184,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         //read header
         if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+            logit<<"Error: "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
             return false;
         }
@@ -199,7 +199,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                 elapsed_lifetime = 1.0;
             }
         }
@@ -213,7 +213,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                 elapsed_realtime = 1.0;
             }
         }
@@ -240,7 +240,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+            logit<<"Error: "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
             return false;
         }
@@ -263,7 +263,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
     if ((retval = nc_close(ncid)))
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         return false;
     }
 
@@ -308,26 +308,26 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
     if( num_detectors > 4)
     {
-        logit<<"Error: Max detectors supported is 4, requesting :"<< num_detectors<<std::endl;
+        logit<<"Error: Max detectors supported is 4, requesting :"<< num_detectors<<"\n";
         return false;
     }
 
     if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0 )
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         return false;
     }
 
     if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
 
     if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
@@ -336,7 +336,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     {
         if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
         {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+            logit<<"Error: "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
             return false;
         }
@@ -346,7 +346,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     start[0] = dim2size[0] - 1;
     if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         nc_close(ncid);
         return false;
     }
@@ -364,14 +364,14 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         //read header
         if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
-            logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+            logit<<"Error: "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
             return false;
         }
 
         if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
         {
-            logit<<"Error: NetCDF header not found! Stopping load : "<<path<<std::endl;
+            logit<<"Error: NetCDF header not found! Stopping load : "<<path<<"\n";
             return false;
         }
 
@@ -381,7 +381,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
         if(num_cols > max_cols)
         {
-            logit<<"Adjusting number of cols from Netcdf cols "<<num_cols<< " to MDA cols "<<max_cols<<std::endl;
+            logit<<"Adjusting number of cols from Netcdf cols "<<num_cols<< " to MDA cols "<<max_cols<<"\n";
             num_cols = max_cols;
         }
 
@@ -392,14 +392,14 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             //read sub header and spectra data
             if( retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) )
             {
-                logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+                logit<<"Error: "<< nc_strerror(retval)<<"\n";
                 nc_close(ncid);
                 return false;
             }
 
             if (data_in[0][0][0] != 13260 || data_in[0][0][1] != -13261)
             {
-                logit<<"Error: NetCDF sub header not found! Stopping load : "<<path<<std::endl;
+                logit<<"Error: NetCDF sub header not found! Stopping load : "<<path<<"\n";
                 return false;
             }
 
@@ -419,7 +419,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 {
                     if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
                     {
-                        logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                        logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                         elapsed_lifetime = 1.0;
                     }
                 }
@@ -433,7 +433,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 {
                     if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
                     {
-                        logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<std::endl;
+                        logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                         elapsed_realtime = 1.0;
                     }
                 }
@@ -471,7 +471,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
     if((retval = nc_close(ncid)) != 0)
     {
-        logit<<"Error: "<< nc_strerror(retval)<<std::endl;
+        logit<<"Error: "<< nc_strerror(retval)<<"\n";
         return false;
     }
 

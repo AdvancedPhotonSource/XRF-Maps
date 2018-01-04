@@ -183,10 +183,10 @@ bool APS_Fit_Params_Import::load(std::string path,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
-                //logit<<"tag : "<<tag<<std::endl;
+                //logit<<"tag : "<<tag<<"\n";
                 if (tag == "VERSION" || tag == "DATE")
                 {
-                    //logit << line << std::endl;
+                    //logit << line << "\n";
                 }
                 else if (tag == "DETECTOR_ELEMENTS")
                 {
@@ -203,12 +203,12 @@ bool APS_Fit_Params_Import::load(std::string path,
                         // check if element_symb contains '_'
                         std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
 
-                        //logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<std::endl;
+                        //logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
                         data_struct::xrf::Element_Info* e_info = element_info_map->get_element(base_element_symb);
                         if(e_info == nullptr)
                         {
-                            logit<<"Can not find element "<<base_element_symb<<std::endl;
+                            logit<<"Can not find element "<<base_element_symb<<"\n";
                         }
                         else
                         {
@@ -233,7 +233,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     while(std::getline(strstream, element_symb, ','))
                     {
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        logit<<"Element with pileup : "<<element_symb<<std::endl;
+                        logit<<"Element with pileup : "<<element_symb<<"\n";
                         //data_struct::xrf::Element_Param* element_param = new data_struct::xrf::Element_Param();
                         //element_param->name = element_symb;
                         //params_override->fit_params.append_element(element_param);
@@ -366,7 +366,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     }
                     else
                     {
-                        logit<<"Error: Unknown detector element enumeration : "<<value<<::std::endl;
+                        logit<<"Error: Unknown detector element enumeration : "<<value<<"\n";
                     }
                 }
                 else if (tag == "ELT1")
@@ -617,7 +617,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     << "Error bits are: "
                     << "\nfailbit: " << paramFileStream.fail()
                     << "\neofbit: " << paramFileStream.eof()
-                    << "\nbadbit: " << paramFileStream.bad() << std::endl;
+                    << "\nbadbit: " << paramFileStream.bad() << "\n";
             }
         }
 
@@ -637,7 +637,7 @@ bool APS_Fit_Params_Import::save(std::string path,
     std::string save_path = path+std::to_string(detector_num);
     std::ofstream out_stream(save_path);
 
-    logit<<save_path<<std::endl;
+    logit<<save_path<<"\n";
 
     std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
     std::time_t tt;
@@ -709,7 +709,7 @@ bool APS_Fit_Params_Import::save(std::string path,
                     << "Error bits are: "
                     << "\nfailbit: " << in_stream.fail()
                     << "\neofbit: " << in_stream.eof()
-                    << "\nbadbit: " << in_stream.bad() << std::endl;
+                    << "\nbadbit: " << in_stream.bad() << "\n";
             }
         }
 
@@ -719,7 +719,7 @@ bool APS_Fit_Params_Import::save(std::string path,
 
     }
 
-    logit<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<std::endl;
+    logit<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<"\n";
     return false;
 }
 

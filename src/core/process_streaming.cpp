@@ -219,7 +219,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    logit << "Perform_quantification()"<<std::endl;
+    logit << "Perform_quantification()"<<"\n";
 
     data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
 
@@ -246,7 +246,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
             }
             if(override_params == nullptr)
             {
-                logit<<"Skipping file "<<dataset_directory << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<std::endl;
+                logit<<"Skipping file "<<dataset_directory << " detector "<<detector_num<<" because could not find maps_fit_params_override.txt"<<"\n";
                 continue;
             }
 
@@ -304,13 +304,13 @@ bool perform_quantification_streaming(std::string dataset_directory,
                     quantification_standard->standard_filename(standard_file_name);
                     if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
                     {
-                        logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                        logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<"\n";
                         return false;
                     }
                 }
                 else
                 {
-                    logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                    logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<"\n";
                     return false;
                 }
             }
@@ -372,14 +372,14 @@ bool perform_quantification_streaming(std::string dataset_directory,
     }
     else
     {
-        logit<<"Error loading quantification standard "<<quantification_info_file<<std::endl;
+        logit<<"Error loading quantification standard "<<quantification_info_file<<"\n";
         return false;
     }
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 */
     return true;
 

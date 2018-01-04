@@ -120,7 +120,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     //load the quantification standard dataset
     if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &params_override) )
     {
-        logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<std::endl;
+        logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
         ret_struct.success = false;
         return ret_struct;
     }
@@ -218,12 +218,12 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
     {
         fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
-        logit << "Processing  "<< fit_routine->get_name()<<std::endl;
+        logit << "Processing  "<< fit_routine->get_name()<<"\n";
 
         start = std::chrono::system_clock::now();
         if (override_params->elements_to_fit.size() < 1)
         {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<"\n";
             continue;
         }
 
@@ -237,7 +237,7 @@ void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
         {
             for(size_t j=0; j<spectra_volume->cols(); j++)
             {
-                //logit<< i<<" "<<j<<std::endl;
+                //logit<< i<<" "<<j<<"\n";
                 fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector_struct->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
             }
         }
@@ -298,7 +298,7 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
             bool is_loaded_from_analyzed_h5;
             if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, true) )
             {
-                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<std::endl;
+                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<"\n";
                 delete spectra_volume;
                 delete tmp_spectra_volume;
                 return;
@@ -310,7 +310,7 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
 
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, tmp_spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, false) )
                 {
-                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<std::endl;
+                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<"\n";
                     delete spectra_volume;
                     delete tmp_spectra_volume;
                     return;
@@ -365,7 +365,7 @@ void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job)
                 //load spectra volume
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &loaded_from_analyzed_hdf5, true) )
                 {
-                    logit<<"Skipping detector "<<detector_num<<std::endl;
+                    logit<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
                     continue;
                 }
@@ -394,7 +394,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    logit << "Perform_quantification()"<<std::endl;
+    logit << "Perform_quantification()"<<"\n";
 
     data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
 
@@ -468,13 +468,13 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
                     quantification_standard->standard_filename(standard_file_name);
                     if(false == io::load_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, &is_loaded_from_analyzed_h5, false) )
                     {
-                        logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                        logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<"\n";
                         return false;
                     }
                 }
                 else
                 {
-                    logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<std::endl;
+                    logit<<"Error perform_quantification() : could not load file "<< standard_file_name <<" for detector"<<detector_num<<"\n";
                     return false;
                 }
             }
@@ -530,7 +530,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
     }
     else
     {
-        logit<<"Error loading quantification standard "<<analysis_job->quantificaiton_standard_filename<<std::endl;
+        logit<<"Error loading quantification standard "<<analysis_job->quantificaiton_standard_filename<<"\n";
         return false;
     }
 
@@ -542,7 +542,7 @@ bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job)
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
     return true;
 

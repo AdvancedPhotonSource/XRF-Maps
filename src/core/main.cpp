@@ -53,38 +53,38 @@ POSSIBILITY OF SUCH DAMAGE.
 
 void help()
 {
-    logit_s<<"Help: "<<std::endl;
-    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<std::endl;
-    logit_s<<"Options: "<<std::endl;
-    logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) "<<std::endl;
-    logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<std::endl;
-    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<std::endl;
-    logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<std::endl;
+    logit_s<<"Help: "<<"\n";
+    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<"\n";
+    logit_s<<"Options: "<<"\n";
+    logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) "<<"\n";
+    logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<"\n";
+    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<"\n";
+    logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<"\n";
 //    logit_s<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
 //    logit_s<<"    us = upstream ion chamber\n";
 //    logit_s<<"    ds = downstream ion chamber\n";
-//    logit_s<<"    sr = sr current. "<<std::endl;
-    logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<std::endl;
+//    logit_s<<"    sr = sr current. "<<"\n";
+    logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<"\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
-               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<std::endl;
-    logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<std::endl;
-    logit_s<<"Fitting Routines: "<<std::endl;
-    logit_s<<"--roi : ROI "<<std::endl;
-    logit_s<<"--roi_plus : SVD method "<<std::endl;
-    logit_s<<"--nnls : Non-Negative Least Squares"<<std::endl;
-    logit_s<<"--tails : Fit with multiple parameters "<<std::endl;
-    logit_s<<"--matrix : Fit with locked parameters \n"<<std::endl;
-    logit_s<<"Dataset: "<<std::endl;
-    logit_s<<"--dir : Dataset directory "<<std::endl;
-    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<std::endl;
-    logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<std::endl;
-    logit_s<<"Examples: "<<std::endl;
-    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<std::endl;
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<std::endl;
-    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<std::endl;
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<std::endl;
-    logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<std::endl;
-    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<std::endl;
+               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<"\n";
+    logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<"\n";
+    logit_s<<"Fitting Routines: "<<"\n";
+    logit_s<<"--roi : ROI "<<"\n";
+    logit_s<<"--roi_plus : SVD method "<<"\n";
+    logit_s<<"--nnls : Non-Negative Least Squares"<<"\n";
+    logit_s<<"--tails : Fit with multiple parameters "<<"\n";
+    logit_s<<"--matrix : Fit with locked parameters \n"<<"\n";
+    logit_s<<"Dataset: "<<"\n";
+    logit_s<<"--dir : Dataset directory "<<"\n";
+    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
+    logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
+    logit_s<<"Examples: "<<"\n";
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<"\n";
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<"\n";
+    logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<"\n";
+    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<"\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         else if(opt == "4")
             analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_FREE_ENERGY;
         else
-            logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<std::endl;
+            logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
     }
 
     //Which optimizer do we want to pick. Default is lmfit
@@ -266,7 +266,7 @@ int main(int argc, char *argv[])
         }
         if (analysis_job.dataset_files.size() == 0)
         {
-            logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<std::endl;
+            logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<"\n";
             return -1;
         }
 
@@ -309,15 +309,15 @@ int main(int argc, char *argv[])
         whole_command_line += " " + std::string(argv[ic]);
     }
     analysis_job.command_line = whole_command_line;
-    logit<<"whole command line : "<<whole_command_line<<std::endl;
-    logit << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<std::endl;
+    logit<<"whole command line : "<<whole_command_line<<"\n";
+    logit << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
 
     start = std::chrono::system_clock::now();
 
     //load element information
     if(false == io::load_element_info(element_henke_filename, element_csv_filename, data_struct::xrf::Element_Info_Map::inst()))
     {
-        logit<<"Error loading element information: "<<std::endl;
+        logit<<"Error loading element information: "<<"\n";
         return -1;
     }
 
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        logit<<"Error initializing analysis job"<<std::endl;
+        logit<<"Error initializing analysis job"<<"\n";
     }
 
     data_struct::xrf::Element_Info_Map::inst()->clear();

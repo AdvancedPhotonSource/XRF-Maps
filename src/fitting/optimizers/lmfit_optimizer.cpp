@@ -212,9 +212,9 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     //printf( "\nResults:\n" );
     //printf( "status after %d function evaluations:\n  %s\n",  status.nfev, lm_infmsg[status.outcome] );
     //if(residuals_count_lmfit < 100)
-     //   logit<<"=-=-=-=-=-=-=-=-=-=--==--=-=-==--==---==--==--== bad fit =-=-=-=-=-=-=-=-=-=-=-=-=-=-= "<<residuals_count_lmfit<<std::endl;
+     //   logit<<"=-=-=-=-=-=-=-=-=-=--==--=-=-==--==---==--==--== bad fit =-=-=-=-=-=-=-=-=-=-=-=-=-=-= "<<residuals_count_lmfit<<"\n";
 
-    //logit<<"residuals count = "<<residuals_count_lmfit<<std::endl;
+    //logit<<"residuals count = "<<residuals_count_lmfit<<"\n";
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )

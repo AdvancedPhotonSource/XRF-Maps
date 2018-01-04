@@ -145,7 +145,7 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
 
         if (override_params->elements_to_fit.size() < 1)
         {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<std::endl;
+            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<"\n";
             return false;
         }
 
@@ -176,13 +176,13 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 	if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
 	{
-		logit << "error loading " << element_henke_filename << std::endl;
+		logit << "error loading " << element_henke_filename << "\n";
 		return false;
 	}
 
 	if (io::file::load_element_info_from_csv(element_csv_filename, element_info_map) == false)
 	{
-		logit << "error loading " << element_csv_filename << std::endl;
+		logit << "error loading " << element_csv_filename << "\n";
 		return false;
 	}
 
@@ -208,7 +208,7 @@ bool save_results(std::string save_loc,
 
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    logit << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    logit << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
 
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
@@ -242,7 +242,7 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 {
     io::file::CSV_IO csv_io;
     std::string full_path = file_and_fit_params.dataset_dir+"/output/"+file_and_fit_params.dataset_filename+std::to_string(file_and_fit_params.detector_num)+".csv";
-    logit<<full_path<<std::endl;
+    logit<<full_path<<"\n";
     csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
 
 #ifdef _BUILD_WITH_VTK
@@ -329,14 +329,14 @@ bool load_quantification_standard(std::string dataset_directory,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
-                //logit<<"tag : "<<tag<<std::endl;
+                //logit<<"tag : "<<tag<<"\n";
                 if (tag == "FILENAME")
                 {
                     std::string standard_filename;
-                    logit << line << std::endl;
+                    logit << line << "\n";
                     std::getline(strstream, standard_filename, ':');
                     standard_filename.erase(std::remove_if(standard_filename.begin(), standard_filename.end(), ::isspace), standard_filename.end());
-                    logit << "Standard file name = "<< standard_filename << std::endl;
+                    logit << "Standard file name = "<< standard_filename << "\n";
                     //quantification_standard->standard_filename(standard_filename);
                     (*standard_file_name) = standard_filename;
                     has_filename = true;
@@ -347,7 +347,7 @@ bool load_quantification_standard(std::string dataset_directory,
                     while(std::getline(strstream, element_symb, ','))
                     {
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        logit<<"Element : "<<element_symb<<std::endl;
+                        logit<<"Element : "<<element_symb<<"\n";
                         element_names.push_back(element_symb);
                     }
                     has_elements = true;
@@ -358,7 +358,7 @@ bool load_quantification_standard(std::string dataset_directory,
                     while(std::getline(strstream, element_weight_str, ','))
                     {
                         element_weight_str.erase(std::remove_if(element_weight_str.begin(), element_weight_str.end(), ::isspace), element_weight_str.end());
-                        logit<<"Element weight: "<<element_weight_str<<std::endl;
+                        logit<<"Element weight: "<<element_weight_str<<"\n";
                         real_t weight = std::stof(element_weight_str);
                         element_weights.push_back(weight);
                     }
@@ -375,7 +375,7 @@ bool load_quantification_standard(std::string dataset_directory,
                     << "Error bits are: "
                     << "\nfailbit: " << paramFileStream.fail()
                     << "\neofbit: " << paramFileStream.eof()
-                    << "\nbadbit: " << paramFileStream.bad() << std::endl;
+                    << "\nbadbit: " << paramFileStream.bad() << "\n";
             }
         }
 
@@ -393,7 +393,7 @@ bool load_quantification_standard(std::string dataset_directory,
             }
             else
             {
-                logit<<"Error: number of element names ["<<element_names.size()<<"] does not match number of element weights ["<<element_weights.size()<<"]!"<<std::endl;
+                logit<<"Error: number of element names ["<<element_names.size()<<"] does not match number of element weights ["<<element_weights.size()<<"]!"<<"\n";
             }
 
             return true;
@@ -402,7 +402,7 @@ bool load_quantification_standard(std::string dataset_directory,
     }
     else
     {
-        logit<<"Failed to open file "<<path<<std::endl;
+        logit<<"Failed to open file "<<path<<"\n";
     }
     return false;
 
@@ -425,7 +425,7 @@ bool load_override_params(std::string dataset_directory,
                                         data_struct::xrf::Element_Info_Map::inst(),
                                         params_override))
     {
-        logit<<"Error loading fit param override file: "<<std::endl;
+        logit<<"Error loading fit param override file: "<<"\n";
         return false;
     }
     else
@@ -440,7 +440,7 @@ bool load_override_params(std::string dataset_directory,
         else
         {
          //log error or warning
-            logit<<"Error, no detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<std::endl;
+            logit<<"Error, no detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<"\n";
             detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
         }
 
@@ -462,7 +462,7 @@ bool load_override_params(std::string dataset_directory,
             itr.second->init_energy_ratio_for_detector_element(detector_element);
             logit_s<<itr.first<<" ";
         }
-        logit_s<<std::endl;
+        logit_s<<"\n";
 
     }
 
@@ -486,7 +486,7 @@ bool load_spectra_volume(std::string dataset_directory,
     //data_struct::xrf::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
-    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
+    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -558,7 +558,7 @@ bool load_spectra_volume(std::string dataset_directory,
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, quantification_standard) )
     {
-        logit<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+        logit<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<"\n";
         return false;
     }
     else
@@ -574,13 +574,13 @@ bool load_spectra_volume(std::string dataset_directory,
                 {
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
-                    //logit<<"Loading file "<<full_filename<<std::endl;
+                    //logit<<"Loading file "<<full_filename<<"\n";
                     io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                 }
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
@@ -607,7 +607,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     mda_io.unload();
-    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
     return true;
 }
 
@@ -627,7 +627,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     data_struct::xrf::Spectra_Volume spectra_volume;
 
-    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<std::endl;
+    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<"\n";
 
     //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
 
@@ -726,7 +726,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     data_struct::xrf::Spectra_Line spectra_line;
                     spectra_line.resize(dims[1], integrated_spectra->size());
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
-                    //logit<<"Loading file "<<full_filename<<std::endl;
+                    //logit<<"Loading file "<<full_filename<<"\n";
                     if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
                     {
                         for(int k=0; k<spectra_line.size(); k++)
@@ -738,7 +738,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<std::endl;
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
@@ -766,7 +766,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     }
 
-    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<std::endl;
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
     return ret_val;
 }
 
@@ -777,7 +777,7 @@ void generate_h5_averages(std::string dataset_directory,
                           size_t detector_num_start,
                           size_t detector_num_end)
 {
-    logit<<std::endl;
+    logit<<"\n";
 
     std::vector<std::string> hdf5_filenames;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -785,7 +785,7 @@ void generate_h5_averages(std::string dataset_directory,
 
     if (detector_num_start == detector_num_end)
     {
-        logit << "Warning: detector range "<<detector_num_start<<":"<<detector_num_end<<" is only 1 detector. Nothing to avg."<<std::endl;
+        logit << "Warning: detector range "<<detector_num_start<<":"<<detector_num_end<<" is only 1 detector. Nothing to avg."<<"\n";
         return;
     }
 
@@ -800,7 +800,7 @@ void generate_h5_averages(std::string dataset_directory,
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<std::endl;
+    logit << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
 
 }
@@ -810,7 +810,7 @@ void generate_h5_averages(std::string dataset_directory,
 std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)
 {
     std::vector<std::string> dataset_files;
-    logit<<dataset_directory<<" searching for "<<search_str<<std::endl;
+    logit<<dataset_directory<<" searching for "<<search_str<<"\n";
     DIR *dir;
     struct dirent *ent;
     size_t search_str_size = search_str.length();
@@ -834,10 +834,10 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     else
     {
         /* could not open directory */
-        logit<<"Error: could not open directory "<<dataset_directory<<std::endl;
+        logit<<"Error: could not open directory "<<dataset_directory<<"\n";
     }
 
-    logit<<"found "<<dataset_files.size()<<std::endl;
+    logit<<"found "<<dataset_files.size()<<"\n";
     return dataset_files;
 }
 
@@ -847,7 +847,7 @@ void check_and_create_dirs(std::string dataset_directory)
 {
 
     bool found_img_dat = false;
-    logit<<dataset_directory<<std::endl;
+    logit<<dataset_directory<<"\n";
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir (dataset_directory.c_str())) != NULL)
@@ -866,7 +866,7 @@ void check_and_create_dirs(std::string dataset_directory)
     else
     {
         /* could not open directory */
-        logit<<"Error: could not open directory "<<dataset_directory<<std::endl;
+        logit<<"Error: could not open directory "<<dataset_directory<<"\n";
     }
 
     if (false == found_img_dat)
@@ -874,7 +874,7 @@ void check_and_create_dirs(std::string dataset_directory)
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
         system(cmd.c_str());
     }
-    logit<<"done"<<std::endl;
+    logit<<"done"<<"\n";
 
 }
 
@@ -884,7 +884,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 {
 
     io::file::MDA_IO mda_io;
-    logit<<dataset_directory<<" "<<dataset_files->size()<<" files"<<std::endl;
+    logit<<dataset_directory<<" "<<dataset_files->size()<<" files"<<"\n";
     std::list<file_name_size> f_list;
 
     for (auto &itr : *dataset_files)
@@ -903,7 +903,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
         dataset_files->push_back(itr.filename);
     }
 
-    logit<<"done"<<std::endl;
+    logit<<"done"<<"\n";
 }
 
 }// end namespace io

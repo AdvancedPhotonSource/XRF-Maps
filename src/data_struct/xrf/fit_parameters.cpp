@@ -149,7 +149,7 @@ void Fit_Parameters::from_array(std::vector<real_t> &arr)
 
 void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
 {
-    //logit_s<<std::endl;
+    //logit_s<<"\n";
     for(auto& itr : _params)
     {
         if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < arr_size)
@@ -157,7 +157,7 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
             itr.second.value = arr[itr.second.opt_array_index];
         }
     }
-    //logit_s<<std::endl;
+    //logit_s<<"\n";
 }
 
 void Fit_Parameters::set_all_value(real_t value, data_struct::xrf::E_Bound_Type btype)
@@ -209,9 +209,9 @@ void Fit_Parameters::print()
 {
     for(const auto& itr : _params)
     {
-        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
+        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << "\n";
     }
-    logit_s<<std::endl;
+    logit_s<<"\n";
 
 }
 
@@ -221,10 +221,10 @@ void Fit_Parameters::print_non_fixed()
     {
         if(itr.second.bound_type != E_Bound_Type::FIXED)
         {
-            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << std::endl;
+            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << "\n";
         }
     }
-    logit_s<<std::endl;
+    logit_s<<"\n";
 
 }
 

@@ -138,7 +138,7 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
             {
                 //Fitting models
                 fitting::routines::Base_Fit_Routine *fit_routine = sub_struct->fit_routines[proc_type];
-                logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<std::endl;
+                logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
 
                 Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
                 //Initialize model

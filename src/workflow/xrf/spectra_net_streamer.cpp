@@ -115,7 +115,7 @@ void Spectra_Net_Streamer::stream(data_struct::xrf::Stream_Block* stream_block)
 	bool val = _zmq_socket->send(message, 0);
 	if (val == false)
 	{
-		logit << "Error sending ZMQ message"<<std::endl;
+		logit << "Error sending ZMQ message"<<"\n";
 	}
 #endif
 }
