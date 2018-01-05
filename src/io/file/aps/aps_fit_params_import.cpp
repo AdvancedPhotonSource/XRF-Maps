@@ -150,17 +150,24 @@ const std::vector<std::string> Updatable_detector_dependand_TAGS = {
                                                                 "OCR1"
 };
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 APS_Fit_Params_Import::APS_Fit_Params_Import()
 {
 
 
 }
 
+//-----------------------------------------------------------------------------
+
 APS_Fit_Params_Import::~APS_Fit_Params_Import()
 {
 
 
 }
+
+//-----------------------------------------------------------------------------
 
 bool APS_Fit_Params_Import::load(std::string path,
                                  data_struct::xrf::Element_Info_Map * element_info_map,
@@ -194,7 +201,6 @@ bool APS_Fit_Params_Import::load(std::string path,
                 }
                 else if (tag == "ELEMENTS_TO_FIT")
                 {
-
                     std::string element_symb;
                     while(std::getline(strstream, element_symb, ','))
                     {
@@ -628,6 +634,8 @@ bool APS_Fit_Params_Import::load(std::string path,
 
 }
 
+//-----------------------------------------------------------------------------
+
 bool APS_Fit_Params_Import::save(std::string path,
                                  data_struct::xrf::Fit_Parameters fit_params,
                                  int detector_num)
@@ -722,6 +730,9 @@ bool APS_Fit_Params_Import::save(std::string path,
     logit<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<"\n";
     return false;
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 } //end namespace aps
 } //end namespace file

@@ -54,6 +54,8 @@ namespace data_struct
 namespace xrf
 {
 
+//-----------------------------------------------------------------------------
+
 Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
 {
 
@@ -82,6 +84,8 @@ Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
 
 }
 
+//-----------------------------------------------------------------------------
+
 Fit_Element_Map::~Fit_Element_Map()
 {
 
@@ -89,6 +93,8 @@ Fit_Element_Map::~Fit_Element_Map()
     _energy_ratio_custom_multipliers.clear();
 
 }
+
+//-----------------------------------------------------------------------------
 
 void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info * const detector_element)
 {
@@ -140,6 +146,8 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
     _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );
 
 }
+
+//-----------------------------------------------------------------------------
 
 void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element)
 {
@@ -194,6 +202,8 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
     _energy_ratios.push_back(Element_Energy_Ratio(energy, ratio, mu_fraction, et));
 }
 
+//-----------------------------------------------------------------------------
+
 void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
 {
     if (idx > 0 && idx < _energy_ratio_custom_multipliers.size())
@@ -201,6 +211,37 @@ void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
         _energy_ratio_custom_multipliers[idx] = multi;
     }
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+data_struct::xrf::Fit_Element_Map* gen_element_map(std::string element_symb)
+{
+	data_struct::xrf::Element_Info_Map * element_info_map = data_struct::xrf::Element_Info_Map::inst();
+	data_struct::xrf::Fit_Element_Map* fit_map = nullptr;
+
+	element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+
+	// check if element_symb contains '_'
+	std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
+
+	//logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
+
+	data_struct::xrf::Element_Info* e_info = element_info_map->get_element(base_element_symb);
+	if (e_info == nullptr)
+	{
+		logit << "Can not find element " << base_element_symb << "\n";
+	}
+	else
+	{
+		fit_map = new data_struct::xrf::Fit_Element_Map(element_symb, e_info);
+	}
+
+	return fit_map;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 } //namespace xrf
 } //namespace data_struct

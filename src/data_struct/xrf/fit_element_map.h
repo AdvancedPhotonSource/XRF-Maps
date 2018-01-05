@@ -131,6 +131,8 @@ protected:
 
 //-----------------------------------------------------------------------------
 
+DLL_EXPORT Fit_Element_Map* gen_element_map(std::string element_symb);
+
 typedef std::unordered_map<std::string, Fit_Element_Map*> Fit_Element_Map_Dict;
 
 
