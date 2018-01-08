@@ -99,13 +99,11 @@ SOURCES += \
     src/data_struct/xrf/fit_parameters.cpp \
     src/data_struct/xrf/fit_element_map.cpp \
     src/data_struct/xrf/quantification_standard.cpp \
-    #src/data_struct/xrf/element_quant.cpp \
     src/data_struct/xrf/spectra.cpp \
     src/data_struct/xrf/spectra_line.cpp \
     src/data_struct/xrf/spectra_volume.cpp \
     src/data_struct/xrf/stream_block.cpp \
     src/data_struct/xrf/analysis_job.cpp \
-    #src/data_struct/xrf/aps/aps_fit_parameters.cpp \
     src/fitting/models/base_model.cpp \
     src/fitting/models/gaussian_model.cpp \
     src/fitting/routines/base_fit_routine.cpp \
@@ -119,7 +117,6 @@ SOURCES += \
     src/fitting/optimizers/mpfit_optimizer.cpp \
     src/fitting/optimizers/minpack_optimizer.cpp \
     src/quantification/models/quantification_model.cpp \
-    #src/fitting/optimizers/ceres_optimizer.cpp \
     src/workflow/xrf/spectra_file_source.cpp \
     src/workflow/xrf/spectra_net_source.cpp \
     src/workflow/xrf/integrated_spectra_source.cpp \
@@ -158,13 +155,11 @@ HEADERS += \
     src/data_struct/xrf/params_override.h \
     src/data_struct/xrf/element_quant.h \
     src/data_struct/xrf/quantification_standard.h \
-    #src/data_struct/ndarray.h \
     src/data_struct/xrf/spectra.h \
     src/data_struct/xrf/spectra_line.h \
     src/data_struct/xrf/spectra_volume.h \
     src/data_struct/xrf/stream_block.h \
     src/data_struct/xrf/analysis_job.h \
-    #src/data_struct/xrf/aps/aps_fit_parameters.h \
     src/fitting/models/base_model.h \
     src/fitting/models/gaussian_model.h \
     src/fitting/routines/base_fit_routine.h \
@@ -178,7 +173,6 @@ HEADERS += \
     src/fitting/optimizers/mpfit_optimizer.h \
     src/fitting/optimizers/minpack_optimizer.h \
     src/quantification/models/quantification_model.h \
-    #src/fitting/optimizers/ceres_optimizer.h \
     src/workflow/sink.h \
     src/workflow/distributor.h \
     src/workflow/source.h \

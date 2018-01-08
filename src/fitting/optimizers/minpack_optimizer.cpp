@@ -76,9 +76,9 @@ void residuals_minpack(void *usr_data, int params_size, real_t *params, real_t *
     ud->fit_parameters->from_array(params, params_size);
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
 
-    for(size_t i=0; i<ud->spectra->size(); i++)
+    for(size_t i=0; i<ud->spectra.rows(); i++)
     {
-        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+        fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
     residuals_count_minpack ++;
 }
@@ -92,9 +92,9 @@ void gen_residuals_minpack(void *usr_data, int params_size, real_t *params, real
     ud->fit_parameters->from_array(params, params_size);
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
 
-    for(size_t i=0; i<ud->spectra->size(); i++)
+    for(size_t i=0; i<ud->spectra.rows(); i++)
     {
-        fvec[i] = ( (*ud->spectra)[i] - ud->spectra_model[i] ) * ud->weights[i];
+        fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
     }
     //gen_residuals_count_minpack ++;
 }
