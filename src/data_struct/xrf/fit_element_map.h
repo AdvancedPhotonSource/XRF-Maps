@@ -108,6 +108,8 @@ public:
 
     const std::string full_name() const { return _full_name; }
 
+    const int Z() const {return _element_info==nullptr? -1:_element_info->number;}
+
     const std::vector<Element_Energy_Ratio>& energy_ratios() const { return _energy_ratios; }
 
     const real_t width_multi() const { return _width_multi; }
