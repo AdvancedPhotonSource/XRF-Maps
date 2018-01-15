@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include "core/defines.h"
 
@@ -122,6 +123,8 @@ public:
 
     //void set_energies(float* energy_arr, int num_energies);
 
+    bool contains(std::string element_name) {return _name_element_info_map.count(element_name) > 0 ? true : false; }
+
     std::vector<float> _energies;
 
 private:
@@ -131,7 +134,7 @@ private:
     static Element_Info_Map *_this_inst;
 
     std::unordered_map<std::string, Element_Info*> _name_element_info_map;
-    std::unordered_map<int, Element_Info*>  _number_element_info_map;
+    std::map<int, Element_Info*>  _number_element_info_map;
 
 
 };
