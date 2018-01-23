@@ -254,10 +254,11 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
 	data_struct::xrf::ArrayXr background(file_and_fit_params.spectra.size());
 	background.setZero();
-	if (file_and_fit_params.fit_params.contains(data_struct::xrf::STR_FIT_SNIP_WIDTH))
+
+    if (file_and_fit_params.fit_params.contains(data_struct::xrf::STR_SNIP_WIDTH))
 	{
-		data_struct::xrf::Fit_Param fit_snip_width = file_and_fit_params.fit_params[data_struct::xrf::STR_FIT_SNIP_WIDTH];
-		if (fit_snip_width.value > 0.0)
+        data_struct::xrf::Fit_Param fit_snip_width = file_and_fit_params.fit_params[data_struct::xrf::STR_SNIP_WIDTH];
+        if (fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
 		{
 			real_t spectral_binning = 0.0;
 			background = data_struct::xrf::snip_background(&file_and_fit_params.spectra,

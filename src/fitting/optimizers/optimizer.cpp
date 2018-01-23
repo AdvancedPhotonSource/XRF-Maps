@@ -81,10 +81,10 @@ namespace optimizers
 
         ArrayXr background(spectra->size());
 		background.setZero();
-        if(fit_params->contains(STR_FIT_SNIP_WIDTH))
+        if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);
-            if(fit_snip_width.value > 0.0)
+            Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
+            if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
             {
                 real_t spectral_binning = 0.0;
                 background = snip_background(spectra,
@@ -124,10 +124,11 @@ namespace optimizers
 
         ArrayXr background(spectra->size());
 		background.setZero();
-        if(fit_params->contains(STR_FIT_SNIP_WIDTH))
+
+        if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            Fit_Param fit_snip_width = fit_params->at(STR_FIT_SNIP_WIDTH);
-            if(fit_snip_width.value > 0.0)
+            Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
+            if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
             {
                 real_t spectral_binning = 0.0;
                 background = snip_background(spectra,
@@ -145,6 +146,33 @@ namespace optimizers
 
 		ud.spectra_model.resize(energy_range.count());
 	}
+
+    void update_background_user_data(User_Data *ud)
+    {
+        if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
+        {
+            Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
+            if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
+            {
+                //ArrayXr background(ud->spectra.size());
+                //background.setZero();
+
+                real_t spectral_binning = 0.0;
+                ud->spectra_background = snip_background(&(ud->spectra),
+                                             ud->fit_parameters->at(STR_ENERGY_OFFSET).value,
+                                             ud->fit_parameters->at(STR_ENERGY_SLOPE).value,
+                                             ud->fit_parameters->at(STR_ENERGY_QUADRATIC).value,
+                                             spectral_binning,
+                                             ud->fit_parameters->at(STR_SNIP_WIDTH).value,
+                                             ud->energy_range.min,
+                                             ud->energy_range.max);
+
+                //ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
+            }
+        }
+
+
+    }
 
 } //namespace optimizers
 } //namespace fitting

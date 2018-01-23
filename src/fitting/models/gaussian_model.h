@@ -77,7 +77,6 @@ const string STR_COMPTON_HI_F_TAIL      = "COMPTON_HI_F_TAIL";
 const string STR_COMPTON_HI_GAMMA       = "COMPTON_HI_GAMMA";
 
 const string STR_SNIP_WIDTH             = "SNIP_WIDTH";
-const string STR_FIT_SNIP_WIDTH         = "FIT_SNIP_WIDTH";
 
 const string STR_F_STEP_OFFSET          = "F_STEP_OFFSET";
 const string STR_F_STEP_LINEAR          = "F_STEP_LINEAR";

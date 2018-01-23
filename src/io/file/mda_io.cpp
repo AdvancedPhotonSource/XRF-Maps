@@ -485,7 +485,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
-                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->number_detectors-1 > detector_num_end)
+                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
                 {
                     logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
@@ -511,7 +511,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 > detector_num_end)
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
         {
             logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();

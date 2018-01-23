@@ -118,6 +118,8 @@ void fill_gen_user_data(Gen_User_Data &ud,
                         const Range energy_range,
                         Gen_Func_Def gen_func);
 
+void update_background_user_data(User_Data *ud);
+
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
  */

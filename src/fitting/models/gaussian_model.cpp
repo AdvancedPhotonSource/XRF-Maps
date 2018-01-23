@@ -112,7 +112,6 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
     fit_params.add_parameter(STR_COMPTON_HI_GAMMA, Fit_Param(STR_COMPTON_HI_GAMMA,	 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.01,      E_Bound_Type::FIXED));
 
     fit_params.add_parameter(STR_SNIP_WIDTH, Fit_Param(STR_SNIP_WIDTH,			     (real_t)0.1,   (real_t)2.828427, (real_t)0.15, (real_t)0.01,      E_Bound_Type::FIXED)); //max = 2* sqrt(2)
-    fit_params.add_parameter(STR_FIT_SNIP_WIDTH, Fit_Param(STR_FIT_SNIP_WIDTH,		 (real_t)0.0,   (real_t)1.0,      (real_t)0.0,  (real_t)0.01,      E_Bound_Type::FIXED));
 
     fit_params.add_parameter(STR_F_STEP_OFFSET, Fit_Param(STR_F_STEP_OFFSET,		(real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
     fit_params.add_parameter(STR_F_STEP_LINEAR, Fit_Param(STR_F_STEP_LINEAR,        (real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
@@ -199,7 +198,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
-            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
 
             _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
@@ -237,7 +236,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
-            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
 
             _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;

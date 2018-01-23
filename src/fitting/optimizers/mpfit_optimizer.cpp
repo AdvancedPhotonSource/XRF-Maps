@@ -72,6 +72,8 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
 
+    update_background_user_data(ud);
+
     //Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
     ud->spectra_model += ud->spectra_background;

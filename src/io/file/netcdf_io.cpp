@@ -387,6 +387,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
         start[2] = header_size;
         count[2] = header_size + (spectra_size * num_detectors);
+        size_t move_offset = header_size + (spectra_size * 4);//only 4 element detector supported
         for(size_t j=0; j<num_cols; j++)
         {
             //read sub header and spectra data
@@ -465,7 +466,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 callback_fun(row, j, max_rows, max_cols, detector_num, spectra, user_data);
             }
 
-            start[2] += count[2];
+            start[2] += move_offset;
         }
     }
 

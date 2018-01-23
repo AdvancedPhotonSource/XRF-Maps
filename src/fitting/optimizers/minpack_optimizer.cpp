@@ -74,6 +74,8 @@ void residuals_minpack(void *usr_data, int params_size, real_t *params, real_t *
     User_Data* ud = static_cast<User_Data*>(usr_data);
 
     ud->fit_parameters->from_array(params, params_size);
+    update_background_user_data(ud);
+
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
 
     for(size_t i=0; i<ud->spectra.rows(); i++)
