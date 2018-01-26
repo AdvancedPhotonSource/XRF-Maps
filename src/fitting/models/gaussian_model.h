@@ -154,10 +154,6 @@ protected:
 
     Fit_Parameters _fit_parameters;
 
-private:
-
-    Optimizer *_optimizer;
-
 };
 
 } //namespace models

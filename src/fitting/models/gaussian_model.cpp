@@ -71,11 +71,7 @@ namespace models
 
 Gaussian_Model::Gaussian_Model() : Base_Model()
 {
-
-    _optimizer = nullptr;
     _fit_parameters = _generate_default_fit_parameters();
-
-
 }
 
 // ----------------------------------------------------------------------------

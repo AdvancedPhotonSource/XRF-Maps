@@ -73,6 +73,7 @@ Param_Optimized_Fit_Routine::Param_Optimized_Fit_Routine() : Base_Fit_Routine()
     _optimizer = nullptr;
     _energy_range.min = 0;
     _energy_range.max = 1999;
+    _update_coherent_amplitude_on_fit = true;
 
 }
 
@@ -176,7 +177,10 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
     //Add fit param for number of iterations
     fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
-    _calc_and_update_coherent_amplitude(&fit_params, spectra);
+    if(_update_coherent_amplitude_on_fit)
+    {
+        _calc_and_update_coherent_amplitude(&fit_params, spectra);
+    }
 
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
     if(spectra->sum() == 0)
@@ -229,7 +233,10 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
     //Add fit param for number of iterations
     fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
-    //_calc_and_update_coherent_amplitude(&fit_params, spectra);
+    if(_update_coherent_amplitude_on_fit)
+    {
+        _calc_and_update_coherent_amplitude(&fit_params, spectra);
+    }
 
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
     if(spectra->sum() == 0)

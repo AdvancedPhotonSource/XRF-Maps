@@ -85,6 +85,7 @@ struct User_Data
     Fit_Element_Map_Dict *elements;
     Range energy_range;
     Spectra  spectra_model;
+    const Spectra *orig_spectra;
 };
 
 struct Gen_User_Data

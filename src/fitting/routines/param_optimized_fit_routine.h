@@ -87,6 +87,8 @@ public:
 
      void set_optimizer(Optimizer *optimizer);
 
+     void set_update_coherent_amplitude_on_fit(bool val) {_update_coherent_amplitude_on_fit = val;}
+
 protected:
 
     void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
@@ -99,6 +101,8 @@ protected:
     Optimizer *_optimizer;
 
     Range _energy_range;
+
+    bool _update_coherent_amplitude_on_fit;
 
 private:
 

@@ -174,22 +174,30 @@ ArrayXr snip_background(const Spectra* const spectra,
 		no_iterations = 3;
 	}
 
-	real_t max_of_xmin = (std::max)(xmin, (real_t)0.0);
-	real_t min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));
+        int max_of_xmin = (std::max)(xmin, (real_t)0.0);
+        int min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));
 	for (int j = 0; j<no_iterations; j++)
 	{
 		for (size_t k = 0; k<background.size(); k++)
 		{
-			real_t lo_index = k - current_width[k];
-			real_t hi_index = k + current_width[k];
+                        int lo_index = k - current_width[k];
+                        int hi_index = k + current_width[k];
 			if (lo_index < max_of_xmin)
 			{
-				lo_index = max_of_xmin;
+                                lo_index = max_of_xmin;
 			}
+                        if(lo_index > min_of_xmax)
+                        {
+                            lo_index = min_of_xmax;
+                        }
 			if (hi_index > min_of_xmax)
 			{
-				hi_index = min_of_xmax;
+                                hi_index = min_of_xmax;
 			}
+                        if(hi_index < max_of_xmin)
+                        {
+                            hi_index = max_of_xmin;
+                        }
 			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
 			if (background[k] > temp)
 			{
@@ -202,16 +210,24 @@ ArrayXr snip_background(const Spectra* const spectra,
 	{
 		for (size_t k = 0; k<background.size(); k++)
 		{
-			real_t lo_index = k - current_width[k];
-			real_t hi_index = k + current_width[k];
-			if (lo_index < max_of_xmin)
-			{
-				lo_index = max_of_xmin;
-			}
-			if (hi_index > min_of_xmax)
-			{
-				hi_index = min_of_xmax;
-			}
+                        int lo_index = k - current_width[k];
+                        int hi_index = k + current_width[k];
+                        if (lo_index < max_of_xmin)
+                        {
+                                lo_index = max_of_xmin;
+                        }
+                        if(lo_index > min_of_xmax)
+                        {
+                            lo_index = min_of_xmax;
+                        }
+                        if (hi_index > min_of_xmax)
+                        {
+                                hi_index = min_of_xmax;
+                        }
+                        if(hi_index < max_of_xmin)
+                        {
+                            hi_index = max_of_xmin;
+                        }
 			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
 			if (background[k] > temp)
 			{

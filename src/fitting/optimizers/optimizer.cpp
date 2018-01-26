@@ -65,6 +65,7 @@ namespace optimizers
 		ud.fit_model = (Base_Model*)model;
 		// set spectra to fit
 		ud.spectra = spectra->sub_spectra(energy_range);
+        ud.orig_spectra = spectra;
 		ud.fit_parameters = fit_params;
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
         ud.energy_range.min = energy_range.min;
@@ -152,13 +153,10 @@ namespace optimizers
         if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
+            if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
             {
-                //ArrayXr background(ud->spectra.size());
-                //background.setZero();
-
                 real_t spectral_binning = 0.0;
-                ud->spectra_background = snip_background(&(ud->spectra),
+                ud->spectra_background = snip_background(ud->orig_spectra,
                                              ud->fit_parameters->at(STR_ENERGY_OFFSET).value,
                                              ud->fit_parameters->at(STR_ENERGY_SLOPE).value,
                                              ud->fit_parameters->at(STR_ENERGY_QUADRATIC).value,
@@ -167,7 +165,7 @@ namespace optimizers
                                              ud->energy_range.min,
                                              ud->energy_range.max);
 
-                //ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
+                ud->spectra_background = ud->spectra_background.segment(ud->energy_range.min, ud->energy_range.count());
             }
         }
 
