@@ -160,8 +160,7 @@ void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job)
     std::queue<std::future<struct io::file_name_fit_params> > job_queue;
     ThreadPool tp(analysis_job->num_threads);
 
-    std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs;
-    fit_params_avgs.resize(analysis_job->detector_num_end - analysis_job->detector_num_start + 1);
+    std::unordered_map<int, data_struct::xrf::Fit_Parameters> fit_params_avgs;
 
     for(auto &itr : analysis_job->optimize_dataset_files)
     {

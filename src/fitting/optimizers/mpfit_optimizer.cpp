@@ -66,16 +66,18 @@ namespace optimizers
 
 int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
-    //Get user passed data
+    // Get user passed data
     User_Data* ud = static_cast<User_Data*>(usr_data);
 
-    //Update fit parameters from optimizer
+    // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
-
+    // Update background if fit_snip_width is set to fit
     update_background_user_data(ud);
-
-    //Model spectra based on new fit parameters
+    // Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    // Add background
     ud->spectra_model += ud->spectra_background;
 
     //Calculate residuals
@@ -89,17 +91,20 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 
 int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
-    //Get user passed data
+    // Get user passed data
     Gen_User_Data* ud = static_cast<Gen_User_Data*>(usr_data);
 
-    //Update fit parameters from optimizer
+    // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
 
-    //Model spectra based on new fit parameters
+    // Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    // Add background
     ud->spectra_model += ud->spectra_background;
 
-    //Calculate residuals
+    // Calculate residuals
     for (int i=0; i<m; i++)
     {
         dy[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
@@ -147,8 +152,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    config.maxiter = MP_NO_ITER;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
-    //config.maxiter = 200;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -339,13 +343,13 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = (real_t)0.1;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    mp_config.maxiter = 1000;     //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
                                     //    Default: 200
 
-    //mp_config.maxfev = 0;
+
     mp_config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
                                        // Default: 0 (no limit)
     mp_config.nprint = 0;           // Default: 1

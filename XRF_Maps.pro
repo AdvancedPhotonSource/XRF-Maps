@@ -115,7 +115,6 @@ SOURCES += \
     src/fitting/optimizers/optimizer.cpp \
     src/fitting/optimizers/lmfit_optimizer.cpp \
     src/fitting/optimizers/mpfit_optimizer.cpp \
-    src/fitting/optimizers/minpack_optimizer.cpp \
     src/quantification/models/quantification_model.cpp \
     src/workflow/xrf/spectra_file_source.cpp \
     src/workflow/xrf/spectra_net_source.cpp \
@@ -171,7 +170,6 @@ HEADERS += \
     src/fitting/optimizers/optimizer.h \
     src/fitting/optimizers/lmfit_optimizer.h \
     src/fitting/optimizers/mpfit_optimizer.h \
-    src/fitting/optimizers/minpack_optimizer.h \
     src/quantification/models/quantification_model.h \
     src/workflow/sink.h \
     src/workflow/distributor.h \

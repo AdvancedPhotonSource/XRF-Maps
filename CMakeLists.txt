@@ -61,9 +61,6 @@ include_directories(GCC_INCLUDE_DIR)
 
 IF(MSVC)
   set(EIGEN3_INCLUDES "" CACHE PATH "Eigen include folder")
-  #set(NETCDF_INCLUDES "" CACHE PATH "NetCDF include folder")
-  #set(NETCDF_LIBRARIES "" CACHE FILEPATH "NetCDF library")
-  #set(HDF5_INCLUDES "" CACHE PATH "HDF5 include folder")
   set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
   set(EIGEN3_INCLUDES "/usr/include/eigen3" CACHE PATH "Eigen include folder")
@@ -174,7 +171,7 @@ include_directories(${HDF5_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDES})
 
 # Include NetCDF 
-include_directories(${NETCDF_INCLUDES})
+include_directories(${NETCDF_INCLUDE_DIRS})
 
 # Include libxrf header files
 include_directories(src)
@@ -190,7 +187,6 @@ endif()
 
 set(libxrf_fit_HEADERS
     src/core/defines.h
-    src/support/minpack/minpack.hpp
     src/support/cmpfit-1.3a/mpfit.hpp
     src/support/lmfit_6.1/lmstruct.hpp
     src/support/lmfit_6.1/lmmin.hpp
@@ -266,6 +262,8 @@ set(XRF_IO_HEADERS
 	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
 	src/workflow/xrf/spectra_net_streamer.h
+    src/core/process_streaming.h
+    src/core/process_whole.h
    )
 
 set(XRF_IO_SOURCE
@@ -285,6 +283,8 @@ set(XRF_IO_SOURCE
     src/workflow/xrf/detector_sum_spectra_source.cpp
     src/workflow/xrf/spectra_stream_saver.cpp
     src/workflow/xrf/spectra_net_streamer.cpp
+    src/core/process_streaming.cpp
+    src/core/process_whole.cpp
     )
 
 IF(BUILD_FOR_PHI)
@@ -312,10 +312,6 @@ ENDIF()
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
     src/core/command_line_parser.h
-    src/core/process_streaming.h
-    src/core/process_streaming.cpp
-    src/core/process_whole.h
-    src/core/process_whole.cpp
     src/core/main.cpp
 )
 

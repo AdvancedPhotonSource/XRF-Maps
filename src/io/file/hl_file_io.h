@@ -126,6 +126,13 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
 DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type,
                                                                      fitting::optimizers::Optimizer* optimizer);
 
+/**
+ * @brief init_analysis_job_detectors : Read in maps_fit_parameters_override.txt[0-3] and initialize data structres
+ *                                      Override file contains information about which element to fit, updated branching
+ *                                      conditions and other custom properties of the dataset.
+ * @param analysis_job : data structure that holds information about the analysis to be perfomred.
+ * @return True if successful
+ */
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job);
 
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
@@ -159,7 +166,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
-                              std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs,
+                              std::unordered_map<int, data_struct::xrf::Fit_Parameters> fit_params_avgs,
                               int detector_num_start,
                               int detector_num_end);
 

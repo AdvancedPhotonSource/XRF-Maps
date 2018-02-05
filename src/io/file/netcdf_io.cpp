@@ -70,8 +70,6 @@ NetCDF_IO* NetCDF_IO::_this_inst(0);
 #define INPUT_COUNTS_OFFSET 36
 #define OUTPUT_COUNTS_OFFSET 38
 
-//static std::mutex netcdf_mutex;
-
 //-----------------------------------------------------------------------------
 
 NetCDF_IO::NetCDF_IO()

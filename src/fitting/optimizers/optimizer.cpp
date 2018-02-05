@@ -71,9 +71,6 @@ namespace optimizers
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
 
-		std::vector<real_t> fitp_arr = fit_params->to_array();
-		std::vector<real_t> perror(fitp_arr.size());
-
 		ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
 		weights = convolve1d(weights, 5);
 		weights = Eigen::abs(weights);

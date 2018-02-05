@@ -66,13 +66,16 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
 {
     User_Data* ud = (User_Data*)(data);
 
-    //Update fit parameters from optimizer
+    // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
-    //Model spectra based on new fit parameters
+    // Model spectra based on new fit parameters
     update_background_user_data(ud);
     ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    // Add background
     ud->spectra_model += ud->spectra_background;
-    //Calculate residuals
+    // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
 		fvec[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
@@ -86,12 +89,15 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
 
     Gen_User_Data* ud = (Gen_User_Data*)(data);
 
-    //Update fit parameters from optimizer
+    // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
-    //Model spectra based on new fit parameters
+    // Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    // Add background
     ud->spectra_model += ud->spectra_background;
-    //Calculate residuals
+    // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
         fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
@@ -206,16 +212,9 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     //control.verbosity = 3;
 
     /* perform the fit */
-    //printf( "Fitting:\n" );
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
-	printf(".");
-    /* print results */
-    //printf( "\nResults:\n" );
-    //printf( "status after %d function evaluations:\n  %s\n",  status.nfev, lm_infmsg[status.outcome] );
-    //if(residuals_count_lmfit < 100)
-     //   logit<<"=-=-=-=-=-=-=-=-=-=--==--=-=-==--==---==--==--== bad fit =-=-=-=-=-=-=-=-=-=-=-=-=-=-= "<<residuals_count_lmfit<<"\n";
+    logit<< "status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
 
-    //logit<<"residuals count = "<<residuals_count_lmfit<<"\n";
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )

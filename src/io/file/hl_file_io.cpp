@@ -243,9 +243,7 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     io::file::CSV_IO csv_io;
     std::string full_path = file_and_fit_params.dataset_dir+"/output/"+file_and_fit_params.dataset_filename+std::to_string(file_and_fit_params.detector_num)+".csv";
     logit<<full_path<<"\n";
-    csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
 
-#ifdef _BUILD_WITH_VTK
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
@@ -274,9 +272,13 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
     data_struct::xrf::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
 	model_spectra += background;
+#ifdef _BUILD_WITH_VTK
     std::string str_path = file_and_fit_params.dataset_dir+"/output/fit_"+file_and_fit_params.dataset_filename+"_det"+std::to_string(file_and_fit_params.detector_num)+".png";
     visual::SavePlotSpectras(str_path, file_and_fit_params.spectra, model_spectra, true);
 #endif
+
+    // TODO: save the spectra, model, and background to csv
+    csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
 
     for(auto &itr : file_and_fit_params.elements_to_fit)
     {
@@ -287,7 +289,7 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
 // ----------------------------------------------------------------------------
 
-void save_averaged_fit_params(std::string dataset_dir, std::vector<data_struct::xrf::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
+void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::xrf::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
 {
     io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
