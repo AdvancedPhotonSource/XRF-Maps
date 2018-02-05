@@ -58,8 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 const real_t AVOGADRO = (real_t)6.02204531e23;
 const real_t HC_ANGSTROMS = (real_t)12398.52;
@@ -307,7 +305,6 @@ const std::unordered_map<int, real_t> Element_Weight = {
     std::pair<int, real_t>(109, (real_t)268.0)
 };
 
-} //namespace xrf
 } //namespace data_struct
 
 #endif // Element_Info_H

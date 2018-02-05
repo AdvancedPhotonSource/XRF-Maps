@@ -50,8 +50,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef CSV_IO_H
 #define CSV_IO_H
 
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/element_info.h"
+#include "data_struct/fit_parameters.h"
+
+using namespace data_struct;
 
 namespace io
 {
@@ -75,7 +77,7 @@ public:
      */
     ~CSV_IO();
 
-    bool save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Parameters fit_params);
+    bool save_fit_parameters(std::string fullpath, data_struct::Fit_Parameters fit_params);
 
 private:
 
@@ -83,7 +85,7 @@ private:
 };
 
 
-DLL_EXPORT bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_Info_Map *element_map);
+DLL_EXPORT bool load_element_info_from_csv(std::string filename, data_struct::Element_Info_Map *element_map);
 
 }// end namespace file
 }// end namespace io

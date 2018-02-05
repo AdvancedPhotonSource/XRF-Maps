@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fitting/routines/base_fit_routine.h"
 #include "fitting/optimizers/optimizer.h"
-#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/fit_parameters.h"
 
 namespace fitting
 {
@@ -60,9 +60,8 @@ namespace routines
 {
 
 using namespace std;
-using namespace data_struct::xrf;
+using namespace data_struct;
 using namespace fitting::optimizers;
-
 
 class DLL_EXPORT Param_Optimized_Fit_Routine: public Base_Fit_Routine
 {

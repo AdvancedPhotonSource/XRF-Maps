@@ -50,6 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 static std::time_t now_c;
 #define logit now_c=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());std::cout<<std::put_time(std::localtime(&now_c),"[%F_%T]\t")<<__FILE__<<"::"<<__FUNCTION__<<"():"<<__LINE__<<"\t"
@@ -89,5 +90,84 @@ static std::time_t now_c;
     #define DLL_LOCAL
   #endif
 #endif
+
+
+// STRING KEYS
+using namespace std;
+
+//namespace keys
+//{
+
+/**
+* @brief String defines for fit parameters string value pair.
+*/
+const string MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
+const string MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
+
+const string STR_SI_ESCAPE = "SI_ESCAPE";
+const string STR_GE_ESCAPE = "GE_ESCAPE";
+const string STR_ESCAPE_LINEAR = "ESCAPE_LINEAR";
+const string STR_PILEUP0 = "PILEUP0";
+const string STR_PILEUP1 = "PILEUP1";
+const string STR_PILEUP2 = "PILEUP2";
+const string STR_PILEUP3 = "PILEUP3";
+const string STR_PILEUP4 = "PILEUP4";
+const string STR_PILEUP5 = "PILEUP5";
+const string STR_PILEUP6 = "PILEUP6";
+const string STR_PILEUP7 = "PILEUP7";
+const string STR_PILEUP8 = "PILEUP8";
+
+const string STR_NUM_ITR = "Num_Iter";
+const string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
+const string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
+const string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
+const string STR_GE_DEAD_LAYER = "GE_DEAD_LAYER";
+
+//namespace gaussian_model
+//{
+const string STR_ENERGY_OFFSET = "ENERGY_OFFSET";
+const string STR_ENERGY_SLOPE = "ENERGY_SLOPE";
+const string STR_ENERGY_QUADRATIC = "ENERGY_QUADRATIC";
+
+const string STR_FWHM_OFFSET = "FWHM_OFFSET";
+const string STR_FWHM_FANOPRIME = "FWHM_FANOPRIME";
+
+const string STR_COHERENT_SCT_ENERGY = "COHERENT_SCT_ENERGY";
+const string STR_COHERENT_SCT_AMPLITUDE = "COHERENT_SCT_AMPLITUDE";
+
+const string STR_COMPTON_ANGLE = "COMPTON_ANGLE";
+const string STR_COMPTON_FWHM_CORR = "COMPTON_FWHM_CORR";
+const string STR_COMPTON_AMPLITUDE = "COMPTON_AMPLITUDE";
+const string STR_COMPTON_F_STEP = "COMPTON_F_STEP";
+const string STR_COMPTON_F_TAIL = "COMPTON_F_TAIL";
+const string STR_COMPTON_GAMMA = "COMPTON_GAMMA";
+const string STR_COMPTON_HI_F_TAIL = "COMPTON_HI_F_TAIL";
+const string STR_COMPTON_HI_GAMMA = "COMPTON_HI_GAMMA";
+
+const string STR_SNIP_WIDTH = "SNIP_WIDTH";
+const string STR_FIT_SNIP_WIDTH = "FIT_SNIP_WIDTH";
+
+const string STR_F_STEP_OFFSET = "F_STEP_OFFSET";
+const string STR_F_STEP_LINEAR = "F_STEP_LINEAR";
+const string STR_F_STEP_QUADRATIC = "F_STEP_QUADRATIC";
+
+const string STR_F_TAIL_OFFSET = "F_TAIL_OFFSET";
+const string STR_F_TAIL_LINEAR = "F_TAIL_LINEAR";
+const string STR_F_TAIL_QUADRATIC = "F_TAIL_QUADRATIC";
+
+const string STR_GAMMA_OFFSET = "GAMMA_OFFSET";
+const string STR_GAMMA_LINEAR = "GAMMA_LINEAR";
+const string STR_GAMMA_QUADRATIC = "GAMMA_QUADRATIC";
+
+const string STR_KB_F_TAIL_OFFSET = "KB_F_TAIL_OFFSET";
+const string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
+const string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
+
+//}
+
+//}// namespace keys
+
+
+
 
 #endif

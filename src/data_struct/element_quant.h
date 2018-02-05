@@ -43,122 +43,57 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2017>: Arthur Glowacki
+/// Initial Author <2016>: Arthur Glowacki
 
 
 
-#ifndef Analysis_Job_H
-#define Analysis_Job_H
+#ifndef Element_Quant_H
+#define Element_Quant_H
 
 #include "core/defines.h"
-#include "data_struct/xrf/element_info.h"
-#include "fitting/routines/base_fit_routine.h"
-#include <vector>
-#include <string>
-#include "data_struct/xrf/quantification_standard.h"
-#include "data_struct/xrf/params_override.h"
-#include "fitting/optimizers/lmfit_optimizer.h"
-#include "fitting/optimizers/mpfit_optimizer.h"
-#include <iostream>
 
 namespace data_struct
-{
-namespace xrf
 {
 
 //-----------------------------------------------------------------------------
 
-///
-/// \brief The Analysis_Sub_Struct class
-///
-struct DLL_EXPORT Analysis_Sub_Struct
+struct DLL_EXPORT Element_Quant
 {
+    Element_Quant()
+    {
+        zero();
+    }
+    Element_Quant(real_t weight_)
+    {
+        zero();
+        weight = weight_;
+    }
+    void zero()
+    {
+        weight = 0.0;
+        absorption = 0.0;
+        transmission_Be = 0.0;
+        transmission_Ge = 0.0; // or Si dead layer
+        yield = 0.0;
+        transmission_through_Si_detector = 0.0;
+        transmission_through_air = 0.0;// (N2)
+        e_cal_ratio = 0.0;
+    }
 
-    // Fitting routines map
-    std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
+    real_t weight;  // in ug/cm2
+    real_t absorption;
+    real_t transmission_Be;
+    real_t transmission_Ge; // or Si dead layer
+    real_t yield;
+    real_t transmission_through_Si_detector;
+    real_t transmission_through_air;// (N2)
 
-    // Fitting model
-    fitting::models::Base_Model * model;
-
-    // Quantification
-    data_struct::xrf::Quantification_Standard quant_standard;
-
-    // Fit Parameters Override for model
-    data_struct::xrf::Params_Override fit_params_override_dict;
+    real_t e_cal_ratio;
 
 };
 
-///
-/// \brief The Analysis_Job class
-///
-class DLL_EXPORT Analysis_Job
-{
-public:
-
-    Analysis_Job();
-
-    ~Analysis_Job();
-
-    struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
-
-    void set_optimizer(std::string optimizer);
-
-    fitting::optimizers::Optimizer *optimizer(){return _optimizer;}
-
-    void init_fit_routines(size_t spectra_samples);
-
-    std::string command_line;
-
-    std::string dataset_directory;
-
-    std::string quantificaiton_standard_filename;
-
-    std::string theta_pv;
-
-    float theta;
-
-    std::vector<std::string> dataset_files;
-
-    std::vector<std::string> optimize_dataset_files;
-
-    std::vector<Fitting_Routines> fitting_routines;
-
-    std::map<int, struct Analysis_Sub_Struct> detectors_meta_data;
-
-    fitting::models::Fit_Params_Preset optimize_fit_params_preset;
-
-    size_t detector_num_start;
-
-    size_t detector_num_end;
-
-    size_t num_threads;
-
-    bool quick_and_dirty;
-
-    bool optimize_fit_override_params;
-
-    bool generate_average_h5;
-
-    bool is_network_source;
-
-    bool stream_over_network;
-
-protected:
-
-    //Optimizers for fitting models
-    fitting::optimizers::LMFit_Optimizer _lmfit_optimizer;
-    fitting::optimizers::MPFit_Optimizer _mpfit_optimizer;
-    fitting::optimizers::Optimizer *_optimizer;
-
-    size_t _last_init_sample_size;
-
-private:
-	bool _first_init;
-
-};
-
-} //namespace xrf
+//-----------------------------------------------------------------------------
 
 } //namespace data_struct
 
-#endif // Analysis_Job_H
+#endif // Element_Quant_H

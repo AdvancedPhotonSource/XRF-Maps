@@ -47,58 +47,46 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef SPECTRAVOLUME_H
-#define SPECTRAVOLUME_H
+#ifndef SPECTRALINE_H
+#define SPECTRALINE_H
 
-#include "data_struct/xrf/spectra_line.h"
-
-//#include "base_dataset.h"
+#include "data_struct/spectra.h"
+#include <vector>
 
 namespace data_struct
 {
-namespace xrf
-{
 
 /**
- * @brief The Spectra_Volume class : A volume of spectras
+ * @brief The Spectra_Line class : A row of spectras
  */
-class DLL_EXPORT Spectra_Volume //: public Base_Dataset
+class DLL_EXPORT Spectra_Line
 {
 public:
-	Spectra_Volume();
+    Spectra_Line();
 
-	~Spectra_Volume();
+    ~Spectra_Line();
 
-    Spectra_Line& operator [](std::size_t row) { return _data_vol[row]; }
+    Spectra& operator [](std::size_t row) { return _data_line[row]; }
 
-    const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
+    const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
 
-    void resize(size_t rows, size_t cols, size_t samples);
+    void resize(size_t cols, size_t samples);
 
-    void dims(int &dims_out) {  }
-
-    const Spectra integrate();
-
-    //real_t* get_spectra(unsigned int row, unsigned int col);
-
-    const size_t cols() const { return _data_vol[0].size(); }
-
-    const size_t rows() const { return _data_vol.size(); }
+    void alloc_row_size(size_t n);
 
     void recalc_elapsed_lifetime();
 
-    const size_t samples_size() const { return _data_vol[0][0].size(); }
-
-    int rank() { return 3; }
+    auto size() const { return _data_line.size(); }
 
 private:
 
-    std::vector<Spectra_Line> _data_vol;
-//    std::vector<std::vector< Spectra* > > array3D;
+
+    void _alloc_spectra_size(size_t n);
+
+    std::vector<Spectra> _data_line;
 
 };
 
-} //namespace xrf
 } //namespace data_struct
 
-#endif // SpectraVolume_H
+#endif // SPECTRALINE_H

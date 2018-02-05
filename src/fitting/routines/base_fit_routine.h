@@ -51,16 +51,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <unordered_map>
 
-#include "data_struct/xrf/spectra.h"
+#include "data_struct/spectra.h"
 #include "fitting/models/base_model.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/fit_element_map.h"
 
 namespace fitting
 {
 namespace routines
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 using namespace std;
 
 

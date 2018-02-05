@@ -92,7 +92,7 @@ NetCDF_IO* NetCDF_IO::inst()
 
 //-----------------------------------------------------------------------------
 
-bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::xrf::Spectra_Line* spec_line)
+bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
 {
 
     std::lock_guard<std::mutex> lock(_mutex);
@@ -276,7 +276,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                                                 int row,
                                                 size_t max_rows,
                                                 size_t max_cols,
-												data_struct::xrf::IO_Callback_Func_Def callback_fun,
+												data_struct::IO_Callback_Func_Def callback_fun,
                                                 void* user_data)
 {
 
@@ -408,7 +408,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             {
                 spectra_size = data_in[0][0][8 + detector_num];
 
-                data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(spectra_size);
+                data_struct::Spectra * spectra = new data_struct::Spectra(spectra_size);
 
                 unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector_num*8)];
                 unsigned short i2 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector_num*8)+1];

@@ -56,8 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 //-----------------------------------------------------------------------------
 
@@ -199,7 +197,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         }
 
         Fit_Parameters fit_params;
-        fit_params.add_parameter("quantifier", Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, FIT));
+        fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
         fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
         real_t val = fit_params["quantifier"].value;
@@ -239,5 +237,4 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
 //-----------------------------------------------------------------------------
 
-} //namespace xrf
 } //namespace data_struct

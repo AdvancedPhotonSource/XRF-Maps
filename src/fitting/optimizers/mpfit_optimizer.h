@@ -59,7 +59,7 @@ namespace optimizers
 
 using namespace std;
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 
 class DLL_EXPORT MPFit_Optimizer: public Optimizer

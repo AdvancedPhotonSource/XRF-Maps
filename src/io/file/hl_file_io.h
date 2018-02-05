@@ -59,22 +59,22 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "io/file/hdf5_io.h"
 #include "io/file/csv_io.h"
 
-#include "data_struct/xrf/spectra_volume.h"
+#include "data_struct/spectra_volume.h"
 
 #include "fitting/models/gaussian_model.h"
 
-#include "data_struct/xrf/element_info.h"
+#include "data_struct/element_info.h"
 
 #include "io/file/aps/aps_fit_params_import.h"
 
 #include "fitting/routines/base_fit_routine.h"
 
-#include "data_struct/xrf/fit_element_map.h"
-#include "data_struct/xrf/params_override.h"
+#include "data_struct/fit_element_map.h"
+#include "data_struct/params_override.h"
 
-#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/quantification_standard.h"
 
-#include "data_struct/xrf/stream_block.h"
+#include "data_struct/stream_block.h"
 
 #include "fitting/routines/roi_fit_routine.h"
 #include "fitting/routines/svd_fit_routine.h"
@@ -104,9 +104,9 @@ struct DLL_EXPORT file_name_fit_params
     std::string dataset_dir;
     std::string dataset_filename;
     int detector_num;
-    data_struct::xrf::Fit_Parameters fit_params;
-    data_struct::xrf::Spectra spectra;
-    data_struct::xrf::Fit_Element_Map_Dict elements_to_fit;
+    data_struct::Fit_Parameters fit_params;
+    data_struct::Spectra spectra;
+    data_struct::Fit_Element_Map_Dict elements_to_fit;
     bool success;
 };
 
@@ -123,7 +123,7 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
                           size_t detector_num_start,
                           size_t detector_num_end);
 
-DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type,
+DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::Fitting_Routines proc_type,
                                                                      fitting::optimizers::Optimizer* optimizer);
 
 /**
@@ -133,21 +133,21 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct
  * @param analysis_job : data structure that holds information about the analysis to be perfomred.
  * @return True if successful
  */
-DLL_EXPORT bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job);
+DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job);
 
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
                        std::string element_csv_filename,
-                       data_struct::xrf::Element_Info_Map *element_info_map);
+                       data_struct::Element_Info_Map *element_info_map);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
-                                       data_struct::xrf::Spectra *integrated_spectra,
+                                       data_struct::Spectra *integrated_spectra,
                                        size_t detector_num,
-                                       data_struct::xrf::Params_Override * params_override);
+                                       data_struct::Params_Override * params_override);
 
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
                           int detector_num,
-                          data_struct::xrf::Params_Override *params_override);
+                          data_struct::Params_Override *params_override);
 
 DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
@@ -156,29 +156,29 @@ DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
 
 DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::xrf::Spectra_Volume *spectra_volume,
+                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         data_struct::xrf::Params_Override * params_override,
-                         data_struct::xrf::Quantification_Standard * quantification_standard,
+                         data_struct::Params_Override * params_override,
+                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
-                              std::unordered_map<int, data_struct::xrf::Fit_Parameters> fit_params_avgs,
+                              std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
                               int detector_num_start,
                               int detector_num_end);
 
 DLL_EXPORT bool save_results(std::string save_loc,
-                  const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                  const data_struct::Fit_Count_Dict * const element_counts,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start);
 
 DLL_EXPORT void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params);
 
-DLL_EXPORT bool save_volume(data_struct::xrf::Quantification_Standard * quantification_standard,
-                 data_struct::xrf::Spectra_Volume *spectra_volume,
+DLL_EXPORT bool save_volume(data_struct::Quantification_Standard * quantification_standard,
+                 data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
                  real_t energy_quad);

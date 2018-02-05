@@ -53,16 +53,14 @@ project(XRF_Maps)
 # Add a CMake parameter for choosing a desired Python version
 #set(PYBIND11_PYTHON_VERSION "" CACHE STRING "Python version to use for compiling the XRF Maps application")
 
-set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
-
-include_directories(GCC_INCLUDE_DIR)
 
 IF(MSVC)
   set(EIGEN3_INCLUDES "" CACHE PATH "Eigen include folder")
   set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
+  set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
+  include_directories(GCC_INCLUDE_DIR)
   set(EIGEN3_INCLUDES "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 ENDIF()
 
@@ -193,16 +191,16 @@ set(libxrf_fit_HEADERS
     src/support/lmfit_6.1/lmcurve_tyd.hpp
     src/support/lmfit_6.1/lmcurve.hpp
     src/support/nnls/nnls.hpp
-    src/data_struct/xrf/quantification_standard.h
-    src/data_struct/xrf/element_quant.h
-    src/data_struct/xrf/element_info.h
-    src/data_struct/xrf/fit_parameters.h
-    src/data_struct/xrf/fit_element_map.h
-    src/data_struct/xrf/params_override.h
-    src/data_struct/xrf/spectra.h
-    src/data_struct/xrf/spectra_line.h
-    src/data_struct/xrf/spectra_volume.h
-    src/data_struct/xrf/stream_block.h
+    src/data_struct/quantification_standard.h
+    src/data_struct/element_quant.h
+    src/data_struct/element_info.h
+    src/data_struct/fit_parameters.h
+    src/data_struct/fit_element_map.h
+    src/data_struct/params_override.h
+    src/data_struct/spectra.h
+    src/data_struct/spectra_line.h
+    src/data_struct/spectra_volume.h
+    src/data_struct/stream_block.h
     src/quantification/models/quantification_model.h
     src/fitting/models/base_model.h
     src/fitting/models/gaussian_model.h
@@ -215,19 +213,19 @@ set(libxrf_fit_HEADERS
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
-    src/data_struct/xrf/analysis_job.h
+    src/data_struct/analysis_job.h
     src/workflow/threadpool.h
 )
 
 set(libxrf_fit_SOURCE
-    src/data_struct/xrf/quantification_standard.cpp
-    src/data_struct/xrf/element_info.cpp
-    src/data_struct/xrf/fit_parameters.cpp
-    src/data_struct/xrf/fit_element_map.cpp
-    src/data_struct/xrf/spectra.cpp
-    src/data_struct/xrf/spectra_line.cpp
-    src/data_struct/xrf/spectra_volume.cpp
-    src/data_struct/xrf/stream_block.cpp
+    src/data_struct/quantification_standard.cpp
+    src/data_struct/element_info.cpp
+    src/data_struct/fit_parameters.cpp
+    src/data_struct/fit_element_map.cpp
+    src/data_struct/spectra.cpp
+    src/data_struct/spectra_line.cpp
+    src/data_struct/spectra_volume.cpp
+    src/data_struct/stream_block.cpp
     src/quantification/models/quantification_model.cpp
     src/fitting/models/base_model.cpp
     src/fitting/models/gaussian_model.cpp
@@ -240,7 +238,7 @@ set(libxrf_fit_SOURCE
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/lmfit_optimizer.cpp
-    src/data_struct/xrf/analysis_job.cpp
+    src/data_struct/analysis_job.cpp
 )
 
 #--------------- start xrf io lib -----------------

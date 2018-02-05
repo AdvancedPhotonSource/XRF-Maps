@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <functional>
 
-#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/fit_parameters.h"
 #include "fitting/models/base_model.h"
 #include "quantification/models/quantification_model.h"
 
@@ -63,7 +63,7 @@ namespace optimizers
 {
 
 using namespace std;
-using namespace data_struct::xrf;
+using namespace data_struct;
 using namespace fitting::models;
 
 

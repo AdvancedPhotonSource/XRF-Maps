@@ -51,12 +51,10 @@
 #include <string>
 #include "core/defines.h"
 
-#include "data_struct/xrf/fit_parameters.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/fit_parameters.h"
+#include "data_struct/fit_element_map.h"
 
 namespace data_struct
-{
-namespace xrf
 {
 
 using namespace std;
@@ -144,8 +142,6 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-
-} //namespace xrf
 
 } //namespace data_struct
 

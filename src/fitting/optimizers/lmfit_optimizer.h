@@ -59,7 +59,7 @@ namespace optimizers
 
 using namespace std;
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 /**
  * @brief The LMFit_Optimizer class : Minimization class to find optimal specta model

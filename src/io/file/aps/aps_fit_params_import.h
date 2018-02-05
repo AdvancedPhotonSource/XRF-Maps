@@ -50,8 +50,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #define APS_FIT_PARAMS_IMPORT_H
 
 #include "core/defines.h"
-#include "data_struct/xrf/params_override.h"
-#include "data_struct/xrf/element_info.h"
+#include "data_struct/params_override.h"
+#include "data_struct/element_info.h"
+
+using namespace data_struct;
 
 namespace io
 {
@@ -75,11 +77,11 @@ public:
     ~APS_Fit_Params_Import();
 
     bool load(std::string path,
-              data_struct::xrf::Element_Info_Map *element_info_map,
-              data_struct::xrf::Params_Override *params_override);
+              data_struct::Element_Info_Map *element_info_map,
+              data_struct::Params_Override *params_override);
 
     bool save(std::string path,
-              data_struct::xrf::Fit_Parameters fit_params,
+              data_struct::Fit_Parameters fit_params,
               int detector_num);
 
 private:

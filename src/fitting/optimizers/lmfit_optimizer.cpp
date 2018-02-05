@@ -53,7 +53,7 @@
 
 #include "support/lmfit_6.1/lmmin.hpp"
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 
 namespace fitting
@@ -217,9 +217,9 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
+        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
 
 }
@@ -247,9 +247,9 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     printf(".");
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = status.nfev;
+        (*fit_params)[STR_NUM_ITR].value = status.nfev;
     }
 
 }
@@ -275,9 +275,9 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     printf(".");
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
+        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
 }
 

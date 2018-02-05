@@ -46,59 +46,100 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2016>: Arthur Glowacki
 
 
-
-#ifndef Element_Quant_H
-#define Element_Quant_H
+#ifndef Fit_Element_Map_H
+#define Fit_Element_Map_H
 
 #include "core/defines.h"
+#include "data_struct/fit_parameters.h"
+#include "data_struct/element_info.h"
 
 namespace data_struct
 {
-namespace xrf
-{
+
+const real_t ENERGY_RES_OFFSET = 150.0;
+const real_t ENERGY_RES_SQRT = 12.0;
 
 //-----------------------------------------------------------------------------
 
-struct DLL_EXPORT Element_Quant
+enum Element_Param_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
+
+//-----------------------------------------------------------------------------
+
+struct Element_Energy_Ratio
 {
-    Element_Quant()
+
+    Element_Energy_Ratio(real_t e, real_t r, real_t m, Element_Param_Type et)
     {
-        zero();
-    }
-    Element_Quant(real_t weight_)
-    {
-        zero();
-        weight = weight_;
-    }
-    void zero()
-    {
-        weight = 0.0;
-        absorption = 0.0;
-        transmission_Be = 0.0;
-        transmission_Ge = 0.0; // or Si dead layer
-        yield = 0.0;
-        transmission_through_Si_detector = 0.0;
-        transmission_through_air = 0.0;// (N2)
-        e_cal_ratio = 0.0;
+        energy = e;
+        ratio = r;
+        mu_fraction = m;
+        ptype = et;
     }
 
-    real_t weight;  // in ug/cm2
-    real_t absorption;
-    real_t transmission_Be;
-    real_t transmission_Ge; // or Si dead layer
-    real_t yield;
-    real_t transmission_through_Si_detector;
-    real_t transmission_through_air;// (N2)
+    real_t energy;
+    real_t ratio;
+    real_t mu_fraction;
+    Element_Param_Type ptype;
+};
 
-    real_t e_cal_ratio;
+//-----------------------------------------------------------------------------
+
+///
+/// \brief The Fit_Element class: Class that hold element information and the results of the fitting to a spectra.
+///                                Able to store 2d image of the fit an element
+///
+class DLL_EXPORT Fit_Element_Map
+{
+
+public:
+    Fit_Element_Map(std::string name, Element_Info* element_info);
+
+    ~Fit_Element_Map();
+
+    const real_t center() const { return _center; }
+
+    const real_t width() const { return _width; }
+
+    void set_custom_multiply_ratio(unsigned int idx, real_t multi);
+
+    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element);
+
+    const std::string full_name() const { return _full_name; }
+
+    const std::string symbol() const { return _element_info==nullptr?"":_element_info->name; }
+
+    const int Z() const {return _element_info==nullptr? -1:_element_info->number;}
+
+    const std::vector<Element_Energy_Ratio>& energy_ratios() const { return _energy_ratios; }
+
+    const  std::vector<real_t>& energy_ratio_multipliers() const {return _energy_ratio_custom_multipliers;}
+
+    const real_t width_multi() const { return _width_multi; }
+
+protected:
+
+    void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
+
+    // reference to element information from Database
+    Element_Info* _element_info;
+
+    std::string _full_name;
+    std::vector<Element_Energy_Ratio> _energy_ratios;
+    std::vector<real_t> _energy_ratio_custom_multipliers;
+
+    real_t _center;
+    real_t _width;
+    real_t _width_multi;
 
 };
 
 //-----------------------------------------------------------------------------
 
+DLL_EXPORT Fit_Element_Map* gen_element_map(std::string element_symb);
 
-} //namespace xrf
+typedef std::unordered_map<std::string, Fit_Element_Map*> Fit_Element_Map_Dict;
+
 
 } //namespace data_struct
 
-#endif // Element_Quant_H
+#endif // Fit_Element_Map_H

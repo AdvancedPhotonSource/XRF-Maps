@@ -55,15 +55,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <future>
 #include <stack>
-#include "data_struct/xrf/spectra_volume.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/spectra_volume.h"
+#include "data_struct/fit_element_map.h"
 #include "hdf5.h"
 
 //Include mda data structures to save scalers
 #include "io/file/mda_io.h"
 
-#include "data_struct/xrf/quantification_standard.h"
-#include "data_struct/xrf/params_override.h"
+#include "data_struct/quantification_standard.h"
+#include "data_struct/params_override.h"
 
 namespace io
 {
@@ -158,31 +158,31 @@ public:
      */
     //void lazy_load();
 
-    bool load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
+    bool load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
 
     bool load_spectra_volume_with_callback(std::string path,
                                            size_t detector_start,
                                            size_t detector_end,
-										   data_struct::xrf::IO_Callback_Func_Def callback_func,
+										   data_struct::IO_Callback_Func_Def callback_func,
                                            void* user_data);
 
-    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row);
+    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row);
 
-    bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol);
+    bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
 
-    bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
+    bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
     bool load_spectra_vol_analyzed_h5(std::string path,
                                       size_t detector_num,
-                                      data_struct::xrf::Spectra_Volume* spectra_volume,
+                                      data_struct::Spectra_Volume* spectra_volume,
                                       int row_idx_start = 0,
                                       int row_idx_end = -1,
                                       int col_idx_start = 0,
                                       int col_idx_end = -1);
 
-    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
-    bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
@@ -195,10 +195,10 @@ public:
     bool save_stream_row(size_t d_hash,
                          size_t detector_num,
                          size_t row,
-                         std::vector< data_struct::xrf::Spectra* >  *spectra_row);
+                         std::vector< data_struct::Spectra* >  *spectra_row);
 
 
-    bool save_itegrade_spectra(data_struct::xrf::Spectra * spectra);
+    bool save_itegrade_spectra(data_struct::Spectra * spectra);
 
     bool close_dataset(size_t d_hash);
 
@@ -209,7 +209,7 @@ public:
     void set_filename(std::string fname) {_cur_filename = fname;}
 
     bool save_spectra_volume(const std::string path,
-                             data_struct::xrf::Spectra_Volume * spectra_volume,
+                             data_struct::Spectra_Volume * spectra_volume,
                              real_t energy_offset,
                              real_t energy_slope,
                              real_t energy_quad,
@@ -219,13 +219,13 @@ public:
                              int col_idx_end=-1);
 
     bool save_element_fits(const std::string path,
-                           const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                           const data_struct::Fit_Count_Dict * const element_counts,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
-    bool save_quantification(data_struct::xrf::Quantification_Standard * quantification_standard,
+    bool save_quantification(data_struct::Quantification_Standard * quantification_standard,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,
                              size_t col_idx_start=0,
@@ -233,7 +233,7 @@ public:
 
     bool save_scan_scalers(size_t detector_num,
                            struct mda_file *mda_scalers,
-                           data_struct::xrf::Params_Override * params_override,
+                           data_struct::Params_Override * params_override,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
@@ -259,8 +259,8 @@ private:
 
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override, bool hasNetcdf);
-    void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::xrf::Params_Override * params_override);
+    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::Params_Override * params_override, bool hasNetcdf);
+    void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);

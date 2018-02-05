@@ -179,7 +179,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if( false == fit_parameters.contains(itr.first) )
         {
-            data_struct::xrf::Fit_Param fp(itr.first, (real_t)-100.0, std::numeric_limits<real_t>::max(), 0.0, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIT);
+            Fit_Param fp(itr.first, (real_t)-100.0, std::numeric_limits<real_t>::max(), 0.0, (real_t)0.00001, E_Bound_Type::FIT);
             fit_parameters[itr.first] = fp;
         }
         else
@@ -256,7 +256,7 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
@@ -276,9 +276,9 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         }
 
         //check if we are saving the number of iterations and save if so
-        if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
+        if(fit_params.contains(STR_NUM_ITR))
         {
-            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params.at(data_struct::xrf::STR_NUM_ITR).value;
+            counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
         }
     }
     return counts_dict;

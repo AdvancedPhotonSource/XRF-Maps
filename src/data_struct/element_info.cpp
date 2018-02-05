@@ -52,8 +52,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 Element_Info::Element_Info()
 {
@@ -361,4 +359,3 @@ void Element_Info_Map::generate_default_elements(int start_element, int end_elem
 }
 
 } //namespace data_struct
-} //namespace xrf

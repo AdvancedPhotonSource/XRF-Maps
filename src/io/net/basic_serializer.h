@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define BASIC_SERIALIZER_H
 
 #include "core/defines.h"
-#include "data_struct/xrf/stream_block.h"
+#include "data_struct/stream_block.h"
 
 namespace io
 {
@@ -66,9 +66,9 @@ public:
 
     ~Basic_Serializer();
 
-    std::string encode_counts(data_struct::xrf::Stream_Block* in_stream_block);
+    std::string encode_counts(data_struct::Stream_Block* in_stream_block);
 
-	data_struct::xrf::Stream_Block* decode_counts(char* message, int message_len);
+	data_struct::Stream_Block* decode_counts(char* message, int message_len);
 
 protected:
 	template <typename T>

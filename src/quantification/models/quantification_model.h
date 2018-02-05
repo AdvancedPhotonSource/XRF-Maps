@@ -55,15 +55,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <unordered_map>
 
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/element_quant.h"
+#include "data_struct/element_info.h"
+#include "data_struct/element_quant.h"
 
 namespace quantification
 {
 namespace models
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 
 enum Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};

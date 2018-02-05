@@ -57,7 +57,7 @@ namespace fitting
 namespace routines
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 class DLL_EXPORT ROI_Fit_Routine: public Base_Fit_Routine
 {

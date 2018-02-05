@@ -49,30 +49,30 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // ----------------------------------------------------------------------------
 
-data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block )
+data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream_block )
 {
 
     for(auto &itr : stream_block->fitting_blocks)
     {
-        int i = itr.first;
+		Fitting_Routines i = itr.first;
         std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
         {
             stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_lifetime();
         }
-        stream_block->fitting_blocks[i].fit_counts[data_struct::xrf::STR_NUM_ITR] = counts_dict[data_struct::xrf::STR_NUM_ITR];
+        stream_block->fitting_blocks[i].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
     }
     return stream_block;
 }
 
 // ----------------------------------------------------------------------------
 
-void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
+void run_stream_pipeline(data_struct::Analysis_Job* job)
 {
-    workflow::Source<data_struct::xrf::Stream_Block*> *source;
-    workflow::Distributor<data_struct::xrf::Stream_Block*, data_struct::xrf::Stream_Block*> distributor(job->num_threads);
-    workflow::Sink<data_struct::xrf::Stream_Block*> *sink;
+    workflow::Source<data_struct::Stream_Block*> *source;
+    workflow::Distributor<data_struct::Stream_Block*, data_struct::Stream_Block*> distributor(job->num_threads);
+    workflow::Sink<data_struct::Stream_Block*> *sink;
 
     //setup input
     if(job->quick_and_dirty)
@@ -112,7 +112,7 @@ void run_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 
 // ----------------------------------------------------------------------------
 
-struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xrf::Stream_Block* stream_block )
+struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::Stream_Block* stream_block )
 {
     struct io::file_name_fit_params* ret_struct = new struct io::file_name_fit_params();
 
@@ -176,11 +176,11 @@ void save_optimal_params(struct io::file_name_fit_params* f_struct)
 
 // ----------------------------------------------------------------------------
 
-void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
+void run_optimization_stream_pipeline(data_struct::Analysis_Job* job)
 {
     //TODO: Run only on 8 largest files if no files are specified
     workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
-    workflow::Distributor<data_struct::xrf::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads);
+    workflow::Distributor<data_struct::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads);
     workflow::Sink<struct io::file_name_fit_params*> sink;
     sink.set_function(save_optimal_params);
 
@@ -201,9 +201,9 @@ void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job)
 
 bool perform_quantification_streaming(std::string dataset_directory,
                             std::string quantification_info_file,
-                            std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                            std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
+                            std::vector<data_struct::Fitting_Routines> proc_types,
+                            std::vector<data_struct::Quantification_Standard>* quant_stand_list,
+                            std::unordered_map<int, data_struct::Params_Override> *fit_params_override_dict,
                             size_t detector_num_start,
                             size_t detector_num_end)
 {
@@ -221,7 +221,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
 
     logit << "Perform_quantification()"<<"\n";
 
-    data_struct::xrf::Element_Info* detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
+    data_struct::Element_Info* detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
@@ -229,13 +229,13 @@ bool perform_quantification_streaming(std::string dataset_directory,
 
     std::string standard_file_name;
     std::unordered_map<std::string, real_t> element_standard_weights;
-    //data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[0];
+    //data_struct::Quantification_Standard* quantification_standard = &(*quant_stand_list)[0];
 
     if( io::load_quantification_standard(dataset_directory, quantification_info_file, &standard_file_name, &element_standard_weights) )
     {
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            data_struct::xrf::Params_Override * override_params = nullptr;
+            data_struct::Params_Override * override_params = nullptr;
             if(fit_params_override_dict->count(detector_num) > 0)
             {
                override_params = &fit_params_override_dict->at(detector_num);
@@ -251,7 +251,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
             }
 
 
-            data_struct::xrf::Quantification_Standard* quantification_standard = &(*quant_stand_list)[detector_num];
+            data_struct::Quantification_Standard* quantification_standard = &(*quant_stand_list)[detector_num];
             quantification_standard->standard_filename(standard_file_name);
             for(auto& itr : element_standard_weights)
             {
@@ -263,7 +263,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
             if (override_params->detector_element.length() > 0)
             {
                 // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-                detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(override_params->detector_element);
+                detector_element = data_struct::Element_Info_Map::inst()->get_element(override_params->detector_element);
             }
             if (override_params->be_window_thickness.length() > 0)
             {
@@ -278,21 +278,21 @@ bool perform_quantification_streaming(std::string dataset_directory,
                 detector_chip_thickness = std::stof(override_params->det_chip_thickness);
             }
 
-            if(override_params->fit_params.contains(data_struct::xrf::STR_COHERENT_SCT_ENERGY))
+            if(override_params->fit_params.contains(STR_COHERENT_SCT_ENERGY))
             {
-                incident_energy = override_params->fit_params.at(data_struct::xrf::STR_COHERENT_SCT_ENERGY).value;
+                incident_energy = override_params->fit_params.at(STR_COHERENT_SCT_ENERGY).value;
             }
 
             //Output of fits for elements specified
-            std::unordered_map<std::string, data_struct::xrf::Fit_Element_Map*> elements_to_fit;
+            std::unordered_map<std::string, data_struct::Fit_Element_Map*> elements_to_fit;
             for(auto& itr : element_standard_weights)
             {
-                data_struct::xrf::Element_Info* e_info = data_struct::xrf::Element_Info_Map::inst()->get_element(itr.first);
-                elements_to_fit[itr.first] = new data_struct::xrf::Fit_Element_Map(itr.first, e_info);
+                data_struct::Element_Info* e_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
+                elements_to_fit[itr.first] = new data_struct::Fit_Element_Map(itr.first, e_info);
                 elements_to_fit[itr.first]->init_energy_ratio_for_detector_element( detector_element );
             }
 
-            data_struct::xrf::Spectra_Volume spectra_volume;
+            data_struct::Spectra_Volume spectra_volume;
             //load the quantification standard dataset
             if(false == io::load_spectra_volume(dataset_directory, quantification_standard->standard_filename(), &spectra_volume, detector_num, override_params, quantification_standard, false) )
             {
@@ -316,7 +316,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
             }
 
             //First we integrate the spectra and get the elemental counts
-            data_struct::xrf::Spectra integrated_spectra = spectra_volume.integrate();
+            data_struct::Spectra integrated_spectra = spectra_volume.integrate();
             energy_range.max = integrated_spectra.size() -1;
 
 

@@ -76,11 +76,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "io/file/hl_file_io.h"
 
 
-#include "data_struct/xrf/spectra_volume.h"
+#include "data_struct/spectra_volume.h"
 
 #include "fitting/models/gaussian_model.h"
 
-#include "data_struct/xrf/element_info.h"
+#include "data_struct/element_info.h"
 
 #include "io/file/aps/aps_fit_params_import.h"
 
@@ -91,10 +91,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/optimizers/lmfit_optimizer.h"
 #include "fitting/optimizers/mpfit_optimizer.h"
 
-#include "data_struct/xrf/fit_element_map.h"
-#include "data_struct/xrf/params_override.h"
+#include "data_struct/fit_element_map.h"
+#include "data_struct/params_override.h"
 
-#include "data_struct/xrf/quantification_standard.h"
+#include "data_struct/quantification_standard.h"
 
 
 using namespace std::placeholders; //for _1, _2,
@@ -102,7 +102,7 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 template<typename T>
-data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit,
+data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit,
                                                           size_t height,
                                                           size_t width,
                                                           bool alloc_iter_count);
@@ -111,9 +111,9 @@ data_struct::xrf::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std
 
 DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
                         const fitting::models::Base_Model * const model,
-                        const data_struct::xrf::Spectra * const spectra,
-                        const data_struct::xrf::Fit_Element_Map_Dict * const elements_to_fit,
-                        data_struct::xrf::Fit_Count_Dict * out_fit_counts,
+                        const data_struct::Spectra * const spectra,
+                        const data_struct::Fit_Element_Map_Dict * const elements_to_fit,
+                        data_struct::Fit_Count_Dict * out_fit_counts,
                         size_t i,
                         size_t j);
 
@@ -127,26 +127,26 @@ DLL_EXPORT struct io::file_name_fit_params optimize_integrated_fit_params(std::s
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void generate_optimal_params(data_struct::xrf::Analysis_Job* analysis_job);
+DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void proc_spectra(data_struct::xrf::Spectra_Volume* spectra_volume,
-                             data_struct::xrf::Analysis_Sub_Struct* detector_struct,
+DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
+                             data_struct::Analysis_Sub_Struct* detector_struct,
                              ThreadPool* tp,
                              bool save_spec_vol);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void process_dataset_files(data_struct::xrf::Analysis_Job* analysis_job);
+DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool perform_quantification(data_struct::xrf::Analysis_Job* analysis_job);
+DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void average_quantification(std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
+DLL_EXPORT void average_quantification(std::vector<data_struct::Quantification_Standard>* quant_stand_list,
                             size_t detector_num_start,
                             size_t detector_num_end);
 

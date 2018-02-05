@@ -30,7 +30,7 @@ namespace visual
 {
 
 
-void PlotSpectras(data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them)
+void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them)
 {
     // Create a table with some points in it
     vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -105,7 +105,7 @@ void PlotSpectras(data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr 
 }
 
 
-void SavePlotSpectras(std::string path, data_struct::xrf::ArrayXr spectra1, data_struct::xrf::ArrayXr spectra2, bool log_them)
+void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them)
 {
     // Setup offscreen rendering
     vtkSmartPointer<vtkGraphicsFactory> graphics_factory = vtkSmartPointer<vtkGraphicsFactory>::New();
@@ -212,7 +212,7 @@ void SavePlotSpectras(std::string path, data_struct::xrf::ArrayXr spectra1, data
 }
 
 /*
-void PlotSpectras_carray(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, data_struct::xrf::Fit_Counts_Array* counts_arr)
+void PlotSpectras_carray(std::valarray<real_t> spectra1, std::valarray<real_t> spectra2, data_struct::Fit_Counts_Array* counts_arr)
 {
 
     // Create a table with some points in it

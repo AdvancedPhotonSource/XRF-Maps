@@ -51,8 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 //-----------------------------------------------------------------------------
 
@@ -126,13 +124,13 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            data_struct::xrf::Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
+            Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
 
-            fitting::models::Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
-                                                                   sub_struct->fit_params_override_dict.max_energy,
-                                                                   spectra_samples,
-                                                                   sub_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
-                                                                   sub_struct->fit_params_override_dict.fit_params[fitting::models::STR_ENERGY_SLOPE].value);
+            Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
+                                                  sub_struct->fit_params_override_dict.max_energy,
+                                                  spectra_samples,
+                                                  sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_OFFSET].value,
+                                                  sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_SLOPE].value);
 
             for(auto &proc_type : fitting_routines)
             {
@@ -164,5 +162,4 @@ void Analysis_Job::set_optimizer(std::string optimizer)
 
 //-----------------------------------------------------------------------------
 
-} //namespace xrf
 } //namespace data_struct

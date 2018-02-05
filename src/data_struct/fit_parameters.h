@@ -49,7 +49,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <string>
-#include <vector>
 #include <limits>
 #include <math.h>
 
@@ -59,77 +58,12 @@
 
 namespace data_struct
 {
-namespace xrf
-{
-
-    /**
-     * @brief String defines for fit parameters string value pair.
-     */
-    const std::string STR_FWHM_OFFSET = "FWHM_OFFSET";
-    const std::string STR_FWHM_FANOPRIME = "FWHM_FANOPRIME";
-
-    const std::string STR_COHERENT_SCT_ENERGY = "COHERENT_SCT_ENERGY";
-    const std::string STR_COHERENT_SCT_AMPLITUDE = "COHERENT_SCT_AMPLITUDE";
-
-    const std::string STR_COMPTON_ANGLE = "COMPTON_ANGLE";
-    const std::string STR_COMPTON_FWHM_CORR = "COMPTON_FWHM_CORR";
-    const std::string STR_COMPTON_AMPLITUDE = "COMPTON_AMPLITUDE";
-    const std::string STR_COMPTON_F_STEP = "COMPTON_F_STEP";
-    const std::string STR_COMPTON_F_TAIL = "COMPTON_F_TAIL";
-    const std::string STR_COMPTON_GAMMA = "COMPTON_GAMMA";
-    const std::string STR_COMPTON_HI_F_TAIL = "COMPTON_HI_F_TAIL";
-    const std::string STR_COMPTON_HI_GAMMA = "COMPTON_HI_GAMMA";
-
-    const std::string STR_SNIP_WIDTH = "SNIP_WIDTH";
-    const std::string STR_FIT_SNIP_WIDTH = "FIT_SNIP_WIDTH";
-    const std::string STR_SI_ESCAPE = "SI_ESCAPE";
-    const std::string STR_GE_ESCAPE = "GE_ESCAPE";
-    const std::string STR_ESCAPE_LINEAR = "ESCAPE_LINEAR";
-    const std::string STR_PILEUP0 = "PILEUP0";
-    const std::string STR_PILEUP1 = "PILEUP1";
-    const std::string STR_PILEUP2 = "PILEUP2";
-    const std::string STR_PILEUP3 = "PILEUP3";
-    const std::string STR_PILEUP4 = "PILEUP4";
-    const std::string STR_PILEUP5 = "PILEUP5";
-    const std::string STR_PILEUP6 = "PILEUP6";
-    const std::string STR_PILEUP7 = "PILEUP7";
-    const std::string STR_PILEUP8 = "PILEUP8";
-
-    const std::string STR_F_STEP_OFFSET = "F_STEP_OFFSET";
-    const std::string STR_F_STEP_LINEAR = "F_STEP_LINEAR";
-    const std::string STR_F_STEP_QUADRATIC = "F_STEP_QUADRATIC";
-    const std::string STR_F_TAIL_OFFSET = "F_TAIL_OFFSET";
-    const std::string STR_F_TAIL_LINEAR = "F_TAIL_LINEAR";
-    const std::string STR_F_TAIL_QUADRATIC = "F_TAIL_QUADRATIC";
-    const std::string STR_GAMMA_OFFSET = "GAMMA_OFFSET";
-    const std::string STR_GAMMA_LINEAR = "GAMMA_LINEAR";
-    const std::string STR_GAMMA_QUADRATIC = "GAMMA_QUADRATIC";
-    const std::string STR_KB_F_TAIL_OFFSET = "KB_F_TAIL_OFFSET";
-    const std::string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
-    const std::string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
-
-const std::string STR_NUM_ITR = "Num_Iter";
-const std::string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
-const std::string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
-const std::string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
-const std::string STR_GE_DEAD_LAYER = "GE_DEAD_LAYER";
-
-const std::vector<std::string> k_elements {"Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr",
-                                             "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se",
-                                             "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
-                                             "In", "Sn", "Sb", "Te", "I"};
-
-const std::vector<std::string> l_elements {"Mo_L", "Tc_L", "Ru_L", "Rh_L", "Pd_L", "Ag_L", "Cd_L", "In_L", "Sn_L", "Sb_L", "Te_L", "I_L", "Xe_L,", "Cs_L", "Ba_L", "La_L", "Ce_L", "Pr_L", "Nd_L", "Pm_L", "Sm_L",
-                                             "Eu_L", "Gd_L", "Tb_L", "Dy_L", "Ho_L", "Er_L", "Tm_L", "Yb_L", "Lu_L", "Hf_L", "Ta_L", "W_L", "Re_L", "Os_L", "Ir_L", "Pt_L", "Au_L", "Hg_L", "Tl_L",
-                                             "Pb_L", "Bi_L", "Po_L", "At_L", "Rn_L", "Fr_L", "Ac_L", "Th_L", "Pa_L", "U_L", "Np_L", "Pu_L", "Am_L"};
-
-const std::vector<std::string> m_elements {"Au_M", "Pb_M", "U_M", "noise", "Pt_M"};
-
+	
 //-----------------------------------------------------------------------------
 
-enum Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+enum class Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
-enum E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
+enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
 
 //-----------------------------------------------------------------------------
 
@@ -208,7 +142,7 @@ struct DLL_EXPORT Fit_Param
         opt_array_index = -1;
     }
 
-    std::string bound_type_str();
+    const std::string bound_type_str() const; 
 
     std::string name;
     real_t min_val;
@@ -238,7 +172,7 @@ public:
 
     //const Fit_Param& operator [](std::string name) const { return _params[name]; }
 
-    void add_parameter(std::string name, Fit_Param param);
+    void add_parameter(Fit_Param param);
 
 	void append_and_update(Fit_Parameters* fit_params);
 
@@ -258,11 +192,13 @@ public:
 
     void from_array(const real_t* arr, size_t arr_size);
 
-    void set_all_value(real_t value, data_struct::xrf::E_Bound_Type btype);
+    void set_all_value(real_t value, E_Bound_Type btype);
 
-    void set_all(data_struct::xrf::E_Bound_Type btype);
+    void set_all(E_Bound_Type btype);
 
     void update_values(Fit_Parameters *override_fit_params);
+
+	const real_t& value(std::string key) const { return _params.at(key).value; }
 
     void print();
 
@@ -281,8 +217,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-
-} //namespace xrf
 
 } //namespace data_struct
 

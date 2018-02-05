@@ -43,84 +43,59 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2017>: Arthur Glowacki
+/// Initial Author <2016>: Arthur Glowacki
 
 
 
-#include "spectra_net_streamer.h"
+#ifndef SPECTRAVOLUME_H
+#define SPECTRAVOLUME_H
 
-namespace workflow
+#include "data_struct/spectra_line.h"
+
+//#include "base_dataset.h"
+
+namespace data_struct
 {
-namespace xrf
+
+/**
+ * @brief The Spectra_Volume class : A volume of spectras
+ */
+class DLL_EXPORT Spectra_Volume //: public Base_Dataset
 {
+public:
+	Spectra_Volume();
 
-//-----------------------------------------------------------------------------
+	~Spectra_Volume();
 
-Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::Stream_Block*>()
-{
-#ifdef _BUILD_WITH_ZMQ
-    _send_counts = true;
+    Spectra_Line& operator [](std::size_t row) { return _data_vol[row]; }
 
-    _send_spectra = false;
+    const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
 
-    _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
+    void resize(size_t rows, size_t cols, size_t samples);
 
-	std::string conn_str = "tcp://*:43434";
-	_context = new zmq::context_t(1);
-	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
-	_zmq_socket->bind(conn_str);
-#endif
-}
+    void dims(int &dims_out) {  }
 
-//-----------------------------------------------------------------------------
+    const Spectra integrate();
 
-Spectra_Net_Streamer::~Spectra_Net_Streamer()
-{
-#ifdef _BUILD_WITH_ZMQ
-    if(_zmq_socket != nullptr)
-    {
-		_zmq_socket->close();
-        delete _zmq_socket;
-    }
-	if (_context != nullptr)
-	{
-		_context->close();
-		delete _context;
-	}
-    _zmq_socket = nullptr;
-	_context = nullptr;
-#endif
-}
+    //real_t* get_spectra(unsigned int row, unsigned int col);
 
-// ----------------------------------------------------------------------------
+    const size_t cols() const { return _data_vol[0].size(); }
 
-void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
-{
-#ifdef _BUILD_WITH_ZMQ
-	std::string data;
+    const size_t rows() const { return _data_vol.size(); }
 
-    if(_send_counts)
-    {
-		data = _serializer.encode_counts(stream_block);
-    }
-    else if(_send_spectra)
-    {
-		//data = _serializer.encode_spectra(stream_block);
-    }
+    void recalc_elapsed_lifetime();
 
-	zmq::message_t topic("XRF-Counts", 10);
-	zmq::message_t message(data.c_str(), data.length());
-	
-	_zmq_socket->send(topic, ZMQ_SNDMORE);
-	bool val = _zmq_socket->send(message, 0);
-	if (val == false)
-	{
-		logit << "Error sending ZMQ message"<<"\n";
-	}
-#endif
-}
+    const size_t samples_size() const { return _data_vol[0][0].size(); }
 
-// ----------------------------------------------------------------------------
+    int rank() { return 3; }
 
-} //namespace xrf
-} //namespace workflow
+private:
+
+    std::vector<Spectra_Line> _data_vol;
+//    std::vector<std::vector< Spectra* > > array3D;
+
+};
+
+} //namespace data_struct
+
+#endif // SpectraVolume_H

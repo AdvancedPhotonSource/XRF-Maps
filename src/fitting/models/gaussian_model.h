@@ -52,51 +52,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fitting/models/base_model.h"
 #include "fitting/optimizers/optimizer.h"
-#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/fit_parameters.h"
 
 namespace fitting
 {
 namespace models
 {
 
-using namespace std;
-
-const string STR_FWHM_OFFSET            = "FWHM_OFFSET";
-const string STR_FWHM_FANOPRIME         = "FWHM_FANOPRIME";
-
-const string STR_COHERENT_SCT_ENERGY    = "COHERENT_SCT_ENERGY";
-const string STR_COHERENT_SCT_AMPLITUDE = "COHERENT_SCT_AMPLITUDE";
-
-const string STR_COMPTON_ANGLE          = "COMPTON_ANGLE";
-const string STR_COMPTON_FWHM_CORR      = "COMPTON_FWHM_CORR";
-const string STR_COMPTON_AMPLITUDE      = "COMPTON_AMPLITUDE";
-const string STR_COMPTON_F_STEP         = "COMPTON_F_STEP";
-const string STR_COMPTON_F_TAIL         = "COMPTON_F_TAIL";
-const string STR_COMPTON_GAMMA          = "COMPTON_GAMMA";
-const string STR_COMPTON_HI_F_TAIL      = "COMPTON_HI_F_TAIL";
-const string STR_COMPTON_HI_GAMMA       = "COMPTON_HI_GAMMA";
-
-const string STR_SNIP_WIDTH             = "SNIP_WIDTH";
-
-const string STR_F_STEP_OFFSET          = "F_STEP_OFFSET";
-const string STR_F_STEP_LINEAR          = "F_STEP_LINEAR";
-const string STR_F_STEP_QUADRATIC       = "F_STEP_QUADRATIC";
-
-const string STR_F_TAIL_OFFSET          = "F_TAIL_OFFSET";
-const string STR_F_TAIL_LINEAR          = "F_TAIL_LINEAR";
-const string STR_F_TAIL_QUADRATIC       = "F_TAIL_QUADRATIC";
-
-const string STR_GAMMA_OFFSET           = "GAMMA_OFFSET";
-const string STR_GAMMA_LINEAR           = "GAMMA_LINEAR";
-const string STR_GAMMA_QUADRATIC        = "GAMMA_QUADRATIC";
-
-const string STR_KB_F_TAIL_OFFSET       = "KB_F_TAIL_OFFSET";
-const string STR_KB_F_TAIL_LINEAR       = "KB_F_TAIL_LINEAR";
-const string STR_KB_F_TAIL_QUADRATIC    = "KB_F_TAIL_QUADRATIC";
-
-
-using namespace data_struct::xrf;
-using namespace fitting::optimizers;
+	using namespace data_struct;
+	using namespace fitting::optimizers;
 
 class DLL_EXPORT Gaussian_Model: public Base_Model
 {

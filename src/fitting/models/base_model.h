@@ -49,22 +49,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Base_Model_H
 #define Base_Model_H
 
-#include "data_struct/xrf/spectra.h"
-#include "data_struct/xrf/fit_parameters.h"
-#include "data_struct/xrf/fit_element_map.h"
+#include "data_struct/spectra.h"
+#include "data_struct/fit_parameters.h"
+#include "data_struct/fit_element_map.h"
 
 namespace fitting
 {
 namespace models
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 using namespace std;
-
-// Detector energy
-const string STR_ENERGY_OFFSET          = "ENERGY_OFFSET";
-const string STR_ENERGY_SLOPE           = "ENERGY_SLOPE";
-const string STR_ENERGY_QUADRATIC       = "ENERGY_QUADRATIC";
 
 /*
  1 batch_a: matrix batch fit

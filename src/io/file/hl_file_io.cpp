@@ -79,27 +79,27 @@ void populate_netcdf_hdf5_files(std::string dataset_dir)
 
 //-----------------------------------------------------------------------------
 
-fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitting_Routines proc_type, fitting::optimizers::Optimizer* optimizer)
+fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::Fitting_Routines proc_type, fitting::optimizers::Optimizer* optimizer)
 {
     //Fitting routines
     fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
     switch(proc_type)
     {
-        case data_struct::xrf::GAUSS_TAILS:
+		case data_struct::Fitting_Routines::GAUSS_TAILS:
             fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
             ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
             break;
-        case data_struct::xrf::GAUSS_MATRIX:
+        case data_struct::Fitting_Routines::GAUSS_MATRIX:
             fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
             ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
             break;
-        case data_struct::xrf::ROI:
+        case data_struct::Fitting_Routines::ROI:
             fit_routine = new fitting::routines::ROI_Fit_Routine();
             break;
-        case data_struct::xrf::SVD:
+        case data_struct::Fitting_Routines::SVD:
             fit_routine = new fitting::routines::SVD_Fit_Routine();
             break;
-        case data_struct::xrf::NNLS:
+        case data_struct::Fitting_Routines::NNLS:
             fit_routine = new fitting::routines::NNLS_Fit_Routine();
             break;
         default:
@@ -110,7 +110,7 @@ fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::xrf::Fitt
 
 // ----------------------------------------------------------------------------
 
-bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
+bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 {
 
 //    _default_sub_struct.
@@ -126,11 +126,11 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
     //initialize models and fit routines for all detectors
     for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
     {
-        analysis_job->detectors_meta_data[detector_num] = data_struct::xrf::Analysis_Sub_Struct();
-        data_struct::xrf::Analysis_Sub_Struct *sub_struct = &analysis_job->detectors_meta_data[detector_num];
+        analysis_job->detectors_meta_data[detector_num] = data_struct::Analysis_Sub_Struct();
+        data_struct::Analysis_Sub_Struct *sub_struct = &analysis_job->detectors_meta_data[detector_num];
 
         sub_struct->model = new fitting::models::Gaussian_Model();
-        data_struct::xrf::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
+        data_struct::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
 
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
@@ -171,7 +171,7 @@ bool init_analysis_job_detectors(data_struct::xrf::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::xrf::Element_Info_Map *element_info_map)
+bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::Element_Info_Map *element_info_map)
 {
 
 	if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
@@ -192,7 +192,7 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 // ----------------------------------------------------------------------------
 
 bool save_results(std::string save_loc,
-                  const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                  const data_struct::Fit_Count_Dict * const element_counts,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start)
 {
@@ -221,8 +221,8 @@ bool save_results(std::string save_loc,
 
 // ----------------------------------------------------------------------------
 
-bool save_volume(data_struct::xrf::Quantification_Standard * quantification_standard,
-                 data_struct::xrf::Spectra_Volume *spectra_volume,
+bool save_volume(data_struct::Quantification_Standard * quantification_standard,
+                 data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
                  real_t energy_quad)
@@ -250,27 +250,27 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
     energy_range.min = 0;
     energy_range.max = file_and_fit_params.spectra.size() -1;
 
-	data_struct::xrf::ArrayXr background(file_and_fit_params.spectra.size());
+	data_struct::ArrayXr background(file_and_fit_params.spectra.size());
 	background.setZero();
 
-    if (file_and_fit_params.fit_params.contains(data_struct::xrf::STR_SNIP_WIDTH))
+    if (file_and_fit_params.fit_params.contains(STR_SNIP_WIDTH))
 	{
-        data_struct::xrf::Fit_Param fit_snip_width = file_and_fit_params.fit_params[data_struct::xrf::STR_SNIP_WIDTH];
-        if (fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED)
+        data_struct::Fit_Param fit_snip_width = file_and_fit_params.fit_params[STR_SNIP_WIDTH];
+        if (fit_snip_width.bound_type > data_struct::E_Bound_Type::FIXED)
 		{
 			real_t spectral_binning = 0.0;
-			background = data_struct::xrf::snip_background(&file_and_fit_params.spectra,
-				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_OFFSET].value,
-				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_SLOPE].value,
-				file_and_fit_params.fit_params[fitting::models::STR_ENERGY_QUADRATIC].value,
+			background = data_struct::snip_background(&file_and_fit_params.spectra,
+				file_and_fit_params.fit_params[STR_ENERGY_OFFSET].value,
+				file_and_fit_params.fit_params[STR_ENERGY_SLOPE].value,
+				file_and_fit_params.fit_params[STR_ENERGY_QUADRATIC].value,
 				spectral_binning,
-				file_and_fit_params.fit_params[data_struct::xrf::STR_SNIP_WIDTH].value,
+				file_and_fit_params.fit_params[STR_SNIP_WIDTH].value,
 				energy_range.min,
 				energy_range.max);
 		}
 	}
 
-    data_struct::xrf::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
+    data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
 	model_spectra += background;
 #ifdef _BUILD_WITH_VTK
     std::string str_path = file_and_fit_params.dataset_dir+"/output/fit_"+file_and_fit_params.dataset_filename+"_det"+std::to_string(file_and_fit_params.detector_num)+".png";
@@ -289,7 +289,7 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 
 // ----------------------------------------------------------------------------
 
-void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::xrf::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
+void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
 {
     io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
@@ -307,7 +307,7 @@ bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
                                   std::string *standard_file_name,
                                   std::unordered_map<std::string, real_t> *element_standard_weights)
-                                  //data_struct::xrf::Quantification_Standard * quantification_standard)
+                                  //data_struct::Quantification_Standard * quantification_standard)
 {
     std::string path = dataset_directory + quantification_info_file;
     std::ifstream paramFileStream(path);
@@ -415,7 +415,7 @@ bool load_quantification_standard(std::string dataset_directory,
 
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
-                          data_struct::xrf::Params_Override *params_override)
+                          data_struct::Params_Override *params_override)
 {
     //Importer for APS datasets
     io::file::aps::APS_Fit_Params_Import fit_param_importer;
@@ -425,7 +425,7 @@ bool load_override_params(std::string dataset_directory,
         det_num = std::to_string(detector_num);
 
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
-                                        data_struct::xrf::Element_Info_Map::inst(),
+                                        data_struct::Element_Info_Map::inst(),
                                         params_override))
     {
         logit<<"Error loading fit param override file: "<<"\n";
@@ -433,29 +433,29 @@ bool load_override_params(std::string dataset_directory,
     }
     else
     {
-        data_struct::xrf::Element_Info* detector_element;
+        data_struct::Element_Info* detector_element;
         if(params_override->detector_element.length() > 0)
         {
             // Get the element info class                                   // detector element as string "Si" or "Ge" usually
 
-            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element(params_override->detector_element);
+            detector_element = data_struct::Element_Info_Map::inst()->get_element(params_override->detector_element);
         }
         else
         {
          //log error or warning
             logit<<"Error, no detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<"\n";
-            detector_element = data_struct::xrf::Element_Info_Map::inst()->get_element("Si");
+            detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
         }
 
 
         //add compton and coherant amp
-        if(params_override->elements_to_fit.count(data_struct::xrf::STR_COMPTON_AMPLITUDE) == 0)
+        if(params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COMPTON_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COMPTON_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)) );
         }
-        if(params_override->elements_to_fit.count(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE) == 0)
+        if(params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::xrf::Fit_Element_Map*>(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, new data_struct::xrf::Fit_Element_Map(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
         }
 
         logit<<"Elements to fit:  ";
@@ -476,17 +476,17 @@ bool load_override_params(std::string dataset_directory,
 
 bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::xrf::Spectra_Volume *spectra_volume,
+                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
-                         data_struct::xrf::Params_Override * params_override,
-                         data_struct::xrf::Quantification_Standard * quantification_standard,
+                         data_struct::Params_Override * params_override,
+                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers)
 {
 
     //Dataset importer
     io::file::MDA_IO mda_io;
-    //data_struct::xrf::Detector detector;
+    //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
     logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
@@ -618,17 +618,17 @@ bool load_spectra_volume(std::string dataset_directory,
 
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
-                                       data_struct::xrf::Spectra *integrated_spectra,
+                                       data_struct::Spectra *integrated_spectra,
                                        size_t detector_num,
-                                       data_struct::xrf::Params_Override * params_override)
+                                       data_struct::Params_Override * params_override)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
-    //data_struct::xrf::Detector detector;
+    //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
 
-    data_struct::xrf::Spectra_Volume spectra_volume;
+    data_struct::Spectra_Volume spectra_volume;
 
     logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<"\n";
 
@@ -726,7 +726,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 std::string full_filename;
                 for(size_t i=0; i<dims[0]; i++)
                 {
-                    data_struct::xrf::Spectra_Line spectra_line;
+                    data_struct::Spectra_Line spectra_line;
                     spectra_line.resize(dims[1], integrated_spectra->size());
                     full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //logit<<"Loading file "<<full_filename<<"\n";
@@ -752,7 +752,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         else if (hasXspress)
         {
             std::string full_filename;
-            data_struct::xrf::Spectra_Line spectra_line;
+            data_struct::Spectra_Line spectra_line;
             spectra_line.resize(dims[1], integrated_spectra->size());
             for(size_t i=0; i<dims[0]; i++)
             {

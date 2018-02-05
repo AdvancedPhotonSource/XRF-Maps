@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "support/cmpfit-1.3a/mpfit.hpp"
 #include <string.h>
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 
 namespace fitting
@@ -311,9 +311,9 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     }
 
     fit_params->from_array(fitp_arr);
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = result.nfev;
+        (*fit_params)[STR_NUM_ITR].value = result.nfev;
     }
 
     //delete [] mp_par;
@@ -499,9 +499,9 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 */
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
     }
 
 }

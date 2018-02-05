@@ -71,7 +71,7 @@ Basic_Serializer::~Basic_Serializer()
 
 //-----------------------------------------------------------------------------
 
-std::string Basic_Serializer::encode_counts(data_struct::xrf::Stream_Block* stream_block)
+std::string Basic_Serializer::encode_counts(data_struct::Stream_Block* stream_block)
 {
 
     std::string raw_msg = "";
@@ -116,7 +116,7 @@ std::string Basic_Serializer::encode_counts(data_struct::xrf::Stream_Block* stre
 
 //-----------------------------------------------------------------------------
 
-data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, int message_len)
+data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, int message_len)
 {
 
 	int idx = 0;
@@ -146,7 +146,7 @@ data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, i
     memcpy(&theta, message + idx, sizeof(real_t));
     idx += sizeof(real_t);
 
-	data_struct::xrf::Stream_Block* out_stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+	data_struct::Stream_Block* out_stream_block = new data_struct::Stream_Block(row, col, height, width);
 	out_stream_block->detector_number = detector_number;
 
 
@@ -156,7 +156,7 @@ data_struct::xrf::Stream_Block* Basic_Serializer::decode_counts(char* message, i
 	{
 		memcpy(&proc_type, message + idx, 4);
 		idx += 4;
-		out_stream_block->fitting_blocks[proc_type] = data_struct::xrf::Stream_Fitting_Block();
+		out_stream_block->fitting_blocks[proc_type] = data_struct::Stream_Fitting_Block();
 
 		//get fit_block[proc_type] size
 		memcpy(&fit_block_size, message + idx, 4);

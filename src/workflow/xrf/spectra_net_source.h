@@ -53,8 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 
 #include "workflow/source.h"
-#include "data_struct/xrf/stream_block.h"
-#include "data_struct/xrf/analysis_job.h"
+#include "data_struct/stream_block.h"
+#include "data_struct/analysis_job.h"
 #ifdef _BUILD_WITH_ZMQ
 #include "support/zmq/zmq.hpp"
 #endif
@@ -65,12 +65,12 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::xrf::Stream_Block*>
+class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block*>
 {
 
 public:
 
-    Spectra_Net_Source(data_struct::xrf::Analysis_Job* analysis_job);
+    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job);
 
     ~Spectra_Net_Source();
 
@@ -81,14 +81,14 @@ public:
                                       size_t height,
                                       size_t width,
                                       size_t detector_num,
-                                      data_struct::xrf::Spectra* spectra,
+                                      data_struct::Spectra* spectra,
                                       void* user_data);
 */
 protected:
 
     bool _running;
 
-    data_struct::xrf::Analysis_Job* _analysis_job;
+    data_struct::Analysis_Job* _analysis_job;
 #ifdef _BUILD_WITH_ZMQ
 	zmq::context_t *_context;
 

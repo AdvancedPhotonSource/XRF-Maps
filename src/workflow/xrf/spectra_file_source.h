@@ -53,8 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 
 #include "workflow/source.h"
-#include "data_struct/xrf/stream_block.h"
-#include "data_struct/xrf/analysis_job.h"
+#include "data_struct/stream_block.h"
+#include "data_struct/analysis_job.h"
 #include "io/file/netcdf_io.h"
 #include "io/file/mda_io.h"
 #include "io/file/hdf5_io.h"
@@ -69,16 +69,16 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_File_Source : public Source<data_struct::xrf::Stream_Block*>
+class DLL_EXPORT Spectra_File_Source : public Source<data_struct::Stream_Block*>
 {
 
 public:
 
-    Spectra_File_Source(data_struct::xrf::Analysis_Job* analysis_job);
+    Spectra_File_Source(data_struct::Analysis_Job* analysis_job);
 
     ~Spectra_File_Source();
 
-    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
 
     virtual void run();
 
@@ -88,18 +88,18 @@ protected:
                                                     std::string dataset_file,
                                                     size_t detector_num_start,
                                                     size_t detector_num_end,
-													data_struct::xrf::IO_Callback_Func_Def callback_fun);
+													data_struct::IO_Callback_Func_Def callback_fun);
 
     std::string *_current_dataset_directory;
     std::string *_current_dataset_name;
 
-    data_struct::xrf::Analysis_Job* _analysis_job;
+    data_struct::Analysis_Job* _analysis_job;
 
     std::vector<std::string> _netcdf_files;
 
     std::vector<std::string> _hdf_files;
 
-    std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> _cb_function;
+    std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> _cb_function;
 
 };
 

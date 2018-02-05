@@ -50,11 +50,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MDA_IO_H
 
 #include "support/mda_utils/mda-load.h"
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/spectra_volume.h"
-#include "data_struct/xrf/quantification_standard.h"
-#include "data_struct/xrf/params_override.h"
-#include "data_struct/xrf/analysis_job.h"
+#include "data_struct/element_info.h"
+#include "data_struct/spectra_volume.h"
+#include "data_struct/quantification_standard.h"
+#include "data_struct/params_override.h"
+#include "data_struct/analysis_job.h"
 
 namespace io
 {
@@ -84,17 +84,17 @@ public:
 
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
-                            data_struct::xrf::Spectra_Volume* vol,
+                            data_struct::Spectra_Volume* vol,
                             bool hasNetCDF,
-                            data_struct::xrf::Params_Override *override_values,
-                            data_struct::xrf::Quantification_Standard * quantification_standard);
+                            data_struct::Params_Override *override_values,
+                            data_struct::Quantification_Standard * quantification_standard);
 
     bool load_spectra_volume_with_callback(std::string path,
                                         size_t detector_num_start,
                                         size_t detector_num_end,
                                         bool hasNetCDF,
-                                        data_struct::xrf::Analysis_Job *analysis_job,
-										data_struct::xrf::IO_Callback_Func_Def callback_func,
+                                        data_struct::Analysis_Job *analysis_job,
+										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
     int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val);
@@ -113,7 +113,7 @@ private:
 
     bool _find_theta(std::string pv_name, float* theta_out);
 
-    //void _load_detector_meta_data(data_struct::xrf::Detector * detector);
+    //void _load_detector_meta_data(data_struct::Detector * detector);
     bool _is_single_row;
 
     /**
@@ -132,7 +132,7 @@ private:
 
 };
 
-DLL_EXPORT bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Map* element_map);
+DLL_EXPORT bool load_henke_from_xdr(std::string filename, data_struct::Element_Info_Map* element_map);
 
 }// end namespace file
 }// end namespace io

@@ -163,10 +163,10 @@ int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, r
 
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
-                                 data_struct::xrf::Spectra_Volume* vol,
+                                 data_struct::Spectra_Volume* vol,
                                  bool hasNetCDF,
-                                 data_struct::xrf::Params_Override *override_values,
-                                 data_struct::xrf::Quantification_Standard * quantification_standard)
+                                 data_struct::Params_Override *override_values,
+                                 data_struct::Quantification_Standard * quantification_standard)
 {
     //index per row and col
     int elt_idx = -1;
@@ -432,8 +432,8 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                                                  size_t detector_num_start,
                                                  size_t detector_num_end,
                                                  bool hasNetCDF,
-                                                 data_struct::xrf::Analysis_Job *analysis_job,
-												 data_struct::xrf::IO_Callback_Func_Def callback_func,
+                                                 data_struct::Analysis_Job *analysis_job,
+												 data_struct::IO_Callback_Func_Def callback_func,
                                                  void *user_data)
 {
     int elt_idx = -1;
@@ -538,7 +538,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     //find scaler indexes
     if (analysis_job != nullptr)
     {
-        struct data_struct::xrf::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num_start);
+        struct data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num_start);
 
         if(detector_struct != nullptr)
         {
@@ -620,7 +620,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
                 for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
                 {
-                    data_struct::xrf::Spectra* spectra = new data_struct::xrf::Spectra(samples);
+                    data_struct::Spectra* spectra = new data_struct::Spectra(samples);
 
 
                     if (_is_single_row)
@@ -812,7 +812,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
 
 //-----------------------------------------------------------------------------
 
-bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Map *element_map)
+bool load_henke_from_xdr(std::string filename, data_struct::Element_Info_Map *element_map)
 {
     std::ifstream fileStream(filename);
 
@@ -861,12 +861,12 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
     for (int i=0; i<num_elements; i++)
     {
-        data_struct::xrf::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info* element = element_map->get_element(i+1);
         if (element == nullptr)
         {
-            element = new data_struct::xrf::Element_Info();
+            element = new data_struct::Element_Info();
             element->number = i+1;
-            element->name = data_struct::xrf::Element_Symbols[i];
+            element->name = data_struct::Element_Symbols[i];
             element_map->add_element(element);
         }
         //element->init_f_energies(num_energies);
@@ -894,7 +894,7 @@ bool load_henke_from_xdr(std::string filename, data_struct::xrf::Element_Info_Ma
 
     for (int i=0; i<num_elements; i++)
     {
-        data_struct::xrf::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info* element = element_map->get_element(i+1);
         element->init_extra_energies(num_extra_energies);
 
         int element_n;

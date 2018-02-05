@@ -56,8 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 using namespace std;
 
@@ -222,9 +220,9 @@ DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t s
 
 DLL_EXPORT void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec);
 
-typedef std::function<void(size_t, size_t, size_t, size_t, size_t, data_struct::xrf::Spectra*, void*)> IO_Callback_Func_Def;
+typedef std::function<void(size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> IO_Callback_Func_Def;
 
-} //namespace xrf
+
 } //namespace data_struct
 
 #endif // SPECTRA_H

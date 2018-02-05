@@ -57,8 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
 
-using namespace data_struct::xrf;
-
+using namespace data_struct;
 
 namespace fitting
 {
@@ -99,12 +98,12 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
         {
             real_t e_guess = (real_t)1.0e-10;
 
-            data_struct::xrf::Fit_Element_Map *element = el_itr.second;
+            Fit_Element_Map *element = el_itr.second;
             std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
             {
-                data_struct::xrf::Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.1, data_struct::xrf::E_Bound_Type::FIT);
+                Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.1, E_Bound_Type::FIT);
                 (*fit_params)[el_itr.first] = fp;
             }
             if(spectra != nullptr  && energies.size() > 0)
@@ -113,7 +112,7 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
                 real_t min_e =  e_energy - (real_t)0.1;
                 real_t max_e =  e_energy + (real_t)0.1;
 
-                struct Range energy_range = data_struct::xrf::get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
+                struct Range energy_range = get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
 
                 real_t sum = spectra->segment(energy_range.min, energy_range.count()).sum();
                 sum /= energy_range.count();
@@ -131,13 +130,13 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
         }
     }
 
-    if( false == fit_params->contains(data_struct::xrf::STR_NUM_ITR) )
+    if( false == fit_params->contains(STR_NUM_ITR) )
     {
         //add number of iteration it took
-        data_struct::xrf::Fit_Param fp(data_struct::xrf::STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, data_struct::xrf::E_Bound_Type::FIXED);
-        (*fit_params)[data_struct::xrf::STR_NUM_ITR] = fp;
+        Fit_Param fp(STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
+        (*fit_params)[STR_NUM_ITR] = fp;
     }
-    (*fit_params)[data_struct::xrf::STR_NUM_ITR].value = 0.0;
+    (*fit_params)[STR_NUM_ITR].value = 0.0;
 }
 
 // ----------------------------------------------------------------------------
@@ -150,7 +149,7 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
     real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
     real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
     real_t this_factor = (real_t)8.0;
-    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->at(STR_ENERGY_OFFSET).value, fitp->at(STR_ENERGY_SLOPE).value);
+    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->value(STR_ENERGY_OFFSET), fitp->value(STR_ENERGY_SLOPE));
     size_t e_size = (energy_range.max + 1) - energy_range.min;
     real_t sum = spectra->segment(energy_range.min, e_size).sum();
     sum /= energy_range.count();
@@ -175,7 +174,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {
@@ -211,9 +210,9 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
         //model->update_fit_params_values(fit_params);
 
         //check if we are saving the number of iterations and save if so
-        if(fit_params.contains(data_struct::xrf::STR_NUM_ITR))
+        if(fit_params.contains(STR_NUM_ITR))
         {
-            counts_dict[data_struct::xrf::STR_NUM_ITR] = fit_params.at(data_struct::xrf::STR_NUM_ITR).value;
+            counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
         }
     }
 
@@ -231,7 +230,7 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
 
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(data_struct::xrf::STR_NUM_ITR, Fit_Param(data_struct::xrf::STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {

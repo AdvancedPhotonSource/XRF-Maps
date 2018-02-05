@@ -65,11 +65,11 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 
 #include "io/file/hl_file_io.h"
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/fit_element_map.h"
-#include "data_struct/xrf/analysis_job.h"
+#include "data_struct/element_info.h"
+#include "data_struct/fit_element_map.h"
+#include "data_struct/analysis_job.h"
 #include "core/command_line_parser.h"
-#include "data_struct/xrf/stream_block.h"
+#include "data_struct/stream_block.h"
 #include "workflow/pipeline.h"
 #include "workflow/xrf/spectra_file_source.h"
 #include "workflow/xrf/integrated_spectra_source.h"
@@ -80,21 +80,21 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/param_optimized_fit_routine.h"
 #include "fitting/models/gaussian_model.h"
 
-DLL_EXPORT data_struct::xrf::Stream_Block* proc_spectra_block( data_struct::xrf::Stream_Block* stream_block );
+DLL_EXPORT data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream_block );
 
-DLL_EXPORT void run_stream_pipeline(data_struct::xrf::Analysis_Job* job);
+DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job* job);
 
-DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::xrf::Stream_Block* stream_block );
+DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::Stream_Block* stream_block );
 
 DLL_EXPORT void save_optimal_params(struct io::file_name_fit_params* f_struct);
 
-DLL_EXPORT void run_optimization_stream_pipeline(data_struct::xrf::Analysis_Job* job);
+DLL_EXPORT void run_optimization_stream_pipeline(data_struct::Analysis_Job* job);
 
 DLL_EXPORT bool perform_quantification_streaming(std::string dataset_directory,
                             std::string quantification_info_file,
-                            std::vector<data_struct::xrf::Fitting_Routines> proc_types,
-                            std::vector<data_struct::xrf::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, data_struct::xrf::Params_Override> *fit_params_override_dict,
+                            std::vector<data_struct::Fitting_Routines> proc_types,
+                            std::vector<data_struct::Quantification_Standard>* quant_stand_list,
+                            std::unordered_map<int, data_struct::Params_Override> *fit_params_override_dict,
                             size_t detector_num_start,
                             size_t detector_num_end);
 

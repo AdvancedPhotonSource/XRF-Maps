@@ -51,8 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 Spectra_Line::Spectra_Line()
 {
@@ -110,4 +108,3 @@ void Spectra_Line::recalc_elapsed_lifetime()
 }
 
 } //namespace data_struct
-} //namespace xrf

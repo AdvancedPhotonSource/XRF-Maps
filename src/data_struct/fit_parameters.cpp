@@ -54,34 +54,31 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
-std::string Fit_Param::bound_type_str()
+const std::string Fit_Param::bound_type_str() const
 {
-    std::string str_bound_type = " ";
     switch (bound_type)
     {
-        case data_struct::xrf::NOT_INIT:
-            str_bound_type = "Not Initialized";
+		case E_Bound_Type::NOT_INIT:
+            return "Not Initialized";
             break;
-        case data_struct::xrf::FIXED:
-            str_bound_type = "Fixed";
+        case E_Bound_Type::FIXED:
+			return "Fixed";
             break;
-        case data_struct::xrf::LIMITED_LO_HI:
-            str_bound_type = "LIMITED LO HI";
+        case E_Bound_Type::LIMITED_LO_HI:
+			return "LIMITED LO HI";
             break;
-        case data_struct::xrf::LIMITED_LO:
-            str_bound_type = "LIMITED LO";
+        case E_Bound_Type::LIMITED_LO:
+			return "LIMITED LO";
             break;
-        case data_struct::xrf::LIMITED_HI:
-            str_bound_type = "LIMITED HI";
+        case E_Bound_Type::LIMITED_HI:
+			return "LIMITED HI";
             break;
-        case data_struct::xrf::FIT:
-            str_bound_type = "FIT";
+        case E_Bound_Type::FIT:
+			return "FIT";
             break;
     }
-    return str_bound_type;
+    return "N/A";
 }
 
 Fit_Parameters::Fit_Parameters(const Fit_Parameters& fit_pars)
@@ -92,9 +89,10 @@ Fit_Parameters::Fit_Parameters(const Fit_Parameters& fit_pars)
         _params[itr.first] = itr.second;
     }
 }
-void Fit_Parameters::add_parameter(std::string name, Fit_Param param)
+
+void Fit_Parameters::add_parameter(Fit_Param param)
 {
-    _params[name] = param;
+    _params[param.name] = param;
 }
 
 void Fit_Parameters::append_and_update(Fit_Parameters* fit_params)
@@ -160,7 +158,7 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     //logit_s<<"\n";
 }
 
-void Fit_Parameters::set_all_value(real_t value, data_struct::xrf::E_Bound_Type btype)
+void Fit_Parameters::set_all_value(real_t value, E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
@@ -170,7 +168,7 @@ void Fit_Parameters::set_all_value(real_t value, data_struct::xrf::E_Bound_Type 
     }
 }
 
-void Fit_Parameters::set_all(data_struct::xrf::E_Bound_Type btype)
+void Fit_Parameters::set_all(E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
@@ -209,7 +207,7 @@ void Fit_Parameters::print()
 {
     for(const auto& itr : _params)
     {
-        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << "\n";
+        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\n";
     }
     logit_s<<"\n";
 
@@ -221,12 +219,11 @@ void Fit_Parameters::print_non_fixed()
     {
         if(itr.second.bound_type != E_Bound_Type::FIXED)
         {
-            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type << "\n";
+            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\n";
         }
     }
     logit_s<<"\n";
 
 }
 
-} //namespace xrf
 } //namespace data_struct

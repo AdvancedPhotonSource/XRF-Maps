@@ -56,7 +56,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Saver::Spectra_Stream_Saver() : Sink<data_struct::xrf::Stream_Block*>()
+Spectra_Stream_Saver::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block*>()
 {
     _callback_func = std::bind(&Spectra_Stream_Saver::save_stream, this, std::placeholders::_1);
 }
@@ -70,7 +70,7 @@ Spectra_Stream_Saver::~Spectra_Stream_Saver()
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_block)
+void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
 {
 
     size_t d_hash = stream_block->dataset_hash();
@@ -155,7 +155,7 @@ void Spectra_Stream_Saver::save_stream(data_struct::xrf::Stream_Block* stream_bl
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block)
+void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::Stream_Block* stream_block)
 {
     Dataset_Save *dataset = new Dataset_Save();
     dataset->dataset_directory = stream_block->dataset_directory;
@@ -166,7 +166,7 @@ void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::xrf::Stream_
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block)
+void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::Stream_Block* stream_block)
 {
     Detector_Save *detector = new Detector_Save(stream_block->width());
     dataset->detector_map.insert( { stream_block->detector_number, detector } );

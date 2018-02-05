@@ -55,14 +55,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <unordered_map>
 
-#include "data_struct/xrf/element_info.h"
-#include "data_struct/xrf/element_quant.h"
+#include "data_struct/element_info.h"
+#include "data_struct/element_quant.h"
 #include "fitting/optimizers/optimizer.h"
 
 
 namespace data_struct
-{
-namespace xrf
 {
 
 using namespace std;
@@ -219,8 +217,6 @@ protected:
 
 //-----------------------------------------------------------------------------
 
-
-} //namespace xrf
 
 } //namespace data_struct
 

@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <mutex>
 
-#include "data_struct/xrf/element_info.h"
+#include "data_struct/element_info.h"
 
 #define HDF5_SAVE_VERSION 10.0
 
@@ -414,7 +414,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
+bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -557,7 +557,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
              for(size_t col=0; col<count_row[1]; col++)
              {
                  offset_meta[2] = col;
-                 data_struct::xrf::Spectra *spectra = &((*spec_vol)[row][col]);
+                 data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
 
                  H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -610,7 +610,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::xrf::Spectra_Line* spec_row)
+bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -722,7 +722,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
         for(size_t col=0; col < dims_in[0]; col++)
         {
             offset_meta[0] = col;
-            data_struct::xrf::Spectra *spectra = &((*spec_row)[col]);
+            data_struct::Spectra *spectra = &((*spec_row)[col]);
 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -770,7 +770,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::xrf::Spectra_Volume* spec_vol)
+bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -953,7 +953,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
              {
                  offset_meta[1] = col;
 
-                 data_struct::xrf::Spectra *spectra = &((*spec_vol)[row][col]);
+                 data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
 
                  offset_meta[2] = detector_lookup["Timer"];
                  H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
@@ -1005,7 +1005,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 }
 
 /* TODO: make generic lookup for spectra data in hdf5
-bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spectra_Layout layout, data_struct::xrf::Spectra_Volume* spec_vol)
+bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spectra_Layout layout, data_struct::Spectra_Volume* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1158,7 +1158,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
                  real_t out_cnt = 1.0;
 
                  offset_meta[2] = col;
-                 data_struct::xrf::Spectra *spectra = &((*spec_vol)[row][col]);
+                 data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
 
                  H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -1211,7 +1211,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
 bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
                                                 size_t detector_num_start,
                                                 size_t detector_num_end,
-												data_struct::xrf::IO_Callback_Func_Def callback_func,
+												data_struct::IO_Callback_Func_Def callback_func,
                                                 void* user_data)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -1363,7 +1363,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
                  for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
                  {
                      offset_meta[0] = detector_num;
-                     data_struct::xrf::Spectra * spectra = new data_struct::xrf::Spectra(dims_in[0]);
+                     data_struct::Spectra * spectra = new data_struct::Spectra(dims_in[0]);
 
                      H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                      error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -1420,7 +1420,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::xrf::Spectra* spectra)
+bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1619,7 +1619,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
                                            size_t detector_num,
-                                           data_struct::xrf::Spectra_Volume* spectra_volume,
+                                           data_struct::Spectra_Volume* spectra_volume,
                                            int row_idx_start,
                                            int row_idx_end,
                                            int col_idx_start,
@@ -1737,7 +1737,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
         offset_time[0] = row;
         for(size_t col=col_idx_start; col < col_idx_end; col++)
         {
-            data_struct::xrf::Spectra *spectra = &((*spectra_volume)[row][col]);
+            data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
             offset_time[1] = col;
             H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
@@ -1781,7 +1781,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
 bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
                                            size_t detector_num,
-                                           data_struct::xrf::Spectra* spectra)
+                                           data_struct::Spectra* spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1808,7 +1808,7 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::xrf::Spectra* spectra)
+bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra)
 {
 
     hid_t    dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
@@ -2038,7 +2038,7 @@ bool HDF5_IO::end_save_seq()
 //-----------------------------------------------------------------------------
 
 bool HDF5_IO::save_spectra_volume(const std::string path,
-                                  data_struct::xrf::Spectra_Volume * spectra_volume,
+                                  data_struct::Spectra_Volume * spectra_volume,
                                   real_t energy_offset,
                                   real_t energy_slope,
                                   real_t energy_quad,
@@ -2088,7 +2088,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     }
 
     //get one element
-    //data_struct::xrf::Fit_Element_Map* element;
+    //data_struct::Fit_Element_Map* element;
 
     //H5T_FLOAT
     dims_out[0] = spectra_volume->samples_size();
@@ -2174,7 +2174,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
         offset_time[0] = row;
         for(size_t col=col_idx_start; col < col_idx_end; col++)
         {
-            const data_struct::xrf::Spectra *spectra = &((*spectra_volume)[row][col]);
+            const data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
             offset_time[1] = col;
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
@@ -2214,7 +2214,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
         int_spec_grp_id = H5Gcreate(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     //save quantification_standard integrated spectra
-    data_struct::xrf::Spectra spectra = spectra_volume->integrate();
+    data_struct::Spectra spectra = spectra_volume->integrate();
     count[0] = spectra.size();
     memoryspace_id = H5Screate_simple(1, count, NULL);
     filespace_id = H5Screate_simple(1, count, NULL);
@@ -2272,7 +2272,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     //save energy vector
     std::vector<real_t> out_vec;
-    data_struct::xrf::gen_energy_vector(spectra.size(), energy_offset, energy_slope, &out_vec);
+    data_struct::gen_energy_vector(spectra.size(), energy_offset, energy_slope, &out_vec);
     count[0] = out_vec.size();
     memoryspace_id = H5Screate_simple(1, count, NULL);
     filespace_id = H5Screate_simple(1, count, NULL);
@@ -2332,7 +2332,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 //-----------------------------------------------------------------------------
 
 bool HDF5_IO::save_element_fits(std::string path,
-                                const data_struct::xrf::Fit_Count_Dict * const element_counts,
+                                const data_struct::Fit_Count_Dict * const element_counts,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
@@ -2468,22 +2468,22 @@ bool HDF5_IO::save_element_fits(std::string path,
 
     //create save ordered vector by element Z number with K , L, M lines
     std::vector<std::string> element_lines;
-    for (std::string el_name : data_struct::xrf::Element_Symbols)
+    for (std::string el_name : data_struct::Element_Symbols)
     {
         element_lines.push_back(el_name);
     }
-    for (std::string el_name : data_struct::xrf::Element_Symbols)
+    for (std::string el_name : data_struct::Element_Symbols)
     {
         element_lines.push_back(el_name+"_L");
     }
-    for (std::string el_name : data_struct::xrf::Element_Symbols)
+    for (std::string el_name : data_struct::Element_Symbols)
     {
         element_lines.push_back(el_name+"_M");
     }
 
-    element_lines.push_back(data_struct::xrf::STR_COHERENT_SCT_AMPLITUDE);
-    element_lines.push_back(data_struct::xrf::STR_COMPTON_AMPLITUDE);
-    element_lines.push_back(data_struct::xrf::STR_NUM_ITR);
+    element_lines.push_back(STR_COHERENT_SCT_AMPLITUDE);
+    element_lines.push_back(STR_COMPTON_AMPLITUDE);
+    element_lines.push_back(STR_NUM_ITR);
 
     int i=0;
     //save by element Z order
@@ -2538,7 +2538,7 @@ bool HDF5_IO::save_element_fits(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * quantification_standard,
+bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantification_standard,
                                   size_t row_idx_start,
                                   int row_idx_end,
                                   size_t col_idx_start,
@@ -2650,7 +2650,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         }
 
         //save quantification_standard element weights
-        const std::unordered_map<std::string, data_struct::xrf::Element_Quant> e_weights = quantification_standard->element_weights();
+        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_weights();
         count[0] = e_weights.size();
         memoryspace_id = H5Screate_simple(1, count, NULL);
         filespace_id = H5Screate_simple(1, count, NULL);
@@ -2692,7 +2692,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         }
 
         //save quantification_standard integrated spectra
-        data_struct::xrf::Spectra spectra = quantification_standard->integrated_spectra();
+        data_struct::Spectra spectra = quantification_standard->integrated_spectra();
         count[0] = spectra.size();
         memoryspace_id = H5Screate_simple(1, count, NULL);
         filespace_id = H5Screate_simple(1, count, NULL);
@@ -2776,7 +2776,7 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
         H5Sclose(dataspace_id);
 
         //save calibration curves
-        //data_struct::xrf::Quantifiers quantifiers = quantification_standard->calibration_curves.at(path);
+        //data_struct::Quantifiers quantifiers = quantification_standard->calibration_curves.at(path);
         //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
         q_dims_out[0] = 3;// shells K, L, and M
@@ -2826,20 +2826,20 @@ bool HDF5_IO::save_quantification(data_struct::xrf::Quantification_Standard * qu
             dset_ch_id = H5Dcreate (q_fit_grp_id, "Channel_Names", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             //create save ordered vector by element Z number with K , L, M lines
             std::vector<std::string> element_lines;
-            for (std::string el_name : data_struct::xrf::Element_Symbols)
+            for (std::string el_name : data_struct::Element_Symbols)
             {
                 element_lines.push_back(el_name);
             }
-            for (std::string el_name : data_struct::xrf::Element_Symbols)
+            for (std::string el_name : data_struct::Element_Symbols)
             {
                 element_lines.push_back(el_name+"_L");
             }
-            for (std::string el_name : data_struct::xrf::Element_Symbols)
+            for (std::string el_name : data_struct::Element_Symbols)
             {
                 element_lines.push_back(el_name+"_M");
             }
 
-            element_lines.push_back(data_struct::xrf::STR_NUM_ITR);
+            element_lines.push_back(STR_NUM_ITR);
 
             offset_idx = 0;
             offset[0] = 0;
@@ -3633,7 +3633,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	return true;
 }
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::xrf::Params_Override * params_override, bool hasNetcdf)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::Params_Override * params_override, bool hasNetcdf)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1, memoryspace_str_id = -1;
     hid_t filetype, memtype;
@@ -4153,7 +4153,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::xrf::Params_Override * params_override)
+void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1;
     hid_t dset_id = -1;
@@ -4388,7 +4388,7 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
 
 bool HDF5_IO::save_scan_scalers(size_t detector_num,
                                 struct mda_file *mda_scalers,
-                                data_struct::xrf::Params_Override * params_override,
+                                data_struct::Params_Override * params_override,
                                 bool hasNetcdf,
                                 size_t row_idx_start,
                                 int row_idx_end,
@@ -4778,8 +4778,8 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 analysis_ids.push_back(det_analysis_dset_id);
         }
 
-        data_struct::xrf::ArrayXr buffer1(total);
-		data_struct::xrf::ArrayXr buffer2(total);
+        data_struct::ArrayXr buffer1(total);
+		data_struct::ArrayXr buffer2(total);
         float divisor = 1.0;
         error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
         for(int k=0; k<analysis_ids.size(); k++)
@@ -4896,14 +4896,14 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
 bool HDF5_IO::save_stream_row(size_t d_hash,
                              size_t detector_num,
                              size_t row,
-                             std::vector< data_struct::xrf::Spectra* >  *spectra_row)
+                             std::vector< data_struct::Spectra* >  *spectra_row)
 {
     return false;
 }
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_itegrade_spectra(data_struct::xrf::Spectra * spectra)
+bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra * spectra)
 {
     return false;
 }

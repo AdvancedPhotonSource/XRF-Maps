@@ -66,15 +66,15 @@ class DLL_EXPORT Integrated_Spectra_Source : public Spectra_File_Source
 
 public:
 
-    Integrated_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job);
+    Integrated_Spectra_Source(data_struct::Analysis_Job* analysis_job);
 
     ~Integrated_Spectra_Source();
 
-    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data);
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
 
 protected:
 
-    std::map<int, data_struct::xrf::Stream_Block *> _stream_block_list;
+    std::map<int, data_struct::Stream_Block *> _stream_block_list;
 
 };
 

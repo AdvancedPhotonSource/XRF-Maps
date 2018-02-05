@@ -47,7 +47,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "aps_fit_params_import.h"
-
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -56,7 +55,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <unordered_map>
 #include <chrono>
 #include <ctime>
-#include "fitting/models/base_model.h"
 
 
 namespace io
@@ -70,45 +68,47 @@ namespace aps
  * Translation map from APS file tags to internal tags
  */
 const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]", fitting::models::STR_ENERGY_OFFSET),
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MAX", fitting::models::STR_ENERGY_OFFSET),
-    std::pair<std::string, std::string>("CAL_OFFSET_[E_OFFSET]_MIN", fitting::models::STR_ENERGY_OFFSET),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]", fitting::models::STR_ENERGY_SLOPE),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MAX", fitting::models::STR_ENERGY_SLOPE),
-    std::pair<std::string, std::string>("CAL_SLOPE_[E_LINEAR]_MIN", fitting::models::STR_ENERGY_SLOPE),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]", fitting::models::STR_ENERGY_QUADRATIC),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MAX", fitting::models::STR_ENERGY_QUADRATIC),
-    std::pair<std::string, std::string>("CAL_QUAD_[E_QUADRATIC]_MIN", fitting::models::STR_ENERGY_QUADRATIC),
-    std::pair<std::string, std::string>("FWHM_OFFSET", data_struct::xrf::STR_FWHM_OFFSET),
-    std::pair<std::string, std::string>("FWHM_FANOPRIME", data_struct::xrf::STR_FWHM_FANOPRIME),
-    std::pair<std::string, std::string>("COHERENT_SCT_ENERGY", data_struct::xrf::STR_COHERENT_SCT_ENERGY),
-    std::pair<std::string, std::string>("COHERENT_SCT_ENERGY_MAX", data_struct::xrf::STR_COHERENT_SCT_ENERGY),
-    std::pair<std::string, std::string>("COHERENT_SCT_ENERGY_MIN", data_struct::xrf::STR_COHERENT_SCT_ENERGY),
-    std::pair<std::string, std::string>("COMPTON_ANGLE", data_struct::xrf::STR_COMPTON_ANGLE),
-    std::pair<std::string, std::string>("COMPTON_ANGLE_MAX", data_struct::xrf::STR_COMPTON_ANGLE),
-    std::pair<std::string, std::string>("COMPTON_ANGLE_MIN", data_struct::xrf::STR_COMPTON_ANGLE),
-    std::pair<std::string, std::string>("COMPTON_FWHM_CORR", data_struct::xrf::STR_COMPTON_FWHM_CORR),
-    std::pair<std::string, std::string>("COMPTON_STEP", data_struct::xrf::STR_COMPTON_F_STEP),
-    std::pair<std::string, std::string>("COMPTON_F_TAIL", data_struct::xrf::STR_COMPTON_F_TAIL),
-    std::pair<std::string, std::string>("COMPTON_GAMMA", data_struct::xrf::STR_COMPTON_GAMMA),
-    std::pair<std::string, std::string>("COMPTON_HI_F_TAIL", data_struct::xrf::STR_COMPTON_HI_F_TAIL),
-    std::pair<std::string, std::string>("COMPTON_HI_GAMMA", data_struct::xrf::STR_COMPTON_HI_GAMMA),
-    std::pair<std::string, std::string>("STEP_OFFSET", data_struct::xrf::STR_F_STEP_OFFSET),
-    std::pair<std::string, std::string>("STEP_LINEAR", data_struct::xrf::STR_F_STEP_LINEAR),
-    std::pair<std::string, std::string>("STEP_QUADRATIC", data_struct::xrf::STR_F_STEP_QUADRATIC),
-    std::pair<std::string, std::string>("F_TAIL_OFFSET", data_struct::xrf::STR_F_TAIL_OFFSET),
-    std::pair<std::string, std::string>("F_TAIL_LINEAR", data_struct::xrf::STR_F_TAIL_LINEAR),
-    std::pair<std::string, std::string>("F_TAIL_QUADRATIC", data_struct::xrf::STR_F_TAIL_QUADRATIC),
-    std::pair<std::string, std::string>("KB_F_TAIL_OFFSET", data_struct::xrf::STR_KB_F_TAIL_OFFSET),
-    std::pair<std::string, std::string>("KB_F_TAIL_LINEAR", data_struct::xrf::STR_KB_F_TAIL_LINEAR),
-    std::pair<std::string, std::string>("KB_F_TAIL_QUADRATIC", data_struct::xrf::STR_KB_F_TAIL_QUADRATIC),
-    std::pair<std::string, std::string>("GAMMA_OFFSET", data_struct::xrf::STR_GAMMA_OFFSET),
-    std::pair<std::string, std::string>("GAMMA_LINEAR", data_struct::xrf::STR_GAMMA_LINEAR),
-    std::pair<std::string, std::string>("GAMMA_QUADRATIC", data_struct::xrf::STR_GAMMA_QUADRATIC),
-    std::pair<std::string, std::string>("SNIP_WIDTH", data_struct::xrf::STR_SNIP_WIDTH),
-    std::pair<std::string, std::string>("SI_ESCAPE_FACTOR", data_struct::xrf::STR_SI_ESCAPE),
-    std::pair<std::string, std::string>("GE_ESCAPE_FACTOR", data_struct::xrf::STR_GE_ESCAPE),
-    std::pair<std::string, std::string>("ESCAPE_LINEAR", data_struct::xrf::STR_ESCAPE_LINEAR)
+	{"CAL_OFFSET_[E_OFFSET]", STR_ENERGY_OFFSET},
+    {"CAL_OFFSET_[E_OFFSET]_MAX", STR_ENERGY_OFFSET},
+    {"CAL_OFFSET_[E_OFFSET]_MIN", STR_ENERGY_OFFSET},
+    {"CAL_SLOPE_[E_LINEAR]", STR_ENERGY_SLOPE},
+    {"CAL_SLOPE_[E_LINEAR]_MAX", STR_ENERGY_SLOPE},
+    {"CAL_SLOPE_[E_LINEAR]_MIN", STR_ENERGY_SLOPE},
+    {"CAL_QUAD_[E_QUADRATIC]", STR_ENERGY_QUADRATIC},
+    {"CAL_QUAD_[E_QUADRATIC]_MAX", STR_ENERGY_QUADRATIC},
+    {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC},
+    {"FWHM_OFFSET", STR_FWHM_OFFSET},
+    {"FWHM_FANOPRIME", STR_FWHM_FANOPRIME},
+    {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
+    {"COHERENT_SCT_ENERGY_MAX", STR_COHERENT_SCT_ENERGY},
+    {"COHERENT_SCT_ENERGY_MIN", STR_COHERENT_SCT_ENERGY},
+    {"COMPTON_ANGLE", STR_COMPTON_ANGLE},
+    {"COMPTON_ANGLE_MAX", STR_COMPTON_ANGLE},
+    {"COMPTON_ANGLE_MIN", STR_COMPTON_ANGLE},
+    {"COMPTON_FWHM_CORR", STR_COMPTON_FWHM_CORR},
+    {"COMPTON_STEP", STR_COMPTON_F_STEP},
+    {"COMPTON_F_TAIL", STR_COMPTON_F_TAIL},
+    {"COMPTON_GAMMA", STR_COMPTON_GAMMA},
+    {"COMPTON_HI_F_TAIL", STR_COMPTON_HI_F_TAIL},
+    {"COMPTON_HI_GAMMA", STR_COMPTON_HI_GAMMA},
+    {"STEP_OFFSET", STR_F_STEP_OFFSET},
+    {"STEP_LINEAR", STR_F_STEP_LINEAR},
+    {"STEP_QUADRATIC", STR_F_STEP_QUADRATIC},
+    {"F_TAIL_OFFSET", STR_F_TAIL_OFFSET},
+    {"F_TAIL_LINEAR", STR_F_TAIL_LINEAR},
+    {"F_TAIL_QUADRATIC", STR_F_TAIL_QUADRATIC},
+    {"KB_F_TAIL_OFFSET", STR_KB_F_TAIL_OFFSET},
+    {"KB_F_TAIL_LINEAR", STR_KB_F_TAIL_LINEAR},
+    {"KB_F_TAIL_QUADRATIC", STR_KB_F_TAIL_QUADRATIC},
+    {"GAMMA_OFFSET", STR_GAMMA_OFFSET},
+    {"GAMMA_LINEAR", STR_GAMMA_LINEAR},
+    {"GAMMA_QUADRATIC", STR_GAMMA_QUADRATIC},
+    {"SNIP_WIDTH", STR_SNIP_WIDTH},
+    {"SI_ESCAPE_FACTOR", STR_SI_ESCAPE},
+    {"GE_ESCAPE_FACTOR", STR_GE_ESCAPE},
+    {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR},
+	{"MAX_ENERGY_TO_FIT", MAX_ENERGY_TO_FIT },
+	{"MIN_ENERGY_TO_FIT", MIN_ENERGY_TO_FIT }
 };
 
 const std::vector<std::string> Updatable_TAGS = {
@@ -170,8 +170,8 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 //-----------------------------------------------------------------------------
 
 bool APS_Fit_Params_Import::load(std::string path,
-                                 data_struct::xrf::Element_Info_Map * element_info_map,
-                                 data_struct::xrf::Params_Override *params_override)
+                                 Element_Info_Map * element_info_map,
+                                 Params_Override *params_override)
 {
 
     std::ifstream paramFileStream(path);
@@ -211,21 +211,21 @@ bool APS_Fit_Params_Import::load(std::string path,
 
                         //logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
-                        data_struct::xrf::Element_Info* e_info = element_info_map->get_element(base_element_symb);
+                        Element_Info* e_info = element_info_map->get_element(base_element_symb);
                         if(e_info == nullptr)
                         {
                             logit<<"Can not find element "<<base_element_symb<<"\n";
                         }
                         else
                         {
-                            data_struct::xrf::Fit_Element_Map* fit_map;
+                            Fit_Element_Map* fit_map;
                             if(params_override->elements_to_fit.count(element_symb) > 0)
                             {
                                 fit_map = params_override->elements_to_fit[element_symb];
                             }
                             else
                             {
-                                fit_map = new data_struct::xrf::Fit_Element_Map(element_symb, e_info);
+                                fit_map = new Fit_Element_Map(element_symb, e_info);
                                 params_override->elements_to_fit[element_symb] = fit_map;
                             }
                         }
@@ -240,7 +240,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     {
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
                         logit<<"Element with pileup : "<<element_symb<<"\n";
-                        //data_struct::xrf::Element_Param* element_param = new data_struct::xrf::Element_Param();
+                        //Element_Param* element_param = new Element_Param();
                         //element_param->name = element_symb;
                         //params_override->fit_params.append_element(element_param);
                     }
@@ -251,7 +251,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
                     if( false == params_override->fit_params.contains(tag_name))
                     {
-                        params_override->fit_params.add_parameter(tag_name, data_struct::xrf::Fit_Param(tag_name));
+                        params_override->fit_params.add_parameter(Fit_Param(tag_name));
                     }
 
                     std::string str_value;
@@ -294,7 +294,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     std::getline(strstream, element_symb, ',');
                     element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
-                    data_struct::xrf::Fit_Element_Map* fit_map;
+                    Fit_Element_Map* fit_map;
                     if(params_override->elements_to_fit.count(element_symb) > 0)
                     {
                         fit_map = params_override->elements_to_fit[element_symb];
@@ -307,7 +307,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         }
                     }
                 }
-                else if (tag == data_struct::xrf::STR_FIT_SNIP_WIDTH)
+                else if (tag == STR_FIT_SNIP_WIDTH)
                 {
                     std::string str_value;
                     std::getline(strstream, str_value, ':');
@@ -317,15 +317,15 @@ bool APS_Fit_Params_Import::load(std::string path,
                     float fvalue = std::stof(str_value);
                     params_override->fit_snip_width = fvalue;
 
-                    if( false == params_override->fit_params.contains(data_struct::xrf::STR_SNIP_WIDTH))
+                    if( false == params_override->fit_params.contains(STR_SNIP_WIDTH))
                     {
-                        params_override->fit_params.add_parameter(data_struct::xrf::STR_SNIP_WIDTH, data_struct::xrf::Fit_Param(data_struct::xrf::STR_SNIP_WIDTH));
+                        params_override->fit_params.add_parameter(Fit_Param(STR_SNIP_WIDTH));
                     }
 
                     if(fvalue > 0.0)
-                        params_override->fit_params[data_struct::xrf::STR_SNIP_WIDTH].bound_type = data_struct::xrf::FIT;
+                        params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
                     else
-                        params_override->fit_params[data_struct::xrf::STR_SNIP_WIDTH].bound_type = data_struct::xrf::FIXED;
+                        params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
                 }
                 else if (tag == "TIME_SCALER_PV")
                 {
@@ -551,6 +551,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         params_override->ge_escape_enabled = false;
                     }
                 }
+				/*
                 else if (tag == "MAX_ENERGY_TO_FIT")
                 {
                     std::string value;
@@ -569,6 +570,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->min_energy = std::stof(value);
                 }
+				*/
                 else if (tag == "LINEAR_ESCAPE_FACTOR")
                 {
                     std::string value;
@@ -642,7 +644,7 @@ bool APS_Fit_Params_Import::load(std::string path,
 //-----------------------------------------------------------------------------
 
 bool APS_Fit_Params_Import::save(std::string path,
-                                 data_struct::xrf::Fit_Parameters fit_params,
+                                 Fit_Parameters fit_params,
                                  int detector_num)
 {
 

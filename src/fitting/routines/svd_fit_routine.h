@@ -59,7 +59,7 @@ namespace fitting
 namespace routines
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 class DLL_EXPORT SVD_Fit_Routine: public Matrix_Optimized_Fit_Routine
 {

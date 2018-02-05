@@ -72,7 +72,7 @@ CSV_IO::~CSV_IO()
 
 }
 
-bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Parameters fit_params)
+bool CSV_IO::save_fit_parameters(std::string fullpath, Fit_Parameters fit_params)
 {
     std::ofstream file_stream(fullpath);
     if(file_stream.is_open())
@@ -93,7 +93,7 @@ bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::xrf::Fit_Par
     return true;
 }
 
-bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_Info_Map *element_map)
+bool load_element_info_from_csv(std::string filename, Element_Info_Map *element_map)
 {
     std::ifstream file_stream(filename);
     try
@@ -115,14 +115,14 @@ bool load_element_info_from_csv(std::string filename, data_struct::xrf::Element_
             {
 
                 //logit<< "value = "<< value<<"\n";
-                data_struct::xrf::Element_Info* element = nullptr;
+                Element_Info* element = nullptr;
                 int element_number = std::stoi(value);
                 element = element_map->get_element(element_number);
                 std::string el_name;
                 std::getline(strstream, el_name, ',');
                 if (element == nullptr)
                 {
-                     element = new data_struct::xrf::Element_Info();
+                     element = new Element_Info();
                      element->number = element_number;
                      element->name = el_name;
                      element_map->add_element(element);

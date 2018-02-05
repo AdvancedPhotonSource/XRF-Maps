@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 
 
 namespace fitting
@@ -87,43 +87,43 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 {
 
     Fit_Parameters fit_params;
-    //                                                        name                     min               max             val              step              use
-    fit_params.add_parameter(STR_ENERGY_OFFSET,    Fit_Param(STR_ENERGY_OFFSET,        (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_SLOPE,     Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_ENERGY_QUADRATIC, Fit_Param(STR_ENERGY_QUADRATIC,        (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    //                                      name                     min               max             val              step              use
+    fit_params.add_parameter(Fit_Param(STR_ENERGY_OFFSET,       (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_ENERGY_QUADRATIC,    (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
 
-    fit_params.add_parameter(STR_FWHM_OFFSET,    Fit_Param(STR_FWHM_OFFSET,        (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_FWHM_FANOPRIME, Fit_Param(STR_FWHM_FANOPRIME,     (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_FWHM_OFFSET,         (real_t)0.005,    (real_t)0.5,  (real_t)0.12,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_FWHM_FANOPRIME,      (real_t)0.000001, (real_t)0.05, (real_t)0.00012, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
 
-    fit_params.add_parameter(STR_COHERENT_SCT_ENERGY, Fit_Param(STR_COHERENT_SCT_ENERGY,	   (real_t)9.4, (real_t)10.4, (real_t)9.99, (real_t)0.001,  E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_COHERENT_SCT_AMPLITUDE, Fit_Param(STR_COHERENT_SCT_AMPLITUDE, (real_t)0.000001, (real_t)10.0, (real_t)10.0,  (real_t)0.00001, E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_ENERGY,	   (real_t)9.4, (real_t)10.4, (real_t)9.99, (real_t)0.001,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, (real_t)0.000001, (real_t)10.0, (real_t)10.0,  (real_t)0.00001, E_Bound_Type::FIT));
 
-    fit_params.add_parameter(STR_COMPTON_ANGLE, Fit_Param(STR_COMPTON_ANGLE,		 (real_t)-0.0001, (real_t)0.0001, (real_t)90.0, (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_COMPTON_FWHM_CORR, Fit_Param(STR_COMPTON_FWHM_CORR, (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_COMPTON_AMPLITUDE, Fit_Param(STR_COMPTON_AMPLITUDE, (real_t)-0.0001, (real_t)0.0001, (real_t)10.0, (real_t)0.000001,       E_Bound_Type::FIT));
-    fit_params.add_parameter(STR_COMPTON_F_STEP, Fit_Param(STR_COMPTON_F_STEP,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_COMPTON_F_TAIL, Fit_Param(STR_COMPTON_F_TAIL,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_COMPTON_GAMMA, Fit_Param(STR_COMPTON_GAMMA,		 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_COMPTON_HI_F_TAIL, Fit_Param(STR_COMPTON_HI_F_TAIL, (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.0000001, E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(STR_COMPTON_HI_GAMMA, Fit_Param(STR_COMPTON_HI_GAMMA,	 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.01,      E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_ANGLE,		 (real_t)-0.0001, (real_t)0.0001, (real_t)90.0, (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_FWHM_CORR,    (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE,    (real_t)-0.0001, (real_t)0.0001, (real_t)10.0, (real_t)0.000001,  E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_F_STEP,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_F_TAIL,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_GAMMA,		 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_HI_F_TAIL, (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_HI_GAMMA,	 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.01,      E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(STR_SNIP_WIDTH, Fit_Param(STR_SNIP_WIDTH,			     (real_t)0.1,   (real_t)2.828427, (real_t)0.15, (real_t)0.01,      E_Bound_Type::FIXED)); //max = 2* sqrt(2)
+    fit_params.add_parameter(Fit_Param(STR_SNIP_WIDTH,			     (real_t)0.1,   (real_t)2.828427, (real_t)0.15, (real_t)0.01,  E_Bound_Type::FIXED)); //max = 2* sqrt(2)
 
-    fit_params.add_parameter(STR_F_STEP_OFFSET, Fit_Param(STR_F_STEP_OFFSET,		(real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_F_STEP_LINEAR, Fit_Param(STR_F_STEP_LINEAR,        (real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_F_STEP_QUADRATIC, Fit_Param(STR_F_STEP_QUADRATIC,  (real_t)0.0, (real_t)0.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_STEP_OFFSET,		(real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_STEP_LINEAR,        (real_t)0.0, (real_t)1.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_STEP_QUADRATIC,  (real_t)0.0, (real_t)0.0, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(STR_F_TAIL_OFFSET, Fit_Param(STR_F_TAIL_OFFSET,		(real_t)0.0, (real_t)0.1, (real_t)0.04, (real_t)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_F_TAIL_LINEAR, Fit_Param(STR_F_TAIL_LINEAR,		(real_t)0.0, (real_t)1.0, (real_t)0.01, (real_t)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_F_TAIL_QUADRATIC, Fit_Param(STR_F_TAIL_QUADRATIC,  (real_t)0.0, (real_t)0.01, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_TAIL_OFFSET,		(real_t)0.0, (real_t)0.1, (real_t)0.04, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_TAIL_LINEAR,		(real_t)0.0, (real_t)1.0, (real_t)0.01, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_F_TAIL_QUADRATIC,  (real_t)0.0, (real_t)0.01, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(STR_GAMMA_OFFSET, Fit_Param(STR_GAMMA_OFFSET,			(real_t)0.1, (real_t)10.0, (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_GAMMA_LINEAR, Fit_Param(STR_GAMMA_LINEAR,			(real_t)0.0, (real_t)3.0,  (real_t)0.2, (real_t)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_GAMMA_QUADRATIC, Fit_Param(STR_GAMMA_QUADRATIC,	(real_t)0.0, (real_t)0.0,  (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_GAMMA_OFFSET,			(real_t)0.1, (real_t)10.0, (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_GAMMA_LINEAR,			(real_t)0.0, (real_t)3.0,  (real_t)0.2, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_GAMMA_QUADRATIC,	(real_t)0.0, (real_t)0.0,  (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(STR_KB_F_TAIL_OFFSET, Fit_Param(STR_KB_F_TAIL_OFFSET,		 (real_t)0.0, (real_t)0.2,  (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_KB_F_TAIL_LINEAR, Fit_Param(STR_KB_F_TAIL_LINEAR,		 (real_t)0.0, (real_t)0.02, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(STR_KB_F_TAIL_QUADRATIC, Fit_Param(STR_KB_F_TAIL_QUADRATIC, (real_t)0.0, (real_t)0.0,  (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_OFFSET,		 (real_t)0.0, (real_t)0.2,  (real_t)0.0, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_LINEAR,		 (real_t)0.0, (real_t)0.02, (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_QUADRATIC, (real_t)0.0, (real_t)0.0,  (real_t)0.0, (real_t)0.01, E_Bound_Type::FIXED));
 
     return fit_params;
 

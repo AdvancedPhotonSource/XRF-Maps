@@ -56,10 +56,10 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
+Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
 {
     _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-    _spectra = new data_struct::xrf::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
+    _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
 }
 
 //-----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ Detector_Sum_Spectra_Source::~Detector_Sum_Spectra_Source()
 
 // ----------------------------------------------------------------------------
 
-void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
     if(_spectra->size() < spectra->size())
@@ -86,9 +86,9 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
         if(_output_callback_func != nullptr)
         {
             _analysis_job->init_fit_routines(spectra->size());
-            struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+            struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
-            data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+            data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
             stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
             stream_block->spectra = _spectra;
             stream_block->model = cp->model;
@@ -101,7 +101,7 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
             _output_callback_func(stream_block);
         }
 
-        _spectra = new data_struct::xrf::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
+        _spectra = new data_struct::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
     }
 
     delete spectra;

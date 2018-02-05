@@ -51,8 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
 
 //-----------------------------------------------------------------------------
 
@@ -215,10 +213,10 @@ void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-data_struct::xrf::Fit_Element_Map* gen_element_map(std::string element_symb)
+data_struct::Fit_Element_Map* gen_element_map(std::string element_symb)
 {
-	data_struct::xrf::Element_Info_Map * element_info_map = data_struct::xrf::Element_Info_Map::inst();
-	data_struct::xrf::Fit_Element_Map* fit_map = nullptr;
+	data_struct::Element_Info_Map * element_info_map = data_struct::Element_Info_Map::inst();
+	data_struct::Fit_Element_Map* fit_map = nullptr;
 
 	element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
@@ -227,14 +225,14 @@ data_struct::xrf::Fit_Element_Map* gen_element_map(std::string element_symb)
 
 	//logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
-	data_struct::xrf::Element_Info* e_info = element_info_map->get_element(base_element_symb);
+	data_struct::Element_Info* e_info = element_info_map->get_element(base_element_symb);
 	if (e_info == nullptr)
 	{
 		logit << "Can not find element " << base_element_symb << "\n";
 	}
 	else
 	{
-		fit_map = new data_struct::xrf::Fit_Element_Map(element_symb, e_info);
+		fit_map = new data_struct::Fit_Element_Map(element_symb, e_info);
 	}
 
 	return fit_map;
@@ -243,5 +241,4 @@ data_struct::xrf::Fit_Element_Map* gen_element_map(std::string element_symb)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-} //namespace xrf
 } //namespace data_struct

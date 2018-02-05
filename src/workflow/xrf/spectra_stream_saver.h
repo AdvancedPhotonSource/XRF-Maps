@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 
 #include "workflow/sink.h"
-#include "data_struct/xrf/stream_block.h"
+#include "data_struct/stream_block.h"
 #include "io/file/mda_io.h"
 #include "io/file/hdf5_io.h"
 #include <functional>
@@ -65,7 +65,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::xrf::Stream_Block* >
+class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::Stream_Block* >
 {
 
 public:
@@ -74,9 +74,9 @@ public:
 
     ~Spectra_Stream_Saver();
 
-    void save_stream(data_struct::xrf::Stream_Block* stream_block);
+    void save_stream(data_struct::Stream_Block* stream_block);
 
-    virtual void set_function(std::function<void (data_struct::xrf::Stream_Block*)> func) { }
+    virtual void set_function(std::function<void (data_struct::Stream_Block*)> func) { }
 
 protected:
 
@@ -98,8 +98,8 @@ protected:
         }
 
         int last_row;
-        data_struct::xrf::Spectra integrated_spectra;
-        std::vector< data_struct::xrf::Spectra* > spectra_line;
+        data_struct::Spectra integrated_spectra;
+        std::vector< data_struct::Spectra* > spectra_line;
     };
 
     class Dataset_Save
@@ -123,9 +123,9 @@ protected:
         std::map<int, Detector_Save*> detector_map;
     };
 
-    void _new_dataset(size_t d_hash, data_struct::xrf::Stream_Block* stream_block);
+    void _new_dataset(size_t d_hash, data_struct::Stream_Block* stream_block);
 
-    void _new_detector(Dataset_Save *dataset, data_struct::xrf::Stream_Block* stream_block);
+    void _new_detector(Dataset_Save *dataset, data_struct::Stream_Block* stream_block);
 
     void _finalize_dataset(Dataset_Save *dataset);
 

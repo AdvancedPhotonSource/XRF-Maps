@@ -55,8 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-namespace xrf
-{
+
 /*
 template<typename T>
 std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g)
@@ -276,4 +275,4 @@ void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t ener
 }
 
 } //namespace data_struct
-} //namespace xrf
+

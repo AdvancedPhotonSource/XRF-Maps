@@ -47,49 +47,73 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef SPECTRALINE_H
-#define SPECTRALINE_H
-
-#include "data_struct/xrf/spectra.h"
-#include <vector>
+#include "spectra_volume.h"
 
 namespace data_struct
 {
-namespace xrf
+
+Spectra_Volume::Spectra_Volume()
 {
 
-/**
- * @brief The Spectra_Line class : A row of spectras
- */
-class DLL_EXPORT Spectra_Line
+}
+
+Spectra_Volume::~Spectra_Volume()
 {
-public:
-    Spectra_Line();
 
-    ~Spectra_Line();
+}
 
-    Spectra& operator [](std::size_t row) { return _data_line[row]; }
+void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
+{
 
-    const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
+    _data_vol.resize(rows);
+    for(size_t i=0; i<_data_vol.size(); i++)
+    {
+        _data_vol[i].resize(cols, samples);
+    }
 
-    void resize(size_t cols, size_t samples);
+}
 
-    void alloc_row_size(size_t n);
+const Spectra Spectra_Volume::integrate()
+{
 
-    void recalc_elapsed_lifetime();
+    Spectra i_spectra(_data_vol[0][0].size());
+    real_t elt = 0.0;
+    real_t ert = 0.0;
+    real_t in_cnt = 0.0;
+    real_t out_cnt = 0.0;
+    for(size_t i = 0; i < _data_vol.size(); i++)
+    {
+        for(size_t j = 0; j < _data_vol[0].size(); j++)
+        {
+            for(size_t k = 0; k < _data_vol[0][0].size(); k++)
+            {
+                i_spectra[k] += _data_vol[i][j][k];
+            }
+            elt += _data_vol[i][j].elapsed_lifetime();
+            ert += _data_vol[i][j].elapsed_realtime();
+            in_cnt += _data_vol[i][j].input_counts();
+            out_cnt += _data_vol[i][j].output_counts();
+        }
+    }
 
-    auto size() const { return _data_line.size(); }
+    i_spectra.elapsed_lifetime(elt);
+    i_spectra.elapsed_realtime(ert);
+    i_spectra.input_counts(in_cnt);
+    i_spectra.output_counts(out_cnt);
 
-private:
+    i_spectra.recalc_elapsed_lifetime();
 
+    return i_spectra;
+}
 
-    void _alloc_spectra_size(size_t n);
+void Spectra_Volume::recalc_elapsed_lifetime()
+{
 
-    std::vector<Spectra> _data_line;
+    for(size_t i=0; i<_data_vol.size(); i++)
+    {
+        _data_vol[i].recalc_elapsed_lifetime();
+    }
 
-};
+}
 
-} //namespace xrf
 } //namespace data_struct
-
-#endif // SPECTRALINE_H

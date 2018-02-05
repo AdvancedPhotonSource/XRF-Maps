@@ -51,14 +51,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Matrix_Optimized_Fit_Routine_H
 
 #include "fitting/routines/param_optimized_fit_routine.h"
-#include "data_struct/xrf/fit_parameters.h"
+#include "data_struct/fit_parameters.h"
 
 namespace fitting
 {
 namespace routines
 {
 
-using namespace data_struct::xrf;
+using namespace data_struct;
 using namespace std;
 
 /**

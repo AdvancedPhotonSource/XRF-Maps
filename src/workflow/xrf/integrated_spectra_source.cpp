@@ -56,7 +56,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Integrated_Spectra_Source::Integrated_Spectra_Source(data_struct::xrf::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
+Integrated_Spectra_Source::Integrated_Spectra_Source(data_struct::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
 {
     _cb_function = std::bind(&Integrated_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
@@ -70,15 +70,15 @@ Integrated_Spectra_Source::~Integrated_Spectra_Source()
 
 // ----------------------------------------------------------------------------
 
-void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
     if(_stream_block_list.count(detector_num) == 0)
     {
         _analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+        struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
-        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;
         stream_block->model = cp->model;
@@ -91,7 +91,7 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
     }
     else
     {
-        data_struct::xrf::Stream_Block * stream_block = _stream_block_list.at(detector_num);
+        data_struct::Stream_Block * stream_block = _stream_block_list.at(detector_num);
 
         stream_block->spectra->add(*spectra);
         delete spectra;

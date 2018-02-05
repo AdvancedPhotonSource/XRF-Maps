@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 
 #include "workflow/sink.h"
-#include "data_struct/xrf/stream_block.h"
+#include "data_struct/stream_block.h"
 #include "io/net/basic_serializer.h"
 #ifdef _BUILD_WITH_ZMQ
 #include "support/zmq/zmq.hpp"
@@ -65,7 +65,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::xrf::Stream_Block* >
+class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::Stream_Block* >
 {
 
 public:
@@ -74,7 +74,7 @@ public:
 
     ~Spectra_Net_Streamer();
 
-    void stream(data_struct::xrf::Stream_Block* stream_block);
+    void stream(data_struct::Stream_Block* stream_block);
 
     void set_send_counts(bool val) {_send_counts = val;}
 

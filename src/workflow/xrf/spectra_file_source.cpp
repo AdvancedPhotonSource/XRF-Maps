@@ -57,7 +57,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_File_Source::Spectra_File_Source(data_struct::xrf::Analysis_Job* analysis_job) : Source<data_struct::xrf::Stream_Block*>()
+Spectra_File_Source::Spectra_File_Source(data_struct::Analysis_Job* analysis_job) : Source<data_struct::Stream_Block*>()
 {
     _analysis_job = analysis_job;
     _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
@@ -72,15 +72,15 @@ Spectra_File_Source::~Spectra_File_Source()
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::xrf::Spectra* spectra, void* user_data)
+void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
     if(_output_callback_func != nullptr)
     {
         _analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::xrf::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+        struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
-        data_struct::xrf::Stream_Block * stream_block = new data_struct::xrf::Stream_Block(row, col, height, width);
+        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;
         stream_block->model = cp->model;
@@ -118,11 +118,11 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                                                                  std::string dataset_file,
                                                                  size_t detector_num_start,
                                                                  size_t detector_num_end,
-																 data_struct::xrf::IO_Callback_Func_Def callback_fun)
+																 data_struct::IO_Callback_Func_Def callback_fun)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
-    //data_struct::xrf::Detector detector;
+    //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
     logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";

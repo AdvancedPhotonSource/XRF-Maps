@@ -43,80 +43,119 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2017>: Arthur Glowacki
 
 
 
-#include "spectra_volume.h"
+#ifndef Analysis_Job_H
+#define Analysis_Job_H
+
+#include "core/defines.h"
+#include "data_struct/element_info.h"
+#include "fitting/routines/base_fit_routine.h"
+#include <vector>
+#include <string>
+#include "data_struct/quantification_standard.h"
+#include "data_struct/params_override.h"
+#include "fitting/optimizers/lmfit_optimizer.h"
+#include "fitting/optimizers/mpfit_optimizer.h"
+#include <iostream>
 
 namespace data_struct
 {
-namespace xrf
+
+
+//-----------------------------------------------------------------------------
+
+///
+/// \brief The Analysis_Sub_Struct class
+///
+struct DLL_EXPORT Analysis_Sub_Struct
 {
 
-Spectra_Volume::Spectra_Volume()
+    // Fitting routines map
+    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> fit_routines;
+
+    // Fitting model
+    fitting::models::Base_Model * model;
+
+    // Quantification
+    Quantification_Standard quant_standard;
+
+    // Fit Parameters Override for model
+    Params_Override fit_params_override_dict;
+
+};
+
+///
+/// \brief The Analysis_Job class
+///
+class DLL_EXPORT Analysis_Job
 {
+public:
 
-}
+    Analysis_Job();
 
-Spectra_Volume::~Spectra_Volume()
-{
+    ~Analysis_Job();
 
-}
+    struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
 
-void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
-{
+    void set_optimizer(std::string optimizer);
 
-    _data_vol.resize(rows);
-    for(size_t i=0; i<_data_vol.size(); i++)
-    {
-        _data_vol[i].resize(cols, samples);
-    }
+    fitting::optimizers::Optimizer *optimizer(){return _optimizer;}
 
-}
+    void init_fit_routines(size_t spectra_samples);
 
-const Spectra Spectra_Volume::integrate()
-{
+    std::string command_line;
 
-    Spectra i_spectra(_data_vol[0][0].size());
-    real_t elt = 0.0;
-    real_t ert = 0.0;
-    real_t in_cnt = 0.0;
-    real_t out_cnt = 0.0;
-    for(size_t i = 0; i < _data_vol.size(); i++)
-    {
-        for(size_t j = 0; j < _data_vol[0].size(); j++)
-        {
-            for(size_t k = 0; k < _data_vol[0][0].size(); k++)
-            {
-                i_spectra[k] += _data_vol[i][j][k];
-            }
-            elt += _data_vol[i][j].elapsed_lifetime();
-            ert += _data_vol[i][j].elapsed_realtime();
-            in_cnt += _data_vol[i][j].input_counts();
-            out_cnt += _data_vol[i][j].output_counts();
-        }
-    }
+    std::string dataset_directory;
 
-    i_spectra.elapsed_lifetime(elt);
-    i_spectra.elapsed_realtime(ert);
-    i_spectra.input_counts(in_cnt);
-    i_spectra.output_counts(out_cnt);
+    std::string quantificaiton_standard_filename;
 
-    i_spectra.recalc_elapsed_lifetime();
+    std::string theta_pv;
 
-    return i_spectra;
-}
+    float theta;
 
-void Spectra_Volume::recalc_elapsed_lifetime()
-{
+    std::vector<std::string> dataset_files;
 
-    for(size_t i=0; i<_data_vol.size(); i++)
-    {
-        _data_vol[i].recalc_elapsed_lifetime();
-    }
+    std::vector<std::string> optimize_dataset_files;
 
-}
+    std::vector<Fitting_Routines> fitting_routines;
 
-} //namespace xrf
+    std::map<int, struct Analysis_Sub_Struct> detectors_meta_data;
+
+    fitting::models::Fit_Params_Preset optimize_fit_params_preset;
+
+    size_t detector_num_start;
+
+    size_t detector_num_end;
+
+    size_t num_threads;
+
+    bool quick_and_dirty;
+
+    bool optimize_fit_override_params;
+
+    bool generate_average_h5;
+
+    bool is_network_source;
+
+    bool stream_over_network;
+
+protected:
+
+    //Optimizers for fitting models
+    fitting::optimizers::LMFit_Optimizer _lmfit_optimizer;
+    fitting::optimizers::MPFit_Optimizer _mpfit_optimizer;
+    fitting::optimizers::Optimizer *_optimizer;
+
+    size_t _last_init_sample_size;
+
+private:
+	bool _first_init;
+
+};
+
 } //namespace data_struct
+
+#endif // Analysis_Job_H

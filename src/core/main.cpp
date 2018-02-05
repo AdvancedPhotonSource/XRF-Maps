@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     std::string element_henke_filename = "../reference/henke.xdr";
 
     //main structure for analysis job information
-    data_struct::xrf::Analysis_Job analysis_job;
+    data_struct::Analysis_Job analysis_job;
 
     Command_Line_Parser clp(argc, argv);
 
@@ -125,23 +125,23 @@ int main(int argc, char *argv[])
     //Look for which analysis types we want to run
     if ( clp.option_exists("--tails") )
     {
-        analysis_job.fitting_routines.push_back(data_struct::xrf::GAUSS_TAILS);
+        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_TAILS);
     }
     if ( clp.option_exists("--matrix") )
     {
-        analysis_job.fitting_routines.push_back(data_struct::xrf::GAUSS_MATRIX);
+        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
     }
     if ( clp.option_exists("--roi") )
     {
-        analysis_job.fitting_routines.push_back(data_struct::xrf::ROI);
+        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
     }
     if ( clp.option_exists("--roi_plus") )
     {
-        analysis_job.fitting_routines.push_back(data_struct::xrf::SVD);
+        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::SVD);
     }
     if ( clp.option_exists("--nnls") )
     {
-        analysis_job.fitting_routines.push_back(data_struct::xrf::NNLS);
+        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
     }
 
     //Check if we want to quantifiy with a standard
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     //load element information
-    if(false == io::load_element_info(element_henke_filename, element_csv_filename, data_struct::xrf::Element_Info_Map::inst()))
+    if(false == io::load_element_info(element_henke_filename, element_csv_filename, data_struct::Element_Info_Map::inst()))
     {
         logit<<"Error loading element information: "<<"\n";
         return -1;
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
         logit<<"Error initializing analysis job"<<"\n";
     }
 
-    data_struct::xrf::Element_Info_Map::inst()->clear();
+    data_struct::Element_Info_Map::inst()->clear();
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
