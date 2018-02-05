@@ -153,7 +153,8 @@ namespace optimizers
             if(fit_snip_width.bound_type > data_struct::xrf::E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
             {
                 real_t spectral_binning = 0.0;
-                ud->spectra_background = snip_background(ud->orig_spectra,
+                //ud->spectra_background = snip_background(ud->orig_spectra,
+				ArrayXr background = snip_background(ud->orig_spectra,
                                              ud->fit_parameters->at(STR_ENERGY_OFFSET).value,
                                              ud->fit_parameters->at(STR_ENERGY_SLOPE).value,
                                              ud->fit_parameters->at(STR_ENERGY_QUADRATIC).value,
@@ -161,8 +162,18 @@ namespace optimizers
                                              ud->fit_parameters->at(STR_SNIP_WIDTH).value,
                                              ud->energy_range.min,
                                              ud->energy_range.max);
-
-                ud->spectra_background = ud->spectra_background.segment(ud->energy_range.min, ud->energy_range.count());
+				/*
+				if (ud->spectra_background.rows() > ud->spectra.rows())
+				{
+					ud->spectra_background = ud->spectra_background.segment(ud->energy_range.min, ud->energy_range.count());
+				}
+				else
+				{
+					int bb = 1;
+				}
+				*/
+				ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
+				
             }
         }
 
