@@ -87,7 +87,10 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 {
 
     Fit_Parameters fit_params;
-    //                                      name                     min               max             val              step              use
+    //                                      name                     min         max             val       step              use
+	fit_params.add_parameter(Fit_Param(STR_MIN_ENERGY_TO_FIT, (real_t)0.1, (real_t)0.100, (real_t)1.0, (real_t)0.1, E_Bound_Type::FIXED));
+	fit_params.add_parameter(Fit_Param(STR_MAX_ENERGY_TO_FIT, (real_t)0.1, (real_t)0.100, (real_t)11.0, (real_t)0.1, E_Bound_Type::FIXED));
+
     fit_params.add_parameter(Fit_Param(STR_ENERGY_OFFSET,       (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_ENERGY_QUADRATIC,    (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));

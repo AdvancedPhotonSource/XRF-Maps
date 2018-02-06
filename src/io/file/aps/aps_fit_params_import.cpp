@@ -107,8 +107,8 @@ const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
     {"SI_ESCAPE_FACTOR", STR_SI_ESCAPE},
     {"GE_ESCAPE_FACTOR", STR_GE_ESCAPE},
     {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR},
-	{"MAX_ENERGY_TO_FIT", MAX_ENERGY_TO_FIT },
-	{"MIN_ENERGY_TO_FIT", MIN_ENERGY_TO_FIT }
+	{"MAX_ENERGY_TO_FIT", STR_MAX_ENERGY_TO_FIT },
+	{"MIN_ENERGY_TO_FIT", STR_MIN_ENERGY_TO_FIT }
 };
 
 const std::vector<std::string> Updatable_TAGS = {

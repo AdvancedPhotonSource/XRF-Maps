@@ -226,4 +226,36 @@ void Fit_Parameters::print_non_fixed()
 
 }
 
+
+Range get_energy_range(size_t spectra_size, Fit_Parameters* params)
+{
+	return get_energy_range(params->value(STR_MIN_ENERGY_TO_FIT),
+							params->value(STR_MAX_ENERGY_TO_FIT),
+							spectra_size,
+							params->value(STR_ENERGY_OFFSET),
+							params->value(STR_ENERGY_SLOPE));
+}
+
+
+Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope)
+{
+
+	struct Range energy_range;
+	energy_range.min = (int)ceil((min_energy - energy_offset) / energy_slope);
+	energy_range.max = (int)ceil((max_energy - energy_offset) / energy_slope);
+	//if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
+	if ((energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min))
+	{
+		energy_range.max = spectra_size - 1;
+	}
+	if (energy_range.min < 0 || energy_range.min > energy_range.max)
+	{
+		energy_range.min = 0;
+	}
+	return energy_range;
+
+}
+
+
+
 } //namespace data_struct

@@ -113,7 +113,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
 
-	ArrayXr rhs = spectra->sub_spectra(_energy_range);
+	ArrayXr rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
 	nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
 
     num_iter = solver.optimize();

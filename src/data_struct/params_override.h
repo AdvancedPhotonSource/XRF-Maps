@@ -117,8 +117,8 @@ public:
     bool si_escape_enabled;
     bool ge_escape_enabled;
     real_t fit_snip_width;
-    real_t max_energy;
-    real_t min_energy;
+  //  real_t max_energy;
+  //  real_t min_energy;
 
     string be_window_thickness;
     string det_chip_thickness;

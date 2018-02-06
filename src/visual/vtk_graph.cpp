@@ -105,7 +105,7 @@ void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, 
 }
 
 
-void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them)
+void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them)
 {
     // Setup offscreen rendering
     vtkSmartPointer<vtkGraphicsFactory> graphics_factory = vtkSmartPointer<vtkGraphicsFactory>::New();
@@ -120,7 +120,7 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_stru
     vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
 
     vtkSmartPointer<vtkFloatArray> arrX = vtkSmartPointer<vtkFloatArray>::New();
-    arrX->SetName("X Axis");
+    arrX->SetName("Energy (kEv)");
     table->AddColumn(arrX);
 
     vtkSmartPointer<vtkFloatArray> arrC = vtkSmartPointer<vtkFloatArray>::New();
@@ -139,20 +139,15 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_stru
 		spectra2 = spectra2.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
     }
 
-
     // Fill in the table with some example values
     int numPoints = spectra2.size();
     table->SetNumberOfRows(numPoints);
-    real_t en = 0.0;
+
     for (int i = 0; i < numPoints; ++i)
     {
-        table->SetValue(i, 0, en);
+        table->SetValue(i, 0, xAxis[i]);
         table->SetValue(i, 1, spectra1[i]);
         table->SetValue(i, 2, spectra2[i]);
-
-        //table->SetValue(i, 1, spectra1->buffer()->operator [](i));
-        //table->SetValue(i, 2, spectra2->buffer()->operator [](i));
-        en += 1.0;
     }
 
 //    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
@@ -173,6 +168,7 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_stru
     view->GetScene()->AddItem(chart);
     vtkPlot *line = chart->AddPlot(vtkChart::LINE);
     line->SetInputData(table, 0, 1);
+	//line->SetLabel("Integrated Spectra");
     line->SetColor(0, 255, 0, 255);
     line->SetWidth(1.0);
 
@@ -180,8 +176,13 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_stru
     line->SetInputData(table, 0, 2);
     line->SetColor(255, 0, 0, 255);
     line->SetWidth(1.0);
+	//line->SetLabel("Fitted Spectra");
+	
 
-    // For dotted line, the line type can be from 2 to 5 for different dash/dot
+	/*chart->GetAxis(vtkAxis::LEFT)->SetTitle("Counts Log10");
+	chart->GetAxis(vtkAxis::BOTTOM)->SetTitle("Energy (kEv)");
+	chart->SetShowLegend(true);
+    */// For dotted line, the line type can be from 2 to 5 for different dash/dot
     // patterns (see enum in vtkPen containing DASH_LINE, value 2):
     #ifndef WIN32
     line->GetPen()->SetLineType(vtkPen::DASH_LINE);

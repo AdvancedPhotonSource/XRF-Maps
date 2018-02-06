@@ -128,7 +128,7 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, int me
 	size_t width = 0;
     float theta = 0;
 	size_t proc_type_count = 0;
-	size_t proc_type = 0;
+	data_struct::Fitting_Routines proc_type;
 	size_t fit_block_size = 0;
 	char name[256] = { 0 };
 	real_t val = 0.0;

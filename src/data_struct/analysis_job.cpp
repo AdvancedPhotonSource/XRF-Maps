@@ -126,11 +126,7 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
         {
             Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
 
-            Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
-                                                  sub_struct->fit_params_override_dict.max_energy,
-                                                  spectra_samples,
-                                                  sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_OFFSET].value,
-                                                  sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_SLOPE].value);
+            Range energy_range = get_energy_range(spectra_samples, &(sub_struct->fit_params_override_dict.fit_params));
 
             for(auto &proc_type : fitting_routines)
             {

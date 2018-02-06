@@ -40,6 +40,7 @@ freely, subject to the following restrictions:
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
 #include <vtkChartXY.h>
+#include <vtkAxis.h>
 #include <vtkTable.h>
 #include <vtkPlot.h>
 #include <vtkFloatArray.h>
@@ -55,6 +56,6 @@ namespace visual
 {
 
 void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them=false);
-void SavePlotSpectras(std::string path, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them);
+void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them);
 
 }

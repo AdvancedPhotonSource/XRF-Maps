@@ -244,25 +244,6 @@ ArrayXr snip_background(const Spectra* const spectra,
 
 }
 
-Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope)
-{
-
-   struct Range energy_range;
-    energy_range.min = (int)ceil( (min_energy - energy_offset) / energy_slope );
-    energy_range.max = (int)ceil( (max_energy - energy_offset) / energy_slope );
-    //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
-    if ( (energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min) )
-    {
-        energy_range.max = spectra_size - 1;
-    }
-    if (energy_range.min < 0 || energy_range.min > energy_range.max)
-    {
-        energy_range.min = 0;
-    }
-    return energy_range;
-
-}
-
 void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec)
 {
 

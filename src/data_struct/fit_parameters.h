@@ -69,6 +69,21 @@ enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIM
 
 typedef std::unordered_map<std::string, Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > Fit_Count_Dict;
 
+/**
+* @brief The Range struct to determine size of spectra we want to fit or model
+*/
+struct Range
+{
+	Range() { min = 0; max = 0; }
+	Range(const Range& r) { min = r.min; max = r.max; }
+	Range(int rmin, int rmax) { min = rmin; max = rmax; }
+	size_t count() const { return (max - min) + 1; }
+	int min;
+	int max;
+};
+
+
+
 //-----------------------------------------------------------------------------
 /**
  * @brief The Fit_Param struct : Structure that holds a parameter which consists of a value, min, max, and if it should be used in the fit routine.
@@ -217,6 +232,20 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+
+DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters* params);
+
+/**
+* @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
+* @param min_energy
+* @param max_energy
+* @param spectra_size
+* @param calibration: energy calibration
+* @return Range structure with the min energy and max enegry of the spectra to fit.
+*/
+DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
+
+
 
 } //namespace data_struct
 

@@ -59,19 +59,6 @@ namespace data_struct
 
 using namespace std;
 
-/**
- * @brief The Range struct to determine size of spectra we want to fit or model
- */
-struct Range
-{
-    Range() {min = 0; max = 0;}
-    Range(const Range& r) {min = r.min; max = r.max;}
-    Range(int rmin, int rmax) {min = rmin; max = rmax;}
-    size_t count() const  {return (max - min) + 1;}
-    int min;
-    int max;
-};
-
 typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
 
 template<typename _T>
@@ -180,9 +167,9 @@ public:
 
     const _T output_counts() const { return _output_counts; }
 
-    Spectra_T sub_spectra(Range range) const
+    Spectra_T sub_spectra(size_t start, size_t count) const
 	{
-		return Spectra_T(this->segment(range.min, range.count()));
+		return Spectra_T(this->segment(start, count));
 //        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
 //        ret_spec.elapsed_realtime(this->_elapsed_realtime);
 //        ret_spec.input_counts(this->_input_counts);
@@ -205,17 +192,6 @@ typedef Spectra_T<real_t> Spectra;
 DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, size_t boxcar_size);
 DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, ArrayXr boxcar);
 DLL_EXPORT ArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
-
-
-/**
- * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
- * @param min_energy
- * @param max_energy
- * @param spectra_size
- * @param calibration: energy calibration
- * @return Range structure with the min energy and max enegry of the spectra to fit.
- */
-DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
 
 
 DLL_EXPORT void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec);

@@ -126,11 +126,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     }
 
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(params_override.min_energy,
-                                                                             params_override.max_energy,
-                                                                             ret_struct.spectra.size(),
-                                                                             params_override.fit_params[STR_ENERGY_OFFSET].value,
-                                                                             params_override.fit_params[STR_ENERGY_SLOPE].value);
+    fitting::models::Range energy_range = data_struct::get_energy_range(ret_struct.spectra.size(), &(params_override.fit_params));
 
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
@@ -138,9 +134,11 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
-    //Update fit parameters by override values
-    model.update_fit_params_values(&(params_override.fit_params));
-    model.set_fit_params_preset(optimize_fit_params_preset);
+	//Update fit parameters by override values
+	model.update_fit_params_values(&(params_override.fit_params));
+	//set fixed/fit preset
+	model.set_fit_params_preset(optimize_fit_params_preset);
+    
     //Initialize the fit routine
     fit_routine.initialize(&model, &ret_struct.elements_to_fit, energy_range);
     //Fit the spectra saving the element counts in element_fit_count_dict
@@ -205,11 +203,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
     data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(detector_struct->fit_params_override_dict.min_energy,
-                                                                             detector_struct->fit_params_override_dict.max_energy,
-                                                                             spectra_volume->samples_size(),
-                                                                             detector_struct->fit_params_override_dict.fit_params[STR_ENERGY_OFFSET].value,
-                                                                             detector_struct->fit_params_override_dict.fit_params[STR_ENERGY_SLOPE].value);
+    fitting::models::Range energy_range = data_struct::get_energy_range(spectra_volume->samples_size(), &(detector_struct->fit_params_override_dict.fit_params) );
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
 

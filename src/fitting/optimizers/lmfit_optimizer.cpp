@@ -169,7 +169,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
         */
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 1000, 1, NULL, 0, -1, -1};
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, 2.2204460e-2, 100., 1000, 1, NULL, 0, -1, -1};
 
 //    control.ftol = 1.0e-10;
 //    /* Relative error desired in the sum of squares.

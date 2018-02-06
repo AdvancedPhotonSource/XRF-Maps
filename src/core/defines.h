@@ -101,8 +101,8 @@ using namespace std;
 /**
 * @brief String defines for fit parameters string value pair.
 */
-const string MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
-const string MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
+const string STR_MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
+const string STR_MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
 
 const string STR_SI_ESCAPE = "SI_ESCAPE";
 const string STR_GE_ESCAPE = "GE_ESCAPE";
