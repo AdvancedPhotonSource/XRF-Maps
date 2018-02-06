@@ -238,30 +238,30 @@ bool save_volume(data_struct::Quantification_Standard * quantification_standard,
 
 // ----------------------------------------------------------------------------
 
-void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
+void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 {
     io::file::CSV_IO csv_io;
-    std::string full_path = file_and_fit_params.dataset_dir+"/output/"+file_and_fit_params.dataset_filename+std::to_string(file_and_fit_params.detector_num)+".csv";
+    std::string full_path = file_and_fit_params->dataset_dir+"/output/"+file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
     logit<<full_path<<"\n";
 
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params.spectra.size(), &(file_and_fit_params.fit_params));
+    fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
 
-	data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params.fit_params, &file_and_fit_params.elements_to_fit, energy_range);
+    data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
 
-    if (file_and_fit_params.fit_params.contains(STR_SNIP_WIDTH))
+    if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
 	{
-        data_struct::Fit_Param fit_snip_width = file_and_fit_params.fit_params[STR_SNIP_WIDTH];
+        data_struct::Fit_Param fit_snip_width = file_and_fit_params->fit_params[STR_SNIP_WIDTH];
         if (fit_snip_width.bound_type > data_struct::E_Bound_Type::FIXED)
 		{
 			real_t spectral_binning = 0.0;
-			data_struct::ArrayXr s_background = data_struct::snip_background(&file_and_fit_params.spectra,
-																			file_and_fit_params.fit_params.value(STR_ENERGY_OFFSET),
-																			file_and_fit_params.fit_params.value(STR_ENERGY_SLOPE),
-																			file_and_fit_params.fit_params.value(STR_ENERGY_QUADRATIC),
+            data_struct::ArrayXr s_background = data_struct::snip_background(&file_and_fit_params->spectra,
+                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET),
+                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE),
+                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC),
 																			spectral_binning,
-																			file_and_fit_params.fit_params.value(STR_SNIP_WIDTH),
+                                                                            file_and_fit_params->fit_params.value(STR_SNIP_WIDTH),
 																			energy_range.min,
 																			energy_range.max);
 			data_struct::ArrayXr background = s_background.segment(energy_range.min, energy_range.count());
@@ -269,22 +269,25 @@ void save_optimized_fit_params(struct file_name_fit_params file_and_fit_params)
 		}
 	}
 	
-	ArrayXr spec = file_and_fit_params.spectra.segment(energy_range.min, energy_range.count());
+    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
 	
+    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
+    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
+    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
+
 	data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-	data_struct::ArrayXr ev = (file_and_fit_params.fit_params.value(STR_ENERGY_OFFSET) + energy) * file_and_fit_params.fit_params.value(STR_ENERGY_SLOPE) + (pow(energy, (real_t)2.0) * file_and_fit_params.fit_params.value(STR_ENERGY_QUADRATIC));
-	data_struct::ArrayXr ev2 = file_and_fit_params.fit_params.at(STR_ENERGY_OFFSET).value + energy * file_and_fit_params.fit_params.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * file_and_fit_params.fit_params.at(STR_ENERGY_QUADRATIC).value;
-	int diff = (ev2 - ev).sum();
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+
 
 #ifdef _BUILD_WITH_VTK
-    std::string str_path = file_and_fit_params.dataset_dir+"/output/fit_"+file_and_fit_params.dataset_filename+"_det"+std::to_string(file_and_fit_params.detector_num)+".png";
-    visual::SavePlotSpectras(str_path, energy, spec, model_spectra, true);
+    std::string str_path = file_and_fit_params->dataset_dir+"/output/fit_"+file_and_fit_params->dataset_filename+"_det"+std::to_string(file_and_fit_params->detector_num)+".png";
+    visual::SavePlotSpectras(str_path, ev, spec, model_spectra, true);
 #endif
 
     // TODO: save the spectra, model, and background to csv
-    csv_io.save_fit_parameters(full_path, file_and_fit_params.fit_params );
+    csv_io.save_fit_parameters(full_path, file_and_fit_params->fit_params );
 
-    for(auto &itr : file_and_fit_params.elements_to_fit)
+    for(auto &itr : file_and_fit_params->elements_to_fit)
     {
         delete itr.second;
     }

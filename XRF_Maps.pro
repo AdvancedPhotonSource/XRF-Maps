@@ -95,15 +95,15 @@ QMAKE_LIBS += -L"C:/Program Files/HDF_Group/HDF5/1.10.0/lib" -lszip -lzlib -lhdf
 
 SOURCES += \    
     src/support/mda_utils/mda_loader.c \
-    src/data_struct/xrf/element_info.cpp \
-    src/data_struct/xrf/fit_parameters.cpp \
-    src/data_struct/xrf/fit_element_map.cpp \
-    src/data_struct/xrf/quantification_standard.cpp \
-    src/data_struct/xrf/spectra.cpp \
-    src/data_struct/xrf/spectra_line.cpp \
-    src/data_struct/xrf/spectra_volume.cpp \
-    src/data_struct/xrf/stream_block.cpp \
-    src/data_struct/xrf/analysis_job.cpp \
+    src/data_struct/element_info.cpp \
+    src/data_struct/fit_parameters.cpp \
+    src/data_struct/fit_element_map.cpp \
+    src/data_struct/quantification_standard.cpp \
+    src/data_struct/spectra.cpp \
+    src/data_struct/spectra_line.cpp \
+    src/data_struct/spectra_volume.cpp \
+    src/data_struct/stream_block.cpp \
+    src/data_struct/analysis_job.cpp \
     src/fitting/models/base_model.cpp \
     src/fitting/models/gaussian_model.cpp \
     src/fitting/routines/base_fit_routine.cpp \
@@ -148,17 +148,17 @@ HEADERS += \
     src/support/lmfit_6.1/lmmin.hpp \
     src/support/cmpfit-1.3a/mpfit.hpp \
     src/support/zmq/zmq.hpp \
-    src/data_struct/xrf/element_info.h \
-    src/data_struct/xrf/fit_parameters.h \
-    src/data_struct/xrf/fit_element_map.h \
-    src/data_struct/xrf/params_override.h \
-    src/data_struct/xrf/element_quant.h \
-    src/data_struct/xrf/quantification_standard.h \
-    src/data_struct/xrf/spectra.h \
-    src/data_struct/xrf/spectra_line.h \
-    src/data_struct/xrf/spectra_volume.h \
-    src/data_struct/xrf/stream_block.h \
-    src/data_struct/xrf/analysis_job.h \
+    src/data_struct/element_info.h \
+    src/data_struct/fit_parameters.h \
+    src/data_struct/fit_element_map.h \
+    src/data_struct/params_override.h \
+    src/data_struct/element_quant.h \
+    src/data_struct/quantification_standard.h \
+    src/data_struct/spectra.h \
+    src/data_struct/spectra_line.h \
+    src/data_struct/spectra_volume.h \
+    src/data_struct/stream_block.h \
+    src/data_struct/analysis_job.h \
     src/fitting/models/base_model.h \
     src/fitting/models/gaussian_model.h \
     src/fitting/routines/base_fit_routine.h \

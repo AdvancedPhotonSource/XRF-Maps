@@ -90,6 +90,7 @@ public:
      * @param delta_energy
      * @return
      */
+    // TODO: try to make inline
     virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const;
 
     /**

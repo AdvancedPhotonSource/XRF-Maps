@@ -51,7 +51,7 @@
 #include <string>
 #include <limits>
 #include <math.h>
-
+#include <vector>
 #include <Eigen/Core>
 
 #include "core/defines.h"
@@ -61,7 +61,7 @@ namespace data_struct
 	
 //-----------------------------------------------------------------------------
 
-enum class Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+enum  Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
 
 enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
 
@@ -213,7 +213,7 @@ public:
 
     void update_values(Fit_Parameters *override_fit_params);
 
-	const real_t& value(std::string key) const { return _params.at(key).value; }
+    inline const real_t& value(std::string key) const { return _params.at(key).value; }
 
     void print();
 

@@ -88,8 +88,8 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 
     Fit_Parameters fit_params;
     //                                      name                     min         max             val       step              use
-	fit_params.add_parameter(Fit_Param(STR_MIN_ENERGY_TO_FIT, (real_t)0.1, (real_t)0.100, (real_t)1.0, (real_t)0.1, E_Bound_Type::FIXED));
-	fit_params.add_parameter(Fit_Param(STR_MAX_ENERGY_TO_FIT, (real_t)0.1, (real_t)0.100, (real_t)11.0, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_MIN_ENERGY_TO_FIT, (real_t)0.1, (real_t)100.00, (real_t)1.0, (real_t)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param(STR_MAX_ENERGY_TO_FIT, (real_t)0.1, (real_t)100.00, (real_t)11.0, (real_t)0.1, E_Bound_Type::FIXED));
 
     fit_params.add_parameter(Fit_Param(STR_ENERGY_OFFSET,       (real_t)-0.2,    (real_t)0.2,    (real_t)0.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_ENERGY_SLOPE,        (real_t)0.001,   (real_t)0.1,    (real_t)1.0,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
@@ -303,8 +303,12 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
     Spectra agr_spectra(energy_range.count());
 
+    real_t energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+    real_t energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+    real_t energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+
 	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-	ArrayXr ev = fit_params->at(STR_ENERGY_OFFSET).value + energy * fit_params->at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_params->at(STR_ENERGY_QUADRATIC).value;
+    ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
 	/*
 	std::vector<std::string> keys;
 	for (const auto& itr : (*elements_to_fit))
@@ -401,6 +405,8 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 
     if(std::isnan(pre_faktor))
         return spectra_model;
+
+    //real_t fwhm_offset = fitp->value(STR_FWHM_OFFSET);
 
     for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
     {

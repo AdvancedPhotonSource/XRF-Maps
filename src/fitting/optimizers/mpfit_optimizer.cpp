@@ -148,11 +148,11 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     config.ftol = (real_t)1.0e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
     config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
-	//config.epsfcn = 1.0;  
-    config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    config.epsfcn = (real_t)1.0e-10;
+    //config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    config.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = 20000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -273,7 +273,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
 
-    logit_s<<"*";
+    //logit_s<<"*";
 
 
     switch(info)
@@ -341,7 +341,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     mp_config.xtol = (real_t)1.0e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = (real_t)1.0e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = (real_t)0.1;   // Initial step bound                         Default: 100.0
+    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter

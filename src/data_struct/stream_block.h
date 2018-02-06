@@ -88,7 +88,7 @@ public:
 
     ~Stream_Block();
 
-    void init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+    void init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
 
     const size_t& row() { return _row; }
 
@@ -103,7 +103,7 @@ public:
     inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
 
     //by Fitting_Routines
-    std::unordered_map<Fitting_Routines, Stream_Fitting_Block> fitting_blocks;
+    std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
 
     size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}
 

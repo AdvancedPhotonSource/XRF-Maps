@@ -127,7 +127,7 @@ Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
 
 //-----------------------------------------------------------------------------
 
-void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines,
+void Stream_Block::init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines,
                                        Fit_Element_Map_Dict * elements_to_fit_)
 {
     elements_to_fit = elements_to_fit_;
@@ -137,7 +137,7 @@ void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitt
         //throw Exception;
     }
 
-    for(auto &itr : *fit_routines)
+    for(const auto &itr : *fit_routines)
     {
         fitting_blocks[itr.first] = Stream_Fitting_Block();
         fitting_blocks[itr.first].fit_routine = itr.second;

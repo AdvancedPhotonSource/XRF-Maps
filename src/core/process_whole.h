@@ -119,7 +119,7 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_rou
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
+DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
                                                                 size_t detector_num,
                                                                 fitting::models::Fit_Params_Preset,

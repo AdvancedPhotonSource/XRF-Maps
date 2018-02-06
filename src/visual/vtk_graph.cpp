@@ -47,14 +47,6 @@ void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, 
     arrS->SetName("Spectra Model");
     table->AddColumn(arrS);
 
-    if(log_them)
-    {
-        spectra1 = spectra1.log10();
-        spectra2 = spectra2.log10();
-		spectra1 = spectra1.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
-		spectra2 = spectra2.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
-    }
-
 
     // Fill in the table with some example values
     int numPoints = spectra2.size();
@@ -62,12 +54,36 @@ void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, 
     real_t en = 0.0;
     for (int i = 0; i < numPoints; ++i)
     {
-        table->SetValue(i, 0, en);
-        table->SetValue(i, 1, spectra1[i]);
-        table->SetValue(i, 2, spectra2[i]);
 
-        //table->SetValue(i, 1, spectra1->buffer()->operator [](i));
-        //table->SetValue(i, 2, spectra2->buffer()->operator [](i));
+        real_t val1 = spectra1[i];
+        real_t val2 = spectra2[i];
+
+        if(log_them)
+        {
+            val1 = log10(val1);
+            if( false == std::isfinite(val1) )
+            {
+                val1 = 0.0;
+            }
+            if( val1 < 0.0)
+            {
+                val1 = 0.0;
+            }
+
+            val2 = log10(val2);
+            if( false == std::isfinite(val2) )
+            {
+                val2 = 0.0;
+            }
+            if( val2 < 0.0)
+            {
+                val2 = 0.0;
+            }
+        }
+
+        table->SetValue(i, 0, en);
+        table->SetValue(i, 1, val1);
+        table->SetValue(i, 2, val2);
         en += 1.0;
     }
 
@@ -131,23 +147,41 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct:
     arrS->SetName("Spectra Model");
     table->AddColumn(arrS);
 
-    if(log_them)
-    {
-		spectra1 = spectra1.log10();
-		spectra2 = spectra2.log10();
-		spectra1 = spectra1.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
-		spectra2 = spectra2.unaryExpr([](real_t v) { return std::max(v, (real_t)0.0); });
-    }
-
     // Fill in the table with some example values
     int numPoints = spectra2.size();
     table->SetNumberOfRows(numPoints);
 
     for (int i = 0; i < numPoints; ++i)
     {
+        real_t val1 = spectra1[i];
+        real_t val2 = spectra2[i];
+
+        if(log_them)
+        {
+            val1 = log10(val1);
+            if( false == std::isfinite(val1) )
+            {
+                val1 = 0.0;
+            }
+            if( val1 < 0.0)
+            {
+                val1 = 0.0;
+            }
+
+            val2 = log10(val2);
+            if( false == std::isfinite(val2) )
+            {
+                val2 = 0.0;
+            }
+            if( val2 < 0.0)
+            {
+                val2 = 0.0;
+            }
+        }
+
         table->SetValue(i, 0, xAxis[i]);
-        table->SetValue(i, 1, spectra1[i]);
-        table->SetValue(i, 2, spectra2[i]);
+        table->SetValue(i, 1, val1);
+        table->SetValue(i, 2, val2);
     }
 
 //    vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();

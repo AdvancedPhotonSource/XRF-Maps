@@ -169,9 +169,12 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    real_t energy_offset = fit_parameters.value(STR_ENERGY_OFFSET);
+    real_t energy_slope = fit_parameters.value(STR_ENERGY_SLOPE);
+    real_t energy_quad = fit_parameters.value(STR_ENERGY_QUADRATIC);
 
-	ArrayXr ev = fit_parameters.at(STR_ENERGY_OFFSET).value + energy * fit_parameters.at(STR_ENERGY_SLOPE).value + pow(energy, (real_t)2.0) * fit_parameters.at(STR_ENERGY_QUADRATIC).value;
+	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
 
     for(const auto& itr : (*elements_to_fit))
     {

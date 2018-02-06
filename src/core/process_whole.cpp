@@ -94,7 +94,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
- struct io::file_name_fit_params optimize_integrated_fit_params(std::string dataset_directory,
+ struct io::file_name_fit_params* optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
                                                                 size_t detector_num,
                                                                 fitting::models::Fit_Params_Preset optimize_fit_params_preset,
@@ -102,31 +102,39 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 {
 
     //return structure
-    struct io::file_name_fit_params ret_struct;
+    struct io::file_name_fit_params* ret_struct = new struct::io::file_name_fit_params();
 
-    ret_struct.dataset_dir = dataset_directory;
-    ret_struct.dataset_filename = dataset_filename;
-    ret_struct.detector_num = detector_num;
+    ret_struct->dataset_dir = dataset_directory;
+    ret_struct->dataset_filename = dataset_filename;
+    ret_struct->detector_num = detector_num;
 
     fitting::models::Gaussian_Model model;
 
     data_struct::Params_Override params_override;
 
     //load override parameters
-    io::load_override_params(dataset_directory, -1, &params_override);
+    if(false == io::load_override_params(dataset_directory, detector_num, &params_override) )
+    {
+        if(false == io::load_override_params(dataset_directory, -1, &params_override))
+        {
+            logit<<"Error loading maps_fit_parameters_override.txt"<<dataset_filename<<" for detector"<<detector_num<<"\n";
+            ret_struct->success = false;
+            return ret_struct;
+        }
+    }
 
-    ret_struct.elements_to_fit = params_override.elements_to_fit;
+    ret_struct->elements_to_fit = params_override.elements_to_fit;
 
     //load the quantification standard dataset
-    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct.spectra, detector_num, &params_override) )
+    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct->spectra, detector_num, &params_override) )
     {
         logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
-        ret_struct.success = false;
+        ret_struct->success = false;
         return ret_struct;
     }
 
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(ret_struct.spectra.size(), &(params_override.fit_params));
+    fitting::models::Range energy_range = data_struct::get_energy_range(ret_struct->spectra.size(), &(params_override.fit_params));
 
     //Fitting routines
     fitting::routines::Param_Optimized_Fit_Routine fit_routine;
@@ -140,11 +148,11 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 	model.set_fit_params_preset(optimize_fit_params_preset);
     
     //Initialize the fit routine
-    fit_routine.initialize(&model, &ret_struct.elements_to_fit, energy_range);
+    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
     //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct.fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct.spectra, &ret_struct.elements_to_fit);
+    ret_struct->fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct->spectra, &ret_struct->elements_to_fit);
 
-    ret_struct.success = true;
+    ret_struct->success = true;
 
     return ret_struct;
 
@@ -155,7 +163,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 {
     bool first = true;
-    std::queue<std::future<struct io::file_name_fit_params> > job_queue;
+    std::queue<std::future<struct io::file_name_fit_params*> > job_queue;
     ThreadPool tp(analysis_job->num_threads);
 
     std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
@@ -174,20 +182,21 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
     {
         auto ret = std::move(job_queue.front());
         job_queue.pop();
-        struct io::file_name_fit_params f_struct = ret.get();
-        if(f_struct.success)
+        struct io::file_name_fit_params* f_struct = ret.get();
+        if(f_struct->success)
         {
             if(first)
             {
-                fit_params_avgs[f_struct.detector_num] = f_struct.fit_params;
+                fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
                 first = false;
             }
             else
             {
-                fit_params_avgs[f_struct.detector_num].moving_average_with(f_struct.fit_params);
+                fit_params_avgs[f_struct->detector_num].moving_average_with(f_struct->fit_params);
             }
             io::save_optimized_fit_params(f_struct);
         }
+        delete f_struct;
     }
     io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
 

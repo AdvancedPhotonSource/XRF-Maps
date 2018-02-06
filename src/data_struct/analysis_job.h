@@ -74,7 +74,7 @@ struct DLL_EXPORT Analysis_Sub_Struct
 {
 
     // Fitting routines map
-    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> fit_routines;
+    std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
 
     // Fitting model
     fitting::models::Base_Model * model;

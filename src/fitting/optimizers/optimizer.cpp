@@ -96,7 +96,7 @@ namespace optimizers
             }
         }
         ud.spectra_background = background.segment(energy_range.min, energy_range.count());
-
+        ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 		ud.spectra_model.resize(energy_range.count());
 	}
 
@@ -141,7 +141,7 @@ namespace optimizers
         }
 
 		ud.spectra_background = background.segment(energy_range.min, energy_range.count());
-
+        ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 		ud.spectra_model.resize(energy_range.count());
 	}
 
@@ -164,6 +164,7 @@ namespace optimizers
                                              ud->energy_range.max);
 
 				ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
+                ud->spectra_background = ud->spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 				
             }
         }
