@@ -82,8 +82,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fitting/models/gaussian_model.h"
 
-#ifdef _BUILD_WITH_VTK
-  #include "visual/vtk_graph.h"
+#ifdef _BUILD_WITH_QT
+  #include "visual/grapher.h"
 #endif
 
 

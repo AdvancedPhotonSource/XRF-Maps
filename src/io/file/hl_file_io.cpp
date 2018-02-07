@@ -249,6 +249,7 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
 
     data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
+    data_struct::ArrayXr background;
 
     if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
 	{
@@ -264,10 +265,15 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
                                                                             file_and_fit_params->fit_params.value(STR_SNIP_WIDTH),
 																			energy_range.min,
 																			energy_range.max);
-			data_struct::ArrayXr background = s_background.segment(energy_range.min, energy_range.count());
+            background = s_background.segment(energy_range.min, energy_range.count());
 			model_spectra += background;
 		}
 	}
+    else
+    {
+        background.resize(energy_range.count());
+        background.setZero();
+    }
 	
     ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
 	
@@ -276,12 +282,12 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
 
 	data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    //data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
-	energy = energy.unaryExpr([energy_offset, energy_slope, energy_quad](real_t v) { return energy_offset + (v * energy_slope) + (std::pow(v, (real_t)2.0) * energy_quad); });
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+    //energy = energy.unaryExpr([energy_offset, energy_slope, energy_quad](real_t v) { return energy_offset + (v * energy_slope) + (std::pow(v, (real_t)2.0) * energy_quad); });
 
-#ifdef _BUILD_WITH_VTK
+#ifdef _BUILD_WITH_QT
     std::string str_path = file_and_fit_params->dataset_dir+"/output/fit_"+file_and_fit_params->dataset_filename+"_det"+std::to_string(file_and_fit_params->detector_num)+".png";
-    visual::SavePlotSpectras(str_path, energy, spec, model_spectra, true);
+    visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
 #endif
 
     // TODO: save the spectra, model, and background to csv
