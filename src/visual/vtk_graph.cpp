@@ -120,7 +120,7 @@ void PlotSpectras(data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, 
 
 }
 
-
+//TODO: add background plot
 void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct::ArrayXr spectra1, data_struct::ArrayXr spectra2, bool log_them)
 {
     // Setup offscreen rendering
@@ -148,7 +148,7 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct:
     table->AddColumn(arrS);
 
     // Fill in the table with some example values
-    int numPoints = spectra2.size();
+    int numPoints = spectra1.size();
     table->SetNumberOfRows(numPoints);
 
     for (int i = 0; i < numPoints; ++i)
@@ -179,7 +179,8 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr xAxis, data_struct:
             }
         }
 
-        table->SetValue(i, 0, xAxis[i]);
+        //table->SetValue(i, 0, xAxis[i]);
+		table->SetValue(i, 0, i);
         table->SetValue(i, 1, val1);
         table->SetValue(i, 2, val2);
     }

@@ -35,7 +35,7 @@
   #define LM_DWARF FLT_MIN            /* smallest nonzero number */
   #define LM_SQRT_DWARF sqrt(FLT_MIN) /* square should not underflow */
   #define LM_SQRT_GIANT sqrt(FLT_MAX) /* square should not overflow */
-  #define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
+  #define LM_USERTOL 1.e-7   /* users are recommended to require this */
 #endif
 /* If the above values do not work, the following seem good for an x86:
  LM_MACHEP     .555e-16
