@@ -82,18 +82,16 @@ namespace optimizers
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type > E_Bound_Type::FIXED)
-            {
-                real_t spectral_binning = 0.0;
-                background = snip_background(spectra,
-                                             fit_params->value(STR_ENERGY_OFFSET),
-                                             fit_params->value(STR_ENERGY_SLOPE),
-                                             fit_params->value(STR_ENERGY_QUADRATIC),
-                                             spectral_binning,
-                                             fit_params->value(STR_SNIP_WIDTH),
-                                             energy_range.min,
-                                             energy_range.max);
-            }
+
+            real_t spectral_binning = 0.0;
+            background = snip_background(spectra,
+                                         fit_params->value(STR_ENERGY_OFFSET),
+                                         fit_params->value(STR_ENERGY_SLOPE),
+                                         fit_params->value(STR_ENERGY_QUADRATIC),
+                                         spectral_binning,
+                                         fit_params->value(STR_SNIP_WIDTH),
+                                         energy_range.min,
+                                         energy_range.max);
         }
         ud.spectra_background = background.segment(energy_range.min, energy_range.count());
         ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
@@ -126,18 +124,16 @@ namespace optimizers
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type > E_Bound_Type::FIXED)
-            {
-                real_t spectral_binning = 0.0;
-                background = snip_background(spectra,
-                                             fit_params->value(STR_ENERGY_OFFSET),
-                                             fit_params->value(STR_ENERGY_SLOPE),
-                                             fit_params->value(STR_ENERGY_QUADRATIC),
-                                             spectral_binning,
-                                             fit_params->value(STR_SNIP_WIDTH),
-                                             energy_range.min,
-                                             energy_range.max);
-            }
+
+            real_t spectral_binning = 0.0;
+            background = snip_background(spectra,
+                                         fit_params->value(STR_ENERGY_OFFSET),
+                                         fit_params->value(STR_ENERGY_SLOPE),
+                                         fit_params->value(STR_ENERGY_QUADRATIC),
+                                         spectral_binning,
+                                         fit_params->value(STR_SNIP_WIDTH),
+                                         energy_range.min,
+                                         energy_range.max);
         }
 
 		ud.spectra_background = background.segment(energy_range.min, energy_range.count());

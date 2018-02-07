@@ -142,10 +142,11 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
     //reset model fit parameters to defaults
     model.reset_to_default_fit_params();
-	//Update fit parameters by override values
-	model.update_fit_params_values(&(params_override.fit_params));
-	//set fixed/fit preset
-	model.set_fit_params_preset(optimize_fit_params_preset);
+    //set fixed/fit preset
+    model.set_fit_params_preset(optimize_fit_params_preset);
+    //Update fit parameters by override values
+    model.update_fit_params_values(&(params_override.fit_params));
+
     
     //Initialize the fit routine
     fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);

@@ -254,20 +254,18 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
 	{
         data_struct::Fit_Param fit_snip_width = file_and_fit_params->fit_params[STR_SNIP_WIDTH];
-        if (fit_snip_width.bound_type > data_struct::E_Bound_Type::FIXED)
-		{
-			real_t spectral_binning = 0.0;
-            data_struct::ArrayXr s_background = data_struct::snip_background(&file_and_fit_params->spectra,
-                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET),
-                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE),
-                                                                            file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC),
-																			spectral_binning,
-                                                                            file_and_fit_params->fit_params.value(STR_SNIP_WIDTH),
-																			energy_range.min,
-																			energy_range.max);
-            background = s_background.segment(energy_range.min, energy_range.count());
-			model_spectra += background;
-		}
+
+        real_t spectral_binning = 0.0;
+        data_struct::ArrayXr s_background = data_struct::snip_background(&file_and_fit_params->spectra,
+                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET),
+                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE),
+                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC),
+                                                                        spectral_binning,
+                                                                        file_and_fit_params->fit_params.value(STR_SNIP_WIDTH),
+                                                                        energy_range.min,
+                                                                        energy_range.max);
+        background = s_background.segment(energy_range.min, energy_range.count());
+        model_spectra += background;
 	}
     else
     {
