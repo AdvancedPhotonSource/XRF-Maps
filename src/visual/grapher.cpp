@@ -82,8 +82,11 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
     QtCharts::QLineSeries *series_background = new QtCharts::QLineSeries();
 
     series_spectra->setName("Integrated Spectra");
+    series_spectra->setColor(QColor(Qt::green));
     series_model->setName("Model Spectra");
+    series_model->setColor(QColor(Qt::red));
     series_background->setName("Background");
+    series_background->setColor(QColor(Qt::blue));
 
     for(unsigned int i =0; i < spectra->rows(); i++)
     {

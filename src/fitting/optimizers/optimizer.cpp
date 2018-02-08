@@ -81,8 +81,6 @@ namespace optimizers
 		background.setZero();
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
-
             real_t spectral_binning = 0.0;
             background = snip_background(spectra,
                                          fit_params->value(STR_ENERGY_OFFSET),
@@ -123,8 +121,6 @@ namespace optimizers
 
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            Fit_Param fit_snip_width = fit_params->at(STR_SNIP_WIDTH);
-
             real_t spectral_binning = 0.0;
             background = snip_background(spectra,
                                          fit_params->value(STR_ENERGY_OFFSET),
@@ -155,7 +151,7 @@ namespace optimizers
                                              ud->fit_parameters->value(STR_ENERGY_SLOPE),
                                              ud->fit_parameters->value(STR_ENERGY_QUADRATIC),
                                              spectral_binning,
-                                             ud->fit_parameters->value(STR_SNIP_WIDTH),
+                                             fit_snip_width.value,
                                              ud->energy_range.min,
                                              ud->energy_range.max);
 
