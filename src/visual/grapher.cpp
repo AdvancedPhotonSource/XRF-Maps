@@ -53,7 +53,7 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
     axisX->setLabelFormat("%.3f");
     //axisX->setTickCount(series->count());
     //axisX->setRange(0, 2048);
-    axisX->setTickCount(20);
+    axisX->setTickCount(11);
 
     QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
     axisY->setTitleText("Counts");
@@ -65,7 +65,6 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
     chartView->resize(1024, 768);
 
     QtCharts::QChart *chart = chartView->chart();
-    chart->setTitle(QString(path.c_str()));
     chart->addAxis(axisX, Qt::AlignBottom);
 
     if(log_them)

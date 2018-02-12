@@ -164,17 +164,53 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 {
     bool first = true;
+
+    std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
+    int file_cnt = 0;
+    for(auto &itr : analysis_job->optimize_dataset_files)
+    {
+        file_cnt += 1.0;
+        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+        {
+            struct io::file_name_fit_params* f_struct = optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer());
+            if(f_struct->success)
+            {
+                if(first)
+                {
+                    fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
+                    first = false;
+                }
+                else
+                {
+                    fit_params_avgs[f_struct->detector_num].sum_values(f_struct->fit_params);
+                }
+                io::save_optimized_fit_params(f_struct);
+            }
+            delete f_struct;
+        }
+    }
+    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+    {
+        fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
+    }
+
+    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
+
+}
+
+void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job)
+{
+    bool first = true;
     std::queue<std::future<struct io::file_name_fit_params*> > job_queue;
     ThreadPool tp(analysis_job->num_threads);
 
     std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
-
+    real_t file_cnt = 0.;
     for(auto &itr : analysis_job->optimize_dataset_files)
     {
+        file_cnt += 1.0;
         for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
-            //data_struct::Fit_Parameters out_fitp;
-            //out_fitp = optimize_integrated_fit_params(analysis_job->dataset_directory(), itr, detector_num);
             job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()) );
         }
     }
@@ -193,15 +229,21 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             }
             else
             {
-                fit_params_avgs[f_struct->detector_num].moving_average_with(f_struct->fit_params);
+                fit_params_avgs[f_struct->detector_num].sum_values(f_struct->fit_params);
             }
             io::save_optimized_fit_params(f_struct);
         }
         delete f_struct;
     }
+    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+    {
+        fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
+    }
+
     io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
 
 }
+
 
 // ----------------------------------------------------------------------------
 

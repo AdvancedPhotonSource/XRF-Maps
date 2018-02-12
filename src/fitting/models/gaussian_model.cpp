@@ -309,7 +309,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
     ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
-	/*
+
 	std::vector<std::string> keys;
 	for (const auto& itr : (*elements_to_fit))
 		keys.push_back(itr.first);
@@ -325,15 +325,18 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 			agr_spectra += tmp;
 		}
     }
-	*/
+
 	
+    /*
+
 	for(const auto& itr : (*elements_to_fit))
 	{
 		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
 	}
-	
+    */
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+
 
 /*
     // pileup

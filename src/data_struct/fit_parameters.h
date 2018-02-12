@@ -195,7 +195,9 @@ public:
 
     inline auto end() { return _params.end(); }
 
-    void moving_average_with(Fit_Parameters fit_params);
+    void sum_values(Fit_Parameters fit_params);
+
+    void divide_fit_values_by(real_t divisor);
 
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 

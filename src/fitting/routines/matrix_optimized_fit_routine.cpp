@@ -48,9 +48,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "matrix_optimized_fit_routine.h"
 
-//debug
-#include <iostream>
-
 namespace fitting
 {
 namespace routines
@@ -79,38 +76,7 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
                                                   const struct Range * const energy_range,
 												  Spectra* spectra_model)
 {
-    //Spectra spectra_model(energy_range->count());
 	spectra_model->setZero();
-
-//    valarray<real_t> energy((real_t)0.0, energy_range.count());
-//    real_t e_val = energy_range.min;
-//    for(int i=0; i < (energy_range.max - energy_range.min )+1; i++)
-//    {
-//        energy[i] = e_val;
-//        e_val += 1.0;
-//    }
-
-//    real_t gain = detector->energy_slope();
-//    valarray<real_t> ev = detector->energy_offset() + energy * detector->energy_energy_slope() + pow(energy, (real_t)2.0) * detector->energy_quad();
-/*
-    if( _snip_background )
-    {
-        real_t spectral_binning = 0.0;
-        spectra->snip_background(_background_counts, detector->energy_offset(), detector->energy_slope(), detector->energy_quad(), spectral_binning, fit_params->at(STR_SNIP_WIDTH).value, energy_range.min, energy_range.max);
-    }
-*/
-/*
-    if (keywords.spectral_binning > 0)
-    {
-        ind = energy/keywords.spectral_binning;
-        counts_background = keywords.background[ind.astype(int)];
-    }
-    else
-    {
-        counts_background = keywords.background[energy];
-    }
-*/
-
 
     for(const auto& itr : _element_models)
     {
@@ -121,7 +87,7 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
         }
     }
 
-    /*
+/*
     if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
     {
         ev = this->add_matrixfit_pars[keywords.energy_pos[0]] + energy * this->add_matrixfit_pars[keywords.energy_pos[1]] + (energy)**2 * this->add_matrixfit_pars[keywords.energy_pos[2]];
@@ -143,11 +109,7 @@ void Matrix_Optimized_Fit_Routine::model_spectrum(const Fit_Parameters * const f
             counts = counts + counts_escape;
         }
     }
-
-
 */
-//   *counts += _background_counts;
-
 
 }
 

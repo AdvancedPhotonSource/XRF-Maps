@@ -128,16 +128,28 @@ std::vector<std::string> Fit_Parameters::names_to_array()
     return arr;
 }
 
-void Fit_Parameters::moving_average_with(Fit_Parameters fit_params)
+void Fit_Parameters::sum_values(Fit_Parameters fit_params)
 {
     for(const auto &itr : _params)
     {
         if(fit_params.contains(itr.first))
         {
             _params[itr.first].value += fit_params[itr.first].value;
-            _params[itr.first].value *= 0.5;;
+
         }
     }
+}
+
+void Fit_Parameters::divide_fit_values_by(real_t divisor)
+{
+    for(const auto &itr : _params)
+    {
+        if (itr.second.bound_type > E_Bound_Type::FIXED)
+        {
+            _params[itr.first].value /= divisor;
+        }
+    }
+
 }
 
 void Fit_Parameters::from_array(std::vector<real_t> &arr)
