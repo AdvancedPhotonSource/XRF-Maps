@@ -104,11 +104,24 @@ void Spectra_File_Source::run()
 
     for(std::string dataset_file : _analysis_job->dataset_files)
     {
-        if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function) )
-        {
-            logit<<"Skipping dataset_file "<<dataset_file<<"\n";
-            continue;
-        }
+		if (_analysis_job->is_emd)
+		{
+			// load emd dataset
+			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function, nullptr))
+			{
+				logit << "Skipping dataset_file " << dataset_file << "\n";
+				continue;
+			}
+		}
+		else
+		{
+			//load xfm dataset
+			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function))
+			{
+				logit << "Skipping dataset_file " << dataset_file << "\n";
+				continue;
+			}
+		}
     }
 }
 

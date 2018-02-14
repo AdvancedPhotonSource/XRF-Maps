@@ -72,6 +72,7 @@ Analysis_Job::Analysis_Job()
     command_line = "";
     theta_pv = "";
     theta = 0.f;
+	is_emd = false;
 }
 
 //-----------------------------------------------------------------------------

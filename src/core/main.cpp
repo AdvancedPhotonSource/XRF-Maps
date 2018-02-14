@@ -78,6 +78,7 @@ void help()
     logit_s<<"--dir : Dataset directory "<<"\n";
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
     logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
+	logit_s << "--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
     logit_s<<"Examples: "<<"\n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
     logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";
@@ -193,10 +194,14 @@ int main(int argc, char *argv[])
     }
 
 
-    else if(clp.option_exists("--confocal"))
+    if(clp.option_exists("--confocal"))
     {
         is_confocal = true;
     }
+	if (clp.option_exists("--emd"))
+	{
+		analysis_job.is_emd = true;
+	}
 
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
@@ -259,6 +264,10 @@ int main(int argc, char *argv[])
         {
             analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
         }
+		else if (analysis_job.is_emd)
+		{
+			analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".emd");
+		}
         else
         {
             // find all files in the dataset
@@ -275,7 +284,7 @@ int main(int argc, char *argv[])
             analysis_job.optimize_dataset_files.push_back(itr);
         }
 
-        if(!is_confocal)
+        if(!is_confocal && !analysis_job.is_emd)
             io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
 
         //if no files were specified only take the 8 largest datasets
@@ -338,7 +347,7 @@ int main(int argc, char *argv[])
             perform_quantification(&analysis_job);
         }
 
-        if( clp.option_exists("--stream"))
+        if( clp.option_exists("--stream") || analysis_job.is_emd)
         {
             //if we are streaming we use 1 thread for loading and 1 for saving
             analysis_job.num_threads = std::thread::hardware_concurrency() - 1;

@@ -166,6 +166,12 @@ public:
 										   data_struct::IO_Callback_Func_Def callback_func,
                                            void* user_data);
 
+	bool load_spectra_volume_emd_with_callback(std::string path,
+												size_t frame_num_start,
+												size_t frame_num_end,
+												data_struct::IO_Callback_Func_Def callback_func,
+												void* user_data);
+
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row);
 
     bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
