@@ -1207,6 +1207,27 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
 */
 //-----------------------------------------------------------------------------
 
+int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::string lookup_str)
+{
+    int find_idx = lookup_str.find(start_delim);
+    if(find_idx < 0)
+    {
+        logit<<"Could not find string property start delimeter "<<start_delim<<"\n";
+        return -1;
+    }
+    std::string leftover = lookup_str.substr(find_idx+start_delim.length());
+    find_idx = leftover.find(end_delim); // find end double quote
+    if(find_idx < 0)
+    {
+        logit<<"Could not find spectra sample count end delimeter \"\n";
+        return -1;
+    }
+    std::string str_val = leftover.substr(0, find_idx);
+    return std::stoi(str_val.c_str());
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	size_t frame_num_start,
 	size_t frame_num_end,
@@ -1214,11 +1235,19 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	void* user_data)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
+//TDOO: change to unique_lock so we can unlock and allow stream saver to be called
+
+
+    const std::string STR_BINCOUNT = "\"bincount\": \"";
+    const std::string STR_WIDTH = "\"Width\": \"";
+    const std::string STR_HEIGHT = "\"Height\": \"";
 
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
 
 	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    hsize_t start_offset = 0;
 
 	logit << path << " frames : " << frame_num_start << ":" << frame_num_end << "\n";
 
@@ -1249,11 +1278,32 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	dataspace_acqui_id = H5Dget_space(acqui_id);
 	close_map.push({ dataspace_acqui_id, H5O_DATASPACE });
 
-	if (false == _open_h5_object(frame_id, H5O_DATASET, close_map, "FrameLocationTable", spectra_grp_id))
-		return false;
-	dataspace_frame_id = H5Dget_space(frame_id);
-	close_map.push({ dataspace_frame_id, H5O_DATASPACE });
+    if(frame_num_start > 0)
+    {
+        if (false == _open_h5_object(frame_id, H5O_DATASET, close_map, "FrameLocationTable", spectra_grp_id))
+            return false;
+        dataspace_frame_id = H5Dget_space(frame_id);
+        close_map.push({ dataspace_frame_id, H5O_DATASPACE });
 
+        hsize_t frame_dims[2] = {0,0};
+        error = H5Sget_simple_extent_dims(dataspace_frame_id, &frame_dims[0], NULL);
+
+        if(frame_num_start < frame_dims[0])
+        {
+            int *frames = new int[frame_dims[0]];
+            //read frames
+            hid_t frame_memoryspace_id = H5Screate_simple(2, frame_dims, NULL);
+            error = H5Dread(frame_id, H5T_NATIVE_INT, frame_memoryspace_id, dataspace_frame_id, H5P_DEFAULT, &frames[0]);
+            start_offset = frames[frame_num_start];
+            delete frames;
+            close_map.push({frame_memoryspace_id, H5O_DATASPACE});
+        }
+        else
+        {
+            logit<<"Warning: frame_num_start "<<frame_num_start<<" > Max Frames"<<frame_dims[0]<<". Setting frame_num_start = 0\n";
+        }
+
+    }
 	if (false == _open_h5_object(meta_id, H5O_DATASET, close_map, "Metadata", spectra_grp_id))
 		return false;
 	dataspace_meta_id = H5Dget_space(meta_id);
@@ -1264,16 +1314,24 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
 	error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
+    //prase bincount/samples width and height
 	std::string str_acqui = std::string(acquisition[0]);
-	//parse out volume size
-	int rows = 0;
-	int cols = 0;
-	int frame = 0;
-	int samples = 0;
+    int samples = parse_str_val_to_int(STR_BINCOUNT, "\"", str_acqui);
+    int height = parse_str_val_to_int(STR_HEIGHT, "\"", str_acqui);; //wrong place, this data is incorrect
+    int width = parse_str_val_to_int(STR_WIDTH, "\"", str_acqui);; // need to read image size in from /Data/Image/...
+    int frame = 0;
+
+    if( samples < 0 || height < 0 || width < 0)
+    {
+        logit<<"Unknown spectra volume size Width: "<<width<<" Height: "<<height<<" Samples: "<<samples<<"\n";
+        _close_h5_objects(close_map);
+        return false;
+    }
+
 
 	hsize_t rank;
 	rank = H5Sget_simple_extent_ndims(dataspace_id);
-	real_t *buffer;
+    unsigned short *buffer;
 	hsize_t* dims_in = new hsize_t[rank];
 	hsize_t* offset = new hsize_t[rank];
 	hsize_t* count = new hsize_t[rank];
@@ -1297,34 +1355,73 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	hid_t dcpl_id = H5Dget_create_plist(dataset_id);
 	H5Pget_chunk(dcpl_id, rank, chunk_dims);
 
-	buffer = new real_t[chunk_dims[0] * chunk_dims[1]]; 
+    buffer = new unsigned short[chunk_dims[0]];
+
+    if(start_offset > count[0])
+    {
+        logit<<"Warning: frame start offset: "<<start_offset<<" > dataset count: "<<count[0]<<". Setting start offset = 0\n.";
+        start_offset = 0;
+    }
 
 	memoryspace_id = H5Screate_simple(2, chunk_dims, NULL);
+    close_map.push({memoryspace_id, H5O_DATASPACE});
 	H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
 
-	size_t read_leftover = count[0] % chunk_dims[0];
-	size_t read_amt = count[0] / chunk_dims[0];
+    size_t read_leftover = (count[0] - start_offset) % chunk_dims[0];
+    size_t read_amt = (count[0] - start_offset) / chunk_dims[0];
 
 	int row = 0;
 	int col = 0;
 
+    offset[0] = start_offset; // start of frame offset
 	data_struct::Spectra *spectra = new data_struct::Spectra(samples);
 	for (size_t i = 0; i < read_amt; i++)
 	{
 		
 		H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
-		error = H5Dread(dataset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+        error = H5Dread(dataset_id, H5T_NATIVE_USHORT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
 		offset[0] += chunk_dims[0];
 
 		if (error > -1)
 		{
-			for (hsize_t j = 0; chunk_dims[0]; j++)
+            for (hsize_t j = 0; j < chunk_dims[0]; j++)
 			{
 				//check for delim to move to new spectra
 				if (buffer[j] == 65535)
 				{
-					callback_func(row, col, rows, cols, frame, spectra, user_data);
-					data_struct::Spectra *spectra = new data_struct::Spectra(samples);
+                    callback_func(row, col, height, width, frame, spectra, user_data);
+                    col++;
+                    if(col >= width)
+                    {
+                        col = 0;
+                        row++;
+                        logit<<"Reading row "<<row<<" of "<<height<<"\n";
+                    }
+                    if(row >= height)
+                    {
+                        col = 0;
+                        row = 0;
+                        frame++;
+                        if(frame >= frame_num_end)
+                        {
+                            delete[] dims_in;
+                            delete[] offset;
+                            delete[] count;
+                            delete[] chunk_dims;
+                            delete[] buffer;
+
+                            _close_h5_objects(close_map);
+
+                            end = std::chrono::system_clock::now();
+                            std::chrono::duration<double> elapsed_seconds = end - start;
+                            //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+                            logit << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+                            return true;
+                        }
+                    }
+                    spectra = new data_struct::Spectra(samples);
 				}
 				else
 				{
@@ -1339,14 +1436,39 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 		
 	}
 
-	chunk_dims[0] = read_leftover -1;
+    chunk_dims[0] = read_leftover;
 	H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
-	offset[0] = 0;
-	H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
-	error = H5Dread(dataset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+    //offset[0] = 0;
+    //H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, NULL, chunk_dims, NULL);
+    error = H5Dread(dataset_id, H5T_NATIVE_USHORT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
 	if (error > -1)
 	{
-
+        for (hsize_t j = 0; j < read_leftover; j++)
+        {
+            //check for delim to move to new spectra
+            if (buffer[j] == 65535)
+            {
+                callback_func(row, col, height, width, frame, spectra, user_data);
+                col++;
+                if(col >= width)
+                {
+                    col = 0;
+                    row++;
+                    logit<<"Reading row "<<row<<" of "<<height<<"\n";
+                }
+                if(row >= height)
+                {
+                    col = 0;
+                    row = 0;
+                    frame++;
+                }
+                spectra = new data_struct::Spectra(samples);
+            }
+            else
+            {
+                (*spectra)[buffer[j]] += 1.0;
+            }
+        }
 	}
 	else
 	{
@@ -5047,9 +5169,9 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
                                       size_t width)
 {
 
-    //    std::string str_detector_num = std::to_string(detector_num);
-    //    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
-    //    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+    std::string str_detector_num = std::to_string(detector_num);
+    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_name+".h5"+str_detector_num;
+    //io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
 
     return false;

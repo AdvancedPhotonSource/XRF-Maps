@@ -201,6 +201,8 @@ int main(int argc, char *argv[])
 	if (clp.option_exists("--emd"))
 	{
 		analysis_job.is_emd = true;
+        analysis_job.detector_num_start = 0;
+        analysis_job.detector_num_end = 0;
 	}
 
 

@@ -80,6 +80,17 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
         _analysis_job->init_fit_routines(spectra->size());
         struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
 
+        if(cp == nullptr)
+        {
+            cp = _analysis_job->get_first_sub_struct();
+            if(cp == nullptr)
+            {
+                logit<<"Error: no fitting routines found! Not processing spectra!\n";
+                delete spectra;
+                return;
+            }
+        }
+
         data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;

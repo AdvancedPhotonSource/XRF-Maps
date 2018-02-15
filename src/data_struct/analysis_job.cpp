@@ -105,6 +105,19 @@ Analysis_Job::~Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
+struct Analysis_Sub_Struct* Analysis_Job::get_first_sub_struct()
+{
+       struct Analysis_Sub_Struct* sub_struct = nullptr;
+       for(auto &itr : detectors_meta_data)
+       {
+           sub_struct = &(itr.second);
+           break;
+       }
+       return sub_struct;
+}
+
+//-----------------------------------------------------------------------------
+
 struct Analysis_Sub_Struct* Analysis_Job::get_sub_struct(int detector_num)
 {
        struct Analysis_Sub_Struct* sub_struct = nullptr;

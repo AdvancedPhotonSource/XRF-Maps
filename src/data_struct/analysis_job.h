@@ -98,6 +98,8 @@ public:
 
     ~Analysis_Job();
 
+    struct Analysis_Sub_Struct* get_first_sub_struct();
+
     struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
 
     void set_optimizer(std::string optimizer);
