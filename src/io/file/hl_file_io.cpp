@@ -57,7 +57,8 @@ namespace io
 std::vector<std::string> netcdf_files;
 std::vector<std::string> hdf_files;
 std::vector<std::string> hdf_xspress_files;
-std::vector<std::string> hdf_confocal_files;
+//std::vector<std::string> hdf_confocal_files;
+std::vector<std::string> hdf_emd_files;
 
 // ----------------------------------------------------------------------------
 
@@ -74,7 +75,8 @@ void populate_netcdf_hdf5_files(std::string dataset_dir)
     netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "_0.nc");
     hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5/", "_0.h5");
     hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress/", "_0.h5");
-    hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
+    //hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
+    hdf_emd_files = find_all_dataset_files(dataset_dir , ".emd");
 }
 
 //-----------------------------------------------------------------------------
@@ -555,10 +557,22 @@ bool load_spectra_volume(std::string dataset_directory,
         *is_loaded_from_analyazed_h5 = false;
     }
 
+    //try loading emd dataset if it ends in .emd
+    if(dataset_file.rfind(".emd") == dataset_file.length() - 4)
+    {
+        if(true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
+        {
+            //*is_loaded_from_analyazed_h5 = true;//test to not save volume
+            std::string str_detector_num = std::to_string(detector_num);
+            std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+"_frame_"+str_detector_num+".h5";
+            io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true);
+            return true;
+        }
+    }
+
     //try loading confocal dataset
     if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
     {
-        *is_loaded_from_analyazed_h5 = false;
         if(save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);

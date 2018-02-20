@@ -201,8 +201,9 @@ int main(int argc, char *argv[])
 	if (clp.option_exists("--emd"))
 	{
 		analysis_job.is_emd = true;
+        analysis_job.generate_average_h5 = false;
         analysis_job.detector_num_start = 0;
-        analysis_job.detector_num_end = 0;
+        analysis_job.detector_num_end = 0; //default to loading the first frame only
 	}
 
 
@@ -349,7 +350,8 @@ int main(int argc, char *argv[])
             perform_quantification(&analysis_job);
         }
 
-        if( clp.option_exists("--stream") || analysis_job.is_emd)
+        //if( clp.option_exists("--stream") || analysis_job.is_emd)
+        if( clp.option_exists("--stream"))
         {
             //if we are streaming we use 1 thread for loading and 1 for saving
             analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
