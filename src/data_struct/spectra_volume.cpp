@@ -73,7 +73,7 @@ void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
 
 }
 
-const Spectra Spectra_Volume::integrate()
+Spectra Spectra_Volume::integrate()
 {
 
     Spectra i_spectra(_data_vol[0][0].size());
@@ -85,10 +85,7 @@ const Spectra Spectra_Volume::integrate()
     {
         for(size_t j = 0; j < _data_vol[0].size(); j++)
         {
-            for(size_t k = 0; k < _data_vol[0][0].size(); k++)
-            {
-                i_spectra[k] += _data_vol[i][j][k];
-            }
+            i_spectra += _data_vol[i][j];
             elt += _data_vol[i][j].elapsed_lifetime();
             ert += _data_vol[i][j].elapsed_realtime();
             in_cnt += _data_vol[i][j].input_counts();

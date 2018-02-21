@@ -198,6 +198,8 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 
 }
 
+// ----------------------------------------------------------------------------
+
 void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job)
 {
     bool first = true;

@@ -164,7 +164,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     elastic_model += model->elastic_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
     element_spectra[STR_COHERENT_SCT_AMPLITUDE] = elastic_model;
     //Set it so we fit coherent amp in fit params
-    ///(*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::xrf::E_Bound_Type::FIT;
+    ///(*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::E_Bound_Type::FIT;
 
 
     // compton peak
@@ -174,7 +174,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
     compton_model += model->compton_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
     element_spectra[STR_COMPTON_AMPLITUDE] = compton_model;
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
-    ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::xrf::FIT;
+    ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::FIT;
 
     /*
     //int this_i = i + 2;

@@ -75,7 +75,7 @@ public:
 
     void dims(int &dims_out) {  }
 
-    const Spectra integrate();
+    Spectra integrate();
 
     //real_t* get_spectra(unsigned int row, unsigned int col);
 
