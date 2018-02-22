@@ -70,7 +70,7 @@ public:
      */
     Spectra_T() : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>()
 	{
-		_elapsed_lifetime = 1.0;
+        _elapsed_livetime = 1.0;
 		_elapsed_realtime = 1.0;
 		_input_counts = 1.0;
 		_output_counts = 1.0;
@@ -78,7 +78,7 @@ public:
 
 	Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(spectra)
 	{
-		_elapsed_lifetime = spectra._elapsed_lifetime;
+        _elapsed_livetime = spectra._elapsed_livetime;
 		_elapsed_realtime = spectra._elapsed_realtime;
 		_input_counts = spectra._input_counts;
 		_output_counts = spectra._output_counts;
@@ -86,7 +86,7 @@ public:
 	/*
 	Spectra_T(Spectra_T &&spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(std::move(spectra))
 	{
-		//_elapsed_lifetime = spectra._elapsed_lifetime;
+        //_elapsed_livetime = spectra._elapsed_livetime;
 		//_elapsed_realtime = spectra._elapsed_realtime;
 		//_input_counts = spectra._input_counts;
 		//_output_counts = spectra._output_counts;
@@ -95,7 +95,7 @@ public:
     Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
 	{
 		this->setZero();
-		_elapsed_lifetime = 1.0;
+        _elapsed_livetime = 1.0;
 		_elapsed_realtime = 1.0;
 		_input_counts = 1.0;
 		_output_counts = 1.0;
@@ -103,7 +103,7 @@ public:
 
     Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
-        _elapsed_lifetime = 1.0;
+        _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
         _input_counts = 1.0;
         _output_counts = 1.0;
@@ -111,7 +111,7 @@ public:
 
     Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
-        _elapsed_lifetime = 1.0;
+        _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
         _input_counts = 1.0;
         _output_counts = 1.0;
@@ -120,7 +120,7 @@ public:
     Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
     {
 		this->setZero();		
-        _elapsed_lifetime = elt;
+        _elapsed_livetime = elt;
         _elapsed_realtime = ert;
         _input_counts = incnt;
         _output_counts = outcnt;
@@ -130,30 +130,30 @@ public:
     {
     }
 
-    void recalc_elapsed_lifetime()
+    void recalc_elapsed_livetime()
     {
         if(_input_counts == 0 || _output_counts == 0)
         {
-            _elapsed_lifetime = _elapsed_realtime;
+            _elapsed_livetime = _elapsed_realtime;
         }
         else
         {
-            _elapsed_lifetime = _elapsed_realtime * _output_counts / _input_counts;
+            _elapsed_livetime = _elapsed_realtime * _output_counts / _input_counts;
         }
     }
 
     void add(const Spectra_T& spectra)
     {
         *this += (Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>)spectra;
-        _elapsed_lifetime += spectra.elapsed_lifetime();
+        _elapsed_livetime += spectra.elapsed_livetime();
         _elapsed_realtime += spectra.elapsed_realtime();
         _input_counts += spectra.input_counts();
         _output_counts += spectra.output_counts();
     }
 
-    void elapsed_lifetime(_T val) { _elapsed_lifetime = val; }
+    void elapsed_livetime(_T val) { _elapsed_livetime = val; }
 
-    const _T elapsed_lifetime() const { return _elapsed_lifetime; }
+    const _T elapsed_livetime() const { return _elapsed_livetime; }
 
     void elapsed_realtime(_T val) { _elapsed_realtime = val; }
 
@@ -170,7 +170,7 @@ public:
     Spectra_T sub_spectra(size_t start, size_t count) const
 	{
 		return Spectra_T(this->segment(start, count));
-//        ret_spec.elapsed_lifetime(this->_elapsed_lifetime);
+//        ret_spec.elapsed_livetime(this->_elapsed_livetime);
 //        ret_spec.elapsed_realtime(this->_elapsed_realtime);
 //        ret_spec.input_counts(this->_input_counts);
 //        ret_spec.output_counts(this->_output_counts);
@@ -178,7 +178,7 @@ public:
 
 private:
 
-    _T _elapsed_lifetime;
+    _T _elapsed_livetime;
     _T _elapsed_realtime;
     _T _input_counts;
     _T _output_counts;

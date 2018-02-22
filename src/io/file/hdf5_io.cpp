@@ -561,7 +561,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
                  H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-                 spectra->elapsed_lifetime(live_time);
+                 spectra->elapsed_livetime(live_time);
 
                  H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -575,7 +575,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
                  error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
                  spectra->output_counts(out_cnt);
 
-                 spectra->recalc_elapsed_lifetime();
+                 spectra->recalc_elapsed_livetime();
 
                  for(size_t s=0; s<count_row[0]; s++)
                  {
@@ -726,7 +726,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-            spectra->elapsed_lifetime(live_time * 0.000000125 );
+            spectra->elapsed_livetime(live_time * 0.000000125 );
             
             //H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
             //error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -740,7 +740,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
             //error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
             //spectra->output_counts(out_cnt);
 
-            //spectra->recalc_elapsed_lifetime();
+            //spectra->recalc_elapsed_livetime();
             
 
 
@@ -959,7 +959,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
                  H5Sselect_hyperslab (dataspace_detectors_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &live_time);
                  el_time = live_time/time_base;
-                 spectra->elapsed_lifetime(el_time);
+                 spectra->elapsed_livetime(el_time);
 
 //                 H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
 //                 error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -975,7 +975,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
                  error = H5Dread(dset_detectors_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_detectors_id, H5P_DEFAULT, &out_cnt);
                  spectra->output_counts(out_cnt*1000.0);
 
-//                 spectra->recalc_elapsed_lifetime();
+//                 spectra->recalc_elapsed_livetime();
 
                  for(size_t s=0; s<dims_in[2]; s++)
                  {
@@ -1162,7 +1162,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
 
                  H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-                 spectra->elapsed_lifetime(live_time);
+                 spectra->elapsed_livetime(live_time);
 
                  H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                  error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -1176,7 +1176,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
                  error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
                  spectra->output_counts(out_cnt);
 
-                 spectra->recalc_elapsed_lifetime();
+                 spectra->recalc_elapsed_livetime();
 
                  for(size_t s=0; s<count_row[0]; s++)
                  {
@@ -1380,7 +1380,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
     }
 
     hid_t dcpl_id = H5Dget_create_plist(dataset_id);
-    H5Pget_chunk(dcpl_id, rank, chunk_dims);
+    error = H5Pget_chunk(dcpl_id, rank, chunk_dims);
     buffer = new unsigned short[chunk_dims[0]];
 
     if(start_offset > count[0])
@@ -1400,6 +1400,9 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
     int col = 0;
 
     offset[0] = start_offset; // start of frame offset
+    real_t incnt = 0.0;
+    real_t outcnt = 0.0;
+    real_t elt = 1.0; // TODO: read from metadata
     data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
     for (size_t i = 0; i < read_amt; i++)
     {
@@ -1440,11 +1443,18 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
 
                         return true;
                     }
+                    spectra->input_counts(incnt);
+                    spectra->output_counts(outcnt);
+                    spectra->elapsed_livetime(elt);
+                    incnt = 0.0;
+                    outcnt = 0.0;
                     spectra = &((*spec_vol)[row][col]);
                 }
                 else
                 {
                     (*spectra)[buffer[j]] += 1.0;
+                    incnt += 1.0;
+                    outcnt += 1.0;
                 }
             }
         }
@@ -1688,6 +1698,9 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	int row = 0;
 	int col = 0;
 
+    real_t incnt = 0.0;
+    real_t outcnt = 0.0;
+    real_t elt = 1.0;
     offset[0] = start_offset; // start of frame offset
 	data_struct::Spectra *spectra = new data_struct::Spectra(samples);
 	for (size_t i = 0; i < read_amt; i++)
@@ -1704,6 +1717,12 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 				//check for delim to move to new spectra
 				if (buffer[j] == 65535)
 				{
+                    spectra->input_counts(incnt);
+                    spectra->output_counts(outcnt);
+                    spectra->elapsed_livetime(elt);
+                    incnt = 0.0;
+                    outcnt = 0.0;
+
                     callback_func(row, col, height, width, frame, spectra, user_data);
                     col++;
                     if(col >= width)
@@ -1741,6 +1760,8 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 				else
 				{
 					(*spectra)[buffer[j]] += 1.0;
+                    incnt += 1.0;
+                    outcnt += 1.0;
 				}
 			}
 		}
@@ -1968,7 +1989,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
                      H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                      error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-                     spectra->elapsed_lifetime(live_time);
+                     spectra->elapsed_livetime(live_time);
 
                      H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, NULL, count_meta, NULL);
                      error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
@@ -2194,7 +2215,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
           }
      }
 
-     spectra->elapsed_lifetime(live_time_total);
+     spectra->elapsed_livetime(live_time_total);
      spectra->elapsed_realtime(real_time_total);
      spectra->input_counts(in_cnt_total);
      spectra->output_counts(out_cnt_total);
@@ -2360,7 +2381,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
             error = H5Dread (dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
             error = H5Dread (dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
 
-            spectra->elapsed_lifetime(live_time);
+            spectra->elapsed_livetime(live_time);
             spectra->elapsed_realtime(real_time);
             spectra->input_counts(in_cnt);
             spectra->output_counts(out_cnt);
@@ -2506,7 +2527,7 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Sp
     error = H5Dread (dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
     error = H5Dread (dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
 
-    spectra->elapsed_lifetime(live_time);
+    spectra->elapsed_livetime(live_time);
     spectra->elapsed_realtime(real_time);
     spectra->input_counts(in_cnt);
     spectra->output_counts(out_cnt);
@@ -2785,7 +2806,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
             H5Sselect_hyperslab (file_time_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
 
             real_time = spectra->elapsed_realtime();
-            life_time = spectra->elapsed_lifetime();
+            life_time = spectra->elapsed_livetime();
             in_cnt = spectra->input_counts();
             out_cnt = spectra->output_counts();
             status = H5Dwrite (dset_rt_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&real_time);
@@ -2842,7 +2863,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     H5Sclose(dataspace_id);
 
     //save life_time
-    save_val = spectra.elapsed_lifetime();
+    save_val = spectra.elapsed_livetime();
     dataspace_id = H5Screate_simple (1, count, NULL);
     memoryspace_id = H5Screate_simple (1, count, NULL);
     dset_id = H5Dcreate (int_spec_grp_id, "Elapsed_Livetime", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -3350,7 +3371,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         H5Sclose(dataspace_id);
 
         //save life_time
-        save_val = spectra.elapsed_lifetime();
+        save_val = spectra.elapsed_livetime();
         dataspace_id = H5Screate_simple (1, count, NULL);
         dset_id = H5Dcreate (q_int_spec_grp_id, "Elapsed_Livetime", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);

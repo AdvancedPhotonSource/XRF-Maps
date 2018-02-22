@@ -66,7 +66,7 @@ NetCDF_IO* NetCDF_IO::_this_inst(0);
 
 
 #define ELAPSED_REALTIME_OFFSET 32
-#define ELAPSED_LIFETIME_OFFSET 34
+#define ELAPSED_LIVETIME_OFFSET 34
 #define INPUT_COUNTS_OFFSET 36
 #define OUTPUT_COUNTS_OFFSET 38
 
@@ -110,7 +110,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     int rh_ndims;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
     int rh_natts;
-    real_t elapsed_lifetime;
+    real_t elapsed_livetime;
     real_t elapsed_realtime;
     real_t input_counts;
     real_t output_counts;
@@ -189,19 +189,19 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
 
         header_size = data_in[0][0][2];
 
-        unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)];
-        unsigned short i2 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector*8)+1];
+        unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector*8)];
+        unsigned short i2 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
         unsigned int ii = i1 | i2<<16;
-        elapsed_lifetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-        if(elapsed_lifetime == 0)
+        elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+        if(elapsed_livetime == 0)
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
                 logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
-                elapsed_lifetime = 1.0;
+                elapsed_livetime = 1.0;
             }
         }
-        (*spec_line)[j].elapsed_lifetime(elapsed_lifetime);
+        (*spec_line)[j].elapsed_livetime(elapsed_livetime);
 
         i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)];
         i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)+1];
@@ -221,7 +221,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         i1 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
-        input_counts = ((float)ii) / elapsed_lifetime;
+        input_counts = ((float)ii) / elapsed_livetime;
         (*spec_line)[j].input_counts(input_counts);
 
         i1 = data_in[0][0][OUTPUT_COUNTS_OFFSET+(detector*8)];
@@ -231,7 +231,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         (*spec_line)[j].output_counts(output_counts);
 
         // recalculate elapsed lifetime
-        (*spec_line)[j].recalc_elapsed_lifetime();
+        (*spec_line)[j].recalc_elapsed_livetime();
 
         start[2] += header_size + (spectra_size * detector);
         count[2] = spectra_size;
@@ -297,7 +297,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
     int rh_natts;
 
-    real_t elapsed_lifetime;
+    real_t elapsed_livetime;
     real_t elapsed_realtime;
     real_t input_counts;
     real_t output_counts;
@@ -410,19 +410,19 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
                 data_struct::Spectra * spectra = new data_struct::Spectra(spectra_size);
 
-                unsigned short i1 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector_num*8)];
-                unsigned short i2 = data_in[0][0][ELAPSED_LIFETIME_OFFSET+(detector_num*8)+1];
+                unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector_num*8)];
+                unsigned short i2 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector_num*8)+1];
                 unsigned int ii = i1 | i2<<16;
-                elapsed_lifetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-                if(elapsed_lifetime == 0)
+                elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+                if(elapsed_livetime == 0)
                 {
                     if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
                     {
                         logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
-                        elapsed_lifetime = 1.0;
+                        elapsed_livetime = 1.0;
                     }
                 }
-                spectra->elapsed_lifetime(elapsed_lifetime);
+                spectra->elapsed_livetime(elapsed_livetime);
 
                 i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector_num*8)];
                 i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector_num*8)+1];
@@ -442,7 +442,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 i1 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector_num*8)];
                 i2 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector_num*8)+1];
                 ii = i1 | i2<<16;
-                input_counts = ((float)ii) / elapsed_lifetime;
+                input_counts = ((float)ii) / elapsed_livetime;
                 spectra->input_counts(input_counts);
 
                 i1 = data_in[0][0][OUTPUT_COUNTS_OFFSET+(detector_num*8)];
@@ -452,7 +452,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 spectra->output_counts(output_counts);
 
                 // recalculate elapsed lifetime
-                spectra->recalc_elapsed_lifetime();
+                spectra->recalc_elapsed_livetime();
 
                 int idx = header_size + (detector_num*spectra_size);
 

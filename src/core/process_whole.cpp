@@ -86,7 +86,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     //save count / sec
     for (auto& el_itr : *elements_to_fit)
     {
-        (*out_fit_counts)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_lifetime();
+        (*out_fit_counts)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
     }
     (*out_fit_counts)[STR_NUM_ITR](i,j) = counts_dict[STR_NUM_ITR];
     return true;
@@ -367,7 +367,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                 {
                     for(int k=0; k<spectra_volume->cols(); k++)
                     {
-                        real_t elapsed_lifetime = (*spectra_volume)[j][k].elapsed_lifetime();
+                        real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
                         real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
                         real_t input_counts = (*spectra_volume)[j][k].input_counts();
                         real_t output_counts = (*spectra_volume)[j][k].output_counts();
@@ -375,12 +375,12 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
                         (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
 
-                        elapsed_lifetime += (*tmp_spectra_volume)[j][k].elapsed_lifetime();
+                        elapsed_livetime += (*tmp_spectra_volume)[j][k].elapsed_livetime();
                         elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
                         input_counts += (*tmp_spectra_volume)[j][k].input_counts();
                         output_counts += (*tmp_spectra_volume)[j][k].output_counts();
 
-                        (*spectra_volume)[j][k].elapsed_lifetime(elapsed_lifetime);
+                        (*spectra_volume)[j][k].elapsed_livetime(elapsed_livetime);
                         (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
                         (*spectra_volume)[j][k].input_counts(input_counts);
                         (*spectra_volume)[j][k].output_counts(output_counts);
@@ -550,7 +550,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
                 for (auto& itr2 : elements_to_fit)
                 {
-                    counts_dict[itr2.first] /= integrated_spectra.elapsed_lifetime();
+                    counts_dict[itr2.first] /= integrated_spectra.elapsed_livetime();
                 }
                 quantification_standard->integrated_spectra(integrated_spectra);
 

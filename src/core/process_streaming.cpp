@@ -59,7 +59,7 @@ data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
         {
-            stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_lifetime();
+            stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_livetime();
         }
         stream_block->fitting_blocks[i].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
     }
@@ -345,7 +345,7 @@ bool perform_quantification_streaming(std::string dataset_directory,
 
                 for (auto& itr : elements_to_fit)
                 {
-                    counts_dict[itr.first] /= integrated_spectra.elapsed_lifetime();
+                    counts_dict[itr.first] /= integrated_spectra.elapsed_livetime();
                 }
                 quantification_standard->integrated_spectra(integrated_spectra);
 

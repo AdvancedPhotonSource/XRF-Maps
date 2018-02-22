@@ -90,6 +90,7 @@ void Spectra_Line::_alloc_spectra_size(size_t n)
     for(size_t i=0; i<_data_line.size(); i++)
     {
         _data_line[i].resize(n);
+        _data_line[i].setZero();
     }
     /*
     for(Spectra s : _data_line)
@@ -99,11 +100,11 @@ void Spectra_Line::_alloc_spectra_size(size_t n)
     //_data_line.resize(n);
 }
 
-void Spectra_Line::recalc_elapsed_lifetime()
+void Spectra_Line::recalc_elapsed_livetime()
 {
     for(size_t i=0; i<_data_line.size(); i++)
     {
-        _data_line[i].recalc_elapsed_lifetime();
+        _data_line[i].recalc_elapsed_livetime();
     }
 }
 

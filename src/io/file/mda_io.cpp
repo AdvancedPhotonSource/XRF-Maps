@@ -357,7 +357,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 {
                     if(elt_idx > -1)
                     {
-                        (*vol)[i][j].elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
+                        (*vol)[i][j].elapsed_livetime(_mda_file->scan->detectors_data[elt_idx][j]);
                     }
                     if(ert_idx > -1)
                     {
@@ -373,7 +373,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                     }
                     if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
                     {
-                        (*vol)[i][j].recalc_elapsed_lifetime();
+                        (*vol)[i][j].recalc_elapsed_livetime();
                     }
 
 
@@ -387,7 +387,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 {
                     if(elt_idx > -1)
                     {
-                        (*vol)[i][j].elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                        (*vol)[i][j].elapsed_livetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
                     }
                     if(ert_idx > -1)
                     {
@@ -403,7 +403,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                     }
                     if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
                     {
-                        (*vol)[i][j].recalc_elapsed_lifetime();
+                        (*vol)[i][j].recalc_elapsed_livetime();
                     }
 
 
@@ -627,7 +627,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     {
                         if(elt_idx > -1)
                         {
-                            spectra->elapsed_lifetime(_mda_file->scan->detectors_data[elt_idx][j]);
+                            spectra->elapsed_livetime(_mda_file->scan->detectors_data[elt_idx][j]);
                         }
                         if(ert_idx > -1)
                         {
@@ -643,7 +643,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                         }
                         if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
                         {
-                            spectra->recalc_elapsed_lifetime();
+                            spectra->recalc_elapsed_livetime();
                         }
 
 
@@ -658,7 +658,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     {
                         if(elt_idx > -1)
                         {
-                             spectra->elapsed_lifetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
+                             spectra->elapsed_livetime(_mda_file->scan->sub_scans[i]->detectors_data[elt_idx][j]);
                         }
                         if(ert_idx > -1)
                         {
@@ -674,7 +674,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                         }
                         if(ert_idx > -1 && incnt_idx > -1 && outcnt_idx > -1)
                         {
-                            spectra->recalc_elapsed_lifetime();
+                            spectra->recalc_elapsed_livetime();
                         }
 
 

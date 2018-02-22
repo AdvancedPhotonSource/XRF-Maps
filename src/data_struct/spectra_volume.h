@@ -83,7 +83,7 @@ public:
 
     const size_t rows() const { return _data_vol.size(); }
 
-    void recalc_elapsed_lifetime();
+    void recalc_elapsed_livetime();
 
     const size_t samples_size() const { return _data_vol[0][0].size(); }
 

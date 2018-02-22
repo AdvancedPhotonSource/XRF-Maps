@@ -74,7 +74,7 @@ public:
 
     void alloc_row_size(size_t n);
 
-    void recalc_elapsed_lifetime();
+    void recalc_elapsed_livetime();
 
     auto size() const { return _data_line.size(); }
 

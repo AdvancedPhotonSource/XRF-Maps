@@ -86,29 +86,29 @@ Spectra Spectra_Volume::integrate()
         for(size_t j = 0; j < _data_vol[0].size(); j++)
         {
             i_spectra += _data_vol[i][j];
-            elt += _data_vol[i][j].elapsed_lifetime();
+            elt += _data_vol[i][j].elapsed_livetime();
             ert += _data_vol[i][j].elapsed_realtime();
             in_cnt += _data_vol[i][j].input_counts();
             out_cnt += _data_vol[i][j].output_counts();
         }
     }
 
-    i_spectra.elapsed_lifetime(elt);
+    i_spectra.elapsed_livetime(elt);
     i_spectra.elapsed_realtime(ert);
     i_spectra.input_counts(in_cnt);
     i_spectra.output_counts(out_cnt);
 
-    i_spectra.recalc_elapsed_lifetime();
+    i_spectra.recalc_elapsed_livetime();
 
     return i_spectra;
 }
 
-void Spectra_Volume::recalc_elapsed_lifetime()
+void Spectra_Volume::recalc_elapsed_livetime()
 {
 
     for(size_t i=0; i<_data_vol.size(); i++)
     {
-        _data_vol[i].recalc_elapsed_lifetime();
+        _data_vol[i].recalc_elapsed_livetime();
     }
 
 }
