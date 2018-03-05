@@ -156,8 +156,8 @@ TIME_NORMALIZED_SCALER: CFG_7;2xfm:mcs:mca16.VAL
 TIME_NORMALIZED_SCALER: CFG_8;2xfm:mcs:mca17.VAL
 TIME_NORMALIZED_SCALER: CFG_9;2xfm:mcs:mca18.VAL
     Spectra scalers
-ELT1: dxpXMAP2xfm3:mca4.ELTM
-ERT1: dxpXMAP2xfm3:mca4.ERTM
+ELT1: dxpXMAP2xfm3:mca1.ELTM
+ERT1: dxpXMAP2xfm3:mca1.ERTM
 ICR1: dxpXMAP2xfm3:dxp1:InputCountRate
 OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
     the lines below (if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file
