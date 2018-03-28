@@ -83,15 +83,15 @@ public:
 		_input_counts = spectra._input_counts;
 		_output_counts = spectra._output_counts;
 	}
-	/*
-	Spectra_T(Spectra_T &&spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(std::move(spectra))
+
+    Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
 	{
-        //_elapsed_livetime = spectra._elapsed_livetime;
-		//_elapsed_realtime = spectra._elapsed_realtime;
-		//_input_counts = spectra._input_counts;
-		//_output_counts = spectra._output_counts;
+        _elapsed_livetime = 1.0;
+        _elapsed_realtime = 1.0;
+        _input_counts = 1.0;
+        _output_counts = 1.0;
 	}
-	*/
+
     Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
 	{
 		this->setZero();
