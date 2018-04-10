@@ -1,4 +1,22 @@
 sudo: required
+
+matrix:
+  include:
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env:
+        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+
+before_install:
+    - eval "${MATRIX_EVAL}"
+
+
 before_install:
   - sudo apt-get install libhdf5-dev
   - sudo apt-get install libnetcdf-dev
@@ -9,7 +27,7 @@ language: cpp
 
 # Compiler selection
 compiler:
-  - gcc-5
+  - gcc-6
   
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
