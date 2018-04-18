@@ -173,16 +173,16 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::Element_Info_Map *element_info_map)
+bool load_element_info(std::string element_henke_filename, std::string element_csv_filename)
 {
 
-	if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
+    if (io::file::load_henke_from_xdr(element_henke_filename) == false)
 	{
 		logit << "error loading " << element_henke_filename << "\n";
 		return false;
 	}
 
-	if (io::file::load_element_info_from_csv(element_csv_filename, element_info_map) == false)
+    if (io::file::load_element_info_from_csv(element_csv_filename) == false)
 	{
 		logit << "error loading " << element_csv_filename << "\n";
 		return false;
@@ -436,10 +436,9 @@ bool load_override_params(std::string dataset_directory,
         det_num = std::to_string(detector_num);
 
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
-                                        data_struct::Element_Info_Map::inst(),
                                         params_override))
     {
-        logit<<"Error loading fit param override file: "<<"\n";
+        logit<<"Error loading fit param override file: "<<dataset_directory+"maps_fit_parameters_override.txt"+det_num<<"\n";
         return false;
     }
     else

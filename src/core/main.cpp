@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
     start = std::chrono::system_clock::now();
 
     //load element information
-    if(false == io::load_element_info(element_henke_filename, element_csv_filename, data_struct::Element_Info_Map::inst()))
+    if(false == io::load_element_info(element_henke_filename, element_csv_filename))
     {
         logit<<"Error loading element information: "<<"\n";
         return -1;

@@ -44,7 +44,7 @@
 #POSSIBILITY OF SUCH DAMAGE.
 
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 
 project(XRF_Maps)
 
@@ -291,7 +291,11 @@ IF (BUILD_WITH_PYBIND11)
     #set_target_properties(pyxrfmaps PROPERTIES SUFFIX ".pyd")
 
     pybind11_add_module(pyxrfmaps src/pybindings/main.cpp)
-    target_link_libraries(pyxrfmaps libxrf_fit )
+    IF (BUILD_WITH_ZMQ)
+      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES} PUBLIC ${ZeroMQ_STATIC_LIBRARY})
+    ELSE()
+      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES})
+    ENDIF()
 ENDIF()
 
 #--------------- start xrf maps exec -----------------
@@ -359,8 +363,8 @@ ELSEIF (UNIX)
   ENDIF()
 
   IF (BUILD_WITH_ZMQ)
-    target_link_libraries(libxrf_io optimized ${ZeroMQ_STATIC_LIBRARY} )
-    target_link_libraries(libxrf_io debug ${ZeroMQ_STATIC_LIBRARY} )
+    target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} )
+    target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} )
     target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_STATIC_LIBRARY} )
     target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_STATIC_LIBRARY} )
   ENDIF()

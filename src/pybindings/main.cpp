@@ -15,6 +15,10 @@
 #include "fitting/routines/nnls_fit_routine.h"
 #include "data_struct/analysis_job.h"
 
+#include "io/file/hl_file_io.h"
+
+//#include "core/process_streaming.h"
+#include "core/process_whole.h"
 
 namespace py = pybind11;
 
@@ -98,6 +102,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("extra_energies", &data_struct::Element_Info::extra_energies)
     .def_readwrite("extra_f1", &data_struct::Element_Info::extra_f1)
     .def_readwrite("extra_f2", &data_struct::Element_Info::extra_f2);
+
+    py::class_<data_struct::Element_Info_Map>(m, "ElementInfoMap")
+    .def("inst", &data_struct::Element_Info_Map::inst)
+    .def("clear", &data_struct::Element_Info_Map::clear)
+    .def("generate_default_elements", &data_struct::Element_Info_Map::generate_default_elements)
+    .def("add_element", &data_struct::Element_Info_Map::add_element)
+    .def("calc_beta", &data_struct::Element_Info_Map::calc_beta)
+    .def("get_element", (data_struct::Element_Info* (data_struct::Element_Info_Map::*)(int)) &data_struct::Element_Info_Map::get_element)
+    .def("get_element", (data_struct::Element_Info* (data_struct::Element_Info_Map::*)(std::string)) &data_struct::Element_Info_Map::get_element)
+    .def("contains", &data_struct::Element_Info_Map::contains)
+    .def_readwrite("_energies", &data_struct::Element_Info_Map::_energies);
 
     py::class_<data_struct::Element_Quant>(m, "ElementQuant")
     .def(py::init<>())
@@ -269,6 +284,45 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<data_struct::Analysis_Job* analysis_job>())
     .def("run", &workflow::xrf::Spectra_File_Source::run);
 */
+
+    ////// IO //////
+    //hl_file_io
+    m.def("check_and_create_dirs", &io::check_and_create_dirs);
+    m.def("compare_file_size", &io::compare_file_size);
+    m.def("find_all_dataset_files", &io::find_all_dataset_files);
+    m.def("generate_h5_averages", &io::generate_h5_averages);
+    m.def("generate_fit_routine", &io::generate_fit_routine);
+    m.def("init_analysis_job_detectors", &io::init_analysis_job_detectors);
+    m.def("load_element_info", &io::load_element_info);
+    m.def("load_and_integrate_spectra_volume", &io::load_and_integrate_spectra_volume);
+    m.def("load_override_params", &io::load_override_params);
+    m.def("load_quantification_standard", &io::load_quantification_standard);
+    m.def("load_spectra_volume", &io::load_spectra_volume);
+    m.def("populate_netcdf_hdf5_files", &io::populate_netcdf_hdf5_files);
+    m.def("save_averaged_fit_params", &io::save_averaged_fit_params);
+    m.def("save_results", &io::save_results);
+    m.def("save_optimized_fit_params", &io::save_optimized_fit_params);
+    m.def("save_volume", &io::save_volume);
+    m.def("sort_dataset_files_by_size", &io::sort_dataset_files_by_size);
+
+
+    //process_streaming
+//    m.def("proc_spectra_block", &proc_spectra_block);
+//    m.def("run_stream_pipeline", &run_stream_pipeline);
+//    m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
+//    m.def("save_optimal_params", &save_optimal_params);
+//    m.def("run_optimization_stream_pipeline", &run_optimization_stream_pipeline);
+//    m.def("perform_quantification_streaming", &perform_quantification_streaming);
+    //process_whole
+    //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
+    m.def("fit_single_spectra", &fit_single_spectra);
+    m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
+    m.def("generate_optimal_params", &generate_optimal_params);
+    m.def("generate_optimal_params_mp", &generate_optimal_params_mp);
+    m.def("proc_spectra", &proc_spectra);
+    m.def("process_dataset_files", &process_dataset_files);
+    m.def("perform_quantification", &perform_quantification);
+    m.def("average_quantification", &average_quantification);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;

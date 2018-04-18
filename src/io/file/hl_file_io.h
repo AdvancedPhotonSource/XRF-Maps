@@ -136,8 +136,7 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job);
 
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
-                       std::string element_csv_filename,
-                       data_struct::Element_Info_Map *element_info_map);
+                       std::string element_csv_filename);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,

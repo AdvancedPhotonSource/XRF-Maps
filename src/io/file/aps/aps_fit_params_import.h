@@ -77,7 +77,6 @@ public:
     ~APS_Fit_Params_Import();
 
     bool load(std::string path,
-              data_struct::Element_Info_Map *element_info_map,
               data_struct::Params_Override *params_override);
 
     bool save(std::string path,
