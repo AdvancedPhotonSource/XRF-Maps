@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
     //Check if we want to quantifiy with a standard
     if ( clp.option_exists("--quantify-with") )
     {
-        analysis_job.quantificaiton_standard_filename = clp.get_option("--quantify-with");
+        analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
     }
 
     //Do we want to optimize our fitting parameters
@@ -241,9 +241,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     //add a slash if missing at the end
-    if (dataset_dir.back() != '/' && dataset_dir.back() != '\\')
+    if (dataset_dir.back() != DIR_END_CHAR)
     {
-        dataset_dir += "/";
+        dataset_dir += DIR_END_CHAR;
     }
 
     //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
         else
         {
             // find all files in the dataset
-            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda/", ".mda");
+            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda"+ DIR_END_CHAR, ".mda");
         }
         if (analysis_job.dataset_files.size() == 0)
         {
@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
             generate_optimal_params(&analysis_job);
         }
 
-        if (analysis_job.quantificaiton_standard_filename.length() > 0)
+        if (analysis_job.quantification_standard_filename.length() > 0)
         {
             perform_quantification(&analysis_job);
         }

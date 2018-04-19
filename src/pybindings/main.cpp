@@ -205,7 +205,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("init_fit_routines", &data_struct::Analysis_Job::init_fit_routines)
     .def_readwrite("command_line", &data_struct::Analysis_Job::command_line)
     .def_readwrite("dataset_directory", &data_struct::Analysis_Job::dataset_directory)
-    .def_readwrite("quantificaiton_standard_filename", &data_struct::Analysis_Job::quantificaiton_standard_filename)
+    .def_readwrite("quantification_standard_filename", &data_struct::Analysis_Job::quantification_standard_filename)
     .def_readwrite("theta_pv", &data_struct::Analysis_Job::theta_pv)
     .def_readwrite("dataset_files", &data_struct::Analysis_Job::dataset_files)
     .def_readwrite("optimize_dataset_files", &data_struct::Analysis_Job::optimize_dataset_files)
