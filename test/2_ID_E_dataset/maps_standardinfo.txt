@@ -1,0 +1,7 @@
+	This file describes arbitrary standard reference materials
+	please put the filename that contains the measured standard next. if it was acquired using a multi element detector, please list just the mca0 file
+FILENAME:      axo_std.mda
+	please put the comma seperated list of elements in the standard
+ELEMENTS_IN_STANDARD: Ca, Fe, Cu
+	please put the weight (area density) in ug/cm2 for each of the elements above
+WEIGHT:       1.931, 0.504, 0.284

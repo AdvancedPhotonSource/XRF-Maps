@@ -812,8 +812,10 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
 
 //-----------------------------------------------------------------------------
 
-bool load_henke_from_xdr(std::string filename, data_struct::Element_Info_Map *element_map)
+bool load_henke_from_xdr(std::string filename)
 {
+    data_struct::Element_Info_Map *element_map = data_struct::Element_Info_Map::inst();
+
     std::ifstream fileStream(filename);
 
     if (false == fileStream.good())

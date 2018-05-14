@@ -44,14 +44,9 @@
 #POSSIBILITY OF SUCH DAMAGE.
 
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.5)
 
 project(XRF_Maps)
-
-#option(PYBIND11_INSTALL "Install pybind11 header files?" ON)
-
-# Add a CMake parameter for choosing a desired Python version
-#set(PYBIND11_PYTHON_VERSION "" CACHE STRING "Python version to use for compiling the XRF Maps application")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -68,6 +63,7 @@ find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
+option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
@@ -104,21 +100,17 @@ ELSE()
 ENDIF()
 
 # Set a default build configuration if none is specified. 'Release' produces the smallest binaries
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
-endif()
+ENDIF()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
-#set(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6)
-#find_package(PythonLibs ${PYBIND11_PYTHON_VERSION} REQUIRED)
-#find_package(PythonInterp ${PYBIND11_PYTHON_VERSION} REQUIRED)
-
 include(CheckCXXCompilerFlag)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g -fopenmp -march=native")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC -march=native")
@@ -126,38 +118,20 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
   if(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic ")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic ")
-  endif()
-
-  # Enable link time optimization and set the default symbol
-  # visibility to hidden (very important to obtain small binaries)
-#  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-    # Default symbol visibility
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-
-    # Check for Link Time Optimization support
-#    CHECK_CXX_COMPILER_FLAG("-flto" HAS_LTO_FLAG)
-#    if (HAS_LTO_FLAG)
-#      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
-#    endif()
-#  endif()
-endif()
+  ENDIF()
+ENDIF()
 
 # Compile with compiler warnings turned on
-if(MSVC)
-  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+IF(MSVC)
+  IF(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  else()
+  ELSE()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  endif()
+  ENDIF()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /openmp")
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+ELSEIF ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-endif()
-
-# Include path for Python header files
-#include_directories(${PYTHON_INCLUDE_DIR})
-# Include path for pybind11 header files
-#include_directories(pybind11)
+ENDIF()
 
 IF(BUILD_WITH_ZMQ)
   #zeromq include
@@ -177,14 +151,14 @@ include_directories(${NETCDF_INCLUDE_DIRS})
 include_directories(src)
 
 # Visual Studio specific include and source
-if(MSVC)
+IF(MSVC)
   set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
   include_directories(src/support/direct)
-else()
+ELSE()
   set(XDR_HACK  )
-endif()
+ENDIF()
 
-
+#--------------- start xrf lib -----------------
 set(libxrf_fit_HEADERS
     src/core/defines.h
     src/support/cmpfit-1.3a/mpfit.hpp
@@ -309,6 +283,21 @@ ELSE()
              )
 ENDIF()
 
+#--------------- start pyxrf-maps lib -----------------
+
+IF (BUILD_WITH_PYBIND11)
+    add_subdirectory(src/support/pybind11)
+    # .PYD file extension on Windows
+    #set_target_properties(pyxrfmaps PROPERTIES SUFFIX ".pyd")
+
+    pybind11_add_module(pyxrfmaps src/pybindings/main.cpp)
+    IF (BUILD_WITH_ZMQ)
+      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES} PUBLIC ${ZeroMQ_STATIC_LIBRARY})
+    ELSE()
+      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES})
+    ENDIF()
+ENDIF()
+
 #--------------- start xrf maps exec -----------------
 add_executable(xrf_maps
     src/core/command_line_parser.h
@@ -325,23 +314,20 @@ set(CompilerFlags
   RUNTIME_OUTPUT_DIRECTORY RUNTIME_OUTPUT_DIRECTORY_RELEASE RUNTIME_OUTPUT_DIRECTORY_DEBUG)
 
 foreach(CompilerFlag ${CompilerFlags})
-  set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+  set_target_properties(pyxrfmaps libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
 endforeach()
 
-if (WIN32)
-  if (MSVC)
+IF (WIN32)
+  IF (MSVC)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
     # /MP enables multithreaded builds (relevant when there are many files).
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
 	set_target_properties(xrf_maps libxrf_io PROPERTIES COMPILE_FLAGS "/D_WINSOCKAPI_")
-	if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+        IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/Ox /arch:SSE2 /Qvec-report:2 /GL /MP /bigobj /Qansi-alias")
             set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "/LTCG")
-	endif()
-  endif()
-
-  # .PYD file extension on Windows
-  #set_target_properties(libxrf_fit PROPERTIES SUFFIX ".pyd")
+        ENDIF()
+  ENDIF()
 
   target_link_libraries(libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries(libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
@@ -359,7 +345,7 @@ if (WIN32)
   ENDIF()
 
 
-elseif (UNIX)
+ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
   # installed on one's system. E.g.: one copy from the OS and another copy
   # that's statically linked into an application like Blender or Maya.
@@ -372,48 +358,38 @@ elseif (UNIX)
   # link against the Python library. The resulting shared library will have
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
-  if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+  IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     set_target_properties(xrf_maps libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-O3")
-  endif()
+  ENDIF()
 
   IF (BUILD_WITH_ZMQ)
-    target_link_libraries(libxrf_io optimized ${ZeroMQ_LIBRARY} )
-    target_link_libraries(libxrf_io debug ${ZeroMQ_LIBRARY} )
+    target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY} )
+    target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY} )
     target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY} )
     target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY} )
   ENDIF()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
-  if(APPLE)
+  IF(APPLE)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".dylib")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-DDARWIN")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES MACOSX_RPATH ".")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "-undefined dynamic_lookup -dead_strip")
-    if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+    IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
       add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.dylib)
       add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_io.dylib)
-    endif()
-  else()
+    ENDIF()
+  ELSE()
     #if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    if(NOT BUILD_FOR_PHI)
+    IF(NOT BUILD_FOR_PHI)
       set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
-      if (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+      IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
         add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
         add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
-      endif()
-    endif()
-  endif()
-endif()
-
-#enable_testing()
-#set(RUN_TEST ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/bin/run_test.py)
-#foreach(i RANGE 1 12)
-#  add_test(NAME libxrf_fit${i} COMMAND ${RUN_TEST} libxrf_fit${i})
-#endforeach()
-
-#if (PYBIND11_INSTALL)
-#    install(FILES ${PYBIND11_HEADERS} DESTINATION include/pybind11)
-#endif()
+      ENDIF()
+    ENDIF()
+  ENDIF()
+ENDIF()
 
 target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
@@ -424,6 +400,5 @@ IF (BUILD_WITH_QT)
 
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${Qt5Charts_LIBRARIES} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug ${Qt5Charts_LIBRARIES} )
-ELSE()
-
 ENDIF()
+

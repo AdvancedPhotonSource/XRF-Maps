@@ -5506,7 +5506,7 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
 {
 
     std::string str_detector_num = std::to_string(detector_num);
-    std::string full_save_path = dataset_directory+"/img.dat/"+dataset_name+".h5"+str_detector_num;
+    std::string full_save_path = dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_name+".h5"+str_detector_num;
     //io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
 

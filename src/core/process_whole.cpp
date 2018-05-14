@@ -331,7 +331,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
         //if quick and dirty then sum all detectors to 1 spectra volume and process it
         if(analysis_job->quick_and_dirty)
         {
-            std::string full_save_path = analysis_job->dataset_directory+"/img.dat/"+dataset_file+".h5";
+            std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5";
 
             data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(0);
             //Spectra volume data
@@ -345,7 +345,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             bool is_loaded_from_analyzed_h5;
             if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, true) )
             {
-                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<"\n";
+                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                 delete spectra_volume;
                 delete tmp_spectra_volume;
                 return;
@@ -357,7 +357,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, tmp_spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, false) )
                 {
-                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<<"/"<<dataset_file<<"\n";
+                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                     delete spectra_volume;
                     delete tmp_spectra_volume;
                     return;
@@ -405,7 +405,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                 data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
 
                 std::string str_detector_num = std::to_string(detector_num);
-                std::string full_save_path = analysis_job->dataset_directory+"/img.dat/"+dataset_file+".h5"+str_detector_num;
+                std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+str_detector_num;
                 io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
                 bool loaded_from_analyzed_hdf5 = false;
@@ -452,7 +452,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     std::string standard_file_name;
     std::unordered_map<std::string, real_t> element_standard_weights;
 
-    if( io::load_quantification_standard(analysis_job->dataset_directory, analysis_job->quantificaiton_standard_filename, &standard_file_name, &element_standard_weights) )
+    if( io::load_quantification_standard(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, &standard_file_name, &element_standard_weights) )
     {
         for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
@@ -577,7 +577,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     }
     else
     {
-        logit<<"Error loading quantification standard "<<analysis_job->quantificaiton_standard_filename<<"\n";
+        logit<<"Error loading quantification standard "<<analysis_job->quantification_standard_filename<<"\n";
         return false;
     }
 

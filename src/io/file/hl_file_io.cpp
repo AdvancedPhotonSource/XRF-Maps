@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "hl_file_io.h"
 
+#include <stdlib.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -72,9 +73,9 @@ bool compare_file_size (const file_name_size& first, const file_name_size& secon
 void populate_netcdf_hdf5_files(std::string dataset_dir)
 {
     //populate netcdf and hdf5 files for fly scans
-    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF/", "_0.nc");
-    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5/", "_0.h5");
-    hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress/", "_0.h5");
+    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF"+ DIR_END_CHAR, "_0.nc");
+    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
+    hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress"+ DIR_END_CHAR, "_0.h5");
     //hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
     hdf_emd_files = find_all_dataset_files(dataset_dir , ".emd");
 }
@@ -173,16 +174,16 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-bool load_element_info(std::string element_henke_filename, std::string element_csv_filename, data_struct::Element_Info_Map *element_info_map)
+bool load_element_info(std::string element_henke_filename, std::string element_csv_filename)
 {
 
-	if (io::file::load_henke_from_xdr(element_henke_filename, element_info_map) == false)
+    if (io::file::load_henke_from_xdr(element_henke_filename) == false)
 	{
 		logit << "error loading " << element_henke_filename << "\n";
 		return false;
 	}
 
-	if (io::file::load_element_info_from_csv(element_csv_filename, element_info_map) == false)
+    if (io::file::load_element_info_from_csv(element_csv_filename) == false)
 	{
 		logit << "error loading " << element_csv_filename << "\n";
 		return false;
@@ -243,7 +244,7 @@ bool save_volume(data_struct::Quantification_Standard * quantification_standard,
 void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 {
     io::file::CSV_IO csv_io;
-    std::string full_path = file_and_fit_params->dataset_dir+"/output/"+file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
+    std::string full_path = file_and_fit_params->dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
     logit<<full_path<<"\n";
 
     fitting::models::Gaussian_Model model;
@@ -304,7 +305,7 @@ void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, d
 {
     io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
-    std::string full_path = dataset_dir+"/maps_fit_parameters_override.txt";
+    std::string full_path = dataset_dir+ DIR_END_CHAR+"maps_fit_parameters_override.txt";
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
         aps_io.save(full_path, fit_params_avgs[i], detector_num );
@@ -436,10 +437,9 @@ bool load_override_params(std::string dataset_directory,
         det_num = std::to_string(detector_num);
 
     if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
-                                        data_struct::Element_Info_Map::inst(),
                                         params_override))
     {
-        logit<<"Error loading fit param override file: "<<"\n";
+        logit<<"Error loading fit param override file: "<<dataset_directory+"maps_fit_parameters_override.txt"+det_num<<"\n";
         return false;
     }
     else
@@ -500,7 +500,7 @@ bool load_spectra_volume(std::string dataset_directory,
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
-    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
+    logit<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -546,7 +546,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
-    if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(dataset_directory+"img.dat/"+dataset_file, detector_num, spectra_volume))
+    if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file, detector_num, spectra_volume))
     {
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);
@@ -560,45 +560,45 @@ bool load_spectra_volume(std::string dataset_directory,
     //try loading emd dataset if it ends in .emd
     if(dataset_file.rfind(".emd") == dataset_file.length() - 4)
     {
-        if(true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
+        if(true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, spectra_volume))
         {
             //*is_loaded_from_analyazed_h5 = true;//test to not save volume
             std::string str_detector_num = std::to_string(detector_num);
-            std::string full_save_path = dataset_directory+"/img.dat/"+dataset_file+"_frame_"+str_detector_num+".h5";
+            std::string full_save_path = dataset_directory + DIR_END_CHAR + "img.dat"+ DIR_END_CHAR +dataset_file+"_frame_"+str_detector_num+".h5";
             io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true);
             return true;
         }
     }
 
     //try loading confocal dataset
-    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, spectra_volume))
+    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, spectra_volume))
     {
         if(save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+"/"+dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num);
         }
         return true;
     }
 
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, quantification_standard) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, quantification_standard) )
     {
-        logit<<"Error load spectra "<<dataset_directory+"mda/"+dataset_file<<"\n";
+        logit<<"Error load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
     }
     else
     {
         if(hasNetcdf)
         {
-            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
+            std::ifstream file_io(dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
                 std::string full_filename;
                 for(size_t i=0; i<spectra_volume->rows(); i++)
                 {
-                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
+                    full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logit<<"Loading file "<<full_filename<<"\n";
                     io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
@@ -606,20 +606,20 @@ bool load_spectra_volume(std::string dataset_directory,
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<"\n";
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
         else if (hasHdf)
         {
-            io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
+            io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
         }
         else if (hasXspress)
         {
             std::string full_filename;
             for(size_t i=0; i<spectra_volume->rows(); i++)
             {
-                full_filename = dataset_directory + "flyXspress/" + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
+                full_filename = dataset_directory + "flyXspress"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
                 io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
             }
         }
@@ -633,7 +633,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     mda_io.unload();
-    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
     return true;
 }
 
@@ -653,7 +653,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     data_struct::Spectra_Volume spectra_volume;
 
-    logit<<"Loading dataset "<<dataset_directory+"mda/"+dataset_file<<"\n";
+    logit<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
 
     //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
 
@@ -701,14 +701,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //  try to load from a pre analyzed file because they should contain the integrated spectra
-    if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(dataset_directory+"img.dat/"+dataset_file, detector_num, integrated_spectra))
+    if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file, detector_num, integrated_spectra))
     {
         return true;
     }
 
 
     //try loading confocal dataset
-    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+"/"+dataset_file, detector_num, &spectra_volume))
+    if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume))
     {
         *integrated_spectra = spectra_volume.integrate();
         return true;
@@ -717,7 +717,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda/"+dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, nullptr);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasHdf | hasXspress, params_override, nullptr);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();
@@ -729,7 +729,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         int rank;
         int dims[10];
         dims[0] = 0;
-        rank = mda_io.get_rank_and_dims(dataset_directory + "mda/" + dataset_file, &dims[0]);
+        rank = mda_io.get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
         if(rank == 3)
         {
             integrated_spectra->resize(dims[2]);
@@ -742,7 +742,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
         if(hasNetcdf)
         {
-            std::ifstream file_io(dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc");
+            std::ifstream file_io(dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc");
             if(file_io.is_open())
             {
                 file_io.close();
@@ -751,7 +751,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 {
                     data_struct::Spectra_Line spectra_line;
                     spectra_line.resize(dims[1], integrated_spectra->size());
-                    full_filename = dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
+                    full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //logit<<"Loading file "<<full_filename<<"\n";
                     if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
                     {
@@ -764,13 +764,13 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF/" + tmp_dataset_file + file_middle + "0.nc"<<"\n";
+                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
         else if (hasHdf)
         {
-            ret_val = io::file::HDF5_IO::inst()->load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5/" + tmp_dataset_file + file_middle + "0.h5", detector_num, integrated_spectra);
+            ret_val = io::file::HDF5_IO::inst()->load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, integrated_spectra);
         }
         else if (hasXspress)
         {
@@ -779,7 +779,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             spectra_line.resize(dims[1], integrated_spectra->size());
             for(size_t i=0; i<dims[0]; i++)
             {
-                full_filename = dataset_directory + "flyXspress/" + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
+                full_filename = dataset_directory + "flyXspress"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
                 if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line))
                 {
                     for(int k=0; k<spectra_line.size(); k++)
@@ -792,7 +792,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     }
 
-    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detector "<<detector_num<<"\n";
+    logit<<"Finished Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
     return ret_val;
 }
 
@@ -818,10 +818,10 @@ void generate_h5_averages(std::string dataset_directory,
 
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        hdf5_filenames.push_back(dataset_directory+"img.dat/"+dataset_file+".h5"+std::to_string(detector_num));
+        hdf5_filenames.push_back(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }
 
-    io::file::HDF5_IO::inst()->generate_avg(dataset_directory+"img.dat/"+dataset_file+".h5", hdf5_filenames);
+    io::file::HDF5_IO::inst()->generate_avg(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5", hdf5_filenames);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
@@ -897,8 +897,13 @@ void check_and_create_dirs(std::string dataset_directory)
 
     if (false == found_img_dat)
     {
+		int retval = system(nullptr);
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
-        system(cmd.c_str());
+        retval = system(cmd.c_str());
+		if (retval != 0)
+		{
+			logit << "Error: could not create directory: " << cmd << " . May not be able to save results!\n";
+		}
     }
     logit<<"done"<<"\n";
 
@@ -915,7 +920,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 
     for (auto &itr : *dataset_files)
     {
-        std::string full_path = dataset_directory + "/mda/"+itr;
+        std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
         int fsize = mda_io.get_multiplied_dims(full_path);
         f_list.push_back(file_name_size(itr, fsize));
     }
