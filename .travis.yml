@@ -20,7 +20,6 @@ before_install:
 before_install:
   - sudo apt-get install libhdf5-dev
   - sudo apt-get install libnetcdf-dev
-  - sudo apt-get install libeigen3-dev 
   
 # Enable C++ support
 language: cpp
@@ -38,6 +37,8 @@ install:
       CMAKE_URL="https://cmake.org/files/v3.5/cmake-3.5.0-Linux-x86_64.tar.gz"
       mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+      EIGEN_URL="http://bitbucket.org/eigen/eigen/get/3.3.4.tar.gz"
+      mkdir eigen && travis_retry wget --no-check-certificate --quiet -O - ${EIGEN_URL} | tar --strip-components=1 -xz -C eigen
     fi
   
   # Go to the Root directory  
@@ -47,4 +48,4 @@ install:
 script:
   - mkdir build
   - cd build
-  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DBUILD_WITH_PYTHON=ON .. && make
+  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DEIGEN3_INCLUDES=${DEPS_DIR}/eigen -DBUILD_WITH_PYBIND11=ON .. && make
