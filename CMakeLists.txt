@@ -313,8 +313,14 @@ set(CompilerFlags
   LIBRARY_OUTPUT_DIRECTORY LIBRARY_OUTPUT_DIRECTORY_RELEASE LIBRARY_OUTPUT_DIRECTORY_DEBUG
   RUNTIME_OUTPUT_DIRECTORY RUNTIME_OUTPUT_DIRECTORY_RELEASE RUNTIME_OUTPUT_DIRECTORY_DEBUG)
 
+IF (BUILD_WITH_PYBIND11)
+  foreach(CompilerFlag ${CompilerFlags})
+    set_target_properties(pyxrfmaps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+  endforeach()
+ENDIF()
+
 foreach(CompilerFlag ${CompilerFlags})
-  set_target_properties(pyxrfmaps libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+  set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
 endforeach()
 
 IF (WIN32)
