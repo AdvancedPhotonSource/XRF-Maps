@@ -170,10 +170,10 @@ APS_Fit_Params_Import::~APS_Fit_Params_Import()
 //-----------------------------------------------------------------------------
 
 bool APS_Fit_Params_Import::load(std::string path,
-                                 Element_Info_Map * element_info_map,
                                  Params_Override *params_override)
 {
 
+    data_struct::Element_Info_Map *element_info_map = data_struct::Element_Info_Map::inst();
     std::ifstream paramFileStream(path);
 
 

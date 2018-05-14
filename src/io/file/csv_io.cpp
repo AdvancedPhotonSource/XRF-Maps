@@ -93,8 +93,10 @@ bool CSV_IO::save_fit_parameters(std::string fullpath, Fit_Parameters fit_params
     return true;
 }
 
-bool load_element_info_from_csv(std::string filename, Element_Info_Map *element_map)
+bool load_element_info_from_csv(std::string filename)
 {
+    data_struct::Element_Info_Map *element_map = data_struct::Element_Info_Map::inst();
+
     std::ifstream file_stream(filename);
     try
     {

@@ -140,17 +140,20 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
         {
             Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
 
-            Range energy_range = get_energy_range(spectra_samples, &(sub_struct->fit_params_override_dict.fit_params));
-
-            for(auto &proc_type : fitting_routines)
+            if(sub_struct != nullptr)
             {
-                //Fitting models
-                fitting::routines::Base_Fit_Routine *fit_routine = sub_struct->fit_routines[proc_type];
-                logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
+                Range energy_range = get_energy_range(spectra_samples, &(sub_struct->fit_params_override_dict.fit_params));
 
-                Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
-                //Initialize model
-                fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
+                for(auto &proc_type : fitting_routines)
+                {
+                    //Fitting models
+                    fitting::routines::Base_Fit_Routine *fit_routine = sub_struct->fit_routines[proc_type];
+                    logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
+
+                    Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
+                    //Initialize model
+                    fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
+                }
             }
         }
     }

@@ -112,7 +112,7 @@ public:
 
     std::string dataset_directory;
 
-    std::string quantificaiton_standard_filename;
+    std::string quantification_standard_filename;
 
     std::string theta_pv;
 

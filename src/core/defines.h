@@ -67,6 +67,7 @@ static std::time_t now_c;
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__
+  #define DIR_END_CHAR '\\'
   #ifdef BUILDING_DLL
     #ifdef __GNUC__
       #define DLL_EXPORT __attribute__ ((dllexport))
@@ -82,6 +83,7 @@ static std::time_t now_c;
   #endif
   #define DLL_LOCAL
 #else
+  #define DIR_END_CHAR '/'
   #if __GNUC__ >= 4
     #define DLL_EXPORT __attribute__ ((visibility ("default")))
     #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))

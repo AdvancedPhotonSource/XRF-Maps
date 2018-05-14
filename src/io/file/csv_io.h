@@ -85,7 +85,7 @@ private:
 };
 
 
-DLL_EXPORT bool load_element_info_from_csv(std::string filename, data_struct::Element_Info_Map *element_map);
+DLL_EXPORT bool load_element_info_from_csv(std::string filename);
 
 }// end namespace file
 }// end namespace io
