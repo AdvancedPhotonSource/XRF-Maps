@@ -250,9 +250,19 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
+    //fitting::models::Range energy_range = fitting::models::Range(0.0, file_and_fit_params->spectra.size()-1);
 
     data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
     data_struct::ArrayXr background;
+
+    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
+    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
+    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
+
+    data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+
+    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
 
     if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
 	{
@@ -275,22 +285,11 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     }
 
 #ifdef _BUILD_WITH_QT
-
-    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
-
-    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
-    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
-    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
-
-	data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
-
     std::string str_path = file_and_fit_params->dataset_dir+"/output/fit_"+file_and_fit_params->dataset_filename+"_det"+std::to_string(file_and_fit_params->detector_num)+".png";
     visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
 #endif
 
-    // TODO: save the spectra, model, and background to csv
-    csv_io.save_fit_parameters(full_path, file_and_fit_params->fit_params );
+    csv_io.save_fit_parameters(full_path, ev, spec, model_spectra, background );
 
     for(auto &itr : file_and_fit_params->elements_to_fit)
     {
@@ -873,6 +872,7 @@ void check_and_create_dirs(std::string dataset_directory)
 {
 
     bool found_img_dat = false;
+    bool found_output = false;
     logit<<dataset_directory<<"\n";
     DIR *dir;
     struct dirent *ent;
@@ -884,8 +884,15 @@ void check_and_create_dirs(std::string dataset_directory)
             if( strcmp(ent->d_name , "img.dat") == 0)
             {
                 found_img_dat = true;
-                break;
             }
+            if( strcmp(ent->d_name , "output") == 0)
+            {
+                found_output = true;
+            }
+			if(found_img_dat && found_output)
+			{
+                break;
+			}
         }
         closedir (dir);
     }
@@ -899,6 +906,16 @@ void check_and_create_dirs(std::string dataset_directory)
     {
 		int retval = system(nullptr);
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
+        retval = system(cmd.c_str());
+		if (retval != 0)
+		{
+			logit << "Error: could not create directory: " << cmd << " . May not be able to save results!\n";
+		}
+    }
+    if (false == found_output)
+    {
+		int retval = system(nullptr);
+        std::string cmd = "mkdir "+dataset_directory+"output";
         retval = system(cmd.c_str());
 		if (retval != 0)
 		{

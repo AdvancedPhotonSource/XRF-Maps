@@ -59,15 +59,15 @@ QMAKE_CXXFLAGS += -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -D_BUILD_WITH_QT
 #end VTK
 
 #eigen
-INCLUDEPATH += /local/aglowacki/libs/eigen3/include/eigen3
+INCLUDEPATH += /local/aglowacki/libs/eigen_3_3_4
 
 #ceres
-INCLUDEPATH += /local/aglowacki/libs/ceres/include
-LIBS += /local/aglowacki/libs/ceres/lib64/libceres.a
-INCLUDEPATH += /local/aglowacki/libs/glog/include
-LIBS += /local/aglowacki/libs/glog/lib/libglog.a
-INCLUDEPATH += /local/aglowacki/libs/gflags/include
-LIBS += /local/aglowacki/libs/gflags/lib/libgflags.a
+#INCLUDEPATH += /local/aglowacki/libs/ceres/include
+#LIBS += /local/aglowacki/libs/ceres/lib64/libceres.a
+#INCLUDEPATH += /local/aglowacki/libs/glog/include
+#LIBS += /local/aglowacki/libs/glog/lib/libglog.a
+#INCLUDEPATH += /local/aglowacki/libs/gflags/include
+#LIBS += /local/aglowacki/libs/gflags/lib/libgflags.a
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -lgomp
 

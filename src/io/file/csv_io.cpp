@@ -72,17 +72,16 @@ CSV_IO::~CSV_IO()
 
 }
 
-bool CSV_IO::save_fit_parameters(std::string fullpath, Fit_Parameters fit_params)
+bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background)
 {
     std::ofstream file_stream(fullpath);
     if(file_stream.is_open())
     {
-        file_stream<<"Optimized Fit Parameters"<<"\n";
-        file_stream<<"Name,Value,Fixed,Min,Max"<<"\n";
+        file_stream<<"Energy,Spectrum,Fitted,Background"<<"\n";
 
-        for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        for (int i=0; i<energy.rows(); i++)
         {
-            file_stream<<itr->first<<","<<itr->second.value<<","<<itr->second.bound_type_str()<<","<<itr->second.min_val<<","<<itr->second.max_val<<"\n";
+            file_stream<<energy(i)<<","<<spectra(i)<<","<<spectra_model(i)<<","<<background(i)<<"\n";
         }
         file_stream.close();
     }
