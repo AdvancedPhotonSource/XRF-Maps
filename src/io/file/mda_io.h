@@ -101,7 +101,7 @@ public:
 
     int get_multiplied_dims(std::string path);
 
-    int get_rank_and_dims(std::string path, int* dims);
+    int get_rank_and_dims(std::string path, size_t* dims);
 
     int rows() { return _rows; }
 

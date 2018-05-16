@@ -76,10 +76,10 @@ struct Range
 {
 	Range() { min = 0; max = 0; }
 	Range(const Range& r) { min = r.min; max = r.max; }
-	Range(int rmin, int rmax) { min = rmin; max = rmax; }
+    Range(size_t rmin, size_t rmax) { min = rmin; max = rmax; }
 	size_t count() const { return (max - min) + 1; }
-	int min;
-	int max;
+    size_t min;
+    size_t max;
 };
 
 
@@ -171,7 +171,7 @@ struct DLL_EXPORT Fit_Param
 
 //-----------------------------------------------------------------------------
 /**
- * @brief The Fit_Parameters class: Dictionary of fit parameters. Many fit routines use arrays so there are convert to and from array functions. TODO: Maybe derive from unordered map?
+ * @brief The Fit_Parameters class: Dictionary of fit parameters. Many fit routines use arrays so there are convert to and from array functions.
  */
 class DLL_EXPORT Fit_Parameters
 {

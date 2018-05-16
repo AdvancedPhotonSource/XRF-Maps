@@ -271,7 +271,7 @@ void HDF5_IO::lazy_load()
     hsize_t* count = new hsize_t[rank];
     hsize_t* sel_dims = new hsize_t[rank];
     //logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_out[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_out[0], NULL);
 
     unsigned long total = 1;
     for (int i=0; i < rank; i++)
@@ -499,7 +499,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -668,7 +668,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -869,7 +869,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -913,7 +913,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     if(error == 0)
     {
         //generate lookup map
-        for(int z = 0; z < det_dims_in[2]; z++)
+        for(size_t z = 0; z < det_dims_in[2]; z++)
         {
             detector_lookup[std::string(detector_names[z])] = z;
             free(detector_names[z]);
@@ -1086,7 +1086,7 @@ bool HDF5_IO::_load_spectra_volume(std::string path, size_t detector_num, H5_Spe
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -1364,7 +1364,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
     hsize_t* count = new hsize_t[rank];
     hsize_t* chunk_dims = new hsize_t[rank];
     logit << "rank = " << rank << "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if (status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -1372,7 +1372,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
         return false;
     }
 
-    for (int i = 0; i < rank; i++)
+    for (hsize_t i = 0; i < rank; i++)
     {
         logit << "dims [" << i << "] =" << dims_in[i] << "\n";
         offset[i] = 0;
@@ -1553,7 +1553,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	std::string detector_path;
     hsize_t image_dims[3] = {0,0,0};
 	char str_grp_name[2048] = { 0 };
-    int frame = frame_num_start;
+    size_t frame = frame_num_start;
 
 	if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
 		return false;
@@ -1663,7 +1663,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	hsize_t* count = new hsize_t[rank];
 	hsize_t* chunk_dims = new hsize_t[rank];
 	logit << "rank = " << rank << "\n";
-	unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
 	if (status_n < 0)
 	{
 		_close_h5_objects(close_map);
@@ -1671,7 +1671,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 		return false;
 	}
 
-	for (int i = 0; i < rank; i++)
+    for (size_t i = 0; i < rank; i++)
 	{
 		logit << "dims [" << i << "] =" << dims_in[i] << "\n";
 		offset[i] = 0;
@@ -1926,7 +1926,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(detector_hid_map[detector_num_start].dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(detector_hid_map[detector_num_start].dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -2128,7 +2128,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
      hsize_t* offset = new hsize_t[rank];
      hsize_t* count = new hsize_t[rank];
      logit<<"rank = "<<rank<< "\n";
-     unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+     int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
      if(status_n < 0)
      {
          _close_h5_objects(close_map);
@@ -2149,7 +2149,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
      count[1] = 1; //1 row
 
-     if(spectra->size() != dims_in[0])
+     if((hsize_t)spectra->size() != dims_in[0])
      {
         spectra->resize(dims_in[0]);
      }
@@ -2309,7 +2309,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
        //throw exception ("Dataset is not a volume");
     }
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -2353,11 +2353,11 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
     //offset[1] = row;
 
-    for(size_t row=row_idx_start; row < row_idx_end; row++)
+    for(size_t row=(size_t)row_idx_start; row < (size_t)row_idx_end; row++)
     {
         offset[1] = row;
         offset_time[0] = row;
-        for(size_t col=col_idx_start; col < col_idx_end; col++)
+        for(size_t col=(size_t)col_idx_start; col < (size_t)col_idx_end; col++)
         {
             data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
@@ -2484,7 +2484,7 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Sp
        //throw exception ("Dataset is not a volume");
     }
     logit<<"rank = "<<rank<< "\n";
-    unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+    int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -2688,9 +2688,10 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    hid_t    dset_id, spec_grp_id, int_spec_grp_id, dataspace_id, memoryspace_id, memoryspace_time_id, dataspace_time_id, file_time_id, filespace_id, status, maps_grp_id, dcpl_id;
+    hid_t    dset_id, spec_grp_id, int_spec_grp_id, dataspace_id, memoryspace_id, memoryspace_time_id, dataspace_time_id, file_time_id, filespace_id, maps_grp_id, dcpl_id;
     hid_t   dset_rt_id, dset_lt_id, incnt_dset_id, outcnt_dset_id;
     //herr_t   error;
+    int status = 0;
 
     hsize_t chunk_dims[3];
     hsize_t dims_out[3];
@@ -2700,11 +2701,11 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     hsize_t offset_time[2];
     hsize_t count_time[2];
 
-    if (row_idx_end < row_idx_start || row_idx_end > spectra_volume->rows() -1)
+    if (row_idx_end < (int)row_idx_start || (size_t)row_idx_end > spectra_volume->rows() -1)
     {
         row_idx_end = spectra_volume->rows();
     }
-    if (col_idx_end < col_idx_start || col_idx_end > spectra_volume->cols() -1)
+    if (col_idx_end < (int)col_idx_start || (size_t)col_idx_end > spectra_volume->cols() -1)
     {
         col_idx_end = spectra_volume->cols();
     }
@@ -2790,18 +2791,18 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     real_t life_time;
     real_t in_cnt;
     real_t out_cnt;
-    for(size_t row=row_idx_start; row < row_idx_end; row++)
+    for(size_t row=row_idx_start; row < (size_t)row_idx_end; row++)
     {
         offset[1] = row;
         offset_time[0] = row;
-        for(size_t col=col_idx_start; col < col_idx_end; col++)
+        for(size_t col=col_idx_start; col < (size_t)col_idx_end; col++)
         {
             const data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
             offset_time[1] = col;
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-            status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
+            H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
 
             H5Sselect_hyperslab (file_time_id, H5S_SELECT_SET, offset_time, NULL, count_time, NULL);
 
@@ -2809,10 +2810,10 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
             life_time = spectra->elapsed_livetime();
             in_cnt = spectra->input_counts();
             out_cnt = spectra->output_counts();
-            status = H5Dwrite (dset_rt_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&real_time);
-            status = H5Dwrite (dset_lt_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&life_time);
-            status = H5Dwrite (incnt_dset_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&in_cnt);
-            status = H5Dwrite (outcnt_dset_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&out_cnt);
+            H5Dwrite (dset_rt_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&real_time);
+            H5Dwrite (dset_lt_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&life_time);
+            H5Dwrite (incnt_dset_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&in_cnt);
+            H5Dwrite (outcnt_dset_id, H5T_NATIVE_REAL, memoryspace_time_id, file_time_id, H5P_DEFAULT, (void*)&out_cnt);
         }
     }
 
@@ -4266,7 +4267,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
     hsize_t offset[1] = { 0 };
     hsize_t count[1] = { 1 };
 
-	hsize_t offset_2d[2] = { 0, 0 };
+    //hsize_t offset_2d[2] = { 0, 0 };
 	hsize_t count_2d[2] = { 1, 1 };
 
     hsize_t offset_3d[3] = { 0, 0, 0 };
@@ -5218,7 +5219,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
         status = H5Dwrite (dataset_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, detector_names);
         H5Sclose(dataspace_id);
         H5Dclose(dataset_id);
-        for(int z = 0; z < det_dims_in[2]; z++)
+        for(size_t z = 0; z < det_dims_in[2]; z++)
         {
             free(detector_names[z]);
         }
@@ -5385,15 +5386,19 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
 
         hsize_t* dims_in = new hsize_t[rank];
-        unsigned int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
-
+        int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
+        if(status_n < 0)
+        {
+            logit<<"Error: could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            return;
+        }
         unsigned long total = 1;
         for(int i=0; i< rank; i++)
         {
             total *= dims_in[i];
         }
         //get all the other files dataset ids
-        for(int k=1; k<hdf5_file_ids.size(); k++)
+        for(long unsigned int k=1; k<hdf5_file_ids.size(); k++)
         {
             hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
             if( det_analysis_dset_id > -1 )
@@ -5404,7 +5409,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 		data_struct::ArrayXr buffer2(total);
         float divisor = 1.0;
         error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
-        for(int k=0; k<analysis_ids.size(); k++)
+        for(long unsigned int k=0; k<analysis_ids.size(); k++)
         {
             error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
             if(error > -1)
@@ -5426,7 +5431,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
         error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
 
-        for(int k=0; k<analysis_ids.size(); k++)
+        for(long unsigned int k=0; k<analysis_ids.size(); k++)
         {
             H5Dclose(analysis_ids[k]);
         }
@@ -5457,7 +5462,15 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
                 hid_t dst_fit_grp_id = H5Gcreate(dst_analyzed_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                 //copy channel names
                 hid_t status = H5Ocopy(src_fit_grp_id, "Channel_Names", dst_fit_grp_id, "Channel_Names", ocpypl_id, H5P_DEFAULT);
+                if(status < 0)
+                {
+                    logit<<"Error: coping Channel_Names!\n";
+                }
                 status = H5Ocopy(src_fit_grp_id, "Calibration_Curve_Labels", dst_fit_grp_id, "Calibration_Curve_Labels", ocpypl_id, H5P_DEFAULT);
+                if(status < 0)
+                {
+                    logit<<"Error: coping Calibration_Curve_Labels!\n";
+                }
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_Current", "Calibration_Curve_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);

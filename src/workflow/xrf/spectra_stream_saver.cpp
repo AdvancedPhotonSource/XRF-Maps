@@ -102,10 +102,10 @@ void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
         {
             Detector_Save *detector = dataset->detector_map.at(detector_num);
 
-            if(detector->last_row > -1 && stream_block->row() > detector->last_row)
+            if(detector->last_row > -1 && stream_block->row() > (size_t)detector->last_row)
             {
                 io::file::HDF5_IO::inst()->save_stream_row(d_hash, detector_num, detector->last_row, &detector->spectra_line);
-                for(int i=0; i<detector->spectra_line.size(); i++)
+                for(size_t i=0; i<detector->spectra_line.size(); i++)
                 {
                     if(detector->spectra_line[i] != nullptr)
                     {

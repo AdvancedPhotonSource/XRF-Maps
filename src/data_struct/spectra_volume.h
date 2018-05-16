@@ -52,15 +52,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_struct/spectra_line.h"
 
-//#include "base_dataset.h"
-
 namespace data_struct
 {
 
 /**
  * @brief The Spectra_Volume class : A volume of spectras
  */
-class DLL_EXPORT Spectra_Volume //: public Base_Dataset
+class DLL_EXPORT Spectra_Volume
 {
 public:
 	Spectra_Volume();
@@ -73,19 +71,17 @@ public:
 
     void resize(size_t rows, size_t cols, size_t samples);
 
-    void dims(int &dims_out) {  }
-
     Spectra integrate();
 
     //real_t* get_spectra(unsigned int row, unsigned int col);
 
-    const size_t cols() const { return _data_vol[0].size(); }
+    size_t cols() const { return _data_vol[0].size(); }
 
-    const size_t rows() const { return _data_vol.size(); }
+    size_t rows() const { return _data_vol.size(); }
 
     void recalc_elapsed_livetime();
 
-    const size_t samples_size() const { return _data_vol[0][0].size(); }
+    size_t samples_size() const { return _data_vol[0][0].size(); }
 
     int rank() { return 3; }
 

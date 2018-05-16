@@ -108,7 +108,7 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
 
 //-----------------------------------------------------------------------------
 
-void quantification_residuals( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
+void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
 {
     ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
 
@@ -271,7 +271,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
 
-    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &control, &status );
     printf(".");
     fit_params->from_array(fitp_arr);
 

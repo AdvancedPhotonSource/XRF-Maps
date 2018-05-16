@@ -111,7 +111,7 @@ void Spectra_Net_Source::cb_load_spectra_data(size_t row, size_t col, size_t hei
     if(_output_callback_func != nullptr)
     {
         analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+        struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
 
         data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
         stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));

@@ -116,11 +116,11 @@ std::string Basic_Serializer::encode_counts(data_struct::Stream_Block* stream_bl
 
 //-----------------------------------------------------------------------------
 
-data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, int message_len)
+data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, size_t message_len)
 {
 
-	int idx = 0;
-	int idx2 = 0;
+    size_t idx = 0;
+    size_t idx2 = 0;
 	int detector_number = 0;
 	size_t row = 0;
 	size_t col = 0;
@@ -152,7 +152,7 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, int me
 
 	memcpy(&proc_type_count, message + idx, 4);
 	idx += 4;
-	for (int proc_type_itr = 0; proc_type_itr < proc_type_count; proc_type_itr++)
+    for (size_t proc_type_itr = 0; proc_type_itr < proc_type_count; proc_type_itr++)
 	{
 		memcpy(&proc_type, message + idx, 4);
 		idx += 4;
@@ -161,7 +161,7 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, int me
 		//get fit_block[proc_type] size
 		memcpy(&fit_block_size, message + idx, 4);
 		idx += 4;
-		for (int i = 0; i < fit_block_size; i++)
+        for (size_t i = 0; i < fit_block_size; i++)
 		{
 			idx2 = idx;
 			// find null term

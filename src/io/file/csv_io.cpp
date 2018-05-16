@@ -327,7 +327,7 @@ bool load_element_info_from_csv(std::string filename)
             }
         }
     }
-    catch(std::exception e)
+    catch(std::exception& e)
     {
         if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()) )
         {

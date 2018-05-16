@@ -87,7 +87,7 @@ protected:
         {
             last_row = -1;
             spectra_line.resize(width);
-            for(int i=0;i<width; i++)
+            for(size_t i=0;i<width; i++)
             {
                 spectra_line[i] = nullptr;
             }

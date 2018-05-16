@@ -186,7 +186,7 @@ private:
 };
 
 
-template DLL_EXPORT class Spectra_T<real_t>;
+template class DLL_EXPORT Spectra_T<real_t>;
 typedef Spectra_T<real_t> Spectra;
 
 DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, size_t boxcar_size);

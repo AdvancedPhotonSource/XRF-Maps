@@ -622,7 +622,7 @@ bool APS_Fit_Params_Import::load(std::string path,
 
             }
         }
-        catch(std::exception e)
+        catch(std::exception& e)
         {
             if (paramFileStream.eof() == 0 && (paramFileStream.bad() || paramFileStream.fail()) )
             {
@@ -716,7 +716,7 @@ bool APS_Fit_Params_Import::save(std::string path,
             }
         }
 
-        catch(std::exception e)
+        catch(std::exception& e)
         {
             if (in_stream.eof() == 0 && (in_stream.bad() || in_stream.fail()) )
             {

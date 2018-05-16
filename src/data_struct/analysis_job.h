@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/base_fit_routine.h"
 #include <vector>
 #include <string>
+#include <thread>
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
 #include "fitting/optimizers/lmfit_optimizer.h"
@@ -68,9 +69,9 @@ namespace data_struct
 //-----------------------------------------------------------------------------
 
 ///
-/// \brief The Analysis_Sub_Struct class
+/// \brief The Detector class
 ///
-struct DLL_EXPORT Analysis_Sub_Struct
+struct DLL_EXPORT Detector
 {
 
     // Fitting routines map
@@ -98,9 +99,9 @@ public:
 
     ~Analysis_Job();
 
-    struct Analysis_Sub_Struct* get_first_sub_struct();
+    struct Detector* get_first_detector();
 
-    struct Analysis_Sub_Struct* get_sub_struct(int detector_num);
+    struct Detector* get_detector(int detector_num);
 
     void set_optimizer(std::string optimizer);
 
@@ -124,7 +125,7 @@ public:
 
     std::vector<Fitting_Routines> fitting_routines;
 
-    std::map<int, struct Analysis_Sub_Struct> detectors_meta_data;
+    std::map<int, struct Detector> detectors_meta_data;
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
@@ -135,8 +136,6 @@ public:
     size_t num_threads;
 
     bool quick_and_dirty;
-
-    bool optimize_fit_override_params;
 
     bool generate_average_h5;
 

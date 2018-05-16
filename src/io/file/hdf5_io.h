@@ -117,7 +117,7 @@ struct H5_Layout_Item
 
     int get_order_index(H5_Order o)
     {
-        for (int i=0; i < order_size; i++)
+        for (size_t i=0; i < order_size; i++)
         {
             if(order[i] == o)
                 return i;

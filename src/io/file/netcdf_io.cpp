@@ -353,7 +353,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
 
     //loop through col sectors
-    for(int z = 0; z < dim2size[0]; z++)
+    for(size_t z = 0; z < dim2size[0]; z++)
     {
         header_size = 256;
         start[0] = z;
@@ -389,7 +389,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         for(size_t j=0; j<num_cols; j++)
         {
             //read sub header and spectra data
-            if( retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) )
+            if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0])) )
             {
                 logit<<"Error: "<< nc_strerror(retval)<<"\n";
                 nc_close(ncid);

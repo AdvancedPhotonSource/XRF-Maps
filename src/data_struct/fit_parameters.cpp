@@ -162,7 +162,7 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     //logit_s<<"\n";
     for(auto& itr : _params)
     {
-        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < arr_size)
+        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < (int)arr_size)
         {
             itr.second.value = arr[itr.second.opt_array_index];
         }
@@ -260,7 +260,7 @@ Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size
 	{
 		energy_range.max = spectra_size - 1;
 	}
-	if (energy_range.min < 0 || energy_range.min > energy_range.max)
+    if (energy_range.min > energy_range.max)
 	{
 		energy_range.min = 0;
 	}

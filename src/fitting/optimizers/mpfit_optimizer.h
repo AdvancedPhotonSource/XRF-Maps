@@ -82,7 +82,7 @@ public:
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,
                                          std::unordered_map<std::string, Element_Quant> * quant_map,
-                                         quantification::models::Quantification_Model * quantification_model){}
+                                         quantification::models::Quantification_Model * quantification_model);
 
 private:
 

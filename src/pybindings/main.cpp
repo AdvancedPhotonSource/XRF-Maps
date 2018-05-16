@@ -189,17 +189,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("quantifiy", &data_struct::Quantification_Standard::quantifiy)
     .def_readwrite("calibration_curves", &data_struct::Quantification_Standard::calibration_curves);
 
-    py::class_<data_struct::Analysis_Sub_Struct>(m, "AnalysisSubStruct")
+    py::class_<data_struct::Detector>(m, "Detector")
     .def(py::init<>())
-    .def_readwrite("fit_routines", &data_struct::Analysis_Sub_Struct::fit_routines)
-    .def_readwrite("model", &data_struct::Analysis_Sub_Struct::model)
-    .def_readwrite("quant_standard", &data_struct::Analysis_Sub_Struct::quant_standard)
-    .def_readwrite("fit_params_override_dict", &data_struct::Analysis_Sub_Struct::fit_params_override_dict);
+    .def_readwrite("fit_routines", &data_struct::Detector::fit_routines)
+    .def_readwrite("model", &data_struct::Detector::model)
+    .def_readwrite("quant_standard", &data_struct::Detector::quant_standard)
+    .def_readwrite("fit_params_override_dict", &data_struct::Detector::fit_params_override_dict);
 
     py::class_<data_struct::Analysis_Job>(m, "AnalysisJob")
     .def(py::init<>())
-    .def("get_first_sub_struct", &data_struct::Analysis_Job::get_first_sub_struct)
-    .def("get_sub_struct", &data_struct::Analysis_Job::get_sub_struct)
+    .def("get_first_detector", &data_struct::Analysis_Job::get_first_detector)
+    .def("get_detector", &data_struct::Analysis_Job::get_detector)
     .def("set_optimizer", &data_struct::Analysis_Job::set_optimizer)
     .def("get_optimizer", &data_struct::Analysis_Job::optimizer)
     .def("init_fit_routines", &data_struct::Analysis_Job::init_fit_routines)
@@ -216,7 +216,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("detector_num_end", &data_struct::Analysis_Job::detector_num_end)
     .def_readwrite("num_threads", &data_struct::Analysis_Job::num_threads)
     .def_readwrite("quick_and_dirty", &data_struct::Analysis_Job::quick_and_dirty)
-    .def_readwrite("optimize_fit_override_params", &data_struct::Analysis_Job::optimize_fit_override_params)
     .def_readwrite("generate_average_h5", &data_struct::Analysis_Job::generate_average_h5)
     .def_readwrite("is_network_source", &data_struct::Analysis_Job::is_network_source)
     .def_readwrite("stream_over_network", &data_struct::Analysis_Job::stream_over_network)

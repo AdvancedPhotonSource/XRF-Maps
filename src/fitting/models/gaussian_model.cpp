@@ -315,7 +315,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 		keys.push_back(itr.first);
 
 #pragma omp parallel for
-		for (int i=0; i < keys.size(); i++) 
+        for (size_t i=0; i < keys.size(); i++)
     //for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
