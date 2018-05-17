@@ -62,13 +62,13 @@ Spectra_Volume::~Spectra_Volume()
 
 }
 
-void Spectra_Volume::resize(size_t rows, size_t cols, size_t samples)
+void Spectra_Volume::resize_and_zero(size_t rows, size_t cols, size_t samples)
 {
 
     _data_vol.resize(rows);
     for(size_t i=0; i<_data_vol.size(); i++)
     {
-        _data_vol[i].resize(cols, samples);
+        _data_vol[i].resize_and_zero(cols, samples);
     }
 
 }

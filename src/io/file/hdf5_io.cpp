@@ -526,7 +526,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
     if(spec_vol->rows() < dims_in[1] || spec_vol->cols() < dims_in[2] || spec_vol->samples_size() < dims_in[0])
     {
-        spec_vol->resize(dims_in[1], dims_in[2], dims_in[0]);
+        spec_vol->resize_and_zero(dims_in[1], dims_in[2], dims_in[0]);
     }
 
     count[1] = 1; //1 row
@@ -693,7 +693,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
 
     if( spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
     {
-        spec_row->resize(greater_cols, greater_channels);
+        spec_row->resize_and_zero(greater_cols, greater_channels);
     }
 
     memoryspace_id = H5Screate_simple(3, count_row, NULL);
@@ -898,7 +898,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 
     if(spec_vol->rows() < dims_in[0] || spec_vol->cols() < dims_in[1] || spec_vol->samples_size() < dims_in[2])
     {
-        spec_vol->resize(dims_in[0], dims_in[1], dims_in[2]);
+        spec_vol->resize_and_zero(dims_in[0], dims_in[1], dims_in[2]);
     }
 
 
@@ -1354,7 +1354,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
         return false;
     }
 
-    spec_vol->resize(height, width, samples);
+    spec_vol->resize_and_zero(height, width, samples);
 
     hsize_t rank;
     rank = H5Sget_simple_extent_ndims(dataspace_id);
@@ -2152,6 +2152,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
      if((hsize_t)spectra->size() != dims_in[0])
      {
         spectra->resize(dims_in[0]);
+        spectra->setZero(dims_in[0]);
      }
 
      memoryspace_id = H5Screate_simple(2, count_row, NULL);
@@ -2334,7 +2335,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
         col_idx_end = dims_in[2];
     }
 
-    spectra_volume->resize(dims_in[1], dims_in[2], dims_in[0]);
+    spectra_volume->resize_and_zero(dims_in[1], dims_in[2], dims_in[0]);
 
     //buffer = new real_t [dims_in[0] * dims_in[2]]; // cols x spectra_size
     count[0] = dims_in[0];
@@ -2500,6 +2501,7 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Sp
     }
 
     spectra->resize(dims_in[0]);
+    spectra->setZero(dims_in[0]);
 
     count[0] = dims_in[0];
 

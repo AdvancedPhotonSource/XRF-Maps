@@ -60,6 +60,7 @@ namespace data_struct
 using namespace std;
 
 typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
+typedef Eigen::Array<const real_t, Eigen::Dynamic, Eigen::RowMajor> ConstArrayXr;
 
 template<typename _T>
 class Spectra_T : public Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>
@@ -117,6 +118,15 @@ public:
         _output_counts = 1.0;
     }
 
+
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
+    {
+        _elapsed_livetime = livetime;
+        _elapsed_realtime = realtime;
+        _input_counts = incnt;
+        _output_counts = outnt;
+    }
+
     Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
     {
 		this->setZero();		
@@ -145,10 +155,26 @@ public:
     void add(const Spectra_T& spectra)
     {
         *this += (Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>)spectra;
-        _elapsed_livetime += spectra.elapsed_livetime();
-        _elapsed_realtime += spectra.elapsed_realtime();
-        _input_counts += spectra.input_counts();
-        _output_counts += spectra.output_counts();
+        real_t val = spectra.elapsed_livetime();
+        if(std::isnan(val) == false)
+        {
+            _elapsed_livetime += val;
+        }
+        val = spectra.elapsed_realtime();
+        if(std::isnan(val) == false)
+        {
+            _elapsed_realtime += val;
+        }
+        val = spectra.input_counts();
+        if(std::isnan(val) == false)
+        {
+            _input_counts += val;
+        }
+        val = spectra.output_counts();
+        if(std::isnan(val) == false)
+        {
+            _output_counts += val;
+        }
     }
 
     void elapsed_livetime(_T val) { _elapsed_livetime = val; }
@@ -169,11 +195,7 @@ public:
 
     Spectra_T sub_spectra(size_t start, size_t count) const
 	{
-		return Spectra_T(this->segment(start, count));
-//        ret_spec.elapsed_livetime(this->_elapsed_livetime);
-//        ret_spec.elapsed_realtime(this->_elapsed_realtime);
-//        ret_spec.input_counts(this->_input_counts);
-//        ret_spec.output_counts(this->_output_counts);
+        return Spectra_T(this->segment(start, count), _elapsed_livetime, _elapsed_realtime, _input_counts, _output_counts);
 	}
 
 private:

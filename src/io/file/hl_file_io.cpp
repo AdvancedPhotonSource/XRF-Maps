@@ -732,10 +732,12 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         if(rank == 3)
         {
             integrated_spectra->resize(dims[2]);
+            integrated_spectra->setZero(dims[2]);
         }
         else
         {
             integrated_spectra->resize(2048);
+            integrated_spectra->setZero(2048);
         }
 
 
@@ -749,14 +751,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 for(size_t i=0; i<dims[0]; i++)
                 {
                     data_struct::Spectra_Line spectra_line;
-                    spectra_line.resize(dims[1], integrated_spectra->size());
+                    spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //logit<<"Loading file "<<full_filename<<"\n";
                     if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
                     {
                         for(size_t k=0; k<spectra_line.size(); k++)
                         {
-                            *integrated_spectra += spectra_line[k];
+                            integrated_spectra->add(spectra_line[k]);
                         }
                     }
                 }
@@ -775,7 +777,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         {
             std::string full_filename;
             data_struct::Spectra_Line spectra_line;
-            spectra_line.resize(dims[1], integrated_spectra->size());
+            spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
             for(size_t i=0; i<dims[0]; i++)
             {
                 full_filename = dataset_directory + "flyXspress"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";

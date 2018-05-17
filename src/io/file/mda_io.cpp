@@ -209,7 +209,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 cols = 1;
             else
                 cols = _mda_file->scan->sub_scans[0]->last_point;
-            vol->resize(rows, cols, 2048);
+            vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
         else
@@ -229,7 +229,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 else
                 cols = _mda_file->scan->last_point;
                 samples = _mda_file->header->dimensions[1];
-                vol->resize(rows, cols, samples);
+                vol->resize_and_zero(rows, cols, samples);
                 _is_single_row = true;
             }
             else
@@ -259,7 +259,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         else
             cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
-        vol->resize(rows, cols, samples);
+        vol->resize_and_zero(rows, cols, samples);
     }
     else
     {

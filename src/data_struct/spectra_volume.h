@@ -69,7 +69,7 @@ public:
 
     const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
 
-    void resize(size_t rows, size_t cols, size_t samples);
+    void resize_and_zero(size_t rows, size_t cols, size_t samples);
 
     Spectra integrate();
 

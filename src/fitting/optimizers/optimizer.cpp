@@ -64,7 +64,9 @@ namespace optimizers
 	{
 		ud.fit_model = (Base_Model*)model;
 		// set spectra to fit
-		ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+        ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+        //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+        //new (&(ud.spectra)) Eigen::Map<const ArrayXr>(spectra->data() + energy_range.min, energy_range.count());
         ud.orig_spectra = spectra;
 		ud.fit_parameters = fit_params;
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
@@ -104,8 +106,9 @@ namespace optimizers
 	{
 		ud.func = gen_func;
 		// set spectra to fit
-		//ud.spectra.resize(energy_range.count());
-		ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());;
+        ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());;
+        //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+        //new (&ud.spectra) Eigen::Map<const ArrayXr>(spectra->data() + energy_range.min, energy_range.count());
 		ud.fit_parameters = fit_params;
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
