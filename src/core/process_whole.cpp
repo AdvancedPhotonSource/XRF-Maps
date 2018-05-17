@@ -250,7 +250,7 @@ void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job)
 // ----------------------------------------------------------------------------
 
 void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
-                  data_struct::Analysis_Sub_Struct * detector_struct,
+                  data_struct::Detector * detector_struct,
                   ThreadPool* tp,
                   bool save_spec_vol)
 {
@@ -333,7 +333,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
         {
             std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5";
 
-            data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(0);
+            data_struct::Detector* detector_struct = analysis_job->get_detector(0);
             //Spectra volume data
             data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
             data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
@@ -363,9 +363,9 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                     return;
                 }
                 //add all detectors up
-                for(int j=0; j<spectra_volume->rows(); j++)
+                for(size_t j=0; j<spectra_volume->rows(); j++)
                 {
-                    for(int k=0; k<spectra_volume->cols(); k++)
+                    for(size_t k=0; k<spectra_volume->cols(); k++)
                     {
                         real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
                         real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
@@ -399,7 +399,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
             {
 
-                data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num);
+                data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
 
                 //Spectra volume data
                 data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
@@ -457,7 +457,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
         for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
 
-            data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num);
+            data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
             data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
 

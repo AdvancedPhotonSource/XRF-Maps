@@ -78,6 +78,7 @@ typedef std::function<void(const Fit_Parameters * const, const Range * const, Sp
 struct User_Data
 {
     Base_Model* fit_model;
+    //Eigen::Map<ArrayXr> spectra;
     Spectra spectra;
 	ArrayXr weights;
     Fit_Parameters *fit_parameters;
@@ -90,6 +91,7 @@ struct User_Data
 
 struct Gen_User_Data
 {
+    //Eigen::Map<ArrayXr> spectra;
     Spectra spectra;
 	ArrayXr weights;
     Fit_Parameters *fit_parameters;

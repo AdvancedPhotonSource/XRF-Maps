@@ -166,8 +166,8 @@ DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
                               std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
-                              int detector_num_start,
-                              int detector_num_end);
+                              size_t detector_num_start,
+                              size_t detector_num_end);
 
 DLL_EXPORT bool save_results(std::string save_loc,
                   const data_struct::Fit_Count_Dict * const element_counts,

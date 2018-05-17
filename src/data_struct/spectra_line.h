@@ -70,7 +70,7 @@ public:
 
     const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
 
-    void resize(size_t cols, size_t samples);
+    void resize_and_zero(size_t cols, size_t samples);
 
     void alloc_row_size(size_t n);
 

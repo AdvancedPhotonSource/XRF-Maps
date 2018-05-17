@@ -64,6 +64,8 @@ namespace fitting
 namespace optimizers
 {
 
+//-----------------------------------------------------------------------------
+
 int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
     // Get user passed data
@@ -88,6 +90,8 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 	
 	return 0;
 }
+
+//-----------------------------------------------------------------------------
 
 int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
 {
@@ -114,6 +118,36 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
 }
 
 
+//-----------------------------------------------------------------------------
+
+int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
+{
+    ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
+
+    //y is array of elements standards
+    //x is indexes of elements in standard
+    //p is array size 2 but seems only first index is used
+    ///return (y - this->fit_calibrationcurve(x, p));
+
+    Quant_User_Data* ud = (Quant_User_Data*)(usr_data);
+
+    //Update fit parameters from optimizer
+    ud->fit_parameters->from_array(params, params_size);
+    //Model spectra based on new fit parameters
+
+    //Calculate residuals
+    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(*(ud->quant_map), params[0]);
+
+    int idx = 0;
+    for(auto& itr : *(ud->quant_map))
+    {
+        dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+        idx++;
+    }
+
+    return 0;
+}
+
 // =====================================================================================================================
 
 
@@ -122,11 +156,15 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
 
 }
 
+//-----------------------------------------------------------------------------
+
 MPFit_Optimizer::~MPFit_Optimizer()
 {
 
 
 }
+
+//-----------------------------------------------------------------------------
 
 void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
@@ -319,6 +357,8 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 }
 
+//-----------------------------------------------------------------------------
+
 void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
                                     const Range energy_range,
@@ -504,6 +544,70 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     }
 
 }
+
+//-----------------------------------------------------------------------------
+
+void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
+                                              std::unordered_map<std::string, Element_Quant> * quant_map,
+                                              quantification::models::Quantification_Model * quantification_model)
+{
+    Quant_User_Data ud;
+
+    ud.quant_map = quant_map;
+    ud.quantification_model = quantification_model;
+    ud.fit_parameters = fit_params;
+
+    std::vector<real_t> fitp_arr = fit_params->to_array();
+    std::vector<real_t> perror(fitp_arr.size());
+
+    int info;
+
+    /////// init config ////////////
+    struct mp_config<real_t> mp_config;
+    mp_config.ftol = MP_MACHEP0;       // Relative chi-square convergence criterium  Default: 1e-10
+    mp_config.xtol = MP_MACHEP0;       // Relative parameter convergence criterium   Default: 1e-10
+    mp_config.gtol = MP_MACHEP0;       // Orthogonality convergence criterium        Default: 1e-10
+    mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
+    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+                                    //    then basic error checking is done, and parameter
+                                    //    errors/covariances are estimated based on input
+                                    //    parameter values, but no fitting iterations are done.
+                                    //    Default: 200
+
+
+    mp_config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
+                                       // Default: 0 (no limit)
+    mp_config.nprint = 0;           // Default: 1
+    mp_config.douserscale = 0;      // Scale variables by user values?
+                                    //    1 = yes, user scale values in diag;
+                                    //    0 = no, variables scaled internally (Default)
+    mp_config.nofinitecheck = 1;    // Disable check for infinite quantities from user?
+                                    //    0 = do not perform check (Default)
+                                    //    1 = perform check
+
+    mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
+
+
+    mp_result<real_t> result;
+    memset(&result,0,sizeof(result));
+    result.xerror = &perror[0];
+
+    struct mp_par<real_t> *mp_par = nullptr;
+
+    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
+
+    fit_params->from_array(fitp_arr);
+
+    if (fit_params->contains(STR_NUM_ITR) )
+    {
+        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+    }
+
+}
+
+//-----------------------------------------------------------------------------
 
 } //namespace optimizers
 } //namespace fitting

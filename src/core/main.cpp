@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
     std::string dataset_dir;
     std::string whole_command_line = "";
     bool is_confocal = false;
+    bool optimize_fit_override_params = false;
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -117,7 +118,6 @@ int main(int argc, char *argv[])
     analysis_job.detector_num_start = 0;
     analysis_job.detector_num_end = 3;
 
-    analysis_job.num_threads = std::thread::hardware_concurrency();
     if ( clp.option_exists("--nthreads") )
     {
         analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     //Do we want to optimize our fitting parameters
     if( clp.option_exists("--optimize-fit-override-params") )
     {
-        analysis_job.optimize_fit_override_params = true;
+        optimize_fit_override_params = true;
 
         std::string opt = clp.get_option("--optimize-fit-override-params");
         if(opt == "1")
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 
 
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fitting_routines.size() == 0 && analysis_job.optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
+    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
     {
         help();
         return -1;
@@ -338,7 +338,7 @@ int main(int argc, char *argv[])
     // init our job and run
     if(io::init_analysis_job_detectors(&analysis_job))
     {
-        if(analysis_job.optimize_fit_override_params)
+        if(optimize_fit_override_params)
         {
             //run_optimization_stream_pipeline(&analysis_job);
             io::populate_netcdf_hdf5_files(dataset_dir);

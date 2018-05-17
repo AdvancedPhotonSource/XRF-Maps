@@ -90,12 +90,4 @@ DLL_EXPORT void save_optimal_params(struct io::file_name_fit_params* f_struct);
 
 DLL_EXPORT void run_optimization_stream_pipeline(data_struct::Analysis_Job* job);
 
-DLL_EXPORT bool perform_quantification_streaming(std::string dataset_directory,
-                            std::string quantification_info_file,
-                            std::vector<data_struct::Fitting_Routines> proc_types,
-                            std::vector<data_struct::Quantification_Standard>* quant_stand_list,
-                            std::unordered_map<int, data_struct::Params_Override> *fit_params_override_dict,
-                            size_t detector_num_start,
-                            size_t detector_num_end);
-
 #endif

@@ -124,7 +124,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
 
     //n_pileup = 9
     //valarray<real_t> value(0.0, energy_range.count());
-    real_t start_val = (real_t)0.0;
+    //real_t start_val = (real_t)0.0;
     //Spectra counts(energy_range.count());
 
     Fit_Parameters fit_parameters = model->fit_parameters();

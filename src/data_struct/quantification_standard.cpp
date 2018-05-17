@@ -96,7 +96,7 @@ void Quantification_Standard::element_counts(string proc_type_str, unordered_map
 
 //-----------------------------------------------------------------------------
 
-std::string get_shell_element_label(int shell, int l)
+std::string get_shell_element_label(int shell, size_t l)
 {
     std::string shell_str = "";
     switch(shell)
@@ -218,7 +218,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
             //change nan's to zeros
             quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size());
-            for(int l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
+            for(size_t l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
             {
                 quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell][l] = get_shell_element_label(shell, l);
                 if( std::isnan(quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l]) )

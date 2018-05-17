@@ -74,7 +74,7 @@ void Spectra_Line::append_spectra(Spectra* spectra)
 }
 */
 
-void Spectra_Line::resize(size_t cols, size_t samples)
+void Spectra_Line::resize_and_zero(size_t cols, size_t samples)
 {
     alloc_row_size(cols);
     _alloc_spectra_size(samples);
@@ -90,7 +90,7 @@ void Spectra_Line::_alloc_spectra_size(size_t n)
     for(size_t i=0; i<_data_line.size(); i++)
     {
         _data_line[i].resize(n);
-        _data_line[i].setZero();
+        _data_line[i].setZero(n);
     }
     /*
     for(Spectra s : _data_line)

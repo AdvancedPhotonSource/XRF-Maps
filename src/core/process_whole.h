@@ -136,7 +136,7 @@ DLL_EXPORT void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_j
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
-                             data_struct::Analysis_Sub_Struct* detector_struct,
+                             data_struct::Detector* detector_struct,
                              ThreadPool* tp,
                              bool save_spec_vol);
 

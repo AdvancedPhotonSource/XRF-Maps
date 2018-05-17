@@ -220,7 +220,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 }
 
 // ----------------------------------------------------------------------------
-//TODO: FIX SO this isn't a repeat function
+
 Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
                                                         const Spectra * const spectra,
                                                         const Fit_Element_Map_Dict * const elements_to_fit)

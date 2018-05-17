@@ -78,11 +78,11 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
     if(_output_callback_func != nullptr)
     {
         _analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::Analysis_Sub_Struct* cp = _analysis_job->get_sub_struct(detector_num);
+        struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
 
         if(cp == nullptr)
         {
-            cp = _analysis_job->get_first_sub_struct();
+            cp = _analysis_job->get_first_detector();
             if(cp == nullptr)
             {
                 logit<<"Error: no fitting routines found! Not processing spectra!\n";
@@ -207,7 +207,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                 std::string full_filename;
                 int row_size = mda_io.rows();
                 int col_size = mda_io.cols();
-                for(size_t i=0; i<row_size; i++)
+                for(int i=0; i<row_size; i++)
                 {
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option

@@ -129,11 +129,11 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
     //initialize models and fit routines for all detectors
     for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
     {
-        analysis_job->detectors_meta_data[detector_num] = data_struct::Analysis_Sub_Struct();
-        data_struct::Analysis_Sub_Struct *sub_struct = &analysis_job->detectors_meta_data[detector_num];
+        analysis_job->detectors_meta_data[detector_num] = data_struct::Detector();
+        data_struct::Detector *detector = &analysis_job->detectors_meta_data[detector_num];
 
-        sub_struct->model = new fitting::models::Gaussian_Model();
-        data_struct::Params_Override * override_params = &(sub_struct->fit_params_override_dict);
+        detector->model = new fitting::models::Gaussian_Model();
+        data_struct::Params_Override * override_params = &(detector->fit_params_override_dict);
 
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
@@ -155,16 +155,16 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
         for(auto proc_type : analysis_job->fitting_routines)
         {
             //Fitting models
-            sub_struct->fit_routines[proc_type] = generate_fit_routine(proc_type, analysis_job->optimizer());
+            detector->fit_routines[proc_type] = generate_fit_routine(proc_type, analysis_job->optimizer());
 
             //reset model fit parameters to defaults
-            sub_struct->model->reset_to_default_fit_params();
+            detector->model->reset_to_default_fit_params();
             //Update fit parameters by override values
-            sub_struct->model->update_fit_params_values(&(override_params->fit_params));
+            detector->model->update_fit_params_values(&(override_params->fit_params));
 
-            //Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
+            //Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
             //Initialize model
-            //fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
+            //fit_routine->initialize(detector->model, elements_to_fit, energy_range);
 
         }        
     }
@@ -250,9 +250,19 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
+    //fitting::models::Range energy_range = fitting::models::Range(0.0, file_and_fit_params->spectra.size()-1);
 
     data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
     data_struct::ArrayXr background;
+
+    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
+    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
+    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
+
+    data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+
+    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
 
     if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
 	{
@@ -275,22 +285,11 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     }
 
 #ifdef _BUILD_WITH_QT
-
-    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
-
-    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
-    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
-    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
-
-	data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
-
     std::string str_path = file_and_fit_params->dataset_dir+"/output/fit_"+file_and_fit_params->dataset_filename+"_det"+std::to_string(file_and_fit_params->detector_num)+".png";
     visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
 #endif
 
-    // TODO: save the spectra, model, and background to csv
-    csv_io.save_fit_parameters(full_path, file_and_fit_params->fit_params );
+    csv_io.save_fit_parameters(full_path, ev, spec, model_spectra, background );
 
     for(auto &itr : file_and_fit_params->elements_to_fit)
     {
@@ -301,7 +300,7 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 
 // ----------------------------------------------------------------------------
 
-void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, int detector_num_start, int detector_num_end)
+void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, size_t detector_num_start, size_t detector_num_end)
 {
     io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
@@ -382,7 +381,7 @@ bool load_quantification_standard(std::string dataset_directory,
 
             }
         }
-        catch(std::exception e)
+        catch(std::exception& e)
         {
             if (paramFileStream.eof() == 0 && (paramFileStream.bad() || paramFileStream.fail()) )
             {
@@ -727,16 +726,18 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     else
     {
         int rank;
-        int dims[10];
+        size_t dims[10];
         dims[0] = 0;
         rank = mda_io.get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
         if(rank == 3)
         {
             integrated_spectra->resize(dims[2]);
+            integrated_spectra->setZero(dims[2]);
         }
         else
         {
             integrated_spectra->resize(2048);
+            integrated_spectra->setZero(2048);
         }
 
 
@@ -750,14 +751,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 for(size_t i=0; i<dims[0]; i++)
                 {
                     data_struct::Spectra_Line spectra_line;
-                    spectra_line.resize(dims[1], integrated_spectra->size());
+                    spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //logit<<"Loading file "<<full_filename<<"\n";
                     if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
                     {
-                        for(int k=0; k<spectra_line.size(); k++)
+                        for(size_t k=0; k<spectra_line.size(); k++)
                         {
-                            *integrated_spectra += spectra_line[k];
+                            integrated_spectra->add(spectra_line[k]);
                         }
                     }
                 }
@@ -776,13 +777,13 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         {
             std::string full_filename;
             data_struct::Spectra_Line spectra_line;
-            spectra_line.resize(dims[1], integrated_spectra->size());
+            spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
             for(size_t i=0; i<dims[0]; i++)
             {
                 full_filename = dataset_directory + "flyXspress"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
                 if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line))
                 {
-                    for(int k=0; k<spectra_line.size(); k++)
+                    for(size_t k=0; k<spectra_line.size(); k++)
                     {
                         *integrated_spectra += spectra_line[k];
                     }
@@ -873,6 +874,7 @@ void check_and_create_dirs(std::string dataset_directory)
 {
 
     bool found_img_dat = false;
+    bool found_output = false;
     logit<<dataset_directory<<"\n";
     DIR *dir;
     struct dirent *ent;
@@ -884,8 +886,15 @@ void check_and_create_dirs(std::string dataset_directory)
             if( strcmp(ent->d_name , "img.dat") == 0)
             {
                 found_img_dat = true;
-                break;
             }
+            if( strcmp(ent->d_name , "output") == 0)
+            {
+                found_output = true;
+            }
+			if(found_img_dat && found_output)
+			{
+                break;
+			}
         }
         closedir (dir);
     }
@@ -899,6 +908,16 @@ void check_and_create_dirs(std::string dataset_directory)
     {
 		int retval = system(nullptr);
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
+        retval = system(cmd.c_str());
+		if (retval != 0)
+		{
+			logit << "Error: could not create directory: " << cmd << " . May not be able to save results!\n";
+		}
+    }
+    if (false == found_output)
+    {
+		int retval = system(nullptr);
+        std::string cmd = "mkdir "+dataset_directory+"output";
         retval = system(cmd.c_str());
 		if (retval != 0)
 		{

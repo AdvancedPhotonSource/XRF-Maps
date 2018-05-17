@@ -59,13 +59,12 @@ Analysis_Job::Analysis_Job()
     _optimizer = &_lmfit_optimizer;
     _last_init_sample_size = 0;
 	_first_init = true;
-    num_threads = 1;
+    num_threads = std::thread::hardware_concurrency();;
     detector_num_start = 0;
     detector_num_end = 0;
     //default mode for which parameters to fit when optimizing fit parameters
     optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;
-    optimize_fit_override_params = false;
     generate_average_h5 = false;
     is_network_source = false;
     stream_over_network = false;
@@ -82,7 +81,7 @@ Analysis_Job::~Analysis_Job()
 
     for(auto& itr : detectors_meta_data)
     {
-        Analysis_Sub_Struct *sub = &itr.second;
+        Detector *sub = &itr.second;
         if (sub->model != nullptr)
         {
             delete sub->model;
@@ -105,27 +104,27 @@ Analysis_Job::~Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-struct Analysis_Sub_Struct* Analysis_Job::get_first_sub_struct()
+struct Detector* Analysis_Job::get_first_detector()
 {
-       struct Analysis_Sub_Struct* sub_struct = nullptr;
+       struct Detector* detector = nullptr;
        for(auto &itr : detectors_meta_data)
        {
-           sub_struct = &(itr.second);
+           detector = &(itr.second);
            break;
        }
-       return sub_struct;
+       return detector;
 }
 
 //-----------------------------------------------------------------------------
 
-struct Analysis_Sub_Struct* Analysis_Job::get_sub_struct(int detector_num)
+struct Detector* Analysis_Job::get_detector(int detector_num)
 {
-       struct Analysis_Sub_Struct* sub_struct = nullptr;
+       struct Detector* detector = nullptr;
        if(detectors_meta_data.count(detector_num) > 0)
        {
-            sub_struct = &(detectors_meta_data.at(detector_num));
+            detector = &(detectors_meta_data.at(detector_num));
        }
-       return sub_struct;
+       return detector;
 }
 
 //-----------------------------------------------------------------------------
@@ -138,21 +137,21 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples)
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
         {
-            Analysis_Sub_Struct *sub_struct = &detectors_meta_data[detector_num];
+            Detector *detector = &detectors_meta_data[detector_num];
 
-            if(sub_struct != nullptr)
+            if(detector != nullptr)
             {
-                Range energy_range = get_energy_range(spectra_samples, &(sub_struct->fit_params_override_dict.fit_params));
+                Range energy_range = get_energy_range(spectra_samples, &(detector->fit_params_override_dict.fit_params));
 
                 for(auto &proc_type : fitting_routines)
                 {
                     //Fitting models
-                    fitting::routines::Base_Fit_Routine *fit_routine = sub_struct->fit_routines[proc_type];
+                    fitting::routines::Base_Fit_Routine *fit_routine = detector->fit_routines[proc_type];
                     logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
 
-                    Fit_Element_Map_Dict *elements_to_fit = &(sub_struct->fit_params_override_dict.elements_to_fit);
+                    Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
                     //Initialize model
-                    fit_routine->initialize(sub_struct->model, elements_to_fit, energy_range);
+                    fit_routine->initialize(detector->model, elements_to_fit, energy_range);
                 }
             }
         }

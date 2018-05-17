@@ -209,14 +209,14 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 cols = 1;
             else
                 cols = _mda_file->scan->sub_scans[0]->last_point;
-            vol->resize(rows, cols, 2048);
+            vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
         else
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
-                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
+                if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
                 {
                     logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
@@ -229,7 +229,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 else
                 cols = _mda_file->scan->last_point;
                 samples = _mda_file->header->dimensions[1];
-                vol->resize(rows, cols, samples);
+                vol->resize_and_zero(rows, cols, samples);
                 _is_single_row = true;
             }
             else
@@ -243,7 +243,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
         {
             logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
@@ -259,7 +259,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         else
             cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
-        vol->resize(rows, cols, samples);
+        vol->resize_and_zero(rows, cols, samples);
     }
     else
     {
@@ -485,7 +485,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
-                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
+                if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
                 {
                     logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
@@ -511,7 +511,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
+        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
         {
             logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
@@ -538,7 +538,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     //find scaler indexes
     if (analysis_job != nullptr)
     {
-        struct data_struct::Analysis_Sub_Struct* detector_struct = analysis_job->get_sub_struct(detector_num_start);
+        struct data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num_start);
 
         if(detector_struct != nullptr)
         {
@@ -598,7 +598,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
             }
         }
 
-        for(size_t i=0; i<_rows; i++)
+        for(int i=0; i<_rows; i++)
         {
             // update num rows if header is incorrect and not single row scan
 
@@ -609,7 +609,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     _cols = _mda_file->scan->sub_scans[i]->last_point;
                 }
             }
-            for(size_t j=0; j<_cols; j++)
+            for(int j=0; j<_cols; j++)
             {
 /* TODO: we might need to do the same check for samples size
                 if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
@@ -771,7 +771,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
 
 //-----------------------------------------------------------------------------
 
-int MDA_IO::get_rank_and_dims(std::string path, int* dims)
+int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
 {
 
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
@@ -803,7 +803,7 @@ int MDA_IO::get_rank_and_dims(std::string path, int* dims)
     {
         logit<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
     }
-    rank = header->data_rank;
+    rank = (int)header->data_rank;
 
     mda_header_unload(header);
 

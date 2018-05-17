@@ -99,7 +99,8 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
 
     if(_element_info == nullptr)
     {
-        //TODO: LOG Something
+        //Don't log because we can have non elements such as Compton that doesn't have element properties
+        //logit<<"ERROR: Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
     int idx = _full_name.find_last_of("_") + 1;
@@ -151,7 +152,8 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
 {
     if(_element_info == nullptr)
     {
-        //TODO: LOG Something
+        //Don't log because we can have non elements such as Compton that doesn't have element properties
+        //logit<<"ERROR: Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
 

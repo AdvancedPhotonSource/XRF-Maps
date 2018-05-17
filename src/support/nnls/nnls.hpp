@@ -105,7 +105,7 @@ namespace nsNNLS
 
 				x = x - (step * gradient); // x = x - step*gradient
 											// project
-				for (size_t i = 0; i < x.rows(); i++)
+                for (long int i = 0; i < x.rows(); i++)
 				{
 					if (x[i] < 0)
 					{
@@ -321,7 +321,7 @@ namespace nsNNLS
 			_T d = 0;
 
 			// compute sigma*<grad, refx - x>
-			for (size_t i = 0; i < gradient.rows(); i++)
+            for (long int i = 0; i < gradient.rows(); i++)
 			{
 				d += gradient[i] * (refx[i] - x[i]);
 			}

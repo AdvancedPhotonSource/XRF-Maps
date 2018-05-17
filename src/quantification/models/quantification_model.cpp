@@ -124,7 +124,7 @@ std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incid
     std::vector<Element_Quant> element_quant_vec( end_z - start_z + 2 );
 
     size_t idx = 0;
-    for (int i=start_z; i <= end_z; i ++)
+    for (size_t i=start_z; i <= end_z; i ++)
     {
         element_quant_vec[idx] = generate_element_quant(incident_energy,
                                                          detector_element,

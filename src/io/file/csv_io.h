@@ -50,6 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef CSV_IO_H
 #define CSV_IO_H
 
+#include "data_struct/spectra.h"
 #include "data_struct/element_info.h"
 #include "data_struct/fit_parameters.h"
 
@@ -77,7 +78,7 @@ public:
      */
     ~CSV_IO();
 
-    bool save_fit_parameters(std::string fullpath, data_struct::Fit_Parameters fit_params);
+    bool save_fit_parameters(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background);
 
 private:
 
