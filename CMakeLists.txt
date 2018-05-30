@@ -88,7 +88,6 @@ ENDIF()
 
 IF (BUILD_WITH_QT)
   add_definitions(-D_BUILD_WITH_QT)
-  cmake_policy(SET CMP0022 OLD)
   set(CMAKE_CXX_STANDARD 14)
   find_package(Qt5 COMPONENTS Core Charts REQUIRED)
   set(VISUAL_INC src/visual/grapher.h src/visual/grapher.cpp )

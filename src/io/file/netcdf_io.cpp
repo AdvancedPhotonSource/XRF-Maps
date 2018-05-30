@@ -377,16 +377,17 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         num_cols = data_in[0][0][8];
         spectra_size = data_in[0][0][20];
 
+        /*
         if(num_cols > max_cols)
         {
             logit<<"Adjusting number of cols from Netcdf cols "<<num_cols<< " to MDA cols "<<max_cols<<"\n";
             num_cols = max_cols;
         }
-
+        */
         start[2] = header_size;
         count[2] = header_size + (spectra_size * num_detectors);
         size_t move_offset = header_size + (spectra_size * 4);//only 4 element detector supported
-        for(size_t j=0; j<num_cols; j++)
+        for(size_t j=0; j<max_cols; j++)
         {
             //read sub header and spectra data
             if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0])) )
@@ -396,10 +397,18 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 return false;
             }
 
+            header_size = data_in[0][0][2];
+
             if (data_in[0][0][0] != 13260 || data_in[0][0][1] != -13261)
             {
-                logit<<"Error: NetCDF sub header not found! Stopping load : "<<path<<"\n";
-                return false;
+                if(j < max_cols -2)
+                {
+                    logit<<"Error: NetCDF sub header not found! Stopping load at Col: "<<j<<" path :"<<path<<"\n";
+                    return false;
+                }
+                //last two may not be filled with data
+                //TODO: send end of row stream_block down pipeline
+                return true;
             }
 
             header_size = data_in[0][0][2];
@@ -416,7 +425,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
                 if(elapsed_livetime == 0)
                 {
-                    if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
+                    if(j < max_cols-2) // usually the last two are missing which spams the log ouput.
                     {
                         logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                         elapsed_livetime = 1.0;
@@ -430,7 +439,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
                 if(elapsed_realtime == 0)
                 {
-                    if(j < num_cols - 2) // usually the last two are missing which spams the log ouput.
+                    if(j < max_cols-2) // usually the last two are missing which spams the log ouput.
                     {
                         logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                         elapsed_realtime = 1.0;
@@ -465,6 +474,12 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             }
 
             start[2] += move_offset;
+
+            if(start[2] >= dim2size[2])
+            {
+                start[0]++;
+                start[2] = header_size;
+            }
         }
     }
 

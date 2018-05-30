@@ -55,9 +55,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <future>
 #include <stack>
+#include "hdf5.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/fit_element_map.h"
-#include "hdf5.h"
 
 //Include mda data structures to save scalers
 #include "io/file/mda_io.h"
@@ -190,9 +190,9 @@ public:
                                       int col_idx_start = 0,
                                       int col_idx_end = -1);
 
-    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5f(std::string filename, data_struct::Spectra* spectra);
 
-    bool load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
@@ -259,6 +259,8 @@ public:
 
     bool end_save_seq();
 
+    bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
+
 private:
 
     HDF5_IO();
@@ -266,6 +268,8 @@ private:
     static HDF5_IO *_this_inst;
 
     static std::mutex _mutex;
+
+
 
 	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);

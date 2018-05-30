@@ -78,16 +78,17 @@ std::string Basic_Serializer::encode_counts(data_struct::Stream_Block* stream_bl
     char *tmp_real = new char[sizeof(real_t)];
     char *tmp_ushort = new char[sizeof(unsigned short)];
     char *tmp_uint = new char[sizeof(unsigned int)];
+    char *tmp_size_t = new char[sizeof(size_t)];
 
     //TODO:
     // add something to distinguish between counts and spectra
     // add something to tell if 4 or 8 byte real
 
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->detector_number, 4);
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->row(), 4);
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->col(), 4);
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->height(), 4);
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->width(), 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->detector_number, sizeof(unsigned int));
+    _convert_var_to_bytes(&raw_msg, tmp_size_t, stream_block->row(), sizeof(size_t));
+    _convert_var_to_bytes(&raw_msg, tmp_size_t, stream_block->col(), sizeof(size_t));
+    _convert_var_to_bytes(&raw_msg, tmp_size_t, stream_block->height(), sizeof(size_t));
+    _convert_var_to_bytes(&raw_msg, tmp_size_t, stream_block->width(), sizeof(size_t));
     _convert_var_to_bytes(&raw_msg, tmp_real, stream_block->theta, sizeof(real_t));
 
 
@@ -133,16 +134,16 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, size_t
 	char name[256] = { 0 };
 	real_t val = 0.0;
 
-	memcpy(&detector_number, message + idx, 4);
-	idx += 4;
-	memcpy(&row, message + idx, 4);
-	idx += 4;
-	memcpy(&col, message + idx, 4);
-	idx += 4;
-	memcpy(&height, message + idx, 4);
-	idx += 4;
-	memcpy(&width, message + idx, 4);
-	idx += 4;
+    memcpy(&detector_number, message + idx, sizeof(unsigned int));
+    idx += sizeof(unsigned int);
+    memcpy(&row, message + idx, sizeof(size_t));
+    idx += sizeof(size_t);
+    memcpy(&col, message + idx, sizeof(size_t));
+    idx += sizeof(size_t);
+    memcpy(&height, message + idx, sizeof(size_t));
+    idx += sizeof(size_t);
+    memcpy(&width, message + idx, sizeof(size_t));
+    idx += sizeof(size_t);
     memcpy(&theta, message + idx, sizeof(real_t));
     idx += sizeof(real_t);
 

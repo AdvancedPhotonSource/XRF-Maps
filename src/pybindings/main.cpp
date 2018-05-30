@@ -14,6 +14,8 @@
 #include "fitting/routines/matrix_optimized_fit_routine.h"
 #include "fitting/routines/nnls_fit_routine.h"
 #include "data_struct/analysis_job.h"
+#include "data_struct/stream_block.h"
+#include "io/net/basic_serializer.h"
 
 #include "io/file/hl_file_io.h"
 
@@ -45,6 +47,9 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::module fr = fit.def_submodule("routines", "Fitting routines submodule");
     //sub module workflow
     py::module work = m.def_submodule("workflow", "Workflow submodule");
+    //sub module io
+    py::module io = m.def_submodule("io", "IO submodule");
+    py::module net = io.def_submodule("net", "network submodule");
 
     py::enum_<data_struct::Fitting_Routines>(m, "FittingRoutines")
     .value("ROI", data_struct::ROI)
@@ -189,6 +194,31 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("quantifiy", &data_struct::Quantification_Standard::quantifiy)
     .def_readwrite("calibration_curves", &data_struct::Quantification_Standard::calibration_curves);
 
+    py::class_<data_struct::Stream_Fitting_Block>(m, "StreamFittingBlock")
+    .def(py::init<>())
+    .def_readwrite("fit_routine", &data_struct::Stream_Fitting_Block::fit_routine)
+    .def_readwrite("fit_counts", &data_struct::Stream_Fitting_Block::fit_counts);
+
+    py::class_<data_struct::Stream_Block>(m, "StreamBlock")
+    .def(py::init<>())
+    .def("init_fitting_blocks", &data_struct::Stream_Block::init_fitting_blocks)
+    .def("row", &data_struct::Stream_Block::row)
+    .def("col", &data_struct::Stream_Block::col)
+    .def("height", &data_struct::Stream_Block::height)
+    .def("width", &data_struct::Stream_Block::width)
+    .def("is_end_of_row", &data_struct::Stream_Block::is_end_of_row)
+    .def("is_end_of_detector", &data_struct::Stream_Block::is_end_of_detector)
+    .def("dataset_hash", &data_struct::Stream_Block::dataset_hash)
+    .def_readwrite("fitting_blocks", &data_struct::Stream_Block::fitting_blocks)
+    .def_readwrite("dataset_directory", &data_struct::Stream_Block::dataset_directory)
+    .def_readwrite("dataset_name", &data_struct::Stream_Block::dataset_name)
+    .def_readwrite("detector_number", &data_struct::Stream_Block::detector_number)
+    .def_readwrite("spectra", &data_struct::Stream_Block::spectra)
+    .def_readwrite("elements_to_fit", &data_struct::Stream_Block::elements_to_fit)
+    .def_readwrite("optimize_fit_params_preset", &data_struct::Stream_Block::optimize_fit_params_preset)
+    .def_readwrite("model", &data_struct::Stream_Block::model)
+    .def_readwrite("theta", &data_struct::Stream_Block::theta);
+
     py::class_<data_struct::Detector>(m, "Detector")
     .def(py::init<>())
     .def_readwrite("fit_routines", &data_struct::Detector::fit_routines)
@@ -303,6 +333,13 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("save_optimized_fit_params", &io::save_optimized_fit_params);
     m.def("save_volume", &io::save_volume);
     m.def("sort_dataset_files_by_size", &io::sort_dataset_files_by_size);
+
+    // IO NET
+    //basic serializer
+    py::class_<io::net::Basic_Serializer>(net, "BasicSerializer")
+    .def(py::init<>())
+    .def("encode_counts", &io::net::Basic_Serializer::encode_counts)
+    .def("decode_counts", &io::net::Basic_Serializer::decode_counts);
 
 
     //process_streaming
