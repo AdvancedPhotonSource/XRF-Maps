@@ -158,15 +158,25 @@ int main(int argc, char *argv[])
 
         std::string opt = clp.get_option("--optimize-fit-override-params");
         if(opt == "1")
+        {
             analysis_job.optimize_fit_params_preset = fitting::models::MATRIX_BATCH_FIT;
+        }
         else if(opt == "2")
+        {
             analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+        }
         else if(opt == "3")
+        {
             analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_TAILS;
+        }
         else if(opt == "4")
+        {
             analysis_job.optimize_fit_params_preset = fitting::models::BATCH_FIT_WITH_FREE_ENERGY;
+        }
         else
+        {
             logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
+        }
     }
 
     //Which optimizer do we want to pick. Default is lmfit
@@ -354,7 +364,7 @@ int main(int argc, char *argv[])
         if( clp.option_exists("--stream"))
         {
             //if we are streaming we use 1 thread for loading and 1 for saving
-            analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
+            //analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
             analysis_job.stream_over_network = true;
             //analysis_job.theta_pv = "2xfm:m53.VAL";
             analysis_job.theta_pv = clp.get_option("--theta_pv");

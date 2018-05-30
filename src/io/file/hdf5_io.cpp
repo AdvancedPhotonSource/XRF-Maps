@@ -2402,6 +2402,32 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::load_integrated_spectra_analyzed_h5f(std::string filename,
+                                           data_struct::Spectra* spectra)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   //std::chrono::time_point<std::chrono::system_clock> start, end;
+   //start = std::chrono::system_clock::now();
+
+   logit<< filename <<"\n";
+
+   hid_t    file_id;
+
+    file_id = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if(file_id < 0)
+    {
+
+        logit<<"Error opening file "<<filename<<"\n";
+        return false;
+    }
+
+    return _load_integrated_spectra_analyzed_h5(file_id, spectra);
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
                                            size_t detector_num,
                                            data_struct::Spectra* spectra)
@@ -2426,12 +2452,12 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
         return false;
     }
 
-    return load_integrated_spectra_analyzed_h5(file_id, spectra);
+    return _load_integrated_spectra_analyzed_h5(file_id, spectra);
 }
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra)
+bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra)
 {
 
     hid_t    dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;

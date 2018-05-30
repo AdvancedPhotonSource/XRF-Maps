@@ -80,7 +80,7 @@ namespace optimizers
 		ud.weights = weights.segment(energy_range.min, energy_range.count());
 
         ArrayXr background(spectra->size());
-		background.setZero();
+        background.setZero(spectra->size());
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
             real_t spectral_binning = 0.0;
@@ -120,7 +120,7 @@ namespace optimizers
 		ud.weights = weights.segment(energy_range.min, energy_range.count());
 
         ArrayXr background(spectra->size());
-		background.setZero();
+        background.setZero(spectra->size());
 
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
