@@ -207,8 +207,11 @@ private:
 
 };
 
-
-template class DLL_EXPORT Spectra_T<real_t>;
+#if defined _WIN32 || defined __CYGWIN__
+	template DLL_EXPORT class Spectra_T<real_t>;
+#else
+	template class DLL_EXPORT Spectra_T<real_t>;
+#endif
 typedef Spectra_T<real_t> Spectra;
 
 DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, size_t boxcar_size);

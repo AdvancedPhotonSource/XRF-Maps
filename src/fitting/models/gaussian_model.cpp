@@ -315,7 +315,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 		keys.push_back(itr.first);
 
 #pragma omp parallel for
-        for (size_t i=0; i < keys.size(); i++)
+        for (int i=0; i < (int)keys.size(); i++)
     //for(const auto& itr : (*elements_to_fit))
     {
         //Fit_Element_Map* element = itr.second;
@@ -500,7 +500,7 @@ const ArrayXr Gaussian_Model::step(real_t gain, real_t sigma, const ArrayXr& del
 	ArrayXr counts(delta_energy.size());
 	for (unsigned int i = 0; i < delta_energy.size(); i++)
 	{
-		counts[i] = gain / (real_t)2.0 / peak_E * std::erfc(delta_energy[i] / (M_SQRT2 * sigma));
+		counts[i] = gain / (real_t)2.0 / peak_E * std::erfc((real_t)delta_energy[i] / (M_SQRT2 * sigma));
 	}
     return counts;
 }
@@ -518,7 +518,7 @@ const ArrayXr Gaussian_Model::tail(real_t gain, real_t sigma, const ArrayXr& del
         {
             temp_a = exp(delta_energy[i]/ (gamma * sigma));
         }
-        counts[i] = gain / 2. / gamma / sigma / exp((real_t)-0.5/pow(gamma, (real_t)2.0)) * temp_a * std::erfc( delta_energy[i]  /( M_SQRT2*sigma) + ((real_t)1.0/(gamma*M_SQRT2) )  );
+        counts[i] = gain / 2. / gamma / sigma / exp((real_t)-0.5/pow(gamma, (real_t)2.0)) * temp_a * std::erfc((real_t)delta_energy[i]  /( M_SQRT2*sigma) + ((real_t)1.0/(gamma*M_SQRT2) )  );
     }
     return counts;
 }
