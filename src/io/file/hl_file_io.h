@@ -174,6 +174,10 @@ DLL_EXPORT bool save_results(std::string save_loc,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start);
 
+DLL_EXPORT void save_quantification_plots(data_struct::Analysis_Job* analysis_job,
+                                          data_struct::Quantification_Standard* standard,
+                                          int detector_num);
+
 DLL_EXPORT void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params);
 
 DLL_EXPORT bool save_volume(data_struct::Quantification_Standard * quantification_standard,

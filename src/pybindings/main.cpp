@@ -21,6 +21,7 @@
 
 //#include "core/process_streaming.h"
 #include "core/process_whole.h"
+#include "workflow/xrf/spectra_net_streamer.h"
 
 namespace py = pybind11;
 
@@ -46,10 +47,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::module fo = fit.def_submodule("optimizers", "Fitting optimizers submodule");
     py::module fr = fit.def_submodule("routines", "Fitting routines submodule");
     //sub module workflow
-    py::module work = m.def_submodule("workflow", "Workflow submodule");
+    py::module workflow = m.def_submodule("workflow", "Workflow submodule");
     //sub module io
     py::module io = m.def_submodule("io", "IO submodule");
-    py::module net = io.def_submodule("net", "network submodule");
+    py::module io_net = io.def_submodule("net", "network submodule");
+    py::module io_file = io.def_submodule("file", "file submodule");
 
     py::enum_<data_struct::Fitting_Routines>(m, "FittingRoutines")
     .value("ROI", data_struct::ROI)
@@ -307,12 +309,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine::set_optimizer)
     .def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine::set_update_coherent_amplitude_on_fit);
 
-/*
-    //workflow
-    py::class_<workflow::xrf::Spectra_File_Source>(work, "spectra_file_source")
-    .def(py::init<data_struct::Analysis_Job* analysis_job>())
-    .def("run", &workflow::xrf::Spectra_File_Source::run);
-*/
 
     ////// IO //////
     //hl_file_io
@@ -336,11 +332,53 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
     // IO NET
     //basic serializer
-    py::class_<io::net::Basic_Serializer>(net, "BasicSerializer")
+    py::class_<io::net::Basic_Serializer>(io_net, "BasicSerializer")
     .def(py::init<>())
     .def("encode_counts", &io::net::Basic_Serializer::encode_counts)
-    .def("decode_counts", &io::net::Basic_Serializer::decode_counts);
+    .def("decode_counts", &io::net::Basic_Serializer::decode_counts)
+    .def("encode_spectra", &io::net::Basic_Serializer::encode_spectra)
+    .def("decode_spectra", &io::net::Basic_Serializer::decode_spectra);
 
+    // IO FILE
+    //netcdf_io
+//    py::class_<io::file::NetCDF_IO>(io_file, "NetCDF_IO")
+//    .def(py::init(&io::file::NetCDF_IO::inst), py::return_value_policy::reference)
+//    .def("load_spectra_line", &io::file::NetCDF_IO::load_spectra_line)
+//    .def("load_spectra_line_with_callback", &io::file::NetCDF_IO::load_spectra_line_with_callback);
+
+    io_file.def("netcdf_load_spectra_line", [](std::string path,
+                size_t detector,
+                data_struct::Spectra_Line* spec_line)
+                {
+                    return io::file::NetCDF_IO::inst()->load_spectra_line(path, detector, spec_line);
+                });
+
+    io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
+                size_t detector_num_start,
+                size_t detector_num_end,
+                int row,
+                size_t max_rows,
+                size_t max_cols,
+                data_struct::IO_Callback_Func_Def callback_fun,
+                void* user_data) { return io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(path,
+                                                                                  detector_num_start,
+                                                                                  detector_num_end,
+                                                                                  row,
+                                                                                  max_rows,
+                                                                                  max_cols,
+                                                                                  callback_fun,
+                                                                                  user_data);
+                                 });
+
+
+#ifdef _BUILD_WITH_ZMQ
+    //workflow
+    py::class_<workflow::xrf::Spectra_Net_Streamer>(workflow, "SpectraNetStreamer")
+    .def(py::init<>())
+    .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer::set_send_counts)
+    .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer::set_send_spectra)
+    .def("stream", &workflow::xrf::Spectra_Net_Streamer::stream);
+#endif
 
     //process_streaming
 //    m.def("proc_spectra_block", &proc_spectra_block);

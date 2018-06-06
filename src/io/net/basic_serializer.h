@@ -70,6 +70,11 @@ public:
 
     data_struct::Stream_Block* decode_counts(char* message, size_t message_len);
 
+    std::string encode_spectra(data_struct::Stream_Block* in_stream_block);
+
+    data_struct::Stream_Block* decode_spectra(char* message, size_t message_len);
+
+
 protected:
 	template <typename T>
 	void _convert_var_to_bytes(std::string * str, char* bytes_temp, T variable, size_t size)

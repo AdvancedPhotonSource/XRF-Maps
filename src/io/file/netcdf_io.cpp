@@ -103,7 +103,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     size_t count[] = {1, 1, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
     real_t data_in[1][1][5000];
-    size_t num_cols;
+    //size_t num_cols;
     size_t spectra_size;
 
     nc_type rh_type;
@@ -163,7 +163,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     }
 
     header_size = data_in[0][0][2];
-    num_cols = data_in[0][0][8];
+    //num_cols = data_in[][0][8];  //sum all across the first dim looking at value 8
     spectra_size = data_in[0][0][20];
 
     /*
@@ -288,7 +288,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     size_t count[] = {1, 1, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
     real_t data_in[1][1][10000];
-    size_t num_cols = 0;
+    //size_t num_cols = 0;
     size_t spectra_size;
     size_t num_detectors = detector_num_end - detector_num_start + 1;
 
@@ -374,7 +374,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         }
 
         header_size = data_in[0][0][2];
-        num_cols = data_in[0][0][8];
+       // num_cols = data_in[0][0][8];
         spectra_size = data_in[0][0][20];
 
         /*

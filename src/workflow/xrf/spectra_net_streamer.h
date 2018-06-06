@@ -64,7 +64,7 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
+#ifdef _BUILD_WITH_ZMQ
 class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::Stream_Block* >
 {
 
@@ -76,16 +76,16 @@ public:
 
     void stream(data_struct::Stream_Block* stream_block);
 
-    void set_send_counts(bool val) {_send_counts = val;}
+    void set_send_counts() {_send_counts = true; _send_spectra = false;}
 
-    void set_send_spectra(bool val) {_send_spectra = val;}
+    void set_send_spectra() {_send_spectra = true; _send_counts = false;}
 
 protected:
-#ifdef _BUILD_WITH_ZMQ
+
 	zmq::context_t *_context;
 
 	zmq::socket_t *_zmq_socket;
-#endif
+
 	io::net::Basic_Serializer _serializer;
 
     bool _send_counts;
@@ -93,7 +93,7 @@ protected:
     bool _send_spectra;
 
 };
-
+#endif
 //-----------------------------------------------------------------------------
 
 } //namespace xrf

@@ -241,6 +241,16 @@ bool save_volume(data_struct::Quantification_Standard * quantification_standard,
 
 // ----------------------------------------------------------------------------
 
+void save_quantification_plots(data_struct::Analysis_Job* analysis_job, data_struct::Quantification_Standard *standard, int detector_num)
+{
+#ifdef _BUILD_WITH_QT
+    std::string str_path = analysis_job->dataset_directory+"/output/calib0_0_det"+std::to_string(detector_num)+".png";
+    //visual::SavePlotQuantification(str_path, standard->calibration_curves);
+#endif
+}
+
+// ----------------------------------------------------------------------------
+
 void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 {
     io::file::CSV_IO csv_io;
