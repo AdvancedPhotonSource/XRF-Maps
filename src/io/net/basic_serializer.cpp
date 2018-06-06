@@ -324,7 +324,7 @@ data_struct::Stream_Block* Basic_Serializer::decode_spectra(char* message, size_
         idx += sizeof(unsigned short);
         memcpy(&spec_value, message + idx, sizeof(real_t));
         idx += sizeof(real_t);
-        out_stream_block->spectra[(int)spec_index] = spec_value;
+        (*(out_stream_block->spectra))[spec_index] = spec_value;
     }
     return out_stream_block;
 
