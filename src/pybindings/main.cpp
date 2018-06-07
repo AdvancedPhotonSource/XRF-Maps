@@ -22,6 +22,8 @@
 //#include "core/process_streaming.h"
 #include "core/process_whole.h"
 #include "workflow/xrf/spectra_net_streamer.h"
+#include "workflow/xrf/spectra_file_source.h"
+//#include "workflow/xrf/spectra_net_source.h"
 
 namespace py = pybind11;
 
@@ -340,19 +342,27 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("decode_spectra", &io::net::Basic_Serializer::decode_spectra);
 
     // IO FILE
-    //netcdf_io
-//    py::class_<io::file::NetCDF_IO>(io_file, "NetCDF_IO")
-//    .def(py::init(&io::file::NetCDF_IO::inst), py::return_value_policy::reference)
-//    .def("load_spectra_line", &io::file::NetCDF_IO::load_spectra_line)
-//    .def("load_spectra_line_with_callback", &io::file::NetCDF_IO::load_spectra_line_with_callback);
+    //mda_io
+    py::class_<io::file::MDA_IO>(io_file, "MDA_IO")
+    .def(py::init<>())
+    .def("unload", &io::file::MDA_IO::unload)
+    .def("load_spectra_volume", &io::file::MDA_IO::load_spectra_volume)
+    .def("load_spectra_volume_with_callback", &io::file::MDA_IO::load_spectra_volume_with_callback)
+    .def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
+    .def("get_multiplied_dims", &io::file::MDA_IO::get_multiplied_dims)
+    .def("get_rank_and_dims", &io::file::MDA_IO::get_rank_and_dims)
+    .def("rows", &io::file::MDA_IO::rows)
+    .def("cols", &io::file::MDA_IO::cols)
+    .def("is_single_row_scan", &io::file::MDA_IO::is_single_row_scan);
 
+    //NetCDF_IO
     io_file.def("netcdf_load_spectra_line", [](std::string path,
                 size_t detector,
                 data_struct::Spectra_Line* spec_line)
                 {
                     return io::file::NetCDF_IO::inst()->load_spectra_line(path, detector, spec_line);
                 });
-
+    //NetCDF_IO
     io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
                 size_t detector_num_start,
                 size_t detector_num_end,
@@ -371,14 +381,31 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                                  });
 
 
-#ifdef _BUILD_WITH_ZMQ
+
     //workflow
-    py::class_<workflow::xrf::Spectra_Net_Streamer>(workflow, "SpectraNetStreamer")
+    py::class_<workflow::Sink<data_struct::Stream_Block*> >(workflow, "StreamBlockSink")
+    .def(py::init<>())
+    //.def("connect", &workflow::Sink<data_struct::Stream_Block>::connect)
+    .def("set_function", &workflow::Sink<data_struct::Stream_Block*>::set_function)
+    .def("start", &workflow::Sink<data_struct::Stream_Block*>::start)
+    .def("stop", &workflow::Sink<data_struct::Stream_Block*>::stop)
+    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block*>::wait_and_stop)
+    .def("set_delete_block", &workflow::Sink<data_struct::Stream_Block*>::set_delete_block)
+    .def("sink_function", &workflow::Sink<data_struct::Stream_Block*>::sink_function);
+#ifdef _BUILD_WITH_ZMQ
+    py::class_<workflow::xrf::Spectra_Net_Streamer, workflow::Sink<data_struct::Stream_Block*> >(workflow, "SpectraNetStreamer")
     .def(py::init<>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer::set_send_spectra)
     .def("stream", &workflow::xrf::Spectra_Net_Streamer::stream);
 #endif
+
+    py::class_<workflow::xrf::Spectra_File_Source>(workflow, "SpectraFileSource")
+    .def(py::init<>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block*>::connect_sink)
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source::run);
 
     //process_streaming
 //    m.def("proc_spectra_block", &proc_spectra_block);
@@ -387,6 +414,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 //    m.def("save_optimal_params", &save_optimal_params);
 //    m.def("run_optimization_stream_pipeline", &run_optimization_stream_pipeline);
 //    m.def("perform_quantification_streaming", &perform_quantification_streaming);
+
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
     m.def("fit_single_spectra", &fit_single_spectra);

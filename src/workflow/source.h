@@ -53,6 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include <functional>
 #include "workflow/distributor.h"
+#include "workflow/sink.h"
 
 namespace workflow
 {
@@ -81,6 +82,22 @@ public:
     void connect(Distributor<T_OUT, _T> *distributor)
     {
         _output_callback_func = std::bind(&Distributor<T_OUT, _T>::distribute, distributor, std::placeholders::_1);
+    }
+
+    void connect(Sink<T_OUT> *sink)
+    {
+        _output_callback_func = std::bind(&Sink<T_OUT>::sink_function, sink, std::placeholders::_1);
+    }
+
+    template<typename _T>
+    void connect_distributor(Distributor<T_OUT, _T> *distributor)
+    {
+        connect(distributor);
+    }
+
+    void connect_sink(Sink<T_OUT> *sink)
+    {
+        connect(sink);
     }
 
 /*

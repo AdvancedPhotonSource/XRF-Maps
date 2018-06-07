@@ -60,7 +60,7 @@ Stream_Block::Stream_Block()
     _width = 0;
     theta = 0;
 	spectra = nullptr;
-    optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
 //-----------------------------------------------------------------------------

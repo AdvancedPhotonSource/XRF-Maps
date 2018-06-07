@@ -57,9 +57,22 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
+Spectra_File_Source::Spectra_File_Source() : Source<data_struct::Stream_Block*>()
+{
+    _analysis_job = nullptr;
+    _current_dataset_directory = nullptr;
+    _current_dataset_name = nullptr;
+    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+}
+
+//-----------------------------------------------------------------------------
+
 Spectra_File_Source::Spectra_File_Source(data_struct::Analysis_Job* analysis_job) : Source<data_struct::Stream_Block*>()
 {
     _analysis_job = analysis_job;
+    _current_dataset_directory = nullptr;
+    _current_dataset_name = nullptr;
+    _init_fitting_routines = true;
     _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
@@ -72,36 +85,57 @@ Spectra_File_Source::~Spectra_File_Source()
 
 // ----------------------------------------------------------------------------
 
+bool Spectra_File_Source::load_netcdf_line(std::string filepath,
+                                           size_t detector_num_start,
+                                           size_t detector_num_end,
+                                           size_t row,
+                                           size_t row_size,
+                                           size_t col_size)
+{
+    return io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(filepath, detector_num_start, detector_num_end, row, row_size, col_size, _cb_function, nullptr);
+}
+
+// ----------------------------------------------------------------------------
+
 void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
     if(_output_callback_func != nullptr)
     {
-        _analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
 
-        if(cp == nullptr)
+        if(_init_fitting_routines && _analysis_job != nullptr)
         {
-            cp = _analysis_job->get_first_detector();
+            _analysis_job->init_fit_routines(spectra->size());
+
+            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+
             if(cp == nullptr)
             {
-                logit<<"Error: no fitting routines found! Not processing spectra!\n";
-                delete spectra;
-                return;
+                cp = _analysis_job->get_first_detector();
+            }
+            if(cp != nullptr)
+            {
+                stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+                stream_block->model = cp->model;
             }
         }
+        if(_analysis_job != nullptr)
+        {
+            stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
+            stream_block->theta = _analysis_job->theta;
+        }
 
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
-        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
         stream_block->spectra = spectra;
-        stream_block->model = cp->model;
-        stream_block->theta = _analysis_job->theta;
-        stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
         stream_block->detector_number = detector_num;
 
         _output_callback_func(stream_block);
+    }
+    else
+    {
+        delete spectra;
     }
 
 }
@@ -110,6 +144,12 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
 
 void Spectra_File_Source::run()
 {
+    if(_analysis_job == nullptr)
+    {
+        logit<<"Class was not constructed with Analysis job. Don't know what to run?\n";
+        return;
+    }
+
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
 

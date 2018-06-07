@@ -67,11 +67,11 @@ class DLL_EXPORT Sink
 public:
 
 	
-    Sink(bool delete_block = true)
+    Sink()
     {
         _thread = nullptr;
         _running = false;
-        _delete_block = delete_block;
+        _delete_block = true;
     }
 
 	Sink(const Sink &)
@@ -93,6 +93,8 @@ public:
         }
         _thread = nullptr;
     }
+
+    void set_delete_block(bool val) { _delete_block = val; }
 
     template<typename _T>
     void connect(Distributor<_T, T_IN> *distributor)
@@ -133,6 +135,11 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
         stop();
+    }
+
+    void sink_function(T_IN val)
+    {
+        _callback_func(val);
     }
 
 protected:

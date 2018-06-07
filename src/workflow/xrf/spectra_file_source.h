@@ -74,6 +74,9 @@ class DLL_EXPORT Spectra_File_Source : public Source<data_struct::Stream_Block*>
 
 public:
 
+    Spectra_File_Source();
+
+    //used with run function to process job
     Spectra_File_Source(data_struct::Analysis_Job* analysis_job);
 
     ~Spectra_File_Source();
@@ -81,6 +84,15 @@ public:
     virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
 
     virtual void run();
+
+    bool load_netcdf_line(std::string filepath,
+                          size_t detector_num_start,
+                          size_t detector_num_end,
+                          size_t row,
+                          size_t row_size,
+                          size_t col_size);
+
+    void set_init_fitting_routines(bool val) {_init_fitting_routines = val;}
 
 protected:
 
@@ -100,6 +112,8 @@ protected:
     std::vector<std::string> _hdf_files;
 
     std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> _cb_function;
+
+    bool _init_fitting_routines;
 
 };
 
