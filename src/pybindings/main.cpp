@@ -5,6 +5,12 @@
 #include <pybind11/functional.h>
 #include <pybind11/eigen.h>
 
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef _BUILD_WITH_ZMQ
+    #include "winsock2.h"
+  #endif
+#endif
+
 #include "fitting/models/gaussian_model.h"
 #include "fitting/optimizers/lmfit_optimizer.h"
 #include "fitting/optimizers/mpfit_optimizer.h"
