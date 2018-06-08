@@ -78,7 +78,10 @@ void help()
     logit_s<<"--dir : Dataset directory "<<"\n";
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
     logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
-	logit_s << "--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
+    logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
+    logit_s<<"Network: "<<"\n";
+    logit_s<<"--streamin : Accept a ZMQ stream of spectra to process (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
+    logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
     logit_s<<"Examples: "<<"\n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
     logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";
@@ -216,6 +219,16 @@ int main(int argc, char *argv[])
         analysis_job.detector_num_end = 0; //default to loading the first frame only
 	}
 
+    if( clp.option_exists("--streamin"))
+    {
+        analysis_job.is_network_source = true;
+    }
+
+    if( clp.option_exists("--streamout"))
+    {
+        analysis_job.stream_over_network = true;
+    }
+
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
@@ -243,23 +256,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    //Get the dataset directory you want to process
-    dataset_dir = clp.get_option("--dir");
-    if (dataset_dir.length() < 1)
-    {
-        help();
-        return -1;
-    }
-    //add a slash if missing at the end
-    if (dataset_dir.back() != DIR_END_CHAR)
-    {
-        dataset_dir += DIR_END_CHAR;
-    }
-
-    //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
-    io::check_and_create_dirs(dataset_dir);
-
-
     //Check to make sure we have something to do. If not then show the help screen
     if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
     {
@@ -267,62 +263,83 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-
-    //Look if files were specified
-    std::string dset_file = clp.get_option("--files");
-    //if they were not then look for them in $dataset_directory/mda
-    if (dset_file.length() < 1)
+    if(false == analysis_job.is_network_source)
     {
-        if(is_confocal)
+        //Get the dataset directory you want to process
+        dataset_dir = clp.get_option("--dir");
+        if (dataset_dir.length() < 1)
         {
-            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
-        }
-		else if (analysis_job.is_emd)
-		{
-			analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".emd");
-		}
-        else
-        {
-            // find all files in the dataset
-            analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda"+ DIR_END_CHAR, ".mda");
-        }
-        if (analysis_job.dataset_files.size() == 0)
-        {
-            logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<"\n";
+            help();
             return -1;
         }
-
-        for (auto& itr : analysis_job.dataset_files)
+        //add a slash if missing at the end
+        if (dataset_dir.back() != DIR_END_CHAR)
         {
-            analysis_job.optimize_dataset_files.push_back(itr);
+            dataset_dir += DIR_END_CHAR;
+        }
+        //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
+        io::check_and_create_dirs(dataset_dir);
+
+
+        //Look if files were specified
+        std::string dset_file = clp.get_option("--files");
+        //if they were not then look for them in $dataset_directory/mda
+        if (dset_file.length() < 1)
+        {
+            if(is_confocal)
+            {
+                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
+            }
+            else if (analysis_job.is_emd)
+            {
+                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".emd");
+            }
+            else
+            {
+                // find all files in the dataset
+                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda"+ DIR_END_CHAR, ".mda");
+            }
+            if (analysis_job.dataset_files.size() == 0)
+            {
+                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<"\n";
+                return -1;
+            }
+
+            for (auto& itr : analysis_job.dataset_files)
+            {
+                analysis_job.optimize_dataset_files.push_back(itr);
+            }
+
+            if(!is_confocal && !analysis_job.is_emd)
+                io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
+
+            //if no files were specified only take the 8 largest datasets
+            while (analysis_job.optimize_dataset_files.size() > 9)
+            {
+                analysis_job.optimize_dataset_files.pop_back();
+            }
+
+        }
+        else if (dset_file.find(',') != std::string::npos )
+        {
+            // if we found a comma, split the string to get list of dataset files
+            std::stringstream ss;
+            ss.str(dset_file);
+            std::string item;
+            while (std::getline(ss, item, ','))
+            {
+                analysis_job.dataset_files.push_back(item);
+                analysis_job.optimize_dataset_files.push_back(item);
+            }
+        }
+        else
+        {
+            analysis_job.dataset_files.push_back(dset_file);
+            analysis_job.optimize_dataset_files.push_back(dset_file);
         }
 
-        if(!is_confocal && !analysis_job.is_emd)
-            io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
+        analysis_job.dataset_directory = dataset_dir;
 
-        //if no files were specified only take the 8 largest datasets
-        while (analysis_job.optimize_dataset_files.size() > 9)
-        {
-            analysis_job.optimize_dataset_files.pop_back();
-        }
-
-    }
-    else if (dset_file.find(',') != std::string::npos )
-    {
-        // if we found a comma, split the string to get list of dataset files
-        std::stringstream ss;
-        ss.str(dset_file);
-        std::string item;
-        while (std::getline(ss, item, ','))
-        {
-            analysis_job.dataset_files.push_back(item);
-            analysis_job.optimize_dataset_files.push_back(item);
-        }
-    }
-    else
-    {
-        analysis_job.dataset_files.push_back(dset_file);
-        analysis_job.optimize_dataset_files.push_back(dset_file);
     }
 
     //gen whole command line to save in hdf5 later
@@ -343,8 +360,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    analysis_job.dataset_directory = dataset_dir;
-
     // init our job and run
     if(io::init_analysis_job_detectors(&analysis_job))
     {
@@ -360,12 +375,10 @@ int main(int argc, char *argv[])
             perform_quantification(&analysis_job);
         }
 
-        //if( clp.option_exists("--stream") || analysis_job.is_emd)
-        if( clp.option_exists("--stream"))
+        if( analysis_job.is_network_source ||  analysis_job.stream_over_network)
         {
             //if we are streaming we use 1 thread for loading and 1 for saving
             //analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
-            analysis_job.stream_over_network = true;
             //analysis_job.theta_pv = "2xfm:m53.VAL";
             analysis_job.theta_pv = clp.get_option("--theta_pv");
             run_stream_pipeline(&analysis_job);

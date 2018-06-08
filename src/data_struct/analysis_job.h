@@ -107,7 +107,7 @@ public:
 
     fitting::optimizers::Optimizer *optimizer(){return _optimizer;}
 
-    void init_fit_routines(size_t spectra_samples);
+    void init_fit_routines(size_t spectra_samples, bool force=false);
 
     std::string command_line;
 

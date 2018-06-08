@@ -142,7 +142,14 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
         {
             if( false == io::load_override_params(analysis_job->dataset_directory, -1, override_params) )
             {
-                return false;
+                //last case, check current directory for override. This will be used for streaming
+                if( false == io::load_override_params("./", detector_num, override_params) )
+                {
+                    if( false == io::load_override_params("./", -1, override_params) )
+                    {
+                        return false;
+                    }
+                }
             }
         }
 

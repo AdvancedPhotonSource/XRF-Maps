@@ -129,9 +129,9 @@ struct Detector* Analysis_Job::get_detector(int detector_num)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::init_fit_routines(size_t spectra_samples)
+void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
 {
-    if(_first_init)// && _last_init_sample_size != spectra_samples)
+    if(_first_init || force)// && _last_init_sample_size != spectra_samples)
     {
 		_first_init = false;
         _last_init_sample_size = spectra_samples;

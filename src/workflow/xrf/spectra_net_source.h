@@ -54,6 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "workflow/source.h"
 #include "data_struct/stream_block.h"
+#include "io/net/basic_serializer.h"
 #include "data_struct/analysis_job.h"
 #ifdef _BUILD_WITH_ZMQ
 #include "support/zmq/zmq.hpp"
@@ -70,25 +71,22 @@ class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block*>
 
 public:
 
-    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job);
+    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, std::string ip_addr="127.0.0.1");
 
     ~Spectra_Net_Source();
 
     virtual void run();
-/*
-    virtual void cb_load_spectra_data(size_t row,
-                                      size_t col,
-                                      size_t height,
-                                      size_t width,
-                                      size_t detector_num,
-                                      data_struct::Spectra* spectra,
-                                      void* user_data);
-*/
+
 protected:
 
     bool _running;
 
+    std::string _conn_str;
+
+    io::net::Basic_Serializer _serializer;
+
     data_struct::Analysis_Job* _analysis_job;
+
 #ifdef _BUILD_WITH_ZMQ
 	zmq::context_t *_context;
 
