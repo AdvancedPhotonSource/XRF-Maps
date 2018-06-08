@@ -63,13 +63,14 @@ Analysis_Job::Analysis_Job()
     detector_num_start = 0;
     detector_num_end = 0;
     //default mode for which parameters to fit when optimizing fit parameters
-    optimize_fit_params_preset = fitting::models::BATCH_FIT_NO_TAILS;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;
     generate_average_h5 = false;
     is_network_source = false;
     stream_over_network = false;
     command_line = "";
     theta_pv = "";
+    network_source_ip = "";
     theta = 0.f;
 	is_emd = false;
 }
@@ -129,9 +130,9 @@ struct Detector* Analysis_Job::get_detector(int detector_num)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::init_fit_routines(size_t spectra_samples)
+void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
 {
-    if(_first_init)// && _last_init_sample_size != spectra_samples)
+    if(_first_init || force)// && _last_init_sample_size != spectra_samples)
     {
 		_first_init = false;
         _last_init_sample_size = spectra_samples;

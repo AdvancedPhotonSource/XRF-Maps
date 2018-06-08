@@ -73,17 +73,39 @@ Integrated_Spectra_Source::~Integrated_Spectra_Source()
 void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
+    if(_output_callback_func == nullptr)
+    {
+        delete spectra;
+        return;
+    }
+    //init
     if(_stream_block_list.count(detector_num) == 0)
     {
-        _analysis_job->init_fit_routines(spectra->size());
-        struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
-
         data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
-        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+
+        if(_analysis_job != nullptr)
+        {
+            if(_init_fitting_routines)
+            {
+                _analysis_job->init_fit_routines(spectra->size());
+            }
+
+            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+            if(_init_fitting_routines && cp == nullptr)
+            {
+                cp = _analysis_job->get_first_detector();
+            }
+
+            if(cp != nullptr)
+            {
+                stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+                stream_block->model = cp->model;
+            }
+            stream_block->theta = _analysis_job->theta;
+            stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
+        }
+
         stream_block->spectra = spectra;
-        stream_block->model = cp->model;
-        stream_block->theta = _analysis_job->theta;
-        stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
         stream_block->detector_number = detector_num;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
@@ -98,14 +120,7 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
 
         if(col == width && row == height)
         {
-            if(_output_callback_func != nullptr)
-            {
-                _output_callback_func(stream_block);
-            }
-            else
-            {
-                delete stream_block;
-            }
+            _output_callback_func(stream_block);
             _stream_block_list.erase(detector_num);
         }
     }

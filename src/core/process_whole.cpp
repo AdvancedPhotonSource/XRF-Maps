@@ -567,6 +567,8 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
             }
 
+            io::save_quantification_plots(analysis_job, quantification_standard, detector_num);
+
             //cleanup
             for(auto &itr3 : elements_to_fit)
             {

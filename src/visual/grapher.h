@@ -27,6 +27,7 @@ freely, subject to the following restrictions:
 #include <valarray>
 #include "core/defines.h"
 #include "data_struct/spectra.h"
+#include "data_struct/quantification_standard.h".h"
 
 namespace visual
 {
@@ -37,5 +38,7 @@ void SavePlotSpectras(std::string path,
                       data_struct::ArrayXr *model,
                       data_struct::ArrayXr *background,
                       bool log_them);
+
+void SavePlotQuantification(std::string path, data_struct::Quantifiers *quantifiers);
 
 }

@@ -67,7 +67,7 @@ using namespace std;
  3 batch_c: batch_fit_w_tails
  4 batch fit with free E, everything else fixed
  */
-enum Fit_Params_Preset { MATRIX_BATCH_FIT, BATCH_FIT_NO_TAILS, BATCH_FIT_WITH_TAILS, BATCH_FIT_WITH_FREE_ENERGY };
+enum class Fit_Params_Preset { MATRIX_BATCH_FIT, BATCH_FIT_NO_TAILS, BATCH_FIT_WITH_TAILS, BATCH_FIT_WITH_FREE_ENERGY };
 
 
 /**

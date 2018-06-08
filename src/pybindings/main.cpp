@@ -21,6 +21,10 @@
 
 //#include "core/process_streaming.h"
 #include "core/process_whole.h"
+#include "workflow/xrf/spectra_net_streamer.h"
+#include "workflow/xrf/spectra_file_source.h"
+#include "workflow/xrf/detector_sum_spectra_source.h"
+//#include "workflow/xrf/spectra_net_source.h"
 
 namespace py = pybind11;
 
@@ -46,10 +50,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::module fo = fit.def_submodule("optimizers", "Fitting optimizers submodule");
     py::module fr = fit.def_submodule("routines", "Fitting routines submodule");
     //sub module workflow
-    py::module work = m.def_submodule("workflow", "Workflow submodule");
+    py::module workflow = m.def_submodule("workflow", "Workflow submodule");
     //sub module io
     py::module io = m.def_submodule("io", "IO submodule");
-    py::module net = io.def_submodule("net", "network submodule");
+    py::module io_net = io.def_submodule("net", "network submodule");
+    py::module io_file = io.def_submodule("file", "file submodule");
 
     py::enum_<data_struct::Fitting_Routines>(m, "FittingRoutines")
     .value("ROI", data_struct::ROI)
@@ -307,12 +312,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine::set_optimizer)
     .def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine::set_update_coherent_amplitude_on_fit);
 
-/*
-    //workflow
-    py::class_<workflow::xrf::Spectra_File_Source>(work, "spectra_file_source")
-    .def(py::init<data_struct::Analysis_Job* analysis_job>())
-    .def("run", &workflow::xrf::Spectra_File_Source::run);
-*/
 
     ////// IO //////
     //hl_file_io
@@ -336,11 +335,85 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
     // IO NET
     //basic serializer
-    py::class_<io::net::Basic_Serializer>(net, "BasicSerializer")
+    py::class_<io::net::Basic_Serializer>(io_net, "BasicSerializer")
     .def(py::init<>())
     .def("encode_counts", &io::net::Basic_Serializer::encode_counts)
-    .def("decode_counts", &io::net::Basic_Serializer::decode_counts);
+    .def("decode_counts", &io::net::Basic_Serializer::decode_counts)
+    .def("encode_spectra", &io::net::Basic_Serializer::encode_spectra)
+    .def("decode_spectra", &io::net::Basic_Serializer::decode_spectra);
 
+    // IO FILE
+    //mda_io
+    py::class_<io::file::MDA_IO>(io_file, "MDA_IO")
+    .def(py::init<>())
+    .def("unload", &io::file::MDA_IO::unload)
+    .def("load_spectra_volume", &io::file::MDA_IO::load_spectra_volume)
+    .def("load_spectra_volume_with_callback", &io::file::MDA_IO::load_spectra_volume_with_callback)
+    .def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
+    .def("get_multiplied_dims", &io::file::MDA_IO::get_multiplied_dims)
+    .def("get_rank_and_dims", &io::file::MDA_IO::get_rank_and_dims)
+    .def("rows", &io::file::MDA_IO::rows)
+    .def("cols", &io::file::MDA_IO::cols)
+    .def("is_single_row_scan", &io::file::MDA_IO::is_single_row_scan);
+
+    //NetCDF_IO
+    io_file.def("netcdf_load_spectra_line", [](std::string path,
+                size_t detector,
+                data_struct::Spectra_Line* spec_line)
+                {
+                    return io::file::NetCDF_IO::inst()->load_spectra_line(path, detector, spec_line);
+                });
+    //NetCDF_IO
+    io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
+                size_t detector_num_start,
+                size_t detector_num_end,
+                int row,
+                size_t max_rows,
+                size_t max_cols,
+                data_struct::IO_Callback_Func_Def callback_fun,
+                void* user_data) { return io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(path,
+                                                                                  detector_num_start,
+                                                                                  detector_num_end,
+                                                                                  row,
+                                                                                  max_rows,
+                                                                                  max_cols,
+                                                                                  callback_fun,
+                                                                                  user_data);
+                                 });
+
+
+
+    //workflow
+    py::class_<workflow::Sink<data_struct::Stream_Block*> >(workflow, "StreamBlockSink")
+    .def(py::init<>())
+    //.def("connect", &workflow::Sink<data_struct::Stream_Block>::connect)
+    .def("set_function", &workflow::Sink<data_struct::Stream_Block*>::set_function)
+    .def("start", &workflow::Sink<data_struct::Stream_Block*>::start)
+    .def("stop", &workflow::Sink<data_struct::Stream_Block*>::stop)
+    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block*>::wait_and_stop)
+    .def("set_delete_block", &workflow::Sink<data_struct::Stream_Block*>::set_delete_block)
+    .def("sink_function", &workflow::Sink<data_struct::Stream_Block*>::sink_function);
+#ifdef _BUILD_WITH_ZMQ
+    py::class_<workflow::xrf::Spectra_Net_Streamer, workflow::Sink<data_struct::Stream_Block*> >(workflow, "SpectraNetStreamer")
+    .def(py::init<>())
+    .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer::set_send_counts)
+    .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer::set_send_spectra)
+    .def("stream", &workflow::xrf::Spectra_Net_Streamer::stream);
+#endif
+
+    py::class_<workflow::xrf::Spectra_File_Source>(workflow, "SpectraFileSource")
+    .def(py::init<>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block*>::connect_sink)
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source::run);
+
+    py::class_<workflow::xrf::Detector_Sum_Spectra_Source, workflow::xrf::Spectra_File_Source>(workflow, "DetectorSumSpectraFileSource")
+    .def(py::init<>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block*>::connect_sink)
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source::run);
 
     //process_streaming
 //    m.def("proc_spectra_block", &proc_spectra_block);
@@ -349,6 +422,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 //    m.def("save_optimal_params", &save_optimal_params);
 //    m.def("run_optimization_stream_pipeline", &run_optimization_stream_pipeline);
 //    m.def("perform_quantification_streaming", &perform_quantification_streaming);
+
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
     m.def("fit_single_spectra", &fit_single_spectra);

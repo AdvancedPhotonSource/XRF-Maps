@@ -142,7 +142,14 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
         {
             if( false == io::load_override_params(analysis_job->dataset_directory, -1, override_params) )
             {
-                return false;
+                //last case, check current directory for override. This will be used for streaming
+                if( false == io::load_override_params("./", detector_num, override_params) )
+                {
+                    if( false == io::load_override_params("./", -1, override_params) )
+                    {
+                        return false;
+                    }
+                }
             }
         }
 
@@ -237,6 +244,16 @@ bool save_volume(data_struct::Quantification_Standard * quantification_standard,
     delete spectra_volume;
 
     return true;
+}
+
+// ----------------------------------------------------------------------------
+
+void save_quantification_plots(data_struct::Analysis_Job* analysis_job, data_struct::Quantification_Standard *standard, int detector_num)
+{
+#ifdef _BUILD_WITH_QT
+    std::string str_path = analysis_job->dataset_directory+"/output/calib0_0_det"+std::to_string(detector_num)+".png";
+    //visual::SavePlotQuantification(str_path, standard->calibration_curves);
+#endif
 }
 
 // ----------------------------------------------------------------------------

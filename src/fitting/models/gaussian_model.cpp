@@ -139,7 +139,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
 
     switch (preset)
     {
-        case MATRIX_BATCH_FIT: //matrix batch fit
+        case Fit_Params_Preset::MATRIX_BATCH_FIT: //matrix batch fit
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
@@ -177,7 +177,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
             break;
-        case BATCH_FIT_NO_TAILS: // batch fit without tails
+        case Fit_Params_Preset::BATCH_FIT_NO_TAILS: // batch fit without tails
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -215,7 +215,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
             break;
-        case BATCH_FIT_WITH_TAILS: //batch fit with tails
+        case Fit_Params_Preset::BATCH_FIT_WITH_TAILS: //batch fit with tails
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -253,7 +253,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
             break;
-        case BATCH_FIT_WITH_FREE_ENERGY: // batch fit with free E, everything else fixed
+        case Fit_Params_Preset::BATCH_FIT_WITH_FREE_ENERGY: // batch fit with free E, everything else fixed
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;

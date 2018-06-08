@@ -160,4 +160,126 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 }
 
 
+void SavePlotQuantification(std::string path, data_struct::Quantifiers *quantifiers)
+{
+    int argc = 0;
+    char ** argv = nullptr;
+    QApplication app(argc, argv);
+
+    QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
+    axisYLog10->setTitleText("Counts Log10");
+    axisYLog10->setLabelFormat("%.1e");
+    //axisYLog10->setRange(1.0, 10000.0);
+    axisYLog10->setBase(10.0);
+
+    QtCharts::QValueAxis *axisX = new QtCharts::QValueAxis();
+    axisX->setTitleText("Energy (keV)");
+    axisX->setLabelFormat("%.3f");
+    //axisX->setTickCount(series->count());
+    //axisX->setRange(0, 2048);
+    axisX->setTickCount(11);
+/*
+    QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
+    axisY->setTitleText("Counts");
+    axisY->setLabelFormat("%i");
+    //axisY->setTickCount(series->count());
+*/
+    QtCharts::QChartView *chartView = new QtCharts::QChartView();
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->resize(1024, 768);
+
+    QtCharts::QChart *chart = chartView->chart();
+    chart->addAxis(axisX, Qt::AlignBottom);
+
+
+    chart->addAxis(axisYLog10, Qt::AlignLeft);
+
+
+    QtCharts::QLineSeries *series_current = new QtCharts::QLineSeries();
+    QtCharts::QLineSeries *series_us_ic = new QtCharts::QLineSeries();
+    QtCharts::QLineSeries *series_ds_ic = new QtCharts::QLineSeries();
+
+    series_current->setName("Current");
+    series_current->setColor(QColor(Qt::green));
+    series_us_ic->setName("Up Stream ION Chamber");
+    series_us_ic->setColor(QColor(Qt::red));
+    series_ds_ic->setName("Up Stream ION Chamber");
+    series_ds_ic->setColor(QColor(Qt::blue));
+
+    //quantifiers->calib_curves[data_struct::Quantifiers::CURRENT].shell_curves[0].size();
+    //quantifiers->calib_curves[data_struct::Quantifiers::CURRENT].shell_curves_labels[0].size();
+/*
+    for(unsigned int i =0; i < spectra->rows(); i++)
+    {
+
+        float val_spec = (*spectra)[i];
+        float val_mod = (*model)[i];
+        float val_back = (*background)[i];
+
+        bool isFine = std::isfinite(val_spec);
+        if (false == isFine || val_spec <= 0.0f)
+        {
+            val_spec = 1.0;
+        }
+        isFine = std::isfinite(val_mod);
+        if (false == isFine || val_mod <= 0.0f)
+        {
+            val_mod = 1.0;
+        }
+        isFine = std::isfinite(val_back);
+        if (false == isFine || val_back <= 0.0f)
+        {
+            val_back = 1.0;
+        }
+
+        if(energy !=nullptr)
+        {
+            series_spectra->append((*energy)[i], val_spec);
+            series_model->append((*energy)[i], val_mod);
+            series_background->append((*energy)[i], val_back);
+        }
+        else
+        {
+            series_spectra->append(i, val_spec);
+            series_model->append(i, val_mod);
+            series_background->append(i, val_back);
+        }
+    }
+
+    chart->addSeries(series_spectra);
+    chart->addSeries(series_model);
+    chart->addSeries(series_background);
+
+    series_spectra->attachAxis(axisX);
+    series_model->attachAxis(axisX);
+    series_background->attachAxis(axisX);
+
+
+    if(log_them)
+    {
+        series_spectra->attachAxis(axisYLog10);
+        series_model->attachAxis(axisYLog10);
+        series_background->attachAxis(axisYLog10);
+    }
+    else
+    {
+        series_spectra->attachAxis(axisY);
+        series_model->attachAxis(axisY);
+        series_background->attachAxis(axisY);
+    }
+
+    QPixmap pix = chartView->grab();
+    QPainter painter(&pix);
+    int h = 768;
+    int w = 1024;
+    int x = 0;
+    int y = 0;
+    painter.drawPixmap(x, y, w, h, pix);
+
+    painter.end();
+    pix.save(QString(path.c_str()), "png");
+*/
+}
+
+
 } //namespace visual
