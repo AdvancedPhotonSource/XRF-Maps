@@ -61,6 +61,7 @@ Spectra_Net_Source::Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, 
     _analysis_job = analysis_job;
 #ifdef _BUILD_WITH_ZMQ
     _conn_str = "tcp://"+ip_addr+":43434";
+    logit<<"Connecting to "<<_conn_str<<"\n";
 	_context = new zmq::context_t(1);
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_SUB);
     _zmq_socket->connect(_conn_str);

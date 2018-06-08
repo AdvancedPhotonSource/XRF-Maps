@@ -66,6 +66,8 @@ class DLL_EXPORT Detector_Sum_Spectra_Source : public Spectra_File_Source
 
 public:
 
+    Detector_Sum_Spectra_Source();
+
     Detector_Sum_Spectra_Source(data_struct::Analysis_Job* analysis_job);
 
     ~Detector_Sum_Spectra_Source();

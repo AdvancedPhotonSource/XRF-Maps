@@ -81,7 +81,14 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
     }
     else if(job->is_network_source)
     {
-        source = new workflow::xrf::Spectra_Net_Source(job);
+        if(job->network_source_ip.length() > 0)
+        {
+            source = new workflow::xrf::Spectra_Net_Source(job, job->network_source_ip);
+        }
+        else
+        {
+            source = new workflow::xrf::Spectra_Net_Source(job);
+        }
     }
     else
     {

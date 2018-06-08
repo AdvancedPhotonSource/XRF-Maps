@@ -80,7 +80,7 @@ void help()
     logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
     logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
     logit_s<<"Network: "<<"\n";
-    logit_s<<"--streamin : Accept a ZMQ stream of spectra to process (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
+    logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
     logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
     logit_s<<"Examples: "<<"\n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
@@ -222,6 +222,7 @@ int main(int argc, char *argv[])
     if( clp.option_exists("--streamin"))
     {
         analysis_job.is_network_source = true;
+        analysis_job.network_source_ip = clp.get_option("--streamin");
     }
 
     if( clp.option_exists("--streamout"))

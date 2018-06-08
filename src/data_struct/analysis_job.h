@@ -117,6 +117,8 @@ public:
 
     std::string theta_pv;
 
+    std::string network_source_ip;
+
     float theta;
 
     std::vector<std::string> dataset_files;

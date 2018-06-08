@@ -56,6 +56,16 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
+Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source() : Spectra_File_Source(nullptr)
+{
+    _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
+    _detector_num_start = 0;
+    _detector_num_end = 3;
+}
+
+//-----------------------------------------------------------------------------
+
 Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
 {
     _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);

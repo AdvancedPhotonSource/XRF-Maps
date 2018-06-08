@@ -70,6 +70,7 @@ Analysis_Job::Analysis_Job()
     stream_over_network = false;
     command_line = "";
     theta_pv = "";
+    network_source_ip = "";
     theta = 0.f;
 	is_emd = false;
 }

@@ -23,6 +23,7 @@
 #include "core/process_whole.h"
 #include "workflow/xrf/spectra_net_streamer.h"
 #include "workflow/xrf/spectra_file_source.h"
+#include "workflow/xrf/detector_sum_spectra_source.h"
 //#include "workflow/xrf/spectra_net_source.h"
 
 namespace py = pybind11;
@@ -401,6 +402,13 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 #endif
 
     py::class_<workflow::xrf::Spectra_File_Source>(workflow, "SpectraFileSource")
+    .def(py::init<>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block*>::connect_sink)
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source::run);
+
+    py::class_<workflow::xrf::Detector_Sum_Spectra_Source, workflow::xrf::Spectra_File_Source>(workflow, "DetectorSumSpectraFileSource")
     .def(py::init<>())
     .def("connect_sink", &workflow::Source<data_struct::Stream_Block*>::connect_sink)
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source::set_init_fitting_routines)
