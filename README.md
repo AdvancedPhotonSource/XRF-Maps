@@ -19,6 +19,22 @@ Cmake 3.5 or greater
  QT : https://www.qt.io/download
  ZeroMQ : http://zeromq.org/area:download
 
+# Prebuilt Binaries
+## Windows 64 (Visual C++ 2015 redis)
+### Single precision with ZeroMQ, and Anaconda Python 3.6 bindings
+ https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64/lastSuccessfulBuild/artifact/*zip*/archive.zip
+### Single precision with QT, and ZeroMQ
+ https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64_QT/lastSuccessfulBuild/artifact/*zip*/archive.zip
+### Double precision with ZeroMQ, and Anaconda Python 3.6 bindings
+ https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64_Double_Prec/lastSuccessfulBuild/artifact/*zip*/archive.zip
+
+## RedHat Linux 7 (gcc 6.2)
+### Single precision with ZeroMQ, and Anaconda Python 3.6 bindings
+ https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Linux64/lastSuccessfulBuild/artifact/*zip*/archive.zip
+### Double precision with ZeroMQ, and Anaconda Python 3.6 bindings
+ https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Linux64_Double_Prec/lastSuccessfulBuild/artifact/*zip*/archive.zip
+
+
 # Compile Default
  1) mkdir build ; cd build
  2) cmake ../
