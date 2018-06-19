@@ -1329,7 +1329,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
             hid_t frame_memoryspace_id = H5Screate_simple(2, frame_dims, NULL);
             error = H5Dread(frame_id, H5T_NATIVE_INT, frame_memoryspace_id, dataspace_frame_id, H5P_DEFAULT, &frames[0]);
             start_offset = frames[frame_num];
-            delete frames;
+            delete [] frames;
             close_map.push({frame_memoryspace_id, H5O_DATASPACE});
         }
         else
@@ -1627,7 +1627,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
             hid_t frame_memoryspace_id = H5Screate_simple(2, frame_dims, NULL);
             error = H5Dread(frame_id, H5T_NATIVE_INT, frame_memoryspace_id, dataspace_frame_id, H5P_DEFAULT, &frames[0]);
             start_offset = frames[frame_num_start];
-            delete frames;
+            delete [] frames;
             close_map.push({frame_memoryspace_id, H5O_DATASPACE});
         }
         else
