@@ -111,12 +111,15 @@ include(CheckCXXCompilerFlag)
 
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g -fopenmp -march=native")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC -march=native")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g -fopenmp")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC")
 
-  if(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axMIC-AVX512 -dynamic ")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -axMIC-AVX512 -dynamic ")
+  IF(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xMIC-AVX512")
+  ELSE()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
   ENDIF()
 ENDIF()
 

@@ -28,10 +28,10 @@
 ### Nersc Cori
 #### Intel Phi
 * module swap craype-haswell craype-mic-knl
-* module add gcc/6.3.0
+* module add gcc/7.3.0
 * module add eigen3/3.3.3
-* module add netcdf/4.4.1
-* export PATH=/usr/common/software/hdf5-serial/1.8.16/hsw/intel/bin/:$PATH
+* module add netcdf/4.6.1
+* module add hdf5/1.10.1
 * mkdir build
 * cd build
 * CC=icc CXX=icpc cmake -DBUILD_FOR_PHI=ON -DEIGEN3_INCLUDES=/usr/common/software/eigen3/3.3.3/include/eigen3/ ../
