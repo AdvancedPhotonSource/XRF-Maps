@@ -370,6 +370,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
         {
             logit<<"Error: NetCDF header not found! Stopping load : "<<path<<"\n";
+            nc_close(ncid);
             return false;
         }
 
@@ -404,10 +405,12 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                 if(j < max_cols -2)
                 {
                     logit<<"Error: NetCDF sub header not found! Stopping load at Col: "<<j<<" path :"<<path<<"\n";
+                    nc_close(ncid);
                     return false;
                 }
                 //last two may not be filled with data
                 //TODO: send end of row stream_block down pipeline
+                nc_close(ncid);
                 return true;
             }
 

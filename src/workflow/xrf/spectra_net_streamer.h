@@ -72,7 +72,7 @@ public:
 
     Spectra_Net_Streamer();
 
-    ~Spectra_Net_Streamer();
+    virtual ~Spectra_Net_Streamer();
 
     void stream(data_struct::Stream_Block* stream_block);
 

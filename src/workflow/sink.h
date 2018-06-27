@@ -84,7 +84,7 @@ public:
 		return *this;
 	}
 
-    ~Sink()
+    virtual ~Sink()
     {
         if(_thread != nullptr)
         {

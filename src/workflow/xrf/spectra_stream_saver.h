@@ -72,7 +72,7 @@ public:
 
     Spectra_Stream_Saver();
 
-    ~Spectra_Stream_Saver();
+    virtual ~Spectra_Stream_Saver();
 
     void save_stream(data_struct::Stream_Block* stream_block);
 
