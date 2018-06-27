@@ -159,7 +159,7 @@ protected:
 
                     _callback_func(input_block);
 
-                    if(_delete_block)
+                    if(_delete_block && input_block != nullptr)
                     {
                         delete input_block;
                     }
