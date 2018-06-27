@@ -120,7 +120,6 @@ namespace nsNNLS
 					checkDescentUpdateBeta();
 				}
 			}
-			fprintf(stderr, "-");
 			return out.iter;
 		}
 		

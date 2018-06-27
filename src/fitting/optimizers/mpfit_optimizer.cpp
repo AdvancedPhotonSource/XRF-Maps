@@ -310,9 +310,6 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
 
-    //logit_s<<"*";
-
-
     switch(info)
     {
         case 0:
@@ -497,8 +494,6 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     struct mp_par<real_t> *mp_par = nullptr;
 
     info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
-    logit_s<<"*";
-
 
   //  delete [] mp_par;
 /*

@@ -106,7 +106,7 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
         }
 
         stream_block->spectra = new data_struct::Spectra(spectra->size());
-        stream_block->spectra->add(spectra);
+        stream_block->spectra->add(*spectra);
         stream_block->detector_number = detector_num;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;

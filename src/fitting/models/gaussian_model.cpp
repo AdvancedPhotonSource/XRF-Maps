@@ -197,7 +197,7 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
-            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
