@@ -27,7 +27,7 @@ freely, subject to the following restrictions:
 #include <valarray>
 #include "core/defines.h"
 #include "data_struct/spectra.h"
-#include "data_struct/quantification_standard.h".h"
+#include "data_struct/quantification_standard.h"
 
 namespace visual
 {

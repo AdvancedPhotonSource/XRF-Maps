@@ -120,7 +120,10 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
         logit << "Error sending ZMQ message"<<"\n";
     }
 
-    //delete_block happens in parent class sink
+    if(stream_block != nullptr)
+    {
+        delete stream_block;
+    }
 #else
     logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
