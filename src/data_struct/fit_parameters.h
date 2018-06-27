@@ -181,7 +181,7 @@ public:
 
     Fit_Parameters(const Fit_Parameters& fit_pars);
 
-    ~Fit_Parameters(){}
+    ~Fit_Parameters(){_params.clear();}
 
     Fit_Param& operator [](std::string name) { return _params[name]; }
 

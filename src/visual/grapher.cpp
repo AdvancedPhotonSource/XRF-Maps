@@ -50,7 +50,7 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 
     QtCharts::QValueAxis *axisX = new QtCharts::QValueAxis();
     axisX->setTitleText("Energy (keV)");
-    axisX->setLabelFormat("%.3f");
+    axisX->setLabelFormat("%1.0f");
     //axisX->setTickCount(series->count());
     //axisX->setRange(0, 2048);
     axisX->setTickCount(11);
@@ -174,7 +174,7 @@ void SavePlotQuantification(std::string path, data_struct::Quantifiers *quantifi
 
     QtCharts::QValueAxis *axisX = new QtCharts::QValueAxis();
     axisX->setTitleText("Energy (keV)");
-    axisX->setLabelFormat("%.3f");
+    axisX->setLabelFormat("%1.0f");
     //axisX->setTickCount(series->count());
     //axisX->setRange(0, 2048);
     axisX->setTickCount(11);
