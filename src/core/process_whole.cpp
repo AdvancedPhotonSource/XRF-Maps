@@ -315,6 +315,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
     }
     else
     {
+		io::file::HDF5_IO::inst()->save_quantification(&(detector_struct->quant_standard));
         io::file::HDF5_IO::inst()->end_save_seq();
     }
 
@@ -538,11 +539,11 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                 fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
                 //reset model fit parameters to defaults
-//                model.reset_to_default_fit_params();
+                model.reset_to_default_fit_params();
                 //Update fit parameters by override values
-//                model.update_fit_params_values(override_params->fit_params);
+                model.update_fit_params_values(&(override_params->fit_params));
                 //Initialize the fit routine
-//                fit_routine->initialize(&model, &elements_to_fit, energy_range);
+                fit_routine->initialize(&model, &elements_to_fit, energy_range);
                 //Fit the spectra
                 std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model,
                                                                                               &integrated_spectra,
