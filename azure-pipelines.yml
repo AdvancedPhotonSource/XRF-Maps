@@ -4,14 +4,19 @@
 # https://aka.ms/yaml
 
 pool:
-  vmImage: 'Windows 10 64'
+  vmImage: 'VS2017'
 
 
 steps:
+- script: |
+	mkdir build
+	cd build
+  displayName: 'make build directory'
+
 - task: CMake@1
   inputs:
-    workingDirectory: 'build' # Optional
-    cmakeArgs: -G "Visual Studio 15 2017 Win64"
+    workingDirectory: 'build'
+    cmakeArgs: -G "Visual Studio 15 2017 Win64" ..
 
 - script: nmake
   displayName: 'Run a one-line script'
