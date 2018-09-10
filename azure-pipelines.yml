@@ -4,16 +4,16 @@
 # https://aka.ms/yaml
 
 pool:
-  vmImage: 'Ubuntu 18.04'
+  vmImage: 'Windows 10 64'
 
 
 steps:
 - task: CMake@1
   inputs:
     workingDirectory: 'build' # Optional
-    #cmakeArgs: 
+    cmakeArgs: -G "Visual Studio 2017 64bit"
 
-- script: make
+- script: nmake
   displayName: 'Run a one-line script'
 
 - script: |
