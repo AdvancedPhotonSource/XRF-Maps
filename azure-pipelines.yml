@@ -11,7 +11,7 @@ steps:
 - task: CMake@1
   inputs:
     workingDirectory: 'build' # Optional
-    cmakeArgs: -G "Visual Studio 2017 Win64"
+    cmakeArgs: -G "Visual Studio 15 2017 Win64"
 
 - script: nmake
   displayName: 'Run a one-line script'
