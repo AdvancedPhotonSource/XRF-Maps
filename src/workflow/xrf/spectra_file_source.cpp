@@ -151,6 +151,13 @@ void Spectra_File_Source::run()
     }
 
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
+
+//    if(_netcdf_files.size() == 0)
+//    {
+//        // search bnp netcdf files
+//        _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
+//    }
+
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
 
     for(std::string dataset_file : _analysis_job->dataset_files)
