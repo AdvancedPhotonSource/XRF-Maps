@@ -11,7 +11,7 @@ QT       -= gui
 
 TARGET = XRF_Maps
 CONFIG   -= app_bundle
-CONFIG += c++14
+CONFIG += c++17
 
 TEMPLATE = app
 CONFIG += debug

@@ -312,7 +312,16 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 	std::vector<std::string> keys;
 	for (const auto& itr : (*elements_to_fit))
-		keys.push_back(itr.first);
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        else
+        {
+            keys.push_back(itr.first);
+        }
+    }
 
 #pragma omp parallel for
         for (int i=0; i < (int)keys.size(); i++)
@@ -331,7 +340,14 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 	for(const auto& itr : (*elements_to_fit))
 	{
-		agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        else
+        {
+            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+        }
 	}
     */
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);

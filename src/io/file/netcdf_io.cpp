@@ -197,7 +197,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                logit<<"Error reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
+                logit<<"Warning: reading in elapsed lifetime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                 elapsed_livetime = 1.0;
             }
         }
@@ -211,7 +211,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
             {
-                logit<<"Error reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<"\n";
+                logit<<"Warning: reading in elapsed realtime for Col:"<<j<<". Setting it to 1.0"<<"\n";
                 elapsed_realtime = 1.0;
             }
         }
