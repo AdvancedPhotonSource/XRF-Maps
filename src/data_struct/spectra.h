@@ -135,6 +135,14 @@ public:
         _output_counts = outnt;
     }
 
+	Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
+	{
+        _elapsed_livetime = 1.0;
+        _elapsed_realtime = 1.0;
+        _input_counts = 1.0;
+        _output_counts = 1.0;
+	}
+
     virtual ~Spectra_T()
     {
 
