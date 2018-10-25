@@ -135,7 +135,7 @@ public:
         _output_counts = outnt;
     }
 
-	Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
+	Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, 1, Eigen::Dynamic>(rows, cols)
 	{
         _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
