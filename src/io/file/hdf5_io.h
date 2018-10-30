@@ -75,74 +75,6 @@ enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
-enum H5_Order {ROW, COL, SAMPLE, DETECTOR};
-
-struct H5_Layout_Item
-{
-    H5_Layout_Item()
-    {
-        order_size = 0;
-        path = "";
-    }
-
-    void set_order(H5_Order o1)
-    {
-        order[0] = o1;
-        order_size = 1;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order_size = 2;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2, H5_Order o3)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order[2] = o3;
-        order_size = 3;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2, H5_Order o3, H5_Order o4)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order[2] = o3;
-        order[3] = o4;
-        order_size = 4;
-    }
-
-    int get_order_index(H5_Order o)
-    {
-        for (size_t i=0; i < order_size; i++)
-        {
-            if(order[i] == o)
-                return i;
-        }
-        return -1;
-    }
-
-    std::string path;
-    //index
-    H5_Order order[4];
-    size_t order_size; // min 2 , max 3
-    //size_t index;
-};
-
-struct H5_Spectra_Layout
-{
-    size_t detector_num;
-    H5_Layout_Item spectra;
-    H5_Layout_Item elt;
-    H5_Layout_Item ert;
-    H5_Layout_Item incnt;
-    H5_Layout_Item outcnt;
-};
-
-H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num);
 
 class DLL_EXPORT HDF5_IO
 {
@@ -151,12 +83,6 @@ public:
     static HDF5_IO* inst();
 
     ~HDF5_IO();
-
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    //void lazy_load();
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
 
@@ -255,6 +181,11 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+    bool add_v9_layout(std::string dataset_directory,
+                       std::string dataset_file,
+                       size_t detector_num_start,
+                       size_t detector_num_end);
+
     bool end_save_seq();
 
 private:
@@ -276,10 +207,10 @@ private:
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
+    void _add_v9_layout(std::string dataset_file);
+
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
-
-    //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
 
     struct scaler_struct
     {
@@ -298,10 +229,6 @@ private:
 
     hid_t _cur_file_id;
     std::string _cur_filename;
-
-    //void _parse_group_info(hid_t h5file, hid_t id);
-    //void _parse_dataset_info(hid_t h5file, hid_t id);
-    //void _parse_attr_info(hid_t h5file, hid_t id);
 
 };
 

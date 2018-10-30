@@ -206,6 +206,11 @@ int main(int argc, char *argv[])
         analysis_job.generate_average_h5 = true;
     }
 
+    else if(clp.option_exists("--add-v9layout"))
+    {
+        analysis_job.add_v9_layout = true;
+    }
+
 
     if(clp.option_exists("--confocal"))
     {
@@ -397,6 +402,15 @@ int main(int argc, char *argv[])
             for(std::string dataset_file : analysis_job.dataset_files)
             {
                 io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
+        //add v9 layout soft links
+        if(analysis_job.add_v9_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
             }
         }
     }
