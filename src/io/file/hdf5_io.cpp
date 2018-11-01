@@ -5267,6 +5267,69 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         }
     }
 
+    //open scan extras and create 4xN array
+    hid_t extra_names = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Names", H5P_DEFAULT);
+    hid_t extra_units = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Unit", H5P_DEFAULT);
+    hid_t extra_values = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Values", H5P_DEFAULT);
+    hid_t extra_desc = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Description", H5P_DEFAULT);
+    if(extra_names > -1 && extra_units > -1 && extra_values > -1 && extra_desc > -1)
+    {
+
+        hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+        H5Tset_size(filetype, 256);
+        hid_t memtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(memtype, 255);
+
+        hid_t name_space = H5Dget_space(extra_names);
+        int rank = H5Sget_simple_extent_ndims(name_space);
+        hsize_t* dims_in = new hsize_t[rank];
+        int status_n = H5Sget_simple_extent_dims(name_space, &dims_in[0], NULL);
+        hsize_t extra_pv_dims[2];
+        extra_pv_dims[0] = 4;
+        extra_pv_dims[1] = dims_in[0];
+
+        hid_t file_space = H5Screate_simple(2, &extra_pv_dims[0], &extra_pv_dims[0]);
+
+        //hid_t mem_space = H5Screate_simple(1, &extra_pv_dims[0], &extra_pv_dims[0]);
+
+        hid_t name_type = H5Dget_type(extra_names);
+        hid_t extra_pvs = H5Dcreate1(file_id, "/MAPS/extra_pvs", name_type, file_space, H5P_DEFAULT);
+
+        hsize_t offset_1d[1] = {0};
+        hsize_t count_1d[1] = {1};
+        hsize_t offset_2d[2] = {0,0};
+        hsize_t count_2d[2] = {1,1};
+
+        hid_t memoryspace_id = H5Screate_simple(1, count_1d, NULL);
+        for(hsize_t i=0; i<dims_in[0]; i++)
+        {
+            char tmp_char[255] = {0};
+            offset_1d[0] = i;
+            offset_2d[1] = i;
+            //name
+            offset_2d[0] = 0;
+            H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, NULL, count_1d, NULL);
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, NULL, count_2d, NULL);
+            H5Dread(extra_names, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            //value
+            offset_2d[0] = 1;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, NULL, count_2d, NULL);
+            H5Dread(extra_values, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            //description
+            offset_2d[0] = 2;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, NULL, count_2d, NULL);
+            H5Dread(extra_desc, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            //units
+            offset_2d[0] = 3;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, NULL, count_2d, NULL);
+            H5Dread(extra_units, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+        }
+    }
+
 
     _cur_file_id = file_id;
     end_save_seq();
