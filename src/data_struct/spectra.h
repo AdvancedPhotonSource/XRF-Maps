@@ -59,17 +59,17 @@ namespace data_struct
 
 using namespace std;
 
-typedef Eigen::Array<real_t, 1, Eigen::Dynamic> ArrayXr;
-typedef Eigen::Array<const real_t, 1, Eigen::Dynamic> ConstArrayXr;
+typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
+typedef Eigen::Array<const real_t, Eigen::Dynamic, Eigen::RowMajor> ConstArrayXr;
 
 template<typename _T>
-class Spectra_T : public Eigen::Array<_T, 1, Eigen::Dynamic>
+class Spectra_T : public Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>
 {
 public:
     /**
      * @brief Spectra : Constructor
      */
-    Spectra_T() : Eigen::Array<_T, 1, Eigen::Dynamic>()
+    Spectra_T() : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>()
 	{
         _elapsed_livetime = 1.0;
 		_elapsed_realtime = 1.0;
@@ -77,7 +77,7 @@ public:
 		_output_counts = 1.0;
 	}
 
-        Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, 1, Eigen::Dynamic>(spectra)
+        Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(spectra)
 	{
         _elapsed_livetime = spectra._elapsed_livetime;
 		_elapsed_realtime = spectra._elapsed_realtime;
@@ -85,7 +85,7 @@ public:
 		_output_counts = spectra._output_counts;
 	}
 
-    Spectra_T(size_t sample_size) : Eigen::Array<_T, 1, Eigen::Dynamic>(sample_size)
+    Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
 	{
 		this->setZero();
         _elapsed_livetime = 1.0;
@@ -94,7 +94,7 @@ public:
 		_output_counts = 1.0;
 	}
 
-    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, 1, Eigen::Dynamic>(sample_size)
+    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
     {
         this->setZero();
         _elapsed_livetime = elt;
@@ -103,7 +103,7 @@ public:
         _output_counts = outcnt;
     }
 
-    Spectra_T(const Eigen::Array<_T, 1, Eigen::Dynamic>& arr) : Eigen::Array<_T, 1, Eigen::Dynamic>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -111,7 +111,7 @@ public:
         _output_counts = 1.0;
     }
 
-    Spectra_T(const Eigen::Array<_T, 1, Eigen::Dynamic>& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, 1, Eigen::Dynamic>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = livetime;
         _elapsed_realtime = realtime;
@@ -119,7 +119,7 @@ public:
         _output_counts = outnt;
     }
 
-    Spectra_T(const Eigen::Array<_T, 1, Eigen::Dynamic>&& arr) : Eigen::Array<_T, 1, Eigen::Dynamic>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -127,7 +127,7 @@ public:
         _output_counts = 1.0;
     }
 
-    Spectra_T(const Eigen::Array<_T, 1, Eigen::Dynamic>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, 1, Eigen::Dynamic>(arr)
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = livetime;
         _elapsed_realtime = realtime;
@@ -135,7 +135,7 @@ public:
         _output_counts = outnt;
     }
 
-	Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, 1, Eigen::Dynamic>(rows, cols)
+    Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
 	{
         _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
@@ -162,7 +162,7 @@ public:
 
     void add(const Spectra_T& spectra)
     {
-        *this += (Eigen::Array<_T, 1, Eigen::Dynamic>)spectra;
+        *this += (Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>)spectra;
         real_t val = spectra.elapsed_livetime();
         if(std::isnan(val) == false)
         {

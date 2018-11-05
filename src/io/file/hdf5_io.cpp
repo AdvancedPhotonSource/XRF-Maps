@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <ctime>
 #include <thread>
 #include <mutex>
+#include <algorithm>
 
 #include "data_struct/element_info.h"
 
@@ -3950,19 +3951,21 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
                 scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
                 hdf_idx++;
+                std::string scaler_name = itr.first;
+                std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
                 if (mda_idx > -1)
                 {
-                    if (itr.first == "US_IC")
+                    if (scaler_name == "US_IC")
                         us_ic_idx = mda_idx;
-                    else if (itr.first == "DS_IC")
+                    else if (scaler_name == "DS_IC")
                         ds_ic_idx = mda_idx;
-                    else if (itr.first == "CFG_2")
+                    else if (scaler_name == "CFG_2")
                         cfg_2_idx = mda_idx;
-                    else if (itr.first == "CFG_3")
+                    else if (scaler_name == "CFG_3")
                         cfg_3_idx = mda_idx;
-                    else if (itr.first == "CFG_4")
+                    else if (scaler_name == "CFG_4")
                         cfg_4_idx = mda_idx;
-                    else if (itr.first == "CFG_5")
+                    else if (scaler_name == "CFG_5")
                         cfg_5_idx = mda_idx;
                 }
             }
@@ -3972,6 +3975,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
                 if (s_itr != ignore_scaler_strings.end())
                     continue;
+
+
+                std::string scaler_name = itr.first;
+                std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
+
 
                 int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
                 if (mda_idx > -1)
@@ -3992,17 +4000,17 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, true));
                         hdf_idx++;
                     }
-                    if (itr.first == "US_IC")
+                    if (scaler_name == "US_IC")
                         us_ic_idx = mda_idx;
-                    else if (itr.first == "DS_IC")
+                    else if (scaler_name == "DS_IC")
                         ds_ic_idx = mda_idx;
-                    else if (itr.first == "CFG_2")
+                    else if (scaler_name == "CFG_2")
                         cfg_2_idx = mda_idx;
-                    else if (itr.first == "CFG_3")
+                    else if (scaler_name == "CFG_3")
                         cfg_3_idx = mda_idx;
-                    else if (itr.first == "CFG_4")
+                    else if (scaler_name == "CFG_4")
                         cfg_4_idx = mda_idx;
-                    else if (itr.first == "CFG_5")
+                    else if (scaler_name == "CFG_5")
                         cfg_5_idx = mda_idx;
                 }
             }
@@ -5324,29 +5332,29 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
             std::string val2(tmp_char);
             val2 = val2.substr(0,val2.find("\x20"));
             as_csv += val2;
-//            as_csv += ",";
             //description
             offset_2d[0] = 2;
             H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
             H5Dread(extra_desc, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
             H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-//            std::string val3(tmp_char);
-//            val3 = val3.substr(0,val3.find("\x20"));
-//            as_csv += val3;
-//            as_csv += ",";
             //units
             offset_2d[0] = 3;
             H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
             H5Dread(extra_units, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
             H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-//            std::string val4(tmp_char);
-//            val4 = val4.substr(0,val4.find("\x20"));
-//            as_csv += val4;
+
             as_csv.copy(tmp_char, 254);
             H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
         }
     }
 
+    //change version to 9
+    real_t version = 9;
+    hid_t version_id = H5Dopen(file_id, "/MAPS/version", H5P_DEFAULT);
+    hid_t ver_space = H5Dget_space(version_id);
+    hid_t ver_type = H5Dget_type(version_id);
+    H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
+    H5Dclose(version_id);
 
     _cur_file_id = file_id;
     end_save_seq();
