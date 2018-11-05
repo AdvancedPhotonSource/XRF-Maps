@@ -141,6 +141,8 @@ public:
 
     bool generate_average_h5;
 
+    bool add_v9_layout;
+
     bool is_network_source;
 
     bool stream_over_network;

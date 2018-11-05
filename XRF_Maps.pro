@@ -175,6 +175,10 @@ SOURCES += \
     src/workflow/xrf/spectra_stream_saver.cpp \
     src/workflow/xrf/spectra_net_streamer.cpp \
     src/io/file/mda_io.cpp \
+    #src/io/file/hdf5_layout_base.cpp \
+    #src/io/file/hdf5_layout_emd.cpp \
+    #src/io/file/hdf5_layout_confocal.cpp \
+    #src/io/file/hdf5_layout_10.cpp \
     src/io/file/hdf5_io.cpp \
     src/io/file/netcdf_io.cpp \
     src/io/file/csv_io.cpp \
@@ -234,6 +238,10 @@ HEADERS += \
     src/workflow/xrf/spectra_stream_saver.h \
     src/workflow/xrf/spectra_net_streamer.h \
     src/io/file/mda_io.h \
+    #src/io/file/hdf5_layout_base.h \
+    #src/io/file/hdf5_layout_emd.h \
+    #src/io/file/hdf5_layout_confocal.h \
+    #src/io/file/hdf5_layout_10.h \
     src/io/file/hdf5_io.h \
     src/io/file/netcdf_io.h \
     src/io/file/csv_io.h \

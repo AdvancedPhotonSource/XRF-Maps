@@ -78,14 +78,14 @@ std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g
 }
 */
 
-ArrayXr convolve1d( ArrayXr arr, size_t boxcar_size)
+ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size)
 {
     ArrayXr boxcar(boxcar_size);
     boxcar.setConstant(boxcar_size, 1.0);
     return convolve1d(arr, boxcar);
 }
 
-ArrayXr convolve1d( ArrayXr arr, ArrayXr boxcar)
+ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr &boxcar)
 {
     ArrayXr new_background(arr.size());
     new_background.setZero(arr.size());
@@ -136,7 +136,7 @@ ArrayXr snip_background(const Spectra* const spectra,
 
     energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (real_t)2.0) * energy_quadratic);
 
-	ArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
+        ArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
 	tmp = tmp.unaryExpr([](real_t r) { return r < 0.0 ? (real_t)0.0 : r;  });
 	
 	//ArrayXr fwhm = 2.35 * std::sqrt(tmp);

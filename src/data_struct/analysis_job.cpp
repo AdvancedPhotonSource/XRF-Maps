@@ -66,6 +66,7 @@ Analysis_Job::Analysis_Job()
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;
     generate_average_h5 = false;
+    add_v9_layout = false;
     is_network_source = false;
     stream_over_network = false;
     command_line = "";

@@ -77,20 +77,12 @@ public:
 		_output_counts = 1.0;
 	}
 
-	Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(spectra)
+        Spectra_T(const Spectra_T &spectra) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(spectra)
 	{
         _elapsed_livetime = spectra._elapsed_livetime;
 		_elapsed_realtime = spectra._elapsed_realtime;
 		_input_counts = spectra._input_counts;
 		_output_counts = spectra._output_counts;
-	}
-
-    Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
-	{
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
 	}
 
     Spectra_T(size_t sample_size) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
@@ -102,12 +94,29 @@ public:
 		_output_counts = 1.0;
 	}
 
+    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
+    {
+        this->setZero();
+        _elapsed_livetime = elt;
+        _elapsed_realtime = ert;
+        _input_counts = incnt;
+        _output_counts = outcnt;
+    }
+
     Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = 1.0;
         _elapsed_realtime = 1.0;
         _input_counts = 1.0;
         _output_counts = 1.0;
+    }
+
+    Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
+    {
+        _elapsed_livetime = livetime;
+        _elapsed_realtime = realtime;
+        _input_counts = incnt;
+        _output_counts = outnt;
     }
 
     Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
@@ -118,7 +127,6 @@ public:
         _output_counts = 1.0;
     }
 
-
     Spectra_T(const Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(arr)
     {
         _elapsed_livetime = livetime;
@@ -127,17 +135,17 @@ public:
         _output_counts = outnt;
     }
 
-    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(sample_size)
-    {
-		this->setZero();		
-        _elapsed_livetime = elt;
-        _elapsed_realtime = ert;
-        _input_counts = incnt;
-        _output_counts = outcnt;
-    }
+    Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>(rows, cols)
+	{
+        _elapsed_livetime = 1.0;
+        _elapsed_realtime = 1.0;
+        _input_counts = 1.0;
+        _output_counts = 1.0;
+	}
 
-    ~Spectra_T()
+    virtual ~Spectra_T()
     {
+
     }
 
     void recalc_elapsed_livetime()
@@ -214,8 +222,8 @@ private:
 #endif
 typedef Spectra_T<real_t> Spectra;
 
-DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, size_t boxcar_size);
-DLL_EXPORT ArrayXr convolve1d(ArrayXr arr, ArrayXr boxcar);
+DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size);
+DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr& boxcar);
 DLL_EXPORT ArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t spectral_binning, real_t width, real_t xmin, real_t xmax);
 
 
