@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
         analysis_job.generate_average_h5 = true;
     }
 
-    else if(clp.option_exists("--add-v9layout"))
+    if(clp.option_exists("--add-v9layout"))
     {
         analysis_job.add_v9_layout = true;
     }

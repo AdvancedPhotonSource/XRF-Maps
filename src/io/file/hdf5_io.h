@@ -181,7 +181,7 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
-    bool add_v9_layout(std::string dataset_directory,
+    void add_v9_layout(std::string dataset_directory,
                        std::string dataset_file,
                        size_t detector_num_start,
                        size_t detector_num_end);

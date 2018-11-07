@@ -5179,7 +5179,7 @@ bool HDF5_IO::close_dataset(size_t d_hash)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::add_v9_layout(std::string dataset_directory,
+void HDF5_IO::add_v9_layout(std::string dataset_directory,
                             std::string dataset_file,
                             size_t detector_num_start,
                             size_t detector_num_end)
@@ -5188,8 +5188,7 @@ bool HDF5_IO::add_v9_layout(std::string dataset_directory,
     {
         io::file::HDF5_IO::inst()->_add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }
-
-    return true;
+    io::file::HDF5_IO::inst()->_add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5");
 }
 
 //-----------------------------------------------------------------------------
@@ -5254,24 +5253,63 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         logit  << "Warning: Couldn't create soft link for mca_arr"<<  "\n";
     }
 
+
+    hsize_t quant_dims[3];
+    quant_dims[0] = 3;
+    quant_dims[1] = 1;
+    quant_dims[2] = 1; //num channel names
+
+
     //XRF_Analyzed
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_roi"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/SVD/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_fits"<<  "\n";
-    }
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
         if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
             logit  << "Warning: Couldn't create soft link for channel_names"<<  "\n";
+        }
+    }
+    hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
+    if(chan_names > -1)
+    {
+        hid_t chan_space = H5Dget_space(chan_names);
+        hsize_t chan_size = 1;
+        H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
+        quant_dims[2] = chan_size; //num channel names
+    }
+    hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
+
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_roi"<<  "\n";
+    }
+    else
+    {
+        //create quantification dataset. In v9 the array starts at element Z 10 insead of element Z 1
+        if(H5Dcreate1(file_id, "/MAPS/XRF_roi_quant", H5T_NATIVE_REAL, quant_space, H5P_DEFAULT) > -1)
+        {
+
+        }
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/SVD/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
+    }
+    else
+    {
+        if(H5Dcreate1(file_id, "/MAPS/XRF_roi_plus_quant", H5T_NATIVE_REAL, quant_space, H5P_DEFAULT) > -1)
+        {
+
+        }
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_fits"<<  "\n";
+    }
+    else
+    {
+        if(H5Dcreate1(file_id, "/MAPS/XRF_fits_quant", H5T_NATIVE_REAL, quant_space, H5P_DEFAULT) > -1)
+        {
+
         }
     }
 
@@ -5346,6 +5384,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
             as_csv.copy(tmp_char, 254);
             H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
         }
+        delete [] dims_in;
     }
 
     //change version to 9
