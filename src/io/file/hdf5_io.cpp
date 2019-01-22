@@ -5361,13 +5361,13 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/SVD/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
         logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
     }
     else
     {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "SVD", "/MAPS/XRF_roi_plus_quant");
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
     }
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {

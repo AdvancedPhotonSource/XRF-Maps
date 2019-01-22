@@ -1031,6 +1031,7 @@ void check_and_create_dirs(std::string dataset_directory)
     {
 		int retval = system(nullptr);
         std::string cmd = "mkdir "+dataset_directory+"img.dat";
+        logit << cmd << "\n";
         retval = system(cmd.c_str());
 		if (retval != 0)
 		{
@@ -1041,6 +1042,7 @@ void check_and_create_dirs(std::string dataset_directory)
     {
 		int retval = system(nullptr);
         std::string cmd = "mkdir "+dataset_directory+"output";
+        logit << cmd << "\n";
         retval = system(cmd.c_str());
 		if (retval != 0)
 		{
