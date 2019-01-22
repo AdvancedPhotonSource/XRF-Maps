@@ -162,6 +162,7 @@ protected:
                     if(_delete_block && input_block != nullptr)
                     {
                         delete input_block;
+						input_block = nullptr;
                     }
                 }
             }

@@ -79,9 +79,11 @@ void help()
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
     logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
     logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
+#ifdef _BUILD_WITH_ZMQ
     logit_s<<"Network: "<<"\n";
     logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
     logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
+#endif
     logit_s<<"Examples: "<<"\n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
     logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";

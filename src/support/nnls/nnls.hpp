@@ -32,13 +32,16 @@ namespace nsNNLS
 	class nnls 
 	{
 	public:
+
+		typedef Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> TArrayXr;
+
 		nnls() 
 		{
 			this->x = nullptr;
 			maxit = 100;
 		}
 
-        nnls(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> *b, int maxit)
+        nnls(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A, TArrayXr *b, int maxit)
 		{
 			this->A = A;
 			this->b = b;
@@ -54,7 +57,7 @@ namespace nsNNLS
 			sigma = .01;
 		}
 
-        nnls(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> *b, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>* x0, int maxit)
+        nnls(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A, TArrayXr *b, TArrayXr* x0, int maxit)
 		{
 			nnls(A, b, maxit);
 			this->x0 = x0; 
@@ -71,7 +74,7 @@ namespace nsNNLS
 		_T getBeta()  const { return beta; }
 		_T getObj() { return out.obj[out.iter - 1]; }
 		_T getPgTol() const { return pgtol; }
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>* getSolution() { return &x; }
+        TArrayXr* getSolution() { return &x; }
 		size_t* getFset() { return fset; }
 		size_t getMaxit() const { return maxit; }
 		_T getSigma() const { return sigma; }
@@ -83,7 +86,7 @@ namespace nsNNLS
 		void setMaxit(size_t m) { maxit = m; }
 		void setSigma(_T s) { sigma = s; }
 
-        void setData(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic>* A, Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>* b) { this->A = A; this->b = b; }
+        void setData(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic>* A, TArrayXr* b) { this->A = A; this->b = b; }
 
 		// The functions that actually launch the ship, and land it!
 		int optimize()
@@ -105,7 +108,7 @@ namespace nsNNLS
 
 				x = x - (step * gradient); // x = x - step*gradient
 											// project
-                for (long int i = 0; i < x.rows(); i++)
+                for (long int i = 0; i < x.size(); i++)
 				{
 					if (x[i] < 0)
 					{
@@ -125,19 +128,19 @@ namespace nsNNLS
 		
     // The variables used during compute time
 	private:                      
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> x;                  // The solution -- also current iterate
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>* x0;                 // Starting value
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> oldx;               // Previous iterate
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> gradient;                  // Current gradient
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> oldg;               // Previous gradient
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> xdelta;             // x - oldx
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> gdelta;             // g - oldg
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> refx;               // iterate from 'M' steps ago
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> refg;               // reference gradient from M steps ago
+        TArrayXr x;                  // The solution -- also current iterate
+        TArrayXr* x0;                 // Starting value
+        TArrayXr oldx;               // Previous iterate
+        TArrayXr gradient;                  // Current gradient
+        TArrayXr oldg;               // Previous gradient
+        TArrayXr xdelta;             // x - oldx
+        TArrayXr gdelta;             // g - oldg
+        TArrayXr refx;               // iterate from 'M' steps ago
+        TArrayXr refg;               // reference gradient from M steps ago
 
 		Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A;
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> *b;
-        Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> ax;                 // vector to hold A*x
+        TArrayXr *b;
+        TArrayXr ax;                 // vector to hold A*x
 		size_t* fset;               // fixed set 
 		size_t fssize;              // sizeof fixed set
 
@@ -152,9 +155,9 @@ namespace nsNNLS
 		// The solution and statistics variables
 		struct out_
 		{
-            Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> obj;
+            TArrayXr obj;
 			int  iter;
-            Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> pgnorms;
+            TArrayXr pgnorms;
 			_T npg;                // inf-norm of projected gradient
 		} out;
 
@@ -286,7 +289,7 @@ namespace nsNNLS
 
 			if (out.iter % 2) 
 			{
-				for (int i = 0; i < xdelta.rows(); i++)
+				for (int i = 0; i < xdelta.size(); i++)
 				{
 					nr += xdelta[i] * xdelta[i];
 					dr += xdelta[i] * gdelta[i];
@@ -294,7 +297,7 @@ namespace nsNNLS
 			}
 			else 
 			{
-				for (int i = 0; i < xdelta.rows(); i++)
+				for (int i = 0; i < xdelta.size(); i++)
 				{
 					nr += xdelta[i] * gdelta[i];
 					dr += gdelta[i] * gdelta[i];
@@ -320,7 +323,7 @@ namespace nsNNLS
 			_T d = 0;
 
 			// compute sigma*<grad, refx - x>
-            for (long int i = 0; i < gradient.rows(); i++)
+            for (long int i = 0; i < gradient.size(); i++)
 			{
 				d += gradient[i] * (refx[i] - x[i]);
 			}
