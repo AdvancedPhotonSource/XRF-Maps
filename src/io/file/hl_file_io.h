@@ -110,6 +110,21 @@ struct DLL_EXPORT file_name_fit_params
     bool success;
 };
 
+struct DLL_EXPORT element_weights_struct
+{
+    std::string standard_file_name;
+    std::unordered_map<std::string, real_t> element_standard_weights;
+
+    element_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+    {
+        standard_file_name = standard_file;
+        for(size_t i=0; i<element_names.size(); i++)
+        {
+            element_standard_weights[element_names[i]] = element_weights[i];
+        }
+    }
+};
+
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
@@ -152,6 +167,11 @@ DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
                                   std::string *standard_file_name,
                                   std::unordered_map<std::string, real_t> *element_standard_weights);
+
+
+DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
+                                                 std::string quantification_info_file,
+                                                 vector<element_weights_struct> &standard_element_weights);
 
 DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
