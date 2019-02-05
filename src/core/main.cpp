@@ -285,6 +285,9 @@ int main(int argc, char *argv[])
         {
             dataset_dir += DIR_END_CHAR;
         }
+        //replace / with \ for windows, won't do anything for linux
+        std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
+
         //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
         io::check_and_create_dirs(dataset_dir);
 
