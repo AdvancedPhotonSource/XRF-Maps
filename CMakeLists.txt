@@ -69,6 +69,17 @@ option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
 option(DOUBLE_PREC "Double Precision" OFF)
 
+# Opitons for getting YouCompleteMe plugin working with this project
+SET( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+
+IF( EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" )
+  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+  )
+ENDIF()
+
+
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
   IF( NOT ZeroMQ_INCLUDE_DIR AND NOT ZeroMQ_LIBRARY)
