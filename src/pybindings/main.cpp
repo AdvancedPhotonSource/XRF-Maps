@@ -401,7 +401,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("sink_function", &workflow::Sink<data_struct::Stream_Block*>::sink_function);
 #ifdef _BUILD_WITH_ZMQ
     py::class_<workflow::xrf::Spectra_Net_Streamer, workflow::Sink<data_struct::Stream_Block*> >(workflow, "SpectraNetStreamer")
-    .def(py::init<>())
+    .def(py::init<std::string>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer::set_send_spectra)
     .def("stream", &workflow::xrf::Spectra_Net_Streamer::stream);
