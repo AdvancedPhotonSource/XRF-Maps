@@ -443,6 +443,109 @@ bool load_quantification_standard(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
+                                                 std::string quantification_info_file,
+                                                 vector<element_weights_struct> &standard_element_weights)
+{
+    std::string path = dataset_directory + quantification_info_file;
+    std::ifstream paramFileStream(path);
+
+    if (paramFileStream.is_open() )
+    {
+        paramFileStream.exceptions(std::ifstream::failbit);
+        bool has_filename = false;
+        bool has_elements = false;
+        bool has_weights = false;
+        //std::string line;
+        std::string tag;
+
+        std::vector<std::string> element_names;
+        std::vector<real_t> element_weights;
+
+        try
+        {
+            std::string standard_filename;
+            for (std::string line; std::getline(paramFileStream, line); )
+            {
+                std::istringstream strstream(line);
+                std::getline(strstream, tag, ':');
+                //logit<<"tag : "<<tag<<"\n";
+                if (tag == "FILENAME")
+                {
+                    standard_filename="";
+                    logit << line << "\n";
+                    std::getline(strstream, standard_filename, ':');
+                    standard_filename.erase(std::remove_if(standard_filename.begin(), standard_filename.end(), ::isspace), standard_filename.end());
+                    logit << "Standard file name = "<< standard_filename << "\n";
+                    has_filename = true;
+                }
+                else if (tag == "ELEMENTS_IN_STANDARD")
+                {
+                    std::string element_symb;
+                    while(std::getline(strstream, element_symb, ','))
+                    {
+                        element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+                        logit<<"Element : "<<element_symb<<"\n";
+                        element_names.push_back(element_symb);
+                    }
+                    has_elements = true;
+                }
+                else if (tag == "WEIGHT")
+                {
+                    std::string element_weight_str;
+                    while(std::getline(strstream, element_weight_str, ','))
+                    {
+                        element_weight_str.erase(std::remove_if(element_weight_str.begin(), element_weight_str.end(), ::isspace), element_weight_str.end());
+                        logit<<"Element weight: "<<element_weight_str<<"\n";
+                        real_t weight = std::stof(element_weight_str);
+                        element_weights.push_back(weight);
+                    }
+                    //has_weights = true;
+                    if(has_elements && has_filename)
+                    {
+                        if(element_names.size() == element_weights.size())
+                        {
+                            standard_element_weights.emplace_back( element_weights_struct(standard_filename, element_names, element_weights) );
+                        }
+                        else
+                        {
+                            logit<<"Error: number of element names ["<<element_names.size()<<"] does not match number of element weights ["<<element_weights.size()<<"]!"<<"\n";
+                        }
+                    }
+                    element_names.clear();
+                    element_weights.clear();
+                    has_filename = false;
+                    has_elements = false;
+                }
+
+            }
+        }
+        catch(std::exception& e)
+        {
+            if (paramFileStream.eof() == 0 && (paramFileStream.bad() || paramFileStream.fail()) )
+            {
+                std::cerr << "ios Exception happened: " << e.what() << "\n"
+                    << "Error bits are: "
+                    << "\nfailbit: " << paramFileStream.fail()
+                    << "\neofbit: " << paramFileStream.eof()
+                    << "\nbadbit: " << paramFileStream.bad() << "\n";
+            }
+        }
+
+
+        paramFileStream.close();
+    }
+    else
+    {
+        logit<<"Failed to open file "<<path<<"\n";
+        return false;
+    }
+
+    return true;
+}
+
+// ----------------------------------------------------------------------------
+
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::Params_Override *params_override)

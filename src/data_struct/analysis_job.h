@@ -119,6 +119,10 @@ public:
 
     std::string network_source_ip;
 
+    std::string network_source_port;
+
+    std::string network_stream_port;
+
     float theta;
 
     std::vector<std::string> dataset_files;
