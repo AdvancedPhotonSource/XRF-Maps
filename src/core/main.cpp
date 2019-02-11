@@ -230,11 +230,25 @@ int main(int argc, char *argv[])
     {
         analysis_job.is_network_source = true;
         analysis_job.network_source_ip = clp.get_option("--streamin");
+        int idx = analysis_job.network_source_ip.find(':');
+        if( idx > 0)
+        {
+            analysis_job.network_source_port = analysis_job.network_source_ip.substr(idx+1);
+            analysis_job.network_source_ip = analysis_job.network_source_ip.substr(0, idx);
+        }
     }
 
     if( clp.option_exists("--streamout"))
     {
         analysis_job.stream_over_network = true;
+        std::string out_port = clp.get_option("--streamout");
+        if(out_port.length() > 1)
+        {
+          if(out_port[0] != '-' && out_port[1] != '-')
+          {
+              analysis_job.network_stream_port = out_port;
+          }
+        }
     }
 
 
