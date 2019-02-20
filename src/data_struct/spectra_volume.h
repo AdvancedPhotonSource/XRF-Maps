@@ -75,13 +75,13 @@ public:
 
     //real_t* get_spectra(unsigned int row, unsigned int col);
 
-    size_t cols() const { return _data_vol[0].size(); }
+	size_t cols() const { if (_data_vol.size() > 0) return _data_vol[0].size(); else return 0; }
 
     size_t rows() const { return _data_vol.size(); }
 
     void recalc_elapsed_livetime();
 
-    size_t samples_size() const { return _data_vol[0][0].size(); }
+	size_t samples_size() const { if (_data_vol.size() > 0) return _data_vol[0][0].size(); else return 0; }
 
     int rank() { return 3; }
 

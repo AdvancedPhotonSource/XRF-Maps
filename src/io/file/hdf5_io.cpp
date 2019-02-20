@@ -713,7 +713,10 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 //    size_t greater_rows = std::max(spec_vol->rows() , dims_in[1]);
 //    size_t greater_cols = std::max(spec_vol->cols() , dims_in[2]);
 //    size_t greater_channels = std::max(spec_vol->samples_size() , dims_in[0]);
-
+	if (dims_in[0] == 0 && dims_in[1] == 0 && dims_in[2] == 0)
+	{
+		return false;
+	}
 
     if(spec_vol->rows() < dims_in[0] || spec_vol->cols() < dims_in[1] || spec_vol->samples_size() < dims_in[2])
     {
