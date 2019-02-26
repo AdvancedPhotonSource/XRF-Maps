@@ -204,7 +204,7 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 // ----------------------------------------------------------------------------
 
 bool save_results(std::string save_loc,
-                  const data_struct::Fit_Count_Dict * const element_counts,
+                  data_struct::Fit_Count_Dict * element_counts,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start)
 {
@@ -222,6 +222,12 @@ bool save_results(std::string save_loc,
     std::chrono::duration<double> elapsed_seconds = end-start;
     logit << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
+	// Add sum of elastic and inelastic 
+	if (element_counts->count(STR_COHERENT_SCT_AMPLITUDE) > 0 && element_counts->count(STR_COMPTON_AMPLITUDE) > 0)
+	{
+		Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> sum = element_counts->at(STR_COHERENT_SCT_AMPLITUDE) + element_counts->at(STR_COMPTON_AMPLITUDE);
+		element_counts->insert({ STR_SUM_ELASTIC_INELASTIC_AMP, sum });
+	}
 
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
 
