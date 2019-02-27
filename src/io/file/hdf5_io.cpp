@@ -5307,121 +5307,10 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 
 }
 
-void HDF5_IO::_add_v9_layout(std::string dataset_file)
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    logit  << dataset_file << "\n";
-    hid_t saved_file_id = _cur_file_id;
-
-    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, 256);
-    hid_t memtype = H5Tcopy(H5T_C_S1);
-    H5Tset_size(memtype, 255);
-
-    hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-
-    //Scan
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/scan_time_stamp", H5L_SAME_LOC, "/MAPS/scan_time_stamp", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for scan_time_stamp"<<  "\n";
-    }
-    //create extra_pvs, extra_pvs_as_csv, extra_strings
-
-    //Scalers
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/ds_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for ds_amp"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/us_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for us_amp"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Names", H5L_SAME_LOC, "/MAPS/scaler_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for scaler_names"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Values", H5L_SAME_LOC, "/MAPS/scalers", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for scalers"<<  "\n";
-    }
-
-    //Spectra
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for energy"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy_Calibration", H5L_SAME_LOC, "/MAPS/energy_calib", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for energy_calib"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Integrated_Spectra/Spectra", H5L_SAME_LOC, "/MAPS/int_spec", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for int_spec"<<  "\n";
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/mca_arr", H5L_SAME_LOC, "/MAPS/mca_arr", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for mca_arr"<<  "\n";
-    }
-
-
-    hsize_t quant_dims[3];
-    quant_dims[0] = 3;
-    quant_dims[1] = 1;
-    quant_dims[2] = 1; //num channel names
-
-
-    //XRF_Analyzed
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            logit  << "Warning: Couldn't create soft link for channel_names"<<  "\n";
-        }
-    }
-    hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
-    hid_t chan_space = H5Dget_space(chan_names);
-    if(chan_names > -1)
-    {
-        hsize_t chan_size = 1;
-        H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
-        quant_dims[2] = chan_size; //num channel names
-    }
-    hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
-
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_roi"<<  "\n";
-    }
-    else
-    {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
-    }
-    else
-    {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
-    }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for XRF_fits"<<  "\n";
-    }
-    else
-    {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
-    }
-
     //open scan extras and create 4xN array
     hid_t extra_names = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Names", H5P_DEFAULT);
     hid_t extra_units = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Unit", H5P_DEFAULT);
@@ -5440,8 +5329,10 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         hid_t file_space = H5Screate_simple(2, &extra_pv_dims[0], &extra_pv_dims[0]);
 
         hid_t name_type = H5Dget_type(extra_names);
-        hid_t extra_pvs = H5Dcreate1(file_id, "/MAPS/extra_pvs", name_type, file_space, H5P_DEFAULT);
-        hid_t extra_pvs_as_csv = H5Dcreate1(file_id, "/MAPS/extra_pvs_as_csv", name_type, name_space, H5P_DEFAULT);
+        std::string extra_pvs_str = group_name + "/extra_pvs";
+        std::string extra_pvs_as_csv_str = group_name + "/extra_pvs_as_csv";
+        hid_t extra_pvs = H5Dcreate1(file_id, extra_pvs_str.c_str(), name_type, file_space, H5P_DEFAULT);
+        hid_t extra_pvs_as_csv = H5Dcreate1(file_id, extra_pvs_as_csv_str.c_str(), name_type, name_space, H5P_DEFAULT);
 
         hsize_t offset_1d[1] = {0};
         hsize_t count_1d[1] = {1};
@@ -5489,6 +5380,137 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         }
         delete [] dims_in;
     }
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_v9_layout(std::string dataset_file)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    logit  << dataset_file << "\n";
+    hid_t saved_file_id = _cur_file_id;
+
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hid_t memtype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(memtype, 255);
+
+    hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+
+    //Scan
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/scan_time_stamp", H5L_SAME_LOC, "/MAPS/scan_time_stamp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for scan_time_stamp"<<  "\n";
+    }
+    //create extra_pvs, extra_pvs_as_csv, extra_strings
+
+    //Scalers
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/ds_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for ds_amp"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/us_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for us_amp"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Names", H5L_SAME_LOC, "/MAPS/scaler_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for scaler_names"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Values", H5L_SAME_LOC, "/MAPS/scalers", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for scalers"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Units", H5L_SAME_LOC, "/MAPS/scaler_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for scaler_units"<<  "\n";
+    }
+
+    //Spectra
+    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for energy"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy_Calibration", H5L_SAME_LOC, "/MAPS/energy_calib", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for energy_calib"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Integrated_Spectra/Spectra", H5L_SAME_LOC, "/MAPS/int_spec", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for int_spec"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/mca_arr", H5L_SAME_LOC, "/MAPS/mca_arr", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for mca_arr"<<  "\n";
+    }
+
+
+    hsize_t quant_dims[3];
+    quant_dims[0] = 3;
+    quant_dims[1] = 1;
+    quant_dims[2] = 1; //num channel names
+
+
+    //XRF_Analyzed
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for channel_names"<<  "\n";
+        }
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for channel_units"<<  "\n";
+        }
+    }
+    hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
+    hid_t chan_space = H5Dget_space(chan_names);
+    if(chan_names > -1)
+    {
+        hsize_t chan_size = 1;
+        H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
+        quant_dims[2] = chan_size; //num channel names
+    }
+    hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
+
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_roi"<<  "\n";
+    }
+    else
+    {
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
+    }
+    else
+    {
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for XRF_fits"<<  "\n";
+    }
+    else
+    {
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
+    }
+
+    _add_extra_pvs(file_id, "/MAPS");
 
     //change version to 9
     real_t version = 9;
@@ -5510,7 +5532,43 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 
 void HDF5_IO::_add_exchange_layout(std::string dataset_file)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
 
+    logit  << dataset_file << "\n";
+    hid_t saved_file_id = _cur_file_id;
+
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hid_t memtype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(memtype, 255);
+
+    hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+
+    hid_t exchange_id = H5Dopen(file_id, "/exchange", H5P_DEFAULT);
+    if(exchange_id < 0)
+    {
+        exchange_id = H5Gcreate(file_id, "exchange", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+
+    //Scan
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/exchange/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/exchange/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
+    }
+
+    _add_extra_pvs(file_id, "/exchange");
+
+    H5Gclose(exchange_id);
+
+    _cur_file_id = file_id;
+    end_save_seq();
+    logit<<"closing file"<<"\n";
+
+    _cur_file_id = saved_file_id;
 }
 
 //-----------------------------------------------------------------------------
