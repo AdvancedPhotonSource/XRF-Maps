@@ -5251,6 +5251,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
     hid_t quant_dset = H5Dcreate1(file_id, new_loc.c_str(), H5T_NATIVE_REAL, quant_space, H5P_DEFAULT);
     if(quant_dset > -1 )
     {
+		hid_t chan_units = H5Dopen(file_id, "/MAPS/channel_units", H5P_DEFAULT);
         hid_t cc_current = H5Dopen(file_id, currnt_quant_str.c_str(), H5P_DEFAULT);
         hid_t cc_space = H5Dget_space(cc_current);
         hid_t cc_us_ic = H5Dopen(file_id, us_quant_str.c_str(), H5P_DEFAULT);
@@ -5264,9 +5265,27 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         hsize_t offset_3d[3] = {0,0,0};
         hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
         real_t real_val = 0.0;
+
         for(int chan_idx=0; chan_idx<chan_amt; chan_idx++)
         {
-            offset_1d[0] = chan_idx;
+			offset_1d[0] = chan_idx;
+			//change /MAPS/channel_units from cts/s to ug/cm2
+			if (chan_units > -1)
+			{
+				hid_t unit_type = H5Dget_type(chan_units);
+				hid_t unit_space = H5Dget_space(chan_units);
+				std::string update = "ug/cm2";
+				char tmp_char1[255] = { 0 };
+				H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+				H5Dread(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+				std::string unit(tmp_char1, 256);
+				if (unit == "cts/s")
+				{
+					update.copy(tmp_char1, 255);
+					H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+				}
+			}
+            
             H5Sselect_hyperslab(chan_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
             char tmp_char[255] = {0};
             H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char);
@@ -5303,6 +5322,10 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
             }
         }
         H5Dclose(quant_dset);
+		if (chan_units > -1)
+		{
+			H5Dclose(chan_units);
+		}
     }
 
 }
