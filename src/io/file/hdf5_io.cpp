@@ -67,8 +67,9 @@ const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
                                                        "US_IC",
                                                        "Standard_Name",
                                                        "Channel_Names",
+													   "Channel_Units",
                                                        "Names",
-                                                       "vresion"
+                                                       "version"
                                                       };
 
 
@@ -2599,14 +2600,12 @@ bool HDF5_IO::save_element_fits(std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
     std::string xrf_grp_name = "XRF_Analyzed";
-    hid_t   dset_id, dset_ch_id;
+    hid_t   dset_id, dset_ch_id, dset_un_id;
     hid_t   memoryspace, filespace, dataspace_id, dataspace_ch_id, dataspace_ch_off_id;
     hid_t   filetype, memtype, status;
     hid_t   dcpl_id;
     hid_t   xrf_grp_id, fit_grp_id, maps_grp_id;
     //herr_t   error;
-
-    //hid_t q_dataspace_id, q_dataspace_ch_id, q_memoryspace_id, q_filespace_id, q_dset_id, q_dset_ch_id, q_grp_id, q_fit_grp_id;
 
     dset_id = -1;
     dset_ch_id = -1;
@@ -2618,7 +2617,6 @@ bool HDF5_IO::save_element_fits(std::string path,
     hsize_t count_3d[3] = {1, 1, 1};
     hsize_t chunk_dims[3];
 
-    //hsize_t q_dims_out[2];
     //fix this
     for(const auto& iter : *element_counts)
     {
@@ -2627,6 +2625,7 @@ bool HDF5_IO::save_element_fits(std::string path,
         break;
     }
     //H5T_FLOAT
+
     dims_out[0] = element_counts->size();
     offset_3d[0] = 0;
     offset_3d[1] = 0;
@@ -2703,6 +2702,15 @@ bool HDF5_IO::save_element_fits(std::string path,
         return false;
     }
 
+	dset_un_id = H5Dopen(fit_grp_id, "Channel_Units", H5P_DEFAULT);
+	if (dset_un_id < 0)
+		dset_un_id = H5Dcreate(fit_grp_id, "Channel_Units", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dset_un_id < 0)
+	{
+		logit << "Error creating dataset MAPS/" << xrf_grp_name << "/" << path << "/Channel_Units" << "\n";
+		return false;
+	}
+
 /*
    if (row_idx_end < row_idx_start || row_idx_end > spectra_volume->rows() -1)
     {
@@ -2731,14 +2739,16 @@ bool HDF5_IO::save_element_fits(std::string path,
 
     element_lines.push_back(STR_COHERENT_SCT_AMPLITUDE);
     element_lines.push_back(STR_COMPTON_AMPLITUDE);
+	element_lines.push_back(STR_SUM_ELASTIC_INELASTIC_AMP);
     element_lines.push_back(STR_NUM_ITR);
 
     int i=0;
     //save by element Z order
     //for(const auto& iter : *element_counts)
+	std::string units = "cts/s";
     for (std::string el_name : element_lines)
     {
-        char tmp_char[255] = {0};
+        char tmp_char[256] = {0};
         if(element_counts->count(el_name) < 1 )
         {
             continue;
@@ -2753,6 +2763,16 @@ bool HDF5_IO::save_element_fits(std::string path,
 
         status = H5Dwrite (dset_ch_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)tmp_char);
 
+		for (int z = 0; z < 256; z++)
+		{
+			tmp_char[z] = '\0';
+		}
+		if (el_name != STR_NUM_ITR)
+		{
+			units.copy(tmp_char, 256);
+		}
+		status = H5Dwrite(dset_un_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)tmp_char);
+
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset_3d, nullptr, chunk_dims, nullptr);
 
         status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace, filespace, H5P_DEFAULT, (void*)element_counts->at(el_name).data());
@@ -2762,6 +2782,7 @@ bool HDF5_IO::save_element_fits(std::string path,
 
     H5Dclose(dset_id);
     H5Dclose(dset_ch_id);
+	H5Dclose(dset_un_id);
     H5Sclose(memoryspace);
     H5Sclose(filespace);
     H5Sclose(dataspace_ch_off_id);
@@ -2916,7 +2937,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
             status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(itr.second.weight));
-            char tmp_char[255] = {0};
+            char tmp_char[256] = {0};
             itr.first.copy(tmp_char, 254);
             status = H5Dwrite (dset_ch_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)tmp_char);
 
@@ -3886,6 +3907,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1, memoryspace_str_id = -1;
     hid_t filetype, memtype;
     hid_t dset_names_id = -1;
+	hid_t dset_units_id = -1;
     hid_t scalers_grp_id = -1;
     hid_t dcpl_id = -1, status;
 
@@ -3933,6 +3955,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
         count[0] = 1;
 
         real_t val;
+		std::string units;
         bool save_cfg_abs = false;
         if (params_override != nullptr && mda_scalers->scan->scan_rank > 1)
         {
@@ -3951,8 +3974,8 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 if (s_itr != ignore_scaler_strings.end())
                     continue;
 
-                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
-                scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, false));
+                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val, units);
+                scalers.push_back(scaler_struct(itr.first, units, mda_idx, hdf_idx, false));
                 hdf_idx++;
                 std::string scaler_name = itr.first;
                 std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
@@ -3979,12 +4002,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 if (s_itr != ignore_scaler_strings.end())
                     continue;
 
-
                 std::string scaler_name = itr.first;
                 std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
 
 
-                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val);
+                int mda_idx = mda_io.find_scaler_index(mda_scalers, itr.second, val, units);
                 if (mda_idx > -1)
                 {
                     bool found_scaler = false;
@@ -3994,13 +4016,14 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         {
                             subitr.mda_idx = mda_idx;
                             subitr.normalize_by_time = true;
+                            subitr.hdf_units = units;
                             found_scaler = true;
                             break;
                         }
                     }
                     if(found_scaler == false)
                     {
-                        scalers.push_back(scaler_struct(itr.first, mda_idx, hdf_idx, true));
+                        scalers.push_back(scaler_struct(itr.first, units, mda_idx, hdf_idx, true));
                         hdf_idx++;
                     }
                     if (scaler_name == "US_IC")
@@ -4019,7 +4042,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
             }
 
             //search for time scaler index
-            mda_time_scaler_idx = mda_io.find_scaler_index(mda_scalers, params_override->time_scaler, val);
+            mda_time_scaler_idx = mda_io.find_scaler_index(mda_scalers, params_override->time_scaler, val, units);
 
             scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
             if (scalers_grp_id < 0)
@@ -4088,7 +4111,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 H5Pset_chunk(dcpl_id, 3, count_3d);
                 H5Pset_deflate(dcpl_id, 7);
 
-                if (us_ic_idx > -1 && ds_ic_idx > -1 && cfg_2_idx > -1 && cfg_2_idx > -1 && cfg_2_idx > -1 && cfg_2_idx > -1)
+                if (us_ic_idx > -1 && ds_ic_idx > -1 && cfg_2_idx > -1 && cfg_3_idx > -1 && cfg_4_idx > -1 && cfg_5_idx > -1)
                 {
                     count_3d[0] = scalers.size() + 6; //abs_ic, abs_cfg, H_dpc_cfg, V_dpc_cfg, dia1_dpc_cfg, dia2_dpc_cfg
                     save_cfg_abs = true;
@@ -4105,6 +4128,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
                 dset_cps_id = H5Dcreate(scalers_grp_id, "Values", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
                 dset_names_id = H5Dcreate(scalers_grp_id, "Names", filetype, filespace_name_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				dset_units_id = H5Dcreate(scalers_grp_id, "Units", filetype, filespace_name_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
                 count_3d[0] = 1;
                 count[0] = 1;
@@ -4145,9 +4169,12 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 
                     offset[0] = itr.hdf_idx;
                     char tmp_char[255] = {0};
+					char tmp_char_units[255] = { 0 };
                     itr.hdf_name.copy(tmp_char, 254);
+					itr.hdf_units.copy(tmp_char_units, 254);
                     H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
                     status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)tmp_char);
+					status = H5Dwrite(dset_units_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)tmp_char_units);
 
                     if(itr.mda_idx < 0)
                     {
@@ -4336,6 +4363,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
             H5Dclose(dset_names_id);
             dset_names_id = -1;
         }
+		if (dset_units_id > -1)
+		{
+			H5Dclose(dset_units_id);
+			dset_units_id = -1;
+		}
         if(dset_cps_id > -1)
         {
             H5Dclose(dset_cps_id);
@@ -4386,6 +4418,8 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
             H5Sclose(memoryspace_id);
         if(dset_names_id > -1)
             H5Dclose(dset_names_id);
+		if (dset_units_id > -1)
+			H5Dclose(dset_units_id);
         if(dset_cps_id > -1)
             H5Dclose(dset_cps_id);
         if(dataspace_id > -1)
@@ -4426,16 +4460,16 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
     H5Tset_size(filetype, 256);
     memtype = H5Tcopy(H5T_C_S1);
     status = H5Tset_size(memtype, 255);
-
+	std::string units;
     real_t us_amp_sens_num_val = params_override->us_amp_sens_num;
-    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_num_pv, us_amp_sens_num_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_num_pv, us_amp_sens_num_val, units);
     real_t us_amp_sens_unit_val = params_override->us_amp_sens_unit;
-    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_unit_pv, us_amp_sens_unit_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->us_amp_sens_unit_pv, us_amp_sens_unit_val, units);
 
     real_t ds_amp_sens_num_val = params_override->ds_amp_sens_num;
-    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_num_pv, ds_amp_sens_num_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_num_pv, ds_amp_sens_num_val, units);
     real_t ds_amp_sens_unit_val = params_override->ds_amp_sens_unit;
-    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_unit_pv, ds_amp_sens_unit_val);
+    mda_io.find_scaler_index(mda_scalers, params_override->ds_amp_sens_unit_pv, ds_amp_sens_unit_val, units);
 
     real_t trans_us_amp_sens_num_val;
     std::string trans_us_amp_sens_unit;
@@ -5189,32 +5223,44 @@ void HDF5_IO::add_v9_layout(std::string dataset_directory,
 {
     for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
     {
-        io::file::HDF5_IO::inst()->_add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
+        _add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }
-    io::file::HDF5_IO::inst()->_add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5");
+    _add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5");
 }
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc)
+void HDF5_IO::_add_v9_quant(hid_t file_id, 
+							hid_t quant_space,
+							hid_t chan_names,
+							hid_t chan_space,
+							int chan_amt,
+							std::string quant_str,
+							std::string new_loc)
 {
     hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
     H5Tset_size(filetype, 256);
     hid_t memtype = H5Tcopy(H5T_C_S1);
     H5Tset_size(memtype, 255);
+	char tmp_char1[256] = { 0 };
 
     //create quantification dataset. In v9 the array starts at element Z 10 insead of element Z 1
     std::string currnt_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_Current";
     std::string us_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_US_IC";
     std::string ds_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_DS_IC";
+	hid_t cc_current = H5Dopen(file_id, currnt_quant_str.c_str(), H5P_DEFAULT);
+	hid_t cc_us_ic = H5Dopen(file_id, us_quant_str.c_str(), H5P_DEFAULT);
+	hid_t cc_ds_ic = H5Dopen(file_id, ds_quant_str.c_str(), H5P_DEFAULT);
     hid_t quant_dset = H5Dcreate1(file_id, new_loc.c_str(), H5T_NATIVE_REAL, quant_space, H5P_DEFAULT);
-    if(quant_dset > -1 )
+	if (quant_dset < 0)
+	{
+		quant_dset = H5Dopen(file_id, new_loc.c_str(), H5P_DEFAULT);
+	}
+    if(quant_dset > -1 && cc_current > -1 && cc_us_ic > -1 && cc_ds_ic > -1)
     {
-        hid_t cc_current = H5Dopen(file_id, currnt_quant_str.c_str(), H5P_DEFAULT);
+		hid_t chan_units = H5Dopen(file_id, "/MAPS/channel_units", H5P_DEFAULT);
         hid_t cc_space = H5Dget_space(cc_current);
-        hid_t cc_us_ic = H5Dopen(file_id, us_quant_str.c_str(), H5P_DEFAULT);
-        hid_t cc_ds_ic = H5Dopen(file_id, ds_quant_str.c_str(), H5P_DEFAULT);
-
+        
         hsize_t count_1d[1] = {1};
         hsize_t count_2d[2] = {1,1};
         hsize_t count_3d[3] = {1,1,1};
@@ -5223,11 +5269,13 @@ void HDF5_IO::_add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, 
         hsize_t offset_3d[3] = {0,0,0};
         hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
         real_t real_val = 0.0;
+
         for(int chan_idx=0; chan_idx<chan_amt; chan_idx++)
         {
-            offset_1d[0] = chan_idx;
+			offset_1d[0] = chan_idx;
+			
             H5Sselect_hyperslab(chan_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-            char tmp_char[255] = {0};
+            char tmp_char[256] = {0};
             H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char);
             std::string el_name_str = std::string(tmp_char);
             int underscore_idx = el_name_str.find("_");
@@ -5259,12 +5307,128 @@ void HDF5_IO::_add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, 
                 H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
                 H5Dread(cc_ds_ic, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val);
                 H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+
+				//change /MAPS/channel_units from cts/s to ug/cm2
+				if (chan_units > -1)
+				{
+					hid_t unit_type = H5Dget_type(chan_units);
+					hid_t unit_space = H5Dget_space(chan_units);
+					std::string update = "ug/cm2";
+					for (int z = 0; z < 256; z++)
+						tmp_char1[z] = 0;
+					H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+					H5Dread(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+					if (strcmp(tmp_char1, "cts/s") == 0)
+					{
+						update.copy(tmp_char1, 256);
+						H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+					}
+				}
+
             }
         }
-        H5Dclose(quant_dset);
+		if (quant_dset > -1)
+		{
+			H5Dclose(quant_dset);
+		}
+		if (chan_units > -1)
+		{
+			H5Dclose(chan_units);
+		}
+		if (cc_current > -1)
+		{
+			H5Dclose(cc_current);
+		}
+		if (cc_us_ic > -1)
+		{
+			H5Dclose(cc_us_ic);
+		}
+		if (cc_ds_ic > -1)
+		{
+			H5Dclose(cc_ds_ic);
+		}
     }
 
 }
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
+{
+	char tmp_char[256] = { 0 };
+    //open scan extras and create 4xN array
+    hid_t extra_names = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Names", H5P_DEFAULT);
+    hid_t extra_units = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Unit", H5P_DEFAULT);
+    hid_t extra_values = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Values", H5P_DEFAULT);
+    hid_t extra_desc = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Description", H5P_DEFAULT);
+    if(extra_names > -1 && extra_units > -1 && extra_values > -1 && extra_desc > -1)
+    {
+        hid_t name_space = H5Dget_space(extra_names);
+        int rank = H5Sget_simple_extent_ndims(name_space);
+        hsize_t* dims_in = new hsize_t[rank];
+        H5Sget_simple_extent_dims(name_space, &dims_in[0], nullptr);
+        hsize_t extra_pv_dims[2];
+        extra_pv_dims[0] = 4;
+        extra_pv_dims[1] = dims_in[0];
+
+        hid_t file_space = H5Screate_simple(2, &extra_pv_dims[0], &extra_pv_dims[0]);
+
+        hid_t name_type = H5Dget_type(extra_names);
+        std::string extra_pvs_str = group_name + "/extra_pvs";
+        std::string extra_pvs_as_csv_str = group_name + "/extra_pvs_as_csv";
+        hid_t extra_pvs = H5Dcreate1(file_id, extra_pvs_str.c_str(), name_type, file_space, H5P_DEFAULT);
+        hid_t extra_pvs_as_csv = H5Dcreate1(file_id, extra_pvs_as_csv_str.c_str(), name_type, name_space, H5P_DEFAULT);
+
+        hsize_t offset_1d[1] = {0};
+        hsize_t count_1d[1] = {1};
+        hsize_t offset_2d[2] = {0,0};
+        hsize_t count_2d[2] = {1,1};
+
+        hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+        for(hsize_t i=0; i<dims_in[0]; i++)
+        {
+			for (int z = 0; z < 256; z++)
+				tmp_char[z] = 0;
+            std::string as_csv = "";
+            offset_1d[0] = i;
+            offset_2d[1] = i;
+            //name
+            offset_2d[0] = 0;
+            H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+            H5Dread(extra_names, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            std::string val(tmp_char);
+            val = val.substr(0,val.find("\x20"));
+            as_csv += val;
+            as_csv += ",";
+            //value
+            offset_2d[0] = 1;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+            H5Dread(extra_values, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            std::string val2(tmp_char);
+            val2 = val2.substr(0,val2.find("\x20"));
+            as_csv += val2;
+            //description
+            offset_2d[0] = 2;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+            H5Dread(extra_desc, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+            //units
+            offset_2d[0] = 3;
+            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+            H5Dread(extra_units, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
+
+            as_csv.copy(tmp_char, 254);
+            H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+        }
+        delete [] dims_in;
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 void HDF5_IO::_add_v9_layout(std::string dataset_file)
 {
@@ -5312,6 +5476,10 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     {
         logit  << "Warning: Couldn't create soft link for scalers"<<  "\n";
     }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Units", H5L_SAME_LOC, "/MAPS/scaler_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for scaler_units"<<  "\n";
+    }
 
     //Spectra
     if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
@@ -5346,6 +5514,13 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
             logit  << "Warning: Couldn't create soft link for channel_names"<<  "\n";
         }
     }
+    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for channel_units"<<  "\n";
+        }
+    }
     hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
     hid_t chan_space = H5Dget_space(chan_names);
     if(chan_names > -1)
@@ -5358,7 +5533,16 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
-        logit  << "Warning: Couldn't create soft link for XRF_roi"<<  "\n";
+		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi", H5P_DEFAULT);
+		if (ana_id > -1)
+		{
+			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+			H5Dclose(ana_id);
+		}
+		else
+		{
+			logit << "Warning: Couldn't create soft link for XRF_roi" << "\n";
+		}
     }
     else
     {
@@ -5366,6 +5550,12 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     }
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
+		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi_plus", H5P_DEFAULT);
+		if (ana_id > -1)
+		{
+			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+			H5Dclose(ana_id);
+		}
         logit  << "Warning: Couldn't create soft link for XRF_roi_plus"<<  "\n";
     }
     else
@@ -5374,6 +5564,12 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     }
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
+		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_fits", H5P_DEFAULT);
+		if (ana_id > -1)
+		{
+			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+			H5Dclose(ana_id);
+		}
         logit  << "Warning: Couldn't create soft link for XRF_fits"<<  "\n";
     }
     else
@@ -5381,73 +5577,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
     }
 
-    //open scan extras and create 4xN array
-    hid_t extra_names = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Names", H5P_DEFAULT);
-    hid_t extra_units = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Unit", H5P_DEFAULT);
-    hid_t extra_values = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Values", H5P_DEFAULT);
-    hid_t extra_desc = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Description", H5P_DEFAULT);
-    if(extra_names > -1 && extra_units > -1 && extra_values > -1 && extra_desc > -1)
-    {
-        hid_t name_space = H5Dget_space(extra_names);
-        int rank = H5Sget_simple_extent_ndims(name_space);
-        hsize_t* dims_in = new hsize_t[rank];
-        H5Sget_simple_extent_dims(name_space, &dims_in[0], nullptr);
-        hsize_t extra_pv_dims[2];
-        extra_pv_dims[0] = 4;
-        extra_pv_dims[1] = dims_in[0];
-
-        hid_t file_space = H5Screate_simple(2, &extra_pv_dims[0], &extra_pv_dims[0]);
-
-        hid_t name_type = H5Dget_type(extra_names);
-        hid_t extra_pvs = H5Dcreate1(file_id, "/MAPS/extra_pvs", name_type, file_space, H5P_DEFAULT);
-        hid_t extra_pvs_as_csv = H5Dcreate1(file_id, "/MAPS/extra_pvs_as_csv", name_type, name_space, H5P_DEFAULT);
-
-        hsize_t offset_1d[1] = {0};
-        hsize_t count_1d[1] = {1};
-        hsize_t offset_2d[2] = {0,0};
-        hsize_t count_2d[2] = {1,1};
-
-        hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
-        for(hsize_t i=0; i<dims_in[0]; i++)
-        {
-            char tmp_char[255] = {0};
-            std::string as_csv = "";
-            offset_1d[0] = i;
-            offset_2d[1] = i;
-            //name
-            offset_2d[0] = 0;
-            H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
-            H5Dread(extra_names, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
-            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-            std::string val(tmp_char);
-            val = val.substr(0,val.find("\x20"));
-            as_csv += val;
-            as_csv += ",";
-            //value
-            offset_2d[0] = 1;
-            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
-            H5Dread(extra_values, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
-            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-            std::string val2(tmp_char);
-            val2 = val2.substr(0,val2.find("\x20"));
-            as_csv += val2;
-            //description
-            offset_2d[0] = 2;
-            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
-            H5Dread(extra_desc, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
-            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-            //units
-            offset_2d[0] = 3;
-            H5Sselect_hyperslab(file_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
-            H5Dread(extra_units, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
-            H5Dwrite(extra_pvs, name_type, memoryspace_id, file_space, H5P_DEFAULT, (void*)tmp_char);
-
-            as_csv.copy(tmp_char, 254);
-            H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
-        }
-        delete [] dims_in;
-    }
+    _add_extra_pvs(file_id, "/MAPS");
 
     //change version to 9
     real_t version = 9;
@@ -5462,6 +5592,65 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     logit<<"closing file"<<"\n";
 
     _cur_file_id = saved_file_id;
+
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_exchange_layout(std::string dataset_file)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    logit  << dataset_file << "\n";
+    hid_t saved_file_id = _cur_file_id;
+
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hid_t memtype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(memtype, 255);
+
+    hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+
+    hid_t exchange_id = H5Dopen(file_id, "/exchange", H5P_DEFAULT);
+    if(exchange_id < 0)
+    {
+        exchange_id = H5Gcreate(file_id, "exchange", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+
+    //Scan
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/exchange/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/exchange/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
+    }
+
+    _add_extra_pvs(file_id, "/exchange");
+
+    H5Gclose(exchange_id);
+
+    _cur_file_id = file_id;
+    end_save_seq();
+    logit<<"closing file"<<"\n";
+
+    _cur_file_id = saved_file_id;
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::add_exchange_layout(std::string dataset_directory,
+								std::string dataset_file,
+								size_t detector_num_start,
+								size_t detector_num_end)
+{
+	
+	for (size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+	{
+		_add_exchange_layout(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+	}
+	_add_exchange_layout(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
 
 }
 

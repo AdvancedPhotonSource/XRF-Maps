@@ -97,7 +97,8 @@ public:
 										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
-    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val);
+	// find index in mda file, if found, fill in value and units 
+    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string &units);
 
     int get_multiplied_dims(std::string path);
 

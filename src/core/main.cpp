@@ -213,6 +213,11 @@ int main(int argc, char *argv[])
         analysis_job.add_v9_layout = true;
     }
 
+    if(clp.option_exists("--add-exchange"))
+    {
+        analysis_job.add_exchange_layout = true;
+    }
+
 
     if(clp.option_exists("--confocal"))
     {
@@ -432,6 +437,17 @@ int main(int argc, char *argv[])
                 io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
             }
         }
+
+
+        //add exchange
+        if(analysis_job.add_exchange_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
     }
     else
     {

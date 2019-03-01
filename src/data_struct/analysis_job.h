@@ -147,6 +147,8 @@ public:
 
     bool add_v9_layout;
 
+    bool add_exchange_layout;
+
     bool is_network_source;
 
     bool stream_over_network;

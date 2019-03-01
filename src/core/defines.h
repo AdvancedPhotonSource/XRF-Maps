@@ -165,6 +165,8 @@ const string STR_KB_F_TAIL_OFFSET = "KB_F_TAIL_OFFSET";
 const string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
 const string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
 
+const string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
+
 //}
 
 //}// namespace keys

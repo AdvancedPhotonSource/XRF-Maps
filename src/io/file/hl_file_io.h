@@ -190,7 +190,7 @@ DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
                               size_t detector_num_end);
 
 DLL_EXPORT bool save_results(std::string save_loc,
-                  const data_struct::Fit_Count_Dict * const element_counts,
+                  data_struct::Fit_Count_Dict * element_counts,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start);
 

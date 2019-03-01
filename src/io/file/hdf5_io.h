@@ -181,10 +181,17 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+	// Add links to dataset and set version to 9 so legacy software can load it
     void add_v9_layout(std::string dataset_directory,
                        std::string dataset_file,
                        size_t detector_num_start,
                        size_t detector_num_end);
+
+	// Add exchange layout to be loadable by external software
+	void add_exchange_layout(std::string dataset_directory,
+							std::string dataset_file,
+							size_t detector_num_start,
+							size_t detector_num_end);
 
     bool end_save_seq();
 
@@ -209,15 +216,19 @@ private:
 
     void _add_v9_layout(std::string dataset_file);
     void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
+    void _add_extra_pvs(hid_t file_id, std::string group_name);
+
+	void _add_exchange_layout(std::string dataset_file);
 
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
 
     struct scaler_struct
     {
-        scaler_struct(std::string name, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
+        scaler_struct(std::string name, std::string units, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
         {
              hdf_name = name;
+			 hdf_units = units;
              mda_idx = mda_idx_;
              hdf_idx = hdf_idx_;
              normalize_by_time = normalize_by_time_;
@@ -225,6 +236,7 @@ private:
         int mda_idx;
         int hdf_idx;
         std::string hdf_name;
+		std::string hdf_units;
         bool normalize_by_time;
     };
 

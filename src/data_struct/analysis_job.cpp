@@ -67,6 +67,7 @@ Analysis_Job::Analysis_Job()
     quick_and_dirty = false;
     generate_average_h5 = false;
     add_v9_layout = false;
+    add_exchange_layout = false;
     is_network_source = false;
     stream_over_network = false;
     command_line = "";
