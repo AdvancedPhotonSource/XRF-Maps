@@ -143,6 +143,7 @@ int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, r
         if(strcmp(mda_file->scan->detectors[k]->name, det_name.c_str())  == 0)
         {
             val = mda_file->scan->detectors_data[k][0];
+            units = std::string(mda_file->scan->detectors[k]->unit);
             return k;
         }
     }
@@ -152,6 +153,7 @@ int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, r
         if(strcmp(mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str())  == 0)
         {
             val = mda_file->scan->sub_scans[0]->detectors_data[k][0];
+            units = std::string(mda_file->scan->sub_scans[0]->detectors[k]->unit);
             return k;
         }
     }

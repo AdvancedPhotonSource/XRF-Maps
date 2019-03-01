@@ -4016,6 +4016,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                         {
                             subitr.mda_idx = mda_idx;
                             subitr.normalize_by_time = true;
+                            subitr.hdf_units = units;
                             found_scaler = true;
                             break;
                         }
