@@ -51,17 +51,17 @@ project(XRF_Maps)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
 IF(MSVC)
-  set(EIGEN3_INCLUDES "" CACHE PATH "Eigen include folder")
   set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
   include_directories(GCC_INCLUDE_DIR)
-  set(EIGEN3_INCLUDES "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 ENDIF()
 
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
+
+set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
 
 option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)

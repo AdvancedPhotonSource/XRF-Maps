@@ -13,7 +13,7 @@ Cmake 3.5 or greater
 # Libraries
  HDF5 : https://www.hdfgroup.org/downloads/
  NetCDF : http://www.unidata.ucar.edu/downloads/netcdf/index.jsp (Download http://www.unidata.ucar.edu/software/netcdf/docs/winbin.html)
- Eigen : http://eigen.tuxfamily.org/index.php?title=Main_Page
+ Eigen : http://eigen.tuxfamily.org/index.php?title=Main_Page (submodule in src/support)
 
 ## Optional Libraries
  QT : https://www.qt.io/download
@@ -36,9 +36,11 @@ Cmake 3.5 or greater
 
 
 # Compile Default
- 1) mkdir build ; cd build
- 2) cmake ../
- 3) make
+ 1) git clone --recurse-submodules https://github.com/AdvancedPhotonSource/XRF-Maps.git
+ 2) cd XRF-Maps
+ 3) mkdir build ; cd build
+ 4) cmake ../
+ 5) make
 
 # Building optional features
 ## QT support 
@@ -58,9 +60,6 @@ Cmake 3.5 or greater
  -DDOUBLE_PREC=ON
 
 ## Can't auto find Libraries
-### Eigen
- -DEIGEN3_INCLUDES={path}
-
 ### HDF5
  -DHDF5_ROOT={path to hdf5 root dir}
 
