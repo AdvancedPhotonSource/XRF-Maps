@@ -61,6 +61,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define HDF5_SAVE_VERSION 10.0
 
+#define HDF5_EXCHANGE_VERSION 1.0
+
 const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
                                                        "Element_Weights_Names",
                                                        "DS_IC",
@@ -5129,6 +5131,11 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
                 {
                     logit<<"Error: coping Channel_Names!\n";
                 }
+                status = H5Ocopy(src_fit_grp_id, "Channel_Units", dst_fit_grp_id, "Channel_Units", ocpypl_id, H5P_DEFAULT);
+                if(status < 0)
+                {
+                    logit<<"Error: coping Channel_Units!\n";
+                }
                 status = H5Ocopy(src_fit_grp_id, "Calibration_Curve_Labels", dst_fit_grp_id, "Calibration_Curve_Labels", ocpypl_id, H5P_DEFAULT);
                 if(status < 0)
                 {
@@ -5595,6 +5602,122 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 
 }
 
+void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link)
+{
+    char desc[256] = {0};
+    char ver[256] = {0};
+    std::string exhange_str = "/exchange_" + exchange_idx;
+    std::string xaxis_str = exhange_str + "/x_axis" ;
+    std::string yaxis_str = exhange_str + "/y_axis" ;
+    std::string str_scalers = "/MAPS/Scalers/Values";
+    std::string str_scaler_names = "/MAPS/Scalers/Names";
+    std::string str_scaler_units = "/MAPS/Scalers/Units";
+
+    std::string str_scan_theta = "/MAPS/Scan/Theta";
+
+    std::string exchange_scalers = exhange_str + "/scalers";
+    std::string exchange_scaler_names = exhange_str + "/scaler_names";
+    std::string exchange_scaler_units = exhange_str + "/scaler_units";
+
+    std::string str_desc = exhange_str + "/description";
+    std::string str_version = exhange_str + "/version";
+    std::string str_theta = exhange_str + "/theta";
+
+    hid_t exchange_id = H5Dopen(file_id, exhange_str.c_str(), H5P_DEFAULT);
+    if(exchange_id < 0)
+    {
+        exchange_id = H5Gcreate(file_id, exhange_str.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+
+    //Scan
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, xaxis_str.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
+    }
+    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, yaxis_str.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
+    }
+
+    _add_extra_pvs(file_id, exhange_str);
+
+    if( H5Lcreate_hard(file_id, str_scalers.c_str(), H5L_SAME_LOC, exchange_scalers.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for"<< exchange_scalers <<  "\n";
+    }
+
+    if( H5Lcreate_hard(file_id, str_scaler_names.c_str(), H5L_SAME_LOC, exchange_scaler_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_names <<  "\n";
+    }
+
+    if( H5Lcreate_hard(file_id, str_scaler_units.c_str(), H5L_SAME_LOC, exchange_scaler_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_units <<  "\n";
+    }
+
+    hid_t fits_grp = H5Gopen(file_id, fits_link.c_str(), H5P_DEFAULT);
+    if(fits_grp > 0)
+    {
+        std::string str_images = fits_link + "/Counts_Per_Sec";
+        std::string str_image_names = fits_link + "/Channel_Names";
+        std::string str_image_units = fits_link + "/Channel_Units";
+
+        std::string exchange_images = exhange_str + "/images";
+        std::string exchange_image_names = exhange_str + "/image_names";
+        std::string exchange_image_units = exhange_str + "/image_units";
+
+        if( H5Lcreate_hard(file_id, str_images.c_str(), H5L_SAME_LOC, exchange_images.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_images <<  "\n";
+        }
+
+        if( H5Lcreate_hard(file_id, str_image_names.c_str(), H5L_SAME_LOC, exchange_image_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_image_names <<  "\n";
+        }
+
+        if( H5Lcreate_hard(file_id, str_image_units.c_str(), H5L_SAME_LOC, exchange_image_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_image_units <<  "\n";
+        }
+    }
+
+    //Save description
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hsize_t count [1] = {1};
+    hid_t dataspace_id = H5Screate_simple (1, count, nullptr);
+    hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(dset_id > 0)
+    {
+        str_desc.copy(desc, 256);
+        H5Dwrite(file_id, filetype, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&desc);
+        H5Dclose(dset_id);
+    }
+
+
+    //Add version dataset
+    real_t save_val = HDF5_EXCHANGE_VERSION;
+    dset_id = H5Dcreate(file_id, str_desc.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(dset_id > 0)
+    {
+        H5Dwrite(file_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+        H5Dclose(dset_id);
+    }
+
+    //Add theta
+    if( H5Lcreate_hard(file_id, str_scan_theta.c_str(), H5L_SAME_LOC, str_theta.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    {
+        logit  << "Warning: Couldn't create soft link for"<< str_theta <<  "\n";
+    }
+
+
+    H5Sclose(dataspace_id);
+    H5Gclose(exchange_id);
+
+}
+
 //-----------------------------------------------------------------------------
 
 void HDF5_IO::_add_exchange_layout(std::string dataset_file)
@@ -5603,33 +5726,15 @@ void HDF5_IO::_add_exchange_layout(std::string dataset_file)
 
     logit  << dataset_file << "\n";
     hid_t saved_file_id = _cur_file_id;
-
-    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, 256);
-    hid_t memtype = H5Tcopy(H5T_C_S1);
-    H5Tset_size(memtype, 255);
-
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
-    hid_t exchange_id = H5Dopen(file_id, "/exchange", H5P_DEFAULT);
-    if(exchange_id < 0)
-    {
-        exchange_id = H5Gcreate(file_id, "exchange", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    }
+    std::string exchange_num[3] = {"1", "2", "3"};
+    std::string exchange_fits[3] = {"/MAPS/XRF_Analyzed/ROI", "/MAPS/XRF_Analyzed/NNLS", "/MAPS/XRF_Analyzed/Fitted"};
 
-    //Scan
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/exchange/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    for(int i=0; i < 3; i++)
     {
-        logit  << "Warning: Couldn't create soft link for x_axis"<<  "\n";
+        _add_exchange_meta(file_id, exchange_num[i], exchange_fits[i]);
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/exchange/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for y_axis"<<  "\n";
-    }
-
-    _add_extra_pvs(file_id, "/exchange");
-
-    H5Gclose(exchange_id);
 
     _cur_file_id = file_id;
     end_save_seq();

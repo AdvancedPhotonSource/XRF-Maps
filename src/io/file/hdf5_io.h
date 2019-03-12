@@ -218,6 +218,7 @@ private:
     void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
     void _add_extra_pvs(hid_t file_id, std::string group_name);
 
+    void _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link);
 	void _add_exchange_layout(std::string dataset_file);
 
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2);
