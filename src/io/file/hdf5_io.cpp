@@ -3247,7 +3247,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers)
+bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1;
 	hid_t status;
@@ -3461,6 +3461,57 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 
 		//save write date
 		count[0] = 1;
+
+        //Save theta
+        dset_id = H5Dcreate(scan_grp_id, "theta", H5T_NATIVE_REAL, memoryspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(dset_id > 0)
+        {
+            real_t theta = 0.0;
+            struct mda_pv * pv = nullptr;
+            //find theta by param_override->theta_pv in extra names
+            for (int16_t i = 0; i < mda_scalers->extra->number_pvs; i++)
+            {
+                pv = mda_scalers->extra->pvs[i];
+                if(pv == nullptr)
+                {
+                    continue;
+                }
+
+                if (pv->name != nullptr && params_override->theta_pv.compare(pv->name) == 0)
+                {
+                    break;
+                }
+            }
+            if( pv != nullptr)
+            {
+                switch (pv->type)
+                {
+                case EXTRA_PV_STRING:
+                    //str_val = std::string(pv->values);
+                    break;
+                case EXTRA_PV_INT16:
+                    //s_val = (short*)pv->values;
+                    //str_val = std::to_string(*s_val);
+                    break;
+                case EXTRA_PV_INT32:
+                    //i_val = (int*)pv->values;
+                    //str_val = std::to_string(*i_val);
+                    break;
+                case EXTRA_PV_FLOAT:
+                    theta = *((float*)pv->values);
+                    //str_val = std::to_string(*f_val);
+                    break;
+                case EXTRA_PV_DOUBLE:
+                    theta = *((double*)pv->values);
+                    //str_val = std::to_string(*d_val);
+                    break;
+                }
+
+                status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, memoryspace_id, H5P_DEFAULT, (void*)&theta);
+            }
+            H5Dclose(dset_id);
+            dset_id = -1;
+        }
 
 		dset_id = H5Dcreate(scan_grp_id, "scan_time_stamp", filetype, memoryspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if (dset_id < 0)
@@ -4725,7 +4776,7 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
         return false;
     }
 
-    _save_scan_meta_data(scan_grp_id, mda_scalers);
+    _save_scan_meta_data(scan_grp_id, mda_scalers, params_override);
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
@@ -5602,10 +5653,11 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 
 }
 
-void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link)
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler)
 {
     char desc[256] = {0};
-    char ver[256] = {0};
     std::string exhange_str = "/exchange_" + exchange_idx;
     std::string xaxis_str = exhange_str + "/x_axis" ;
     std::string yaxis_str = exhange_str + "/y_axis" ;
@@ -5613,7 +5665,7 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     std::string str_scaler_names = "/MAPS/Scalers/Names";
     std::string str_scaler_units = "/MAPS/Scalers/Units";
 
-    std::string str_scan_theta = "/MAPS/Scan/Theta";
+    std::string str_scan_theta = "/MAPS/Scan/theta";
 
     std::string exchange_scalers = exhange_str + "/scalers";
     std::string exchange_scaler_names = exhange_str + "/scaler_names";
@@ -5622,6 +5674,15 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     std::string str_desc = exhange_str + "/description";
     std::string str_version = exhange_str + "/version";
     std::string str_theta = exhange_str + "/theta";
+
+    std::string exchange_images = exhange_str + "/images";
+    std::string exchange_image_names = exhange_str + "/image_names";
+    std::string exchange_image_units = exhange_str + "/image_units";
+
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hsize_t count [1] = {1};
+    hid_t dataspace_id = H5Screate_simple (1, count, nullptr);
 
     hid_t exchange_id = H5Dopen(file_id, exhange_str.c_str(), H5P_DEFAULT);
     if(exchange_id < 0)
@@ -5641,68 +5702,126 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
     _add_extra_pvs(file_id, exhange_str);
 
-    if( H5Lcreate_hard(file_id, str_scalers.c_str(), H5L_SAME_LOC, exchange_scalers.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if(normalize_scaler.size() > 0)
     {
-        logit  << "Warning: Couldn't create soft link for"<< exchange_scalers <<  "\n";
-    }
-
-    if( H5Lcreate_hard(file_id, str_scaler_names.c_str(), H5L_SAME_LOC, exchange_scaler_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_names <<  "\n";
-    }
-
-    if( H5Lcreate_hard(file_id, str_scaler_units.c_str(), H5L_SAME_LOC, exchange_scaler_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_units <<  "\n";
-    }
-
-    hid_t fits_grp = H5Gopen(file_id, fits_link.c_str(), H5P_DEFAULT);
-    if(fits_grp > 0)
-    {
-        std::string str_images = fits_link + "/Counts_Per_Sec";
-        std::string str_image_names = fits_link + "/Channel_Names";
-        std::string str_image_units = fits_link + "/Channel_Units";
-
-        std::string exchange_images = exhange_str + "/images";
-        std::string exchange_image_names = exhange_str + "/image_names";
-        std::string exchange_image_units = exhange_str + "/image_units";
-
-        if( H5Lcreate_hard(file_id, str_images.c_str(), H5L_SAME_LOC, exchange_images.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        //Save description
+        std::string norm_desc = fits_link + " normalized by " + normalize_scaler;
+        hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(dset_id > 0)
         {
-            logit  << "Warning: Couldn't create soft link for"<< exchange_images <<  "\n";
+            norm_desc.copy(desc, 256);
+            H5Dwrite(dset_id, filetype, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&desc);
+            H5Dclose(dset_id);
         }
 
-        if( H5Lcreate_hard(file_id, str_image_names.c_str(), H5L_SAME_LOC, exchange_image_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        //TODO: save normalized data in /exchange_n/images
+
+        dset_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5P_DEFAULT);
+        hid_t chan_units_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5P_DEFAULT);
+        hid_t chan_names_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5P_DEFAULT);
+        hid_t scaler_dset_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
+        hid_t scaler_units_id = H5Dopen(file_id, "/MAPS/Scalers/Units", H5P_DEFAULT);
+        hid_t scaler_names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
+        if(dset_id > 0 && chan_units_id > 0 && chan_names_id > 0 && scaler_dset_id > 0 && scaler_units_id > 0 &&  scaler_names_id > 0)
         {
-            logit  << "Warning: Couldn't create soft link for"<< exchange_image_names <<  "\n";
+            //TODO: add scalers and counts into images but counts will be normalized by ds_ic and quants
+
+
+
+            hid_t image_dset_id = H5Dcreate(file_id, exchange_images.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t image_names_dset_id = H5Dcreate(file_id, exchange_image_names.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t image_units_dset_id = H5Dcreate(file_id, exchange_image_units.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+
+
+            H5Dclose(image_dset_id);
+            H5Dclose(image_names_dset_id);
+            H5Dclose(image_units_dset_id);
+            H5Dclose(chan_units_id);
+            H5Dclose(chan_names_id);
+            H5Dclose(scaler_units_id);
+            H5Dclose(scaler_names_id);
+            H5Dclose(scaler_dset_id);
+            H5Dclose(dset_id);
         }
 
-        if( H5Lcreate_hard(file_id, str_image_units.c_str(), H5L_SAME_LOC, exchange_image_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            logit  << "Warning: Couldn't create soft link for"<< exchange_image_units <<  "\n";
-        }
     }
-
-    //Save description
-    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, 256);
-    hsize_t count [1] = {1};
-    hid_t dataspace_id = H5Screate_simple (1, count, nullptr);
-    hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    if(dset_id > 0)
+    else
     {
-        str_desc.copy(desc, 256);
-        H5Dwrite(file_id, filetype, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&desc);
-        H5Dclose(dset_id);
+        if( H5Lcreate_hard(file_id, str_scalers.c_str(), H5L_SAME_LOC, exchange_scalers.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_scalers <<  "\n";
+        }
+
+        if( H5Lcreate_hard(file_id, str_scaler_names.c_str(), H5L_SAME_LOC, exchange_scaler_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_names <<  "\n";
+        }
+
+        if( H5Lcreate_hard(file_id, str_scaler_units.c_str(), H5L_SAME_LOC, exchange_scaler_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_units <<  "\n";
+        }
+
+        std::string full_fit_link_path = "/MAPS/XRF_Analyzed/" + fits_link;
+        hid_t fits_grp = H5Gopen(file_id, full_fit_link_path.c_str(), H5P_DEFAULT);
+        if(fits_grp > 0)
+        {
+            std::string str_images = "/MAPS/XRF_Analyzed/" + fits_link + "/Counts_Per_Sec";
+            std::string str_image_names = "/MAPS/XRF_Analyzed/" + fits_link + "/Channel_Names";
+            std::string str_image_units = "/MAPS/XRF_Analyzed/" + fits_link + "/Channel_Units";
+
+
+            if( H5Lcreate_hard(file_id, str_images.c_str(), H5L_SAME_LOC, exchange_images.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logit  << "Warning: Couldn't create soft link for"<< exchange_images <<  "\n";
+            }
+
+            if( H5Lcreate_hard(file_id, str_image_names.c_str(), H5L_SAME_LOC, exchange_image_names.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logit  << "Warning: Couldn't create soft link for"<< exchange_image_names <<  "\n";
+            }
+
+            if( H5Lcreate_hard(file_id, str_image_units.c_str(), H5L_SAME_LOC, exchange_image_units.c_str(), H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logit  << "Warning: Couldn't create soft link for"<< exchange_image_units <<  "\n";
+            }
+
+            // Add quantification
+            hsize_t quant_dims[3] = {3,1,1};
+            hid_t chan_names = H5Dopen(file_id, str_image_names.c_str(), H5P_DEFAULT);
+            hid_t chan_space = H5Dget_space(chan_names);
+            if(chan_names > -1)
+            {
+                hsize_t chan_size = 1;
+                H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
+                quant_dims[2] = chan_size; //num channel names
+            }
+            hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
+            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], fits_link, exhange_str+"/quant");
+            H5Sclose(quant_space);
+            H5Dclose(chan_names);
+        }
+
+        //Save description
+        hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(dset_id > 0)
+        {
+            fits_link.copy(desc, 256);
+            H5Dwrite(dset_id, filetype, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&desc);
+            H5Dclose(dset_id);
+        }
     }
+
+
 
 
     //Add version dataset
     real_t save_val = HDF5_EXCHANGE_VERSION;
-    dset_id = H5Dcreate(file_id, str_desc.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t dset_id = H5Dcreate(file_id, str_version.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if(dset_id > 0)
     {
-        H5Dwrite(file_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+        H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
         H5Dclose(dset_id);
     }
 
@@ -5728,12 +5847,13 @@ void HDF5_IO::_add_exchange_layout(std::string dataset_file)
     hid_t saved_file_id = _cur_file_id;
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
-    std::string exchange_num[3] = {"1", "2", "3"};
-    std::string exchange_fits[3] = {"/MAPS/XRF_Analyzed/ROI", "/MAPS/XRF_Analyzed/NNLS", "/MAPS/XRF_Analyzed/Fitted"};
+    std::string exchange_num[4] = {"0", "1", "2", "3"};
+    std::string exchange_fits[4] = {"Fitted", "ROI", "NNLS", "Fitted"};
+    std::string exchange_normalize[4] = {"DS_IC", "", "", ""};
 
-    for(int i=0; i < 3; i++)
+    for(int i=0; i < 4; i++)
     {
-        _add_exchange_meta(file_id, exchange_num[i], exchange_fits[i]);
+        _add_exchange_meta(file_id, exchange_num[i], exchange_fits[i], exchange_normalize[i]);
     }
 
     _cur_file_id = file_id;

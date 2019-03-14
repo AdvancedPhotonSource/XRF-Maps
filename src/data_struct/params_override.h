@@ -80,6 +80,7 @@ public:
         us_amp_sens_unit = 0.0;
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
+        theta_pv = "";
     }
     Params_Override(string dir, int detector)
     {
@@ -93,6 +94,7 @@ public:
         us_amp_sens_unit = 0.0;
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
+        theta_pv = "";
 
         dataset_directory = dir;
         detector_num = detector;
@@ -131,6 +133,8 @@ public:
     string us_amp_sens_unit_pv;
     string ds_amp_sens_num_pv;
     string ds_amp_sens_unit_pv;
+
+    string theta_pv;
 
     real_t us_amp_sens_num;
     real_t us_amp_sens_unit;

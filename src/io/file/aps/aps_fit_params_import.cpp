@@ -607,6 +607,15 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     //params_override->ge_dead_layer = std::stoi(value);
                 }
+                else if (tag == "THETA_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->theta_pv = value;
+                }
                 else
                 {
                     if (tag.length() > 0 && tag[0] != ' ' && (line.find(":") != std::string::npos))
