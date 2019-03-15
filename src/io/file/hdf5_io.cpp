@@ -5714,30 +5714,157 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             H5Dclose(dset_id);
         }
 
-        //TODO: save normalized data in /exchange_n/images
-
         dset_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5P_DEFAULT);
-        hid_t chan_units_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5P_DEFAULT);
+        //hid_t chan_units_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5P_DEFAULT);
         hid_t chan_names_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5P_DEFAULT);
         hid_t scaler_dset_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
         hid_t scaler_units_id = H5Dopen(file_id, "/MAPS/Scalers/Units", H5P_DEFAULT);
         hid_t scaler_names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
-        if(dset_id > 0 && chan_units_id > 0 && chan_names_id > 0 && scaler_dset_id > 0 && scaler_units_id > 0 &&  scaler_names_id > 0)
+        if(dset_id > 0 && chan_names_id > 0 && scaler_dset_id > 0 && scaler_units_id > 0 &&  scaler_names_id > 0)
         {
-            //TODO: add scalers and counts into images but counts will be normalized by ds_ic and quants
+            hsize_t chan_dims[3] = {1,1,1};
+            hsize_t scaler_dims[3] = {1,1,1};
+            hsize_t image_dims[3] = {1,1,1};
+            hsize_t image_dims_single[1] = {1};
+            hsize_t offset[3] = {0,0,0};
+            hsize_t offset_image[3] = {0,0,0};
+            hsize_t offset_single[3] = {0};
 
 
+            hid_t chan_type = H5Dget_type(dset_id);
+            hid_t scalername_type = H5Dget_type(scaler_names_id);
 
-            hid_t image_dset_id = H5Dcreate(file_id, exchange_images.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            hid_t image_names_dset_id = H5Dcreate(file_id, exchange_image_names.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            hid_t image_units_dset_id = H5Dcreate(file_id, exchange_image_units.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t chan_space = H5Dget_space(dset_id);
+            hid_t chan_name_space = H5Dget_space(chan_names_id);
+            hid_t scaler_space = H5Dget_space(scaler_dset_id);
+
+            H5Sget_simple_extent_dims(chan_space, &chan_dims[0], nullptr);
+            H5Sget_simple_extent_dims(scaler_space, &scaler_dims[0], nullptr);
+
+            image_dims_single[0] = chan_dims[0] + scaler_dims[0];
+            image_dims[0] = chan_dims[0] + scaler_dims[0];
+            image_dims[1] = chan_dims[1];
+            image_dims[2] = chan_dims[2];
+            hid_t image_space = H5Screate_simple(3, &image_dims[0], &image_dims[0]);
+            hid_t image_single_space = H5Screate_simple(1, &image_dims_single[0], &image_dims_single[0]);
+
+            image_dims[0] = 1;
+            hid_t readwrite_space = H5Screate_simple(3, &image_dims[0], &image_dims[0]);
+
+            image_dims_single[0] = {1};
+            hid_t readwrite_single_space = H5Screate_simple(1, &image_dims_single[0], &image_dims_single[0]);
 
 
+            hid_t image_dset_id = H5Dcreate(file_id, exchange_images.c_str(), chan_type, image_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t image_names_dset_id = H5Dcreate(file_id, exchange_image_names.c_str(), filetype, image_single_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hid_t image_units_dset_id = H5Dcreate(file_id, exchange_image_units.c_str(), filetype, image_single_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+            real_t *data = new real_t[chan_dims[1] * chan_dims[2]];
+            real_t *ds_ic_data = new real_t[chan_dims[1] * chan_dims[2]];
+            std::string scaler_name_str;
+            char char_data[256]={0};
+            char char_ug_data[256]="ug/cm2";
+            int k =0;
+            std::locale loc;
+
+            real_t quant_value = 1.0;
+
+            for (std::string::size_type x=0; x<normalize_scaler.length(); ++x)
+            {
+                normalize_scaler[x] = std::tolower(normalize_scaler[x],loc);
+            }
+            // save scalers first
+            for(int i=0; i < scaler_dims[0]; i++)
+            {
+                offset[0] = i;
+                offset_single[0] = i;
+                offset_image[0] = k;
+                k++;
+                H5Sselect_hyperslab (image_space, H5S_SELECT_SET, offset, nullptr, image_dims, nullptr);
+                //read write values
+                hid_t status = H5Dread(scaler_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                if(status > -1)
+                {
+                    H5Dwrite(image_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                }
+
+                //read write names
+                H5Sselect_hyperslab (image_single_space, H5S_SELECT_SET, offset_single, nullptr, image_dims_single, nullptr);
+                status = H5Dread(scaler_names_id, scalername_type, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                if(status > -1)
+                {
+                    H5Dwrite(image_names_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                }
+
+
+                scaler_name_str = std::string(char_data, 256);
+                scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
+                //to lower
+                for (std::string::size_type x=0; x<scaler_name_str.length(); ++x)
+                {
+                    scaler_name_str[x] = std::tolower(scaler_name_str[x],loc);
+                }
+                if(scaler_name_str == normalize_scaler)
+                {
+                    for(int z=0; z < (chan_dims[1] * chan_dims[2]); z++)
+                    {
+                        ds_ic_data[z] = data[z];
+                    }
+                }
+
+                //read write units
+                status = H5Dread(scaler_units_id, scalername_type, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                if(status > -1)
+                {
+                    H5Dwrite(image_units_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                }
+            }
+
+            for(int i=0; i < chan_dims[0]; i++)
+            {
+                offset[0] = i;
+                offset_image[0] = k;
+                offset_single[0] = i;
+                k++;
+
+                //read write names
+                H5Sselect_hyperslab (chan_name_space, H5S_SELECT_SET, offset_single, nullptr, image_dims_single, nullptr);
+                H5Sselect_hyperslab (image_single_space, H5S_SELECT_SET, offset_image, nullptr, image_dims_single, nullptr);
+                hid_t status = H5Dread(chan_names_id, scalername_type, readwrite_single_space, chan_name_space, H5P_DEFAULT, (void*)&char_data[0]);
+                if(status > -1)
+                {
+                    H5Dwrite(image_names_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                }
+
+                //TODO: get quantification for ds_ic and store in quant_value
+
+                H5Sselect_hyperslab (chan_space, H5S_SELECT_SET, offset, nullptr, image_dims, nullptr);
+                H5Sselect_hyperslab (image_space, H5S_SELECT_SET, offset_image, nullptr, image_dims, nullptr);
+                //read write values
+                status = H5Dread(dset_id, chan_type, readwrite_space, chan_space, H5P_DEFAULT, (void*)&data[0]);
+                if(status > -1)
+                {
+                    for(int z=0; z < (chan_dims[1] * chan_dims[2]); z++)
+                    {
+                        data[z] = data[z] / quant_value / ds_ic_data[z];
+                    }
+                    H5Dwrite(image_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                }
+
+                //read write units
+                //status = H5Dread(chan_units_id, scalername_type, readwrite_single_space, chan_name_space, H5P_DEFAULT, (void*)&char_data[0]);
+                if(status > -1)
+                {
+                    H5Dwrite(image_units_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_ug_data[0]);
+                }
+            }
+
+            delete [] data;
+            delete [] ds_ic_data;
             H5Dclose(image_dset_id);
             H5Dclose(image_names_dset_id);
             H5Dclose(image_units_dset_id);
-            H5Dclose(chan_units_id);
+            //H5Dclose(chan_units_id);
             H5Dclose(chan_names_id);
             H5Dclose(scaler_units_id);
             H5Dclose(scaler_names_id);

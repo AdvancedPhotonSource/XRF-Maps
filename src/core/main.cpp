@@ -60,7 +60,8 @@ void help()
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<"\n";
     logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<"\n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<"\n";
-//    logit_s<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
+    logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. "<<"\n";
+    logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
 //    logit_s<<"    us = upstream ion chamber\n";
 //    logit_s<<"    ds = downstream ion chamber\n";
 //    logit_s<<"    sr = sr current. "<<"\n";
