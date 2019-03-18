@@ -1865,7 +1865,6 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 
 bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
-                                           size_t detector_num,
                                            data_struct::Spectra_Volume* spectra_volume,
                                            int row_idx_start,
                                            int row_idx_end,
@@ -1880,9 +1879,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
-   logit<< path <<" detector : "<<detector_num<<"\n";
-
-   path += ".h5" + std::to_string(detector_num);
+   logit<< path <<"\n";
 
    hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
@@ -2026,8 +2023,76 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::load_quantification_analyzed_h5(std::string path,
+                                              data_struct::Quantification_Standard * quantification_standard)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+   //_is_loaded = ERROR_LOADING;
+   std::chrono::time_point<std::chrono::system_clock> start, end;
+   start = std::chrono::system_clock::now();
+
+   std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+   logit<< path <<"\n";
+
+   real_t srcurrent, us_ic, ds_ic;
+   hid_t    file_id, ds_ic_id, us_ic_id, srcurrent_id;
+   //herr_t   error;
+   //hsize_t offset[1] = {0};
+   hsize_t count[1] = {1};
+   hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
+
+   if ( false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1) )
+       return false;
+
+   if ( false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/DS_IC", file_id) )
+      return false;
+
+   if ( false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/US_IC", file_id) )
+      return false;
+
+   if ( false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/SR_Current", file_id) )
+      return false;
+
+
+   //read in scaler
+   hid_t d_space = H5Dget_space(srcurrent_id);
+   hid_t d_type = H5Dget_type(srcurrent_id);
+   hid_t status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
+   if(status > -1)
+   {
+        quantification_standard->sr_current(srcurrent);
+   }
+   d_space = H5Dget_space(us_ic_id);
+   d_type = H5Dget_type(us_ic_id);
+   status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
+   if(status > -1)
+   {
+        quantification_standard->US_IC(us_ic);
+   }
+   d_space = H5Dget_space(ds_ic_id);
+   d_type = H5Dget_type(ds_ic_id);
+   status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
+   if(status > -1)
+   {
+        quantification_standard->DS_IC(ds_ic);
+   }
+
+   _close_h5_objects(close_map);
+
+   end = std::chrono::system_clock::now();
+   std::chrono::duration<double> elapsed_seconds = end-start;
+   //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+   logit << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+   return true;
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
-                                           size_t detector_num,
                                            data_struct::Spectra* spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -2035,13 +2100,14 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
    //_is_loaded = ERROR_LOADING;
    //std::chrono::time_point<std::chrono::system_clock> start, end;
    //start = std::chrono::system_clock::now();
-
+   logit<< path <<"\n";
+/*
    logit<< path <<" detector : "<<detector_num<<"\n";
    if (detector_num > -1)
    {
 	   path += ".h5" + std::to_string(detector_num);
    }
- 
+ */
    hid_t    file_id;
 
     file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -5720,6 +5786,9 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
         hid_t scaler_dset_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
         hid_t scaler_units_id = H5Dopen(file_id, "/MAPS/Scalers/Units", H5P_DEFAULT);
         hid_t scaler_names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
+        hid_t ds_ic_quant_id = H5Dopen(file_id, "/MAPS/Quantification/XRF_Analyzed/Fitted/Calibration_Curve_DS_IC", H5P_DEFAULT);
+        hid_t quant_space = H5Dget_space(ds_ic_quant_id);
+        hid_t quant_type = H5Dget_type(ds_ic_quant_id);
         if(dset_id > 0 && chan_names_id > 0 && scaler_dset_id > 0 && scaler_units_id > 0 &&  scaler_names_id > 0)
         {
             hsize_t chan_dims[3] = {1,1,1};
@@ -5730,6 +5799,8 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             hsize_t offset_image[3] = {0,0,0};
             hsize_t offset_single[3] = {0};
 
+            hsize_t offset_quant[2] = {0,0};
+            hsize_t count_quant[2] = {1,1};
 
             hid_t chan_type = H5Dget_type(dset_id);
             hid_t scalername_type = H5Dget_type(scaler_names_id);
@@ -5827,7 +5898,7 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 offset_single[0] = i;
                 k++;
 
-                //read write names
+                // read write names
                 H5Sselect_hyperslab (chan_name_space, H5S_SELECT_SET, offset_single, nullptr, image_dims_single, nullptr);
                 H5Sselect_hyperslab (image_single_space, H5S_SELECT_SET, offset_image, nullptr, image_dims_single, nullptr);
                 hid_t status = H5Dread(chan_names_id, scalername_type, readwrite_single_space, chan_name_space, H5P_DEFAULT, (void*)&char_data[0]);
@@ -5836,7 +5907,29 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                     H5Dwrite(image_names_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 }
 
-                //TODO: get quantification for ds_ic and store in quant_value
+                // get quantification for ds_ic and store in quant_value
+                if(ds_ic_quant_id > -1)
+                {
+                    std::string chan_name_str = std::string(char_data, 256);
+                    chan_name_str.erase(std::remove(chan_name_str.begin(), chan_name_str.end(), ' '), chan_name_str.end());
+                    data_struct::Element_Info* element = data_struct::Element_Info_Map::inst()->get_element(chan_name_str);
+                    if(element != nullptr)
+                    {
+                        offset_quant[1] = element->number - 1;
+
+                        H5Sselect_hyperslab (quant_space, H5S_SELECT_SET, offset_quant, nullptr, count_quant, nullptr);
+                        hid_t status = H5Dread(ds_ic_quant_id, quant_type, readwrite_single_space, quant_space, H5P_DEFAULT, (void*)&quant_value);
+                        if(status < 0)
+                        {
+                            quant_value = 1.0;
+                        }
+                    }
+                }
+                else
+                {
+                    quant_value = 1.0;
+                }
+
 
                 H5Sselect_hyperslab (chan_space, H5S_SELECT_SET, offset, nullptr, image_dims, nullptr);
                 H5Sselect_hyperslab (image_space, H5S_SELECT_SET, offset_image, nullptr, image_dims, nullptr);
@@ -5861,6 +5954,7 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
             delete [] data;
             delete [] ds_ic_data;
+            H5Dclose(ds_ic_quant_id);
             H5Dclose(image_dset_id);
             H5Dclose(image_names_dset_id);
             H5Dclose(image_units_dset_id);

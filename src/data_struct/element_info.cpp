@@ -355,6 +355,8 @@ void Element_Info_Map::generate_default_elements(int start_element, int end_elem
         element->name = Element_Symbols[i];
        _number_element_info_map.insert(std::pair<int, Element_Info*>(element->number, element));
        _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name, element));
+       _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name+"_L", element));
+       _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name+"_M", element));
     }
 }
 

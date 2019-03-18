@@ -109,14 +109,15 @@ public:
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
     bool load_spectra_vol_analyzed_h5(std::string path,
-                                      size_t detector_num,
                                       data_struct::Spectra_Volume* spectra_volume,
                                       int row_idx_start = 0,
                                       int row_idx_end = -1,
                                       int col_idx_start = 0,
                                       int col_idx_end = -1);
 
-    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra* spectra);
+
+    bool load_quantification_analyzed_h5(std::string path, data_struct::Quantification_Standard * quantification_standard);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 

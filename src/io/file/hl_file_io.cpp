@@ -693,9 +693,14 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
+    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
-    if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file, detector_num, spectra_volume))
+    if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
+        if(quantification_standard != nullptr)
+        {
+            io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(fullpath, quantification_standard);
+        }
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);
         return true;
@@ -897,7 +902,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //  try to load from a pre analyzed file because they should contain the integrated spectra
-    if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file, detector_num, integrated_spectra))
+    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
+    if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra))
     {
         return true;
     }
