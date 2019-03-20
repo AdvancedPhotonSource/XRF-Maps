@@ -49,6 +49,7 @@
 
 #include <map>
 #include <string>
+#include <list>
 #include "core/defines.h"
 
 #include "data_struct/fit_parameters.h"
@@ -58,6 +59,12 @@ namespace data_struct
 {
 
 using namespace std;
+
+struct Summed_Scaler
+{
+  string scaler_name;
+  list<string> scalers_to_sum;
+};
 
 //-----------------------------------------------------------------------------
 /**
@@ -135,6 +142,8 @@ public:
     string ds_amp_sens_unit_pv;
 
     string theta_pv;
+
+    list<struct Summed_Scaler> summed_scalers;
 
     real_t us_amp_sens_num;
     real_t us_amp_sens_unit;

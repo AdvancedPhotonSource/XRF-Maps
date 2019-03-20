@@ -699,7 +699,10 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         if(quantification_standard != nullptr)
         {
-            io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(fullpath, quantification_standard);
+            if(false == io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(fullpath, quantification_standard))
+            {
+                mda_io.load_quantification_scalers(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, params_override, quantification_standard);
+            }
         }
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);

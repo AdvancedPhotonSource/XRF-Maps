@@ -97,6 +97,10 @@ public:
 										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
+    bool load_quantification_scalers(std::string path,
+                                     data_struct::Params_Override *override_values,
+                                     data_struct::Quantification_Standard * quantification_standard);
+
 	// find index in mda file, if found, fill in value and units 
     int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string &units);
 
