@@ -56,6 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <mutex>
 #include <algorithm>
+#include <cctype>
 
 #include "data_struct/element_info.h"
 
@@ -5836,13 +5837,12 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             char char_data[256]={0};
             char char_ug_data[256]="ug/cm2";
             int k =0;
-            std::locale loc;
 
             real_t quant_value = 1.0;
 
             for (std::string::size_type x=0; x<normalize_scaler.length(); ++x)
             {
-                normalize_scaler[x] = std::tolower(normalize_scaler[x],loc);
+                normalize_scaler[x] = std::tolower(normalize_scaler[x]);
             }
             // save scalers first
             for(int i=0; i < scaler_dims[0]; i++)
@@ -5873,7 +5873,7 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 //to lower
                 for (std::string::size_type x=0; x<scaler_name_str.length(); ++x)
                 {
-                    scaler_name_str[x] = std::tolower(scaler_name_str[x],loc);
+                    scaler_name_str[x] = std::tolower(scaler_name_str[x]);
                 }
                 if(scaler_name_str == normalize_scaler)
                 {
