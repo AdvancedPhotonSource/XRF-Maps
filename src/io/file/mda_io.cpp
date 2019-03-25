@@ -163,6 +163,53 @@ int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, r
 
 //-----------------------------------------------------------------------------
 
+bool MDA_IO::load_quantification_scalers(std::string path,
+                                        data_struct::Params_Override *override_values,
+                                        data_struct::Quantification_Standard * quantification_standard)
+{
+    real_t tmp_val;
+    std::string units;
+    std::FILE *fptr = std::fopen(path.c_str(), "rb");
+
+    if (fptr == nullptr)
+    {
+        return false;
+    }
+
+
+    _mda_file = mda_load(fptr);
+    std::fclose(fptr);
+    if (_mda_file == nullptr)
+    {
+        return false;
+    }
+
+    if(quantification_standard == nullptr || override_values == nullptr)
+    {
+        return false;
+    }
+
+    if (override_values->scaler_pvs.count("SRCURRENT") > 0)
+    {
+        find_scaler_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), tmp_val, units);
+        quantification_standard->sr_current(tmp_val);
+    }
+    if (override_values->scaler_pvs.count("US_IC") > 0)
+    {
+        find_scaler_index(_mda_file, override_values->scaler_pvs.at("US_IC"), tmp_val, units);
+        quantification_standard->US_IC(tmp_val);
+    }
+    if (override_values->scaler_pvs.count("DS_IC") > 0)
+    {
+        find_scaler_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), tmp_val, units);
+        quantification_standard->DS_IC(tmp_val);
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::Spectra_Volume* vol,
