@@ -191,12 +191,6 @@ int main(int argc, char *argv[])
         analysis_job.set_optimizer(clp.get_option("--optimizer"));
     }
 
-    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
-    if( clp.option_exists("--add-exchange"))
-    {
-        //TODO:
-    }
-
     //Should we sum up all the detectors and process it as one?
     if( clp.option_exists("--quick-and-dirty"))
     {
@@ -214,6 +208,7 @@ int main(int argc, char *argv[])
         analysis_job.add_v9_layout = true;
     }
 
+    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
     if(clp.option_exists("--add-exchange"))
     {
         analysis_job.add_exchange_layout = true;
