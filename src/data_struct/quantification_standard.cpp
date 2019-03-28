@@ -102,7 +102,7 @@ std::string get_shell_element_label(int shell, size_t l)
     switch(shell)
     {
     case quantification::models::K_SHELL:
-        shell_str = "_K";
+        //shell_str = "_K";
         break;
     case quantification::models::L_SHELL:
         shell_str = "_L";
