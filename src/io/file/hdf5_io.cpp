@@ -4887,6 +4887,12 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     hsize_t* det_dims_in;
     //hsize_t n_offset[1] = {0};
     //hsize_t n_count[1] = {1};
+	hsize_t scalers_offset[3] = { 0,0,0 };
+	hsize_t scalers_count[3] = { 1,1,1 };
+	hsize_t value_offset[3] = { 0,0,0 };
+	hsize_t value_count[3] = { 1,1,1 };
+	hsize_t mem_offset[2] = { 0,0 };
+	hsize_t mem_count[2] = { 1,1 };
     hsize_t x_offset[3] = {0,0,0};
     hsize_t x_count[3] = {1,1,1};
     hsize_t y_offset[2] = {0,0};
@@ -4979,8 +4985,45 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     delete [] det_dims_in;
 
     //Save scalers
-    ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
-    status = H5Ocopy(src_maps_grp_id, "Detectors", scalers_grp_id, "Values", ocpypl_id, H5P_DEFAULT);
+    //ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+    //status = H5Ocopy(src_maps_grp_id, "Detectors", scalers_grp_id, "Values", ocpypl_id, H5P_DEFAULT);
+	hid_t scaler_id = H5Dopen(src_maps_grp_id, "Detectors", H5P_DEFAULT);
+	if (scaler_id > -1)
+	{
+		hid_t scaler_space = H5Dget_space(scaler_id);
+		H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
+		value_count[0] = scalers_count[2];
+		value_count[1] = scalers_count[0];
+		value_count[2] = scalers_count[1];
+		hid_t value_space = H5Screate_simple(3, &value_count[0], &value_count[0]);
+		hid_t scalers_type = H5Dget_type(scaler_id);
+		hid_t values_id = H5Dcreate(scalers_grp_id, "Values", scalers_type, value_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		real_t *buffer = new real_t[scalers_count[0] * scalers_count[1]];
+		hsize_t scaler_amt = scalers_count[2];
+		scalers_count[2] = 1;
+		value_count[0] = 1;
+		mem_count[0] = scalers_count[0];
+		mem_count[1] = scalers_count[1];
+		hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
+
+		for (hsize_t s = 0; s < scaler_amt; s++)
+		{
+			value_offset[0] = s;
+			scalers_offset[2] = s;
+			H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, scalers_offset, nullptr, scalers_count, nullptr);
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(scaler_id, scalers_type, mem_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dwrite(values_id, scalers_type, mem_space, value_space, H5P_DEFAULT, &buffer[0]);
+		}
+		delete[] buffer;
+
+		H5Sclose(scaler_space);
+		H5Sclose(mem_space);
+		H5Sclose(value_space);
+		H5Dclose(values_id);
+		H5Dclose(scaler_id);
+	}
+
 
     //save the scalers names
     if ( false == _open_h5_object(dset_detectors_id, H5O_DATASET, close_map, "Detectors", src_maps_grp_id) )
