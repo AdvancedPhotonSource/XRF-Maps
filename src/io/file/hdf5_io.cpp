@@ -3314,6 +3314,27 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override * params_override)
+{
+	//TODO : save param override to hdf5 
+
+	hid_t fit_params_grp_id;
+
+	fit_params_grp_id = H5Gopen(group_id, "Fit_Parameters", H5P_DEFAULT);
+	if (fit_params_grp_id < 0)
+		fit_params_grp_id = H5Gcreate(group_id, "Fit_Parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (fit_params_grp_id < 0)
+	{
+		logit << "Error creating group MAPS/Fit_Parameters_Override/Fit_Parameters" << "\n";
+		return false;
+	}
+
+
+	H5Dclose(fit_params_grp_id);
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1;
@@ -4809,7 +4830,7 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    hid_t scan_grp_id, maps_grp_id;
+    hid_t scan_grp_id, maps_grp_id, po_grp_id;
 
 	if (mda_scalers == nullptr)
     {
@@ -4843,18 +4864,29 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
         return false;
     }
 
+	po_grp_id = H5Gopen(maps_grp_id, "Fit_Parameters_Override", H5P_DEFAULT);
+	if (po_grp_id < 0)
+		po_grp_id = H5Gcreate(maps_grp_id, "Fit_Parameters_Override", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (po_grp_id < 0)
+	{
+		logit << "Error creating group MAPS/Fit_Parameters_Override" << "\n";
+		return false;
+	}
+
+	_save_params_override(po_grp_id, params_override);
+
     _save_scan_meta_data(scan_grp_id, mda_scalers, params_override);
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
     _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override, hasNetcdf);
 
+	H5Gclose(po_grp_id);
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end - start;
-	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
