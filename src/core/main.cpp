@@ -411,9 +411,16 @@ int main(int argc, char *argv[])
         }
         else
         {
-            io::populate_netcdf_hdf5_files(dataset_dir);
-            process_dataset_files(&analysis_job);
-            analysis_job.generate_average_h5 = true;
+			if (analysis_job.fitting_routines.size() > 0)
+			{
+				io::populate_netcdf_hdf5_files(dataset_dir);
+				process_dataset_files(&analysis_job);
+				analysis_job.generate_average_h5 = true;
+			}
+			else
+			{
+				logit << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
+			}
         }
 
         //average all detectors to one files

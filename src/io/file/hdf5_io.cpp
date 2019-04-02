@@ -742,7 +742,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
         for(size_t z = 0; z < det_dims_in[2]; z++)
         {
             detector_lookup[std::string(detector_names[z])] = z;
-            free(detector_names[z]);
+            //free(detector_names[z]);
         }
     }
     delete [] det_dims_in;
@@ -5082,7 +5082,8 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
         H5Dclose(dataset_id);
         for(size_t z = 0; z < det_dims_in[2]; z++)
         {
-            free(detector_names[z]);
+			//TODO: look into why this is causing exception in windows
+            //free(detector_names[z]);
         }
     }
     delete [] det_dims_in;
