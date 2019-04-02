@@ -2988,7 +2988,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         }
 
         //save quantification_standard element weights
-        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_weights();
+        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_quants();
         count[0] = e_weights.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);

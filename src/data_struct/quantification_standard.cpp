@@ -78,9 +78,18 @@ Quantification_Standard::~Quantification_Standard()
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::append_element(string name, real_t weight)
+void Quantification_Standard::append_element(string proc_type, string name, real_t weight)
 {
-    _element_quants.emplace(pair<string, Element_Quant>(name, Element_Quant(weight)));
+	if (_element_quants.count(proc_type) > 0)
+	{
+		_element_quants[proc_type][name] = Element_Quant(weight);
+	}
+	else
+	{
+		unordered_map<string, Element_Quant> e_map;
+		e_map[name] = Element_Quant(weight);
+		_element_quants[proc_type] = e_map;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -162,7 +171,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
     for (auto& quant_itr : quant_list)
     {
 
-        for(auto &itr : _element_quants)
+        for(auto &itr : _element_quants[proc_type_str])
         {
 
             //TODO: Parse the name to see if it is K, L, or M
@@ -199,7 +208,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         Fit_Parameters fit_params;
         fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
         fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
-        optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
+        optimizer->minimize_quantification(&fit_params, &_element_quants[proc_type_str], &quantification_model);
         real_t val = fit_params["quantifier"].value;
 
         for(auto shell : shells_to_quant)

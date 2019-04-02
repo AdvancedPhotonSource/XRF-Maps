@@ -170,7 +170,7 @@ void SavePlotQuantification(std::string path, data_struct::Quantification_Standa
         for(auto& itr2 : itr1.second.calib_curves)
         {
             std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_det"+std::to_string(detector_num)+".png";
-            SavePlotCalibrationCurve(str_path_full, &itr2, standard->element_weights(), zstart, zstop);
+            SavePlotCalibrationCurve(str_path_full, &itr2, standard->element_quants(itr1.first), zstart, zstop);
         }
     }
 }
@@ -231,7 +231,7 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
         data_struct::Element_Info* e_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
         if(e_info != nullptr)
         {
-            e_series->append(e_info->number-1, itr.second.weight);
+            e_series->append(e_info->number-1, itr.second.e_cal_ratio);
         }
     }
     chart->addSeries(e_series);

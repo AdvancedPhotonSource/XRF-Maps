@@ -467,10 +467,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
                 data_struct::Quantification_Standard* quantification_standard = &(detector_struct->quant_standard);
                 quantification_standard->standard_filename(standard_itr.standard_file_name);
-                for(auto& itr : standard_itr.element_standard_weights)
-                {
-                    quantification_standard->append_element(itr.first, itr.second);
-                }
 
                 //Parameters for calibration curve
 
@@ -539,7 +535,13 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
                 for(auto &itr : detector_struct->fit_routines)
                 {
+					
                     fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
+					
+					for (auto& el_itr : standard_itr.element_standard_weights)
+					{
+						quantification_standard->append_element(fit_routine->get_name(), el_itr.first, el_itr.second);
+					}
 
                     //reset model fit parameters to defaults
                     model.reset_to_default_fit_params();
