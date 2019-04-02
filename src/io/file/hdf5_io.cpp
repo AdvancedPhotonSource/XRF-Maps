@@ -3329,8 +3329,9 @@ bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override
 		return false;
 	}
 
+    H5Dclose(fit_params_grp_id);
 
-	H5Dclose(fit_params_grp_id);
+    return true;
 }
 
 //-----------------------------------------------------------------------------

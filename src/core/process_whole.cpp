@@ -540,7 +540,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 					
 					for (auto& el_itr : standard_itr.element_standard_weights)
 					{
-						quantification_standard->append_element(fit_routine->get_name(), el_itr.first, el_itr.second);
+                        quantification_standard->append_element(el_itr.first, el_itr.second);
 					}
 
                     //reset model fit parameters to defaults

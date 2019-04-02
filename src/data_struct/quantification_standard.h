@@ -154,15 +154,13 @@ public:
 
     ~Quantification_Standard();
 
-    void append_element(string proc_type, string name, real_t weight);
+    void append_element(string name, real_t weight);
 
-    const real_t& element_weight(string proc_type, string element_symb) const { return _element_quants.at(proc_type).at(element_symb).weight; }
+    const real_t& element_weight(string element_symb) const { return _element_quants.at(element_symb).weight; }
 
     const map<int, real_t> fitted_e_cal_ratio(string proc_type, int quant_id) const { return _fitted_e_cal_ratio.at(proc_type).at(quant_id); }
 
-	const unordered_map<string, Element_Quant>& element_quants() const { string proc_type = _element_quants.begin()->first; return _element_quants.at(proc_type); }
-
-    const unordered_map<string, Element_Quant>& element_quants(string proc_type) const { return _element_quants.at(proc_type); }
+    const unordered_map<string, Element_Quant>& element_quants() const { return _element_quants; }
 
     void standard_filename(string standard_filename) { _standard_filename = standard_filename; }
 
@@ -207,8 +205,8 @@ protected:
 
     bool _processed;
 
-    //          proc_type               element    quant
-	unordered_map<string, unordered_map<string, Element_Quant>> _element_quants;
+    //             element    quant
+    unordered_map<string, Element_Quant> _element_quants;
 
     //          proc_type               Element   Counts
     unordered_map<string, unordered_map<string, real_t> >  _element_counts;
