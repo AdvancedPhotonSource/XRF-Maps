@@ -73,12 +73,14 @@ struct Calibration_Curve
 
     Calibration_Curve()
     {
+        quant_id = -1;
         shell_curves.resize(3);
         shell_curves_labels.resize(3);
     }
 
     Calibration_Curve(size_t i)
     {
+        quant_id = -1;
         shell_curves.resize(3);
         shell_curves_labels.resize(3);
         resize(i);
@@ -92,6 +94,7 @@ struct Calibration_Curve
         }
     }
 
+    int quant_id;
     string quantifier_name;
     vector<vector<real_t> > shell_curves;
     vector<vector<std::string> > shell_curves_labels;
@@ -107,17 +110,23 @@ struct Quantifiers
     Quantifiers()
     {
         calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[CURRENT].quantifier_name = "SR_Current";
+        calib_curves[CURRENT].quant_id = CURRENT;
         calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[US_IC].quant_id = US_IC;
         calib_curves[DS_IC].quantifier_name = "DS_IC";
+        calib_curves[DS_IC].quant_id = DS_IC;
     }
 
     Quantifiers(size_t i)
     {
         calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[CURRENT].quantifier_name = "SR_Current";
+        calib_curves[CURRENT].quant_id = CURRENT;
         calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[US_IC].quant_id = US_IC;
         calib_curves[DS_IC].quantifier_name = "DS_IC";
+        calib_curves[DS_IC].quant_id = DS_IC;
         resize(i);
     }
 
@@ -130,9 +139,6 @@ struct Quantifiers
     }
 
     vector<Calibration_Curve> calib_curves;
-    //Calibration_Curve current;
-    //Calibration_Curve us_ic;
-    //Calibration_Curve ds_ic;
 };
 
 //-----------------------------------------------------------------------------
@@ -151,6 +157,8 @@ public:
     void append_element(string proc_type, string name, real_t weight);
 
     const real_t& element_weight(string proc_type, string element_symb) const { return _element_quants.at(proc_type).at(element_symb).weight; }
+
+    const map<int, real_t> fitted_e_cal_ratio(string proc_type, int quant_id) const { return _fitted_e_cal_ratio.at(proc_type).at(quant_id); }
 
 	const unordered_map<string, Element_Quant>& element_quants() const { string proc_type = _element_quants.begin()->first; return _element_quants.at(proc_type); }
 
@@ -204,6 +212,9 @@ protected:
 
     //          proc_type               Element   Counts
     unordered_map<string, unordered_map<string, real_t> >  _element_counts;
+
+    //  proc_type   quantifier     z      e_cal_ratio
+    map<string, map<int, map<int, real_t>>> _fitted_e_cal_ratio;
 
     Spectra _integrated_spectra;
 

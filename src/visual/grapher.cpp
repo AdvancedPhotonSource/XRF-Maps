@@ -33,7 +33,9 @@ freely, subject to the following restrictions:
 #include <QtCharts/QLogValueAxis>
 #include <QtCharts/QValueAxis>
 #include <QApplication>
-
+#include <QtCharts/QBarSeries>
+#include <QtCharts/QBarSet>
+#include <QtCharts/QBarCategoryAxis>
 
 namespace visual
 {
@@ -165,18 +167,100 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 
 void SavePlotQuantification(std::string path, data_struct::Quantification_Standard *standard, int detector_num, int zstart, int zstop)
 {
+    //iterate through proc_type {roi, nnls, fitted}
     for(auto& itr1 : standard->calibration_curves)
     {
+        //iterate through quantifier {sr_current, us_ic, ds_ic}
         for(auto& itr2 : itr1.second.calib_curves)
         {
             std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_det"+std::to_string(detector_num)+".png";
-            SavePlotCalibrationCurve(str_path_full, &itr2, standard->element_quants(itr1.first), zstart, zstop);
+            SavePlotCalibrationCurve(str_path_full, &itr2, standard->fitted_e_cal_ratio(itr1.first, itr2.quant_id), zstart, zstop);
         }
     }
 }
 
 // ----------------------------------------------------------------------------
 
+void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *calib_curve, map<int, real_t> fitted_e_cal_raitos, int zstart, int zstop)
+{
+    //index starts at 0 so subtract one so we have correct z number
+    zstart--;
+    zstop--;
+    int argc = 0;
+    char ** argv = nullptr;
+    QApplication app(argc, argv);
+
+    QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
+    axisYLog10->setTitleText("Log10");
+    axisYLog10->setLabelFormat("%.1e");
+    axisYLog10->setBase(10.0);
+//    QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
+//    axisY->setTitleText("Cts/ugcm2");
+
+    QtCharts::QChartView *chartView = new QtCharts::QChartView();
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->resize(1024, 768);
+
+    QtCharts::QChart *chart = chartView->chart();
+    chart->addAxis(axisYLog10, Qt::AlignLeft);
+    //chart->addAxis(axisY, Qt::AlignLeft);
+
+
+    QtCharts::QBarCategoryAxis *axisX = new QtCharts::QBarCategoryAxis();
+    QStringList categories;
+    QtCharts::QBarSet *set0 = new QtCharts::QBarSet("Element");
+
+    QtCharts::QBarSeries *series = new QtCharts::QBarSeries();
+    series->setName(QString::fromStdString(calib_curve->quantifier_name));
+
+    real_t min_y = 9999999.0;
+    real_t max_y = -9999999.0;
+    for(int i=zstart; i <= zstop; i++)
+    {
+        categories << QString::fromStdString(calib_curve->shell_curves_labels[0][i]);
+        *set0 << calib_curve->shell_curves[0][i];
+        min_y = std::min(min_y, calib_curve->shell_curves[0][i]);
+        max_y = std::max(max_y, calib_curve->shell_curves[0][i]);
+    }
+    series->append(set0);
+    chart->addSeries(series);
+
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+    series->attachAxis(axisYLog10);
+    //series->attachAxis(axisY);
+
+    QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
+    e_series->setName(QString::fromStdString("axo"));
+    for(auto& itr : fitted_e_cal_raitos)
+    {
+        e_series->append(((itr.first-1) - zstart), itr.second);
+        min_y = std::min(min_y, itr.second);
+        max_y = std::max(max_y, itr.second);
+    }
+    chart->addSeries(e_series);
+    e_series->attachAxis(axisX);
+    e_series->attachAxis(axisYLog10);
+    //e_series->attachAxis(axisY);
+
+    axisYLog10->setMin(min_y);
+    axisYLog10->setMax(max_y);
+
+
+    QPixmap pix = chartView->grab();
+    QPainter painter(&pix);
+    int h = 768;
+    int w = 1024;
+    int x = 0;
+    int y = 0;
+    painter.drawPixmap(x, y, w, h, pix);
+
+    painter.end();
+    pix.save(QString(path.c_str()), "png");
+
+}
+/*
 void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *calib_curve, unordered_map<string, data_struct::Element_Quant> element_weights, int zstart, int zstop)
 {
     //index starts at 0 so subtract one so we have correct z number
@@ -213,7 +297,7 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
 
     QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
     series->setName(QString::fromStdString(calib_curve->quantifier_name));
-    series->append(zstart-1, 0);
+    //series->append(zstart-1, 0);
     for(int i=zstart; i <= zstop; i++)
     {
         axisX->append(QString::fromStdString(calib_curve->shell_curves_labels[0][i]), i);
@@ -253,6 +337,6 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
     pix.save(QString(path.c_str()), "png");
 
 }
-
+*/
 
 } //namespace visual

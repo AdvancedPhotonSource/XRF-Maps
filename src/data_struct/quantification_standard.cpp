@@ -157,12 +157,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         {Quantifiers::US_IC, &_US_IC},
         {Quantifiers::DS_IC, &_DS_IC}
     };
-    /*{
-        {Quantifiers::CURRENT, 101.94},
-        {Quantifiers::US_IC, 268303.0},
-        {Quantifiers::DS_IC, 134818.0}
-        };
-*/
+
     _element_counts[proc_type_str] = *element_counts;
 
     calibration_curves.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
@@ -201,12 +196,13 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             real_t e_cal_factor = (itr.second.weight * (*quant_itr.second));
             real_t e_cal = e_cal_factor / element_counts->at(itr.first);
             itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
-            //initial guess: parinfo_value[0] = 100000.0 / factor
 
+            _fitted_e_cal_ratio[proc_type_str][quant_itr.first][element->number] = itr.second.e_cal_ratio;
         }
 
         Fit_Parameters fit_params;
         fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
+        //initial guess: parinfo_value[0] = 100000.0 / factor
         fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants[proc_type_str], &quantification_model);
         real_t val = fit_params["quantifier"].value;
