@@ -188,7 +188,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def("append_element", &data_struct::Quantification_Standard::append_element)
     .def("element_weight", &data_struct::Quantification_Standard::element_weight)
-    .def("element_weights", &data_struct::Quantification_Standard::element_weights)
+    .def("element_quants", &data_struct::Quantification_Standard::element_quants)
     .def("standard_filename", (void (data_struct::Quantification_Standard::*)(string)) &data_struct::Quantification_Standard::standard_filename)
     .def("standard_filename", (const string& (data_struct::Quantification_Standard::*)() const) &data_struct::Quantification_Standard::standard_filename)
     .def("element_counts", (void (data_struct::Quantification_Standard::*)(string, unordered_map<string, real_t>)) &data_struct::Quantification_Standard::element_counts)

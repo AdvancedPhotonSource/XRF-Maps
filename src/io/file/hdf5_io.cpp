@@ -742,7 +742,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
         for(size_t z = 0; z < det_dims_in[2]; z++)
         {
             detector_lookup[std::string(detector_names[z])] = z;
-            free(detector_names[z]);
+            //free(detector_names[z]);
         }
     }
     delete [] det_dims_in;
@@ -2988,7 +2988,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         }
 
         //save quantification_standard element weights
-        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_weights();
+        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_quants();
         count[0] = e_weights.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
@@ -3310,6 +3310,28 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
 
     return true;
 
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override * params_override)
+{
+	//TODO : save param override to hdf5 
+
+	hid_t fit_params_grp_id;
+
+	fit_params_grp_id = H5Gopen(group_id, "Fit_Parameters", H5P_DEFAULT);
+	if (fit_params_grp_id < 0)
+		fit_params_grp_id = H5Gcreate(group_id, "Fit_Parameters", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (fit_params_grp_id < 0)
+	{
+		logit << "Error creating group MAPS/Fit_Parameters_Override/Fit_Parameters" << "\n";
+		return false;
+	}
+
+    H5Dclose(fit_params_grp_id);
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -4809,7 +4831,7 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    hid_t scan_grp_id, maps_grp_id;
+    hid_t scan_grp_id, maps_grp_id, po_grp_id;
 
 	if (mda_scalers == nullptr)
     {
@@ -4843,18 +4865,29 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
         return false;
     }
 
+	po_grp_id = H5Gopen(maps_grp_id, "Fit_Parameters_Override", H5P_DEFAULT);
+	if (po_grp_id < 0)
+		po_grp_id = H5Gcreate(maps_grp_id, "Fit_Parameters_Override", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (po_grp_id < 0)
+	{
+		logit << "Error creating group MAPS/Fit_Parameters_Override" << "\n";
+		return false;
+	}
+
+	_save_params_override(po_grp_id, params_override);
+
     _save_scan_meta_data(scan_grp_id, mda_scalers, params_override);
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
     _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override, hasNetcdf);
 
+	H5Gclose(po_grp_id);
     H5Gclose(scan_grp_id);
     H5Gclose(maps_grp_id);
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end - start;
-	//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     logit << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
@@ -4887,6 +4920,12 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     hsize_t* det_dims_in;
     //hsize_t n_offset[1] = {0};
     //hsize_t n_count[1] = {1};
+	hsize_t scalers_offset[3] = { 0,0,0 };
+	hsize_t scalers_count[3] = { 1,1,1 };
+	hsize_t value_offset[3] = { 0,0,0 };
+	hsize_t value_count[3] = { 1,1,1 };
+	hsize_t mem_offset[2] = { 0,0 };
+	hsize_t mem_count[2] = { 1,1 };
     hsize_t x_offset[3] = {0,0,0};
     hsize_t x_count[3] = {1,1,1};
     hsize_t y_offset[2] = {0,0};
@@ -4979,8 +5018,45 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     delete [] det_dims_in;
 
     //Save scalers
-    ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
-    status = H5Ocopy(src_maps_grp_id, "Detectors", scalers_grp_id, "Values", ocpypl_id, H5P_DEFAULT);
+    //ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+    //status = H5Ocopy(src_maps_grp_id, "Detectors", scalers_grp_id, "Values", ocpypl_id, H5P_DEFAULT);
+	hid_t scaler_id = H5Dopen(src_maps_grp_id, "Detectors", H5P_DEFAULT);
+	if (scaler_id > -1)
+	{
+		hid_t scaler_space = H5Dget_space(scaler_id);
+		H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
+		value_count[0] = scalers_count[2];
+		value_count[1] = scalers_count[0];
+		value_count[2] = scalers_count[1];
+		hid_t value_space = H5Screate_simple(3, &value_count[0], &value_count[0]);
+		hid_t scalers_type = H5Dget_type(scaler_id);
+		hid_t values_id = H5Dcreate(scalers_grp_id, "Values", scalers_type, value_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		real_t *buffer = new real_t[scalers_count[0] * scalers_count[1]];
+		hsize_t scaler_amt = scalers_count[2];
+		scalers_count[2] = 1;
+		value_count[0] = 1;
+		mem_count[0] = scalers_count[0];
+		mem_count[1] = scalers_count[1];
+		hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
+
+		for (hsize_t s = 0; s < scaler_amt; s++)
+		{
+			value_offset[0] = s;
+			scalers_offset[2] = s;
+			H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, scalers_offset, nullptr, scalers_count, nullptr);
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(scaler_id, scalers_type, mem_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dwrite(values_id, scalers_type, mem_space, value_space, H5P_DEFAULT, &buffer[0]);
+		}
+		delete[] buffer;
+
+		H5Sclose(scaler_space);
+		H5Sclose(mem_space);
+		H5Sclose(value_space);
+		H5Dclose(values_id);
+		H5Dclose(scaler_id);
+	}
+
 
     //save the scalers names
     if ( false == _open_h5_object(dset_detectors_id, H5O_DATASET, close_map, "Detectors", src_maps_grp_id) )
@@ -5007,7 +5083,8 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
         H5Dclose(dataset_id);
         for(size_t z = 0; z < det_dims_in[2]; z++)
         {
-            free(detector_names[z]);
+			//TODO: look into why this is causing exception in windows
+            //free(detector_names[z]);
         }
     }
     delete [] det_dims_in;

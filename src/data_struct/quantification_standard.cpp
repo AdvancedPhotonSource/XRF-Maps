@@ -80,7 +80,9 @@ Quantification_Standard::~Quantification_Standard()
 
 void Quantification_Standard::append_element(string name, real_t weight)
 {
-    _element_quants.emplace(pair<string, Element_Quant>(name, Element_Quant(weight)));
+
+    _element_quants[name] = Element_Quant(weight);
+
 }
 
 //-----------------------------------------------------------------------------
@@ -102,7 +104,7 @@ std::string get_shell_element_label(int shell, size_t l)
     switch(shell)
     {
     case quantification::models::K_SHELL:
-        shell_str = "_K";
+        //shell_str = "_K";
         break;
     case quantification::models::L_SHELL:
         shell_str = "_L";
@@ -148,12 +150,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
         {Quantifiers::US_IC, &_US_IC},
         {Quantifiers::DS_IC, &_DS_IC}
     };
-    /*{
-        {Quantifiers::CURRENT, 101.94},
-        {Quantifiers::US_IC, 268303.0},
-        {Quantifiers::DS_IC, 134818.0}
-        };
-*/
+
     _element_counts[proc_type_str] = *element_counts;
 
     calibration_curves.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
@@ -192,12 +189,13 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             real_t e_cal_factor = (itr.second.weight * (*quant_itr.second));
             real_t e_cal = e_cal_factor / element_counts->at(itr.first);
             itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
-            //initial guess: parinfo_value[0] = 100000.0 / factor
 
+            _fitted_e_cal_ratio[proc_type_str][quant_itr.first][element->number] = itr.second.e_cal_ratio;
         }
 
         Fit_Parameters fit_params;
         fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
+        //initial guess: parinfo_value[0] = 100000.0 / factor
         fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
         optimizer->minimize_quantification(&fit_params, &_element_quants, &quantification_model);
         real_t val = fit_params["quantifier"].value;
