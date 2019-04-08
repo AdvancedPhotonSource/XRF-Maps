@@ -826,7 +826,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        data_struct::Spectra *integrated_spectra,
                                        size_t detector_num,
-                                       data_struct::Params_Override * params_override)
+                                       data_struct::Params_Override * params_override,
+                                       data_struct::Quantification_Standard * quantification_standard)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
@@ -922,7 +923,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, nullptr);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, quantification_standard);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();

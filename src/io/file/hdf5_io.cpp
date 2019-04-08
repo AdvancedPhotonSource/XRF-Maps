@@ -2063,21 +2063,21 @@ bool HDF5_IO::load_quantification_analyzed_h5(std::string path,
    hid_t status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
    if(status > -1)
    {
-        quantification_standard->sr_current(srcurrent);
+        quantification_standard->sr_current = (srcurrent);
    }
    d_space = H5Dget_space(us_ic_id);
    d_type = H5Dget_type(us_ic_id);
    status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
    if(status > -1)
    {
-        quantification_standard->US_IC(us_ic);
+        quantification_standard->US_IC = (us_ic);
    }
    d_space = H5Dget_space(ds_ic_id);
    d_type = H5Dget_type(ds_ic_id);
    status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
    if(status > -1)
    {
-        quantification_standard->DS_IC(ds_ic);
+        quantification_standard->DS_IC = (ds_ic);
    }
 
    _close_h5_objects(close_map);
@@ -2988,7 +2988,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         }
 
         //save quantification_standard element weights
-        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_quants();
+        const std::unordered_map<std::string, data_struct::Element_Quant> e_weights = quantification_standard->element_quants;
         count[0] = e_weights.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
@@ -3030,7 +3030,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         }
 
         //save quantification_standard integrated spectra
-        data_struct::Spectra spectra = quantification_standard->integrated_spectra();
+        data_struct::Spectra spectra = quantification_standard->integrated_spectra;
         count[0] = spectra.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
@@ -3051,7 +3051,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         memoryspace_id = H5Screate_simple (1, count, nullptr);
         dset_ch_id = H5Dcreate (q_grp_id, "Standard_Name", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         char tmp_char[255] = {0};
-        quantification_standard->standard_filename().copy(tmp_char, 254);
+        quantification_standard->standard_filename.copy(tmp_char, 254);
         status = H5Dwrite (dset_ch_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
         H5Dclose(dset_ch_id);
         H5Sclose(dataspace_id);
@@ -3059,21 +3059,21 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         //save sr_current
         dataspace_id = H5Screate_simple (1, count, nullptr);
         dset_id = H5Dcreate (scalers_grp_id, "SR_Current", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->sr_current()));
+        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->sr_current));
         H5Dclose(dset_id);
         H5Sclose(dataspace_id);
 
         //save us_ic
         dataspace_id = H5Screate_simple (1, count, nullptr);
         dset_id = H5Dcreate (scalers_grp_id, "US_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->US_IC()));
+        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->US_IC));
         H5Dclose(dset_id);
         H5Sclose(dataspace_id);
 
         //save ds_ic
         dataspace_id = H5Screate_simple (1, count, nullptr);
         dset_id = H5Dcreate (scalers_grp_id, "DS_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->DS_IC()));
+        status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quantification_standard->DS_IC));
         H5Dclose(dset_id);
         H5Sclose(dataspace_id);
 
@@ -3154,7 +3154,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
             }
 
             //save quantification_standard counts
-            const std::unordered_map<std::string, std::unordered_map<std::string, real_t> > all_element_counts = quantification_standard->element_counts();
+            const std::unordered_map<std::string, std::unordered_map<std::string, real_t> > all_element_counts = quantification_standard->element_counts;
             std::unordered_map<std::string, real_t> element_counts = all_element_counts.at(qitr.first);
             count[0] = element_counts.size();
             dataspace_id = H5Screate_simple (1, count, nullptr);
