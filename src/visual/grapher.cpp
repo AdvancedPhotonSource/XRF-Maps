@@ -173,16 +173,21 @@ void SavePlotQuantification(std::string path, data_struct::Quantification_Standa
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for(auto& itr2 : itr1.second.calib_curves)
         {
-            std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_det"+std::to_string(detector_num)+".png";
-            SavePlotCalibrationCurve(str_path_full, &itr2, standard->fitted_e_cal_ratio(itr1.first, itr2.quant_id), zstart, zstop);
+            std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_K_det"+std::to_string(detector_num)+".png";
+            SavePlotCalibrationCurve(str_path_full, standard->standard_filename(), &itr2, standard->fitted_e_cal_ratio(itr1.first, itr2.quant_id), 0, zstart, zstop);
+
+            str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_L_det"+std::to_string(detector_num)+".png";
+            SavePlotCalibrationCurve(str_path_full, standard->standard_filename(), &itr2, standard->fitted_e_cal_ratio(itr1.first, itr2.quant_id), 1, 39, 58);
         }
     }
 }
 
 // ----------------------------------------------------------------------------
 
-void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *calib_curve, map<int, real_t> fitted_e_cal_raitos, int zstart, int zstop)
+void SavePlotCalibrationCurve(std::string path, std::string standard_name, data_struct::Calibration_Curve *calib_curve, map<string, real_t> fitted_e_cal_raitos, int shell_idx,  int zstart, int zstop)
 {
+    int width_res = 1920;
+    int height_res = 1080;
     //index starts at 0 so subtract one so we have correct z number
     zstart--;
     zstop--;
@@ -194,12 +199,13 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
     axisYLog10->setTitleText("Log10");
     axisYLog10->setLabelFormat("%.1e");
     axisYLog10->setBase(10.0);
-//    QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
-//    axisY->setTitleText("Cts/ugcm2");
+
+    //QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
+
 
     QtCharts::QChartView *chartView = new QtCharts::QChartView();
     chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->resize(1024, 768);
+    chartView->resize(width_res, height_res);
 
     QtCharts::QChart *chart = chartView->chart();
     chart->addAxis(axisYLog10, Qt::AlignLeft);
@@ -217,10 +223,10 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
     real_t max_y = -9999999.0;
     for(int i=zstart; i <= zstop; i++)
     {
-        categories << QString::fromStdString(calib_curve->shell_curves_labels[0][i]);
-        *set0 << calib_curve->shell_curves[0][i];
-        min_y = std::min(min_y, calib_curve->shell_curves[0][i]);
-        max_y = std::max(max_y, calib_curve->shell_curves[0][i]);
+        categories << QString::fromStdString(calib_curve->shell_curves_labels[shell_idx][i]);
+        *set0 << calib_curve->shell_curves[shell_idx][i];
+        //min_y = std::min(min_y, calib_curve->shell_curves[shell_idx][i]);
+        //max_y = std::max(max_y, calib_curve->shell_curves[shell_idx][i]);
     }
     series->append(set0);
     chart->addSeries(series);
@@ -232,26 +238,34 @@ void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *
     //series->attachAxis(axisY);
 
     QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
-    e_series->setName(QString::fromStdString("axo"));
+    e_series->setName(QString::fromStdString(standard_name));
     for(auto& itr : fitted_e_cal_raitos)
     {
-        e_series->append(((itr.first-1) - zstart), itr.second);
-        min_y = std::min(min_y, itr.second);
-        max_y = std::max(max_y, itr.second);
+        data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
+        quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+        if(element_info != nullptr && shell == shell_idx)
+        {
+            e_series->append(((element_info->number -1) - zstart), itr.second);
+            min_y = std::min(min_y, itr.second);
+            max_y = std::max(max_y, itr.second);
+        }
     }
     chart->addSeries(e_series);
     e_series->attachAxis(axisX);
     e_series->attachAxis(axisYLog10);
     //e_series->attachAxis(axisY);
 
-    axisYLog10->setMin(min_y);
-    axisYLog10->setMax(max_y);
+    //min_y -= 1.0;
+    //max_y += 0.01;
+
+    //axisYLog10->setMin(min_y);
+    //axisYLog10->setMax(max_y);
 
 
     QPixmap pix = chartView->grab();
     QPainter painter(&pix);
-    int h = 768;
-    int w = 1024;
+    int h = height_res;
+    int w = width_res;
     int x = 0;
     int y = 0;
     painter.drawPixmap(x, y, w, h, pix);

@@ -41,6 +41,6 @@ void SavePlotSpectras(std::string path,
 
 void SavePlotQuantification(std::string path, data_struct::Quantification_Standard *standard, int detector_num, int zstart=13, int zstop=30);
 
-void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *calib_curve, map<int, real_t> fitted_e_cal_raitos, int zstart, int zstop);
+void SavePlotCalibrationCurve(std::string path, std::string standard_name, data_struct::Calibration_Curve *calib_curve, map<string, real_t> fitted_e_cal_raitos,  int shell_idx, int zstart, int zstop);
 
 }

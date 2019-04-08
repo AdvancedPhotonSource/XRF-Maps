@@ -130,7 +130,99 @@ std::string get_shell_element_label(int shell, size_t l)
 
     return Element_Symbols[l]+shell_str;
 }
+/*
+void Quantification_Standard::init_element_quats(string proc_type_str,
+                                                unordered_map<string, real_t>  *element_counts,
+                                                real_t incident_energy,
+                                                Element_Info* detector_element,
+                                                bool airpath,
+                                                real_t detector_chip_thickness,
+                                                real_t beryllium_window_thickness,
+                                                real_t germanium_dead_layer)
+{
 
+    quantification::models::Quantification_Model quantification_model;
+    vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
+    unordered_map<size_t, real_t*> quant_list =
+    {
+        {Quantifiers::CURRENT, &_sr_current},
+        {Quantifiers::US_IC, &_US_IC},
+        {Quantifiers::DS_IC, &_DS_IC}
+    };
+
+    _element_counts[proc_type_str] = *element_counts;
+
+    calibration_curves.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
+    Quantifiers *quantifiers = &calibration_curves.at(proc_type_str);
+
+    for (auto& quant_itr : quant_list)
+    {
+
+        for(auto &itr : _element_quants)
+        {
+            quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+
+            Element_Info* element = Element_Info_Map::inst()->get_element(itr.first);
+            if (element == nullptr)
+            {
+                continue;
+            }
+            Element_Quant element_quant = quantification_model.generate_element_quant(incident_energy,
+                                                                                       detector_element,
+                                                                                       shell,
+                                                                                       airpath,
+                                                                                       detector_chip_thickness,
+                                                                                       beryllium_window_thickness,
+                                                                                       germanium_dead_layer,
+                                                                                       element->number);
+            itr.second.absorption = element_quant.absorption;
+            itr.second.transmission_Be = element_quant.transmission_Be;
+            itr.second.transmission_Ge = element_quant.transmission_Ge;
+            itr.second.transmission_through_air = element_quant.transmission_through_air;
+            itr.second.transmission_through_Si_detector = element_quant.transmission_through_Si_detector;
+            itr.second.yield = element_quant.yield;
+
+            //factor = quant_itr.second;
+            real_t e_cal_factor = (itr.second.weight * (*quant_itr.second));
+            real_t e_cal = e_cal_factor / element_counts->at(itr.first);
+            itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
+
+            _fitted_e_cal_ratio[proc_type_str][quant_itr.first][itr.first] = itr.second.e_cal_ratio;
+        }
+
+    }
+}
+
+void Quantification_Standard::generate_calibration_curve(string proc_type_str)
+{
+
+    for(auto shell : shells_to_quant)
+    {
+        //generate calibration curve for all elements
+        vector<Element_Quant> element_quant_vec = quantification_model.generate_quant_vec(incident_energy,
+                                                                                       detector_element,
+                                                                                       shell,
+                                                                                       airpath,
+                                                                                       detector_chip_thickness,
+                                                                                       beryllium_window_thickness,
+                                                                                       germanium_dead_layer,
+                                                                                       1,
+                                                                                       92);
+
+            quantifiers->calib_curves[quant_itr.first].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
+            //change nan's to zeros
+            quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size());
+            for(size_t l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
+            {
+                quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell][l] = get_shell_element_label(shell, l+1);
+                if( std::isnan(quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l]) )
+                {
+                    quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l] = 0.0;
+                }
+            }
+     }
+}
+*/
 bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimizer,
                                         string proc_type_str,
                                         unordered_map<string, real_t>  *element_counts,
@@ -161,9 +253,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
 
         for(auto &itr : _element_quants)
         {
-
-            //TODO: Parse the name to see if it is K, L, or M
-            quantification::models::Electron_Shell shell = quantification::models::K_SHELL;
+            quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
 
             Element_Info* element = Element_Info_Map::inst()->get_element(itr.first);
             if (element == nullptr)
@@ -190,7 +280,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             real_t e_cal = e_cal_factor / element_counts->at(itr.first);
             itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
 
-            _fitted_e_cal_ratio[proc_type_str][quant_itr.first][element->number] = itr.second.e_cal_ratio;
+            _fitted_e_cal_ratio[proc_type_str][quant_itr.first][itr.first] = itr.second.e_cal_ratio;
         }
 
         Fit_Parameters fit_params;
@@ -218,7 +308,7 @@ bool Quantification_Standard::quantifiy(fitting::optimizers::Optimizer * optimiz
             quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size());
             for(size_t l = 0; l<quantifiers->calib_curves[quant_itr.first].shell_curves[shell].size(); l++)
             {
-                quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell][l] = get_shell_element_label(shell, l);
+                quantifiers->calib_curves[quant_itr.first].shell_curves_labels[shell][l] = get_shell_element_label(shell, l+1);
                 if( std::isnan(quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l]) )
                 {
                     quantifiers->calib_curves[quant_itr.first].shell_curves[shell][l] = 0.0;

@@ -158,7 +158,7 @@ public:
 
     const real_t& element_weight(string element_symb) const { return _element_quants.at(element_symb).weight; }
 
-    const map<int, real_t> fitted_e_cal_ratio(string proc_type, int quant_id) const { return _fitted_e_cal_ratio.at(proc_type).at(quant_id); }
+    const map<string, real_t> fitted_e_cal_ratio(string proc_type, int quant_id) const { return _fitted_e_cal_ratio.at(proc_type).at(quant_id); }
 
     const unordered_map<string, Element_Quant>& element_quants() const { return _element_quants; }
 
@@ -211,8 +211,8 @@ protected:
     //          proc_type               Element   Counts
     unordered_map<string, unordered_map<string, real_t> >  _element_counts;
 
-    //  proc_type   quantifier     z      e_cal_ratio
-    map<string, map<int, map<int, real_t>>> _fitted_e_cal_ratio;
+    //  proc_type quantifier  name   e_cal_ratio
+    map<string, map<int, map<string, real_t>>> _fitted_e_cal_ratio;
 
     Spectra _integrated_spectra;
 
@@ -227,6 +227,11 @@ protected:
 };
 
 //-----------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------------------------------------
+
 
 
 } //namespace data_struct

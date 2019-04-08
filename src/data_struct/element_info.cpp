@@ -295,7 +295,7 @@ Element_Info_Map* Element_Info_Map::inst()
 
 Element_Info_Map::Element_Info_Map()
 {
-
+    generate_default_elements(1, 92);
 }
 
 Element_Info_Map::~Element_Info_Map()
@@ -305,7 +305,7 @@ Element_Info_Map::~Element_Info_Map()
 
 void Element_Info_Map::clear()
 {
-	for (auto &itr : _name_element_info_map)
+    for (auto &itr : _number_element_info_map)
 	{
 		delete itr.second;
 	}
@@ -353,6 +353,7 @@ void Element_Info_Map::generate_default_elements(int start_element, int end_elem
         Element_Info* element = new Element_Info();
         element->number = i;
         element->name = Element_Symbols[i];
+        element->energies = &_energies;
        _number_element_info_map.insert(std::pair<int, Element_Info*>(element->number, element));
        _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name, element));
        _name_element_info_map.insert(std::pair<std::string, Element_Info*>(element->name+"_L", element));

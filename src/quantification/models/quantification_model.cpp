@@ -331,6 +331,31 @@ std::vector<real_t> Quantification_Model::model_calibrationcurve(std::vector<Ele
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+Electron_Shell get_shell_by_name(std::string element_name)
+{
+    int idx = element_name.find_last_of("_") + 1;
+    std::string shell_type =  element_name.substr(idx);
+    if(idx == 0)
+    {
+        return quantification::models::K_SHELL;
+    }
+    else
+    {
+        if(shell_type == "L")
+        {
+            return quantification::models::L_SHELL;
+        }
+        if(shell_type == "M")
+        {
+            return quantification::models::M_SHELL;
+        }
+    }
+
+
+    return quantification::models::K_SHELL;
+}
 
 } //namespace models
 } //namespace quantification

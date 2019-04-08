@@ -918,7 +918,7 @@ bool load_henke_from_xdr(std::string filename)
         {
             element = new data_struct::Element_Info();
             element->number = i+1;
-            element->name = data_struct::Element_Symbols[i];
+            element->name = data_struct::Element_Symbols[i+1];
             element_map->add_element(element);
         }
         //element->init_f_energies(num_energies);

@@ -115,6 +115,8 @@ protected:
 
 //-----------------------------------------------------------------------------
 
+DLL_EXPORT Electron_Shell get_shell_by_name(std::string element_name);
+
 
 } //namespace xrf
 
