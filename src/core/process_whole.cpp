@@ -311,11 +311,13 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
     if(save_spec_vol)
     {
-        io::save_volume( &(detector_struct->quant_standard), spectra_volume, energy_offset, energy_slope, energy_quad);
+        io::file::HDF5_IO::inst()->save_quantifications(detector_struct->quant_standards);
+        io::save_volume(spectra_volume, energy_offset, energy_slope, energy_quad);
+        io::file::HDF5_IO::inst()->end_save_seq();
     }
     else
     {
-		io::file::HDF5_IO::inst()->save_quantification(&(detector_struct->quant_standard));
+        io::file::HDF5_IO::inst()->save_quantifications(detector_struct->quant_standards);
         io::file::HDF5_IO::inst()->end_save_seq();
     }
 
@@ -430,10 +432,6 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
 bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 {
-
-    bool air_path = false;
-
-
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
 
@@ -447,49 +445,51 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     energy_range.min = 0;
 
     vector<io::element_weights_struct> standard_element_weights;
-	//vector<io::element_weights_struct> all_standard_element_weights;
 
     if( io::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, standard_element_weights) )
     {
         for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
         {
-
-                    //           Proc_type   counts
-            std::unordered_map<std::string, real_t> all_element_counts;
+            //                    Proc_type   counts
+            //std::unordered_map<std::string, real_t> all_element_counts;
             //  proc_type   quantifier        element     quant_prop
-            map<int, map<int, unordered_map<string, Element_Quant>>> all_element_quants;
+            //map<int, map<int, unordered_map<string, Element_Quant>>> all_element_quants;
+            real_t avg_sr_current = 0.0;
+            real_t avg_US_IC = 0.0;
+            real_t avg_DS_IC = 0.0;
+            real_t avg_cnt = 0.0;
 
             data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
             data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
-
-            data_struct::Quantification_Standard* quantification_standard = &(detector_struct->quant_standard);
-            //Parameters for calibration curve
-
-            if (override_params->detector_element.length() > 0)
-            {
-                // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-                quantification_standard->detector_element = (data_struct::Element_Info_Map::inst()->get_element(override_params->detector_element));
-            }
-            if (override_params->be_window_thickness.length() > 0)
-            {
-                quantification_standard->beryllium_window_thickness = (std::stof(override_params->be_window_thickness));
-            }
-            if (override_params->ge_dead_layer.length() > 0)
-            {
-                quantification_standard->germanium_dead_layer = (std::stof(override_params->ge_dead_layer));
-            }
-            if (override_params->det_chip_thickness.length() > 0)
-            {
-                quantification_standard->detector_chip_thickness = (std::stof(override_params->det_chip_thickness));
-            }
-            if(override_params->fit_params.contains(STR_COHERENT_SCT_ENERGY))
-            {
-                quantification_standard->incident_energy = (override_params->fit_params.at(STR_COHERENT_SCT_ENERGY).value);
-            }
-
             for(io::element_weights_struct &standard_itr : standard_element_weights)
             {
+                Quantification_Standard* quantification_standard = new Quantification_Standard();
+                detector_struct->quant_standards[standard_itr.standard_file_name] = quantification_standard;
+
+                //Parameters for calibration curve
+                if (override_params->detector_element.length() > 0)
+                {
+                    // Get the element info class                                           // detector element as string "Si" or "Ge" usually
+                    quantification_standard->detector_element = (data_struct::Element_Info_Map::inst()->get_element(override_params->detector_element));
+                }
+                if (override_params->be_window_thickness.length() > 0)
+                {
+                    quantification_standard->beryllium_window_thickness = (std::stof(override_params->be_window_thickness));
+                }
+                if (override_params->ge_dead_layer.length() > 0)
+                {
+                    quantification_standard->germanium_dead_layer = (std::stof(override_params->ge_dead_layer));
+                }
+                if (override_params->det_chip_thickness.length() > 0)
+                {
+                    quantification_standard->detector_chip_thickness = (std::stof(override_params->det_chip_thickness));
+                }
+                if(override_params->fit_params.contains(STR_COHERENT_SCT_ENERGY))
+                {
+                    quantification_standard->incident_energy = (override_params->fit_params.at(STR_COHERENT_SCT_ENERGY).value);
+                }
+
                 quantification_standard->standard_filename = standard_itr.standard_file_name;
 
                 //Output of fits for elements specified
@@ -514,23 +514,22 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                         if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, &quantification_standard->integrated_spectra, detector_num, override_params, quantification_standard) )
                         {
                             logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
-                            return false;
+                            continue;
                         }
                     }
                     else
                     {
                         logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
-                        return false;
+                        continue;
                     }
                 }
 
 
-                unordered_map<size_t, real_t*> quant_list =
-                {
-                    {Quantifiers::CURRENT, &quantification_standard->sr_current},
-                    {Quantifiers::US_IC, &quantification_standard->US_IC},
-                    {Quantifiers::DS_IC, &quantification_standard->DS_IC}
-                };
+
+                avg_sr_current += quantification_standard->sr_current;
+                avg_US_IC += quantification_standard->US_IC;
+                avg_DS_IC += quantification_standard->DS_IC;
+                avg_cnt += 1.0;
 
                 analysis_job->init_fit_routines(quantification_standard->integrated_spectra.size());
 
@@ -564,35 +563,44 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                         counts_dict[itr2.first] /= quantification_standard->integrated_spectra.elapsed_livetime();
                         //if(all_element_counts.find(itr.first))
                         //{
-                            all_element_counts[itr2.first] = counts_dict[itr2.first];
+//                            all_element_counts[itr2.first] = counts_dict[itr2.first];
                         //}
                     }
+
+                    unordered_map<size_t, real_t*> quant_list =
+                    {
+                        {Quantifiers::CURRENT, &quantification_standard->sr_current},
+                        {Quantifiers::US_IC, &quantification_standard->US_IC},
+                        {Quantifiers::DS_IC, &quantification_standard->DS_IC}
+                    };
 
                     for (auto& quant_itr : quant_list)
                     {
                         quantification_standard->init_element_quants(fit_routine->get_name(), &counts_dict, &quantification_model, quant_itr.first, *quant_itr.second);
                         for(auto& q_itr: quantification_standard->element_quants)
                         {
-                            all_element_quants[itr.first][quant_itr.first][q_itr.first] = q_itr.second;
+                            detector_struct->all_element_quants[itr.first][quant_itr.first][q_itr.first] = q_itr.second;
                         }
                     }
 
                 }                 
 
-                 //cleanup
-                 for(auto &itr3 : elements_to_fit)
-                 {
-                     delete itr3.second;
-                 }
-
-                 quantification_standard->element_quants.clear();
+                //cleanup
+                for(auto &itr3 : elements_to_fit)
+                {
+                 delete itr3.second;
+                }
             }
+
+            avg_sr_current /= avg_cnt;
+            avg_US_IC /= avg_cnt;
+            avg_DS_IC /= avg_cnt;
 
             unordered_map<size_t, real_t*> quant_list =
             {
-                {Quantifiers::CURRENT, &quantification_standard->sr_current},
-                {Quantifiers::US_IC, &quantification_standard->US_IC},
-                {Quantifiers::DS_IC, &quantification_standard->DS_IC}
+                {Quantifiers::CURRENT, &avg_sr_current},
+                {Quantifiers::US_IC, &avg_US_IC},
+                {Quantifiers::DS_IC, &avg_DS_IC}
             };
 
             for(auto &itr : detector_struct->fit_routines)
@@ -600,20 +608,23 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                fitting::optimizers::Optimizer* optimizer = analysis_job->optimizer();
                for (auto& quant_itr : quant_list)
                {
-                   fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
+                    fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
-                   Fit_Parameters fit_params;
-                   fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
-                   //initial guess: parinfo_value[0] = 100000.0 / factor
-                   fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
-                   optimizer->minimize_quantification(&fit_params, &all_element_quants[itr.first][quant_itr.first], &quantification_model);
-                   real_t val = fit_params["quantifier"].value;
+                    Fit_Parameters fit_params;
+                    fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
+                    //initial guess: parinfo_value[0] = 100000.0 / factor
+                    fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
+                    optimizer->minimize_quantification(&fit_params, &detector_struct->all_element_quants[itr.first][quant_itr.first], &quantification_model);
+                    real_t val = fit_params["quantifier"].value;
 
-                   quantification_standard->generate_calibration_curve(fit_routine->get_name(), quant_itr.first, val);
-               }
-           }
+                    for(auto &dq_itr: detector_struct->quant_standards)
+                    {
+                        dq_itr.second->generate_calibration_curve(fit_routine->get_name(), quant_itr.first, val);
+                    }
+                }
+            }
 
-            io::save_quantification_plots(analysis_job, quantification_standard, detector_num);
+        io::save_quantification_plots(analysis_job, &detector_struct->quant_standards, detector_num);
         }
     }
     else

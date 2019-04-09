@@ -196,16 +196,15 @@ DLL_EXPORT bool save_results(std::string save_loc,
                   std::chrono::time_point<std::chrono::system_clock> start);
 
 DLL_EXPORT void save_quantification_plots(data_struct::Analysis_Job* analysis_job,
-                                          data_struct::Quantification_Standard* standard,
+                                          map<string, data_struct::Quantification_Standard*> *standard,
                                           int detector_num);
 
 DLL_EXPORT void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params);
 
-DLL_EXPORT bool save_volume(data_struct::Quantification_Standard * quantification_standard,
-                 data_struct::Spectra_Volume *spectra_volume,
-                 real_t energy_offset,
-                 real_t energy_slope,
-                 real_t energy_quad);
+DLL_EXPORT bool save_volume(data_struct::Spectra_Volume *spectra_volume,
+                             real_t energy_offset,
+                             real_t energy_slope,
+                             real_t energy_quad);
 
 DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files);
 

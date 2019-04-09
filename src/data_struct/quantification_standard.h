@@ -167,7 +167,7 @@ public:
     void generate_calibration_curve(string proc_type_str,  int quant_id, real_t val);
 
     //           proc_type  quantifier
-    unordered_map<string, Quantifiers> calibration_curves;
+    unordered_map<string, Quantifiers> quantifier_map;
 
     //             element    quant
     unordered_map<string, Element_Quant> element_quants;

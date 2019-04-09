@@ -187,8 +187,8 @@ void Quantification_Standard::init_element_quants(string proc_type_str,
 void Quantification_Standard::generate_calibration_curve(string proc_type_str, int quant_id, real_t val)
 {
     quantification::models::Quantification_Model quantification_model;
-    calibration_curves.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
-    Quantifiers *quantifiers = &calibration_curves.at(proc_type_str);
+    quantifier_map.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
+    Quantifiers *quantifiers = &quantifier_map.at(proc_type_str);
     vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
     for(auto shell : shells_to_quant)
     {
@@ -217,6 +217,7 @@ void Quantification_Standard::generate_calibration_curve(string proc_type_str, i
      }
 }
 
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 } //namespace data_struct

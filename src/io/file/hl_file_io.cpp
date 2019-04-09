@@ -239,28 +239,25 @@ bool save_results(std::string save_loc,
 
 // ----------------------------------------------------------------------------
 
-bool save_volume(data_struct::Quantification_Standard * quantification_standard,
-                 data_struct::Spectra_Volume *spectra_volume,
+bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
                  real_t energy_quad)
 {
-    io::file::HDF5_IO::inst()->save_quantification(quantification_standard);
-    io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
-    io::file::HDF5_IO::inst()->end_save_seq();
+    bool retval = io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
 
     delete spectra_volume;
 
-    return true;
+    return retval;
 }
 
 // ----------------------------------------------------------------------------
 
-void save_quantification_plots(data_struct::Analysis_Job* analysis_job, data_struct::Quantification_Standard *standard, int detector_num)
+void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<string, data_struct::Quantification_Standard *> *standards, int detector_num)
 {
 #ifdef _BUILD_WITH_QT
     std::string str_path = analysis_job->dataset_directory+"/output/";
-    visual::SavePlotQuantification(str_path, standard, detector_num);
+    visual::SavePlotQuantification(str_path, standards, detector_num);
 #endif
 }
 

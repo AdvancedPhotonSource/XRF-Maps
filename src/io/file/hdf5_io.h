@@ -160,11 +160,9 @@ public:
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
-    bool save_quantification(data_struct::Quantification_Standard * quantification_standard,
-                             size_t row_idx_start=0,
-                             int row_idx_end=-1,
-                             size_t col_idx_start=0,
-                             int col_idx_end=-1);
+    void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
+
+    bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
 
     bool save_scan_scalers(size_t detector_num,
                            struct mda_file *mda_scalers,

@@ -610,7 +610,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                 outcnt_idx = find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.out_cnt_pv, tmp_val, units);
             }
 
-
+/*
             if (detector_struct->fit_params_override_dict.scaler_pvs.count("SRCURRENT") > 0)
             {
                 find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("SRCURRENT"), tmp_val, units);
@@ -626,6 +626,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                 find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("DS_IC"), tmp_val, units);
                 detector_struct->quant_standard.DS_IC = (tmp_val);
             }
+*/
         }
     }
 

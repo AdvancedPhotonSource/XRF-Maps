@@ -2876,11 +2876,17 @@ bool HDF5_IO::save_element_fits(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantification_standard,
-                                  size_t row_idx_start,
-                                  int row_idx_end,
-                                  size_t col_idx_start,
-                                  int col_idx_end)
+void HDF5_IO::save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants)
+{
+    for(auto& itr: quants)
+    {
+        HDF5_IO::save_quantification(itr.second);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantification_standard)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3114,7 +3120,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         H5Sclose(dataspace_id);
 
         //save calibration curves
-        //data_struct::Quantifiers quantifiers = quantification_standard->calibration_curves.at(path);
+        //data_struct::Quantifiers quantifiers = quantification_standard->quantifier_map.at(path);
         //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
         q_dims_out[0] = 3;// shells K, L, and M
@@ -3141,7 +3147,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
 
 
-        for (auto& qitr: quantification_standard->calibration_curves)
+        for (auto& qitr: quantification_standard->quantifier_map)
         {
 
             q_fit_grp_id = H5Gopen(xrf_fits_grp_id, qitr.first.c_str(), H5P_DEFAULT);

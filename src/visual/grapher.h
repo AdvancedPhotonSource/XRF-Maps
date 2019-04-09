@@ -39,8 +39,16 @@ void SavePlotSpectras(std::string path,
                       data_struct::ArrayXr *background,
                       bool log_them);
 
-void SavePlotQuantification(std::string path, data_struct::Quantification_Standard *standard, int detector_num, int zstart=13, int zstop=30);
+void SavePlotQuantification(std::string path, map<string, data_struct::Quantification_Standard *> *standards, int detector_num);
 
-void SavePlotCalibrationCurve(std::string path, std::string standard_name, data_struct::Calibration_Curve *calib_curve, map<string, real_t> fitted_e_cal_raitos,  int shell_idx, int zstart, int zstop);
+void SavePlotCalibrationCurve(std::string path,
+                              map<string, data_struct::Quantification_Standard *> *standards,
+                              data_struct::Calibration_Curve *calib_curve,
+                              string proc_type,
+                              quantification::models::Electron_Shell shell_idx,
+                              int zstart,
+                              int zstop);
+
+//void SavePlotCalibrationCurve(std::string path, std::string standard_name, data_struct::Calibration_Curve *calib_curve, map<string, real_t> fitted_e_cal_raitos,  int shell_idx, int zstart, int zstop);
 
 }
