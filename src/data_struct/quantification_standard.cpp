@@ -215,6 +215,7 @@ void Quantification_Standard::generate_calibration_curve(string proc_type_str, i
                 }
             }
      }
+    _processed = true;
 }
 
 //-----------------------------------------------------------------------------

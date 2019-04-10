@@ -836,8 +836,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     logit<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
 
-    //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
-
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
     bool hasNetcdf = false;

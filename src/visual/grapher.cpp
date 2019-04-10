@@ -165,6 +165,27 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 
 // ----------------------------------------------------------------------------
 
+bool contains_shell(quantification::models::Electron_Shell shell_idx, string proc_type, int quant_id, map<string, data_struct::Quantification_Standard *> *standards)
+{
+    for(auto& s_itr: *standards)
+    {
+        data_struct::Quantification_Standard* quant_standard = s_itr.second;
+        QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
+        e_series->setName(QString::fromStdString(s_itr.first));
+        for(auto& itr : quant_standard->fitted_e_cal_ratio.at(proc_type).at(quant_id))
+        {
+            quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+            if(shell == shell_idx)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+
 void SavePlotQuantification(std::string path, map<string, data_struct::Quantification_Standard *> *standards, int detector_num)
 {
     const auto&itr = standards->begin();
@@ -176,11 +197,16 @@ void SavePlotQuantification(std::string path, map<string, data_struct::Quantific
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for(auto& itr2 : itr1.second.calib_curves)
         {
-            std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_K_det"+std::to_string(detector_num)+".png";
-            SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::K_SHELL, 13, 30);
-
-            str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_L_det"+std::to_string(detector_num)+".png";
-            SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::L_SHELL, 39, 58);
+            if(contains_shell(quantification::models::K_SHELL, itr1.first, itr2.quant_id, standards))
+            {
+                std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_K_det"+std::to_string(detector_num)+".png";
+                SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::K_SHELL, 13, 30);
+            }
+            if(contains_shell(quantification::models::L_SHELL, itr1.first, itr2.quant_id, standards))
+            {
+                std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_L_det"+std::to_string(detector_num)+".png";
+                SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::L_SHELL, 39, 58);
+            }
         }
     }
 }
@@ -286,83 +312,6 @@ void SavePlotCalibrationCurve(std::string path,
     pix.save(QString(path.c_str()), "png");
 
 }
-/*
-void SavePlotCalibrationCurve(std::string path, data_struct::Calibration_Curve *calib_curve, unordered_map<string, data_struct::Element_Quant> element_weights, int zstart, int zstop)
-{
-    //index starts at 0 so subtract one so we have correct z number
-    zstart--;
-    zstop--;
-    int argc = 0;
-    char ** argv = nullptr;
-    QApplication app(argc, argv);
 
-    QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
-    axisYLog10->setTitleText("Log10");
-    axisYLog10->setLabelFormat("%.1e");
-    axisYLog10->setBase(10.0);
-
-    QtCharts::QCategoryAxis *axisX = new QtCharts::QCategoryAxis();
-    axisX->setTitleText("Elements");
-    QFont labelsFont;
-    labelsFont.setPixelSize(12);
-    axisX->setLabelsFont(labelsFont);
-    axisX->setRange(zstart-1, zstop+1);
-
-    QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
-    axisY->setTitleText("Cts/ugcm2");
-
-    QtCharts::QChartView *chartView = new QtCharts::QChartView();
-    chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->resize(1024, 768);
-
-    QtCharts::QChart *chart = chartView->chart();
-    chart->addAxis(axisX, Qt::AlignBottom);
-    //chart->addAxis(axisYLog10, Qt::AlignLeft);
-    chart->addAxis(axisY, Qt::AlignLeft);
-
-
-    QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
-    series->setName(QString::fromStdString(calib_curve->quantifier_name));
-    //series->append(zstart-1, 0);
-    for(int i=zstart; i <= zstop; i++)
-    {
-        axisX->append(QString::fromStdString(calib_curve->shell_curves_labels[0][i]), i);
-        series->append(i, calib_curve->shell_curves[0][i]);
-    }
-    chart->addSeries(series);
-    series->attachAxis(axisX);
-    //series->attachAxis(axisYLog10);
-    series->attachAxis(axisY);
-
-    QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
-    e_series->setName(QString::fromStdString("axo"));
-    for(auto& itr : element_weights)
-    {
-        data_struct::Element_Info* e_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
-        if(e_info != nullptr)
-        {
-            e_series->append(e_info->number-1, itr.second.e_cal_ratio);
-        }
-    }
-    chart->addSeries(e_series);
-    e_series->attachAxis(axisX);
-    //e_series->attachAxis(axisYLog10);
-    e_series->attachAxis(axisY);
-
-
-
-    QPixmap pix = chartView->grab();
-    QPainter painter(&pix);
-    int h = 768;
-    int w = 1024;
-    int x = 0;
-    int y = 0;
-    painter.drawPixmap(x, y, w, h, pix);
-
-    painter.end();
-    pix.save(QString(path.c_str()), "png");
-
-}
-*/
 
 } //namespace visual

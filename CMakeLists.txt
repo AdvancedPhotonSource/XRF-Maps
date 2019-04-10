@@ -241,6 +241,7 @@ set(libxrf_fit_SOURCE
 set(XRF_IO_HEADERS
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
+        src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
@@ -265,6 +266,7 @@ set(XRF_IO_SOURCE
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp
+    src/io/file/mca_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
     src/io/file/csv_io.cpp
