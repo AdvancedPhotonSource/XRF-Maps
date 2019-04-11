@@ -619,6 +619,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                 else if (tag == "SUMMED_SCALER")
                 {
                     data_struct::Summed_Scaler s_scaler;
+                    s_scaler.normalize_by_time = false;
                     std::string value;
                     std::string scaler_name;
                     std::getline(strstream, value, ':');
@@ -636,14 +637,42 @@ bool APS_Fit_Params_Import::load(std::string path,
                         scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
                         scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
                         last_scaler = scaler_name;
-                        s_scaler.scalers_to_sum.push_back(scaler_name);
+                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
+                        s_scaler.scalers_to_sum[scaler_name]= -1;
+                        std::getline(strstream, scaler_name, ',');
+                    }
+                    params_override->summed_scalers.push_back(s_scaler);
+                }
+                else if (tag == "TIME_NORMALIZED_SUMMED_SCALER")
+                {
+                    data_struct::Summed_Scaler s_scaler;
+                    s_scaler.normalize_by_time = true;
+                    std::string value;
+                    std::string scaler_name;
+                    std::getline(strstream, value, ':');
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    // split scalers names by ','
+                    logit<<"scaler: "<<value<<std::endl;
+                    s_scaler.scaler_name = value;
+                    std::string last_scaler;
+                    std::getline(strstream, scaler_name, ',');
+                    while(last_scaler != scaler_name)
+                    {
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\n'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
+                        last_scaler = scaler_name;
+                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
+                        s_scaler.scalers_to_sum[scaler_name] = -1;
                         std::getline(strstream, scaler_name, ',');
                     }
                     params_override->summed_scalers.push_back(s_scaler);
                 }
                 else
                 {
-                    if (tag.length() > 0 && tag[0] != ' ' && (line.find(":") != std::string::npos))
+                    if (tag.length() > 0 && tag[0] != ' ' && tag[0] != '\t' && (line.find(":") != std::string::npos))
                     {
                         std::string value;
                         std::getline(strstream, value);

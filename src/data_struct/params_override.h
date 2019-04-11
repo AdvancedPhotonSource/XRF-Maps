@@ -63,7 +63,9 @@ using namespace std;
 struct Summed_Scaler
 {
   string scaler_name;
-  list<string> scalers_to_sum;
+  //  name    mda_idx
+  map<string, int> scalers_to_sum;
+  bool normalize_by_time;
 };
 
 //-----------------------------------------------------------------------------
