@@ -209,7 +209,6 @@ bool save_results(std::string save_loc,
                   std::chrono::time_point<std::chrono::system_clock> start)
 {
 
-
     //wait for queue to finish processing
     while(!job_queue->empty())
     {
@@ -221,6 +220,26 @@ bool save_results(std::string save_loc,
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     logit << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+    bool first = true;
+    Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tfy;
+    for(auto &itr : *element_counts)
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        if(first)
+        {
+            tfy = itr.second;
+            first = !first;
+        }
+        else
+        {
+            tfy += itr.second;
+        }
+    }
+    element_counts->insert({ STR_TOTAL_FLUORESCENCE_YIELD, tfy });
 
 	// Add sum of elastic and inelastic 
 	if (element_counts->count(STR_COHERENT_SCT_AMPLITUDE) > 0 && element_counts->count(STR_COMPTON_AMPLITUDE) > 0)

@@ -2809,6 +2809,7 @@ bool HDF5_IO::save_element_fits(std::string path,
     element_lines.push_back(STR_COHERENT_SCT_AMPLITUDE);
     element_lines.push_back(STR_COMPTON_AMPLITUDE);
 	element_lines.push_back(STR_SUM_ELASTIC_INELASTIC_AMP);
+    element_lines.push_back(STR_TOTAL_FLUORESCENCE_YIELD);
     element_lines.push_back(STR_NUM_ITR);
 
     int i=0;
