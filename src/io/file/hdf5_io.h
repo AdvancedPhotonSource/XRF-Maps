@@ -166,6 +166,7 @@ public:
 
     bool save_scan_scalers(size_t detector_num,
                            struct mda_file *mda_scalers,
+                           data_struct::Spectra_Volume * spectra_volume,
                            data_struct::Params_Override * params_override,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
@@ -206,7 +207,7 @@ private:
 
     bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::Params_Override * params_override, bool hasNetcdf);
+    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
     void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 

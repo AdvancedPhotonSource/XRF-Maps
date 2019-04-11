@@ -380,7 +380,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         logit<<"Error: Unknown detector element enumeration : "<<value<<"\n";
                     }
                 }
-                else if (tag == "ELT1")
+                else if (tag == "ELT" || tag == "ELT1" || tag == "ELT2" || tag == "ELT3" || tag == "ELT4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -389,7 +389,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->elt_pv = value;
                 }
-                else if (tag == "ERT1")
+                else if (tag == "ERT" || tag == "ERT1" || tag == "ERT2" || tag == "ERT3" || tag == "ERT4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -398,7 +398,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->ert_pv = value;
                 }
-                else if (tag == "ICR1")
+                else if (tag == "ICR" || tag == "ICR1" || tag == "ICR2" || tag == "ICR3" || tag == "ICR4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -407,7 +407,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->in_cnt_pv = value;
                 }
-                else if (tag == "OCR1")
+                else if (tag == "OCR" || tag == "OCR1" || tag == "OCR2" || tag == "OCR3" || tag == "OCR4")
                 {
                     std::string value;
                     std::getline(strstream, value);

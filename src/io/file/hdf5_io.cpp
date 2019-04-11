@@ -4051,7 +4051,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	return true;
 }
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::Params_Override * params_override, bool hasNetcdf)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1, memoryspace_str_id = -1;
     hid_t filetype, memtype;
@@ -4286,6 +4286,13 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                 {
                     count_3d[0] = scalers.size() + params_override->summed_scalers.size();
                 }
+
+                if(spectra_volume != nullptr)
+                {
+                    // if we have spectra volume loaded, save elt, ert, in_cnt, and out_cnt scalers
+                    count_3d[0] += 4;
+                }
+
                 dataspace_id = H5Screate_simple(3, count_3d, NULL);
                 filespace_id = H5Screate_simple(3, count_3d, NULL);
 
@@ -4456,6 +4463,48 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
                     hdf_idx++;
                 }
 
+                if(spectra_volume != nullptr)
+                {
+                    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> elt_map, ert_map, in_cnt_map, out_cnt_map;
+                    spectra_volume->generate_scaler_maps(&elt_map, &ert_map, &in_cnt_map, &out_cnt_map);
+                    char elt_char[255] = "Elapsed Live Time";
+                    char ert_char[255] = "Elapsed Real Time";
+                    char in_char[255] = "Inpout Counts";
+                    char out_char[255] = "Output Counts";
+
+                    offset[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)elt_char);
+                    offset_3d[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    status = H5Dwrite(dset_cps_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)elt_map.data());
+                    hdf_idx++;
+
+                    offset[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)ert_char);
+                    offset_3d[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    status = H5Dwrite(dset_cps_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)ert_map.data());
+                    hdf_idx++;
+
+                    offset[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)in_char);
+                    offset_3d[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    status = H5Dwrite(dset_cps_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)in_cnt_map.data());
+                    hdf_idx++;
+
+                    offset[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)out_char);
+                    offset_3d[0] = hdf_idx;
+                    H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    status = H5Dwrite(dset_cps_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)out_cnt_map.data());
+                    hdf_idx++;
+                }
+
                 if (save_cfg_abs)
                 {
                     scaler_mat.Zero(count_2d[0], count_2d[1]);
@@ -4584,10 +4633,6 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, siz
 					H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
                     status = H5Dwrite(dset_cps_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)dia2_dpc_cfg_mat.data());
                 }
-            }
-            else
-            {
-                //params_override->scaler_pvs
             }
         }
 
@@ -4913,6 +4958,7 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, dat
 
 bool HDF5_IO::save_scan_scalers(size_t detector_num,
                                 struct mda_file *mda_scalers,
+                                data_struct::Spectra_Volume * spectra_volume,
                                 data_struct::Params_Override * params_override,
                                 bool hasNetcdf,
                                 size_t row_idx_start,
@@ -4974,7 +5020,7 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	
     _save_extras(scan_grp_id, mda_scalers);
 	
-    _save_scalers(maps_grp_id, mda_scalers, detector_num, params_override, hasNetcdf);
+    _save_scalers(maps_grp_id, mda_scalers, spectra_volume, params_override, hasNetcdf);
 
 	H5Gclose(po_grp_id);
     H5Gclose(scan_grp_id);
