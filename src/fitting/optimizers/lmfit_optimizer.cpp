@@ -215,6 +215,8 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
     logit<< "status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
 
+    logit<<lm_infmsg[status.outcome]<<"\n";
+
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR) )
@@ -269,9 +271,11 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     lm_status_struct<real_t> status;
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 100, 1, NULL, 0, -1, -1};
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 200, 1, NULL, 0, -1, -1};
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &control, &status );
+
+    logit<<lm_infmsg[status.outcome]<<"\n";
 
     fit_params->from_array(fitp_arr);
 

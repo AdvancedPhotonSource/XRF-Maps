@@ -63,7 +63,9 @@ using namespace std;
 struct Summed_Scaler
 {
   string scaler_name;
-  list<string> scalers_to_sum;
+  //  name    mda_idx
+  map<string, int> scalers_to_sum;
+  bool normalize_by_time;
 };
 
 //-----------------------------------------------------------------------------
@@ -144,6 +146,10 @@ public:
     string theta_pv;
 
     list<struct Summed_Scaler> summed_scalers;
+
+    real_t sr_current;
+    real_t US_IC;
+    real_t DS_IC;
 
     real_t us_amp_sens_num;
     real_t us_amp_sens_unit;

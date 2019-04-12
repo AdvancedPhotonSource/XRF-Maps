@@ -113,4 +113,27 @@ void Spectra_Volume::recalc_elapsed_livetime()
 
 }
 
+void Spectra_Volume::generate_scaler_maps(Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * elt_map,
+                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * ert_map,
+                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * in_cnt_map,
+                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * out_cnt_map)
+{
+    elt_map->resize(_data_vol.size(), _data_vol[0].size());
+    ert_map->resize(_data_vol.size(), _data_vol[0].size());
+    in_cnt_map->resize(_data_vol.size(), _data_vol[0].size());
+    out_cnt_map->resize(_data_vol.size(), _data_vol[0].size());
+
+    for(size_t i = 0; i < _data_vol.size(); i++)
+    {
+        for(size_t j = 0; j < _data_vol[0].size(); j++)
+        {
+            (*elt_map)(i,j) = _data_vol[i][j].elapsed_livetime();
+            (*ert_map)(i,j) = _data_vol[i][j].elapsed_realtime();
+            (*in_cnt_map)(i,j) = _data_vol[i][j].input_counts();
+            (*out_cnt_map)(i,j) = _data_vol[i][j].output_counts();
+        }
+    }
+
+}
+
 } //namespace data_struct

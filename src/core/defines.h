@@ -167,6 +167,8 @@ const string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
 
 const string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
 
+const string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
+
 //}
 
 //}// namespace keys

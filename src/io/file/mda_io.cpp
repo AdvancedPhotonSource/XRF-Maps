@@ -164,8 +164,7 @@ int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, r
 //-----------------------------------------------------------------------------
 
 bool MDA_IO::load_quantification_scalers(std::string path,
-                                        data_struct::Params_Override *override_values,
-                                        data_struct::Quantification_Standard * quantification_standard)
+                                        data_struct::Params_Override *override_values)
 {
     real_t tmp_val;
     std::string units;
@@ -184,7 +183,7 @@ bool MDA_IO::load_quantification_scalers(std::string path,
         return false;
     }
 
-    if(quantification_standard == nullptr || override_values == nullptr)
+    if(override_values == nullptr)
     {
         return false;
     }
@@ -192,17 +191,17 @@ bool MDA_IO::load_quantification_scalers(std::string path,
     if (override_values->scaler_pvs.count("SRCURRENT") > 0)
     {
         find_scaler_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), tmp_val, units);
-        quantification_standard->sr_current(tmp_val);
+        override_values->sr_current = (tmp_val);
     }
     if (override_values->scaler_pvs.count("US_IC") > 0)
     {
         find_scaler_index(_mda_file, override_values->scaler_pvs.at("US_IC"), tmp_val, units);
-        quantification_standard->US_IC(tmp_val);
+        override_values->US_IC = (tmp_val);
     }
     if (override_values->scaler_pvs.count("DS_IC") > 0)
     {
         find_scaler_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), tmp_val, units);
-        quantification_standard->DS_IC(tmp_val);
+        override_values->DS_IC = (tmp_val);
     }
 
     return true;
@@ -214,8 +213,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::Spectra_Volume* vol,
                                  bool hasNetCDF,
-                                 data_struct::Params_Override *override_values,
-                                 data_struct::Quantification_Standard * quantification_standard)
+                                 data_struct::Params_Override *override_values)
 {
     //index per row and col
     int elt_idx = -1;
@@ -339,23 +337,21 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             outcnt_idx = find_scaler_index(_mda_file, override_values->out_cnt_pv, tmp_val, units);
         }
-        if(quantification_standard != nullptr)
+
+        if (override_values->scaler_pvs.count("SRCURRENT") > 0)
         {
-            if (override_values->scaler_pvs.count("SRCURRENT") > 0)
-            {
-                find_scaler_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), tmp_val, units);
-                quantification_standard->sr_current(tmp_val);
-            }
-            if (override_values->scaler_pvs.count("US_IC") > 0)
-            {
-                find_scaler_index(_mda_file, override_values->scaler_pvs.at("US_IC"), tmp_val, units);
-                quantification_standard->US_IC(tmp_val);
-            }
-            if (override_values->scaler_pvs.count("DS_IC") > 0)
-            {
-                find_scaler_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), tmp_val, units);
-                quantification_standard->DS_IC(tmp_val);
-            }
+            find_scaler_index(_mda_file, override_values->scaler_pvs.at("SRCURRENT"), tmp_val, units);
+            override_values->sr_current = (tmp_val);
+        }
+        if (override_values->scaler_pvs.count("US_IC") > 0)
+        {
+            find_scaler_index(_mda_file, override_values->scaler_pvs.at("US_IC"), tmp_val, units);
+            override_values->US_IC = (tmp_val);
+        }
+        if (override_values->scaler_pvs.count("DS_IC") > 0)
+        {
+            find_scaler_index(_mda_file, override_values->scaler_pvs.at("DS_IC"), tmp_val, units);
+            override_values->DS_IC = (tmp_val);
         }
 
     }
@@ -610,22 +606,23 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                 outcnt_idx = find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.out_cnt_pv, tmp_val, units);
             }
 
-
+/*
             if (detector_struct->fit_params_override_dict.scaler_pvs.count("SRCURRENT") > 0)
             {
                 find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("SRCURRENT"), tmp_val, units);
-                detector_struct->quant_standard.sr_current(tmp_val);
+                detector_struct->quant_standard.sr_current = (tmp_val);
             }
             if (detector_struct->fit_params_override_dict.scaler_pvs.count("US_IC") > 0)
             {
                 find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("US_IC"), tmp_val, units);
-                detector_struct->quant_standard.US_IC(tmp_val);
+                detector_struct->quant_standard.US_IC = (tmp_val);
             }
             if (detector_struct->fit_params_override_dict.scaler_pvs.count("DS_IC") > 0)
             {
                 find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("DS_IC"), tmp_val, units);
-                detector_struct->quant_standard.DS_IC(tmp_val);
+                detector_struct->quant_standard.DS_IC = (tmp_val);
             }
+*/
         }
     }
 
@@ -918,7 +915,7 @@ bool load_henke_from_xdr(std::string filename)
         {
             element = new data_struct::Element_Info();
             element->number = i+1;
-            element->name = data_struct::Element_Symbols[i];
+            element->name = data_struct::Element_Symbols[i+1];
             element_map->add_element(element);
         }
         //element->init_f_energies(num_energies);

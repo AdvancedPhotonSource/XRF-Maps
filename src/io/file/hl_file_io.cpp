@@ -209,7 +209,6 @@ bool save_results(std::string save_loc,
                   std::chrono::time_point<std::chrono::system_clock> start)
 {
 
-
     //wait for queue to finish processing
     while(!job_queue->empty())
     {
@@ -221,6 +220,26 @@ bool save_results(std::string save_loc,
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
     logit << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+    bool first = true;
+    Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tfy;
+    for(auto &itr : *element_counts)
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        if(first)
+        {
+            tfy = itr.second;
+            first = !first;
+        }
+        else
+        {
+            tfy += itr.second;
+        }
+    }
+    element_counts->insert({ STR_TOTAL_FLUORESCENCE_YIELD, tfy });
 
 	// Add sum of elastic and inelastic 
 	if (element_counts->count(STR_COHERENT_SCT_AMPLITUDE) > 0 && element_counts->count(STR_COMPTON_AMPLITUDE) > 0)
@@ -239,28 +258,25 @@ bool save_results(std::string save_loc,
 
 // ----------------------------------------------------------------------------
 
-bool save_volume(data_struct::Quantification_Standard * quantification_standard,
-                 data_struct::Spectra_Volume *spectra_volume,
+bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
                  real_t energy_quad)
 {
-    io::file::HDF5_IO::inst()->save_quantification(quantification_standard);
-    io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
-    io::file::HDF5_IO::inst()->end_save_seq();
+    bool retval = io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
 
     delete spectra_volume;
 
-    return true;
+    return retval;
 }
 
 // ----------------------------------------------------------------------------
 
-void save_quantification_plots(data_struct::Analysis_Job* analysis_job, data_struct::Quantification_Standard *standard, int detector_num)
+void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<string, data_struct::Quantification_Standard *> *standards, int detector_num)
 {
 #ifdef _BUILD_WITH_QT
     std::string str_path = analysis_job->dataset_directory+"/output/";
-    visual::SavePlotQuantification(str_path, standard, detector_num);
+    visual::SavePlotQuantification(str_path, standards, detector_num);
 #endif
 }
 
@@ -614,10 +630,9 @@ bool load_override_params(std::string dataset_directory,
 
 bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
+                         data_struct::Spectra_Volume *spectra_volume,
                          data_struct::Params_Override * params_override,
-                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers)
 {
@@ -697,13 +712,6 @@ bool load_spectra_volume(std::string dataset_directory,
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
-        if(quantification_standard != nullptr)
-        {
-            if(false == io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(fullpath, quantification_standard))
-            {
-                mda_io.load_quantification_scalers(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, params_override, quantification_standard);
-            }
-        }
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);
         return true;
@@ -738,7 +746,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, quantification_standard) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
         logit<<"Error load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
@@ -812,7 +820,7 @@ bool load_spectra_volume(std::string dataset_directory,
     if(save_scalers)
     {
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), spectra_volume, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();
@@ -824,8 +832,8 @@ bool load_spectra_volume(std::string dataset_directory,
 
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
-                                       data_struct::Spectra *integrated_spectra,
                                        size_t detector_num,
+                                       data_struct::Spectra *integrated_spectra,
                                        data_struct::Params_Override * params_override)
 {
     //Dataset importer
@@ -837,8 +845,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     data_struct::Spectra_Volume spectra_volume;
 
     logit<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
-
-    //TODO: check if any analyized mda.h5 files are around to load. They should have integrated spectra saved already.
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -908,6 +914,13 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
     if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra))
     {
+        if(params_override != nullptr)
+        {
+            if(false == io::file::HDF5_IO::inst()->load_quantification_scalers_analyzed_h5(fullpath, params_override))
+            {
+                mda_io.load_quantification_scalers(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, params_override);
+            }
+        }
         return true;
     }
 
@@ -922,7 +935,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, nullptr);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();
