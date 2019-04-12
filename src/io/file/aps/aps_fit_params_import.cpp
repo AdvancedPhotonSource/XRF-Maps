@@ -627,7 +627,6 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     // split scalers names by ','
-                    logit<<"scaler: "<<value<<std::endl;
                     s_scaler.scaler_name = value;
                     std::string last_scaler;
                     std::getline(strstream, scaler_name, ',');
@@ -654,7 +653,6 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     // split scalers names by ','
-                    logit<<"scaler: "<<value<<std::endl;
                     s_scaler.scaler_name = value;
                     std::string last_scaler;
                     std::getline(strstream, scaler_name, ',');

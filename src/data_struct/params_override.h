@@ -147,6 +147,10 @@ public:
 
     list<struct Summed_Scaler> summed_scalers;
 
+    real_t sr_current;
+    real_t US_IC;
+    real_t DS_IC;
+
     real_t us_amp_sens_num;
     real_t us_amp_sens_unit;
     real_t ds_amp_sens_num;

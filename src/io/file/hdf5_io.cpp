@@ -2024,8 +2024,8 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_quantification_analyzed_h5(std::string path,
-                                              data_struct::Quantification_Standard * quantification_standard)
+bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
+                                                      data_struct::Params_Override *override_values)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -2063,21 +2063,21 @@ bool HDF5_IO::load_quantification_analyzed_h5(std::string path,
    hid_t status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
    if(status > -1)
    {
-        quantification_standard->sr_current = (srcurrent);
+        override_values->sr_current = (srcurrent);
    }
    d_space = H5Dget_space(us_ic_id);
    d_type = H5Dget_type(us_ic_id);
    status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
    if(status > -1)
    {
-        quantification_standard->US_IC = (us_ic);
+        override_values->US_IC = (us_ic);
    }
    d_space = H5Dget_space(ds_ic_id);
    d_type = H5Dget_type(ds_ic_id);
    status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
    if(status > -1)
    {
-        quantification_standard->DS_IC = (ds_ic);
+        override_values->DS_IC = (ds_ic);
    }
 
    _close_h5_objects(close_map);

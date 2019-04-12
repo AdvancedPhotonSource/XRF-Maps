@@ -86,8 +86,7 @@ public:
                             size_t detector_num,
                             data_struct::Spectra_Volume* vol,
                             bool hasNetCDF,
-                            data_struct::Params_Override *override_values,
-                            data_struct::Quantification_Standard * quantification_standard);
+                            data_struct::Params_Override *override_values);
 
     bool load_spectra_volume_with_callback(std::string path,
                                         size_t detector_num_start,
@@ -98,8 +97,7 @@ public:
                                         void *user_data);
 
     bool load_quantification_scalers(std::string path,
-                                     data_struct::Params_Override *override_values,
-                                     data_struct::Quantification_Standard * quantification_standard);
+                                     data_struct::Params_Override *override_values);
 
 	// find index in mda file, if found, fill in value and units 
     int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string &units);

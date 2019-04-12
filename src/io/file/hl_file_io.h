@@ -151,14 +151,13 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job);
 
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
-                       std::string element_csv_filename);
+                                std::string element_csv_filename);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
-                                       std::string dataset_file,
-                                       data_struct::Spectra *integrated_spectra,
-                                       size_t detector_num,
-                                       data_struct::Params_Override * params_override,
-                                       data_struct::Quantification_Standard * quantification_standard);
+                                                   std::string dataset_file,
+                                                   size_t detector_num,
+                                                   data_struct::Spectra *integrated_spectra,
+                                                   data_struct::Params_Override * params_override);
 
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
                           int detector_num,
@@ -176,10 +175,9 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
 
 DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
+                         data_struct::Spectra_Volume *spectra_volume,
                          data_struct::Params_Override * params_override,
-                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 

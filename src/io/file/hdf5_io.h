@@ -117,7 +117,7 @@ public:
 
     bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra* spectra);
 
-    bool load_quantification_analyzed_h5(std::string path, data_struct::Quantification_Standard * quantification_standard);
+    bool load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override *override_values);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 

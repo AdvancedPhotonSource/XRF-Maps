@@ -126,7 +126,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     ret_struct->elements_to_fit = params_override.elements_to_fit;
 
     //load the quantification standard dataset
-    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, &ret_struct->spectra, detector_num, &params_override, nullptr) )
+    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, detector_num, &ret_struct->spectra, &params_override) )
     {
         logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
         ret_struct->success = false;
@@ -346,7 +346,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             //load the first one
             size_t detector_num = analysis_job->detector_num_start;
             bool is_loaded_from_analyzed_h5;
-            if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, true) )
+            if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true) )
             {
                 logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                 delete spectra_volume;
@@ -358,7 +358,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             for(detector_num = analysis_job->detector_num_start+1; detector_num <= analysis_job->detector_num_end; detector_num++)
             {
 
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, tmp_spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &is_loaded_from_analyzed_h5, false) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
                 {
                     logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                     delete spectra_volume;
@@ -413,7 +413,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, spectra_volume, detector_num, &detector_struct->fit_params_override_dict, nullptr, &loaded_from_analyzed_hdf5, true) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )
                 {
                     logit<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
@@ -524,10 +524,16 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                             {
                                 standard_itr.standard_file_name[std_str_len - 2] = 'd';
                                 quantification_standard->standard_filename = standard_itr.standard_file_name;
-                                if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, &quantification_standard->integrated_spectra, detector_num, override_params, quantification_standard) )
+                                if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params) )
                                 {
                                     logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
                                     continue;
+                                }
+                                else
+                                {
+                                    quantification_standard->sr_current = override_params->sr_current;
+                                    quantification_standard->US_IC = override_params->US_IC;
+                                    quantification_standard->DS_IC = override_params->DS_IC;
                                 }
                             }
                             else
@@ -567,6 +573,25 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                             quantification_standard->sr_current = std::stof(pv_map[override_params->scaler_pvs["SRCURRENT"]]);
                         }
                     }
+                }
+                else
+                {
+                    if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params) )
+                    {
+                        logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
+                        continue;
+                    }
+                    else
+                    {
+                        quantification_standard->sr_current = override_params->sr_current;
+                        quantification_standard->US_IC = override_params->US_IC;
+                        quantification_standard->DS_IC = override_params->DS_IC;
+                    }
+                }
+                if(quantification_standard->integrated_spectra.size() == 0)
+                {
+                    logit<<"Error: Spectra size == 0! Can't process it!\n";
+                    continue;
                 }
 
                 avg_sr_current += quantification_standard->sr_current;

@@ -630,10 +630,9 @@ bool load_override_params(std::string dataset_directory,
 
 bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
+                         data_struct::Spectra_Volume *spectra_volume,
                          data_struct::Params_Override * params_override,
-                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers)
 {
@@ -713,13 +712,6 @@ bool load_spectra_volume(std::string dataset_directory,
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
-        if(quantification_standard != nullptr)
-        {
-            if(false == io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(fullpath, quantification_standard))
-            {
-                mda_io.load_quantification_scalers(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, params_override, quantification_standard);
-            }
-        }
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);
         return true;
@@ -754,7 +746,7 @@ bool load_spectra_volume(std::string dataset_directory,
     }
 
     //load spectra
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, quantification_standard) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
         logit<<"Error load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
@@ -840,10 +832,9 @@ bool load_spectra_volume(std::string dataset_directory,
 
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
-                                       data_struct::Spectra *integrated_spectra,
                                        size_t detector_num,
-                                       data_struct::Params_Override * params_override,
-                                       data_struct::Quantification_Standard * quantification_standard)
+                                       data_struct::Spectra *integrated_spectra,
+                                       data_struct::Params_Override * params_override)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
@@ -923,6 +914,13 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
     if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra))
     {
+        if(params_override != nullptr)
+        {
+            if(false == io::file::HDF5_IO::inst()->load_quantification_scalers_analyzed_h5(fullpath, params_override))
+            {
+                mda_io.load_quantification_scalers(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, params_override);
+            }
+        }
         return true;
     }
 
@@ -937,7 +935,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     if (false == hasNetcdf && false == hasHdf)
     {
-        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override, quantification_standard);
+        ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override);
         if(ret_val)
         {
             *integrated_spectra = spectra_volume.integrate();
