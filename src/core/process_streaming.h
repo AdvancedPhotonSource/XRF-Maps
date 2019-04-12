@@ -84,10 +84,4 @@ DLL_EXPORT data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Bl
 
 DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job* job);
 
-DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::Stream_Block* stream_block );
-
-DLL_EXPORT void save_optimal_params(struct io::file_name_fit_params* f_struct);
-
-DLL_EXPORT void run_optimization_stream_pipeline(data_struct::Analysis_Job* job);
-
 #endif

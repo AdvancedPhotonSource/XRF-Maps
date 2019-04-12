@@ -62,9 +62,6 @@ void help()
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<"\n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. "<<"\n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
-//    logit_s<<"    us = upstream ion chamber\n";
-//    logit_s<<"    ds = downstream ion chamber\n";
-//    logit_s<<"    sr = sr current. "<<"\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<"\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<"\n";
@@ -391,7 +388,6 @@ int main(int argc, char *argv[])
     {
         if(optimize_fit_override_params)
         {
-            //run_optimization_stream_pipeline(&analysis_job);
             io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
         }

@@ -73,6 +73,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //data structures
     /*
     py::class_<data_struct::Spectra, data_struct::ArrayXr>(m, "Spectra", py::buffer_protocol())
+    //py::class_<data_struct::Spectra, data_struct::ArrayXr>(m, "Spectra")
         .def(py::init<size_t>())
         .def("add", &data_struct::Spectra::add)
         .def("recalc_elapsed_livetime", &data_struct::Spectra::recalc_elapsed_livetime)
@@ -84,18 +85,45 @@ PYBIND11_MODULE(pyxrfmaps, m) {
         .def("get_input_counts", (const real_t (data_struct::Spectra::*)() const) &data_struct::Spectra::input_counts)
         .def("set_output_counts", (void (data_struct::Spectra::*)(real_t)) &data_struct::Spectra::output_counts )
         .def("get_output_counts", (const real_t (data_struct::Spectra::*)() const) &data_struct::Spectra::output_counts)
-        .def("sub_spectra", &data_struct::Spectra::sub_spectra)
+        .def("sub_spectra", &data_struct::Spectra::sub_spectra);
+
         .def_buffer([](data_struct::Spectra &m) -> py::buffer_info {
                 return py::buffer_info(
                     m.data(),                               // Pointer to buffer
                     sizeof(real_t),                          // Size of one scalar
                     py::format_descriptor<real_t>::format(), // Python struct-style format descriptor
                     1,                                      // Number of dimensions
-                    { m.cols() },                 // Buffer dimensions
+                    { m.size() },                 // Buffer dimensions
                     { sizeof(real_t) }             // Strides (in bytes) for each index
                 );
             });
-    */
+*/
+
+    py::class_<data_struct::Spectra_Line>(m, "Spectra_Line", py::buffer_protocol())
+        .def(py::init<>())
+        .def("__getitem__", [](const data_struct::Spectra_Line &s, size_t i) {
+        if (i >= s.size()) throw py::index_error();
+        return s[i];
+        })
+        .def("resize_and_zero", &data_struct::Spectra_Line::resize_and_zero)
+        .def("alloc_row_size", &data_struct::Spectra_Line::alloc_row_size)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Line::recalc_elapsed_livetime)
+        .def("size", &data_struct::Spectra_Line::size);
+
+    py::class_<data_struct::Spectra_Volume>(m, "Spectra_Volume", py::buffer_protocol())
+        .def(py::init<>())
+        .def("__getitem__", [](const data_struct::Spectra_Volume &s, size_t i) {
+        if (i >= s.rows()) throw py::index_error();
+        return s[i];
+        })
+        .def("resize_and_zero", &data_struct::Spectra_Volume::resize_and_zero)
+        .def("integrate", &data_struct::Spectra_Volume::integrate)
+        .def("generate_scaler_maps", &data_struct::Spectra_Volume::generate_scaler_maps)
+        .def("cols", &data_struct::Spectra_Volume::cols)
+        .def("rows", &data_struct::Spectra_Volume::rows)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Volume::recalc_elapsed_livetime)
+        .def("samples_size", &data_struct::Spectra_Volume::samples_size)
+        .def("rank", &data_struct::Spectra_Volume::rank);
 
     py::class_<data_struct::Element_Info>(m, "ElementInfo")
     .def(py::init<>())
@@ -425,10 +453,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //process_streaming
 //    m.def("proc_spectra_block", &proc_spectra_block);
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
-//    m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
-//    m.def("save_optimal_params", &save_optimal_params);
-//    m.def("run_optimization_stream_pipeline", &run_optimization_stream_pipeline);
-//    m.def("perform_quantification_streaming", &perform_quantification_streaming);
 
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
