@@ -215,8 +215,6 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
     logit<< "status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
 
-    logit<<lm_infmsg[status.outcome]<<"\n";
-
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR) )
