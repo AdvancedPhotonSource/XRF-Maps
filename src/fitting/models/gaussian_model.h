@@ -112,6 +112,8 @@ public:
 
     virtual void update_fit_params_values(Fit_Parameters *fit_params) { _fit_parameters.update_values(fit_params); }
 
+    virtual void update_and_add_fit_params_values_gt_zero(Fit_Parameters *fit_params) { _fit_parameters.update_and_add_values_gt_zero(fit_params); }
+
 protected:
 
     Fit_Parameters _generate_default_fit_parameters();

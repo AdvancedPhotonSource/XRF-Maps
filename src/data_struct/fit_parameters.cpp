@@ -215,6 +215,25 @@ void Fit_Parameters::update_values(Fit_Parameters *override_fit_params)
     }
 }
 
+void Fit_Parameters::update_and_add_values(Fit_Parameters *override_fit_params)
+{
+    for(auto& itr : *override_fit_params)
+    {
+        _params[itr.first] = itr.second;
+    }
+}
+
+void Fit_Parameters::update_and_add_values_gt_zero(Fit_Parameters *override_fit_params)
+{
+    for(auto& itr : *override_fit_params)
+    {
+        if(itr.second.value > 0.0)
+        {
+            _params[itr.first] = itr.second;
+        }
+    }
+}
+
 void Fit_Parameters::print()
 {
     for(const auto& itr : _params)
