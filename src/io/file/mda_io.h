@@ -114,6 +114,8 @@ public:
 
 private:
 
+    bool _get_scaler_value( struct mda_file* _mda_file, data_struct::Params_Override *override_values, string scaler_name, real_t *store_loc, bool isFlyScan);
+
     bool _find_theta(std::string pv_name, float* theta_out);
 
     //void _load_detector_meta_data(data_struct::Detector * detector);

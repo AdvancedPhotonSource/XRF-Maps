@@ -177,7 +177,15 @@ void Quantification_Standard::init_element_quants(string proc_type_str,
         real_t e_cal = e_cal_factor / e_counts->at(itr.first);
         itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
 
-        fitted_e_cal_ratio[proc_type_str][quant_id][itr.first] = itr.second.e_cal_ratio;
+        if(std::isnan(itr.second.e_cal_ratio) || std::isinf(itr.second.e_cal_ratio))
+        {
+            fitted_e_cal_ratio[proc_type_str][quant_id][itr.first] = 0.0;
+        }
+        else
+        {
+            fitted_e_cal_ratio[proc_type_str][quant_id][itr.first] = itr.second.e_cal_ratio;
+        }
+
     }
 
 }
@@ -209,10 +217,11 @@ void Quantification_Standard::generate_calibration_curve(string proc_type_str, i
             for(size_t l = 0; l<quantifiers->calib_curves[quant_id].shell_curves[shell].size(); l++)
             {
                 quantifiers->calib_curves[quant_id].shell_curves_labels[shell][l] = get_shell_element_label(shell, l+1);
-                if( std::isnan(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) )
+                if( std::isnan(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) || std::isinf(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) )
                 {
                     quantifiers->calib_curves[quant_id].shell_curves[shell][l] = 0.0;
                 }
+
             }
      }
     _processed = true;
