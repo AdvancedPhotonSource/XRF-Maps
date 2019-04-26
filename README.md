@@ -13,7 +13,7 @@ X-ray fluorescence (XRF) imaging typically involves the creation and analysis of
 ### Single precision with ZeroMQ, and Anaconda Python 3.6 bindings
  https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Linux64/lastSuccessfulBuild/artifact/*zip*/archive.zip
 
-#Compiling
+# Compiling
 ## Requires 
 Visual Studio 2015 or greater (Windows build)
 GCC 6.0 or greater (Linux build)
