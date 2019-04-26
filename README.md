@@ -21,18 +21,12 @@ Cmake 3.5 or greater
 
 # Prebuilt Binaries
 ## Windows 64 (Visual C++ 2015 redis)
-### Single precision with ZeroMQ, and Anaconda Python 3.6 bindings
- https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64/lastSuccessfulBuild/artifact/*zip*/archive.zip
 ### Single precision with QT, and ZeroMQ
  https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64_QT/lastSuccessfulBuild/artifact/*zip*/archive.zip
-### Double precision with ZeroMQ, and Anaconda Python 3.6 bindings
- https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Win64_Double_Prec/lastSuccessfulBuild/artifact/*zip*/archive.zip
 
 ## RedHat Linux 7 (gcc 6.2)
 ### Single precision with ZeroMQ, and Anaconda Python 3.6 bindings
  https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Linux64/lastSuccessfulBuild/artifact/*zip*/archive.zip
-### Double precision with ZeroMQ, and Anaconda Python 3.6 bindings
- https://jenkins.aps.anl.gov/view/XRF_Maps/job/XRF_Maps_Linux64_Double_Prec/lastSuccessfulBuild/artifact/*zip*/archive.zip
 
 
 # Compile Default
@@ -64,7 +58,7 @@ Cmake 3.5 or greater
  -DHDF5_ROOT={path to hdf5 root dir}
 
 ### NetCDF
- -DNETCDF_INCLUDE={path} -DNETCDF_LIBRARIES={path including .so/.dll}
+ -DNETCDF_INCLUDE_DIRS={path} -DNETCDF_LIBRARIES={path including .so/.dll}
 
 
  Libraries and executable stored in bin directory
