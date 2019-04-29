@@ -346,12 +346,12 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     size_t greater_cols = std::max(spec_vol->cols() , dims_in[2]);
     size_t greater_channels = std::max(spec_vol->samples_size() , dims_in[0]);
 */
-
+/* Bug fix: mda files has dims_in[2] as one value, hdf5 has a larger value but all zeros, use mda size.
     if(spec_vol->rows() < dims_in[1] || spec_vol->cols() < dims_in[2] || spec_vol->samples_size() < dims_in[0])
     {
         spec_vol->resize_and_zero(dims_in[1], dims_in[2], dims_in[0]);
     }
-
+*/
     count[1] = 1; //1 row
 
     memoryspace_id = H5Screate_simple(2, count_row, nullptr);
@@ -367,7 +367,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     real_t out_cnt = 1.0;
 
     offset_meta[0] = detector_num;
-    for (size_t row=0; row < dims_in[1]; row++)
+    for (size_t row=0; row < spec_vol->rows(); row++)
     {
          offset[1] = row;
          offset_meta[1] = row;
@@ -377,7 +377,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
          if (error > -1 )
          {
-             for(size_t col=0; col<count_row[1]; col++)
+             for(size_t col=0; col<spec_vol->cols(); col++)
              {
                  offset_meta[2] = col;
                  data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
@@ -5587,7 +5587,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 	char tmp_char1[256] = { 0 };
 
     //create quantification dataset. In v9 the array starts at element Z 10 insead of element Z 1
-    std::string currnt_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_Current";
+    std::string currnt_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_SR_Current";
     std::string us_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_US_IC";
     std::string ds_quant_str = "/MAPS/Quantification/XRF_Analyzed/" + quant_str + "/Calibration_Curve_DS_IC";
 	hid_t cc_current = H5Dopen(file_id, currnt_quant_str.c_str(), H5P_DEFAULT);
@@ -5939,7 +5939,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler)
+bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler)
 {
     char desc[256] = {0};
     std::string exhange_str = "/exchange_" + exchange_idx;
@@ -5959,9 +5959,21 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     std::string str_version = exhange_str + "/version";
     std::string str_theta = exhange_str + "/theta";
 
-    std::string exchange_images = exhange_str + "/images";
-    std::string exchange_image_names = exhange_str + "/image_names";
-    std::string exchange_image_units = exhange_str + "/image_units";
+    std::string exchange_images = exhange_str + "/data";
+    std::string exchange_image_names = exhange_str + "/data_names";
+    std::string exchange_image_units = exhange_str + "/data_units";
+
+
+
+    std::string full_fit_link_path = "/MAPS/XRF_Analyzed/" + fits_link;
+    hid_t fits_grp = H5Gopen(file_id, full_fit_link_path.c_str(), H5P_DEFAULT);
+    if(fits_grp < 0)
+    {
+        //if we don't find the analysis, don't make an exchange for it
+        return false;
+    }
+
+
 
     hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
     H5Tset_size(filetype, 256);
@@ -6201,8 +6213,6 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             logit  << "Warning: Couldn't create soft link for"<< exchange_scaler_units <<  "\n";
         }
 
-        std::string full_fit_link_path = "/MAPS/XRF_Analyzed/" + fits_link;
-        hid_t fits_grp = H5Gopen(file_id, full_fit_link_path.c_str(), H5P_DEFAULT);
         if(fits_grp > 0)
         {
             std::string str_images = "/MAPS/XRF_Analyzed/" + fits_link + "/Counts_Per_Sec";
@@ -6273,6 +6283,7 @@ void HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     H5Sclose(dataspace_id);
     H5Gclose(exchange_id);
 
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -6285,13 +6296,16 @@ void HDF5_IO::_add_exchange_layout(std::string dataset_file)
     hid_t saved_file_id = _cur_file_id;
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
-    std::string exchange_num[4] = {"0", "1", "2", "3"};
     std::string exchange_fits[4] = {"Fitted", "ROI", "NNLS", "Fitted"};
     std::string exchange_normalize[4] = {"DS_IC", "", "", ""};
 
+    int ex_idx = 0;
     for(int i=0; i < 4; i++)
     {
-        _add_exchange_meta(file_id, exchange_num[i], exchange_fits[i], exchange_normalize[i]);
+        if(true == _add_exchange_meta(file_id, std::to_string(ex_idx), exchange_fits[i], exchange_normalize[i]))
+        {
+            ex_idx++;
+        }
     }
 
     _cur_file_id = file_id;
