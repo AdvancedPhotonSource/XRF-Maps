@@ -5478,7 +5478,7 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
                 }
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
-                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_Current", "Calibration_Curve_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_SR_Current", "Calibration_Curve_SR_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_DS_IC", "Calibration_Curve_DS_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_US_IC", "Calibration_Curve_US_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
@@ -5601,6 +5601,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
     if(quant_dset > -1 && cc_current > -1 && cc_us_ic > -1 && cc_ds_ic > -1)
     {
 		hid_t chan_units = H5Dopen(file_id, "/MAPS/channel_units", H5P_DEFAULT);
+        //share the space between sr_current, us_ic, and ds_ic
         hid_t cc_space = H5Dget_space(cc_current);
         
         hsize_t count_1d[1] = {1};
@@ -5610,7 +5611,39 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         hsize_t offset_2d[2] = {0,0};
         hsize_t offset_3d[3] = {0,0,0};
         hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+        char sr_current_carr[255] = "SRCURRENT";
+        char us_ic_carr[255] = "US_IC";
+        char ds_ic_carr[255] = "DS_IC";
         real_t real_val = 0.0;
+
+
+        count_1d[0] = 3;
+        hid_t quant_name_space = H5Screate_simple(1, count_1d, nullptr);
+        count_1d[0] = 1;
+        //save quant_names to know what each index is
+        new_loc += "_names";
+        hid_t quant_names_dset = H5Dcreate1(file_id, new_loc.c_str(), filetype, quant_name_space, H5P_DEFAULT);
+        if(quant_names_dset > -1)
+        {
+            offset_1d[0] = 0;
+            H5Sselect_hyperslab(quant_name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+            H5Dwrite(quant_names_dset, filetype, memoryspace_id, quant_name_space, H5P_DEFAULT, (void*)sr_current_carr);
+
+            offset_1d[0] = 1;
+            H5Sselect_hyperslab(quant_name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+            H5Dwrite(quant_names_dset, filetype, memoryspace_id, quant_name_space, H5P_DEFAULT, (void*)us_ic_carr);
+
+            offset_1d[0] = 2;
+            H5Sselect_hyperslab(quant_name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+            H5Dwrite(quant_names_dset, filetype, memoryspace_id, quant_name_space, H5P_DEFAULT, (void*)ds_ic_carr);
+
+
+            H5Sclose(quant_name_space);
+            H5Dclose(quant_names_dset);
+        }
+        //reset back
+        offset_1d[0] = 0;
+
 
         for(int chan_idx=0; chan_idx<chan_amt; chan_idx++)
         {
@@ -5622,9 +5655,12 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
             std::string el_name_str = std::string(tmp_char);
             int underscore_idx = el_name_str.find("_");
             //can check if > 0 instead of -1 since it shouldn't start with an '_'
-            if (underscore_idx > 0)
+            if (underscore_idx > 0 && underscore_idx < el_name_str.length())
             {
-
+                if(el_name_str[underscore_idx+1] == 'L')
+                    offset_2d[0] = 1;
+                if(el_name_str[underscore_idx+1] == 'M')
+                    offset_2d[0] = 2;
             }
             else
             {
