@@ -4083,7 +4083,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
     //don't save these scalers
     std::list<std::string> ignore_scaler_strings = { "ELT1", "ERT1", "ICR1", "OCR1" };
     std::list<struct scaler_struct> scalers;
-
+    std::list<data_struct::Summed_Scaler> summed_scalers;
     hid_t dset_cps_id = -1;
 
 	memoryspace_str_id = H5Screate_simple(1, count, NULL);
@@ -4192,18 +4192,24 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
             }
 
             // Maps summed scaler name to scaler mda index
-            for (auto &itr : params_override->summed_scalers)
+            for (auto& itr : params_override->summed_scalers)
             {
+                bool found = false;
                 for(auto &scaler_itr : itr.scalers_to_sum)
                 {
                     for(auto &found_scalers_itr : scalers)
                     {
-                        if(scaler_itr.first == found_scalers_itr.hdf_name)
+                        if(scaler_itr.first == found_scalers_itr.hdf_name && itr.normalize_by_time == found_scalers_itr.normalize_by_time)
                         {
                             scaler_itr.second = found_scalers_itr.mda_idx;
+                            found = true;
                             break;
                         }
                     }
+                }
+                if(found)
+                {
+                    summed_scalers.push_back(itr);
                 }
             }
 
@@ -4279,12 +4285,12 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
 
                 if (us_ic_idx > -1 && ds_ic_idx > -1 && cfg_2_idx > -1 && cfg_3_idx > -1 && cfg_4_idx > -1 && cfg_5_idx > -1)
                 {
-                    count_3d[0] = scalers.size() + params_override->summed_scalers.size() + 6; //abs_ic, abs_cfg, H_dpc_cfg, V_dpc_cfg, dia1_dpc_cfg, dia2_dpc_cfg
+                    count_3d[0] = scalers.size() + summed_scalers.size() + 6; //abs_ic, abs_cfg, H_dpc_cfg, V_dpc_cfg, dia1_dpc_cfg, dia2_dpc_cfg
                     save_cfg_abs = true;
                 }
                 else
                 {
-                    count_3d[0] = scalers.size() + params_override->summed_scalers.size();
+                    count_3d[0] = scalers.size() + summed_scalers.size();
                 }
 
                 if(spectra_volume != nullptr)
@@ -4394,7 +4400,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
 
                 }
 
-                for (auto &itr : params_override->summed_scalers)
+                for (auto &itr : summed_scalers)
                 {
                     scaler_mat.Zero(count_2d[0], count_2d[1]);
                     // sum values before saving. If time normalized then divide by time val

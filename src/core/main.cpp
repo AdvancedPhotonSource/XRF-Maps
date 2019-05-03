@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
     }
 
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
+    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && !analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout)
     {
         help();
         return -1;
@@ -450,7 +450,38 @@ int main(int argc, char *argv[])
     }
     else
     {
-        logit<<"Error initializing analysis job"<<"\n";
+        //average all detectors to one files
+        if(analysis_job.generate_average_h5)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
+        //add v9 layout soft links
+        if(analysis_job.add_v9_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
+
+        //add exchange
+        if(analysis_job.add_exchange_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
+        if(!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout)
+        {
+            logit<<"Error initializing analysis job"<<"\n";
+        }
     }
 
     data_struct::Element_Info_Map::inst()->clear();
