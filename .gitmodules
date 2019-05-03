@@ -1,0 +1,6 @@
+[submodule "src/support/eigen-git-mirror"]
+	path = src/support/eigen-git-mirror
+	url = https://github.com/eigenteam/eigen-git-mirror.git
+[submodule "src/support/pybind11"]
+	path = src/support/pybind11
+	url = https://github.com/pybind/pybind11.git

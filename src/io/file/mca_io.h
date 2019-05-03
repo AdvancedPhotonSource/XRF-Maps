@@ -47,54 +47,47 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef SPECTRAVOLUME_H
-#define SPECTRAVOLUME_H
+#ifndef MCA_IO_H
+#define MCA_IO_H
 
-#include "data_struct/spectra_line.h"
+#include "data_struct/spectra.h"
+#include "data_struct/fit_parameters.h"
 
-namespace data_struct
+using namespace data_struct;
+
+namespace io
+{
+namespace file
 {
 
-/**
- * @brief The Spectra_Volume class : A volume of spectras
- */
-class DLL_EXPORT Spectra_Volume
+class DLL_EXPORT MCA_IO
 {
 public:
-	Spectra_Volume();
 
-	~Spectra_Volume();
+    /**
+     * @brief MCA_IO
+     * @param filename
+     * @return
+     */
+    MCA_IO();
 
-    Spectra_Line& operator [](std::size_t row) { return _data_vol[row]; }
+    /**
+     * @brief ~MCA_IO
+     * @return
+     */
+    ~MCA_IO();
 
-    const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
-
-    void resize_and_zero(size_t rows, size_t cols, size_t samples);
-
-    Spectra integrate();
-
-    void generate_scaler_maps(Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * elt_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * ert_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * in_cnt_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * out_cnt_map);
-
-	size_t cols() const { if (_data_vol.size() > 0) return _data_vol[0].size(); else return 0; }
-
-    size_t rows() const { return _data_vol.size(); }
-
-    void recalc_elapsed_livetime();
-
-	size_t samples_size() const { if (_data_vol.size() > 0) return _data_vol[0][0].size(); else return 0; }
-
-    int rank() { return 3; }
+    bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map);
 
 private:
 
-    std::vector<Spectra_Line> _data_vol;
-//    std::vector<std::vector< Spectra* > > array3D;
 
 };
 
-} //namespace data_struct
 
-#endif // SpectraVolume_H
+DLL_EXPORT bool load_element_info_from_csv(std::string filename);
+
+}// end namespace file
+}// end namespace io
+
+#endif // MCA_IO_H

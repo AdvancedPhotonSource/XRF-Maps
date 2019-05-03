@@ -49,6 +49,7 @@
 
 #include <map>
 #include <string>
+#include <list>
 #include "core/defines.h"
 
 #include "data_struct/fit_parameters.h"
@@ -58,6 +59,14 @@ namespace data_struct
 {
 
 using namespace std;
+
+struct Summed_Scaler
+{
+  string scaler_name;
+  //  name    mda_idx
+  map<string, int> scalers_to_sum;
+  bool normalize_by_time;
+};
 
 //-----------------------------------------------------------------------------
 /**
@@ -80,6 +89,7 @@ public:
         us_amp_sens_unit = 0.0;
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
+        theta_pv = "";
     }
     Params_Override(string dir, int detector)
     {
@@ -93,6 +103,7 @@ public:
         us_amp_sens_unit = 0.0;
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
+        theta_pv = "";
 
         dataset_directory = dir;
         detector_num = detector;
@@ -131,6 +142,14 @@ public:
     string us_amp_sens_unit_pv;
     string ds_amp_sens_num_pv;
     string ds_amp_sens_unit_pv;
+
+    string theta_pv;
+
+    list<struct Summed_Scaler> summed_scalers;
+
+    real_t sr_current;
+    real_t US_IC;
+    real_t DS_IC;
 
     real_t us_amp_sens_num;
     real_t us_amp_sens_unit;

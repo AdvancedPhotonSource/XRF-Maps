@@ -90,17 +90,7 @@ public:
                                         real_t beryllium_window_thickness,
                                         real_t germanium_dead_layer,
                                         size_t z_number);
-    /*
-    std::unordered_map<std::string, Element_Quant> generate_quant_map(real_t incident_energy,
-                                                                      Element_Info* detector_element,
-                                                                      Electron_Shell shell,
-                                                                      bool airpath = false,
-                                                                      real_t detector_chip_thickness = 0.0,
-                                                                      real_t beryllium_window_thickness = 0.0,
-                                                                      real_t germanium_dead_layer = 0.0,
-                                                                      size_t start_z = 0,
-                                                                      size_t end_z = 95);
-    */
+
     std::vector<Element_Quant> generate_quant_vec(real_t incident_energy,
                                                   Element_Info* detector_element,
                                                   Electron_Shell shell,
@@ -124,6 +114,8 @@ protected:
 };
 
 //-----------------------------------------------------------------------------
+
+DLL_EXPORT Electron_Shell get_shell_by_name(std::string element_name);
 
 
 } //namespace xrf

@@ -70,7 +70,7 @@ class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::Stream_Block* >
 
 public:
 
-    Spectra_Net_Streamer();
+    Spectra_Net_Streamer(std::string port = "43434");
 
     virtual ~Spectra_Net_Streamer();
 

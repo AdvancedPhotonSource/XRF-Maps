@@ -73,6 +73,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //data structures
     /*
     py::class_<data_struct::Spectra, data_struct::ArrayXr>(m, "Spectra", py::buffer_protocol())
+    //py::class_<data_struct::Spectra, data_struct::ArrayXr>(m, "Spectra")
         .def(py::init<size_t>())
         .def("add", &data_struct::Spectra::add)
         .def("recalc_elapsed_livetime", &data_struct::Spectra::recalc_elapsed_livetime)
@@ -84,18 +85,45 @@ PYBIND11_MODULE(pyxrfmaps, m) {
         .def("get_input_counts", (const real_t (data_struct::Spectra::*)() const) &data_struct::Spectra::input_counts)
         .def("set_output_counts", (void (data_struct::Spectra::*)(real_t)) &data_struct::Spectra::output_counts )
         .def("get_output_counts", (const real_t (data_struct::Spectra::*)() const) &data_struct::Spectra::output_counts)
-        .def("sub_spectra", &data_struct::Spectra::sub_spectra)
+        .def("sub_spectra", &data_struct::Spectra::sub_spectra);
+
         .def_buffer([](data_struct::Spectra &m) -> py::buffer_info {
                 return py::buffer_info(
                     m.data(),                               // Pointer to buffer
                     sizeof(real_t),                          // Size of one scalar
                     py::format_descriptor<real_t>::format(), // Python struct-style format descriptor
                     1,                                      // Number of dimensions
-                    { m.cols() },                 // Buffer dimensions
+                    { m.size() },                 // Buffer dimensions
                     { sizeof(real_t) }             // Strides (in bytes) for each index
                 );
             });
-    */
+*/
+
+    py::class_<data_struct::Spectra_Line>(m, "Spectra_Line", py::buffer_protocol())
+        .def(py::init<>())
+        .def("__getitem__", [](const data_struct::Spectra_Line &s, size_t i) {
+        if (i >= s.size()) throw py::index_error();
+        return s[i];
+        })
+        .def("resize_and_zero", &data_struct::Spectra_Line::resize_and_zero)
+        .def("alloc_row_size", &data_struct::Spectra_Line::alloc_row_size)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Line::recalc_elapsed_livetime)
+        .def("size", &data_struct::Spectra_Line::size);
+
+    py::class_<data_struct::Spectra_Volume>(m, "Spectra_Volume", py::buffer_protocol())
+        .def(py::init<>())
+        .def("__getitem__", [](const data_struct::Spectra_Volume &s, size_t i) {
+        if (i >= s.rows()) throw py::index_error();
+        return s[i];
+        })
+        .def("resize_and_zero", &data_struct::Spectra_Volume::resize_and_zero)
+        .def("integrate", &data_struct::Spectra_Volume::integrate)
+        .def("generate_scaler_maps", &data_struct::Spectra_Volume::generate_scaler_maps)
+        .def("cols", &data_struct::Spectra_Volume::cols)
+        .def("rows", &data_struct::Spectra_Volume::rows)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Volume::recalc_elapsed_livetime)
+        .def("samples_size", &data_struct::Spectra_Volume::samples_size)
+        .def("rank", &data_struct::Spectra_Volume::rank);
 
     py::class_<data_struct::Element_Info>(m, "ElementInfo")
     .def(py::init<>())
@@ -187,23 +215,24 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::class_<data_struct::Quantification_Standard>(m, "QuantificationStandard")
     .def(py::init<>())
     .def("append_element", &data_struct::Quantification_Standard::append_element)
-    .def("element_weight", &data_struct::Quantification_Standard::element_weight)
-    .def("element_weights", &data_struct::Quantification_Standard::element_weights)
-    .def("standard_filename", (void (data_struct::Quantification_Standard::*)(string)) &data_struct::Quantification_Standard::standard_filename)
-    .def("standard_filename", (const string& (data_struct::Quantification_Standard::*)() const) &data_struct::Quantification_Standard::standard_filename)
-    .def("element_counts", (void (data_struct::Quantification_Standard::*)(string, unordered_map<string, real_t>)) &data_struct::Quantification_Standard::element_counts)
-    .def("element_counts", (const unordered_map<string, unordered_map<string, real_t> >&  (data_struct::Quantification_Standard::*)()const) &data_struct::Quantification_Standard::element_counts)
-    .def("integrated_spectra", (void (data_struct::Quantification_Standard::*)(const data_struct::Spectra &)) &data_struct::Quantification_Standard::integrated_spectra)
-    .def("integrated_spectra", (const data_struct::Spectra& (data_struct::Quantification_Standard::*)()const) &data_struct::Quantification_Standard::integrated_spectra)
-    .def("sr_current", (const real_t& (data_struct::Quantification_Standard::*)()) &data_struct::Quantification_Standard::sr_current)
-    .def("sr_current", (void (data_struct::Quantification_Standard::*)(real_t)) &data_struct::Quantification_Standard::sr_current)
-    .def("US_IC", (const real_t& (data_struct::Quantification_Standard::*)()) &data_struct::Quantification_Standard::US_IC)
-    .def("US_IC", (void (data_struct::Quantification_Standard::*)(real_t)) &data_struct::Quantification_Standard::US_IC)
-    .def("DS_IC", (const real_t& (data_struct::Quantification_Standard::*)()) &data_struct::Quantification_Standard::DS_IC)
-    .def("DS_IC", (void (data_struct::Quantification_Standard::*)(real_t)) &data_struct::Quantification_Standard::DS_IC)
     .def("processed", &data_struct::Quantification_Standard::processed)
-    .def("quantifiy", &data_struct::Quantification_Standard::quantifiy)
-    .def_readwrite("calibration_curves", &data_struct::Quantification_Standard::calibration_curves);
+    .def("init_element_quants", &data_struct::Quantification_Standard::init_element_quants)
+    .def("generate_calibration_curve", &data_struct::Quantification_Standard::generate_calibration_curve)
+    .def_readwrite("quantifier_map", &data_struct::Quantification_Standard::quantifier_map)
+    .def_readwrite("element_quants", &data_struct::Quantification_Standard::element_quants)
+    .def_readwrite("element_counts", &data_struct::Quantification_Standard::element_counts)
+    .def_readwrite("fitted_e_cal_ratio", &data_struct::Quantification_Standard::fitted_e_cal_ratio)
+    .def_readwrite("integrated_spectra", &data_struct::Quantification_Standard::integrated_spectra)
+    .def_readwrite("standard_filename", &data_struct::Quantification_Standard::standard_filename)
+    .def_readwrite("sr_current", &data_struct::Quantification_Standard::sr_current)
+    .def_readwrite("US_IC", &data_struct::Quantification_Standard::US_IC)
+    .def_readwrite("DS_IC", &data_struct::Quantification_Standard::DS_IC)
+    .def_readwrite("beryllium_window_thickness", &data_struct::Quantification_Standard::beryllium_window_thickness)
+    .def_readwrite("germanium_dead_layer", &data_struct::Quantification_Standard::germanium_dead_layer)
+    .def_readwrite("detector_chip_thickness", &data_struct::Quantification_Standard::detector_chip_thickness)
+    .def_readwrite("incident_energy", &data_struct::Quantification_Standard::incident_energy)
+    .def_readwrite("airpath", &data_struct::Quantification_Standard::airpath)
+    .def_readwrite("detector_element", &data_struct::Quantification_Standard::detector_element);
 
     py::class_<data_struct::Stream_Fitting_Block>(m, "StreamFittingBlock")
     .def(py::init<>())
@@ -234,7 +263,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def_readwrite("fit_routines", &data_struct::Detector::fit_routines)
     .def_readwrite("model", &data_struct::Detector::model)
-    .def_readwrite("quant_standard", &data_struct::Detector::quant_standard)
+    .def_readwrite("quant_standards", &data_struct::Detector::quant_standards)
     .def_readwrite("fit_params_override_dict", &data_struct::Detector::fit_params_override_dict);
 
     py::class_<data_struct::Analysis_Job>(m, "AnalysisJob")
@@ -401,7 +430,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("sink_function", &workflow::Sink<data_struct::Stream_Block*>::sink_function);
 #ifdef _BUILD_WITH_ZMQ
     py::class_<workflow::xrf::Spectra_Net_Streamer, workflow::Sink<data_struct::Stream_Block*> >(workflow, "SpectraNetStreamer")
-    .def(py::init<>())
+    .def(py::init<std::string>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer::set_send_spectra)
     .def("stream", &workflow::xrf::Spectra_Net_Streamer::stream);
@@ -424,10 +453,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //process_streaming
 //    m.def("proc_spectra_block", &proc_spectra_block);
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
-//    m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
-//    m.def("save_optimal_params", &save_optimal_params);
-//    m.def("run_optimization_stream_pipeline", &run_optimization_stream_pipeline);
-//    m.def("perform_quantification_streaming", &perform_quantification_streaming);
 
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);

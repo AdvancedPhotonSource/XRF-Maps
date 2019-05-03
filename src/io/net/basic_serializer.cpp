@@ -224,10 +224,10 @@ std::string Basic_Serializer::encode_spectra(data_struct::Stream_Block* stream_b
     _convert_var_to_bytes(&raw_msg, tmp_real, stream_block->spectra->elapsed_realtime(), sizeof(real_t));
     _convert_var_to_bytes(&raw_msg, tmp_real, stream_block->spectra->input_counts(), sizeof(real_t));
     _convert_var_to_bytes(&raw_msg, tmp_real, stream_block->spectra->output_counts(), sizeof(real_t));
-    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->spectra->rows(), 4);
+    _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->spectra->size(), 4);
 
     //first get count of how many
-    for(unsigned short i=0; i<stream_block->spectra->rows(); i++)
+    for(unsigned short i=0; i<stream_block->spectra->size(); i++)
     {
 
         real_t spec_val = (*(stream_block->spectra))[i];
@@ -239,7 +239,7 @@ std::string Basic_Serializer::encode_spectra(data_struct::Stream_Block* stream_b
     }
 
     //if we have more than half the spec it doesn't help to to send index/values pairs
-//    if(send_cnt < (stream_block->spectra->rows() / 2))
+//    if(send_cnt < (stream_block->spectra->size() / 2))
 //    {
 
     _convert_var_to_bytes(&raw_msg, tmp_ushort, send_cnt, sizeof(unsigned short));

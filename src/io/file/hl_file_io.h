@@ -110,6 +110,21 @@ struct DLL_EXPORT file_name_fit_params
     bool success;
 };
 
+struct DLL_EXPORT element_weights_struct
+{
+    std::string standard_file_name;
+    std::unordered_map<std::string, real_t> element_standard_weights;
+
+    element_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+    {
+        standard_file_name = standard_file;
+        for(size_t i=0; i<element_names.size(); i++)
+        {
+            element_standard_weights[element_names[i]] = element_weights[i];
+        }
+    }
+};
+
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
@@ -136,13 +151,13 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job);
 
 DLL_EXPORT bool load_element_info(std::string element_henke_filename,
-                       std::string element_csv_filename);
+                                std::string element_csv_filename);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
-                                       std::string dataset_file,
-                                       data_struct::Spectra *integrated_spectra,
-                                       size_t detector_num,
-                                       data_struct::Params_Override * params_override);
+                                                   std::string dataset_file,
+                                                   size_t detector_num,
+                                                   data_struct::Spectra *integrated_spectra,
+                                                   data_struct::Params_Override * params_override);
 
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
                           int detector_num,
@@ -153,12 +168,16 @@ DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
                                   std::string *standard_file_name,
                                   std::unordered_map<std::string, real_t> *element_standard_weights);
 
+
+DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
+                                                 std::string quantification_info_file,
+                                                 vector<element_weights_struct> &standard_element_weights);
+
 DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          std::string dataset_file,
-                         data_struct::Spectra_Volume *spectra_volume,
                          size_t detector_num,
+                         data_struct::Spectra_Volume *spectra_volume,
                          data_struct::Params_Override * params_override,
-                         data_struct::Quantification_Standard * quantification_standard,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 
@@ -170,21 +189,20 @@ DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
                               size_t detector_num_end);
 
 DLL_EXPORT bool save_results(std::string save_loc,
-                  const data_struct::Fit_Count_Dict * const element_counts,
+                  data_struct::Fit_Count_Dict * element_counts,
                   std::queue<std::future<bool> >* job_queue,
                   std::chrono::time_point<std::chrono::system_clock> start);
 
 DLL_EXPORT void save_quantification_plots(data_struct::Analysis_Job* analysis_job,
-                                          data_struct::Quantification_Standard* standard,
+                                          map<string, data_struct::Quantification_Standard*> *standard,
                                           int detector_num);
 
 DLL_EXPORT void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params);
 
-DLL_EXPORT bool save_volume(data_struct::Quantification_Standard * quantification_standard,
-                 data_struct::Spectra_Volume *spectra_volume,
-                 real_t energy_offset,
-                 real_t energy_slope,
-                 real_t energy_quad);
+DLL_EXPORT bool save_volume(data_struct::Spectra_Volume *spectra_volume,
+                             real_t energy_offset,
+                             real_t energy_slope,
+                             real_t energy_quad);
 
 DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files);
 

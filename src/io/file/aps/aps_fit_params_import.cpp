@@ -380,7 +380,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         logit<<"Error: Unknown detector element enumeration : "<<value<<"\n";
                     }
                 }
-                else if (tag == "ELT1")
+                else if (tag == "ELT" || tag == "ELT1" || tag == "ELT2" || tag == "ELT3" || tag == "ELT4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -389,7 +389,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->elt_pv = value;
                 }
-                else if (tag == "ERT1")
+                else if (tag == "ERT" || tag == "ERT1" || tag == "ERT2" || tag == "ERT3" || tag == "ERT4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -398,7 +398,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->ert_pv = value;
                 }
-                else if (tag == "ICR1")
+                else if (tag == "ICR" || tag == "ICR1" || tag == "ICR2" || tag == "ICR3" || tag == "ICR4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -407,7 +407,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->in_cnt_pv = value;
                 }
-                else if (tag == "OCR1")
+                else if (tag == "OCR" || tag == "OCR1" || tag == "OCR2" || tag == "OCR3" || tag == "OCR4")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -607,9 +607,70 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     //params_override->ge_dead_layer = std::stoi(value);
                 }
+                else if (tag == "THETA_PV")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->theta_pv = value;
+                }
+                else if (tag == "SUMMED_SCALER")
+                {
+                    data_struct::Summed_Scaler s_scaler;
+                    s_scaler.normalize_by_time = false;
+                    std::string value;
+                    std::string scaler_name;
+                    std::getline(strstream, value, ':');
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    // split scalers names by ','
+                    s_scaler.scaler_name = value;
+                    std::string last_scaler;
+                    std::getline(strstream, scaler_name, ',');
+                    while(last_scaler != scaler_name)
+                    {
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\n'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
+                        last_scaler = scaler_name;
+                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
+                        s_scaler.scalers_to_sum[scaler_name]= -1;
+                        std::getline(strstream, scaler_name, ',');
+                    }
+                    params_override->summed_scalers.push_back(s_scaler);
+                }
+                else if (tag == "TIME_NORMALIZED_SUMMED_SCALER")
+                {
+                    data_struct::Summed_Scaler s_scaler;
+                    s_scaler.normalize_by_time = true;
+                    std::string value;
+                    std::string scaler_name;
+                    std::getline(strstream, value, ':');
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    // split scalers names by ','
+                    s_scaler.scaler_name = value;
+                    std::string last_scaler;
+                    std::getline(strstream, scaler_name, ',');
+                    while(last_scaler != scaler_name)
+                    {
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\n'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
+                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
+                        last_scaler = scaler_name;
+                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
+                        s_scaler.scalers_to_sum[scaler_name] = -1;
+                        std::getline(strstream, scaler_name, ',');
+                    }
+                    params_override->summed_scalers.push_back(s_scaler);
+                }
                 else
                 {
-                    if (tag.length() > 0 && tag[0] != ' ' && (line.find(":") != std::string::npos))
+                    if (tag.length() > 0 && tag[0] != ' ' && tag[0] != '\t' && (line.find(":") != std::string::npos))
                     {
                         std::string value;
                         std::getline(strstream, value);

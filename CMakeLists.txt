@@ -51,23 +51,34 @@ project(XRF_Maps)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
 IF(MSVC)
-  set(EIGEN3_INCLUDES "" CACHE PATH "Eigen include folder")
   set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
   include_directories(GCC_INCLUDE_DIR)
-  set(EIGEN3_INCLUDES "/usr/include/eigen3" CACHE PATH "Eigen include folder")
 ENDIF()
 
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
 
+set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
+
 option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
 option(DOUBLE_PREC "Double Precision" OFF)
+
+# Opitons for getting YouCompleteMe plugin working with this project
+SET( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+
+IF( EXISTS "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" )
+  EXECUTE_PROCESS( COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+  )
+ENDIF()
+
 
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
@@ -230,6 +241,7 @@ set(libxrf_fit_SOURCE
 set(XRF_IO_HEADERS
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
+        src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
@@ -254,6 +266,7 @@ set(XRF_IO_SOURCE
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp
+    src/io/file/mca_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
     src/io/file/csv_io.cpp

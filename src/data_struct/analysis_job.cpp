@@ -66,6 +66,8 @@ Analysis_Job::Analysis_Job()
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;
     generate_average_h5 = false;
+    add_v9_layout = false;
+    add_exchange_layout = false;
     is_network_source = false;
     stream_over_network = false;
     command_line = "";
@@ -73,6 +75,8 @@ Analysis_Job::Analysis_Job()
     network_source_ip = "";
     theta = 0.f;
 	is_emd = false;
+    network_source_port = "43434";
+    network_stream_port = "43434";
 }
 
 //-----------------------------------------------------------------------------

@@ -109,7 +109,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
                                                                        const Spectra * const spectra,
                                                                        const Fit_Element_Map_Dict * const elements_to_fit)
 {
-	Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor>* result;
+	data_struct::ArrayXr* result;
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
 

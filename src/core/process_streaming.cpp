@@ -83,7 +83,7 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
     {
         if(job->network_source_ip.length() > 0)
         {
-            source = new workflow::xrf::Spectra_Net_Source(job, job->network_source_ip);
+            source = new workflow::xrf::Spectra_Net_Source(job, job->network_source_ip, job->network_source_port);
         }
         else
         {
@@ -98,7 +98,7 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
     //setup output
     if(job->stream_over_network)
     {
-        sink = new workflow::xrf::Spectra_Net_Streamer();
+        sink = new workflow::xrf::Spectra_Net_Streamer(job->network_stream_port);
     }
     else
     {
@@ -118,90 +118,4 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
 }
 
 // ----------------------------------------------------------------------------
-
-struct io::file_name_fit_params* optimize_integrated_fit_params( data_struct::Stream_Block* stream_block )
-{
-    struct io::file_name_fit_params* ret_struct = new struct io::file_name_fit_params();
-
-    fitting::models::Range energy_range;
-    energy_range.min = 0;
-    energy_range.max = ret_struct->spectra.size() -1;
-
-//    fitting::models::Range energy_range = get_energy_range(sub_struct->fit_params_override_dict.min_energy,
-//                                                           sub_struct->fit_params_override_dict.min_energy,
-//                                                           spectra_samples,
-//                                                           sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_OFFSET].value,
-//                                                           sub_struct->fit_params_override_dict.fit_params[STR_ENERGY_SLOPE].value);
-
-
-    fitting::models::Gaussian_Model model;
-    //Fitting routines
-    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-    //TODO:
-////    fit_routine.set_optimizer(optimizer);
-
-    //reset model fit parameters to defaults
-    model.reset_to_default_fit_params();
-    //Update fit parameters by override values
-    //TODO:
-////    model.update_fit_params_values(params_override.fit_params);
-    model.set_fit_params_preset(stream_block->optimize_fit_params_preset);
-    //Initialize the fit routine
-    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
-    //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct->fit_params = fit_routine.fit_spectra_parameters(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
-
-    ret_struct->success = true;
-
-    delete stream_block;
-
-    return ret_struct;
-}
-
-// ----------------------------------------------------------------------------
-
-void save_optimal_params(struct io::file_name_fit_params* f_struct)
-{
-    static bool first = false;
-    if(f_struct->success)
-    {
-        if(first)
-        {
-            //TODO:
-///            fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
-            first = false;
-        }
-        else
-        {
-            //TODO:
-///            fit_params_avgs[f_struct->detector_num].moving_average_with(f_struct->fit_params);
-        }
-        io::save_optimized_fit_params(f_struct);
-    }
-    delete f_struct;
-}
-
-// ----------------------------------------------------------------------------
-
-void run_optimization_stream_pipeline(data_struct::Analysis_Job* job)
-{
-    //TODO: Run only on 8 largest files if no files are specified
-    workflow::xrf::Integrated_Spectra_Source spectra_stream_producer(job);
-    workflow::Distributor<data_struct::Stream_Block*, struct io::file_name_fit_params*> distributor(job->num_threads);
-    workflow::Sink<struct io::file_name_fit_params*> sink;
-    sink.set_function(save_optimal_params);
-
-    distributor.set_function(optimize_integrated_fit_params);
-    sink.connect(&distributor);
-    spectra_stream_producer.connect(&distributor);
-
-
-    sink.start();
-    spectra_stream_producer.run();
-    sink.wait_and_stop();
-    /*
-    io::save_averaged_fit_params(dataset_directory, fit_params_avgs, detector_num_start, detector_num_end);
-    */
-}
-
 // ----------------------------------------------------------------------------

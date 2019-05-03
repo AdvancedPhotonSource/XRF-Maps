@@ -81,7 +81,10 @@ struct DLL_EXPORT Detector
     fitting::models::Base_Model * model;
 
     // Quantification
-    Quantification_Standard quant_standard;
+    std::map<string, Quantification_Standard*> quant_standards;
+
+    //  proc_type   quantifier        element     quant_prop
+    map<int, map<int, unordered_map<string, Element_Quant>>> all_element_quants;
 
     // Fit Parameters Override for model
     Params_Override fit_params_override_dict;
@@ -119,6 +122,10 @@ public:
 
     std::string network_source_ip;
 
+    std::string network_source_port;
+
+    std::string network_stream_port;
+
     float theta;
 
     std::vector<std::string> dataset_files;
@@ -140,6 +147,10 @@ public:
     bool quick_and_dirty;
 
     bool generate_average_h5;
+
+    bool add_v9_layout;
+
+    bool add_exchange_layout;
 
     bool is_network_source;
 

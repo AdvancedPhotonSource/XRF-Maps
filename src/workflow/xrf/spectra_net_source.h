@@ -71,7 +71,7 @@ class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block*>
 
 public:
 
-    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, std::string ip_addr="127.0.0.1");
+    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, std::string ip_addr="127.0.0.1", std::string port = "43434");
 
     ~Spectra_Net_Source();
 

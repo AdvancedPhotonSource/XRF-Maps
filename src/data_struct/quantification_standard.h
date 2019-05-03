@@ -73,12 +73,14 @@ struct Calibration_Curve
 
     Calibration_Curve()
     {
+        quant_id = -1;
         shell_curves.resize(3);
         shell_curves_labels.resize(3);
     }
 
     Calibration_Curve(size_t i)
     {
+        quant_id = -1;
         shell_curves.resize(3);
         shell_curves_labels.resize(3);
         resize(i);
@@ -92,6 +94,7 @@ struct Calibration_Curve
         }
     }
 
+    int quant_id;
     string quantifier_name;
     vector<vector<real_t> > shell_curves;
     vector<vector<std::string> > shell_curves_labels;
@@ -107,17 +110,23 @@ struct Quantifiers
     Quantifiers()
     {
         calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[CURRENT].quantifier_name = "SR_Current";
+        calib_curves[CURRENT].quant_id = CURRENT;
         calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[US_IC].quant_id = US_IC;
         calib_curves[DS_IC].quantifier_name = "DS_IC";
+        calib_curves[DS_IC].quant_id = DS_IC;
     }
 
     Quantifiers(size_t i)
     {
         calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "Current";
+        calib_curves[CURRENT].quantifier_name = "SR_Current";
+        calib_curves[CURRENT].quant_id = CURRENT;
         calib_curves[US_IC].quantifier_name = "US_IC";
+        calib_curves[US_IC].quant_id = US_IC;
         calib_curves[DS_IC].quantifier_name = "DS_IC";
+        calib_curves[DS_IC].quant_id = DS_IC;
         resize(i);
     }
 
@@ -130,9 +139,6 @@ struct Quantifiers
     }
 
     vector<Calibration_Curve> calib_curves;
-    //Calibration_Curve current;
-    //Calibration_Curve us_ic;
-    //Calibration_Curve ds_ic;
 };
 
 //-----------------------------------------------------------------------------
@@ -150,72 +156,57 @@ public:
 
     void append_element(string name, real_t weight);
 
-    const real_t& element_weight(string element_symb) const { return _element_quants.at(element_symb).weight; }
-
-    const unordered_map<string, Element_Quant>& element_weights() const { return _element_quants; }
-
-    void standard_filename(string standard_filename) { _standard_filename = standard_filename; }
-
-    const string& standard_filename() const { return _standard_filename; }
-
-    void element_counts(string, unordered_map<string, real_t> map);
-
-    const unordered_map<string, unordered_map<string, real_t> >& element_counts() const { return _element_counts; }
-
-    void integrated_spectra(const Spectra &spec) {_integrated_spectra = spec; }
-
-    const Spectra& integrated_spectra() const { return _integrated_spectra; }
-
-    const real_t& sr_current() {return _sr_current;}
-
-    void sr_current(real_t val) {_sr_current = val;}
-
-    const real_t& US_IC() {return _US_IC;}
-
-    void US_IC(real_t val) {_US_IC = val;}
-
-    const real_t& DS_IC() {return _DS_IC;}
-
-    void DS_IC(real_t val) {_DS_IC = val;}
-
     bool processed() {return _processed;}
 
-    bool quantifiy(fitting::optimizers::Optimizer * optimizer,
-                   string proc_type_str,
-                   unordered_map<string, real_t>  *element_counts,
-                   real_t incident_energy,
-                   Element_Info* detector_element,
-                   bool airpath,
-                   real_t detector_chip_thickness,
-                   real_t beryllium_window_thickness,
-                   real_t germanium_dead_layer);
+    void init_element_quants(string proc_type_str,
+                             unordered_map<string, real_t>  *e_counts,
+                             quantification::models::Quantification_Model *quantification_model,
+                             int quant_id,
+                             real_t ic_quantifier);
+
+    void generate_calibration_curve(string proc_type_str,  int quant_id, real_t val);
 
     //           proc_type  quantifier
-    unordered_map<string, Quantifiers> calibration_curves;
+    unordered_map<string, Quantifiers> quantifier_map;
+
+    //             element    quant
+    unordered_map<string, Element_Quant> element_quants;
+
+    //          proc_type               Element   Counts
+    unordered_map<string, unordered_map<string, real_t> > element_counts;
+
+    //  proc_type quantifier  name   e_cal_ratio
+    map<string, map<int, map<string, real_t>>> fitted_e_cal_ratio;
+
+    Spectra integrated_spectra;
+
+    std::string standard_filename;
+
+    real_t sr_current;
+    real_t US_IC;
+    real_t DS_IC;
+
+    real_t beryllium_window_thickness;
+    real_t germanium_dead_layer;
+    real_t detector_chip_thickness;
+    real_t incident_energy;
+    bool airpath;
+
+    data_struct::Element_Info* detector_element;
 
 protected:
 
     bool _processed;
 
-    //          element    quant
-    unordered_map<string, Element_Quant> _element_quants;
-
-    //          proc_type               Element   Counts
-    unordered_map<string, unordered_map<string, real_t> >  _element_counts;
-
-    Spectra _integrated_spectra;
-
-    std::string _standard_filename;
-
-    real_t _sr_current;
-    real_t _US_IC;
-    real_t _DS_IC;
-
-
 
 };
 
 //-----------------------------------------------------------------------------
+
+
+
+//-----------------------------------------------------------------------------
+
 
 
 } //namespace data_struct

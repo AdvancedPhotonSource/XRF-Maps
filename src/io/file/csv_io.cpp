@@ -79,7 +79,7 @@ bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::ArrayXr& ene
     {
         file_stream<<"Energy,Spectrum,Fitted,Background"<<"\n";
 
-        for (int i=0; i<energy.rows(); i++)
+        for (int i=0; i<energy.size(); i++)
         {
             file_stream<<energy(i)<<","<<spectra(i)<<","<<spectra_model(i)<<","<<background(i)<<"\n";
         }

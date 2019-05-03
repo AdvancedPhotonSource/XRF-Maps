@@ -235,6 +235,7 @@ data_struct::Fit_Element_Map* gen_element_map(std::string element_symb)
 	else
 	{
 		fit_map = new data_struct::Fit_Element_Map(element_symb, e_info);
+		fit_map->init_energy_ratio_for_detector_element(data_struct::Element_Info_Map::inst()->get_element("Si"));
 	}
 
 	return fit_map;

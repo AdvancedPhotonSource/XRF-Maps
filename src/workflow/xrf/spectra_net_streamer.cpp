@@ -56,7 +56,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::Stream_Block*>()
+Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct::Stream_Block*>()
 {
 #ifdef _BUILD_WITH_ZMQ
     _send_counts = true;
@@ -65,7 +65,7 @@ Spectra_Net_Streamer::Spectra_Net_Streamer() : Sink<data_struct::Stream_Block*>(
 
     _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
 
-	std::string conn_str = "tcp://*:43434";
+    std::string conn_str = "tcp://*:" + port;
 	_context = new zmq::context_t(1);
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
 	_zmq_socket->bind(conn_str);
@@ -119,11 +119,7 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
     {
         logit << "Error sending ZMQ message"<<"\n";
     }
-
-    if(stream_block != nullptr)
-    {
-        delete stream_block;
-    }
+	//delete of stream block is handled in sink class.
 #else
     logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif

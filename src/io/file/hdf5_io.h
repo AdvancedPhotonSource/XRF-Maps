@@ -75,74 +75,6 @@ enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
-enum H5_Order {ROW, COL, SAMPLE, DETECTOR};
-
-struct H5_Layout_Item
-{
-    H5_Layout_Item()
-    {
-        order_size = 0;
-        path = "";
-    }
-
-    void set_order(H5_Order o1)
-    {
-        order[0] = o1;
-        order_size = 1;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order_size = 2;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2, H5_Order o3)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order[2] = o3;
-        order_size = 3;
-    }
-
-    void set_order(H5_Order o1, H5_Order o2, H5_Order o3, H5_Order o4)
-    {
-        order[0] = o1;
-        order[1] = o2;
-        order[2] = o3;
-        order[3] = o4;
-        order_size = 4;
-    }
-
-    int get_order_index(H5_Order o)
-    {
-        for (size_t i=0; i < order_size; i++)
-        {
-            if(order[i] == o)
-                return i;
-        }
-        return -1;
-    }
-
-    std::string path;
-    //index
-    H5_Order order[4];
-    size_t order_size; // min 2 , max 3
-    //size_t index;
-};
-
-struct H5_Spectra_Layout
-{
-    size_t detector_num;
-    H5_Layout_Item spectra;
-    H5_Layout_Item elt;
-    H5_Layout_Item ert;
-    H5_Layout_Item incnt;
-    H5_Layout_Item outcnt;
-};
-
-H5_Spectra_Layout Generate_Layout(H5_SPECTRA_LAYOUTS layout_def, size_t detector_num);
 
 class DLL_EXPORT HDF5_IO
 {
@@ -151,12 +83,6 @@ public:
     static HDF5_IO* inst();
 
     ~HDF5_IO();
-
-    /**
-     * @brief lazy_load : Only load in the meta info, not the actual datasets
-     * @param filename
-     */
-    //void lazy_load();
 
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
 
@@ -183,14 +109,15 @@ public:
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
     bool load_spectra_vol_analyzed_h5(std::string path,
-                                      size_t detector_num,
                                       data_struct::Spectra_Volume* spectra_volume,
                                       int row_idx_start = 0,
                                       int row_idx_end = -1,
                                       int col_idx_start = 0,
                                       int col_idx_end = -1);
 
-    bool load_integrated_spectra_analyzed_h5(std::string path, size_t detector_num, data_struct::Spectra* spectra);
+    bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra* spectra);
+
+    bool load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override *override_values);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
@@ -233,14 +160,13 @@ public:
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
-    bool save_quantification(data_struct::Quantification_Standard * quantification_standard,
-                             size_t row_idx_start=0,
-                             int row_idx_end=-1,
-                             size_t col_idx_start=0,
-                             int col_idx_end=-1);
+    void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
+
+    bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
 
     bool save_scan_scalers(size_t detector_num,
                            struct mda_file *mda_scalers,
+                           data_struct::Spectra_Volume * spectra_volume,
                            data_struct::Params_Override * params_override,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
@@ -255,6 +181,18 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+	// Add links to dataset and set version to 9 so legacy software can load it
+    void add_v9_layout(std::string dataset_directory,
+                       std::string dataset_file,
+                       size_t detector_num_start,
+                       size_t detector_num_end);
+
+	// Add exchange layout to be loadable by external software
+	void add_exchange_layout(std::string dataset_directory,
+							std::string dataset_file,
+							size_t detector_num_start,
+							size_t detector_num_end);
+
     bool end_save_seq();
 
 private:
@@ -267,25 +205,32 @@ private:
 
 	bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
-	bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers);
+    bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
 	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, size_t detector_num, data_struct::Params_Override * params_override, bool hasNetcdf);
+    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
     void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
+	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
+    void _add_v9_layout(std::string dataset_file);
+    void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
+    void _add_extra_pvs(hid_t file_id, std::string group_name);
+
+    bool _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler);
+	void _add_exchange_layout(std::string dataset_file);
+
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
 
-    //bool save_scalar(const hid_t group_id,  mda_scan *mda_scalers)
-
     struct scaler_struct
     {
-        scaler_struct(std::string name, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
+        scaler_struct(std::string name, std::string units, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
         {
              hdf_name = name;
+			 hdf_units = units;
              mda_idx = mda_idx_;
              hdf_idx = hdf_idx_;
              normalize_by_time = normalize_by_time_;
@@ -293,15 +238,12 @@ private:
         int mda_idx;
         int hdf_idx;
         std::string hdf_name;
+		std::string hdf_units;
         bool normalize_by_time;
     };
 
     hid_t _cur_file_id;
     std::string _cur_filename;
-
-    //void _parse_group_info(hid_t h5file, hid_t id);
-    //void _parse_dataset_info(hid_t h5file, hid_t id);
-    //void _parse_attr_info(hid_t h5file, hid_t id);
 
 };
 

@@ -121,7 +121,7 @@ std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incid
 {
     start_z = std::max(start_z, (size_t)1);
     end_z = std::min(end_z, (size_t)92);
-    std::vector<Element_Quant> element_quant_vec( end_z - start_z + 2 );
+    std::vector<Element_Quant> element_quant_vec( end_z - start_z + 1 );
 
     size_t idx = 0;
     for (size_t i=start_z; i <= end_z; i ++)
@@ -226,18 +226,20 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
     ////aux_arr[mm, 0] = self.absorption(thickness, beta, 1239.852/((self.maps_conf.incident_E+0.1)*1000.), shell_factor=shell_factor)
     element_quant.absorption = absorption(thickness, beta, (real_t)1239.852 / ((incident_energy + (real_t)0.1) * (real_t)1000.0), shell_factor);
 
-    beta  = Element_Info_Map::inst()->calc_beta("Be", (real_t)1.848, ev);
-    ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
-    element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (real_t)1239.852 / ev);
+    if(ev > 0)
+    {
+        beta  = Element_Info_Map::inst()->calc_beta("Be", (real_t)1.848, ev);
+        ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
+        element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (real_t)1239.852 / ev);
 
-    beta  = Element_Info_Map::inst()->calc_beta("Ge", (real_t)5.323, ev);
-    ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
-    element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (real_t)1239.852 / ev);
-
+        beta  = Element_Info_Map::inst()->calc_beta("Ge", (real_t)5.323, ev);
+        ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
+        element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (real_t)1239.852 / ev);
+    }
     ////aux_arr[mm, 3] = yieldd
     //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
 
-    if (detector_element->name == "Si" && detector_chip_thickness > 0,0) //  (self.maps_conf.add_long['a'] == 1)
+    if (detector_element->name == "Si" && detector_chip_thickness > 0,0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
         beta  = Element_Info_Map::inst()->calc_beta("Si", (real_t)2.3, ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (real_t)1239.852 / ev);
@@ -248,7 +250,9 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         ////aux_arr[mm, 4] = 0.
         element_quant.transmission_through_Si_detector = 0.0;
     }
-    if( airpath > 0)
+
+
+    if( airpath > 0 && ev > 0)
     {
         //density = 1.0
         real_t density = (real_t)0.00117;
@@ -327,6 +331,31 @@ std::vector<real_t> Quantification_Model::model_calibrationcurve(std::vector<Ele
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+Electron_Shell get_shell_by_name(std::string element_name)
+{
+    int idx = element_name.find_last_of("_") + 1;
+    std::string shell_type =  element_name.substr(idx);
+    if(idx == 0)
+    {
+        return quantification::models::K_SHELL;
+    }
+    else
+    {
+        if(shell_type == "L")
+        {
+            return quantification::models::L_SHELL;
+        }
+        if(shell_type == "M")
+        {
+            return quantification::models::M_SHELL;
+        }
+    }
+
+
+    return quantification::models::K_SHELL;
+}
 
 } //namespace models
 } //namespace quantification

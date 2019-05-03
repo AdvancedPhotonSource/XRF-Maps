@@ -60,10 +60,8 @@ void help()
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<"\n";
     logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<"\n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<"\n";
-//    logit_s<<"--add-exchange : <us:ds:sr> Add exchange group into hdf5 file with normalized data.\n";
-//    logit_s<<"    us = upstream ion chamber\n";
-//    logit_s<<"    ds = downstream ion chamber\n";
-//    logit_s<<"    sr = sr current. "<<"\n";
+    logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. "<<"\n";
+    logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<"\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<"\n";
@@ -79,9 +77,11 @@ void help()
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
     logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
     logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
+#ifdef _BUILD_WITH_ZMQ
     logit_s<<"Network: "<<"\n";
     logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
     logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
+#endif
     logit_s<<"Examples: "<<"\n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
     logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";
@@ -188,12 +188,6 @@ int main(int argc, char *argv[])
         analysis_job.set_optimizer(clp.get_option("--optimizer"));
     }
 
-    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
-    if( clp.option_exists("--add-exchange"))
-    {
-        //TODO:
-    }
-
     //Should we sum up all the detectors and process it as one?
     if( clp.option_exists("--quick-and-dirty"))
     {
@@ -204,6 +198,17 @@ int main(int argc, char *argv[])
     else if(clp.option_exists("--generate-avg-h5"))
     {
         analysis_job.generate_average_h5 = true;
+    }
+
+    if(clp.option_exists("--add-v9layout"))
+    {
+        analysis_job.add_v9_layout = true;
+    }
+
+    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
+    if(clp.option_exists("--add-exchange"))
+    {
+        analysis_job.add_exchange_layout = true;
     }
 
 
@@ -223,11 +228,25 @@ int main(int argc, char *argv[])
     {
         analysis_job.is_network_source = true;
         analysis_job.network_source_ip = clp.get_option("--streamin");
+        int idx = analysis_job.network_source_ip.find(':');
+        if( idx > 0)
+        {
+            analysis_job.network_source_port = analysis_job.network_source_ip.substr(idx+1);
+            analysis_job.network_source_ip = analysis_job.network_source_ip.substr(0, idx);
+        }
     }
 
     if( clp.option_exists("--streamout"))
     {
         analysis_job.stream_over_network = true;
+        std::string out_port = clp.get_option("--streamout");
+        if(out_port.length() > 1)
+        {
+          if(out_port[0] != '-' && out_port[1] != '-')
+          {
+              analysis_job.network_stream_port = out_port;
+          }
+        }
     }
 
 
@@ -278,6 +297,9 @@ int main(int argc, char *argv[])
         {
             dataset_dir += DIR_END_CHAR;
         }
+        //replace / with \ for windows, won't do anything for linux
+        std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
+
         //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
         io::check_and_create_dirs(dataset_dir);
 
@@ -366,7 +388,6 @@ int main(int argc, char *argv[])
     {
         if(optimize_fit_override_params)
         {
-            //run_optimization_stream_pipeline(&analysis_job);
             io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
         }
@@ -386,9 +407,16 @@ int main(int argc, char *argv[])
         }
         else
         {
-            io::populate_netcdf_hdf5_files(dataset_dir);
-            process_dataset_files(&analysis_job);
-            analysis_job.generate_average_h5 = true;
+			if (analysis_job.fitting_routines.size() > 0)
+			{
+				io::populate_netcdf_hdf5_files(dataset_dir);
+				process_dataset_files(&analysis_job);
+				analysis_job.generate_average_h5 = true;
+			}
+			else
+			{
+				logit << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
+			}
         }
 
         //average all detectors to one files
@@ -399,6 +427,26 @@ int main(int argc, char *argv[])
                 io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
             }
         }
+
+        //add v9 layout soft links
+        if(analysis_job.add_v9_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
+
+        //add exchange
+        if(analysis_job.add_exchange_layout)
+        {
+            for(std::string dataset_file : analysis_job.dataset_files)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+            }
+        }
+
     }
     else
     {
