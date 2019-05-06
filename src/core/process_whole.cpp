@@ -427,6 +427,58 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
     }
 }
 
+// ----------------------------------------------------------------------------
+
+void find_quantifier_scalers(data_struct::Params_Override * override_params, unordered_map<string, string> &pv_map, Quantification_Standard* quantification_standard)
+{
+    std::string quant_scalers_names[] = {"US_IC", "DS_IC", "SRCURRENT"};
+    real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
+    real_t scaler_clock = std::stof(override_params->time_scaler_clock);
+    int i =0;
+    for(auto &itr : quant_scalers_names)
+    {
+
+        Summed_Scaler* sscaler = nullptr;
+        for(auto & ssItr : override_params->summed_scalers)
+        {
+            if (ssItr.scaler_name == itr)
+            {
+                sscaler = &(ssItr);
+                break;
+            }
+        }
+        if(sscaler != nullptr)
+        {
+            *(pointer_arr[i]) = 0.0;
+            for (auto &jitr : sscaler->scalers_to_sum)
+            {
+                if(override_params->time_normalized_scalers.count(jitr.first)
+               && pv_map.count(override_params->time_normalized_scalers[jitr.first])
+               && pv_map.count(override_params->time_scaler))
+                {
+                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr.first]]);
+                    real_t det_time = std::stof(pv_map[override_params->time_scaler]);
+                    det_time /= scaler_clock;
+                    val /= det_time;
+                    *(pointer_arr[i]) += val;
+                }
+                else if(override_params->scaler_pvs.count(jitr.first) && pv_map.count(override_params->scaler_pvs[jitr.first]) > 0)
+                {
+                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr.first]]);
+                }
+            }
+        }
+        else if(override_params->time_normalized_scalers.count(itr) && pv_map.count(override_params->time_normalized_scalers.at(itr)))
+        {
+            *(pointer_arr[i]) = std::stof(pv_map[override_params->time_normalized_scalers[itr]]);
+        }
+        else if(override_params->scaler_pvs.count(itr) && pv_map.count(override_params->scaler_pvs.at(itr)))
+        {
+            *(pointer_arr[i]) = std::stof(pv_map[override_params->scaler_pvs[itr]]);
+        }
+        i++;
+    }
+}
 
 // ----------------------------------------------------------------------------
 
@@ -544,34 +596,12 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                         }
                         else
                         {
-                            if(override_params->scaler_pvs.count("US_IC") && pv_map.count(override_params->scaler_pvs.at("US_IC")))
-                            {
-                                quantification_standard->US_IC = std::stof(pv_map[override_params->scaler_pvs["US_IC"]]);
-                            }
-                            if(override_params->scaler_pvs.count("DS_IC") && pv_map.count(override_params->scaler_pvs.at("DS_IC")))
-                            {
-                                quantification_standard->DS_IC = std::stof(pv_map[override_params->scaler_pvs["DS_IC"]]);
-                            }
-                            if(override_params->scaler_pvs.count("SRCURRENT") && pv_map.count(override_params->scaler_pvs.at("SRCURRENT")))
-                            {
-                                quantification_standard->sr_current = std::stof(pv_map[override_params->scaler_pvs["SRCURRENT"]]);
-                            }
+                            find_quantifier_scalers(override_params, pv_map, quantification_standard);
                         }
                     }
                     else
                     {
-                        if(override_params->scaler_pvs.count("US_IC") && pv_map.count(override_params->scaler_pvs.at("US_IC")))
-                        {
-                            quantification_standard->US_IC = std::stof(pv_map[override_params->scaler_pvs["US_IC"]]);
-                        }
-                        if(override_params->scaler_pvs.count("DS_IC") && pv_map.count(override_params->scaler_pvs.at("DS_IC")))
-                        {
-                            quantification_standard->DS_IC = std::stof(pv_map[override_params->scaler_pvs["DS_IC"]]);
-                        }
-                        if(override_params->scaler_pvs.count("SRCURRENT") && pv_map.count(override_params->scaler_pvs.at("SRCURRENT")))
-                        {
-                            quantification_standard->sr_current = std::stof(pv_map[override_params->scaler_pvs["SRCURRENT"]]);
-                        }
+                        find_quantifier_scalers(override_params, pv_map, quantification_standard);
                     }
                 }
                 else

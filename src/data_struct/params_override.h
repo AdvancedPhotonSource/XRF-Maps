@@ -90,6 +90,7 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
+        time_scaler_clock = "1.0";
     }
     Params_Override(string dir, int detector)
     {
@@ -104,6 +105,7 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
+        time_scaler_clock = "1.0";
 
         dataset_directory = dir;
         detector_num = detector;
