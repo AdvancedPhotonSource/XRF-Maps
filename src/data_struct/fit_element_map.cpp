@@ -143,6 +143,8 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
     }
 
     _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );
+    // _center position for peaks/rois is in keV, widths of ROIs is in eV
+    _width /= 2000.0; // divide by 2 and divide by 1000
 
 }
 
