@@ -73,7 +73,7 @@ public:
         _output_callback_func = nullptr;
     }
 
-    ~Source()
+    virtual ~Source()
     {
 
     }
