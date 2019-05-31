@@ -5622,7 +5622,6 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         char ds_ic_carr[255] = "DS_IC";
         real_t real_val = 0.0;
 
-
         count_1d[0] = 3;
         hid_t quant_name_space = H5Screate_simple(1, count_1d, nullptr);
         count_1d[0] = 1;
@@ -5692,21 +5691,27 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
                 H5Dread(cc_ds_ic, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val);
                 H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
 
-				//change /MAPS/channel_units from cts/s to ug/cm2
+                //change /MAPS/channel_units from cts/s to ug/cm2 for the first 3 of 4 in dim[0]
 				if (chan_units > -1)
 				{
 					hid_t unit_type = H5Dget_type(chan_units);
 					hid_t unit_space = H5Dget_space(chan_units);
 					std::string update = "ug/cm2";
 					for (int z = 0; z < 256; z++)
+                    {
 						tmp_char1[z] = 0;
-					H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-					H5Dread(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
-					if (strcmp(tmp_char1, "cts/s") == 0)
-					{
-						update.copy(tmp_char1, 256);
-						H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
-					}
+                    }
+                    update.copy(tmp_char1, 256);
+                    for(int i=0; i < 3; i++)
+                    {
+                        for(int j=0; j < chan_amt; j++)
+                        {
+                            offset_2d[0] = i;
+                            offset_2d[1] = j;
+                            H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+                            H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+                        }
+                    }
 				}
 
             }
@@ -5825,6 +5830,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     H5Tset_size(filetype, 256);
     hid_t memtype = H5Tcopy(H5T_C_S1);
     H5Tset_size(memtype, 255);
+    char tmp_char1[256] = { 0 };
 
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
@@ -5898,13 +5904,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
             logit  << "Warning: Couldn't create soft link for channel_names"<<  "\n";
         }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5L_SAME_LOC, "/MAPS/channel_units", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            logit  << "Warning: Couldn't create soft link for channel_units"<<  "\n";
-        }
-    }
+
     hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
     hid_t chan_space = H5Dget_space(chan_names);
     if(chan_names > -1)
@@ -5914,6 +5914,42 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         quant_dims[2] = chan_size; //num channel names
     }
     hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
+
+    //Channel Units are a 4 x channels so we can't do a hardlink
+    // the 4 are SR_current, US_IC, DS_IC, and cts/s
+    hsize_t unit_dims[2];
+    hsize_t offset_dims[2] = {0,0};
+    unit_dims[0] = 4;
+    unit_dims[1] = quant_dims[2];
+    hid_t units_space = H5Screate_simple(2, &unit_dims[0], &unit_dims[0]);
+    hid_t ch_unit_id = H5Dcreate1(file_id, "/MAPS/channel_units", filetype, units_space, H5P_DEFAULT);
+    if(ch_unit_id > 0)
+    {
+        hsize_t mem_dims[1] = {1};
+        hsize_t count_2d[2] = {1,1};
+        hid_t mem_space = H5Screate_simple(1, &mem_dims[0], &mem_dims[0]);
+
+        std::string str_val = "cts/s";
+        for (int z = 0; z < 256; z++)
+        {
+            tmp_char1[z] = 0;
+        }
+        str_val.copy(tmp_char1, 256);
+        for(int i=0; i < unit_dims[0] ; i++)
+        {
+            for(int j=0; j < unit_dims[1]; j++)
+            {
+                offset_dims[0] = i;
+                offset_dims[1] = j;
+                H5Sselect_hyperslab (units_space, H5S_SELECT_SET, offset_dims, nullptr, count_2d, nullptr);
+                H5Dwrite(ch_unit_id, filetype, mem_space, units_space, H5P_DEFAULT, (void*)&str_val[0]);
+            }
+        }
+    }
+    else
+    {
+        logit << "Warning: Couldn't create /MAPS/channel_units" << "\n";
+    }
 
     if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {

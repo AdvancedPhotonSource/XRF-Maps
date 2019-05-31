@@ -80,7 +80,7 @@ public:
         return *this;
     }
 
-    ~Distributor()
+    virtual ~Distributor()
     {
         delete _thread_pool;
     }

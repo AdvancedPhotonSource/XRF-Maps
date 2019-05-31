@@ -78,14 +78,15 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
     Fit_Parameters fitp = model->fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
+    real_t energy_offset = fitp.value(STR_ENERGY_OFFSET);
+    real_t energy_slope = fitp.value(STR_ENERGY_SLOPE);
     for(const auto& e_itr : *elements_to_fit)
     {
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
         Fit_Element_Map* element = e_itr.second;
-        // note: center position for peaks/rois is in keV, widths of ROIs is in eV
-        left_roi = int(((element->center() - element->width() / 2.0 / 1000.0) - fitp.value(STR_ENERGY_OFFSET)) / fitp.value(STR_ENERGY_SLOPE));
-		right_roi = int(((element->center() + element->width() / 2.0 / 1000.0) - fitp.value(STR_ENERGY_OFFSET)) / fitp.value (STR_ENERGY_SLOPE));
+        left_roi = (unsigned int)( ( (element->center() - element->width()) - energy_offset) / energy_slope);
+        right_roi = (unsigned int)( ( (element->center() + element->width()) - energy_offset) / energy_slope);
 
         if (right_roi >= n_mca_channels)
         {
@@ -95,25 +96,15 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
         {
             left_roi = right_roi - 1;
         }
-        if (left_roi < 0)
-        {
-            left_roi = 1;
-        }
-        if (right_roi < 0)
-        {
-            right_roi = n_mca_channels - 2;
-        }
 
         //element->left_roi = left_roi;
         //element->right_roi = right_roi;
 
-        size_t spec_size = (right_roi + 1) - left_roi;
+        size_t spec_size = (right_roi - left_roi) + 1;
         real_t counts = 0.0;
         counts = spectra->segment(left_roi, spec_size).sum();
 
         counts_dict[e_itr.first] = counts;
-        //(*out_counts_dic)[e_itr.first][row_idx][col_idx] = counts;
-
     }
     return counts_dict;
 }
