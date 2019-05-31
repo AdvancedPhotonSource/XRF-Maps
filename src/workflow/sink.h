@@ -140,6 +140,11 @@ public:
     void sink_function(T_IN val)
     {
         _callback_func(val);
+		// if sink thread is not running we have to delete the stream_block
+		if (_delete_block && _running == false)
+		{
+			delete val;
+		}
     }
 
 protected:

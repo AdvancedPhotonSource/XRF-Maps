@@ -118,4 +118,28 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
 }
 
 // ----------------------------------------------------------------------------
+
+DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job)
+{
+	workflow::Source<data_struct::Stream_Block*> *source;
+	workflow::xrf::Spectra_Net_Streamer sink(job->network_stream_port);
+	sink.set_send_spectra();
+
+	//setup input
+	if (job->quick_and_dirty)
+	{
+		source = new workflow::xrf::Detector_Sum_Spectra_Source(job);
+	}
+	else
+	{
+		source = new workflow::xrf::Spectra_File_Source(job);
+	}
+	
+	source->connect(&sink);
+	source->run();
+
+	delete source;
+}
+
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

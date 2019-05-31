@@ -84,4 +84,6 @@ DLL_EXPORT data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Bl
 
 DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job* job);
 
+DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job);
+
 #endif
