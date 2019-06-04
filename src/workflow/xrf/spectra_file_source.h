@@ -109,6 +109,8 @@ protected:
 
     std::vector<std::string> _netcdf_files;
 
+    std::vector<std::string> _bnp_netcdf_files;
+
     std::vector<std::string> _hdf_files;
 
     std::function <void (size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> _cb_function;

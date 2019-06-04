@@ -51,7 +51,7 @@ project(XRF_Maps)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
 IF(MSVC)
-  set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
+  # set(HDF5_LIBRARIES "" CACHE FILEPATH "HDF5 library")
 ELSE()
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
   include_directories(GCC_INCLUDE_DIR)
