@@ -94,222 +94,8 @@ NetCDF_IO* NetCDF_IO::inst()
 
 //-----------------------------------------------------------------------------
 
-//real_t* NetCDF_IO::_load_file(std::string path, int& ndims, size_t& total)
-//{
-//    std::lock_guard<std::mutex> lock(_mutex);
-
-//    int ncid, varid, retval;
-//    size_t start[] = {0, 0, 0};
-//    size_t count[] = {1, 1, 1};
-//    ptrdiff_t stride[] = {1, 1, 1};
-//    real_t *fbuffer;
-
-
-//    nc_type rh_type;
-//    int rh_ndims;
-//    int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
-//    int rh_natts;
-
-//    size_t dim2size[NC_MAX_VAR_DIMS] = {0};
-
-//    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
-//    {
-//        logit<<"Error: "<< nc_strerror(retval)<<"\n";
-//        return nullptr;
-//    }
-
-
-//    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
-//    {
-//        logit<<"Error: "<< nc_strerror(retval)<<"\n";
-//        nc_close(ncid);
-//        return nullptr;
-//    }
-
-//    if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
-//    {
-//        logit<<"Error: "<< nc_strerror(retval)<<"\n";
-//        nc_close(ncid);
-//        return nullptr;
-//    }
-
-//    ndims = rh_ndims;
-
-//    for (int i=0; i <  rh_ndims; i++)
-//    {
-//        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
-//        {
-//            logit<<"Error: "<< nc_strerror(retval)<<"\n";
-//            nc_close(ncid);
-//            return nullptr;
-//        }
-//        count[i] = dim2size[i];
-//        total *= dim2size[i];
-//    }
-
-//    fbuffer = new real_t[total];
-
-//    if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &fbuffer[0]) ) != 0)
-//    {
-//        delete [] fbuffer;
-//        logit<<"Error: "<< nc_strerror(retval)<<"\n";
-//        nc_close(ncid);
-//        return nullptr;
-//    }
-
-//    if ((retval = nc_close(ncid)))
-//    {
-//        logit<<"Error:  path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
-//        delete [] fbuffer;
-//        return nullptr;
-//    }
-
-//    return fbuffer;
-//}
-
-////-----------------------------------------------------------------------------
-
-//bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
-//{
-
-//    size_t dims[NC_MAX_VAR_DIMS];
-//    int ndims = 0;
-//    size_t fbuffer_size = 1;
-//    real_t *fbuffer = _load_file(path, ndims, fbuffer_size);
-//    size_t fptr = 0;
-
-//    if(fbuffer == nullptr)
-//    {
-//        return false;
-//    }
-//    if(ndims != 3)
-//    {
-//        logit<<"Error: Unsupported netcdf structure. Expecting /array_data to be 3 dimensions. Got "<< ndims <<"\n";
-//        return false;
-//    }
-
-//    size_t header_size = 256;
-//    size_t spectra_size;
-
-//    real_t elapsed_livetime;
-//    real_t elapsed_realtime;
-//    real_t input_counts;
-//    real_t output_counts;
-
-//    if (fbuffer[fptr] != 21930 || fbuffer[fptr+1] != -21931)
-//    {
-//        logit<<"Error: NetCDF header not found! Stopping load : "<<path<<"\n";
-//        delete [] fbuffer;
-//        return false;
-//    }
-
-//    header_size = static_cast<size_t>(fbuffer[2]);
-//    //num_cols = fbuffer[8];  //sum all across the first dim looking at value 8
-//    spectra_size = static_cast<size_t>(fbuffer[20]);
-
-//    fptr += header_size;
-
-//    for(size_t j=0; j<spec_line->size(); j++)
-//    {
-//        (*spec_line)[j].resize(spectra_size); // should be renames to resize
-
-//        if (fbuffer[fptr] == 21930 && fbuffer[fptr+1] == -21931)
-//        {
-//            fptr += header_size;
-//        }
-
-//        if (fbuffer[fptr] != 13260 || fbuffer[fptr+1] != -13261)
-//        {
-//            if(j < spec_line->size() -2)
-//            {
-//                logit<<"Error: NetCDF sub header not found! Stopping load at Col: "<<j<<" path :"<<path<<"\n";
-//                delete [] fbuffer;
-//                return false;
-//            }
-//            //last two may not be filled with data
-//            //TODO: send end of row stream_block down pipeline
-//            delete [] fbuffer;
-//            return true;
-//        }
-
-//        unsigned short i1 = fbuffer[fptr+ELAPSED_LIVETIME_OFFSET+(detector*8)];
-//        unsigned short i2 = fbuffer[fptr+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
-//        unsigned int ii = i1 | i2<<16;
-//        elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-//        if(elapsed_livetime == 0)
-//        {
-//            if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
-//            {
-//                logit<<"Warning: reading in elapsed lifetime for Col:"<<j<<" is 0. Setting it to 1.0. path :"<<path<<"\n";
-//                elapsed_livetime = 1.0;
-//            }
-//        }
-//        (*spec_line)[j].elapsed_livetime(elapsed_livetime);
-
-//        i1 = fbuffer[fptr+ELAPSED_REALTIME_OFFSET+(detector*8)];
-//        i2 = fbuffer[fptr+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
-//        ii = i1 | i2<<16;
-//        elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-//        if(elapsed_realtime == 0)
-//        {
-//            if(j < spec_line->size()-2) // usually the last two are missing which spams the log ouput.
-//            {
-//                logit<<"Warning: reading in elapsed realtime for Col:"<<j<<" is 0. Setting it to 1.0. path :"<<path<<"\n";
-//                elapsed_realtime = 1.0;
-//            }
-//        }
-//        (*spec_line)[j].elapsed_realtime(elapsed_realtime);
-
-
-//        i1 = fbuffer[fptr+INPUT_COUNTS_OFFSET+(detector*8)];
-//        i2 = fbuffer[fptr+INPUT_COUNTS_OFFSET+(detector*8)+1];
-//        ii = i1 | i2<<16;
-//        input_counts = ((float)ii) / elapsed_livetime;
-//        (*spec_line)[j].input_counts(input_counts);
-
-//        i1 = fbuffer[fptr+OUTPUT_COUNTS_OFFSET+(detector*8)];
-//        i2 = fbuffer[fptr+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
-//        ii = i1 | i2<<16;
-//        output_counts = ((float)ii) / elapsed_realtime;
-//        (*spec_line)[j].output_counts(output_counts);
-
-//        // recalculate elapsed lifetime
-//        (*spec_line)[j].recalc_elapsed_livetime();
-
-//        fptr += header_size + (spectra_size * detector);
-
-//        if(fptr >= fbuffer_size)
-//        {
-//            logit<<"Error:  reading fptr :"<<fptr<<" : past total size is "<< fbuffer_size<<"\n";
-//            delete[] fbuffer;
-//            return false;
-//        }
-
-//        for(size_t k=0; k<spectra_size; k++)
-//        {
-//            (*spec_line)[j][k] = fbuffer[fptr+k];
-//        }
-
-//        fptr += spectra_size * (4 - detector);
-
-//        if(fptr >= fbuffer_size)
-//        {
-//            logit<<"Error:  reading fptr :"<<fptr<<" : past total size is "<< fbuffer_size<<"\n";
-//            delete[] fbuffer;
-//            return false;
-//        }
-
-//    }
-
-//    delete [] fbuffer;
-//    return true;
-//}
-
-//-----------------------------------------------------------------------------
-
 bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
 {
-
     std::lock_guard<std::mutex> lock(_mutex);
 
     size_t header_size = 256;
@@ -490,7 +276,6 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         logit<<"Error:  path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
         return false;
     }
-
     return true;
 }
 
@@ -502,7 +287,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
                                                 int row,
                                                 size_t max_rows,
                                                 size_t max_cols,
-												data_struct::IO_Callback_Func_Def callback_fun,
+                                                data_struct::IO_Callback_Func_Def callback_fun,
                                                 void* user_data)
 {
 
@@ -624,7 +409,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             {
                 if(j < max_cols-2) // usually the last two are missing which spams the log ouput.
                 {
-                    logit<<"Error reading in elapsed lifetime for Col:"<<j<<" is 0. Setting it to 1.0"<<"\n";
+                    logit<<"Warning: reading in elapsed lifetime for Col:"<<j<<" is 0. Setting it to 1.0"<<"\n";
                     elapsed_livetime[detector_num] = 1.0;
                 }
             }
@@ -637,7 +422,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             {
                 if(j < max_cols-2) // usually the last two are missing which spams the log ouput.
                 {
-                    logit<<"Error reading in elapsed realtime for Col:"<<j<<" is 0. Setting it to 1.0"<<"\n";
+                    logit<<"Warning: reading in elapsed realtime for Col:"<<j<<" is 0. Setting it to 1.0"<<"\n";
                     elapsed_realtime[detector_num] = 1.0;
                 }
             }
@@ -651,10 +436,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             i2 = data_in[0][0][OUTPUT_COUNTS_OFFSET+(detector_num*8)+1];
             ii = i1 | i2<<16;
             output_counts[detector_num] = ((float)ii) / elapsed_realtime[detector_num];
-        }
 
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
-        {
             data_struct::Spectra * spectra = new data_struct::Spectra(spectra_size);
 
             spectra->elapsed_livetime(elapsed_livetime[detector_num]);
