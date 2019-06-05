@@ -114,6 +114,12 @@ public:
     {
         time_normalized_scalers.clear();
         scaler_pvs.clear();
+        // TODO: fix this: this memeory is used when optimising and is copyed to another data struct
+//		for (auto& itr : elements_to_fit)
+//		{
+//			delete itr.second;
+//		}
+		elements_to_fit.clear();
     }
 
     string dataset_directory;

@@ -83,28 +83,10 @@ Analysis_Job::Analysis_Job()
 
 Analysis_Job::~Analysis_Job()
 {
-
-    for(auto& itr : detectors_meta_data)
-    {
-        Detector *sub = &itr.second;
-        if (sub->model != nullptr)
-        {
-            delete sub->model;
-            sub->model = nullptr;
-        }
-        for(auto &itr2 : sub->fit_routines)
-        {
-            fitting::routines::Base_Fit_Routine *fit_routine = itr2.second;
-            if(fit_routine != nullptr)
-            {
-                delete fit_routine;
-                itr2.second = nullptr;
-            }
-        }
-        sub->fit_routines.clear();
-    }
+	dataset_files.clear();
+	optimize_dataset_files.clear();
+	fitting_routines.clear();
     detectors_meta_data.clear();
-
 }
 
 //-----------------------------------------------------------------------------

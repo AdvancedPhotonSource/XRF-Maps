@@ -224,6 +224,7 @@ bool save_results(std::string save_loc,
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
 
     delete job_queue;
+	element_counts->clear();
     delete element_counts;
 
     return true;
@@ -237,9 +238,6 @@ bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_quad)
 {
     bool retval = io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
-
-    delete spectra_volume;
-
     return retval;
 }
 
@@ -309,7 +307,6 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     {
         delete itr.second;
     }
-
 }
 
 // ----------------------------------------------------------------------------
@@ -906,7 +903,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //load spectra
-    if (false == hasNetcdf && false == hasHdf)
+    if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
     {
         ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override);
         if(ret_val)
@@ -1088,7 +1085,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     else
     {
         /* could not open directory */
-        logit<<"Error: could not open directory "<<dataset_directory<<"\n";
+        logit<<"Error: could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
     }
 
     logit<<"found "<<dataset_files.size()<<"\n";

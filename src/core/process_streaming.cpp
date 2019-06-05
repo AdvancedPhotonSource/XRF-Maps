@@ -109,6 +109,7 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
     source->connect(&distributor);
     sink->connect(&distributor);
 
+
     sink->start();
     source->run();
     sink->wait_and_stop();
@@ -123,7 +124,8 @@ DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job)
 {
 	workflow::Source<data_struct::Stream_Block*> *source;
 	workflow::xrf::Spectra_Net_Streamer sink(job->network_stream_port);
-	sink.set_send_spectra();
+    sink.set_send_counts(false);
+    sink.set_send_spectra(true);
 
 	//setup input
 	if (job->quick_and_dirty)
