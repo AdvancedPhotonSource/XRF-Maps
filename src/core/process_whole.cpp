@@ -114,6 +114,58 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
+// struct io::file_name_fit_params* optimize_integrated_fit_params_preloaded(std::string dataset_directory,
+//                                                                            std::string  dataset_filename,
+//                                                                            size_t detector_num,
+//                                                                            data_struct::Spectra * integrated_spectra,
+//                                                                            data_struct::Params_Override *params_override,
+//                                                                            fitting::models::Fit_Params_Preset optimize_fit_params_preset,
+//                                                                            fitting::optimizers::Optimizer *optimizer)
+//{
+
+//    //return structure
+//    struct io::file_name_fit_params* ret_struct = new struct::io::file_name_fit_params();
+
+//    ret_struct->dataset_dir = dataset_directory;
+//    ret_struct->dataset_filename = dataset_filename;
+//    ret_struct->detector_num = detector_num;
+
+//    fitting::models::Gaussian_Model model;
+
+//    ret_struct->elements_to_fit = params_override->elements_to_fit;
+
+//    ret_struct->spectra = *integrated_spectra;
+
+//    //Range of energy in spectra to fit
+//    fitting::models::Range energy_range = data_struct::get_energy_range(ret_struct->spectra.size(), &(params_override->fit_params));
+
+//    //Fitting routines
+//    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
+//    fit_routine.set_optimizer(optimizer);
+
+//    //reset model fit parameters to defaults
+//    model.reset_to_default_fit_params();
+//    //set fixed/fit preset
+//    model.set_fit_params_preset(optimize_fit_params_preset);
+//    //Update fit parameters by override values
+//    model.update_fit_params_values(&(params_override->fit_params));
+
+
+//    //Initialize the fit routine
+//    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
+//    //Fit the spectra saving the element counts in element_fit_count_dict
+//    ret_struct->fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct->spectra, &ret_struct->elements_to_fit);
+
+//    ret_struct->success = true;
+
+//    delete params_override;
+//    delete integrated_spectra;
+//    return ret_struct;
+
+//}
+
+// ----------------------------------------------------------------------------
+
  struct io::file_name_fit_params* optimize_integrated_fit_params(std::string dataset_directory,
                                                                 std::string  dataset_filename,
                                                                 size_t detector_num,
@@ -220,51 +272,70 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job)
-{
-    bool first = true;
-    std::queue<std::future<struct io::file_name_fit_params*> > job_queue;
-    ThreadPool tp(analysis_job->num_threads);
+//void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job)
+//{
+//    bool first = true;
+//    std::queue<std::future<struct io::file_name_fit_params*> > job_queue;
+//    ThreadPool tp(analysis_job->num_threads);
 
-    std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
-    real_t file_cnt = 0.;
-    for(auto &itr : analysis_job->optimize_dataset_files)
-    {
-        file_cnt += 1.0;
-        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
-        {
-            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params, analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()) );
-        }
-    }
+//    std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
+//    real_t file_cnt = 0.;
+//    for(auto &itr : analysis_job->optimize_dataset_files)
+//    {
+//        file_cnt += 1.0;
+//        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+//        {
+//            data_struct::Params_Override *params_override = new data_struct::Params_Override();
+//            data_struct::Spectra * int_spectra = new Spectra();
+//            //load override parameters
+//            if(false == io::load_override_params(analysis_job->dataset_directory, detector_num, params_override) )
+//            {
+//                if(false == io::load_override_params(analysis_job->dataset_directory, -1, params_override))
+//                {
+//                    logit<<"Error loading maps_fit_parameters_override.txt"<<itr<<" for detector"<<detector_num<<"\n";
+//                    continue;
+//                }
+//            }
 
-    while(!job_queue.empty())
-    {
-        auto ret = std::move(job_queue.front());
-        job_queue.pop();
-        struct io::file_name_fit_params* f_struct = ret.get();
-        if(f_struct->success)
-        {
-            if(first)
-            {
-                fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
-                first = false;
-            }
-            else
-            {
-                fit_params_avgs[f_struct->detector_num].sum_values(f_struct->fit_params);
-            }
-            io::save_optimized_fit_params(f_struct);
-        }
-        delete f_struct;
-    }
-    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
-    {
-        fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
-    }
+//            //load the quantification standard dataset
+//            if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, int_spectra, params_override) )
+//            {
+//                logit<<"Error loading dataset"<<itr<<" for detector"<<detector_num<<"\n";
+//                continue;
+//            }
 
-    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
+//            job_queue.emplace( tp.enqueue(optimize_integrated_fit_params_preloaded, analysis_job->dataset_directory, itr, detector_num, int_spectra, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()) );
+//        }
+//    }
 
-}
+//    while(!job_queue.empty())
+//    {
+//        auto ret = std::move(job_queue.front());
+//        job_queue.pop();
+//        struct io::file_name_fit_params* f_struct = ret.get();
+//        if(f_struct->success)
+//        {
+//            if(first)
+//            {
+//                fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
+//                first = false;
+//            }
+//            else
+//            {
+//                fit_params_avgs[f_struct->detector_num].sum_values(f_struct->fit_params);
+//            }
+//            io::save_optimized_fit_params(f_struct);
+//        }
+//        delete f_struct;
+//    }
+//    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+//    {
+//        fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
+//    }
+
+//    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
+
+//}
 
 
 // ----------------------------------------------------------------------------

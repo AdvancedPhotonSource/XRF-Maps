@@ -903,7 +903,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //load spectra
-    if (false == hasNetcdf && false == hasHdf)
+    if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
     {
         ret_val = mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override);
         if(ret_val)
@@ -1085,7 +1085,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     else
     {
         /* could not open directory */
-        logit<<"Error: could not open directory "<<dataset_directory<<"\n";
+        logit<<"Error: could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
     }
 
     logit<<"found "<<dataset_files.size()<<"\n";

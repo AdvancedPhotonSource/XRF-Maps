@@ -390,6 +390,7 @@ int main(int argc, char *argv[])
         {
             io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
+            //generate_optimal_params_mp(&analysis_job);
         }
 
         if (analysis_job.quantification_standard_filename.length() > 0)

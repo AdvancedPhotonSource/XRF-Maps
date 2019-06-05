@@ -84,6 +84,9 @@ public:
                                         data_struct::IO_Callback_Func_Def callback_fun,
                                         void* user_data);
 
+protected:
+    //real_t* _load_file(std::string path, int& ndims, size_t& total);
+
 private:
 
     NetCDF_IO();
