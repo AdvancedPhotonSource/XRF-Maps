@@ -74,6 +74,47 @@ namespace data_struct
 struct DLL_EXPORT Detector
 {
 
+	Detector()
+	{
+		model = nullptr;
+	}
+
+	~Detector()
+	{
+		if (model != nullptr)
+		{
+			delete model;
+			model = nullptr;
+		}
+		for (auto &itr : fit_routines)
+		{
+			fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
+			if (fit_routine != nullptr)
+			{
+				delete fit_routine;
+			}
+		}
+		fit_routines.clear();
+
+		for (auto &itr : quant_standards)
+		{
+			if (itr.second != nullptr)
+			{
+				delete itr.second;
+			}
+		}
+		quant_standards.clear();
+		for (auto &itr : all_element_quants)
+		{
+			for (auto &itr2 : itr.second)
+			{
+				itr2.second.clear();
+			}
+			itr.second.clear();
+		}
+		all_element_quants.clear();
+	}
+
     // Fitting routines map
     std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
 

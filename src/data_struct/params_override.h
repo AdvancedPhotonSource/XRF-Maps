@@ -114,6 +114,11 @@ public:
     {
         time_normalized_scalers.clear();
         scaler_pvs.clear();
+		for (auto& itr : elements_to_fit)
+		{
+			delete itr.second;
+		}
+		elements_to_fit.clear();
     }
 
     string dataset_directory;

@@ -415,6 +415,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
 
             proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
+			delete spectra_volume;
         }
         //otherwise process each detector separately
         else
@@ -442,6 +443,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
                 analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
                 proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5);
+				delete spectra_volume;
             }
         }
     }
@@ -538,6 +540,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
             for(io::element_weights_struct &standard_itr : standard_element_weights)
             {
                 Quantification_Standard* quantification_standard = new Quantification_Standard();
+				// detecotr_struct descructor will delete this memory
                 detector_struct->quant_standards[standard_itr.standard_file_name] = quantification_standard;
 
                 //Parameters for calibration curve
@@ -704,6 +707,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                 {
                  delete itr3.second;
                 }
+				elements_to_fit.clear();
             }
 
             avg_sr_current /= avg_cnt;

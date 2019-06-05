@@ -224,6 +224,7 @@ bool save_results(std::string save_loc,
     io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
 
     delete job_queue;
+	element_counts->clear();
     delete element_counts;
 
     return true;
@@ -237,9 +238,6 @@ bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_quad)
 {
     bool retval = io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
-
-    delete spectra_volume;
-
     return retval;
 }
 
@@ -309,7 +307,6 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     {
         delete itr.second;
     }
-
 }
 
 // ----------------------------------------------------------------------------

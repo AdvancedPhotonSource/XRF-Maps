@@ -61,22 +61,24 @@ namespace net
 
 Basic_Serializer::Basic_Serializer()
 {
-
+	char *tmp_real = new char[sizeof(real_t)];
+	char *tmp_uint = new char[sizeof(unsigned int)];
+	char *tmp_size_t = new char[sizeof(size_t)];
+	char *tmp_ushort = new char[sizeof(unsigned short)];
 }
 
 Basic_Serializer::~Basic_Serializer()
 {
-
+	delete[] tmp_real;
+	delete[] tmp_uint;
+	delete[] tmp_size_t;
+	delete[] tmp_ushort;
 }
 
 //-----------------------------------------------------------------------------
 
 void Basic_Serializer::_encode_meta(data_struct::Stream_Block* stream_block, std::string& raw_msg)
 {
-    char *tmp_real = new char[sizeof(real_t)];
-    char *tmp_uint = new char[sizeof(unsigned int)];
-    char *tmp_size_t = new char[sizeof(size_t)];
-
     //TODO:
     // add something to tell if 4 or 8 byte real
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->detector_number, sizeof(unsigned int));
@@ -92,9 +94,6 @@ void Basic_Serializer::_encode_meta(data_struct::Stream_Block* stream_block, std
     raw_msg += *stream_block->dataset_directory;
     raw_msg += '\0';
 
-    delete [] tmp_real;
-    delete [] tmp_uint;
-    delete [] tmp_size_t;
 }
 
 //-----------------------------------------------------------------------------
@@ -184,10 +183,6 @@ data_struct::Stream_Block* Basic_Serializer::_decode_meta(char* message, size_t 
 
 void Basic_Serializer::_encode_counts(data_struct::Stream_Block* stream_block, std::string& raw_msg)
 {
-    char *tmp_ushort = new char[sizeof(unsigned short)];
-    char *tmp_uint = new char[sizeof(unsigned int)];
-    char *tmp_real = new char[sizeof(real_t)];
-
     _convert_var_to_bytes(&raw_msg, tmp_uint, stream_block->fitting_blocks.size(), 4);
 
     // iterate through fitting routine
@@ -203,10 +198,6 @@ void Basic_Serializer::_encode_counts(data_struct::Stream_Block* stream_block, s
             _convert_var_to_bytes(&raw_msg, tmp_real, itr2.second, sizeof(real_t));
         }
     }
-
-    delete [] tmp_real;
-    delete [] tmp_ushort;
-    delete [] tmp_uint;
 }
 
 //-----------------------------------------------------------------------------
@@ -284,11 +275,6 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, size_t
 
 void Basic_Serializer::_encode_spectra(data_struct::Stream_Block* stream_block, std::string& raw_msg)
 {
-    char *tmp_real = new char[sizeof(real_t)];
-    char *tmp_ushort = new char[sizeof(unsigned short)];
-    char *tmp_uint = new char[sizeof(unsigned int)];
-    char *tmp_size_t = new char[sizeof(size_t)];
-
     short send_cnt = 0;
 
     std::map<unsigned short, real_t> spec_indx_values;
@@ -326,10 +312,6 @@ void Basic_Serializer::_encode_spectra(data_struct::Stream_Block* stream_block, 
 
 //    }
 
-    delete [] tmp_real;
-    delete [] tmp_ushort;
-    delete [] tmp_uint;
-    delete [] tmp_size_t;
 }
 
 //-----------------------------------------------------------------------------

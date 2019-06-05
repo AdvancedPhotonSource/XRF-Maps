@@ -98,6 +98,12 @@ protected:
     void _decode_counts(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block* out_stream_block);
 
     void _decode_spectra(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block* out_stream_block);
+
+	char *tmp_real;
+	char *tmp_uint;
+	char *tmp_size_t;
+	char *tmp_ushort;
+
 };
 
 }// end namespace net
