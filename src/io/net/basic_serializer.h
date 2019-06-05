@@ -99,10 +99,10 @@ protected:
 
     void _decode_spectra(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block* out_stream_block);
 
-	char *tmp_real;
-	char *tmp_uint;
-	char *tmp_size_t;
-	char *tmp_ushort;
+    char *_tmp_real;
+    char *_tmp_uint;
+    char *_tmp_size_t;
+    char *_tmp_ushort;
 
 };
 
