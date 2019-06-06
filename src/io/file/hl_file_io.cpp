@@ -682,6 +682,7 @@ bool load_spectra_volume(std::string dataset_directory,
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
+		logI << "Loaded spectra volume from h5.\n";
         *is_loaded_from_analyazed_h5 = true;
         io::file::HDF5_IO::inst()->start_save_seq(false);
         return true;
@@ -884,6 +885,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
     if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, false))
     {
+		logI << "Loaded integradted spectra from h5.\n";
         if(params_override != nullptr)
         {
             if(false == io::file::HDF5_IO::inst()->load_quantification_scalers_analyzed_h5(fullpath, params_override))
@@ -898,6 +900,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //try loading confocal dataset
     if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, false))
     {
+		logI << "Loaded spectra volume confocal from h5.\n";
         *integrated_spectra = spectra_volume.integrate();
         return true;
     }
@@ -1083,7 +1086,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     else
     {
         /* could not open directory */
-        logE<<"Could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
+        logW<<"Could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
     }
 
     logI<<"found "<<dataset_files.size()<<"\n";
@@ -1123,7 +1126,7 @@ void check_and_create_dirs(std::string dataset_directory)
     else
     {
         /* could not open directory */
-        logE<<"Could not open directory "<<dataset_directory<<"\n";
+        logW<<"Could not open directory "<<dataset_directory<<"\n";
     }
 
     if (false == found_img_dat)

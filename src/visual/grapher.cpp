@@ -170,16 +170,19 @@ bool contains_shell(quantification::models::Electron_Shell shell_idx, string pro
     for(auto& s_itr: *standards)
     {
         data_struct::Quantification_Standard* quant_standard = s_itr.second;
-        QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
-        e_series->setName(QString::fromStdString(s_itr.first));
-        for(auto& itr : quant_standard->fitted_e_cal_ratio.at(proc_type).at(quant_id))
-        {
-            quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
-            if(shell == shell_idx)
-            {
-                return true;
-            }
-        }
+		if (quant_standard->fitted_e_cal_ratio.size() > 0)
+		{
+			QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
+			e_series->setName(QString::fromStdString(s_itr.first));
+			for (auto& itr : quant_standard->fitted_e_cal_ratio.at(proc_type).at(quant_id))
+			{
+				quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+				if (shell == shell_idx)
+				{
+					return true;
+				}
+			}
+		}
     }
     return false;
 }
