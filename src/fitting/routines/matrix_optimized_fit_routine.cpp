@@ -206,7 +206,7 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
     _energy_range = energy_range;
     _element_models.clear();
-    logI<<"-------- Generating element models ---------"<<"\n";
+    //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
 }

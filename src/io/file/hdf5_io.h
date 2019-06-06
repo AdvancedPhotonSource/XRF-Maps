@@ -193,7 +193,7 @@ public:
 							size_t detector_num_start,
 							size_t detector_num_end);
 
-    bool end_save_seq();
+    bool end_save_seq(bool loginfo=true);
 
 private:
 

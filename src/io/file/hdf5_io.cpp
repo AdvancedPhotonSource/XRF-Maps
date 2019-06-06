@@ -2272,13 +2272,15 @@ bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::end_save_seq()
+bool HDF5_IO::end_save_seq(bool loginfo)
 {
 
     if(_cur_file_id > 0)
     {
-        logI<<"closing file\n";
-        logI<<"=========================================================\n\n";
+		if (loginfo)
+		{
+			logI << "closing file " << _cur_filename << "\n";
+		}
         H5Fflush(_cur_file_id, H5F_SCOPE_LOCAL);
 
         ssize_t obj_cnt = H5Fget_obj_count( _cur_file_id, H5F_OBJ_DATASET | H5F_OBJ_LOCAL );
@@ -5355,7 +5357,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
     for(auto& f_id : hdf5_file_ids)
     {
         _cur_file_id = f_id;
-        end_save_seq();
+        end_save_seq(false);
     }
 
     logI<<"closing file"<<"\n";
