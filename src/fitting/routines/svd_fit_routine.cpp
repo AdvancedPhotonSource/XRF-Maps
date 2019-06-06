@@ -123,7 +123,7 @@ std::unordered_map<std::string, real_t> SVD_Fit_Routine::fit_spectra(const model
     }
 
     Eigen::Matrix<real_t, Eigen::Dynamic, 1> result = svd.solve(rhs);
-    //logit << "SVD Result : "<<"\n"<< result <<"\n";
+    //logI << "SVD Result : "<<"\n"<< result <<"\n";
 
     for(const auto& itr : *elements_to_fit)
     {

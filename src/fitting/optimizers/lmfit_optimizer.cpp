@@ -213,7 +213,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     /* perform the fit */
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
-    logit<< "status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
+    logI<< "Status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
 
     fit_params->from_array(fitp_arr);
 
@@ -273,7 +273,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &control, &status );
 
-    logit<<lm_infmsg[status.outcome]<<"\n";
+    logI<<lm_infmsg[status.outcome]<<"\n";
 
     fit_params->from_array(fitp_arr);
 

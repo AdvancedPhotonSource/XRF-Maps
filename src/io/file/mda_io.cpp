@@ -119,11 +119,11 @@ void MDA_IO::lazy_load()
 
 	if (_mda_file_info == nullptr)
 	{
-        logit << "Error loading mda file:" << _filename<<"\n";
+        logE << "Error loading mda file:" << _filename<<"\n";
 		return;
 	}
 
-    logit<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
+    logD<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
     for(int16_t i = 0; i < _mda_file_info->data_rank; i++)
     {
         logit_s<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
@@ -320,7 +320,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     {
         return false;
     }
-    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
     std::string units;
     if (override_values != nullptr)
@@ -373,7 +373,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
                 {
-                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
+                    logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
                     return false;
                 }
@@ -400,7 +400,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
         if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
         {
-            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
+            logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
             return false;
         }
@@ -418,12 +418,12 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     else
     {
-        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<"\n";
+        logE<<" No support for data rank "<< _mda_file->header->data_rank <<"\n";
         unload();
         return false;
     }
 
-    logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
+    logI<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
 
     try
     {
@@ -529,7 +529,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     catch(std::exception& e)
     {
-        logit<<"!!! Error Caught exception loading mda file."<<"\n";
+        logE<<"Caught exception loading mda file."<<"\n";
         std::cerr << "Exception catched : " << e.what() << "\n";
         return false;
     }
@@ -569,7 +569,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     {
         return false;
     }
-    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
     if(analysis_job->theta_pv.length() > 0)
     {
@@ -599,7 +599,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
                 {
-                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
+                    logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
                     return false;
                 }
@@ -625,7 +625,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
         if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
         {
-            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
+            logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
             return false;
         }
@@ -642,7 +642,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     else
     {
-        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<"\n";
+        logE<<"No support for data rank "<< _mda_file->header->data_rank <<"\n";
         unload();
         return false;
     }
@@ -693,7 +693,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         }
     }
 
-    logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
+    logI<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
 
     try
     {
@@ -804,8 +804,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     catch(std::exception& e)
     {
-        logit<<"!!! Error Caught exception loading mda file."<<"\n";
-        logit << "Exception catched : " << e.what() << "\n";
+        logE << "Exception catched : " << e.what() << "\n";
         return false;
     }
 
@@ -862,7 +861,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
 
     if (header == nullptr)
     {
-        logit<<"Unable to open mda file "<< path <<"\n";
+        logE<<"Unable to open mda file "<< path <<"\n";
         return f_size;
     }
     else if(header->data_rank == 1)
@@ -875,7 +874,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
     }
     else
     {
-        logit<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
+        logW<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
     }
 
     mda_header_unload(header);
@@ -895,7 +894,7 @@ int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
 
     if (header == nullptr)
     {
-        logit<<"Unable to open mda file "<< path <<"\n";
+        logE<<"Unable to open mda file "<< path <<"\n";
         return -1;
     }
     else if(header->data_rank == 1)
@@ -915,7 +914,7 @@ int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
     }
     else
     {
-        logit<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
+        logW<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
     }
     rank = (int)header->data_rank;
 
@@ -934,7 +933,7 @@ bool load_henke_from_xdr(std::string filename)
 
     if (false == fileStream.good())
     {
-        logit<<"Error opening file "<<filename<<"\n";
+        logE<<"Opening file "<<filename<<"\n";
         return false;
     }
 

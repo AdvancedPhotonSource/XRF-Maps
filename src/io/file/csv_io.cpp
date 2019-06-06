@@ -109,13 +109,13 @@ bool load_element_info_from_csv(std::string filename)
             {
                 std::getline(strstream, value, ',');
                 if (value != "1.2")
-                    logit<<"Warning: non expected version. Loader if for 1.2"<<"\n";
+                    logW<<"Non expected version. Loader if for 1.2"<<"\n";
             }*/
             //if( std::stoi(value) > 0)
             if (value[0] >= 48 && value[0] <= 57) // 0 - 9
             {
 
-                //logit<< "value = "<< value<<"\n";
+                //logD<< "value = "<< value<<"\n";
                 Element_Info* element = nullptr;
                 int element_number = std::stoi(value);
                 element = element_map->get_element(element_number);
@@ -133,7 +133,7 @@ bool load_element_info_from_csv(std::string filename)
                     element->number = element_number;
                     element->name = el_name;
                 }
-                //logit<< element->number << " : "<< element->name <<"\n";
+                //logD<< element->number << " : "<< element->name <<"\n";
                 std::getline(strstream, value, ',');
                 element->xrf["ka1"] = std::stof(value);
                 std::getline(strstream, value, ',');

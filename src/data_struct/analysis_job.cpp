@@ -134,7 +134,7 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
                 {
                     //Fitting models
                     fitting::routines::Base_Fit_Routine *fit_routine = detector->fit_routines[proc_type];
-                    logit << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
+                    logI << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
 
                     Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
                     //Initialize model
