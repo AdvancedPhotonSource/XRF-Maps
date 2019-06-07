@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
+            logI<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
         }
     }
 
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
             }
             if (analysis_job.dataset_files.size() == 0)
             {
-                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<"\n";
+                logE<<"No mda files found in dataset directory "<<dataset_dir<<"\n";
                 return -1;
             }
 
@@ -371,15 +371,15 @@ int main(int argc, char *argv[])
         whole_command_line += " " + std::string(argv[ic]);
     }
     analysis_job.command_line = whole_command_line;
-    logit<<"whole command line : "<<whole_command_line<<"\n";
-    logit << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
+    logI<<"whole command line : "<<whole_command_line<<"\n";
+    logI << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
 
     start = std::chrono::system_clock::now();
 
     //load element information
     if(false == io::load_element_info(element_henke_filename, element_csv_filename))
     {
-        logit<<"Error loading element information: "<<"\n";
+        logE<<"loading element information: "<<"\n";
         return -1;
     }
 
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				logit << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
+				logW << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
 			}
         }
 
@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 
 		if (!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout)
 		{
-			logit << "Error initializing analysis job" << "\n";
+			logE << "initializing analysis job" << "\n";
 		}
     }
 
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    logit << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
+    logI << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
 
 
     return 0;

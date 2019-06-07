@@ -190,10 +190,10 @@ bool APS_Fit_Params_Import::load(std::string path,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
-                //logit<<"tag : "<<tag<<"\n";
+                //logD<<"tag : "<<tag<<"\n";
                 if (tag == "VERSION" || tag == "DATE")
                 {
-                    //logit << line << "\n";
+                    //logD << line << "\n";
                 }
                 else if (tag == "DETECTOR_ELEMENTS")
                 {
@@ -209,12 +209,12 @@ bool APS_Fit_Params_Import::load(std::string path,
                         // check if element_symb contains '_'
                         std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
 
-                        //logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
+                        //logD<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
                         Element_Info* e_info = element_info_map->get_element(base_element_symb);
                         if(e_info == nullptr)
                         {
-                            logit<<"Can not find element "<<base_element_symb<<"\n";
+                            logW<<"Can not find element "<<base_element_symb<<"\n";
                         }
                         else
                         {
@@ -239,7 +239,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     while(std::getline(strstream, element_symb, ','))
                     {
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        logit<<"Element with pileup : "<<element_symb<<"\n";
+                        logI<<"Element with pileup : "<<element_symb<<"\n";
                         //Element_Param* element_param = new Element_Param();
                         //element_param->name = element_symb;
                         //params_override->fit_params.append_element(element_param);
@@ -377,7 +377,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                     }
                     else
                     {
-                        logit<<"Error: Unknown detector element enumeration : "<<value<<"\n";
+                        logE<<"Unknown detector element enumeration : "<<value<<"\n";
                     }
                 }
                 else if (tag == "ELT" || tag == "ELT1" || tag == "ELT2" || tag == "ELT3" || tag == "ELT4")
@@ -713,7 +713,7 @@ bool APS_Fit_Params_Import::save(std::string path,
     std::string save_path = path+std::to_string(detector_num);
     std::ofstream out_stream(save_path);
 
-    logit<<save_path<<"\n";
+    logI<<save_path<<"\n";
 
     std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
     std::time_t tt;
@@ -795,7 +795,7 @@ bool APS_Fit_Params_Import::save(std::string path,
 
     }
 
-    logit<<"Error: APS_Fit_Params_Import::save() : couldn't opening file "<<path<<"\n";
+    logE<<"Couldn't opening file "<<path<<"\n";
     return false;
 }
 

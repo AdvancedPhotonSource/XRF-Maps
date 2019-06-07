@@ -100,7 +100,7 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
     if(_element_info == nullptr)
     {
         //Don't log because we can have non elements such as Compton that doesn't have element properties
-        //logit<<"ERROR: Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
+        //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
     int idx = _full_name.find_last_of("_") + 1;
@@ -155,7 +155,7 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
     if(_element_info == nullptr)
     {
         //Don't log because we can have non elements such as Compton that doesn't have element properties
-        //logit<<"ERROR: Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
+        //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
 
@@ -227,12 +227,12 @@ data_struct::Fit_Element_Map* gen_element_map(std::string element_symb)
 	// check if element_symb contains '_'
 	std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
 
-	//logit<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
+	//logI<<element_symb<<" : "<<base_element_symb<<"\n";
 
 	data_struct::Element_Info* e_info = element_info_map->get_element(base_element_symb);
 	if (e_info == nullptr)
 	{
-		logit << "Can not find element " << base_element_symb << "\n";
+		logW << "Can not find element " << base_element_symb << "\n";
 	}
 	else
 	{

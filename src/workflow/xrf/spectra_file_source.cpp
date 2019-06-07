@@ -146,7 +146,7 @@ void Spectra_File_Source::run()
 {
     if(_analysis_job == nullptr)
     {
-        logit<<"Class was not constructed with Analysis job. Don't know what to run?\n";
+        logE<<"Class was not constructed with Analysis job. Don't know what to run?\n";
         return;
     }
 
@@ -161,7 +161,7 @@ void Spectra_File_Source::run()
 			// load emd dataset
 			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function, nullptr))
 			{
-				logit << "Skipping dataset_file " << dataset_file << "\n";
+				logW << "Skipping dataset_file " << dataset_file << "\n";
 				continue;
 			}
 		}
@@ -170,7 +170,7 @@ void Spectra_File_Source::run()
 			//load xfm dataset
 			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function))
 			{
-				logit << "Skipping dataset_file " << dataset_file << "\n";
+				logW << "Skipping dataset_file " << dataset_file << "\n";
 				continue;
 			}
 		}
@@ -190,7 +190,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
-    logit<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
+    logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -253,7 +253,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                                                         callback_fun,
                                                         nullptr) )
     {
-        logit<<"Error load spectra "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
+        logE<<"load spectra "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
         delete _current_dataset_directory;
         delete _current_dataset_name;
         return false;
@@ -273,13 +273,13 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                 {
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
-                    //logit<<"Loading file "<<full_filename<<"\n";
+                    //logI<<"Loading file "<<full_filename<<"\n";
                     io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
+                logE<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
@@ -308,7 +308,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
             }
             else
             {
-                logit<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
+                logE<<"Did not find netcdf files "<<dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc"<<"\n";
                 //return false;
             }
         }
@@ -321,7 +321,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
 
     //move to stream_block so saver can deal with it
     mda_io.unload();
-    logit<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
+    logI<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
     return true;
 }
 

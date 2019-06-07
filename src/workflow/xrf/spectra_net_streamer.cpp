@@ -69,7 +69,7 @@ Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct:
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
 	_zmq_socket->bind(conn_str);
 #else
-    logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
+    logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
 }
 
@@ -108,7 +108,7 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
         zmq::message_t message(data.c_str(), data.length());
         if (false == _zmq_socket->send(message, 0))
         {
-            logit << "Error sending ZMQ counts and spectra message"<<"\n";
+            logE << "sending ZMQ counts and spectra message"<<"\n";
         }
     }
     else
@@ -121,7 +121,7 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
             zmq::message_t message(data.c_str(), data.length());
             if (false == _zmq_socket->send(message, 0))
             {
-                logit << "Error sending ZMQ counts message"<<"\n";
+                logE << "sending ZMQ counts message"<<"\n";
             }
         }
         if(_send_spectra)
@@ -132,12 +132,12 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
             zmq::message_t message(data.c_str(), data.length());
             if (false == _zmq_socket->send(message, 0))
             {
-                logit << "Error sending ZMQ spectra message"<<"\n";
+                logE << "sending ZMQ spectra message"<<"\n";
             }
         }
     }
 #else
-    logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
+    logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
 }
 

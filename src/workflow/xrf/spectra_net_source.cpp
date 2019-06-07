@@ -61,14 +61,14 @@ Spectra_Net_Source::Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, 
     _analysis_job = analysis_job;
 #ifdef _BUILD_WITH_ZMQ
     _conn_str = "tcp://"+ip_addr+":"+port;
-    logit<<"Connecting to "<<_conn_str<<"\n";
+    logI<<"Connecting to "<<_conn_str<<"\n";
 	_context = new zmq::context_t(1);
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_SUB);
     _zmq_socket->connect(_conn_str);
     _zmq_socket->setsockopt(ZMQ_SUBSCRIBE, "XRF-Spectra", 11);
     //_zmq_socket->setsockopt(ZMQ_RCVTIMEO, 1000); //set timeout to 1000ms
 #else
-    logit<<"Spectra_Net_Source needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
+    logE<<"Spectra_Net_Source needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
 
 }

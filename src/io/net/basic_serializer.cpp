@@ -350,7 +350,7 @@ void Basic_Serializer::_decode_spectra(char* message, size_t message_len, size_t
     idx += 4;
     if(spectra_size < 1)
     {
-        logit<<"Error: spectra_size < 1!\n";
+        logE<<"spectra_size < 1!\n";
         return;
     }
     out_stream_block->spectra = new data_struct::Spectra(spectra_size);

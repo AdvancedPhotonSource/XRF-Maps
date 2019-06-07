@@ -189,7 +189,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     {
         if(false == io::load_override_params(dataset_directory, -1, &params_override))
         {
-            logit<<"Error loading maps_fit_parameters_override.txt"<<dataset_filename<<" for detector"<<detector_num<<"\n";
+            logE<<"Loading maps_fit_parameters_override.txt"<<dataset_filename<<" for detector"<<detector_num<<"\n";
             ret_struct->success = false;
             return ret_struct;
         }
@@ -200,7 +200,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
     //load the quantification standard dataset
     if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, detector_num, &ret_struct->spectra, &params_override) )
     {
-        logit<<"Error in optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
+        logE<<"In optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
         ret_struct->success = false;
         return ret_struct;
     }
@@ -292,7 +292,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 //            {
 //                if(false == io::load_override_params(analysis_job->dataset_directory, -1, params_override))
 //                {
-//                    logit<<"Error loading maps_fit_parameters_override.txt"<<itr<<" for detector"<<detector_num<<"\n";
+//                    logE<<"loading maps_fit_parameters_override.txt"<<itr<<" for detector"<<detector_num<<"\n";
 //                    continue;
 //                }
 //            }
@@ -300,7 +300,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 //            //load the quantification standard dataset
 //            if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, int_spectra, params_override) )
 //            {
-//                logit<<"Error loading dataset"<<itr<<" for detector"<<detector_num<<"\n";
+//                logE<<"loading dataset"<<itr<<" for detector"<<detector_num<<"\n";
 //                continue;
 //            }
 
@@ -356,12 +356,12 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
     {
         fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
-        logit << "Processing  "<< fit_routine->get_name()<<"\n";
+        logI << "Processing  "<< fit_routine->get_name()<<"\n";
 
         start = std::chrono::system_clock::now();
         if (override_params->elements_to_fit.size() < 1)
         {
-            logit<<"Error, no elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<"\n";
+            logE<<"No elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<"\n";
             continue;
         }
 
@@ -375,7 +375,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         {
             for(size_t j=0; j<spectra_volume->cols(); j++)
             {
-                //logit<< i<<" "<<j<<"\n";
+                //logD<< i<<" "<<j<<"\n";
                 fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector_struct->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
             }
         }
@@ -439,7 +439,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             bool is_loaded_from_analyzed_h5;
             if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true) )
             {
-                logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
+                logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                 delete spectra_volume;
                 delete tmp_spectra_volume;
                 return;
@@ -451,7 +451,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
                 {
-                    logit<<"Error loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
+                    logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                     delete spectra_volume;
                     delete tmp_spectra_volume;
                     return;
@@ -507,7 +507,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                 //load spectra volume
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )
                 {
-                    logit<<"Skipping detector "<<detector_num<<"\n";
+                    logW<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
                     continue;
                 }
@@ -584,7 +584,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    logit << "Perform_quantification()"<<"\n";
+    logI << "Perform_quantification()"<<"\n";
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
@@ -672,7 +672,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                                 quantification_standard->standard_filename = standard_itr.standard_file_name;
                                 if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params) )
                                 {
-                                    logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
+                                    logE<<"Could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
                                     continue;
                                 }
                                 else
@@ -684,7 +684,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                             }
                             else
                             {
-                                logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
+                                logE<<"Could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
                                 continue;
                             }
                         }
@@ -702,7 +702,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                 {
                     if(false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params) )
                     {
-                        logit<<"Error perform_quantification() : could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
+                        logE<<"Could not load file "<< standard_itr.standard_file_name <<" for detector"<<detector_num<<"\n";
                         continue;
                     }
                     else
@@ -714,7 +714,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                 }
                 if(quantification_standard->integrated_spectra.size() == 0)
                 {
-                    logit<<"Error: Spectra size == 0! Can't process it!\n";
+                    logE<<"Spectra size == 0! Can't process it!\n";
                     continue;
                 }
 
@@ -818,7 +818,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     }
     else
     {
-        logit<<"Error loading quantification standard "<<analysis_job->quantification_standard_filename<<"\n";
+        logE<<"Loading quantification standard "<<analysis_job->quantification_standard_filename<<"\n";
         return false;
     }
 
@@ -830,7 +830,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
-    logit << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+    logI << "quantification elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
     return true;
 
