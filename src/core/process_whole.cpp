@@ -580,7 +580,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     io::file::MCA_IO mca_io;
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
-
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
@@ -631,6 +630,10 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                 if (override_params->det_chip_thickness.length() > 0)
                 {
                     quantification_standard->detector_chip_thickness = (std::stof(override_params->det_chip_thickness));
+                }
+                if (override_params->airpath.length() > 0)
+                {
+                    quantification_standard->airpath = (std::stof(override_params->airpath));
                 }
                 if(override_params->fit_params.contains(STR_COHERENT_SCT_ENERGY))
                 {

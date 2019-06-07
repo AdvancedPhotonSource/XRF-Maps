@@ -115,6 +115,8 @@ public:
 
     real_t calc_beta(std::string element_name, real_t density, real_t energy);
 
+    real_t calc_compound_beta(std::string compound_name, real_t density, real_t energy);
+
     Element_Info* get_element(int element_number);
 
     Element_Info* get_element(std::string element_name);
