@@ -167,28 +167,48 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 {
     real_t tmp_val;
     std::string units;
-    if (override_values->scaler_pvs.count(scaler_name) > 0)
-    {
-        find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units);
-        *store_loc = (tmp_val);
-        return true;
-    }
-    else
-    {
-        if(isFlyScan)
-        {
-            real_t time_scaler_val = 1.0;
-            real_t time_scaler_clock = 1.0;
-            bool found_time = false;
-            if(override_values->time_scaler_clock.length() > 0)
-            {
-                time_scaler_clock = std::stod(override_values->time_scaler_clock);
-            }
-            if(find_scaler_index(_mda_file, override_values->time_scaler, time_scaler_val, units) > -1)
-            {
-                found_time = true;
-            }
 
+    if(isFlyScan)
+    {
+        real_t time_scaler_val = 1.0;
+        real_t time_scaler_clock = 1.0;
+        bool found_time = false;
+        if(override_values->time_scaler_clock.length() > 0)
+        {
+            time_scaler_clock = std::stod(override_values->time_scaler_clock);
+        }
+        if(find_scaler_index(_mda_file, override_values->time_scaler, time_scaler_val, units) > -1)
+        {
+            found_time = true;
+        }
+
+        if(override_values->time_normalized_scalers.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(scaler_name), tmp_val, units) > -1 && found_time == true)
+            {
+                tmp_val /= (time_scaler_val / time_scaler_clock);
+                *store_loc = tmp_val;
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find time normalized scaler "<<scaler_name<<"\n";
+            }
+        }
+        else if (override_values->scaler_pvs.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units) > -1)
+            {
+                *store_loc = (tmp_val);
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find scaler "<<scaler_name<<"\n";
+            }
+        }
+        else
+        {
             for(auto& itr: override_values->summed_scalers)
             {
                 if(itr.scaler_name == scaler_name && itr.normalize_by_time)
@@ -199,38 +219,16 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
                     {
                         tmp_val = 0;
 
-                        if(itr.normalize_by_time && found_time)
+                        if(itr.normalize_by_time && found_time == true)
                         {
-                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2.first), tmp_val, units) == -1)
-                            {
-                                tmp_val = 0;
-                            }
-                            else
+                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2.first), tmp_val, units) > -1)
                             {
                                 tmp_val /= (time_scaler_val / time_scaler_clock);
                             }
-                        }
-                        val+=tmp_val;
-                    }
-                    *store_loc = val;
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            for(auto& itr: override_values->summed_scalers)
-            {
-                if(itr.scaler_name == scaler_name && itr.normalize_by_time == false)
-                {
-                    real_t val = 0;
-                    for(auto& itr2 : itr.scalers_to_sum)
-                    {
-                        tmp_val = 0;
-
-                        if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2.first), tmp_val, units) == -1)
-                        {
-                            tmp_val = 0;
+                            else
+                            {
+                                logW<<"Could not find time normalized summed scaler "<<scaler_name<<"\n";
+                            }
                         }
                         val+=tmp_val;
                     }
@@ -240,6 +238,42 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
             }
         }
     }
+    else
+    {
+        if (override_values->scaler_pvs.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units) > -1)
+            {
+                *store_loc = (tmp_val);
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find scaler "<<scaler_name<<"\n";
+            }
+        }
+
+        for(auto& itr: override_values->summed_scalers)
+        {
+            if(itr.scaler_name == scaler_name && itr.normalize_by_time == false)
+            {
+                real_t val = 0;
+                for(auto& itr2 : itr.scalers_to_sum)
+                {
+                    tmp_val = 0;
+
+                    if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2.first), tmp_val, units) == -1)
+                    {
+                        tmp_val = 0;
+                    }
+                    val+=tmp_val;
+                }
+                *store_loc = val;
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

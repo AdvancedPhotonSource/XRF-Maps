@@ -650,7 +650,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
                 unordered_map<string, string> pv_map;
                 //load the quantification standard dataset
-                int fn_str_len = quantification_standard->standard_filename.length();
+                size_t fn_str_len = quantification_standard->standard_filename.length();
                 if(fn_str_len > 5 &&
                    quantification_standard->standard_filename[fn_str_len - 4] == '.' &&
                    quantification_standard->standard_filename[fn_str_len - 3] == 'm' &&
@@ -665,7 +665,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                         {
 
                             //legacy code would load mca files, check for mca and replace with mda
-                            int std_str_len = standard_itr.standard_file_name.length();
+                            size_t std_str_len = standard_itr.standard_file_name.length();
                             if(standard_itr.standard_file_name[std_str_len - 4] == '.' && standard_itr.standard_file_name[std_str_len - 3] == 'm' && standard_itr.standard_file_name[std_str_len - 2] == 'c' && standard_itr.standard_file_name[std_str_len - 1] == 'a')
                             {
                                 standard_itr.standard_file_name[std_str_len - 2] = 'd';
@@ -806,6 +806,15 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                     optimizer->minimize_quantification(&fit_params, &detector_struct->all_element_quants[itr.first][quant_itr.first], &quantification_model);
                     real_t val = fit_params["quantifier"].value;
 
+                    if(std::isinf(val))
+                    {
+                        logW<<"Quantifier Value = Inf. setting it to 0.\n";
+                        val = 0;
+                    }
+                    else
+                    {
+                        logI<<"Quantifier Value = "<<val<<"\n";
+                    }
                     for(auto &dq_itr: detector_struct->quant_standards)
                     {
                         dq_itr.second->generate_calibration_curve(fit_routine->get_name(), quant_itr.first, val);
