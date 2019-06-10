@@ -2021,7 +2021,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
     std::chrono::duration<double> elapsed_seconds = end-start;
     //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
-    logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+    logI << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
     return true;
 }

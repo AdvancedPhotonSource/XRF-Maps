@@ -189,7 +189,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    config.maxiter = 200;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -565,7 +565,7 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    mp_config.maxiter = 1000;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.

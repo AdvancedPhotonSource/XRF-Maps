@@ -140,6 +140,7 @@ public:
     string be_window_thickness;
     string det_chip_thickness;
     string ge_dead_layer;
+    string airpath;
 
     string elt_pv;
     string ert_pv;

@@ -515,6 +515,15 @@ bool APS_Fit_Params_Import::load(std::string path,
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->ge_dead_layer = value;
                 }
+                else if (tag == "AIRPATH")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->airpath = value;
+                }
                 else if (tag == "SI_ESCAPE_ENABLE")
                 {
                     std::string value;

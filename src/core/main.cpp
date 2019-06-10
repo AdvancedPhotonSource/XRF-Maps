@@ -386,6 +386,7 @@ int main(int argc, char *argv[])
     // init our job and run
     if(io::init_analysis_job_detectors(&analysis_job))
     {
+        io::populate_netcdf_hdf5_files(dataset_dir);
         if(optimize_fit_override_params)
         {
             io::populate_netcdf_hdf5_files(dataset_dir);
@@ -419,7 +420,6 @@ int main(int argc, char *argv[])
         {
 			if (analysis_job.fitting_routines.size() > 0)
 			{
-				io::populate_netcdf_hdf5_files(dataset_dir);
 				process_dataset_files(&analysis_job);
 				analysis_job.generate_average_h5 = true;
 			}
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    logI << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
+    logI << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n"<<std::endl; //endl will flush the print.
 
 
     return 0;

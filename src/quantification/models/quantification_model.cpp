@@ -262,7 +262,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         beta = Element_Info_Map::inst()->calc_beta("air", density, ev);
         ////aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  // airpath is read in microns, transmission function expects nm
         // airpath is read in microns, transmission function expects nm
-        element_quant.transmission_through_Si_detector = transmission( airpath * (real_t)1000.0, beta, (real_t)1239.852 / ev);
+        element_quant.transmission_through_air = transmission( airpath * (real_t)1000.0, beta, (real_t)1239.852 / ev);
     }
     else
     {

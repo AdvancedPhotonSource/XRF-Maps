@@ -67,7 +67,7 @@ Quantification_Standard::Quantification_Standard()
     germanium_dead_layer = 0.0; //350.0
     detector_chip_thickness = 0.0;
     incident_energy = 10.0;
-    airpath = false;
+    airpath = 0.0;
     sr_current = 1.0;
     US_IC = 1.0;
     DS_IC = 1.0;

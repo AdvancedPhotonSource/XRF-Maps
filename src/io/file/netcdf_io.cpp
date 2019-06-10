@@ -94,7 +94,7 @@ NetCDF_IO* NetCDF_IO::inst()
 
 //-----------------------------------------------------------------------------
 
-bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
+size_t NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -120,7 +120,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
     {
         logE<<path<<" :: "<< nc_strerror(retval)<<"\n";
-        return false;
+        return 0;
     }
 
 
@@ -128,14 +128,14 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
         nc_close(ncid);
-        return false;
+        return 0;
     }
 
     if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
         nc_close(ncid);
-        return false;
+        return 0;
     }
 
     for (int i=0; i <  rh_ndims; i++)
@@ -144,7 +144,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             logE<< path << " :: " << nc_strerror(retval)<<"\n";
             nc_close(ncid);
-            return false;
+            return 0;
         }
     }
 
@@ -152,14 +152,14 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
         nc_close(ncid);
-        return false;
+        return 0;
     }
 
     if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
     {
         logE<<"NetCDF header not found! Stopping load : "<<path<<"\n";
         nc_close(ncid);
-        return false;
+        return 0;
     }
 
     header_size = data_in[0][0][2];
@@ -174,8 +174,9 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     */
     start[2] += header_size;
     count[2] = header_size;
+    size_t j=0;
 
-    for(size_t j=0; j<spec_line->size(); j++)
+    for(; j<spec_line->size(); j++)
     {
         (*spec_line)[j].resize(spectra_size); // should be renames to resize
 
@@ -184,7 +185,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             logE<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
-            return false;
+            return j;
         }
 
         if (data_in[0][0][0] != 13260 || data_in[0][0][1] != -13261)
@@ -193,12 +194,12 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
             {
                 logE<<"NetCDF sub header not found! Stopping load at Col: "<<j<<" path :"<<path<<"\n";
                 nc_close(ncid);
-                return false;
+                return j;
             }
             //last two may not be filled with data
             //TODO: send end of row stream_block down pipeline
             nc_close(ncid);
-            return true;
+            return j;
         }
 
         unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector*8)];
@@ -252,7 +253,7 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
         {
             logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
-            return false;
+            return j;
         }
 
         for(size_t k=0; k<spectra_size; k++)
@@ -274,9 +275,9 @@ bool NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct
     if ((retval = nc_close(ncid)))
     {
         logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
-        return false;
+        return j;
     }
-    return true;
+    return j;
 }
 
 //-----------------------------------------------------------------------------
