@@ -354,7 +354,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     {
         return false;
     }
-    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
     std::string units;
     if (override_values != nullptr)
@@ -385,7 +385,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     if (_mda_file->header->data_rank == 2)
     {
-        logit_s<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
+        logI<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
                   " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
         if(hasNetCDF)

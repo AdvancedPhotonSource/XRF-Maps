@@ -258,7 +258,7 @@ real_t Element_Info::calc_beta(real_t density_val, real_t energy)
     }
     if(false == found_indexes)
     {
-        logW<<"Could not find energy index! Defaulting to 0\n";
+        logW<<"Could not find energy index for element "<< name <<"! Defaulting to 0\n";
         return beta;
     }
 

@@ -949,12 +949,10 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                         //logI<<"Loading file "<<full_filename<<"\n";
-                        if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
+                        size_t num_loaded = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line);
+                        for(size_t k=0; k<num_loaded; k++)
                         {
-                            for(size_t k=0; k<spectra_line.size(); k++)
-                            {
-                                integrated_spectra->add(spectra_line[k]);
-                            }
+                            integrated_spectra->add(spectra_line[k]);
                         }
                     }
                 }
@@ -984,12 +982,10 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
                         data_struct::Spectra_Line spectra_line;
                         spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
-                        if( io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line) )
+                        size_t num_loaded = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &spectra_line);
+                        for(size_t k=0; k<num_loaded; k++)
                         {
-                            for(size_t k=0; k<spectra_line.size(); k++)
-                            {
-                                integrated_spectra->add(spectra_line[k]);
-                            }
+                            integrated_spectra->add(spectra_line[k]);
                         }
                     }
                 }
