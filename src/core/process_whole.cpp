@@ -784,9 +784,39 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 				elements_to_fit.clear();
             }
 
-            avg_sr_current /= avg_cnt;
-            avg_US_IC /= avg_cnt;
-            avg_DS_IC /= avg_cnt;
+            if( avg_sr_current == 0 && avg_US_IC == 0 && avg_DS_IC ==0 )
+            {
+                logE<<"Could not find SR_Current, US_IC, and DS_IC. Not going to perform quantification\n";
+                return false;
+            }
+
+            if( avg_sr_current == 0 )
+            {
+                logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+                avg_sr_current = 1.0;
+            }
+            else
+            {
+                avg_sr_current /= avg_cnt;
+            }
+            if( avg_US_IC == 0 )
+            {
+                logW"US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+                avg_US_IC = 1.0;
+            }
+            else
+            {
+                avg_US_IC /= avg_cnt;
+            }
+            if( avg_DS_IC == 0 )
+            {
+                logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+                avg_DS_IC = 1.0;
+            }
+            else
+            {
+                avg_DS_IC /= avg_cnt;
+            }
 
             unordered_map<size_t, real_t*> quant_list =
             {
