@@ -44,8 +44,8 @@ POSSIBILITY OF SUCH DAMAGE.
 ***/
 
 /// Initial Author <2016>: Arthur Glowacki
-#ifndef __DEFINES__
-#define __DEFINES__
+#ifndef __XRF_DEFINES__
+#define __XRF_DEFINES__
 
 #include <chrono>
 #include <iomanip>
@@ -70,6 +70,7 @@ static std::time_t now_c;
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__
+  #pragma warning( disable : 4251 4127 4996 4505 4244 )
   #define DIR_END_CHAR '\\'
   #ifdef BUILDING_DLL
     #ifdef __GNUC__

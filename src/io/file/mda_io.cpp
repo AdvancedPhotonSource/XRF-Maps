@@ -282,7 +282,6 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 bool MDA_IO::load_quantification_scalers(std::string path,
                                         data_struct::Params_Override *override_values)
 {
-    real_t tmp_val;
     std::string units;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 

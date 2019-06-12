@@ -447,7 +447,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
         paramFileStream.exceptions(std::ifstream::failbit);
         bool has_filename = false;
         bool has_elements = false;
-        bool has_weights = false;
+        //bool has_weights = false;
         //std::string line;
         std::string tag;
 
