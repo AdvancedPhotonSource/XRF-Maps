@@ -62,7 +62,7 @@ namespace file
 
 std::mutex NetCDF_IO::_mutex;
 
-NetCDF_IO* NetCDF_IO::_this_inst(0);
+NetCDF_IO* NetCDF_IO::_this_inst(nullptr);
 
 
 #define ELAPSED_REALTIME_OFFSET 32
@@ -131,7 +131,7 @@ size_t NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_stru
         return 0;
     }
 
-    if( (retval = nc_inq_var (ncid, varid, 0, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
+    if( (retval = nc_inq_var (ncid, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
         nc_close(ncid);
