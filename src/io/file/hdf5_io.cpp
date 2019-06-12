@@ -4408,7 +4408,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                     // sum values before saving. If time normalized then divide by time val
                     offset[0] = hdf_idx;
                     char tmp_char[255] = {0};
-                    char tmp_char_units[255] = { 0 };
+                    //char tmp_char_units[255] = { 0 };
                     itr.scaler_name.copy(tmp_char, 254);
                     //itr.hdf_units.copy(tmp_char_units, 254);
                     H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
@@ -5056,7 +5056,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
 
     std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
-    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error, ocpypl_id;
+    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
     hid_t    file_id, src_maps_grp_id;
     hid_t    dataspace_detectors_id, dset_detectors_id, attr_detector_names_id;
     hid_t   xpos_dataspace_id, xpos_id, ypos_dataspace_id, ypos_id;
@@ -5070,7 +5070,6 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
 	hsize_t scalers_count[3] = { 1,1,1 };
 	hsize_t value_offset[3] = { 0,0,0 };
 	hsize_t value_count[3] = { 1,1,1 };
-	hsize_t mem_offset[2] = { 0,0 };
 	hsize_t mem_count[2] = { 1,1 };
     hsize_t x_offset[3] = {0,0,0};
     hsize_t x_count[3] = {1,1,1};
@@ -5658,7 +5657,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
             char tmp_char[256] = {0};
             H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char);
             std::string el_name_str = std::string(tmp_char);
-            int underscore_idx = el_name_str.find("_");
+            unsigned long underscore_idx = el_name_str.find("_");
             //can check if > 0 instead of -1 since it shouldn't start with an '_'
             if (underscore_idx > 0 && underscore_idx < el_name_str.length())
             {
@@ -5935,9 +5934,9 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
             tmp_char1[z] = 0;
         }
         str_val.copy(tmp_char1, 256);
-        for(int i=0; i < unit_dims[0] ; i++)
+        for(hsize_t i=0; i < unit_dims[0] ; i++)
         {
-            for(int j=0; j < unit_dims[1]; j++)
+            for(hsize_t j=0; j < unit_dims[1]; j++)
             {
                 offset_dims[0] = i;
                 offset_dims[1] = j;
@@ -6152,7 +6151,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 normalize_scaler[x] = std::tolower(normalize_scaler[x]);
             }
             // save scalers first
-            for(int i=0; i < scaler_dims[0]; i++)
+            for(hsize_t i=0; i < scaler_dims[0]; i++)
             {
                 offset[0] = i;
                 offset_single[0] = i;
@@ -6184,7 +6183,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 }
                 if(scaler_name_str == normalize_scaler)
                 {
-                    for(int z=0; z < (chan_dims[1] * chan_dims[2]); z++)
+                    for(hsize_t z=0; z < (chan_dims[1] * chan_dims[2]); z++)
                     {
                         ds_ic_data[z] = data[z];
                     }
@@ -6198,7 +6197,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 }
             }
 
-            for(int i=0; i < chan_dims[0]; i++)
+            for(hsize_t i=0; i < chan_dims[0]; i++)
             {
                 offset[0] = i;
                 offset_image[0] = k;
@@ -6244,7 +6243,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 status = H5Dread(dset_id, chan_type, readwrite_space, chan_space, H5P_DEFAULT, (void*)&data[0]);
                 if(status > -1)
                 {
-                    for(int z=0; z < (chan_dims[1] * chan_dims[2]); z++)
+                    for(hsize_t z=0; z < (chan_dims[1] * chan_dims[2]); z++)
                     {
                         data[z] = data[z] / quant_value / ds_ic_data[z];
                     }

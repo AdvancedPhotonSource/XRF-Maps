@@ -162,7 +162,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "CAL_SLOPE")
                 {
@@ -171,7 +171,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "CAL_QUAD")
                 {
@@ -180,7 +180,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "ENVIRONMENT")
                 {
