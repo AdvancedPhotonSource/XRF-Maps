@@ -85,14 +85,21 @@ Spectra_File_Source::~Spectra_File_Source()
 
 // ----------------------------------------------------------------------------
 
-bool Spectra_File_Source::load_netcdf_line(std::string filepath,
+bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
+										   std::string filename,
                                            size_t detector_num_start,
                                            size_t detector_num_end,
                                            size_t row,
                                            size_t row_size,
                                            size_t col_size)
 {
-    return io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(filepath, detector_num_start, detector_num_end, row, row_size, col_size, _cb_function, nullptr);
+	bool retVal;
+	_current_dataset_directory = new std::string(dirpath);
+	_current_dataset_name = new std::string(filename);
+	retVal = io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_start, detector_num_end, row, row_size, col_size, _cb_function, nullptr);
+	delete _current_dataset_directory;
+	delete _current_dataset_name;
+	return retVal;
 }
 
 // ----------------------------------------------------------------------------
