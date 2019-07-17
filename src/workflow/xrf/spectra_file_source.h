@@ -85,7 +85,8 @@ public:
 
     virtual void run();
 
-    bool load_netcdf_line(std::string filepath,
+    bool load_netcdf_line(std::string dirpath,
+						  std::string filename,
                           size_t detector_num_start,
                           size_t detector_num_end,
                           size_t row,
