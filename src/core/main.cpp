@@ -67,7 +67,7 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"Fitting Routines: \n";
-	logit_s<< "--fit <routines> comma seperated \n";
+	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
     logit_s<<"  roi_plus : SVD method \n";
     logit_s<<"  nnls : Non-Negative Least Squares \n";
@@ -85,11 +85,11 @@ void help()
 #endif
     logit_s<<"Examples: \n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 \n";
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 \n";
+    logit_s<<"xrf_maps --fit roi,matrix --dir /data/dataset1 \n";
     logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 \n";
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda \n";
+    logit_s<<"xrf_maps --fit roi,matrix --dir /data/dataset1 --files scan1.mda,scan2.mda \n";
     logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification \n";
-    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
+    logit_s<<"xrf_maps --fit roi,matrix,nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
 }
 
 // ----------------------------------------------------------------------------
@@ -125,7 +125,57 @@ int main(int argc, char *argv[])
     }
 
     //Look for which analysis types we want to run
-    if ( clp.option_exists("--tails") )
+	if (clp.option_exists("--fit"))
+	{
+		std::string fitting = clp.get_option("--fit");
+		if (fitting.find(',') != std::string::npos)
+		{
+			// if we found a comma, split the string to get list of dataset files
+			std::stringstream ss;
+			ss.str(fitting);
+			std::string item;
+			while (std::getline(ss, item, ','))
+			{
+				if (item == STR_FIT_ROI)
+				{
+					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
+				}
+				else if (item == STR_FIT_SVD)
+				{
+					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::SVD);
+				}
+				else if (item == STR_FIT_NNLS)
+				{
+					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
+				}
+				else if (item == STR_FIT_GAUSS_MATRIX)
+				{
+					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
+				}
+			}
+		}
+		else
+		{
+			if (fitting == STR_FIT_ROI)
+			{
+				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
+			}
+			else if (fitting == STR_FIT_SVD)
+			{
+				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::SVD);
+			}
+			else if (fitting == STR_FIT_NNLS)
+			{
+				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
+			}
+			else if (fitting == STR_FIT_GAUSS_MATRIX)
+			{
+				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
+			}
+		}
+	}
+	/*
+	if ( clp.option_exists("--tails") )
     {
         analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_TAILS);
     }
@@ -145,6 +195,7 @@ int main(int argc, char *argv[])
     {
         analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
     }
+	*/
 
     //Check if we want to quantifiy with a standard
     if ( clp.option_exists("--quantify-with") )

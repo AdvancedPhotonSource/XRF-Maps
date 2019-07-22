@@ -173,6 +173,14 @@ const string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
 
 const string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
 
+
+
+const string STR_FIT_ROI = "roi";
+const string STR_FIT_SVD = "svd";
+const string STR_FIT_NNLS = "nnls";
+const string STR_FIT_GAUSS_MATRIX = "matrix";
+
+
 //}
 
 //}// namespace keys
