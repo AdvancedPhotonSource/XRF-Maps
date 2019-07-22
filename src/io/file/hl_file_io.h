@@ -134,9 +134,8 @@ DLL_EXPORT bool compare_file_size (const file_name_size& first, const file_name_
 DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
 DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
-                          std::string dataset_file,
-                          size_t detector_num_start,
-                          size_t detector_num_end);
+									std::string dataset_file,
+									const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct::Fitting_Routines proc_type,
                                                                      fitting::optimizers::Optimizer* optimizer);
@@ -184,9 +183,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
-                              std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
-                              size_t detector_num_start,
-                              size_t detector_num_end);
+										std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
+										const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT bool save_results(std::string save_loc,
                   data_struct::Fit_Count_Dict * element_counts,

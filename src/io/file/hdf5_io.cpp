@@ -1154,8 +1154,7 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
 //-----------------------------------------------------------------------------
 
 bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
-	size_t frame_num_start,
-	size_t frame_num_end,
+	const std::vector<size_t>& detector_num_arr,
 	data_struct::IO_Callback_Func_Def callback_func,
 	void* user_data)
 {
@@ -1176,8 +1175,6 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 
     hsize_t start_offset = 0;
 
-	logI << path << " frames : " << frame_num_start << ":" << frame_num_end << "\n";
-
     hid_t    file_id, maps_grp_id, memoryspace_id, spectra_grp_id, dataset_id, acqui_id, frame_id, meta_id;
     hid_t    image_grp_id, image_hash_grp_id, image_id, image_ds_id;
 	hid_t    dataspace_id, dataspace_acqui_id, dataspace_frame_id, dataspace_meta_id;
@@ -1185,7 +1182,8 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	std::string detector_path;
     hsize_t image_dims[3] = {0,0,0};
 	char str_grp_name[2048] = { 0 };
-    size_t frame = frame_num_start;
+    size_t frame = detector_num_arr[0];
+	size_t frame_idx = 0;
 
 	if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
 		return false;
@@ -1237,7 +1235,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	dataspace_acqui_id = H5Dget_space(acqui_id);
 	close_map.push({ dataspace_acqui_id, H5O_DATASPACE });
 
-    if(frame_num_start > 0)
+    if(frame > 0)
     {
         if (false == _open_h5_object(frame_id, H5O_DATASET, close_map, "FrameLocationTable", spectra_grp_id))
             return false;
@@ -1247,19 +1245,19 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
         hsize_t frame_dims[2] = {0,0};
         error = H5Sget_simple_extent_dims(dataspace_frame_id, &frame_dims[0], nullptr);
 
-        if(frame_num_start < frame_dims[0])
+        if(frame < frame_dims[0])
         {
             int *frames = new int[frame_dims[0]];
             //read frames
             hid_t frame_memoryspace_id = H5Screate_simple(2, frame_dims, nullptr);
             error = H5Dread(frame_id, H5T_NATIVE_INT, frame_memoryspace_id, dataspace_frame_id, H5P_DEFAULT, &frames[0]);
-            start_offset = frames[frame_num_start];
+            start_offset = frames[frame];
             delete [] frames;
             close_map.push({frame_memoryspace_id, H5O_DATASPACE});
         }
         else
         {
-            logW<<" frame_num_start "<<frame_num_start<<" > Max Frames"<<frame_dims[0]<<". Setting frame_num_start = 0\n";
+            logW<<" detector_num_arr[0] "<<frame<<" > Max Frames"<<frame_dims[0]<<". Setting frame_num_start = 0\n";
         }
 
     }
@@ -1367,8 +1365,9 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
                     {
                         col = 0;
                         row = 0;
-                        frame++;
-                        if(frame >= frame_num_end)
+						frame_idx++;
+						frame = detector_num_arr[frame_idx];
+                        if(frame_idx > detector_num_arr.size())
                         {
                             delete[] dims_in;
                             delete[] offset;
@@ -1463,8 +1462,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 //-----------------------------------------------------------------------------
 
 bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
-                                                size_t detector_num_start,
-                                                size_t detector_num_end,
+												const std::vector<size_t>& detector_num_arr,
 												data_struct::IO_Callback_Func_Def callback_func,
                                                 void* user_data)
 {
@@ -1476,8 +1474,6 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
    std::map<size_t, struct Detector_HDF5_Struct> detector_hid_map;
 
    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-
-   logI<< path <<" detectors : "<<detector_num_start<<":"<<detector_num_end<<"\n";
 
    hid_t    file_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
@@ -1493,7 +1489,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
    if ( false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "MAPS_RAW", file_id) )
       return false;
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         detector_hid_map.insert( {detector_num, Detector_HDF5_Struct()} );
 
@@ -1544,7 +1540,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     close_map.push({dataspace_outct_id, H5O_DATASPACE});
 
 
-    int rank = H5Sget_simple_extent_ndims(detector_hid_map[detector_num_start].dataspace_id);
+    int rank = H5Sget_simple_extent_ndims(detector_hid_map[detector_num_arr[0]].dataspace_id);
     if (rank != 3)
     {
         _close_h5_objects(close_map);
@@ -1556,7 +1552,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     hsize_t* offset = new hsize_t[rank];
     hsize_t* count = new hsize_t[rank];
    
-    int status_n = H5Sget_simple_extent_dims(detector_hid_map[detector_num_start].dataspace_id, &dims_in[0], nullptr);
+    int status_n = H5Sget_simple_extent_dims(detector_hid_map[detector_num_arr[0]].dataspace_id, &dims_in[0], nullptr);
     if(status_n < 0)
     {
         _close_h5_objects(close_map);
@@ -1571,7 +1567,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
        count[i] = dims_in[i];
     }
 
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         detector_hid_map[detector_num].buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
     }
@@ -1600,7 +1596,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
          offset[1] = row;
          offset_meta[1] = row;
 
-         for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+         for(size_t detector_num : detector_num_arr)
          {
             H5Sselect_hyperslab (detector_hid_map[detector_num].dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
             error = H5Dread(detector_hid_map[detector_num].dset_id, H5T_NATIVE_REAL, memoryspace_id, detector_hid_map[detector_num].dataspace_id, H5P_DEFAULT, detector_hid_map[detector_num].buffer);
@@ -1612,7 +1608,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
              {
                  offset_meta[2] = col;
 
-                 for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+                 for(size_t detector_num : detector_num_arr)
                  {
                      offset_meta[0] = detector_num;
                      data_struct::Spectra * spectra = new data_struct::Spectra(dims_in[0]);
@@ -1652,7 +1648,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     delete [] offset;
     delete [] count;
 
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         delete [] detector_hid_map[detector_num].buffer;
     }
@@ -5565,10 +5561,9 @@ bool HDF5_IO::close_dataset(size_t d_hash)
 
 void HDF5_IO::add_v9_layout(std::string dataset_directory,
                             std::string dataset_file,
-                            size_t detector_num_start,
-                            size_t detector_num_end)
+                            const std::vector<size_t>& detector_num_arr)
 {
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         _add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }
@@ -6396,11 +6391,10 @@ void HDF5_IO::_add_exchange_layout(std::string dataset_file)
 
 void HDF5_IO::add_exchange_layout(std::string dataset_directory,
 								std::string dataset_file,
-								size_t detector_num_start,
-								size_t detector_num_end)
+								const std::vector<size_t>& detector_num_arr)
 {
 	
-	for (size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+	for (size_t detector_num : detector_num_arr)
 	{
 		_add_exchange_layout(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
 	}

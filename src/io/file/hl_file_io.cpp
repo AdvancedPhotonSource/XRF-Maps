@@ -129,7 +129,7 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 
 
     //initialize models and fit routines for all detectors
-    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+    for(size_t detector_num : analysis_job->detector_num_arr)
     {
         analysis_job->detectors_meta_data[detector_num] = data_struct::Detector();
         data_struct::Detector *detector = &analysis_job->detectors_meta_data[detector_num];
@@ -311,12 +311,12 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 
 // ----------------------------------------------------------------------------
 
-void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, size_t detector_num_start, size_t detector_num_end)
+void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, const std::vector<size_t>& detector_num_arr)
 {
     io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
     std::string full_path = dataset_dir+ DIR_END_CHAR+"maps_fit_parameters_override.txt";
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         aps_io.save(full_path, fit_params_avgs[i], detector_num );
         i++;
@@ -1027,21 +1027,20 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-                          size_t detector_num_start,
-                          size_t detector_num_end)
+							const std::vector<size_t>& detector_num_arr)
 {
     std::vector<std::string> hdf5_filenames;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    if (detector_num_start == detector_num_end)
+    if (detector_num_arr.size() <= 1)
     {
-        logW << "Warning: detector range "<<detector_num_start<<":"<<detector_num_end<<" is only 1 detector. Nothing to avg."<<"\n";
+        logW << "Warning: need more than 1 detector. Nothing to avg."<<"\n";
         return;
     }
 
 
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         hdf5_filenames.push_back(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }

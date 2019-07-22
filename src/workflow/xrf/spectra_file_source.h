@@ -87,8 +87,7 @@ public:
 
     bool load_netcdf_line(std::string dirpath,
 						  std::string filename,
-                          size_t detector_num_start,
-                          size_t detector_num_end,
+							const std::vector<size_t>& detector_num_arr,
                           size_t row,
                           size_t row_size,
                           size_t col_size);
@@ -99,8 +98,7 @@ protected:
 
     virtual bool _load_spectra_volume_with_callback(std::string dataset_directory,
                                                     std::string dataset_file,
-                                                    size_t detector_num_start,
-                                                    size_t detector_num_end,
+													const std::vector<size_t>& detector_num_arr,
 													data_struct::IO_Callback_Func_Def callback_fun);
 
     std::string *_current_dataset_directory;

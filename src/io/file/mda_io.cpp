@@ -574,8 +574,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 //-----------------------------------------------------------------------------
 
 bool MDA_IO::load_spectra_volume_with_callback(std::string path,
-                                                 size_t detector_num_start,
-                                                 size_t detector_num_end,
+												const std::vector<size_t>& detector_num_arr,
                                                  bool hasNetCDF,
                                                  data_struct::Analysis_Job *analysis_job,
 												 data_struct::IO_Callback_Func_Def callback_func,
@@ -585,7 +584,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
-
+	size_t max_detecotr_num = -1;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
     size_t samples = 1;
@@ -603,6 +602,11 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         return false;
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+
+	for (size_t det : detector_num_arr)
+	{
+		max_detecotr_num = std::max(det, max_detecotr_num);
+	}
 
     if(analysis_job->theta_pv.length() > 0)
     {
@@ -630,7 +634,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000)
             {
-                if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
+                if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < max_detecotr_num)
                 {
                     logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
@@ -656,7 +660,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
+        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < max_detecotr_num)
         {
             logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
@@ -684,7 +688,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     //find scaler indexes
     if (analysis_job != nullptr)
     {
-        struct data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num_start);
+        struct data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num_arr[0]);
 
         if(detector_struct != nullptr)
         {
@@ -765,7 +769,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                 }
 */
 
-                for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+                for(size_t detector_num : detector_num_arr)
                 {
                     data_struct::Spectra* spectra = new data_struct::Spectra(samples);
 

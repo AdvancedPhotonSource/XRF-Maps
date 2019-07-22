@@ -83,8 +83,7 @@ public:
     size_t load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line);
 
     bool load_spectra_line_with_callback(std::string path,
-                                        size_t detector_num_start,
-                                        size_t detector_num_end,
+										const std::vector<size_t>& detector_num_arr,
                                         int row,
                                         size_t max_rows,
                                         size_t max_cols,

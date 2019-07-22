@@ -60,8 +60,11 @@ Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source() : Spectra_File_Source
 {
     _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
     _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
-    _detector_num_start = 0;
-    _detector_num_end = 3;
+	for (size_t det = 0; det < 4; det++)
+	{
+		_detector_num_arr.push_back(det);
+	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -72,13 +75,17 @@ Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::Analysis_J
     _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
     if(analysis_job != nullptr)
     {
-        _detector_num_start = analysis_job->detector_num_start;
-        _detector_num_end = analysis_job->detector_num_end;
-    }
+		for (size_t det : analysis_job->detector_num_arr)
+		{
+			_detector_num_arr.push_back(det);
+		}
+	}
     else
     {
-        _detector_num_start = 0;
-        _detector_num_end = 3;
+		for (size_t det = 0; det < 4; det++)
+		{
+			_detector_num_arr.push_back(det);
+		}
     }
 }
 
@@ -101,7 +108,7 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
 
     _spectra->add(*spectra);
 
-    if(detector_num == _detector_num_end && _output_callback_func != nullptr)
+    if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && _output_callback_func != nullptr)
     {
         data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
 

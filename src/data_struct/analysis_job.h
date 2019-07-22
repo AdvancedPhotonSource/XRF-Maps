@@ -179,9 +179,8 @@ public:
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
-    size_t detector_num_start;
 
-    size_t detector_num_end;
+	std::vector<size_t> detector_num_arr;
 
     size_t num_threads;
 

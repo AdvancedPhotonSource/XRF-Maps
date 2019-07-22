@@ -89,8 +89,7 @@ public:
                             data_struct::Params_Override *override_values);
 
     bool load_spectra_volume_with_callback(std::string path,
-                                        size_t detector_num_start,
-                                        size_t detector_num_end,
+										const std::vector<size_t>& detector_num_arr,
                                         bool hasNetCDF,
                                         data_struct::Analysis_Job *analysis_job,
 										data_struct::IO_Callback_Func_Def callback_func,

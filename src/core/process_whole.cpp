@@ -242,7 +242,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
     for(auto &itr : analysis_job->optimize_dataset_files)
     {
         file_cnt += 1.0;
-        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+        for(size_t detector_num : analysis_job->detector_num_arr)
         {
             struct io::file_name_fit_params* f_struct = optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer());
             if(f_struct->success)
@@ -261,12 +261,12 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             delete f_struct;
         }
     }
-    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+    for(size_t detector_num : analysis_job->detector_num_arr)
     {
         fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
     }
 
-    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
+    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_arr);
 
 }
 
@@ -283,7 +283,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 //    for(auto &itr : analysis_job->optimize_dataset_files)
 //    {
 //        file_cnt += 1.0;
-//        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+//        for(size_t detector_num : analysis_job->detector_num_arr)
 //        {
 //            data_struct::Params_Override *params_override = new data_struct::Params_Override();
 //            data_struct::Spectra * int_spectra = new Spectra();
@@ -328,12 +328,12 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 //        }
 //        delete f_struct;
 //    }
-//    for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+//    for(size_t detector_num : analysis_job->detector_num_arr)
 //    {
 //        fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
 //    }
 
-//    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_start, analysis_job->detector_num_end);
+//    io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_arr);
 
 //}
 
@@ -435,7 +435,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             io::file::HDF5_IO::inst()->set_filename(full_save_path);
 
             //load the first one
-            size_t detector_num = analysis_job->detector_num_start;
+            size_t detector_num = analysis_job->detector_num_arr[0];
             bool is_loaded_from_analyzed_h5;
             if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true) )
             {
@@ -446,9 +446,8 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             }
 
             //load spectra volume
-            for(detector_num = analysis_job->detector_num_start+1; detector_num <= analysis_job->detector_num_end; detector_num++)
+            for(detector_num = 1; detector_num <= analysis_job->detector_num_arr.size(); detector_num++)
             {
-
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
                 {
                     logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
@@ -491,7 +490,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
         //otherwise process each detector separately
         else
         {
-            for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+            for(size_t detector_num : analysis_job->detector_num_arr)
             {
 
                 data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
@@ -593,7 +592,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
     if( io::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, standard_element_weights) )
     {
-        for(size_t detector_num = analysis_job->detector_num_start; detector_num <= analysis_job->detector_num_end; detector_num++)
+        for(size_t detector_num : analysis_job->detector_num_arr)
         {
             //                    Proc_type   counts
             //std::unordered_map<std::string, real_t> all_element_counts;
@@ -866,7 +865,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
     if(analysis_job->quick_and_dirty)
     {
-        ////average_quantification(quant_stand_list, analysis_job->detector_num_start(), analysis_job->detector_num_end());
+        ////average_quantification(quant_stand_list, analysis_job->detector_num_arr);
     }
 
     end = std::chrono::system_clock::now();
@@ -881,15 +880,14 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 // ----------------------------------------------------------------------------
 
 void average_quantification(std::vector<data_struct::Quantification_Standard>* quant_stand_list,
-                            size_t detector_num_start,
-                            size_t detector_num_end)
+                            std::vector<size_t>& detector_num_arr)
 {
     /*
     data_struct::Quantification_Standard q_standard_0;
     q_standard_0.
 
 
-    for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+    for(size_t detector_num : detector_num_arr)
     {
         data_struct::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
         quantification_standard->

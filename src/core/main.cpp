@@ -58,7 +58,7 @@ void help()
     logit_s<<"Options: \n";
     logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) \n";
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
-    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector \n";
+    logit_s<<"--detectors : <int,..> Detectors to process, Defaults to 0,1,2,3 for 4 detector \n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
@@ -67,11 +67,12 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"Fitting Routines: \n";
-    logit_s<<"--roi : ROI \n";
-    logit_s<<"--roi_plus : SVD method \n";
-    logit_s<<"--nnls : Non-Negative Least Squares \n";
-    logit_s<<"--tails : Fit with multiple parameters \n";
-    logit_s<<"--matrix : Fit with locked parameters \n\n";
+	logit_s<< "--fit <routines> comma seperated \n";
+    logit_s<<"  roi : element energy region of interest \n";
+    logit_s<<"  roi_plus : SVD method \n";
+    logit_s<<"  nnls : Non-Negative Least Squares \n";
+    logit_s<<"  tails : Fit with multiple parameters \n";
+    logit_s<<"  matrix : Fit with locked parameters \n\n";
     logit_s<<"Dataset: "<<"\n";
     logit_s<<"--dir : Dataset directory \n";
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";
@@ -117,9 +118,6 @@ int main(int argc, char *argv[])
        help();
        return 0;
     }
-
-    analysis_job.detector_num_start = 0;
-    analysis_job.detector_num_end = 3;
 
     if ( clp.option_exists("--nthreads") )
     {
@@ -220,8 +218,7 @@ int main(int argc, char *argv[])
 	{
 		analysis_job.is_emd = true;
         analysis_job.generate_average_h5 = false;
-        analysis_job.detector_num_start = 0;
-        analysis_job.detector_num_end = 0; //default to loading the first frame only
+        analysis_job.detector_num_arr.push_back(0);
 	}
 
     if( clp.option_exists("--streamin"))
@@ -253,28 +250,58 @@ int main(int argc, char *argv[])
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
     //What detector range should we process. Usually there are 4 detectors.
-    // 0:3 will do the first 4 detectors
-    // 0:1 will do the first 2 detectors
-    // 2:3 will do the last 2 detectors
-    if ( clp.option_exists("--detector-range") )
-    {
-        std::string detector_range_str = clp.get_option("--detector-range");
-        if (detector_range_str.find(':') != std::string::npos )
-        {
-            // if we found a comma, split the string to get list of dataset files
-            std::stringstream ss;
-            ss.str(detector_range_str);
-            std::string item;
-            std::getline(ss, item, ':');
-            analysis_job.detector_num_start = std::stoi(item);
-            std::getline(ss, item, ':');
-            analysis_job.detector_num_end = std::stoi(item);
-        }
-        else
-        {
-            analysis_job.detector_num_start = analysis_job.detector_num_end = std::stoi(detector_range_str);
-        }
-    }
+	if (clp.option_exists("--detectors"))
+	{
+		std::string detector_range_str = clp.get_option("--detectors");
+		if (detector_range_str.find(',') != std::string::npos)
+		{
+			// if we found a comma, split the string to get list of dataset files
+			std::stringstream ss;
+			ss.str(detector_range_str);
+			std::string item;
+			while (std::getline(ss, item, ','))
+			{
+				analysis_job.detector_num_arr.push_back(std::stoi(item));
+			}
+		}
+		else
+		{
+			analysis_job.detector_num_arr.push_back(std::stoi(detector_range_str));
+		}
+	}
+	else if (clp.option_exists("--detector-range"))
+	{
+		// 0:3 will do the first 4 detectors
+		// 0:1 will do the first 2 detectors
+		// 2:3 will do the last 2 detectors
+		std::string detector_range_str = clp.get_option("--detector-range");
+		if (detector_range_str.find(':') != std::string::npos )
+		{
+		    // if we found a comma, split the string to get list of dataset files
+		    std::stringstream ss;
+		    ss.str(detector_range_str);
+		    std::string item;
+		    std::getline(ss, item, ':');
+		    size_t detector_num_start = std::stoi(item);
+		    std::getline(ss, item, ':');
+			size_t detector_num_end = std::stoi(item);
+			for (size_t det = detector_num_start; det <= detector_num_end; det++)
+			{
+				analysis_job.detector_num_arr.push_back(det);
+			}
+		}
+		else
+		{
+			analysis_job.detector_num_arr.push_back(std::stoi(detector_range_str));
+		}
+	}
+	else
+	{
+		for (size_t det = 0; det < 4; det++)
+		{
+			analysis_job.detector_num_arr.push_back(det);
+		}
+	}
 
     //Check to make sure we have something to do. If not then show the help screen
     if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && !analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout && !analysis_job.stream_over_network)
@@ -372,8 +399,7 @@ int main(int argc, char *argv[])
     }
     analysis_job.command_line = whole_command_line;
     logI<<"whole command line : "<<whole_command_line<<"\n";
-    logI << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
-
+    
     start = std::chrono::system_clock::now();
 
     //load element information
@@ -434,7 +460,7 @@ int main(int argc, char *argv[])
         {
             for(std::string dataset_file : analysis_job.dataset_files)
             {
-                io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+                io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
             }
         }
 
@@ -443,7 +469,7 @@ int main(int argc, char *argv[])
         {
             for(std::string dataset_file : analysis_job.dataset_files)
             {
-                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
             }
         }
 
@@ -453,7 +479,7 @@ int main(int argc, char *argv[])
         {
             for(std::string dataset_file : analysis_job.dataset_files)
             {
-                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
             }
         }
 
@@ -465,7 +491,7 @@ int main(int argc, char *argv[])
 		{
 			for (std::string dataset_file : analysis_job.dataset_files)
 			{
-				io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+				io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
 			}
 		}
 
@@ -474,7 +500,7 @@ int main(int argc, char *argv[])
 		{
 			for (std::string dataset_file : analysis_job.dataset_files)
 			{
-				io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+				io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
 			}
 		}
 
@@ -484,7 +510,7 @@ int main(int argc, char *argv[])
 		{
 			for (std::string dataset_file : analysis_job.dataset_files)
 			{
-				io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+				io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
 			}
 		}
 

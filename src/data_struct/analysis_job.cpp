@@ -60,8 +60,6 @@ Analysis_Job::Analysis_Job()
     _last_init_sample_size = 0;
 	_first_init = true;
     num_threads = std::thread::hardware_concurrency();;
-    detector_num_start = 0;
-    detector_num_end = 0;
     //default mode for which parameters to fit when optimizing fit parameters
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;
@@ -122,7 +120,7 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
     {
 		_first_init = false;
         _last_init_sample_size = spectra_samples;
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+        for(size_t detector_num : detector_num_arr)
         {
             Detector *detector = &detectors_meta_data[detector_num];
 
