@@ -10,7 +10,7 @@ variables:
     buildConfiguration: 'Release'
     VCPKG_DEFAULT_TRIPLET: 'x64-windows'
 jobs:
-  -job: Default
+  - job: Default
     timeoutInMinutes: 360
     pool:
       vmImage: 'vs2017-win2016'    
