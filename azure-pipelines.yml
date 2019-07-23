@@ -19,18 +19,17 @@ steps:
   submodules: true | recursive
 
 - script: .\vcpkg\bootstrap-vcpkg.bat
-  - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
-  - script: mkdir build
-  - task: CMake@1
-    inputs:
-      workingDirectory: 'build'
-      cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-  - task: MSBuild@1
-    inputs:
-      solution: 'build/ALL_BUILD.vcxproj'
-      maximumCpuCount: true
-      platform: 'x64'
-  - script: |
-      cd build\Release\
-      .\xrf_maps.exe --dir ../../test/2_ID_E_dataset --fit roi,nnls --quick-and-dirty
-    displayName: 'Run tests, release'
+- script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
+- script: mkdir build
+- task: CMake@1
+  inputs:
+    workingDirectory: 'build'
+    cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+- task: MSBuild@1
+  inputs:
+    solution: 'build/ALL_BUILD.vcxproj'
+    maximumCpuCount: true
+    platform: 'x64'
+- script: |
+    cd build\Release\
+    .\xrf_maps.exe --dir ../../test/2_ID_E_dataset --fit roi,nnls --quick-and-dirty
