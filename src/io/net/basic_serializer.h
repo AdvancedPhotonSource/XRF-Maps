@@ -74,6 +74,9 @@ public:
 
     data_struct::Stream_Block* decode_spectra(char* message, size_t message_len);
 
+    std::string encode_counts_and_spectra(data_struct::Stream_Block* in_stream_block);
+
+    data_struct::Stream_Block* decode_counts_and_spectra(char* message, size_t message_len);
 
 protected:
 	template <typename T>
@@ -83,6 +86,23 @@ protected:
         for (size_t i = 0; i < size; i++)
 			*str += bytes_temp[i];
 	}
+
+    void _encode_meta(data_struct::Stream_Block* stream_block, std::string& raw_msg);
+
+    void _encode_counts(data_struct::Stream_Block* stream_block, std::string& raw_msg);
+
+    void _encode_spectra(data_struct::Stream_Block* stream_block, std::string& raw_msg);
+
+    data_struct::Stream_Block* _decode_meta(char* message, size_t message_len, size_t& idx);
+
+    void _decode_counts(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block* out_stream_block);
+
+    void _decode_spectra(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block* out_stream_block);
+
+    char *_tmp_real;
+    char *_tmp_uint;
+    char *_tmp_size_t;
+    char *_tmp_ushort;
 
 };
 

@@ -90,6 +90,7 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
+        time_scaler_clock = "1.0";
     }
     Params_Override(string dir, int detector)
     {
@@ -104,6 +105,7 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
+        time_scaler_clock = "1.0";
 
         dataset_directory = dir;
         detector_num = detector;
@@ -112,6 +114,12 @@ public:
     {
         time_normalized_scalers.clear();
         scaler_pvs.clear();
+        // TODO: fix this: this memeory is used when optimising and is copyed to another data struct
+//		for (auto& itr : elements_to_fit)
+//		{
+//			delete itr.second;
+//		}
+		elements_to_fit.clear();
     }
 
     string dataset_directory;
@@ -132,6 +140,7 @@ public:
     string be_window_thickness;
     string det_chip_thickness;
     string ge_dead_layer;
+    string airpath;
 
     string elt_pv;
     string ert_pv;

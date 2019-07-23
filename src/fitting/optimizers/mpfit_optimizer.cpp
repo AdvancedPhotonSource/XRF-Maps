@@ -189,7 +189,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    config.maxiter = 200;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -313,34 +313,34 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     switch(info)
     {
         case 0:
-            logit<<"> Improper input parameters."<<"\n";
+            logI<<"> Improper input parameters."<<"\n";
         break;
         case 1:
-            logit<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
+            logI<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
         break;
         case 2:
-            logit<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
+            logI<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
         break;
         case 3:
-            logit<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
+            logI<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
         break;
         case 4:
-            logit<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
+            logI<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
         break;
         case 5:
-            logit<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
+            logI<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
         break;
         case 6:
-            logit<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
+            logI<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
         break;
         case 7:
-            logit<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
+            logI<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
         break;
         case 8:
-            logit<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
+            logI<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
         break;
         default:
-            logit<<"!> Unknown info status"<<"\n";
+            logI<<"!> Unknown info status"<<"\n";
         break;
     }
 
@@ -500,34 +500,34 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     switch(info)
     {
         case 0:
-            logit<<"> Improper input parameters."<<"\n";
+            logI<<"> Improper input parameters."<<"\n";
         break;
         case 1:
-            logit<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
+            logI<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
         break;
         case 2:
-            logit<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
+            logI<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
         break;
         case 3:
-            logit<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
+            logI<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
         break;
         case 4:
-            logit<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
+            logI<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
         break;
         case 5:
-            logit<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
+            logI<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
         break;
         case 6:
-            logit<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
+            logI<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
         break;
         case 7:
-            logit<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
+            logI<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
         break;
         case 8:
-            logit<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
+            logI<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
         break;
         default:
-            logit<<"!> Unknown info status"<<"\n";
+            logI<<"!> Unknown info status"<<"\n";
         break;
     }
 */
@@ -565,7 +565,7 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    mp_config.maxiter = 1000;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.

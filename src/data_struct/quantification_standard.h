@@ -190,7 +190,7 @@ public:
     real_t germanium_dead_layer;
     real_t detector_chip_thickness;
     real_t incident_energy;
-    bool airpath;
+    real_t airpath;
 
     data_struct::Element_Info* detector_element;
 

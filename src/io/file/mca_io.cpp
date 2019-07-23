@@ -79,7 +79,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
 {
     std::ifstream paramFileStream(path);
 
-    logit<<"Loading:  "<<path<<"\n";
+    logI<<"Loading:  "<<path<<"\n";
 
     if (paramFileStream.is_open() )
     {
@@ -94,7 +94,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
-                //logit<<"tag : "<<tag<<"\n";
+                //logD<<"tag : "<<tag<<"\n";
                 if (tag == "VERSION")
                 {
                     std::string value;
@@ -104,7 +104,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     if(value != "3.1")
                     {
-                        logit<<"Warning: MCA_IO supports version 3.1. MAy not load this version "<<value<<" properly.\n";
+                        logW<<"MCA_IO supports version 3.1. MAy not load this version "<<value<<" properly.\n";
                     }
                 }
                 else if (tag == "CHANNELS")
@@ -132,7 +132,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     int ivalue = std::stoi(value);
                     if(ivalue > 1)
                     {
-                        logit<<"Warning: MCA_IO only supports loading 1 channel. This file has "<<value<<" channels.\n";
+                        logW<<"MCA_IO only supports loading 1 channel. This file has "<<value<<" channels.\n";
                     }
                 }
                 else if (tag == "REAL_TIME")
@@ -162,7 +162,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "CAL_SLOPE")
                 {
@@ -171,7 +171,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "CAL_QUAD")
                 {
@@ -180,7 +180,7 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    float fvalue = std::stof(value);
+                    ///float fvalue = std::stof(value);
                 }
                 else if (tag == "ENVIRONMENT")
                 {

@@ -60,8 +60,7 @@ Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct:
 {
 #ifdef _BUILD_WITH_ZMQ
     _send_counts = true;
-
-    _send_spectra = false;
+    _send_spectra = true;
 
     _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
 
@@ -70,7 +69,7 @@ Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct:
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
 	_zmq_socket->bind(conn_str);
 #else
-    logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
+    logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
 }
 
@@ -101,27 +100,44 @@ void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
 #ifdef _BUILD_WITH_ZMQ
 	std::string data;
 
-    if(_send_counts)
+    if(_send_counts && _send_spectra)
     {
-        zmq::message_t topic("XRF-Counts", 10);
+        zmq::message_t topic("XRF-Counts-and-Spectra", 22);
         _zmq_socket->send(topic, ZMQ_SNDMORE);
-		data = _serializer.encode_counts(stream_block);
+        data = _serializer.encode_counts_and_spectra(stream_block);
+        zmq::message_t message(data.c_str(), data.length());
+        if (false == _zmq_socket->send(message, 0))
+        {
+            logE << "sending ZMQ counts and spectra message"<<"\n";
+        }
     }
-    else if(_send_spectra)
+    else
     {
-        zmq::message_t topic("XRF-Spectra", 11);
-        _zmq_socket->send(topic, ZMQ_SNDMORE);
-        data = _serializer.encode_spectra(stream_block);
+        if(_send_counts)
+        {
+            zmq::message_t topic("XRF-Counts", 10);
+            _zmq_socket->send(topic, ZMQ_SNDMORE);
+            data = _serializer.encode_counts(stream_block);
+            zmq::message_t message(data.c_str(), data.length());
+            if (false == _zmq_socket->send(message, 0))
+            {
+                logE << "sending ZMQ counts message"<<"\n";
+            }
+        }
+        if(_send_spectra)
+        {
+            zmq::message_t topic("XRF-Spectra", 11);
+            _zmq_socket->send(topic, ZMQ_SNDMORE);
+            data = _serializer.encode_spectra(stream_block);
+            zmq::message_t message(data.c_str(), data.length());
+            if (false == _zmq_socket->send(message, 0))
+            {
+                logE << "sending ZMQ spectra message"<<"\n";
+            }
+        }
     }
-
-    zmq::message_t message(data.c_str(), data.length());
-    if (false == _zmq_socket->send(message, 0))
-    {
-        logit << "Error sending ZMQ message"<<"\n";
-    }
-	//delete of stream block is handled in sink class.
 #else
-    logit<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
+    logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
 #endif
 }
 

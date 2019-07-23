@@ -459,7 +459,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("fit_single_spectra", &fit_single_spectra);
     m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
     m.def("generate_optimal_params", &generate_optimal_params);
-    m.def("generate_optimal_params_mp", &generate_optimal_params_mp);
+   // m.def("generate_optimal_params_mp", &generate_optimal_params_mp);
     m.def("proc_spectra", &proc_spectra);
     m.def("process_dataset_files", &process_dataset_files);
     m.def("perform_quantification", &perform_quantification);

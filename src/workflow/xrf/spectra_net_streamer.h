@@ -76,9 +76,9 @@ public:
 
     void stream(data_struct::Stream_Block* stream_block);
 
-    void set_send_counts() {_send_counts = true; _send_spectra = false;}
+    void set_send_counts(bool val) {_send_counts = val;}
 
-    void set_send_spectra() {_send_spectra = true; _send_counts = false;}
+    void set_send_spectra(bool val) {_send_spectra = val;}
 
 protected:
 #ifdef _BUILD_WITH_ZMQ

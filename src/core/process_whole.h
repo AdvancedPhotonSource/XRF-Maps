@@ -127,11 +127,21 @@ DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params(std::
 
 // ----------------------------------------------------------------------------
 
+//DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params_preloaded(std::string dataset_directory,
+//                                                                                     std::string  dataset_filename,
+//                                                                                     size_t detector_num,
+//                                                                                     data_struct::Spectra * integrated_spectra,
+//                                                                                     data_struct::Params_Override *params_override,
+//                                                                                     fitting::models::Fit_Params_Preset optimize_fit_params_preset,
+//                                                                                     fitting::optimizers::Optimizer *optimizer);
+
+// ----------------------------------------------------------------------------
+
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job);
+//DLL_EXPORT void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 

@@ -73,7 +73,14 @@ public:
 
     ~NetCDF_IO();
 
-    bool load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line);
+    /**
+     * @brief load_spectra_line
+     * @param path
+     * @param detector
+     * @param spec_line
+     * @return the number of spectra loaded. 0 if fail.
+     */
+    size_t load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line);
 
     bool load_spectra_line_with_callback(std::string path,
                                         size_t detector_num_start,

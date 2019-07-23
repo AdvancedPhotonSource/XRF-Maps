@@ -59,6 +59,8 @@ Stream_Block::Stream_Block()
     _height = 0;
     _width = 0;
     theta = 0;
+    // by default we don't want to delete the string pointers becaues they are shared by stream blocks
+    del_str_ptr = false;
 	spectra = nullptr;
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
@@ -75,6 +77,8 @@ Stream_Block::Stream_Block(size_t row,
     _height = height;
     _width = width;
     theta = 0;
+    // by default we don't want to delete the string pointers becaues they are shared by stream blocks
+    del_str_ptr = false;
     spectra = nullptr;
 }
 
@@ -82,6 +86,20 @@ Stream_Block::Stream_Block(size_t row,
 
 Stream_Block::~Stream_Block()
 {
+    if(del_str_ptr)
+    {
+        if(dataset_name != nullptr)
+        {
+            delete dataset_name;
+            dataset_name = nullptr;
+        }
+        if(dataset_directory != nullptr)
+        {
+            delete dataset_directory;
+            dataset_directory = nullptr;
+        }
+    }
+
     if(spectra != nullptr)
     {
         delete spectra;

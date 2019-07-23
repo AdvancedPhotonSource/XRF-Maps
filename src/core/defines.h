@@ -44,8 +44,8 @@ POSSIBILITY OF SUCH DAMAGE.
 ***/
 
 /// Initial Author <2016>: Arthur Glowacki
-#ifndef __DEFINES__
-#define __DEFINES__
+#ifndef __XRF_DEFINES__
+#define __XRF_DEFINES__
 
 #include <chrono>
 #include <iomanip>
@@ -55,6 +55,9 @@ POSSIBILITY OF SUCH DAMAGE.
 static std::time_t now_c;
 #define logit now_c=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());std::cout<<std::put_time(std::localtime(&now_c),"[%F_%T]\t")<<__FILE__<<"::"<<__FUNCTION__<<"():"<<__LINE__<<"\t"
 #define logit_s std::cout
+#define logE logit<<"Error: "
+#define logW logit<<"Warning: "
+#define logI logit<<"Info: "
 
 #if defined _REAL_FLOAT
   #define real_t float
@@ -67,6 +70,7 @@ static std::time_t now_c;
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__
+  #pragma warning( disable : 4251 4127 4996 4505 4244 )
   #define DIR_END_CHAR '\\'
   #ifdef BUILDING_DLL
     #ifdef __GNUC__

@@ -111,7 +111,7 @@ public:
 
     std::string *dataset_name;
 
-    size_t detector_number;
+    int detector_number;
 
     Spectra * spectra;
 
@@ -123,6 +123,8 @@ public:
     fitting::models::Base_Model * model;
 
     float theta;
+
+    bool del_str_ptr;
 
 protected:
 

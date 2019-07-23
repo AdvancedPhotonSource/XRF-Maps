@@ -79,13 +79,14 @@ public:
     //used with run function to process job
     Spectra_File_Source(data_struct::Analysis_Job* analysis_job);
 
-    ~Spectra_File_Source();
+    virtual ~Spectra_File_Source();
 
     virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
 
     virtual void run();
 
-    bool load_netcdf_line(std::string filepath,
+    bool load_netcdf_line(std::string dirpath,
+						  std::string filename,
                           size_t detector_num_start,
                           size_t detector_num_end,
                           size_t row,
@@ -108,6 +109,8 @@ protected:
     data_struct::Analysis_Job* _analysis_job;
 
     std::vector<std::string> _netcdf_files;
+
+    std::vector<std::string> _bnp_netcdf_files;
 
     std::vector<std::string> _hdf_files;
 

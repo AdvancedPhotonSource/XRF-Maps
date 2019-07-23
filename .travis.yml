@@ -20,7 +20,6 @@ before_install:
 before_install:
   - sudo apt-get install libhdf5-dev
   - sudo apt-get install libnetcdf-dev
-  - pyenv global system 3.6
   
 # Enable C++ support
 language: cpp
@@ -49,4 +48,4 @@ install:
 script:
   - mkdir build
   - cd build
-  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DEIGEN3_INCLUDES=${DEPS_DIR}/eigen -DBUILD_WITH_PYBIND11=ON .. && make
+  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DEIGEN3_INCLUDES=${DEPS_DIR}/eigen -DBUILD_WITH_PYBIND11=ON -DPYTHON_EXECUTABLE=$(python-config --prefix)/bin/python3.5  .. && make

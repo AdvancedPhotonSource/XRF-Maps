@@ -53,42 +53,42 @@ POSSIBILITY OF SUCH DAMAGE.
 
 void help()
 {
-    logit_s<<"Help: "<<"\n";
-    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n"<<"\n";
-    logit_s<<"Options: "<<"\n";
-    logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) "<<"\n";
-    logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard "<<"\n";
-    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector "<<"\n";
-    logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. "<<"\n";
-    logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. "<<"\n";
+    logit_s<<"Help: \n";
+    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n\n";
+    logit_s<<"Options: \n";
+    logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) \n";
+    logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
+    logit_s<<"--detector-range : <int:int> Start and end detector range. Defaults to 0:3 for 4 detector \n";
+    logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
+    logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
-    logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra. "<<"\n";
-    logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params\n"<<
-               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed"<<"\n";
-    logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n"<<"\n";
-    logit_s<<"Fitting Routines: "<<"\n";
-    logit_s<<"--roi : ROI "<<"\n";
-    logit_s<<"--roi_plus : SVD method "<<"\n";
-    logit_s<<"--nnls : Non-Negative Least Squares"<<"\n";
-    logit_s<<"--tails : Fit with multiple parameters "<<"\n";
-    logit_s<<"--matrix : Fit with locked parameters \n"<<"\n";
+    logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
+    logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
+               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
+    logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
+    logit_s<<"Fitting Routines: \n";
+    logit_s<<"--roi : ROI \n";
+    logit_s<<"--roi_plus : SVD method \n";
+    logit_s<<"--nnls : Non-Negative Least Squares \n";
+    logit_s<<"--tails : Fit with multiple parameters \n";
+    logit_s<<"--matrix : Fit with locked parameters \n\n";
     logit_s<<"Dataset: "<<"\n";
-    logit_s<<"--dir : Dataset directory "<<"\n";
-    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n"<<"\n";
-    logit_s<<"--confocal : load hdf confocal xrf datasets \n"<<"\n";
-    logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n" << "\n";
+    logit_s<<"--dir : Dataset directory \n";
+    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";
+    logit_s<<"--confocal : load hdf confocal xrf datasets \n";
+    logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n\n";
 #ifdef _BUILD_WITH_ZMQ
-    logit_s<<"Network: "<<"\n";
-    logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
-    logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option \n" << "\n";
+    logit_s<<"Network: \n";
+    logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option) \n";
+    logit_s<<"--streamout : Streams the analysis counts over a ZMQ stream (must compile with -DBUILD_WITH_ZMQ option) \n\n";
 #endif
-    logit_s<<"Examples: "<<"\n";
-    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 "<<"\n";
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 "<<"\n";
-    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 "<<"\n";
-    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda"<<"\n";
-    logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification "<<"\n";
-    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 "<<"\n";
+    logit_s<<"Examples: \n";
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 \n";
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 \n";
+    logit_s<<"   Perform roi and matrix analysis on the directory /data/dataset1 but only process scan1 and scan2 \n";
+    logit_s<<"xrf_maps --roi --matrix --dir /data/dataset1 --files scan1.mda,scan2.mda \n";
+    logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification \n";
+    logit_s<<"xrf_maps --roi --matrix --nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
 }
 
 // ----------------------------------------------------------------------------
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            logit<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
+            logI<<"Defaulting optimize_fit_params_preset to batch fit without tails"<<"\n";
         }
     }
 
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
     }
 
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && clp.option_exists("--generate-avg-h5") == false)
+    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && !analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout && !analysis_job.stream_over_network)
     {
         help();
         return -1;
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
             }
             if (analysis_job.dataset_files.size() == 0)
             {
-                logit<<"Error: No mda files found in dataset directory "<<dataset_dir<<"\n";
+                logE<<"No mda files found in dataset directory "<<dataset_dir<<"\n";
                 return -1;
             }
 
@@ -371,25 +371,27 @@ int main(int argc, char *argv[])
         whole_command_line += " " + std::string(argv[ic]);
     }
     analysis_job.command_line = whole_command_line;
-    logit<<"whole command line : "<<whole_command_line<<"\n";
-    logit << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
+    logI<<"whole command line : "<<whole_command_line<<"\n";
+    logI << "Processing detectors " << analysis_job.detector_num_start << " - "<< analysis_job.detector_num_end <<"\n";
 
     start = std::chrono::system_clock::now();
 
     //load element information
     if(false == io::load_element_info(element_henke_filename, element_csv_filename))
     {
-        logit<<"Error loading element information: "<<"\n";
+        logE<<"loading element information: "<<"\n";
         return -1;
     }
 
     // init our job and run
     if(io::init_analysis_job_detectors(&analysis_job))
     {
+        io::populate_netcdf_hdf5_files(dataset_dir);
         if(optimize_fit_override_params)
         {
             io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
+            //generate_optimal_params_mp(&analysis_job);
         }
 
         if (analysis_job.quantification_standard_filename.length() > 0)
@@ -399,23 +401,31 @@ int main(int argc, char *argv[])
 
         if( analysis_job.is_network_source ||  analysis_job.stream_over_network)
         {
-            //if we are streaming we use 1 thread for loading and 1 for saving
-            //analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
-            //analysis_job.theta_pv = "2xfm:m53.VAL";
-            analysis_job.theta_pv = clp.get_option("--theta_pv");
-            run_stream_pipeline(&analysis_job);
+			// If we have fitting routines then stream the counts per sec
+			if (analysis_job.fitting_routines.size() > 0)
+			{
+				//if we are streaming we use 1 thread for loading and 1 for saving
+				//analysis_job.num_threads = std::thread::hardware_concurrency() - 1;
+				//analysis_job.theta_pv = "2xfm:m53.VAL";
+				analysis_job.theta_pv = clp.get_option("--theta_pv");
+				run_stream_pipeline(&analysis_job);
+			}
+			// otherwise just stream the spectra
+			else
+			{
+				stream_spectra(&analysis_job);
+			}
         }
         else
         {
 			if (analysis_job.fitting_routines.size() > 0)
 			{
-				io::populate_netcdf_hdf5_files(dataset_dir);
 				process_dataset_files(&analysis_job);
 				analysis_job.generate_average_h5 = true;
 			}
 			else
 			{
-				logit << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
+				logW << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
 			}
         }
 
@@ -450,14 +460,45 @@ int main(int argc, char *argv[])
     }
     else
     {
-        logit<<"Error initializing analysis job"<<"\n";
+		//average all detectors to one files
+		if (analysis_job.generate_average_h5)
+		{
+			for (std::string dataset_file : analysis_job.dataset_files)
+			{
+				io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+			}
+		}
+
+		//add v9 layout soft links
+		if (analysis_job.add_v9_layout)
+		{
+			for (std::string dataset_file : analysis_job.dataset_files)
+			{
+				io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+			}
+		}
+
+
+		//add exchange
+		if (analysis_job.add_exchange_layout)
+		{
+			for (std::string dataset_file : analysis_job.dataset_files)
+			{
+				io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_start, analysis_job.detector_num_end);
+			}
+		}
+
+		if (!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout)
+		{
+			logE << "initializing analysis job" << "\n";
+		}
     }
 
     data_struct::Element_Info_Map::inst()->clear();
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
-    logit << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n\n";
+    logI << "=-=-=-=-=-=- Total elapsed time: " << elapsed_seconds.count() << "s =-=-=-=-=-=-=-\n"<<std::endl; //endl will flush the print.
 
 
     return 0;

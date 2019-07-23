@@ -119,11 +119,11 @@ void MDA_IO::lazy_load()
 
 	if (_mda_file_info == nullptr)
 	{
-        logit << "Error loading mda file:" << _filename<<"\n";
+        logE << "Error loading mda file:" << _filename<<"\n";
 		return;
 	}
 
-    logit<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
+    logD<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
     for(int16_t i = 0; i < _mda_file_info->data_rank; i++)
     {
         logit_s<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
@@ -167,28 +167,48 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 {
     real_t tmp_val;
     std::string units;
-    if (override_values->scaler_pvs.count(scaler_name) > 0)
-    {
-        find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units);
-        *store_loc = (tmp_val);
-        return true;
-    }
-    else
-    {
-        if(isFlyScan)
-        {
-            real_t time_scaler_val = 1.0;
-            real_t time_scaler_clock = 1.0;
-            bool found_time = false;
-            if(override_values->time_scaler_clock.length() > 0)
-            {
-                time_scaler_clock = std::stod(override_values->time_scaler_clock);
-            }
-            if(find_scaler_index(_mda_file, override_values->time_scaler, time_scaler_val, units) > -1)
-            {
-                found_time = true;
-            }
 
+    if(isFlyScan)
+    {
+        real_t time_scaler_val = 1.0;
+        real_t time_scaler_clock = 1.0;
+        bool found_time = false;
+        if(override_values->time_scaler_clock.length() > 0)
+        {
+            time_scaler_clock = std::stod(override_values->time_scaler_clock);
+        }
+        if(find_scaler_index(_mda_file, override_values->time_scaler, time_scaler_val, units) > -1)
+        {
+            found_time = true;
+        }
+
+        if(override_values->time_normalized_scalers.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(scaler_name), tmp_val, units) > -1 && found_time == true)
+            {
+                tmp_val /= (time_scaler_val / time_scaler_clock);
+                *store_loc = tmp_val;
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find time normalized scaler "<<scaler_name<<"\n";
+            }
+        }
+        else if (override_values->scaler_pvs.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units) > -1)
+            {
+                *store_loc = (tmp_val);
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find scaler "<<scaler_name<<"\n";
+            }
+        }
+        else
+        {
             for(auto& itr: override_values->summed_scalers)
             {
                 if(itr.scaler_name == scaler_name && itr.normalize_by_time)
@@ -199,38 +219,16 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
                     {
                         tmp_val = 0;
 
-                        if(itr.normalize_by_time && found_time)
+                        if(itr.normalize_by_time && found_time == true)
                         {
-                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2.first), tmp_val, units) == -1)
-                            {
-                                tmp_val = 0;
-                            }
-                            else
+                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2.first), tmp_val, units) > -1)
                             {
                                 tmp_val /= (time_scaler_val / time_scaler_clock);
                             }
-                        }
-                        val+=tmp_val;
-                    }
-                    *store_loc = val;
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            for(auto& itr: override_values->summed_scalers)
-            {
-                if(itr.scaler_name == scaler_name && itr.normalize_by_time == false)
-                {
-                    real_t val = 0;
-                    for(auto& itr2 : itr.scalers_to_sum)
-                    {
-                        tmp_val = 0;
-
-                        if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2.first), tmp_val, units) == -1)
-                        {
-                            tmp_val = 0;
+                            else
+                            {
+                                logW<<"Could not find time normalized summed scaler "<<scaler_name<<"\n";
+                            }
                         }
                         val+=tmp_val;
                     }
@@ -240,6 +238,42 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
             }
         }
     }
+    else
+    {
+        if (override_values->scaler_pvs.count(scaler_name) > 0)
+        {
+            if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(scaler_name), tmp_val, units) > -1)
+            {
+                *store_loc = (tmp_val);
+                return true;
+            }
+            else
+            {
+                logW<<"Could not find scaler "<<scaler_name<<"\n";
+            }
+        }
+
+        for(auto& itr: override_values->summed_scalers)
+        {
+            if(itr.scaler_name == scaler_name && itr.normalize_by_time == false)
+            {
+                real_t val = 0;
+                for(auto& itr2 : itr.scalers_to_sum)
+                {
+                    tmp_val = 0;
+
+                    if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2.first), tmp_val, units) == -1)
+                    {
+                        tmp_val = 0;
+                    }
+                    val+=tmp_val;
+                }
+                *store_loc = val;
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -248,7 +282,6 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 bool MDA_IO::load_quantification_scalers(std::string path,
                                         data_struct::Params_Override *override_values)
 {
-    real_t tmp_val;
     std::string units;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
@@ -320,7 +353,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     {
         return false;
     }
-    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
     std::string units;
     if (override_values != nullptr)
@@ -351,7 +384,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     if (_mda_file->header->data_rank == 2)
     {
-        logit_s<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
+        logI<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
                   " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
         if(hasNetCDF)
@@ -373,7 +406,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
                 {
-                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
+                    logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
                     return false;
                 }
@@ -400,7 +433,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
         if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
         {
-            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
+            logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
             return false;
         }
@@ -418,12 +451,12 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     else
     {
-        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<"\n";
+        logE<<" No support for data rank "<< _mda_file->header->data_rank <<"\n";
         unload();
         return false;
     }
 
-    logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
+    logI<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
 
     try
     {
@@ -529,7 +562,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     catch(std::exception& e)
     {
-        logit<<"!!! Error Caught exception loading mda file."<<"\n";
+        logE<<"Caught exception loading mda file."<<"\n";
         std::cerr << "Exception catched : " << e.what() << "\n";
         return false;
     }
@@ -569,7 +602,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     {
         return false;
     }
-    logit<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
+    logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
     if(analysis_job->theta_pv.length() > 0)
     {
@@ -599,7 +632,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num_end)
                 {
-                    logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
+                    logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
                     return false;
                 }
@@ -625,7 +658,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
         if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_start || (size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num_end)
         {
-            logit<<"Error: max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
+            logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
             return false;
         }
@@ -642,7 +675,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     else
     {
-        logit<<" Error: no support for data rank "<< _mda_file->header->data_rank <<"\n";
+        logE<<"No support for data rank "<< _mda_file->header->data_rank <<"\n";
         unload();
         return false;
     }
@@ -693,7 +726,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         }
     }
 
-    logit<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
+    logI<<" elt_idx "<< elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx "<< outcnt_idx<<"\n";
 
     try
     {
@@ -804,8 +837,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     catch(std::exception& e)
     {
-        logit<<"!!! Error Caught exception loading mda file."<<"\n";
-        logit << "Exception catched : " << e.what() << "\n";
+        logE << "Exception catched : " << e.what() << "\n";
         return false;
     }
 
@@ -862,7 +894,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
 
     if (header == nullptr)
     {
-        logit<<"Unable to open mda file "<< path <<"\n";
+        logE<<"Unable to open mda file "<< path <<"\n";
         return f_size;
     }
     else if(header->data_rank == 1)
@@ -875,7 +907,7 @@ int MDA_IO::get_multiplied_dims(std::string path)
     }
     else
     {
-        logit<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
+        logW<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
     }
 
     mda_header_unload(header);
@@ -895,7 +927,7 @@ int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
 
     if (header == nullptr)
     {
-        logit<<"Unable to open mda file "<< path <<"\n";
+        logE<<"Unable to open mda file "<< path <<"\n";
         return -1;
     }
     else if(header->data_rank == 1)
@@ -915,7 +947,7 @@ int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
     }
     else
     {
-        logit<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
+        logW<<"Unsupported mda data rank "<<header->data_rank<<" . Skipping file "<< path <<"\n";
     }
     rank = (int)header->data_rank;
 
@@ -934,7 +966,7 @@ bool load_henke_from_xdr(std::string filename)
 
     if (false == fileStream.good())
     {
-        logit<<"Error opening file "<<filename<<"\n";
+        logE<<"Opening file "<<filename<<"\n";
         return false;
     }
 
