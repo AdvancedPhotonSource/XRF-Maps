@@ -3,15 +3,13 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+  trigger:
+  - azure-pipelines
 
 jobs:
 - job: XRF-Maps_Win64
   timeoutInMinutes: 360
   cancelTimeoutInMinutes: 180
-
-  
-  trigger:
-  - azure-pipelines
 
   pool:
     vmImage: 'vs2017-win2016'
