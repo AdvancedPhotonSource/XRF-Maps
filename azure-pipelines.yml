@@ -5,19 +5,15 @@
 
 trigger:
   - azure-pipelines
-
 variables:
     buildPlatform: 'x64'
     buildConfiguration: 'Release'
     VCPKG_DEFAULT_TRIPLET: 'x64-windows'
-
 jobs:
-  -job: XRF-Maps_Win64
+  -job: Default
     timeoutInMinutes: 360
-
     pool:
       vmImage: 'vs2017-win2016'    
-
     steps:
     - checkout: self
       submodules: true | recursive
