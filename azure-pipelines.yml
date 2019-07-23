@@ -7,7 +7,7 @@ trigger:
 - azure-pipelines
 
 pool:
-  vmImage: 'VS2017'
+  vmImage: 'vs2017-win2016'
 
 variables:
   buildPlatform: 'x64'
@@ -18,7 +18,7 @@ steps:
 
 - checkout: self
   clean: true
-  submodules: true
+  submodules: true | recursive
 
 - script: |
      cd vcpkg
