@@ -7,6 +7,7 @@ variables:
 jobs:
   - job: Default
     timeoutInMinutes: 360
+    cancelTimeoutInMinutes: 180
     pool:
       vmImage: 'vs2017-win2016'    
     steps:
