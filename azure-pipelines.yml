@@ -3,9 +3,15 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
+trigger:
+- azure-pipelines
+
 pool:
   vmImage: 'VS2017'
 
+variables:
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
 
 steps:
 - checkout: https://github.com/Microsoft/vcpkg.git
