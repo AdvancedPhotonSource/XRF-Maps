@@ -16,8 +16,9 @@ variables:
 steps:
 - checkout: https://github.com/Microsoft/vcpkg.git
 
-- checkout: https://github.com/aglowacki/XRF-Maps.git
-    submodules: true | recursive
+- checkout: self
+  clean: true
+  submodules: true
 
 - script: |
      cd vcpkg
