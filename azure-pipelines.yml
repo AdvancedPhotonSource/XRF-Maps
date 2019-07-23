@@ -19,11 +19,8 @@ steps:
   submodules: true | recursive
 
 - script: .\vcpkg\bootstrap-vcpkg.bat
-    displayName: Bootstrap vcpkg
   - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
-     displayName: vcpkg install dependencies
   - script: mkdir build
-    displayName: Make Build Directory
   - task: CMake@1
     inputs:
       workingDirectory: 'build'
