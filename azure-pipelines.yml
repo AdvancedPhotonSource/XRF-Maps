@@ -1,14 +1,9 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
   - azure-pipelines
 variables:
-    buildPlatform: 'x64'
-    buildConfiguration: 'Release'
-    VCPKG_DEFAULT_TRIPLET: 'x64-windows'
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
+  VCPKG_DEFAULT_TRIPLET: 'x64-windows'
 jobs:
   - job: Default
     timeoutInMinutes: 360
@@ -16,7 +11,7 @@ jobs:
       vmImage: 'vs2017-win2016'    
     steps:
     - checkout: self
-      submodules: true | recursive
+      submodules: true
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
     - script: mkdir build
