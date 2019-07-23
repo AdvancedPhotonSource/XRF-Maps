@@ -3,35 +3,40 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- azure-pipelines
 
-pool:
-  vmImage: 'vs2017-win2016'
+jobs:
+- job: XRF-Maps_Win64
+  timeoutInMinutes: 360
+  cancelTimeoutInMinutes: 180
 
-variables:
-  buildPlatform: 'x64'
-  buildConfiguration: 'Release'
+  
+  trigger:
+  - azure-pipelines
 
-steps:
-- checkout: self
-  submodules: true | recursive
+  pool:
+    vmImage: 'vs2017-win2016'
 
-#- script: |
-#  cd vcpkg
-#  git submodule update --init --recursive
-- script: .\vcpkg\bootstrap-vcpkg.bat
-- script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
-- script: mkdir build
-- task: CMake@1
-  inputs:
-    workingDirectory: 'build'
-    cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-- task: MSBuild@1
-  inputs:
-    solution: 'build/ALL_BUILD.vcxproj'
-    maximumCpuCount: true
-    platform: 'x64'
-- script: |
-    cd build\Release\
-    .\xrf_maps.exe --dir ../../test/2_ID_E_dataset --fit roi,nnls --quick-and-dirty
+  variables:
+    buildPlatform: 'x64'
+    buildConfiguration: 'Release'
+    VCPKG_DEFAULT_TRIPLET: 'x64-windows'
+
+  steps:
+  - checkout: self
+    submodules: true | recursive
+
+  - script: .\vcpkg\bootstrap-vcpkg.bat
+  - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
+  - script: mkdir build
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  - task: MSBuild@1
+    inputs:
+      solution: 'build/ALL_BUILD.vcxproj'
+      maximumCpuCount: true
+      platform: 'x64'
+  - script: |
+      cd build\Release\
+      .\xrf_maps.exe --dir ../../test/2_ID_E_dataset  --roi --quick-and-dirty
