@@ -14,31 +14,26 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- checkout: https://github.com/Microsoft/vcpkg.git
-
 - checkout: self
   clean: true
   submodules: true | recursive
 
-- script: |
-     cd vcpkg
-     bootstrap-vcpkg.bat
-     vcpkg install hdf5 netcdf-c cppzmq  qt5-base qt5-charts 
-
-- script: |
-    mkdir build
-    cd build
-  displayName: 'make build directory'
-
-- task: CMake@1
-  inputs:
-    workingDirectory: 'build'
-    cmakeArgs: -G "Visual Studio 15 2017 Win64" ..
-
-- script: nmake
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- script: .\vcpkg\bootstrap-vcpkg.bat
+    displayName: Bootstrap vcpkg
+  - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
+     displayName: vcpkg install dependencies
+  - script: mkdir build
+    displayName: Make Build Directory
+  - task: CMake@1
+    inputs:
+      workingDirectory: 'build'
+      cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+  - task: MSBuild@1
+    inputs:
+      solution: 'build/ALL_BUILD.vcxproj'
+      maximumCpuCount: true
+      platform: 'x64'
+  - script: |
+      cd build\Release\
+      .\xrf_maps.exe --dir ../../test/2_ID_E_dataset --fit roi,nnls --quick-and-dirty
+    displayName: 'Run tests, release'
