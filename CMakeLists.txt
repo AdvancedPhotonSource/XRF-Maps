@@ -48,6 +48,9 @@ cmake_minimum_required(VERSION 3.5)
 
 project(XRF_Maps)
 
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
 
 IF(UNIX)

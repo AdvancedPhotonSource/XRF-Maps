@@ -14,12 +14,13 @@ jobs:
     - checkout: self
       submodules: true
     - script: .\vcpkg\bootstrap-vcpkg.bat
-    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
+    #- script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq  qt5-base qt5-charts --vcpkg-root .\vcpkg
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c cppzmq --vcpkg-root .\vcpkg
     - script: mkdir build
     - task: CMake@1
       inputs:
         workingDirectory: 'build'
-        cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_QT=ON -DBUILD_WITH_ZMQ=ON ..'
+        cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_QT=OFF -DBUILD_WITH_ZMQ=ON ..'
     - task: MSBuild@1
       inputs:
         solution: 'build/ALL_BUILD.vcxproj'
