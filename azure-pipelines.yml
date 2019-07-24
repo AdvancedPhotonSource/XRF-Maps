@@ -1,5 +1,5 @@
 trigger:
-  - azure-pipelines
+  - master
 variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
