@@ -27,4 +27,4 @@ jobs:
         platform: 'x64'
     - script: |
         cd bin
-        .\xrf_maps.exe --dir ../../test/2_ID_E_dataset  --roi --quick-and-dirty
+        .\xrf_maps.exe --dir ../test/2_ID_E_dataset  --roi --quick-and-dirty
