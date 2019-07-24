@@ -15,8 +15,7 @@ jobs:
       submodules: true
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - script: echo set(VCPKG_BUILD_TYPE release)>>vcpkg\triplets\x64-windows.cmake
-    #- script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c zeromq qt5-base qt5-charts --vcpkg-root .\vcpkg
-    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c zeromq --vcpkg-root .\vcpkg
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c zeromq qt5-base qt5-charts --vcpkg-root .\vcpkg
     - script: mkdir build
     - task: CMake@1
       inputs:
