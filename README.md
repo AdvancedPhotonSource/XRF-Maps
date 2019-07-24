@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/aglowacki/XRF-Maps.svg?branch=master)](https://travis-ci.org/aglowacki/XRF-Maps)
-[![Build Status](https://dev.azure.com/aglowackianl/XRF-Maps/_apis/build/status/aglowacki.XRF-Maps?branchName=azure-pipelines)](https://dev.azure.com/aglowackianl/XRF-Maps/_build/latest?definitionId=1&branchName=azure-pipelines)
+[![Build Status](https://dev.azure.com/aglow/XRF-Maps/_apis/build/status/aglowacki.XRF-Maps?branchName=master)](https://dev.azure.com/aglow/XRF-Maps/_build/latest?definitionId=1&branchName=master)
 
 # XRF-Maps
 
