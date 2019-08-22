@@ -51,7 +51,8 @@ project(XRF_Maps)
 set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/../libs/libzmq/build ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PROJECT_SOURCE_DIR}/../libs/libzmq/build)
 
 IF(UNIX)
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
@@ -347,10 +348,9 @@ set_property(TARGET libxrf_io libxrf_fit APPEND PROPERTY INTERFACE_INCLUDE_DIREC
   $<INSTALL_INTERFACE:src>  )
 
 install(TARGETS libxrf_io libxrf_fit EXPORT XRF_MapsConfig 
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  INCLUDES DESTINATION ${CMAKE_INSTALL_BINDIR}/src )
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 #install(EXPORT XRF_MapsConfig DESTINATION share/XRF_Maps/cmake)
 #export(TARGETS libxrf_fit libxrf_io FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsTargets.cmake")
 export(EXPORT XRF_MapsConfig FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsConfig.cmake")
@@ -367,15 +367,18 @@ IF (WIN32)
   target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   IF (BUILD_WITH_ZMQ)
-    IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-      string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
-    ELSE()
-      string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
-    ENDIF()
-    target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-    target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
-    target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-    target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
+    #IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+    #  string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
+    #ELSE()
+    #  string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
+    #ENDIF()
+	target_link_libraries(libxrf_io LINK_PUBLIC libzmq ws2_32.lib )
+    target_link_libraries(xrf_maps LINK_PUBLIC libzmq ws2_32.lib )
+  
+  #  target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
+  #  target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
+  #  target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
+  #  target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
   ENDIF()
 ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
