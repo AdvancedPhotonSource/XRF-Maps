@@ -56,6 +56,7 @@ set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PROJECT_SOURCE_DIR}/../libs/libzmq/
 
 IF(UNIX)
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/linux)
   include_directories(GCC_INCLUDE_DIR)
 ENDIF()
 
