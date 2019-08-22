@@ -290,11 +290,11 @@ IF(BUILD_FOR_PHI)
               ${XRF_IO_SOURCE}
               )
 ELSE()
-  add_library(libxrf_fit SHARED
+  add_library(libxrf_fit SHARED 
               ${libxrf_fit_HEADERS}
               ${libxrf_fit_SOURCE}
               )
-  add_library(libxrf_io SHARED
+  add_library(libxrf_io SHARED 
              ${XRF_IO_HEADERS}
              ${XDR_HACK}
              ${XRF_IO_SOURCE}
@@ -340,6 +340,22 @@ ENDIF()
 foreach(CompilerFlag ${CompilerFlags})
   set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
 endforeach()
+
+
+set_property(TARGET libxrf_io libxrf_fit APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/support/eigen-git-mirror> 
+  $<INSTALL_INTERFACE:src>  )
+
+install(TARGETS libxrf_io libxrf_fit EXPORT XRF_MapsConfig 
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_BINDIR}/src )
+#install(EXPORT XRF_MapsConfig DESTINATION share/XRF_Maps/cmake)
+#export(TARGETS libxrf_fit libxrf_io FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsTargets.cmake")
+export(EXPORT XRF_MapsConfig FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsConfig.cmake")
+export(PACKAGE XRF_MapsConfig)
+
 
 IF (WIN32)
   IF (MSVC)
@@ -413,4 +429,5 @@ IF (BUILD_WITH_QT)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${Qt5Charts_LIBRARIES} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug ${Qt5Charts_LIBRARIES} )
 ENDIF()
+
 
