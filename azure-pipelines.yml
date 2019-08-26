@@ -27,4 +27,5 @@ jobs:
         maximumCpuCount: true
         platform: 'x64'
     - script: |
-        .\bin\xrf_maps.exe --dir test/2_ID_E_dataset  --roi --quick-and-dirty
+        -workingDirectory: 'bin'
+        .\xrf_maps.exe --dir ../test/2_ID_E_dataset  --roi --quick-and-dirty
