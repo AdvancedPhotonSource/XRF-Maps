@@ -1,0 +1,33 @@
+trigger:
+  - master
+variables:
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
+  VCPKG_DEFAULT_TRIPLET: 'x64-windows'
+jobs:
+  - job: Default
+    timeoutInMinutes: 360
+    cancelTimeoutInMinutes: 180
+    pool:
+      vmImage: 'vs2017-win2016'    
+    steps:
+    - checkout: self
+      submodules: true
+    - script: .\vcpkg\bootstrap-vcpkg.bat
+    - script: echo set(VCPKG_BUILD_TYPE release)>>vcpkg\triplets\x64-windows.cmake
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c zeromq qt5-base qt5-charts --vcpkg-root .\vcpkg
+    - script: mkdir build
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build'
+        cmakeArgs: '-G "Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_QT=ON -DBUILD_WITH_ZMQ=ON ..'
+    - task: MSBuild@1
+      inputs:
+        solution: 'build/ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        platform: 'x64'
+    - script: |
+        xcopy vcpkg\installed\x64-windows\bin\*.dll .\bin /s /y
+    - script: |
+        workingDirectory: 'bin'
+        .\xrf_maps.exe --dir ../test/2_ID_E_dataset  --roi --quick-and-dirty
