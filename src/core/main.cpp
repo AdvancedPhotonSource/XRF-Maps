@@ -54,7 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 void help()
 {
     logit_s<<"Help: \n";
-    logit_s<<"Usage: xrf_maps [Options] [Fitting Routines] --dir [dataset directory] \n\n";
+    logit_s<<"Usage: xrf_maps [Options] --dir [dataset directory] \n\n";
     logit_s<<"Options: \n";
     logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) \n";
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
