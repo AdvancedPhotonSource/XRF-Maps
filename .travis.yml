@@ -27,25 +27,24 @@ language: cpp
 # Compiler selection
 compiler:
   - gcc-6
-  
+
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
   
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="https://cmake.org/files/v3.5/cmake-3.5.0-Linux-x86_64.tar.gz"
+      CMAKE_URL="https://github.com/Kitware/CMake/releases/download/v3.15.0/cmake-3.15.0-Linux-x86_64.tar.gz"
       mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-      EIGEN_URL="http://bitbucket.org/eigen/eigen/get/3.3.4.tar.gz"
-      mkdir eigen && travis_retry wget --no-check-certificate --quiet -O - ${EIGEN_URL} | tar --strip-components=1 -xz -C eigen
     fi
   
   # Go to the Root directory  
   - cd ..
 
+ 
 # Build steps
 script:
   - mkdir build
   - cd build
-  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DEIGEN3_INCLUDES=${DEPS_DIR}/eigen -DBUILD_WITH_PYBIND11=ON -DPYTHON_EXECUTABLE=$(python-config --prefix)/bin/python3.5  .. && make
+  - CC=gcc-6 CXX=g++-6 ${DEPS_DIR}/cmake/bin/cmake -DBUILD_WITH_PYBIND11=ON -DPYTHON_EXECUTABLE=$(python-config --prefix)/bin/python3.5  .. && make

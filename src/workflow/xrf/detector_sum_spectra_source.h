@@ -76,8 +76,7 @@ public:
 
 protected:
 
-    size_t _detector_num_start;
-    size_t _detector_num_end;
+    std::vector<size_t> _detector_num_arr;
     data_struct::Spectra* _spectra;
 };
 

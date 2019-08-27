@@ -282,8 +282,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("fitting_routines", &data_struct::Analysis_Job::fitting_routines)
     .def_readwrite("detectors_meta_data", &data_struct::Analysis_Job::detectors_meta_data)
     .def_readwrite("optimize_fit_params_preset", &data_struct::Analysis_Job::optimize_fit_params_preset)
-    .def_readwrite("detector_num_start", &data_struct::Analysis_Job::detector_num_start)
-    .def_readwrite("detector_num_end", &data_struct::Analysis_Job::detector_num_end)
+    .def_readwrite("detector_num_arr", &data_struct::Analysis_Job::detector_num_arr)
     .def_readwrite("num_threads", &data_struct::Analysis_Job::num_threads)
     .def_readwrite("quick_and_dirty", &data_struct::Analysis_Job::quick_and_dirty)
     .def_readwrite("generate_average_h5", &data_struct::Analysis_Job::generate_average_h5)
@@ -400,15 +399,13 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 });
     //NetCDF_IO
     io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
-                size_t detector_num_start,
-                size_t detector_num_end,
+                std::vector<size_t> detector_num_arr,
                 int row,
                 size_t max_rows,
                 size_t max_cols,
                 data_struct::IO_Callback_Func_Def callback_fun,
                 void* user_data) { return io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(path,
-                                                                                  detector_num_start,
-                                                                                  detector_num_end,
+                                                                                  detector_num_arr,
                                                                                   row,
                                                                                   max_rows,
                                                                                   max_cols,

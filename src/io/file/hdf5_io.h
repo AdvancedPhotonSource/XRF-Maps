@@ -87,14 +87,12 @@ public:
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol);
 
     bool load_spectra_volume_with_callback(std::string path,
-                                           size_t detector_start,
-                                           size_t detector_end,
+											const std::vector<size_t>& detector_num_arr,
 										   data_struct::IO_Callback_Func_Def callback_func,
                                            void* user_data);
 
 	bool load_spectra_volume_emd_with_callback(std::string path,
-												size_t frame_num_start,
-												size_t frame_num_end,
+												const std::vector<size_t>& detector_num_arr,
 												data_struct::IO_Callback_Func_Def callback_func,
 												void* user_data);
 
@@ -184,14 +182,12 @@ public:
 	// Add links to dataset and set version to 9 so legacy software can load it
     void add_v9_layout(std::string dataset_directory,
                        std::string dataset_file,
-                       size_t detector_num_start,
-                       size_t detector_num_end);
+                       const std::vector<size_t>& detector_num_arr);
 
 	// Add exchange layout to be loadable by external software
 	void add_exchange_layout(std::string dataset_directory,
 							std::string dataset_file,
-							size_t detector_num_start,
-							size_t detector_num_end);
+							const std::vector<size_t>& detector_num_arr);
 
     bool end_save_seq(bool loginfo=true);
 

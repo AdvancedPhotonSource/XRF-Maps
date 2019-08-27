@@ -48,10 +48,15 @@ cmake_minimum_required(VERSION 3.5)
 
 project(XRF_Maps)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/cmake)
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/../libs/libzmq/build ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PROJECT_SOURCE_DIR}/../libs/libzmq/build)
 
 IF(UNIX)
   set(GCC_INCLUDE_DIR "/usr/include" CACHE PATH "Aditional GCC include folder")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/linux)
   include_directories(GCC_INCLUDE_DIR)
 ENDIF()
 
@@ -141,7 +146,7 @@ ELSEIF(MSVC)
   ELSE()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   ENDIF()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DHDF5CPP_USEDLL /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /openmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /openmp")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ot /Qvec-report:2 /GL /MP /bigobj")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
@@ -287,11 +292,11 @@ IF(BUILD_FOR_PHI)
               ${XRF_IO_SOURCE}
               )
 ELSE()
-  add_library(libxrf_fit SHARED
+  add_library(libxrf_fit SHARED 
               ${libxrf_fit_HEADERS}
               ${libxrf_fit_SOURCE}
               )
-  add_library(libxrf_io SHARED
+  add_library(libxrf_io SHARED 
              ${XRF_IO_HEADERS}
              ${XDR_HACK}
              ${XRF_IO_SOURCE}
@@ -338,6 +343,21 @@ foreach(CompilerFlag ${CompilerFlags})
   set_target_properties(libxrf_fit libxrf_io xrf_maps PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
 endforeach()
 
+
+set_property(TARGET libxrf_io libxrf_fit APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/support/eigen-git-mirror> 
+  $<INSTALL_INTERFACE:src>  )
+
+install(TARGETS libxrf_io libxrf_fit EXPORT XRF_MapsConfig 
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+#install(EXPORT XRF_MapsConfig DESTINATION share/XRF_Maps/cmake)
+#export(TARGETS libxrf_fit libxrf_io FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsTargets.cmake")
+export(EXPORT XRF_MapsConfig FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsConfig.cmake")
+export(PACKAGE XRF_MapsConfig)
+
+
 IF (WIN32)
   IF (MSVC)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
@@ -348,15 +368,18 @@ IF (WIN32)
   target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
   IF (BUILD_WITH_ZMQ)
-    IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-      string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
-    ELSE()
-      string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
-    ENDIF()
-    target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-    target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
-    target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-    target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
+    #IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+    #  string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
+    #ELSE()
+    #  string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
+    #ENDIF()
+	target_link_libraries(libxrf_io LINK_PUBLIC libzmq ws2_32.lib )
+    target_link_libraries(xrf_maps LINK_PUBLIC libzmq ws2_32.lib )
+  
+  #  target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
+  #  target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
+  #  target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
+  #  target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
   ENDIF()
 ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
@@ -410,4 +433,5 @@ IF (BUILD_WITH_QT)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized ${Qt5Charts_LIBRARIES} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug ${Qt5Charts_LIBRARIES} )
 ENDIF()
+
 

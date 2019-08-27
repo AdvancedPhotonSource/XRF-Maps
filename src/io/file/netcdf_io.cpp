@@ -283,8 +283,7 @@ size_t NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_stru
 //-----------------------------------------------------------------------------
 
 bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
-                                                size_t detector_num_start,
-                                                size_t detector_num_end,
+												const std::vector<size_t>& detector_num_arr,
                                                 int row,
                                                 size_t max_rows,
                                                 size_t max_cols,
@@ -301,7 +300,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     ptrdiff_t stride[] = {1, 1, 1};
     real_t data_in[1][1][10000];
     size_t spectra_size;
-    size_t num_detectors = detector_num_end - detector_num_start + 1;
+	size_t num_detectors = detector_num_arr.size();
 
     nc_type rh_type;
     int rh_ndims;
@@ -400,7 +399,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
             return true;
         }
 
-        for(size_t detector_num = detector_num_start; detector_num <= detector_num_end; detector_num++)
+        for(size_t detector_num : detector_num_arr)
         {
             unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector_num*8)];
             unsigned short i2 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector_num*8)+1];

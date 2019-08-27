@@ -87,8 +87,7 @@ Spectra_File_Source::~Spectra_File_Source()
 
 bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 										   std::string filename,
-                                           size_t detector_num_start,
-                                           size_t detector_num_end,
+                                           const std::vector<size_t>& detector_num_arr,
                                            size_t row,
                                            size_t row_size,
                                            size_t col_size)
@@ -96,7 +95,7 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 	bool retVal;
 	_current_dataset_directory = new std::string(dirpath);
 	_current_dataset_name = new std::string(filename);
-	retVal = io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_start, detector_num_end, row, row_size, col_size, _cb_function, nullptr);
+	retVal = io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
 	delete _current_dataset_directory;
 	delete _current_dataset_name;
 	return retVal;
@@ -166,7 +165,7 @@ void Spectra_File_Source::run()
 		if (_analysis_job->is_emd)
 		{
 			// load emd dataset
-			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function, nullptr))
+			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_arr, _cb_function, nullptr))
 			{
 				logW << "Skipping dataset_file " << dataset_file << "\n";
 				continue;
@@ -175,7 +174,7 @@ void Spectra_File_Source::run()
 		else
 		{
 			//load xfm dataset
-			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_start, _analysis_job->detector_num_end, _cb_function))
+			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_arr, _cb_function))
 			{
 				logW << "Skipping dataset_file " << dataset_file << "\n";
 				continue;
@@ -188,8 +187,7 @@ void Spectra_File_Source::run()
 
 bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset_directory,
                                                                  std::string dataset_file,
-                                                                 size_t detector_num_start,
-                                                                 size_t detector_num_end,
+                                                                 const std::vector<size_t>& detector_num_arr,
 																 data_struct::IO_Callback_Func_Def callback_fun)
 {
     //Dataset importer
@@ -197,7 +195,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
-    logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
+    logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" \n";
 
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
@@ -253,8 +251,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
     _current_dataset_name = new std::string(dataset_file);
     //load spectra
     if (false == mda_io.load_spectra_volume_with_callback(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file,
-                                                        detector_num_start,
-                                                        detector_num_end,
+                                                        detector_num_arr,
                                                         hasNetcdf | hasBnpNetcdf | hasHdf,
                                                         _analysis_job,
                                                         callback_fun,
@@ -281,7 +278,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else
@@ -310,7 +307,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                     }
                     row_idx_str_full += row_idx_str;
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_start, detector_num_end, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else
@@ -321,14 +318,14 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
         }
         else if (hasHdf)
         {
-            io::file::HDF5_IO::inst()->load_spectra_volume_with_callback(dataset_directory + "flyXRF.h5"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num_start, detector_num_end, callback_fun, nullptr);
+            io::file::HDF5_IO::inst()->load_spectra_volume_with_callback(dataset_directory + "flyXRF.h5"+ DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num_arr, callback_fun, nullptr);
         }
 
     }
 
     //move to stream_block so saver can deal with it
     mda_io.unload();
-    logI<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<" detectors "<<detector_num_start<<":"<<detector_num_end<<"\n";
+    logI<<"Finished Loading dataset "<<dataset_directory+"mda/"+dataset_file<<"\n";
     return true;
 }
 
