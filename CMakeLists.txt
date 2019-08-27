@@ -312,7 +312,7 @@ IF (BUILD_WITH_PYBIND11)
 
     pybind11_add_module(pyxrfmaps src/pybindings/main.cpp)
     IF (BUILD_WITH_ZMQ)
-      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES} PUBLIC ${ZeroMQ_STATIC_LIBRARY})
+      target_link_libraries(pyxrfmaps LINK_PUBLIC libxrf_fit libxrf_io ${NETCDF_LIBRARIES} ${HDF5_LIBRARIES} libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
     ELSE()
       target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES})
     ENDIF()

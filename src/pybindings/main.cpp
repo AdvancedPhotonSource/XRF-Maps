@@ -460,7 +460,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("proc_spectra", &proc_spectra);
     m.def("process_dataset_files", &process_dataset_files);
     m.def("perform_quantification", &perform_quantification);
-    m.def("average_quantification", &average_quantification);
+    //m.def("average_quantification", &average_quantification);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;
