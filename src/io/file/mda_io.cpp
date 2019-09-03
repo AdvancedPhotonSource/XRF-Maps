@@ -584,7 +584,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
-	size_t max_detecotr_num = -1;
+    size_t max_detecotr_num = 0;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
     size_t samples = 1;
@@ -603,7 +603,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank;
 
-	for (size_t det : detector_num_arr)
+    for (size_t det : detector_num_arr)
 	{
 		max_detecotr_num = std::max(det, max_detecotr_num);
 	}
