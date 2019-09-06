@@ -219,11 +219,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         else
                         {
                             Fit_Element_Map* fit_map;
-                            if(params_override->elements_to_fit.count(element_symb) > 0)
-                            {
-                                fit_map = params_override->elements_to_fit[element_symb];
-                            }
-                            else
+                            if(params_override->elements_to_fit.count(element_symb) < 1)
                             {
                                 fit_map = new Fit_Element_Map(element_symb, e_info);
                                 params_override->elements_to_fit[element_symb] = fit_map;
@@ -234,17 +230,85 @@ bool APS_Fit_Params_Import::load(std::string path,
                 }
                 else if (tag == "ELEMENTS_WITH_PILEUP")
                 {
-                    /* compile, need to update logic
                     std::string element_symb;
                     while(std::getline(strstream, element_symb, ','))
                     {
+                        Element_Info* e_info1 = nullptr;
+                        Element_Info* e_info2 = nullptr;
+                        std::string efull_name1;
+                        std::string efull_name2;
+
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
                         logI<<"Element with pileup : "<<element_symb<<"\n";
-                        //Element_Param* element_param = new Element_Param();
-                        //element_param->name = element_symb;
-                        //params_override->fit_params.append_element(element_param);
+                        std::string orig_el_symb = element_symb;
+
+                        std::vector<std::string> string_list;
+                        std::size_t found = element_symb.find("_");
+                        size_t prev = 0;
+                        while(found!=std::string::npos)
+                        {
+                            string_list.push_back(element_symb.substr(prev, found));
+                            element_symb = element_symb.substr(found+1, element_symb.size());
+                            prev = found;
+                            found = element_symb.find("_");
+                        }
+                        if(element_symb.size() > 0)
+                        {
+                            string_list.push_back(element_symb);
+                        }
+
+
+                        if(string_list.size() == 4)
+                        {
+                            if((string_list[1] == "L" || string_list[1] == "M") && (string_list[3] == "L" || string_list[3] == "M"))
+                            {
+                                e_info1 = element_info_map->get_element(string_list[0]);
+                                e_info2 = element_info_map->get_element(string_list[2]);
+                                efull_name1 = string_list[0] + "_" + string_list[1];
+                                efull_name2 = string_list[2] + "_" + string_list[3];
+                            }
+                        }
+                        else if(string_list.size() == 3)
+                        {
+                            if(string_list[1] == "L" || string_list[1] == "M")
+                            {
+                                e_info1 = element_info_map->get_element(string_list[0]);
+                                e_info2 = element_info_map->get_element(string_list[2]);
+                                efull_name1 = string_list[0] + "_" + string_list[1];
+                                efull_name2 = string_list[2];
+                            }
+                            else if(string_list[2] == "L" || string_list[2] == "M")
+                            {
+                                e_info1 = element_info_map->get_element(string_list[0]);
+                                e_info2 = element_info_map->get_element(string_list[1]);
+                                efull_name1 = string_list[0];
+                                efull_name2 = string_list[1] + "_" + string_list[2];
+                            }
+                        }
+                        else if(string_list.size() == 2)
+                        {
+                            e_info1 = element_info_map->get_element(string_list[0]);
+                            e_info2 = element_info_map->get_element(string_list[1]);
+                            efull_name1 = string_list[0];
+                            efull_name2 = string_list[1];
+                        }
+
+
+                        if(e_info1 != nullptr && e_info2 != nullptr)
+                        {
+                            Fit_Element_Map* fit_map;
+                            if(params_override->elements_to_fit.count(orig_el_symb) < 1)
+                            {
+                                fit_map = new Fit_Element_Map(efull_name1, e_info1);
+                                fit_map->set_as_pileup(efull_name2, e_info2);
+                                params_override->elements_to_fit[orig_el_symb] = fit_map;
+                            }
+                        }
+                        else
+                        {
+                            logW<<"Could not parse pileup string: "<<orig_el_symb<<".\n";
+                        }
                     }
-                    */
                 }
                 else if(FILE_TAGS_TRANSLATION.count(tag)> 0)
                 {

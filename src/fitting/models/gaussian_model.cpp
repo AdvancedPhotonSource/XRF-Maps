@@ -312,32 +312,8 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 
 // multicore start
-    std::vector<std::string> keys;
-    for (const auto& itr : (*elements_to_fit))
-    {
-        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
-        {
-            continue;
-        }
-        else
-        {
-            keys.push_back(itr.first);
-        }
-    }
-#pragma omp parallel for
-    for (int i=0; i < (int)keys.size(); i++)
-    {
-        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
-#pragma omp critical
-        {
-            agr_spectra += tmp;
-        }
-    }
-// multicore end
-	
-
-// single core start
-//    for(const auto& itr : (*elements_to_fit))
+//    std::vector<std::string> keys;
+//    for (const auto& itr : (*elements_to_fit))
 //    {
 //        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
 //        {
@@ -345,9 +321,33 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 //        }
 //        else
 //        {
-//            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+//            keys.push_back(itr.first);
 //        }
 //    }
+//#pragma omp parallel for
+//    for (int i=0; i < (int)keys.size(); i++)
+//    {
+//        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
+//#pragma omp critical
+//        {
+//            agr_spectra += tmp;
+//        }
+//    }
+// multicore end
+	
+
+// single core start
+    for(const auto& itr : (*elements_to_fit))
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        else
+        {
+            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+        }
+    }
 // single core end
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
@@ -355,31 +355,6 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 
 
 /*
-    // pileup
-    //temp_element_pos = np.array(keywords.added_params[4:13]);
-    for (int ii=0; ii<9; ii++)
-    {
-        // skip calculation for peaks (element + scatter) that are fixed AND
-        // close to zero (default 'zero' at 1e-10)
-        if (pall[temp_element_pos[ii]] <= -10)
-        {
-            continue;
-        }
-        int j = 0;
-        int i = np.amax(keywords.mele_pos) - np.amin(keywords.kele_pos) + 1 + ii;
-        if (er_struct.energy <= 0.0)
-        {
-            continue;
-        }
-        //repetition delta_energy = ev.copy() - (er_struct.energy);
-        faktor = er_struct.ratio* (10.**pall[temp_element_pos[ii]]);
-        // peak, gauss
-        value = faktor * this->peak(gain, sigma[i, j], delta_energy);
-        //fit_counts.pileup = fit_counts.pileup + value;
-        *(agr_spectra.buffer()) += value;
-    }
-
-    //(*counts) = fit_counts.ka + fit_counts.kb + fit_counts.l + fit_counts.m + fit_counts.elastic + fit_counts.compton + fit_counts.step + fit_counts.tail + fit_counts.pileup;
     //escape
     //if (np.sum(np.abs(pall[keywords.added_params[1:4]])) >= 0.0)
     {

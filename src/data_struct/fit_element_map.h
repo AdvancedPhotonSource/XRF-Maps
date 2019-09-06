@@ -116,6 +116,8 @@ public:
 
     const real_t& width_multi() const { return _width_multi; }
 
+    void set_as_pileup(std::string name, Element_Info* element_info);
+
 protected:
 
     void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
@@ -127,10 +129,14 @@ protected:
     std::vector<Element_Energy_Ratio> _energy_ratios;
     std::vector<real_t> _energy_ratio_custom_multipliers;
 
+    std::string _shell_type;
+
     real_t _center;
     real_t _width;
     real_t _width_multi;
 
+    Element_Info* _pileup_element_info;
+    std::string _pileup_shell_type;
 };
 
 //-----------------------------------------------------------------------------
