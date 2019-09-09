@@ -284,9 +284,14 @@ void SavePlotCalibrationCurve(std::string path,
         {
             data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
             quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+            real_t plot_val = itr.second;
             if(element_info != nullptr && shell == shell_idx)
             {
-                e_series->append(((element_info->number -1) - zstart), itr.second);
+                if(std::isinf(plot_val) || std::isnan(plot_val) || plot_val <= 0.0)
+                {
+                    plot_val = 0.000000001;
+                }
+                e_series->append(((element_info->number -1) - zstart), plot_val);
                 min_y = std::min(min_y, itr.second);
                 max_y = std::max(max_y, itr.second);
             }

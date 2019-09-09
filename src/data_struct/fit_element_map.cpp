@@ -61,17 +61,28 @@ Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
 
     _element_info = element_info;
 
+    _pileup_element_info = nullptr;
+
     _width_multi = 1.0;
 
-    int idx = _full_name.find_last_of("_") + 1;
-    std::string shell_type = _full_name.substr(idx);
-
     size_t num_ratios = 1;
-    if (idx == 0) // K line
+
+    int idx = _full_name.find_last_of("_") + 1;
+    if(idx == 0)
+    {
+        _shell_type = "K";
+    }
+    else
+    {
+        _shell_type = _full_name.substr(idx);
+    }
+
+
+    if (_shell_type == "K") // K line
     {
         num_ratios = 4;
     }
-    else if (shell_type == "L")
+    else if (_shell_type == "L")
     {
         num_ratios = 12;
     }
@@ -103,23 +114,34 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
         //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
-    int idx = _full_name.find_last_of("_") + 1;
-    std::string shell_type = _full_name.substr(idx);
-
     //real_t weight =  Element_Weight.at(element_info->number);
 
     _energy_ratios.clear();
 
-    if (idx == 0) // K line
+    if (_shell_type == "K") // K line
     {
-        _center = _element_info->xrf["ka1"];
+        if(_pileup_element_info != nullptr)
+        {
+            _center = _element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"];
 
-        generate_energy_ratio(_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["kb2"], (_element_info->xrf_abs_yield["kb2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
+            //generate_energy_ratio(_element_info->xrf["ka2"] + _pileup_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka_Line, detector_element);
+            //generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb_Line, detector_element);
+            //generate_energy_ratio(_element_info->xrf["kb2"] + _pileup_element_info->xrf["kb2"], (_element_info->xrf_abs_yield["kb2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb_Line, detector_element);
+        }
+        else
+        {
+            _center = _element_info->xrf["ka1"];
+
+            generate_energy_ratio(_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["kb2"], (_element_info->xrf_abs_yield["kb2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb_Line, detector_element);
+        }
+
+
     }
-    else if (shell_type == "L")
+    else if (_shell_type == "L")
     {
         _center = _element_info->xrf["la1"];
 
@@ -136,7 +158,7 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
         generate_energy_ratio(_element_info->xrf["ll"], (_element_info->xrf_abs_yield["ll"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[10], Element_Param_Type::L_Line, detector_element);
         generate_energy_ratio(_element_info->xrf["ln"], (_element_info->xrf_abs_yield["ln"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[11], Element_Param_Type::L_Line, detector_element);
     }
-    else if(shell_type == "M")
+    else if(_shell_type == "M")
     {
         //TODO: finish adding M info
         generate_energy_ratio(_element_info->xrf["ma1"], 1.0, Element_Param_Type::M_Line, detector_element);
@@ -211,6 +233,30 @@ void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
     if (idx > 0 && idx < _energy_ratio_custom_multipliers.size())
     {
         _energy_ratio_custom_multipliers[idx] = multi;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void Fit_Element_Map::set_as_pileup(std::string name, Element_Info* element_info)
+{
+    if(_pileup_element_info == nullptr)
+    {
+        int idx = name.find_last_of("_") + 1;
+        if(idx == 0)
+        {
+            _pileup_shell_type = "K";
+        }
+        else
+        {
+            _pileup_shell_type = name.substr(idx);
+        }
+        _full_name += "_"+name;
+        _pileup_element_info = element_info;
+    }
+    else
+    {
+        logW<<"Could not add second pileup to "<<_full_name<<"\n";
     }
 }
 
