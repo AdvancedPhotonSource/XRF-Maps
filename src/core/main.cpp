@@ -502,7 +502,7 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				logW << "No fitting routines picked! Please select from [--roi --nnls --matrix]\n";
+				logW << "No fitting routines picked! Please select from [--fit roi,nnls,matrix]\n";
 			}
         }
 
