@@ -5393,7 +5393,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
             logE<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
-        unsigned long total = 1;
+        long long total = 1;
         for(int i=0; i< rank; i++)
         {
             total *= dims_in[i];
@@ -5407,20 +5407,34 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 analysis_ids.push_back(det_analysis_dset_id);
         }
 
-		long long avail_mem = get_total_mem();
-		if ((total * 2) > (avail_mem) && rank == 3) //mca_arr
+		//long long avail_mem = get_total_mem() * .95;
+		long long avail_mem = get_available_mem();
+		if ((total * sizeof(real_t) * 2) > (avail_mem) && rank == 3) //mca_arr
 		{
 			//read in partial dataset at a time by chunks.
 			hsize_t* offset = new hsize_t[rank];
 			hsize_t* chunk_dims = new hsize_t[rank];
-			error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
 			unsigned long chunk_total = 1;
-			for (int i = 0; i < rank; i++)
+			error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
+			if (error < 0)
 			{
-				offset[i] = 0;
-				chunk_total *= chunk_dims[i];
+				for (int i = 0; i < rank; i++)
+				{
+					offset[i] = 0;
+				}
+				chunk_total *= dims_in[0];
+				chunk_dims[0] = dims_in[0];
+				chunk_dims[1] = 1;
+				chunk_dims[2] = 1;
 			}
-
+			else
+			{
+				for (int i = 0; i < rank; i++)
+				{
+					offset[i] = 0;
+					chunk_total *= chunk_dims[i];
+				}
+			}
 			data_struct::ArrayXr buffer1(chunk_total);
 			data_struct::ArrayXr buffer2(chunk_total);
 			
@@ -5436,9 +5450,10 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 					{
-						hid_t dspace_id = H5Dget_space(analysis_ids[k]);
-						H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+						//hid_t dspace_id = H5Dget_space(analysis_ids[k]);
+						//H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+						//error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
 						if (error > -1)
 						{
 							buffer1 += buffer2;
@@ -5460,6 +5475,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 			}
 			delete[] offset;
 			delete[] chunk_dims;
+			H5Sclose(memoryspace_id);
 		}
 		else
 		{
