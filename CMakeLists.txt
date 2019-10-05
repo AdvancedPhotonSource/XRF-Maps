@@ -237,6 +237,7 @@ set(libxrf_fit_SOURCE
 
 #--------------- start xrf io lib -----------------
 set(XRF_IO_HEADERS
+	src/core/mem_info.h
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
         src/io/file/mca_io.h
@@ -261,6 +262,7 @@ set(XRF_IO_HEADERS
 
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
+	src/core/mem_info.cpp
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp

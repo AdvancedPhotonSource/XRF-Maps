@@ -75,6 +75,7 @@ Analysis_Job::Analysis_Job()
 	is_emd = false;
     network_source_port = "43434";
     network_stream_port = "43434";
+	mem_limit = -1;
 }
 
 //-----------------------------------------------------------------------------

@@ -65,6 +65,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
 
+#include "core/mem_info.h"
+
 namespace io
 {
 namespace file

@@ -63,6 +63,7 @@ void help()
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
+	logit_s << "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
@@ -202,6 +203,25 @@ int main(int argc, char *argv[])
     {
         analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
     }
+
+	//check if we should set a ram memory limit
+	if (clp.option_exists("--mem-limit"))
+	{
+		 std::string memlimit = clp.get_option("--mem-limit");
+		 if (memlimit.rfind('M'))
+		 {
+
+		 }
+		 else if (memlimit.rfind('G'))
+		 {
+
+		 }
+		 else
+		 {
+			 logW << "Could not parse --mem-limit parameter. Make sure to use M for megabytes or G for gigabytes. ex 200M\n";
+		 }
+		 //analysis_job.mem_limit = ;
+	}
 
     //Do we want to optimize our fitting parameters
     if( clp.option_exists("--optimize-fit-override-params") )

@@ -5398,6 +5398,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         {
             total *= dims_in[i];
         }
+
         //get all the other files dataset ids
         for(long unsigned int k=1; k<hdf5_file_ids.size(); k++)
         {
@@ -5406,32 +5407,89 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 analysis_ids.push_back(det_analysis_dset_id);
         }
 
-        data_struct::ArrayXr buffer1(total);
-		data_struct::ArrayXr buffer2(total);
-        float divisor = 1.0;
-        error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
-        for(long unsigned int k=0; k<analysis_ids.size(); k++)
-        {
-            error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
-            if(error > -1)
-            {
-                buffer1 += buffer2;
-                divisor += 1.0;
-            }
-            else
-            {
-            logE<<"reading "<<full_hdf5_path<<" dataset "<<"\n";
-            }
-        }
+		long long avail_mem = get_total_mem();
+		if ((total * 2) > (avail_mem) && rank == 3) //mca_arr
+		{
+			//read in partial dataset at a time by chunks.
+			hsize_t* offset = new hsize_t[rank];
+			hsize_t* chunk_dims = new hsize_t[rank];
+			error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
+			unsigned long chunk_total = 1;
+			for (int i = 0; i < rank; i++)
+			{
+				offset[i] = 0;
+				chunk_total *= chunk_dims[i];
+			}
 
-        if(avg)
-        {
-            buffer1 /= divisor;
-        }
+			data_struct::ArrayXr buffer1(chunk_total);
+			data_struct::ArrayXr buffer2(chunk_total);
+			
+			hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
+			for (int w = 0; w < dims_in[1]; w++)
+			{
+				for (int h = 0; h < dims_in[2]; h++)
+				{
+					offset[1] = w;
+					offset[2] = h;
+					float divisor = 1.0;
+					H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+					{
+						hid_t dspace_id = H5Dget_space(analysis_ids[k]);
+						H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+						if (error > -1)
+						{
+							buffer1 += buffer2;
+							divisor += 1.0;
+						}
+						else
+						{
+							logE << "reading " << full_hdf5_path << " dataset " << "\n";
+						}
+					}
 
-        //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-        error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+					if (avg)
+					{
+						buffer1 /= divisor;
+					}
 
+					error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+				}
+			}
+			delete[] offset;
+			delete[] chunk_dims;
+		}
+		else
+		{
+			//read in the whole dataset
+			data_struct::ArrayXr buffer1(total);
+			data_struct::ArrayXr buffer2(total);
+			float divisor = 1.0;
+			error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+			for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+			{
+				error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
+				if (error > -1)
+				{
+					buffer1 += buffer2;
+					divisor += 1.0;
+				}
+				else
+				{
+					logE << "reading " << full_hdf5_path << " dataset " << "\n";
+				}
+			}
+
+			if (avg)
+			{
+				buffer1 /= divisor;
+			}
+
+			//hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+			error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+		}
         for(long unsigned int k=0; k<analysis_ids.size(); k++)
         {
             H5Dclose(analysis_ids[k]);

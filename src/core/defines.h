@@ -97,7 +97,6 @@ static std::time_t now_c;
   #endif
 #endif
 
-
 // STRING KEYS
 using namespace std;
 
