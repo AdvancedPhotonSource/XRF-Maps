@@ -205,6 +205,16 @@ void Spectra_File_Source::run()
 				continue;
 			}
 		}
+
+		//send end of file stream block
+		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1);
+		end_block->dataset_directory = _current_dataset_directory;
+		end_block->dataset_name = _current_dataset_name;
+		end_block->del_str_ptr = true;
+		_output_callback_func(end_block);
+
+		_current_dataset_directory = nullptr;
+		_current_dataset_name = nullptr;
     }
 }
 

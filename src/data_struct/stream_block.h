@@ -102,6 +102,8 @@ public:
 
     inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
 
+	inline bool is_end_block() { return (_row == -1 && _height == -1 && _col == -1 && _width == -1); }
+
     //by Fitting_Routines
     std::unordered_map<int, Stream_Fitting_Block> fitting_blocks;
 
