@@ -80,6 +80,9 @@ public:
               data_struct::Params_Override *params_override);
 
     bool save(std::string path,
+              Params_Override *params_override);
+
+    bool save(std::string path,
               data_struct::Fit_Parameters fit_params,
               int detector_num);
 
