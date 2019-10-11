@@ -275,6 +275,11 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, size_t
 
 void Basic_Serializer::_encode_spectra(data_struct::Stream_Block* stream_block, std::string& raw_msg)
 {
+	if (stream_block->spectra == nullptr)
+	{
+		return;
+	}
+
     short send_cnt = 0;
 
     std::map<unsigned short, real_t> spec_indx_values;

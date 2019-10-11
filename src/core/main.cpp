@@ -175,28 +175,6 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	/*
-	if ( clp.option_exists("--tails") )
-    {
-        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_TAILS);
-    }
-    if ( clp.option_exists("--matrix") )
-    {
-        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
-    }
-    if ( clp.option_exists("--roi") )
-    {
-        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
-    }
-    if ( clp.option_exists("--roi_plus") )
-    {
-        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::SVD);
-    }
-    if ( clp.option_exists("--nnls") )
-    {
-        analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
-    }
-	*/
 
     //Check if we want to quantifiy with a standard
     if ( clp.option_exists("--quantify-with") )
