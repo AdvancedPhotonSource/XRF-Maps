@@ -1,4 +1,4 @@
-/***
+﻿/***
 Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
 
 Copyright 2016. UChicago Argonne, LLC. This software was produced
@@ -117,6 +117,8 @@ public:
     const real_t& width_multi() const { return _width_multi; }
 
     void set_as_pileup(std::string name, Element_Info* element_info);
+
+    const Element_Info* pileup_element() const { return _pileup_element_info; }
 
 protected:
 

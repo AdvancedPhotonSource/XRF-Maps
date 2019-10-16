@@ -139,10 +139,10 @@ TIME_SCALER_CLOCK: 50000000.0
 TIME_NORMALIZED_SCALER: US_IC;8bmb:3820:mca2.VAL
 TIME_NORMALIZED_SCALER: DS_IC;8bmb:3820:mca3.VAL
     Spectra scalers
-ELT1:dxpXMAPDP3:mca1.ELTM
-ERT1:dxpXMAPDP3:mca1.ERTM
-ICR1:dxpXMAPDP3:dxp1:InputCountRate
-OCR1:dxpXMAPDP3:dxp1:OutputCountRate
+ELT1:dxpXMAPDP3:mca<detector+1>.ELTM
+ERT1:dxpXMAPDP3:mca<detector+1>1.ERTM
+ICR1:dxpXMAPDP3:dxp<detector+1>:InputCountRate
+OCR1:dxpXMAPDP3:dxp<detector+1>:OutputCountRate
 AIRPATH: 1000.
     the lines below (if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file
 		 for the amps, the _NUM value should be between 0 and 8 where 0=1, 1=2, 2=5, 3=10, 4=20, 5=50, 6=100, 7=200, 8=500
