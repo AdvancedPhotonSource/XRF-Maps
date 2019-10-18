@@ -4473,7 +4473,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                     spectra_volume->generate_scaler_maps(&elt_map, &ert_map, &in_cnt_map, &out_cnt_map);
                     char elt_char[255] = "Elapsed Live Time";
                     char ert_char[255] = "Elapsed Real Time";
-                    char in_char[255] = "Inpout Counts";
+                    char in_char[255] = "Input Counts";
                     char out_char[255] = "Output Counts";
 
                     offset[0] = hdf_idx;

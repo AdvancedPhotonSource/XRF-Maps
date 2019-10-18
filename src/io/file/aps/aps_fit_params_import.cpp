@@ -56,7 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <chrono>
 #include <ctime>
 
-
 namespace io
 {
 namespace file
@@ -773,6 +772,14 @@ bool APS_Fit_Params_Import::load(std::string path,
     }
     return false;
 
+}
+
+//-----------------------------------------------------------------------------
+
+bool APS_Fit_Params_Import::save(std::string path,
+                                 Params_Override *params_override)
+{
+    return false;
 }
 
 //-----------------------------------------------------------------------------
