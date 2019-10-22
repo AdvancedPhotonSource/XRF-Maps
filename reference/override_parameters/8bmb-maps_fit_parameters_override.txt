@@ -1,0 +1,153 @@
+   This file will override default fit settings for the maps program for a 3 element detector remove: removeme_*elementdetector_to make it work. 
+   note, the filename MUST be maps_fit_parameters_override.txt
+VERSION: 5.0
+DATE: 2015-09-25 21:28:04.312000
+   put below the number of detectors that were used to acquire spectra. IMPORTANT:
+   this MUST come after VERSION, and before all other options!
+DETECTOR_ELEMENTS: 1
+   give this file an internal name, whatever you like
+IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]: automatic
+   list the elements that you want to be fit. For K lines, just use the element
+   name, for L lines add _L, e.g., Au_L, for M lines add _M
+ELEMENTS_TO_FIT: Si, P, S, Cl, Ar, K, Ca, Ti, Cr, Mn, Fe, Ni, Co, Cu, Zn, Au_L
+   list the element combinations you want to fit for pileup, e.g., Si_Si_Si, Si_Cl, etc
+ELEMENTS_WITH_PILEUP: 
+   offset of energy calibration, in kev
+CAL_OFFSET_[E_OFFSET]: 0.028137284
+CAL_OFFSET_[E_OFFSET]_MAX: 0.050000001
+CAL_OFFSET_[E_OFFSET]_MIN: -0.050000001
+   slope of energy calibration, in leV / channel
+CAL_SLOPE_[E_LINEAR]: 0.0115
+CAL_SLOPE_[E_LINEAR]_MAX: 0.013
+CAL_SLOPE_[E_LINEAR]_MIN: 0.01
+   quadratic correction for energy calibration, unless you know exactly what you are doing, please leave it at 0.
+CAL_QUAD_[E_QUADRATIC]: 0.0
+CAL_QUAD_[E_QUADRATIC]_MAX: 9.9999997e-05
+CAL_QUAD_[E_QUADRATIC]_MIN: -9.9999997e-05
+    energy_resolution at 0keV
+FWHM_OFFSET: 0.01
+    energy dependence of the energy resolution
+FWHM_FANOPRIME: 0.00065712239
+    incident energy
+COHERENT_SCT_ENERGY: 15.01
+    upper constraint for the incident energy
+COHERENT_SCT_ENERGY_MAX: 15.3
+    lower constraint for the incident energy
+COHERENT_SCT_ENERGY_MIN: 14.7
+    angle for the compton scatter (in degrees)
+COMPTON_ANGLE: 91.575496
+COMPTON_ANGLE_MAX: 170.0
+COMPTON_ANGLE_MIN: 70.0
+    additional width of the compton
+COMPTON_FWHM_CORR: 1.9860346
+COMPTON_STEP: 0.0
+COMPTON_F_TAIL: 0.039961524
+COMPTON_GAMMA: 3.0
+COMPTON_HI_F_TAIL: 0.78938302
+COMPTON_HI_GAMMA: 3.0
+    tailing parameters, see also Grieken, Markowicz, Handbook of X-ray spectrometry
+    2nd ed, van Espen spectrum evaluation page 287.	_A corresponds to f_S, _B to
+    f_T and _C to gamma
+STEP_OFFSET: 0.0
+STEP_LINEAR: 0.0
+STEP_QUADRATIC: 0.0
+F_TAIL_OFFSET: 0.035931118
+F_TAIL_LINEAR: 1.6940659e-21
+F_TAIL_QUADRATIC: 0.0
+KB_F_TAIL_OFFSET: 0.16684721
+KB_F_TAIL_LINEAR: 0.0
+KB_F_TAIL_QUADRATIC: 0.0
+GAMMA_OFFSET: 2.2101209
+GAMMA_LINEAR: 0.0
+GAMMA_QUADRATIC: 0.0
+    snip width is the width used for estimating background. 0.5 is typically a good start 
+SNIP_WIDTH: 0.5
+    set FIT_SNIP_WIDTH to 1 to fit the width of the snipping for background estimate, set to 0 not to. Only use if you know what it is doing!
+FIT_SNIP_WIDTH: 0
+    detector material: 0= Germanium, 1 = Si
+DETECTOR_MATERIAL: 1
+    beryllium window thickness, in micrometers, typically 8 or 24
+BE_WINDOW_THICKNESS: 24.0
+thickness of the detector chip, e.g., 350 microns for an SDD
+DET_CHIP_THICKNESS: 0.0
+thickness of the Germanium detector dead layer, in microns, for the purposes of the NBS calibration
+GE_DEAD_LAYER: 0.0
+    maximum energy value to fit up to [keV]
+MAX_ENERGY_TO_FIT: 15.5
+    minimum energy value [keV]
+MIN_ENERGY_TO_FIT: 1.0
+    this allows manual adjustment of the branhcing ratios between the different lines of L1, L2, and L3.
+    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,
+    0.8 will correspond to to 80% of that, etc.
+BRANCHING_FAMILY_ADJUSTMENT_L: Pb_L, 0., 0., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Hg_L, 0., 0., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Pt_L, 1., 1., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Au_L, 1., 1., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Gd_L, 1., 1., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Sn_L, 1., 1., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Zr_L, 1., 1., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: Pu_L, 0., 0., 1.
+BRANCHING_FAMILY_ADJUSTMENT_L: I_L, 1., 1., 1.
+    this allows manual adjustment of the branhcing ratios between the different L lines, such as La 1, la2, etc.
+    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.
+    all will be normalized to the La1 line, and the values need to be in the following order:
+    La1, La2, Lb1, Lb2, Lb3, Lb4, Lg1, Lg2, Lg3, Lg4, Ll, Ln
+    please note, the first value (la1) MUST BE A 1. !!!
+BRANCHING_RATIO_ADJUSTMENT_L: Pb_L, 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.
+BRANCHING_RATIO_ADJUSTMENT_L: I_L, 1., 1., 0.45, 1.0, 0.45, 0.45, 0.6, 1., 0.3, 1., 1., 1.
+BRANCHING_RATIO_ADJUSTMENT_L: Gd_L, 1., 0.48, 0.59, 0.98, 0.31, 0.08, 0.636, 1., 0.3, 1., 1., 1.
+BRANCHING_RATIO_ADJUSTMENT_L: Sn_L, 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+    this allows manual adjustment of the branhcing ratios between the different K lines, such as Ka1, Ka2, Kb1, Kb2
+    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.
+    all will be normalized to the Ka1 line, and the values need to be in the following order:
+    Ka1, Ka2, Kb1(+3), Kb2
+    please note, the first value (Ka1) MUST BE A 1. !!!
+BRANCHING_RATIO_ADJUSTMENT_K: Na, 1., 1., 4.0, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Mg, 1., 1., 3.6, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Al, 1., 1., 3.3, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Si, 1., 1., 2.9, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: P, 1., 1., 2.75, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: S, 1., 1., 2.6, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Cl, 1., 1., 2.5, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Ar, 1., 1., 2.2, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: K, 1., 1., 1.9, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Ca, 1., 1., 1.7, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Ti, 1., 1., 1.6, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: V, 1., 1., 1.4, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Cr, 1., 1., 1.35, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Mn, 1., 1., 1.3, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Fe, 1., 1., 1.2, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Co, 1., 1., 1.1, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Ni, 1., 1., 1.05, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Cu, 1., 1., 1.0, 1.
+BRANCHING_RATIO_ADJUSTMENT_K: Zn, 1., 1., 1.0, 1.
+    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero
+SI_ESCAPE_FACTOR: 0.000
+GE_ESCAPE_FACTOR: 0.0
+    this parameter adds a component to the escape peak that depends linear on energy
+LINEAR_ESCAPE_FACTOR: 0.0
+    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)
+SI_ESCAPE_ENABLE: 0
+GE_ESCAPE_ENABLE: 0
+    the lines (if any) below will override the detector names built in to maps. please modify only if you are sure you understand the effect
+SRCURRENT: S:SRcurrentAI
+US_IC: 8bmb:3820:scaler1_cts1.B
+DS_IC: 8bmb:3820:scaler1_cts1.C
+    These scalers are for fly scans.  Tag: Name;PV
+TIME_SCALER_PV: 8bmb:3820:mca1.VAL
+TIME_SCALER_CLOCK: 50000000.0
+TIME_NORMALIZED_SCALER: US_IC;8bmb:3820:mca2.VAL
+TIME_NORMALIZED_SCALER: DS_IC;8bmb:3820:mca3.VAL
+    Spectra scalers
+ELT1:dxpXMAPDP3:mca<detector+1>.ELTM
+ERT1:dxpXMAPDP3:mca<detector+1>1.ERTM
+ICR1:dxpXMAPDP3:dxp<detector+1>:InputCountRate
+OCR1:dxpXMAPDP3:dxp<detector+1>:OutputCountRate
+AIRPATH: 1000.
+    the lines below (if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file
+		 for the amps, the _NUM value should be between 0 and 8 where 0=1, 1=2, 2=5, 3=10, 4=20, 5=50, 6=100, 7=200, 8=500
+		 for the amps, the _UNIT value should be between 0 and 3 where 0=pa/v, 1=na/v, 2=ua/v 3=ma/v
+US_AMP_SENS_NUM:0
+US_AMP_SENS_UNIT:1
+DS_AMP_SENS_NUM:0
+DS_AMP_SENS_UNIT:1
