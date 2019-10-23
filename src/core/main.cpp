@@ -78,6 +78,7 @@ void help()
     logit_s<<"--dir : Dataset directory \n";
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";
     logit_s<<"--confocal : load hdf confocal xrf datasets \n";
+	logit_s<< "--gsecars : load hdf gse cars xrf datasets \n";
     logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n\n";
 #ifdef _BUILD_WITH_ZMQ
     logit_s<<"Network: \n";
@@ -100,6 +101,7 @@ int main(int argc, char *argv[])
     std::string dataset_dir;
     std::string whole_command_line = "";
     bool is_confocal = false;
+	bool is_gsecars = false;
     bool optimize_fit_override_params = false;
 
     //Performance measure
@@ -263,7 +265,11 @@ int main(int argc, char *argv[])
     {
         is_confocal = true;
     }
-	if (clp.option_exists("--emd"))
+	else if (clp.option_exists("--gsecars"))
+	{
+		is_gsecars = true;
+	}
+	else if (clp.option_exists("--emd"))
 	{
 		analysis_job.is_emd = true;
         analysis_job.generate_average_h5 = false;
@@ -389,6 +395,10 @@ int main(int argc, char *argv[])
             {
                 analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
             }
+			else if (is_gsecars)
+			{
+				analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".h5");
+			}
             else if (analysis_job.is_emd)
             {
                 analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".emd");
@@ -409,7 +419,7 @@ int main(int argc, char *argv[])
                 analysis_job.optimize_dataset_files.push_back(itr);
             }
 
-            if(!is_confocal && !analysis_job.is_emd)
+            if(!is_confocal && !analysis_job.is_emd && !is_gsecars)
                 io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
 
             //if no files were specified only take the 8 largest datasets

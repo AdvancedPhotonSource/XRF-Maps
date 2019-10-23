@@ -716,6 +716,17 @@ bool load_spectra_volume(std::string dataset_directory,
         return true;
     }
 
+	//try loading gse cars dataset
+	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
+	{
+		if (save_scalers)
+		{
+			io::file::HDF5_IO::inst()->start_save_seq(true);
+			//io::file::HDF5_IO::inst()->save_scan_scalers_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+		}
+		return true;
+	}
+
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
@@ -904,6 +915,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         *integrated_spectra = spectra_volume.integrate();
         return true;
     }
+
+	//try loading gse cars dataset
+	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
+	{
+		logI << "Loaded spectra volume gse cars from h5.\n";
+		*integrated_spectra = spectra_volume.integrate();
+		return true;
+	}
 
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
