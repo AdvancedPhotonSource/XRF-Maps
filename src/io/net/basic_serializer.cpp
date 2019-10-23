@@ -109,6 +109,12 @@ data_struct::Stream_Block* Basic_Serializer::_decode_meta(char* message, size_t 
     float theta = 0;
     char tmp_char_arr[4096] = {0};
 
+	size_t first_header_size = (sizeof(size_t) * 4) + sizeof(real_t) + sizeof(unsigned int);
+	if (message_len < first_header_size)
+	{
+		return nullptr;
+	}
+
     memcpy(&detector_number, message + idx, sizeof(unsigned int));
     idx += sizeof(unsigned int);
     memcpy(&row, message + idx, sizeof(size_t));
@@ -267,8 +273,11 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts(char* message, size_t
 {
     size_t idx = 0;
     data_struct::Stream_Block* out_stream_block = _decode_meta(message, message_len, idx);
-    _decode_counts(message, message_len, idx, out_stream_block);
-    return out_stream_block;
+	if (out_stream_block != nullptr && idx < message_len)
+	{
+		_decode_counts(message, message_len, idx, out_stream_block);
+	}
+	return out_stream_block;
 }
 
 //-----------------------------------------------------------------------------
@@ -383,8 +392,11 @@ data_struct::Stream_Block* Basic_Serializer::decode_spectra(char* message, size_
 {
     size_t idx = 0;
     data_struct::Stream_Block* out_stream_block = _decode_meta(message, message_len, idx);
-    _decode_spectra(message, message_len, idx, out_stream_block);
-    return out_stream_block;
+	if (out_stream_block != nullptr && idx < message_len)
+	{
+		_decode_spectra(message, message_len, idx, out_stream_block);
+	}
+	return out_stream_block;
 }
 
 //-----------------------------------------------------------------------------
@@ -404,8 +416,17 @@ data_struct::Stream_Block* Basic_Serializer::decode_counts_and_spectra(char* mes
 {
     size_t idx = 0;
     data_struct::Stream_Block* out_stream_block = _decode_meta(message, message_len, idx);
-    _decode_counts(message, message_len, idx, out_stream_block);
-    _decode_spectra(message, message_len, idx, out_stream_block);
+	if (out_stream_block != nullptr)
+	{
+		if (idx < message_len)
+		{
+			_decode_counts(message, message_len, idx, out_stream_block);
+		}
+		if (idx < message_len)
+		{
+			_decode_spectra(message, message_len, idx, out_stream_block);
+		}
+	}
     return out_stream_block;
 }
 
