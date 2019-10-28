@@ -196,9 +196,6 @@ public:
 
     bool stream_over_network;
 
-	//electron microscopy dataset
-	bool is_emd;
-
 	long long mem_limit;
 
 protected:

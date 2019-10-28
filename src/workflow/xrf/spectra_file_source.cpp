@@ -187,24 +187,12 @@ void Spectra_File_Source::run()
 
     for(std::string dataset_file : _analysis_job->dataset_files)
     {
-		if (_analysis_job->is_emd)
-		{
-			// load emd dataset
-			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_arr, _cb_function, nullptr))
-			{
-				logW << "Skipping dataset_file " << dataset_file << "\n";
-				continue;
-			}
-		}
-		else
-		{
-			//load xfm dataset
-			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_arr, _cb_function))
-			{
-				logW << "Skipping dataset_file " << dataset_file << "\n";
-				continue;
-			}
-		}
+        //load xfm dataset
+        if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_arr, _cb_function))
+        {
+            logW << "Skipping dataset_file " << dataset_file << "\n";
+            continue;
+        }
 
 		//send end of file stream block
 		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1);
@@ -281,6 +269,15 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
             }
         }
     }
+
+    //TODO: add confocal and emd streaming
+    //// load emd dataset
+    //if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_arr, _cb_function, nullptr))
+    //{
+    //    logW << "Skipping dataset_file " << dataset_file << "\n";
+    //    continue;
+    //}
+
 
     _current_dataset_directory = new std::string(dataset_directory);
     _current_dataset_name = new std::string(dataset_file);

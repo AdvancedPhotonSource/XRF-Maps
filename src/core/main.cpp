@@ -77,9 +77,6 @@ void help()
     logit_s<<"Dataset: "<<"\n";
     logit_s<<"--dir : Dataset directory \n";
     logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";
-    logit_s<<"--confocal : load hdf confocal xrf datasets \n";
-	logit_s<< "--gsecars : load hdf gse cars xrf datasets \n";
-    logit_s<<"--emd : load hdf electron microscopy FEI EMD xrf datasets \n\n";
 #ifdef _BUILD_WITH_ZMQ
     logit_s<<"Network: \n";
     logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option) \n";
@@ -100,8 +97,6 @@ int main(int argc, char *argv[])
 {
     std::string dataset_dir;
     std::string whole_command_line = "";
-    bool is_confocal = false;
-	bool is_gsecars = false;
     bool optimize_fit_override_params = false;
 
     //Performance measure
@@ -260,22 +255,6 @@ int main(int argc, char *argv[])
         analysis_job.add_exchange_layout = true;
     }
 
-
-    if(clp.option_exists("--confocal"))
-    {
-        is_confocal = true;
-    }
-	else if (clp.option_exists("--gsecars"))
-	{
-		is_gsecars = true;
-	}
-	else if (clp.option_exists("--emd"))
-	{
-		analysis_job.is_emd = true;
-        analysis_job.generate_average_h5 = false;
-        analysis_job.detector_num_arr.push_back(0);
-	}
-
     if( clp.option_exists("--streamin"))
     {
         analysis_job.is_network_source = true;
@@ -391,23 +370,27 @@ int main(int argc, char *argv[])
         //if they were not then look for them in $dataset_directory/mda
         if (dset_file.length() < 1)
         {
-            if(is_confocal)
+            for(auto& itr: io::find_all_dataset_files(dataset_dir, ".hdf5"))
             {
-                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".hdf5");
+                analysis_job.dataset_files.push_back(itr);
             }
-			else if (is_gsecars)
-			{
-				analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".h5");
-			}
-            else if (analysis_job.is_emd)
+            for(auto& itr: io::find_all_dataset_files(dataset_dir, ".h5"))
             {
-                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir, ".emd");
+                analysis_job.dataset_files.push_back(itr);
             }
-            else
+            for(auto& itr: io::find_all_dataset_files(dataset_dir, ".emd"))
             {
-                // find all files in the dataset
-                analysis_job.dataset_files = io::find_all_dataset_files(dataset_dir + "mda"+ DIR_END_CHAR, ".mda");
+                analysis_job.dataset_files.push_back(itr);
             }
+            for(auto& itr: io::find_all_dataset_files(dataset_dir, ".mda"))
+            {
+                analysis_job.dataset_files.push_back(itr);
+            }
+            for(auto& itr: io::find_all_dataset_files(dataset_dir + "mda"+ DIR_END_CHAR, ".mda"))
+            {
+                analysis_job.dataset_files.push_back(itr);
+            }
+
             if (analysis_job.dataset_files.size() == 0)
             {
                 logE<<"No mda files found in dataset directory "<<dataset_dir<<"\n";
@@ -419,8 +402,7 @@ int main(int argc, char *argv[])
                 analysis_job.optimize_dataset_files.push_back(itr);
             }
 
-            if(!is_confocal && !analysis_job.is_emd && !is_gsecars)
-                io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
+            io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
 
             //if no files were specified only take the 8 largest datasets
             while (analysis_job.optimize_dataset_files.size() > 9)

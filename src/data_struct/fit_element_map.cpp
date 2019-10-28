@@ -124,24 +124,24 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
         {
             _center = _element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"];
 
-            generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
-            generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["kb1"], 1.0, Element_Param_Type::Kb_Line, detector_element);
-            generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["kb1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka1_Line, detector_element);
+            //generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["kb1"], (_element_info->xrf["kb1"] / _element_info->xrf["ka1"]) * (_pileup_element_info->xrf["kb1"] / _pileup_element_info->xrf["ka1"]), Element_Param_Type::Kb_Line, detector_element);
+            //generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["kb1"], (_pileup_element_info->xrf["kb1"] / _pileup_element_info->xrf["ka1"]), Element_Param_Type::Ka_Line, detector_element);
 
-            if(_element_info != _pileup_element_info)
-            {
-                generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
-            }
+            //if(_element_info != _pileup_element_info)
+            //{
+            //    generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["ka1"], (element_info->xrf["kb1"] / element_info->xrf["ka1"]), Element_Param_Type::Ka_Line, detector_element);
+            //}
 
         }
         else
         {
             _center = _element_info->xrf["ka1"];
 
-            generate_energy_ratio(_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka_Line, detector_element);
-            generate_energy_ratio(_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka_Line, detector_element);
-            generate_energy_ratio(_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb_Line, detector_element);
-            generate_energy_ratio(_element_info->xrf["kb2"], (_element_info->xrf_abs_yield["kb2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka1_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka2_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb1_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["kb2"], (_element_info->xrf_abs_yield["kb2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb2_Line, detector_element);
         }
 
 
@@ -150,23 +150,26 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
     {
         _center = _element_info->xrf["la1"];
 
-        generate_energy_ratio(_element_info->xrf["la1"], 1.0, Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["la2"], (_element_info->xrf_abs_yield["la2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lb1"], (_element_info->xrf_abs_yield["lb1"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lb2"], (_element_info->xrf_abs_yield["lb2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lb3"], (_element_info->xrf_abs_yield["lb3"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[4], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lb4"], (_element_info->xrf_abs_yield["lb4"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[5], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lg1"], (_element_info->xrf_abs_yield["lg1"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[6], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lg2"], (_element_info->xrf_abs_yield["lg2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[7], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lg3"], (_element_info->xrf_abs_yield["lg3"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[8], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["lg4"], (_element_info->xrf_abs_yield["lg4"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[9], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["ll"], (_element_info->xrf_abs_yield["ll"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[10], Element_Param_Type::L_Line, detector_element);
-        generate_energy_ratio(_element_info->xrf["ln"], (_element_info->xrf_abs_yield["ln"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[11], Element_Param_Type::L_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["la1"], 1.0, Element_Param_Type::La1_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["la2"], (_element_info->xrf_abs_yield["la2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::La2_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lb1"], (_element_info->xrf_abs_yield["lb1"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Lb1_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lb2"], (_element_info->xrf_abs_yield["lb2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Lb2_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lb3"], (_element_info->xrf_abs_yield["lb3"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[4], Element_Param_Type::Lb3_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lb4"], (_element_info->xrf_abs_yield["lb4"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[5], Element_Param_Type::Lb4_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lg1"], (_element_info->xrf_abs_yield["lg1"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[6], Element_Param_Type::Lg1_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lg2"], (_element_info->xrf_abs_yield["lg2"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[7], Element_Param_Type::Lg2_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lg3"], (_element_info->xrf_abs_yield["lg3"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[8], Element_Param_Type::Lg3_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["lg4"], (_element_info->xrf_abs_yield["lg4"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[9], Element_Param_Type::Lg4_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["ll"], (_element_info->xrf_abs_yield["ll"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[10], Element_Param_Type::Ll_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["ln"], (_element_info->xrf_abs_yield["ln"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[11], Element_Param_Type::Ln_Line, detector_element);
     }
     else if(_shell_type == "M")
     {
         //TODO: finish adding M info
-        generate_energy_ratio(_element_info->xrf["ma1"], 1.0, Element_Param_Type::M_Line, detector_element);
+        generate_energy_ratio(_element_info->xrf["ma1"], 1.0, Element_Param_Type::Ma1_Line, detector_element);
+        //generate_energy_ratio(_element_info->xrf["ma2"], 1.0, Element_Param_Type::Ma2_Line, detector_element);
+        //generate_energy_ratio(_element_info->xrf["mb"], 1.0, Element_Param_Type::Mb_Line, detector_element);
+        //generate_energy_ratio(_element_info->xrf["mg"], 1.0, Element_Param_Type::Mg_Line, detector_element);
     }
 
     _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );

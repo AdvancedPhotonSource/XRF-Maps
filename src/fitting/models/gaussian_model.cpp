@@ -421,14 +421,42 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 		ArrayXr delta_energy = ev - er_struct.energy;
 
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
-        if (er_struct.ptype == Element_Param_Type::Kb_Line)
+        switch(er_struct.ptype)
         {
-            faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
+            case Element_Param_Type::Kb1_Line:
+            case Element_Param_Type::Kb2_Line:
+                faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
+                break;
+            case Element_Param_Type::Ka1_Line:
+            case Element_Param_Type::Ka2_Line:
+            case Element_Param_Type::La1_Line:
+            case Element_Param_Type::La2_Line:
+            case Element_Param_Type::Lb1_Line:
+            case Element_Param_Type::Lb2_Line:
+            case Element_Param_Type::Lb3_Line:
+            case Element_Param_Type::Lb4_Line:
+            case Element_Param_Type::Lg1_Line:
+            case Element_Param_Type::Lg2_Line:
+            case Element_Param_Type::Lg3_Line:
+            case Element_Param_Type::Lg4_Line:
+            case Element_Param_Type::Ll_Line:
+            case Element_Param_Type::Ln_Line:
+                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+                break;
+            default:
+                break;
         }
-        if ((er_struct.ptype == Element_Param_Type::Ka_Line) || (er_struct.ptype == Element_Param_Type::L_Line))
-        {
-            faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-        }
+
+//        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+//        {
+//            faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
+//        }
+//        if (er_struct.ptype == Element_Param_Type::Ka1_Line || er_struct.ptype == Element_Param_Type::Ka2_Line || er_struct.ptype == Element_Param_Type::L_Line)
+//        {
+//            faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+//        }
+
+
         // peak, gauss
         //value = faktor * this->peak(fit_params->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
         spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
@@ -465,7 +493,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
             //counts_arr->step = fit_counts.step + value;
         }
         //  peak, tail;; use different tail for K beta vs K alpha lines
-        if (er_struct.ptype == Element_Param_Type::Kb_Line)
+        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
         {
             real_t gamma = std::abs( fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy) ) * element_to_fit->width_multi();
             value = faktor * kb_f_tail;

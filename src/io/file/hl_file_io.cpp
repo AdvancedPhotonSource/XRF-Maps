@@ -1176,16 +1176,21 @@ void check_and_create_dirs(std::string dataset_directory)
 
 void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files)
 {
-
+    // only supports soring mda files
+    std::string ending = ".mda";
     io::file::MDA_IO mda_io;
     logI<<dataset_directory<<" "<<dataset_files->size()<<" files"<<"\n";
     std::list<file_name_size> f_list;
 
     for (auto &itr : *dataset_files)
     {
-        std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
-        int fsize = mda_io.get_multiplied_dims(full_path);
-        f_list.push_back(file_name_size(itr, fsize));
+        //check if file ends with .mda
+        if (itr.compare(itr.length() - ending.length(), ending.length(), ending) == 0 )
+        {
+            std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
+            int fsize = mda_io.get_multiplied_dims(full_path);
+            f_list.push_back(file_name_size(itr, fsize));
+        }
     }
 
     f_list.sort(compare_file_size);
