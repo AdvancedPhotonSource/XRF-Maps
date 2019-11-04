@@ -5554,6 +5554,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	hsize_t single_count[1] = { 1 };
 	hsize_t value_offset[3] = { 0,0,0 };
 	hsize_t value_count[3] = { 1,1,1 };
+	hsize_t mem_offset[2] = { 0,0 };
 	hsize_t mem_count[2] = { 1,1 };
 	hsize_t xy_offset[3] = { 0,0,0 };
 	hsize_t xy_count[3] = { 1,1,1 };
@@ -5608,7 +5609,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 	if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrmmap", file_id, true, false))
 	{
-		if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xfmmap", file_id))
+		if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
 		{
 			return false;
 		}
@@ -5643,6 +5644,9 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	x_data = new float[det_dims_in[1]];
 	y_data = new float[det_dims_in[0]];
 
+	mem_count[0] = det_dims_in[0];
+	mem_count[1] = det_dims_in[1];
+
 	status = H5Sselect_hyperslab(xypos_dataspace_id, H5S_SELECT_SET, xy_offset, NULL, xy_count, NULL);
 	status = H5Dread(xypos_id, xy_type, x_dataspace_id, xypos_dataspace_id, H5P_DEFAULT, &x_data[0]);
 	if (status > -1)
@@ -5663,8 +5667,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 	//Save scalers
 	//names
-	std::vector<std::string> names_array = { "USIC", "DSIC", "I2", "TSCALER" };
-	char tmp_char[255] = { 0 };
+	std::vector<std::string> names_array = { "US_IC", "DS_IC", "I2", "TSCALER" };
 	hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
 	single_count[0] = 4;
 	hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
@@ -5672,80 +5675,124 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	hid_t dtype = H5Tcopy(H5T_C_S1);
 	H5Tset_size(dtype, 255);
 	hid_t names_id = H5Dcreate(scalers_grp_id, "Names", dtype, name_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	close_map.push({ names_id, H5O_DATASET });
 
 	for (int i = 0; i < 4; i++)
 	{
+		char tmp_char[255] = { 0 };
 		single_offset[0] = i;
 		names_array[i].copy(tmp_char, 254);
 		H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
 		H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
-		memset(tmp_char, 0, 254);
 	}
 	//values
+
+	value_count[0] = 4;
+	value_count[1] = det_dims_in[0];
+	value_count[2] = det_dims_in[1];
+	hid_t value_space = H5Screate_simple(3, &value_count[0], &value_count[0]);
+	hid_t values_id = H5Dcreate(scalers_grp_id, "Values", H5T_NATIVE_REAL, value_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	close_map.push({ values_id, H5O_DATASET });
+	real_t *buffer = new real_t[det_dims_in[0] * det_dims_in[1]];
+	value_count[0] = 1;
+
+
 	if (version == GSE_CARS_SAVE_VER::XRMMAP)
 	{
 		hid_t upstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I0", H5P_DEFAULT);
 		hid_t downstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I1", H5P_DEFAULT);
 		hid_t i2_id = H5Dopen(src_maps_grp_id, "scalars/I2", H5P_DEFAULT);
 		hid_t tscaler_id = H5Dopen(src_maps_grp_id, "scalars/TSCALER", H5P_DEFAULT);
+
+		close_map.push({ upstream_ic_id, H5O_DATASET });
+		close_map.push({ downstream_ic_id, H5O_DATASET });
+		close_map.push({ i2_id, H5O_DATASET });
+		close_map.push({ tscaler_id, H5O_DATASET });
+
 		if (upstream_ic_id > -1)
 		{
 			hid_t scaler_space = H5Dget_space(upstream_ic_id);
-			value_count[0] = 4;
-			value_count[1] = det_dims_in[0];
-			value_count[2] = det_dims_in[1];
-			hid_t value_space = H5Screate_simple(3, &value_count[0], &value_count[0]);
-			hid_t scalers_type = H5Dget_type(upstream_ic_id);
-			hid_t values_id = H5Dcreate(scalers_grp_id, "Values", scalers_type, value_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			real_t *buffer = new real_t[det_dims_in[0] * det_dims_in[1]];
-			value_count[0] = 1;
 
-
-			value_offset[0] = 0;
-			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-			status = H5Dread(upstream_ic_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dread(upstream_ic_id, H5T_NATIVE_REAL, scaler_space, scaler_space, H5P_DEFAULT, &buffer[0]);
 			if (status > -1)
 			{
-				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+				value_offset[0] = 0;
+				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+				status = H5Dwrite(values_id, H5T_NATIVE_REAL, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
 			}
 
-			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-			status = H5Dread(downstream_ic_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dread(downstream_ic_id, H5T_NATIVE_REAL, scaler_space, scaler_space, H5P_DEFAULT, &buffer[0]);
 			if (status > -1)
 			{
 				value_offset[0] = 1;
 				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+				status = H5Dwrite(values_id, H5T_NATIVE_REAL, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
 			}
 
-			value_offset[0] = 0;
-			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-			status = H5Dread(i2_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dread(i2_id, H5T_NATIVE_REAL, scaler_space, scaler_space, H5P_DEFAULT, &buffer[0]);
 			if (status > -1)
 			{
 				value_offset[0] = 2;
 				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+				status = H5Dwrite(values_id, H5T_NATIVE_REAL, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
 			}
 
-			value_offset[0] = 0;
-			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-			status = H5Dread(tscaler_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			status = H5Dread(tscaler_id, H5T_NATIVE_REAL, scaler_space, scaler_space, H5P_DEFAULT, &buffer[0]);
 			if (status > -1)
 			{
 				value_offset[0] = 3;
 				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
-				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+				status = H5Dwrite(values_id, H5T_NATIVE_REAL, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
 			}
-
-			delete[] buffer;
-
 		}
 	}
 	else if (version == GSE_CARS_SAVE_VER::XRFMAP)
 	{
+		std::map<std::string, int> save_name_idx = { {"I0", 0}, {"I1", 1}, {"I2", 2}, {"TSCALER", 3} };
 		hid_t scalers_ds_id = H5Dopen(src_maps_grp_id, "roimap/det_cor", H5P_DEFAULT);
 		hid_t scalers_names_id = H5Dopen(src_maps_grp_id, "roimap/det_name", H5P_DEFAULT);
+		close_map.push({ scalers_ds_id, H5O_DATASET });
+		close_map.push({ scalers_names_id, H5O_DATASET });
+		
+		hid_t scaler_name_space = H5Dget_space(scalers_names_id);
+		hid_t scaler_space = H5Dget_space(scalers_ds_id);
+
+		hid_t buffer_space = H5Screate_simple(2, &mem_count[0], &mem_count[0]);
+		close_map.push({ buffer_space, H5O_DATASPACE });
+
+		H5Sget_simple_extent_dims(scaler_name_space, &single_count[0], NULL);
+		int amt = single_count[0];
+		single_count[0] = 1;
+
+		for (int i = 0; i < amt; i++)
+		{
+			single_offset[0] = i;
+			char tmp_char[256] = { 0 };
+			H5Sselect_hyperslab(scaler_name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
+			status = H5Dread(scalers_names_id, dtype, mem_single_space, scaler_name_space, H5P_DEFAULT, (void*)tmp_char);
+			if (status > -1)
+			{
+				std::string sname(tmp_char);
+				if (save_name_idx.count(sname) > 0)
+				{
+					xy_offset[0] = 0;
+					xy_offset[1] = 0;
+					xy_offset[2] = i;
+					xy_count[0] = det_dims_in[0];
+					xy_count[1] = det_dims_in[1];
+					xy_count[2] = 1;
+
+					H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, xy_offset, nullptr, xy_count, nullptr);
+					status = H5Dread(scalers_ds_id, H5T_NATIVE_REAL, buffer_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+					if (status > -1)
+					{
+						value_offset[0] = save_name_idx[sname];
+						H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+						status = H5Dwrite(values_id, H5T_NATIVE_REAL, buffer_space, value_space, H5P_DEFAULT, &buffer[0]);
+					}
+				}
+			}
+		}
 	}
 	
 	hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
@@ -5756,6 +5803,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	delete[] x_data;
 	delete[] y_data;
 	delete[] det_dims_in;
+	delete[] buffer;
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end - start;
