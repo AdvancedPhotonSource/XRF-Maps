@@ -101,6 +101,12 @@ protected:
 													const std::vector<size_t>& detector_num_arr,
 													data_struct::IO_Callback_Func_Def callback_fun);
 
+
+	data_struct::Stream_Block* _alloc_stream_block(size_t row, size_t col, size_t height, size_t width, size_t spectra_size);
+
+	int _max_num_stream_blocks;
+	int _allocated_stream_blocks;
+
     std::string *_current_dataset_directory;
     std::string *_current_dataset_name;
 

@@ -65,6 +65,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
 
+#include "core/mem_info.h"
+
 namespace io
 {
 namespace file
@@ -75,6 +77,7 @@ enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
+enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
 class DLL_EXPORT HDF5_IO
 {
@@ -103,6 +106,8 @@ public:
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row);
 
     bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error=true);
+
+	bool load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error = true);
 
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
@@ -179,6 +184,13 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+	bool save_scan_scalers_gsecars(std::string path,
+								size_t detector_num,
+								size_t row_idx_start = 0,
+								int row_idx_end = -1,
+								size_t col_idx_start = 0,
+								int col_idx_end = -1);
+
 	// Add links to dataset and set version to 9 so legacy software can load it
     void add_v9_layout(std::string dataset_directory,
                        std::string dataset_file,
@@ -218,7 +230,7 @@ private:
     bool _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler);
 	void _add_exchange_layout(std::string dataset_file);
 
-    bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true);
+    bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true, bool close_on_fail=true);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
 
     struct scaler_struct

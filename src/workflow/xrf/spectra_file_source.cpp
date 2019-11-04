@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "spectra_file_source.h"
 #include "io/file/hl_file_io.h"
+#include "core/mem_info.h"
 
 namespace workflow
 {
@@ -62,6 +63,7 @@ Spectra_File_Source::Spectra_File_Source() : Source<data_struct::Stream_Block*>(
     _analysis_job = nullptr;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
+	_max_num_stream_blocks = -1;
     _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
@@ -73,6 +75,7 @@ Spectra_File_Source::Spectra_File_Source(data_struct::Analysis_Job* analysis_job
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
     _init_fitting_routines = true;
+	_max_num_stream_blocks = -1;
     _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
@@ -103,12 +106,23 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 
 // ----------------------------------------------------------------------------
 
+data_struct::Stream_Block* Spectra_File_Source::_alloc_stream_block(size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
+{
+	if (_max_num_stream_blocks == -1)
+	{
+		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(real_t));
+	}
+	return new data_struct::Stream_Block(row, col, height, width);
+}
+
+// ----------------------------------------------------------------------------
+
 void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
 {
 
     if(_output_callback_func != nullptr)
     {
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
+		data_struct::Stream_Block * stream_block = _alloc_stream_block(row, col, height, width, spectra->size());
 
         if(_init_fitting_routines && _analysis_job != nullptr)
         {
@@ -156,30 +170,39 @@ void Spectra_File_Source::run()
         return;
     }
 
+	// if no memory limit is set, then query the system memory and make a stream block queue
+	long long total_mem = get_available_mem();
+	if (_analysis_job->mem_limit == -1)
+	{
+		_analysis_job->mem_limit = total_mem;
+	}
+	else
+	{
+		_analysis_job->mem_limit = std::min(_analysis_job->mem_limit, total_mem);
+	}
+
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
     _bnp_netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
 
     for(std::string dataset_file : _analysis_job->dataset_files)
     {
-		if (_analysis_job->is_emd)
-		{
-			// load emd dataset
-			if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_arr, _cb_function, nullptr))
-			{
-				logW << "Skipping dataset_file " << dataset_file << "\n";
-				continue;
-			}
-		}
-		else
-		{
-			//load xfm dataset
-			if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_arr, _cb_function))
-			{
-				logW << "Skipping dataset_file " << dataset_file << "\n";
-				continue;
-			}
-		}
+        //load xfm dataset
+        if (false == _load_spectra_volume_with_callback(_analysis_job->dataset_directory, dataset_file, _analysis_job->detector_num_arr, _cb_function))
+        {
+            logW << "Skipping dataset_file " << dataset_file << "\n";
+            continue;
+        }
+
+		//send end of file stream block
+		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1);
+		end_block->dataset_directory = _current_dataset_directory;
+		end_block->dataset_name = _current_dataset_name;
+		end_block->del_str_ptr = true;
+		_output_callback_func(end_block);
+
+		_current_dataset_directory = nullptr;
+		_current_dataset_name = nullptr;
     }
 }
 
@@ -246,6 +269,15 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
             }
         }
     }
+
+    //TODO: add confocal and emd streaming
+    //// load emd dataset
+    //if(false == io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(_analysis_job->dataset_directory + dataset_file, _analysis_job->detector_num_arr, _cb_function, nullptr))
+    //{
+    //    logW << "Skipping dataset_file " << dataset_file << "\n";
+    //    continue;
+    //}
+
 
     _current_dataset_directory = new std::string(dataset_directory);
     _current_dataset_name = new std::string(dataset_file);

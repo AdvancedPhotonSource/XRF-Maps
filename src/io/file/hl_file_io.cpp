@@ -716,6 +716,17 @@ bool load_spectra_volume(std::string dataset_directory,
         return true;
     }
 
+	//try loading gse cars dataset
+	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
+	{
+		if (save_scalers)
+		{
+			io::file::HDF5_IO::inst()->start_save_seq(true);
+			io::file::HDF5_IO::inst()->save_scan_scalers_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+		}
+		return true;
+	}
+
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
@@ -904,6 +915,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         *integrated_spectra = spectra_volume.integrate();
         return true;
     }
+
+	//try loading gse cars dataset
+	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
+	{
+		logI << "Loaded spectra volume gse cars from h5.\n";
+		*integrated_spectra = spectra_volume.integrate();
+		return true;
+	}
 
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
@@ -1157,16 +1176,21 @@ void check_and_create_dirs(std::string dataset_directory)
 
 void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files)
 {
-
+    // only supports soring mda files
+    std::string ending = ".mda";
     io::file::MDA_IO mda_io;
     logI<<dataset_directory<<" "<<dataset_files->size()<<" files"<<"\n";
     std::list<file_name_size> f_list;
 
     for (auto &itr : *dataset_files)
     {
-        std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
-        int fsize = mda_io.get_multiplied_dims(full_path);
-        f_list.push_back(file_name_size(itr, fsize));
+        //check if file ends with .mda
+        if (itr.compare(itr.length() - ending.length(), ending.length(), ending) == 0 )
+        {
+            std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
+            int fsize = mda_io.get_multiplied_dims(full_path);
+            f_list.push_back(file_name_size(itr, fsize));
+        }
     }
 
     f_list.sort(compare_file_size);

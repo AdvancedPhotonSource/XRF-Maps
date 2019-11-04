@@ -61,7 +61,51 @@ const real_t ENERGY_RES_SQRT = 12.0;
 
 //-----------------------------------------------------------------------------
 
-enum Element_Param_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
+//enum Element_Param_Basic_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
+enum Element_Param_Type{ Ka1_Line, Ka2_Line, Kb1_Line, Kb2_Line, La1_Line, La2_Line, Lb1_Line, Lb2_Line, Lb3_Line, Lb4_Line, Lg1_Line, Lg2_Line, Lg3_Line, Lg4_Line, Ll_Line, Ln_Line, Ma1_Line, Ma2_Line, Mb_Line, Mg_Line };
+const static std::map<Element_Param_Type, std::string> Element_Param_Str_Map{ {Ka1_Line, "Ka1"},
+                                                                             {Ka2_Line, "Ka2"},
+                                                                             {Kb1_Line, "Kb1"},
+                                                                             {Kb2_Line, "Kb2"},
+                                                                             {La1_Line, "La1"},
+                                                                             {La2_Line, "La2"},
+                                                                             {Lb1_Line, "Lb1"},
+                                                                             {Lb2_Line, "Lb2"},
+                                                                             {Lb3_Line, "Lb3"},
+                                                                             {Lb4_Line, "Lb4"},
+                                                                             {Lg1_Line, "Lg1"},
+                                                                             {Lg2_Line, "Lg2"},
+                                                                             {Lg3_Line, "Lg3"},
+                                                                             {Lg4_Line, "Lg4"},
+                                                                             {Ll_Line, "Ll"},
+                                                                             {Ln_Line, "Ln"},
+                                                                             {Ma1_Line, "Ma1"},
+                                                                             {Ma2_Line, "Ma2"},
+                                                                             {Mb_Line, "Mb"},
+                                                                             {Mg_Line, "Mg"},
+                                                                        };
+
+const static std::map<Element_Param_Type, float> Element_Param_Percent_Map{   {Ka1_Line, 1.00},
+                                                                             {Ka2_Line, 0.50},
+                                                                             {Kb1_Line, 0.15},
+                                                                             {Kb2_Line, 0.05},
+                                                                             {La1_Line, 1.00},
+                                                                             {La2_Line, 0.10},
+                                                                             {Lb1_Line, 0.50},
+                                                                             {Lb2_Line, 0.20},
+                                                                             {Lb3_Line, 0.06},
+                                                                             {Lb4_Line, 0.04},
+                                                                             {Lg1_Line, 0.10},
+                                                                             {Lg2_Line, 0.01},
+                                                                             {Lg3_Line, 0.03},
+                                                                             {Lg4_Line, 0.008},
+                                                                             {Ll_Line, 0.03},
+                                                                             {Ln_Line, 0.01},
+                                                                             {Ma1_Line, 1.00},
+                                                                             {Ma2_Line, 0.50}, //TODO: check these
+                                                                             {Mb_Line, 0.01}, //TODO: check these
+                                                                             {Mg_Line, 0.01}, //TODO: check these
+                                                                };
 
 //-----------------------------------------------------------------------------
 

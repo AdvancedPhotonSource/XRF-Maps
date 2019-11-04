@@ -72,9 +72,9 @@ Analysis_Job::Analysis_Job()
     theta_pv = "";
     network_source_ip = "";
     theta = 0.f;
-	is_emd = false;
     network_source_port = "43434";
     network_stream_port = "43434";
+	mem_limit = -1;
 }
 
 //-----------------------------------------------------------------------------
