@@ -184,6 +184,13 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+	bool save_scan_scalers_gsecars(std::string path,
+								size_t detector_num,
+								size_t row_idx_start = 0,
+								int row_idx_end = -1,
+								size_t col_idx_start = 0,
+								int col_idx_end = -1);
+
 	// Add links to dataset and set version to 9 so legacy software can load it
     void add_v9_layout(std::string dataset_directory,
                        std::string dataset_file,

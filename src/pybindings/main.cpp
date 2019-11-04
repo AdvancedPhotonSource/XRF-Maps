@@ -287,9 +287,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("quick_and_dirty", &data_struct::Analysis_Job::quick_and_dirty)
     .def_readwrite("generate_average_h5", &data_struct::Analysis_Job::generate_average_h5)
     .def_readwrite("is_network_source", &data_struct::Analysis_Job::is_network_source)
-    .def_readwrite("stream_over_network", &data_struct::Analysis_Job::stream_over_network)
-    .def_readwrite("is_emd", &data_struct::Analysis_Job::is_emd);
-
+    .def_readwrite("stream_over_network", &data_struct::Analysis_Job::stream_over_network);
 
     //fitting models
     py::class_<fitting::models::Gaussian_Model>(fm, "GaussModel")

@@ -5374,28 +5374,29 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
         logE << "creating group 'MAPS'" << "\n";
         return false;
     }
+	close_map.push({ maps_grp_id, H5O_GROUP });
 
     scan_grp_id = H5Gopen(maps_grp_id, "Scan", H5P_DEFAULT);
     if (scan_grp_id < 0)
         scan_grp_id = H5Gcreate(maps_grp_id, "Scan", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (scan_grp_id < 0)
     {
-        H5Gclose(maps_grp_id);
+		_close_h5_objects(close_map);
         logE << "creating group MAPS/Scan" << "\n";
         return false;
     }
+	close_map.push({ scan_grp_id, H5O_GROUP });
 
     scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
     if (scalers_grp_id < 0)
         scalers_grp_id = H5Gcreate(maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (scalers_grp_id < 0)
     {
-        H5Gclose(scan_grp_id);
-        H5Gclose(scalers_grp_id);
-        H5Gclose(maps_grp_id);
+		_close_h5_objects(close_map);
         logE << "creating group MAPS/Scalers" << "\n";
         return false;
     }
+	close_map.push({ scalers_grp_id, H5O_GROUP });
 
     if ( false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1) )
         return false;
@@ -5518,16 +5519,249 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
 
     _close_h5_objects(close_map);
 
-    H5Gclose(scan_grp_id);
-    H5Gclose(scalers_grp_id);
-    H5Gclose(maps_grp_id);
-
-
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
+									size_t detector_num,
+									size_t row_idx_start,
+									int row_idx_end,
+									size_t col_idx_start,
+									int col_idx_end)
+{
+
+	std::lock_guard<std::mutex> lock(_mutex);
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+
+	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+	hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
+	hid_t    file_id, src_maps_grp_id;
+	hid_t    dataspace_detectors_id, dset_detectors_id;
+	hid_t   xypos_dataspace_id, xypos_id;
+	hid_t x_dataspace_id, y_dataspace_id, x_dataset_id, y_dataset_id;
+	char* detector_names[256];
+	int det_rank;
+	hsize_t* det_dims_in;
+	hsize_t single_offset[1] = { 0 };
+	hsize_t single_count[1] = { 1 };
+	hsize_t value_offset[3] = { 0,0,0 };
+	hsize_t value_count[3] = { 1,1,1 };
+	hsize_t mem_count[2] = { 1,1 };
+	hsize_t xy_offset[3] = { 0,0,0 };
+	hsize_t xy_count[3] = { 1,1,1 };
+	GSE_CARS_SAVE_VER version = GSE_CARS_SAVE_VER::UNKNOWN;
+	float *x_data;
+	float *y_data;
+
+	if (_cur_file_id < 0)
+	{
+		logE << "hdf5 file was never initialized. Call start_save_seq() before this function." << "\n";
+		return false;
+	}
+	
+	logI << "Saving scalers to hdf5" << "\n";
+
+	maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
+	if (maps_grp_id < 0)
+		maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (maps_grp_id < 0)
+	{
+		logE << "creating group 'MAPS'" << "\n";
+		return false;
+	}
+
+	close_map.push({ maps_grp_id, H5O_GROUP });
+
+	scan_grp_id = H5Gopen(maps_grp_id, "Scan", H5P_DEFAULT);
+	if (scan_grp_id < 0)
+		scan_grp_id = H5Gcreate(maps_grp_id, "Scan", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (scan_grp_id < 0)
+	{
+		_close_h5_objects(close_map);
+		logE << "creating group MAPS/Scan" << "\n";
+		return false;
+	}
+
+	close_map.push({ scan_grp_id, H5O_GROUP });
+
+	scalers_grp_id = H5Gopen(maps_grp_id, "Scalers", H5P_DEFAULT);
+	if (scalers_grp_id < 0)
+		scalers_grp_id = H5Gcreate(maps_grp_id, "Scalers", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (scalers_grp_id < 0)
+	{
+		_close_h5_objects(close_map);
+		logE << "creating group MAPS/Scalers" << "\n";
+		return false;
+	}
+	close_map.push({ scalers_grp_id, H5O_GROUP });
+
+	if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+		return false;
+
+	if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrmmap", file_id, true, false))
+	{
+		if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xfmmap", file_id))
+		{
+			return false;
+		}
+		version = GSE_CARS_SAVE_VER::XRFMAP;
+	}
+	else
+	{
+		version = GSE_CARS_SAVE_VER::XRMMAP;
+	}
+	//_save_scan_meta_data(scan_grp_id, mda_scalers);
+	if (false == _open_h5_object(xypos_id, H5O_DATASET, close_map, "positions/pos", src_maps_grp_id))
+		return false;
+	xypos_dataspace_id = H5Dget_space(xypos_id);
+	close_map.push({ xypos_dataspace_id, H5O_DATASPACE });
+
+	hid_t xy_type = H5Dget_type(xypos_id);
+	det_rank = H5Sget_simple_extent_ndims(xypos_dataspace_id);
+	det_dims_in = new hsize_t[det_rank];
+	H5Sget_simple_extent_dims(xypos_dataspace_id, &det_dims_in[0], NULL);
+
+	x_dataspace_id = H5Screate_simple(1, &det_dims_in[1], NULL);
+	y_dataspace_id = H5Screate_simple(1, &det_dims_in[0], NULL);
+	x_dataset_id = H5Dcreate(scan_grp_id, "x_axis", xy_type, x_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	y_dataset_id = H5Dcreate(scan_grp_id, "y_axis", xy_type, y_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	close_map.push({ x_dataspace_id, H5O_DATASPACE });
+	close_map.push({ y_dataspace_id, H5O_DATASPACE });
+	close_map.push({ x_dataset_id, H5O_DATASET });
+	close_map.push({ y_dataset_id, H5O_DATASET });
+
+	xy_offset[2] = 0;
+	xy_count[1] = det_dims_in[1];
+	x_data = new float[det_dims_in[1]];
+	y_data = new float[det_dims_in[0]];
+
+	status = H5Sselect_hyperslab(xypos_dataspace_id, H5S_SELECT_SET, xy_offset, NULL, xy_count, NULL);
+	status = H5Dread(xypos_id, xy_type, x_dataspace_id, xypos_dataspace_id, H5P_DEFAULT, &x_data[0]);
+	if (status > -1)
+	{
+		status = H5Dwrite(x_dataset_id, xy_type, H5S_ALL, x_dataspace_id, H5P_DEFAULT, &x_data[0]);
+	}
+
+	xy_offset[2] = 1;
+	xy_count[1] = 1;
+	xy_count[0] = det_dims_in[0];
+
+	status = H5Sselect_hyperslab(xypos_dataspace_id, H5S_SELECT_SET, xy_offset, NULL, xy_count, NULL);
+	status = H5Dread(xypos_id, xy_type, y_dataspace_id, xypos_dataspace_id, H5P_DEFAULT, &y_data[0]);
+	if (status > -1)
+	{
+		status = H5Dwrite(y_dataset_id, xy_type, H5S_ALL, y_dataspace_id, H5P_DEFAULT, &y_data[0]);
+	}
+
+	//Save scalers
+	//names
+	std::vector<std::string> names_array = { "USIC", "DSIC", "I2", "TSCALER" };
+	char tmp_char[255] = { 0 };
+	hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+	single_count[0] = 4;
+	hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+	single_count[0] = 1;
+	hid_t dtype = H5Tcopy(H5T_C_S1);
+	H5Tset_size(dtype, 255);
+	hid_t names_id = H5Dcreate(scalers_grp_id, "Names", dtype, name_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+	for (int i = 0; i < 4; i++)
+	{
+		single_offset[0] = i;
+		names_array[i].copy(tmp_char, 254);
+		H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
+		H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+		memset(tmp_char, 0, 254);
+	}
+	//values
+	if (version == GSE_CARS_SAVE_VER::XRMMAP)
+	{
+		hid_t upstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I0", H5P_DEFAULT);
+		hid_t downstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I1", H5P_DEFAULT);
+		hid_t i2_id = H5Dopen(src_maps_grp_id, "scalars/I2", H5P_DEFAULT);
+		hid_t tscaler_id = H5Dopen(src_maps_grp_id, "scalars/TSCALER", H5P_DEFAULT);
+		if (upstream_ic_id > -1)
+		{
+			hid_t scaler_space = H5Dget_space(upstream_ic_id);
+			value_count[0] = 4;
+			value_count[1] = det_dims_in[0];
+			value_count[2] = det_dims_in[1];
+			hid_t value_space = H5Screate_simple(3, &value_count[0], &value_count[0]);
+			hid_t scalers_type = H5Dget_type(upstream_ic_id);
+			hid_t values_id = H5Dcreate(scalers_grp_id, "Values", scalers_type, value_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			real_t *buffer = new real_t[det_dims_in[0] * det_dims_in[1]];
+			value_count[0] = 1;
+
+
+			value_offset[0] = 0;
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(upstream_ic_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			if (status > -1)
+			{
+				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+			}
+
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(downstream_ic_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			if (status > -1)
+			{
+				value_offset[0] = 1;
+				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+			}
+
+			value_offset[0] = 0;
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(i2_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			if (status > -1)
+			{
+				value_offset[0] = 2;
+				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+			}
+
+			value_offset[0] = 0;
+			H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+			status = H5Dread(tscaler_id, scalers_type, value_space, scaler_space, H5P_DEFAULT, &buffer[0]);
+			if (status > -1)
+			{
+				value_offset[0] = 3;
+				H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, nullptr, value_count, nullptr);
+				status = H5Dwrite(values_id, scalers_type, scaler_space, value_space, H5P_DEFAULT, &buffer[0]);
+			}
+
+			delete[] buffer;
+
+		}
+	}
+	else if (version == GSE_CARS_SAVE_VER::XRFMAP)
+	{
+		hid_t scalers_ds_id = H5Dopen(src_maps_grp_id, "roimap/det_cor", H5P_DEFAULT);
+		hid_t scalers_names_id = H5Dopen(src_maps_grp_id, "roimap/det_name", H5P_DEFAULT);
+	}
+	
+	hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+	status = H5Ocopy(src_maps_grp_id, "config", scan_grp_id, "config", ocpypl_id, H5P_DEFAULT);
+
+	_close_h5_objects(close_map);
+
+	delete[] x_data;
+	delete[] y_data;
+	delete[] det_dims_in;
+
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+	logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
