@@ -446,9 +446,9 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             }
 
             //load spectra volume
-            for(detector_num = 1; detector_num <= analysis_job->detector_num_arr.size(); detector_num++)
+            for(int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
             {
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
                 {
                     logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
                     delete spectra_volume;
