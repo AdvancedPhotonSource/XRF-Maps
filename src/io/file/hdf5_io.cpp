@@ -2395,6 +2395,7 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
     hsize_t offset3[3] = { 0,0,0 };
     hsize_t count3[3] = { 1,1,1 };
     hsize_t dims3[3] = { 1,1,1 };
+    hsize_t offset[1] = {1};
     hsize_t count[1] = {1};
     hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
 
@@ -2459,11 +2460,51 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
     }
     else if(version == GSE_CARS_SAVE_VER::XRFMAP)
     {
+        int usIDX = -1;
+        int dsIDX = -1;
+
+        hid_t dtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype, 255);
+
+        hid_t name_space = H5Dget_space(ds_ic_id);
+        status = H5Sget_simple_extent_dims(name_space, &count[0], nullptr);
+        int name_amt = count[0];
+        count[0] = 1;
+
+        for(offset[0] = 0; offset[0] < name_amt; offset[0]++)
+        {
+            char tmp_char[256] = {0};
+            //read the detector names and find I0 and I1 indicies
+            H5Sselect_hyperslab (name_space, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+            status = H5Dread(ds_ic_id, dtype, readwrite_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+            if (status > -1)
+            {
+                std::string sname(tmp_char);
+                if (sname == "I0")
+                {
+                    usIDX = offset[0];
+                }
+                if (sname == "I1")
+                {
+                    dsIDX = offset[0];
+                }
+                if(usIDX > -1 && dsIDX > -1)
+                {
+                    break;
+                }
+            }
+        }
+
+        if(usIDX == -1 || dsIDX == -1)
+        {
+            logW<<"Could not find up stream ion or down stream ion chamber indicies\n";
+        }
+
         for(offset3[0] = 0; offset3[0] < dims3[0]; offset3[0]++)
         {
             for(offset3[1] = 0; offset3[1] < dims3[1]; offset3[1]++)
             {
-                offset3[2] = 1;
+                offset3[2] = usIDX;
                 H5Sselect_hyperslab (d_space, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
 
                 status = H5Dread(us_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
@@ -2472,7 +2513,7 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
                     override_values->US_IC += (us_ic);
                 }
 
-                offset3[2] = 2;
+                offset3[2] = dsIDX;
                 H5Sselect_hyperslab (d_space, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
                 status = H5Dread(us_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
                 if(status > -1)
