@@ -153,7 +153,7 @@ bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hi
 			}
 			if (log_error)
 			{
-				logE << "Failed to open file " << s1 << "\n";
+                logW << "Failed to open file " << s1 << "\n";
 			}
             return false;
         }
@@ -169,7 +169,7 @@ bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hi
 			}
 			if (log_error)
 			{
-				logE << "Failed to open group " << s1 << "\n";
+                logW << "Failed to open group " << s1 << "\n";
 			}
             return false;
         }
@@ -185,7 +185,7 @@ bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hi
 			}
 			if (log_error)
 			{
-				logE << "Failed to open dataset " << s1 << "\n";
+                logW << "Failed to open dataset " << s1 << "\n";
 			}
             return false;
         }
@@ -198,7 +198,7 @@ bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hi
 		}
 		if (log_error)
 		{
-			logE << "Unknown H5_OBJECT type " << obj << "\n";
+            logW << "Unknown H5_OBJECT type " << obj << "\n";
 		}
         return false;
     }
@@ -2374,6 +2374,163 @@ bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
    logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
+                                                  data_struct::Params_Override *override_values)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    int status = 0;
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    logI<< path <<"\n";
+
+    real_t us_ic, ds_ic;
+    hid_t file_id, ds_ic_id, us_ic_id;
+    hsize_t offset3[3] = { 0,0,0 };
+    hsize_t count3[3] = { 1,1,1 };
+    hsize_t dims3[3] = { 1,1,1 };
+    hsize_t offset[1] = {1};
+    hsize_t count[1] = {1};
+    hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
+
+    GSE_CARS_SAVE_VER version = GSE_CARS_SAVE_VER::UNKNOWN;
+
+    if ( false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1) )
+        return false;
+
+    if ( false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/xrmmap/scalars/I1_raw", file_id, false, false) )
+    {
+        if ( false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/xrfmap/roimap/det_name", file_id) )
+        {
+            return false;
+        }
+        version = GSE_CARS_SAVE_VER::XRFMAP;
+    }
+    else
+    {
+        version = GSE_CARS_SAVE_VER::XRMMAP;
+    }
+
+    if ( false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/xrmmap/scalars/I0_raw", file_id, false, false) )
+    {
+        if ( false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/xrfmap/roimap/det_raw", file_id) )
+        {
+            return false;
+        }
+    }
+
+    //read in scaler
+    hid_t d_space = H5Dget_space(us_ic_id);
+    //hid_t d_type = H5Dget_type(us_ic_id);
+    status = H5Sget_simple_extent_dims(d_space, &dims3[0], nullptr);
+    if(status < 0)
+    {
+        _close_h5_objects(close_map);
+         logE<<"getting dataset dims"<<"\n";
+         return false;
+    }
+
+    if(version == GSE_CARS_SAVE_VER::XRMMAP)
+    {
+        for(offset3[0] = 0; offset3[0] < dims3[0]; offset3[0]++)
+        {
+            for(offset3[1] = 0; offset3[1] < dims3[1]; offset3[1]++)
+            {
+                H5Sselect_hyperslab (d_space, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
+
+                status = H5Dread(us_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
+                if(status > -1)
+                {
+                    override_values->US_IC += (us_ic);
+                }
+
+                status = H5Dread(ds_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
+                if(status > -1)
+                {
+                    override_values->DS_IC += (ds_ic);
+                }
+            }
+        }
+    }
+    else if(version == GSE_CARS_SAVE_VER::XRFMAP)
+    {
+        int usIDX = -1;
+        int dsIDX = -1;
+
+        hid_t dtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype, 255);
+
+        hid_t name_space = H5Dget_space(ds_ic_id);
+        status = H5Sget_simple_extent_dims(name_space, &count[0], nullptr);
+        int name_amt = count[0];
+        count[0] = 1;
+
+        for(offset[0] = 0; offset[0] < name_amt; offset[0]++)
+        {
+            char tmp_char[256] = {0};
+            //read the detector names and find I0 and I1 indicies
+            H5Sselect_hyperslab (name_space, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+            status = H5Dread(ds_ic_id, dtype, readwrite_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+            if (status > -1)
+            {
+                std::string sname(tmp_char);
+                if (sname == "I0")
+                {
+                    usIDX = offset[0];
+                }
+                if (sname == "I1")
+                {
+                    dsIDX = offset[0];
+                }
+                if(usIDX > -1 && dsIDX > -1)
+                {
+                    break;
+                }
+            }
+        }
+
+        if(usIDX == -1 || dsIDX == -1)
+        {
+            logW<<"Could not find up stream ion or down stream ion chamber indicies\n";
+        }
+
+        for(offset3[0] = 0; offset3[0] < dims3[0]; offset3[0]++)
+        {
+            for(offset3[1] = 0; offset3[1] < dims3[1]; offset3[1]++)
+            {
+                offset3[2] = usIDX;
+                H5Sselect_hyperslab (d_space, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
+
+                status = H5Dread(us_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
+                if(status > -1)
+                {
+                    override_values->US_IC += (us_ic);
+                }
+
+                offset3[2] = dsIDX;
+                H5Sselect_hyperslab (d_space, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
+                status = H5Dread(us_ic_id, H5T_NATIVE_REAL, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
+                if(status > -1)
+                {
+                    override_values->DS_IC += (ds_ic);
+                }
+            }
+        }
+    }
+
+    _close_h5_objects(close_map);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -5668,6 +5825,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	//Save scalers
 	//names
 	std::vector<std::string> names_array = { "US_IC", "DS_IC", "I2", "TSCALER" };
+    std::vector<std::string> units_array = { "cts/us", "cts/us", "cts/us", "us" };
 	hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
 	single_count[0] = 4;
 	hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
@@ -5677,13 +5835,19 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	hid_t names_id = H5Dcreate(scalers_grp_id, "Names", dtype, name_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	close_map.push({ names_id, H5O_DATASET });
 
+    hid_t units_id = H5Dcreate(scalers_grp_id, "Units", dtype, name_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    close_map.push({ units_id, H5O_DATASET });
+
 	for (int i = 0; i < 4; i++)
 	{
 		char tmp_char[255] = { 0 };
+        char unit_char[255] = { 0 };
 		single_offset[0] = i;
 		names_array[i].copy(tmp_char, 254);
+        units_array[i].copy(unit_char, 254);
 		H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
 		H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+        H5Dwrite(units_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)unit_char);
 	}
 	//values
 
@@ -5699,10 +5863,10 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 	if (version == GSE_CARS_SAVE_VER::XRMMAP)
 	{
-		hid_t upstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I0", H5P_DEFAULT);
-		hid_t downstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I1", H5P_DEFAULT);
-		hid_t i2_id = H5Dopen(src_maps_grp_id, "scalars/I2", H5P_DEFAULT);
-		hid_t tscaler_id = H5Dopen(src_maps_grp_id, "scalars/TSCALER", H5P_DEFAULT);
+        hid_t upstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I0_raw", H5P_DEFAULT);
+        hid_t downstream_ic_id = H5Dopen(src_maps_grp_id, "scalars/I1_raw", H5P_DEFAULT);
+        hid_t i2_id = H5Dopen(src_maps_grp_id, "scalars/I2_raw", H5P_DEFAULT);
+        hid_t tscaler_id = H5Dopen(src_maps_grp_id, "scalars/TSCALER_raw", H5P_DEFAULT);
 
 		close_map.push({ upstream_ic_id, H5O_DATASET });
 		close_map.push({ downstream_ic_id, H5O_DATASET });
@@ -5749,7 +5913,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 	else if (version == GSE_CARS_SAVE_VER::XRFMAP)
 	{
 		std::map<std::string, int> save_name_idx = { {"I0", 0}, {"I1", 1}, {"I2", 2}, {"TSCALER", 3} };
-		hid_t scalers_ds_id = H5Dopen(src_maps_grp_id, "roimap/det_cor", H5P_DEFAULT);
+        hid_t scalers_ds_id = H5Dopen(src_maps_grp_id, "roimap/det_raw", H5P_DEFAULT);
 		hid_t scalers_names_id = H5Dopen(src_maps_grp_id, "roimap/det_name", H5P_DEFAULT);
 		close_map.push({ scalers_ds_id, H5O_DATASET });
 		close_map.push({ scalers_names_id, H5O_DATASET });

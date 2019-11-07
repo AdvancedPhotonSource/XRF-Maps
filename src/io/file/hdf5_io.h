@@ -122,6 +122,8 @@ public:
 
     bool load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override *override_values);
 
+    bool load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override *override_values);
+
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
     bool generate_stream_dataset(std::string dataset_directory,

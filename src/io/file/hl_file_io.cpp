@@ -919,6 +919,12 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 	//try loading gse cars dataset
 	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
 	{
+        fullpath = dataset_directory+ DIR_END_CHAR +dataset_file;
+        if(false == io::file::HDF5_IO::inst()->load_quantification_scalers_gsecars(fullpath, params_override))
+        {
+            logW << "Failed to load ION chamber scalers from h5.\n";
+        }
+
 		logI << "Loaded spectra volume gse cars from h5.\n";
 		*integrated_spectra = spectra_volume.integrate();
 		return true;
