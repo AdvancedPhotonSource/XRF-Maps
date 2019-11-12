@@ -360,7 +360,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("load_spectra_volume", &io::load_spectra_volume);
     m.def("populate_netcdf_hdf5_files", &io::populate_netcdf_hdf5_files);
     m.def("save_averaged_fit_params", &io::save_averaged_fit_params);
-    m.def("save_results", &io::save_results);
     m.def("save_optimized_fit_params", &io::save_optimized_fit_params);
     m.def("save_volume", &io::save_volume);
     m.def("sort_dataset_files_by_size", &io::sort_dataset_files_by_size);
