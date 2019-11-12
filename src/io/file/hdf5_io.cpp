@@ -97,7 +97,7 @@ namespace file
 
 std::mutex HDF5_IO::_mutex;
 
-HDF5_IO* HDF5_IO::_this_inst(0);
+HDF5_IO* HDF5_IO::_this_inst(nullptr);
 
 
 struct Detector_HDF5_Struct
@@ -3318,6 +3318,65 @@ bool HDF5_IO::save_element_fits(std::string path,
 
     return true;
 
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_fitted_int_spectra(const std::string path,
+                                     const data_struct::Spectra& spectra,
+                                     const data_struct::Range& spectra_range,
+                                     const int full_spectra_size)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    if(_cur_file_id < 0)
+    {
+        logE << "hdf5 file was never initialized. Call start_save_seq() before this function." << "\n";
+        return false;
+    }
+
+    bool ret_val = true;
+    hid_t   dset_id, dataspace_id;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+    std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
+
+    hsize_t offset[1] = {0};
+    hsize_t count[1] = {1};
+    count[0] = full_spectra_size;
+    dataspace_id = H5Screate_simple(1, count, nullptr);
+
+    data_struct::Spectra save_spectra(full_spectra_size);
+    int j = 0;
+    for(int i= spectra_range.min; i <= spectra_range.max; i++)
+    {
+        save_spectra[i] = spectra[j];
+        j++;
+    }
+
+    dset_id = H5Dopen (_cur_file_id, dset_name.c_str(), H5P_DEFAULT);
+    if(dset_id < 0)
+        dset_id = H5Dcreate (_cur_file_id, dset_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(dset_id < 0)
+    {
+        logE<<"creating dataset "<<dset_name<<"\n";
+        return false;
+    }
+
+    hid_t status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)save_spectra.data());
+    if (status < 0)
+    {
+        ret_val = false;
+    }
+
+    H5Sclose(dataspace_id);
+    H5Dclose(dset_id);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+    return ret_val;
 }
 
 //-----------------------------------------------------------------------------

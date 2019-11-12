@@ -209,6 +209,11 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
     //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
+    {
+        std::lock_guard<std::mutex> lock(_int_spec_mutex);
+        _integrated_fitted_spectra.setZero(energy_range.count());
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -245,6 +250,16 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         {
             counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
         }
+
+
+        Spectra model(_energy_range.count());
+        this->model_spectrum(&fit_params, &_energy_range, &model);
+        {
+            std::lock_guard<std::mutex> lock(_int_spec_mutex);
+            _integrated_fitted_spectra.add(model);
+        }
+
+
     }
     return counts_dict;
 

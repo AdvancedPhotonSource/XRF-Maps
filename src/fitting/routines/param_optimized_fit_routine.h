@@ -88,6 +88,8 @@ public:
 
      void set_update_coherent_amplitude_on_fit(bool val) {_update_coherent_amplitude_on_fit = val;}
 
+     const Range& energy_range() { return _energy_range; }
+
 protected:
 
     void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,

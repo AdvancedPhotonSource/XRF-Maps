@@ -203,35 +203,6 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 // ----------------------------------------------------------------------------
 
-bool save_results(std::string save_loc,
-                  data_struct::Fit_Count_Dict * element_counts,
-                  std::queue<std::future<bool> >* job_queue,
-                  std::chrono::time_point<std::chrono::system_clock> start)
-{
-
-    //wait for queue to finish processing
-    while(!job_queue->empty())
-    {
-        auto ret = std::move(job_queue->front());
-        job_queue->pop();
-        ret.get();
-    }
-
-    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    logI << "Fitting [ "<< save_loc <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
-
-    io::file::HDF5_IO::inst()->save_element_fits(save_loc, element_counts);
-
-    delete job_queue;
-	element_counts->clear();
-    delete element_counts;
-
-    return true;
-}
-
-// ----------------------------------------------------------------------------
-
 bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                  real_t energy_offset,
                  real_t energy_slope,
@@ -264,7 +235,7 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
     //fitting::models::Range energy_range = fitting::models::Range(0.0, file_and_fit_params->spectra.size()-1);
 
-    data_struct::Spectra model_spectra = model.model_spectrum(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
+    data_struct::Spectra model_spectra = model.model_spectrum_mp(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
     data_struct::ArrayXr background;
 
     real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);

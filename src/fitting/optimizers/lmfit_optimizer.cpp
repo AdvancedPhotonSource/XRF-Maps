@@ -70,7 +70,7 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     ud->fit_parameters->from_array(par, m_dat);
     // Model spectra based on new fit parameters
     update_background_user_data(ud);
-    ud->spectra_model = ud->fit_model->model_spectrum(ud->fit_parameters, ud->elements, ud->energy_range);
+    ud->spectra_model = ud->fit_model->model_spectrum_mp(ud->fit_parameters, ud->elements, ud->energy_range);
     // Remove nan's and inf's
     ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Add background

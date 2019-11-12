@@ -50,6 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Matrix_Optimized_Fit_Routine_H
 #define Matrix_Optimized_Fit_Routine_H
 
+#include <mutex>
+
 #include "fitting/routines/param_optimized_fit_routine.h"
 #include "data_struct/fit_parameters.h"
 
@@ -85,6 +87,8 @@ public:
                         const struct Range * const energy_range,
 					    Spectra* spectra_model);
 
+    const Spectra& get_fitted_integrated_spectra() {return _integrated_fitted_spectra;}
+
 protected:
 
     unordered_map<string, Spectra> _generate_element_models(models::Base_Model * const model,
@@ -94,6 +98,9 @@ protected:
 private:
 
     unordered_map<string, Spectra> _element_models;
+
+    std::mutex _int_spec_mutex;
+    data_struct::Spectra _integrated_fitted_spectra;
 
 };
 
