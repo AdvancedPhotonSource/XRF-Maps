@@ -3337,79 +3337,138 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     }
 
     bool ret_val = true;
-    hid_t   dset_id, dataspace_id;
+    hid_t   dset_id, maps_grp_id, spec_grp_id, int_spec_grp_id, dataspace_id, status;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
     std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
-	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/Max_10_Channels_Integrated_Spectra";
+    std::string max_name = "Max_Channels_Integrated_Spectra";
+    std::string max10_name = "Max_10_Channels_Integrated_Spectra";
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
     count[0] = max_spectra.size();
     dataspace_id = H5Screate_simple(1, count, nullptr);
 
-    data_struct::Spectra save_spectra(max_spectra.size());
+    data_struct::ArrayXr save_spectra(max_spectra.size());
     int j = 0;
     for(int i= spectra_range.min; i <= spectra_range.max; i++)
     {
-        save_spectra[i] = spectra[j];
+        if(std::isfinite(spectra[j]))
+        {
+            save_spectra[i] = spectra[j];
+        }
         j++;
     }
 
     dset_id = H5Dopen (_cur_file_id, dset_name.c_str(), H5P_DEFAULT);
     if(dset_id < 0)
-        dset_id = H5Dcreate (_cur_file_id, dset_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    {
+        dset_id = H5Dcreate2 (_cur_file_id, dset_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
     if(dset_id < 0)
     {
         logE<<"creating dataset "<<dset_name<<"\n";
-        return false;
+        ret_val = false;
+    }
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)save_spectra.data());
+        if (status < 0)
+        {
+            logW<<"Failed to save "<< dset_name <<"\n";
+            ret_val = false;
+        }
+
+        H5Dclose(dset_id);
     }
 
-    hid_t status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)save_spectra.data());
-    if (status < 0)
+
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
+    if(maps_grp_id < 0)
     {
+        logE<<"opening group MAPS"<<"\n";
+        ret_val = false;
+    }
+    spec_grp_id = H5Gopen(maps_grp_id, "Spectra", H5P_DEFAULT);
+    if(spec_grp_id < 0)
+    {
+        spec_grp_id = H5Gcreate(maps_grp_id, "Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if(spec_grp_id < 0)
+    {
+        logE<<"creating group MAPS/Spectra"<<"\n";
         ret_val = false;
     }
 
-    H5Dclose(dset_id);
+    int_spec_grp_id = H5Gopen(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+    if(int_spec_grp_id < 0)
+    {
+        int_spec_grp_id = H5Gcreate(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if(int_spec_grp_id < 0)
+    {
+        logE<<"creating group MAPS/Spectra/Integrated_Spectra"<<"\n";
+        ret_val = false;
+    }
 
-
-	dset_id = H5Dopen(_cur_file_id, max_name.c_str(), H5P_DEFAULT);
-	if (dset_id < 0)
-		dset_id = H5Dcreate(_cur_file_id, max_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (dset_id < 0)
+    dset_id = H5Dopen(int_spec_grp_id, max_name.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dset_id = H5Dcreate2(int_spec_grp_id, max_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (dset_id < 0)
 	{
 		logE << "creating dataset " << max_name << "\n";
-		return false;
+        ret_val = false;
 	}
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_spectra.data());
+        if (status < 0)
+        {
+            logW<<"Failed to save "<< max_name <<"\n";
+            ret_val = false;
+        }
+        H5Dclose(dset_id);
+    }
 
-	status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_spectra.data());
-	if (status < 0)
-	{
-		ret_val = false;
-	}
-	H5Dclose(dset_id);
-
-
-	dset_id = H5Dopen(_cur_file_id, max10_name.c_str(), H5P_DEFAULT);
-	if (dset_id < 0)
-		dset_id = H5Dcreate(_cur_file_id, max10_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (dset_id < 0)
+    dset_id = H5Dopen(int_spec_grp_id, max10_name.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dset_id = H5Dcreate2(int_spec_grp_id, max10_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (dset_id < 0)
 	{
 		logE << "creating dataset " << max10_name << "\n";
-		return false;
+        ret_val = false;
 	}
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_10_spectra.data());
+        if (status < 0)
+        {
+            logW<<"Failed to save "<< max10_name <<"\n";
+            ret_val = false;
+        }
+        H5Dclose(dset_id);
+    }
 
-	status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_10_spectra.data());
-	if (status < 0)
-	{
-		ret_val = false;
-	}
-	H5Dclose(dset_id);
-
-
-	H5Sclose(dataspace_id);
+    if(maps_grp_id > -1)
+    {
+        H5Dclose(maps_grp_id);
+    }
+    if(spec_grp_id > -1)
+    {
+        H5Dclose(spec_grp_id);
+    }
+    if(int_spec_grp_id > -1)
+    {
+        H5Dclose(int_spec_grp_id);
+    }
+    if(dataspace_id > -1)
+    {
+        H5Sclose(dataspace_id);
+    }
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
@@ -6279,7 +6338,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 					if (error > -1)
 					{
-						buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+                        buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 					}
 					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 					{
