@@ -380,7 +380,33 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
             }
         }
 
-        io::save_results( fit_routine->get_name(), element_fit_count_dict, fit_job_queue, start );
+        //wait for queue to finish processing
+        while(!fit_job_queue->empty())
+        {
+            auto ret = std::move(fit_job_queue->front());
+            fit_job_queue->pop();
+            ret.get();
+        }
+
+        std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end-start;
+        logI << "Fitting [ "<< fit_routine->get_name() <<" ] elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+        io::file::HDF5_IO::inst()->save_element_fits(fit_routine->get_name(), element_fit_count_dict);
+
+        if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
+        {
+            fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+            io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),
+																matrix_fit->fitted_integrated_spectra(),
+																matrix_fit->energy_range(),
+																matrix_fit->max_integrated_spectra(),
+																matrix_fit->max_10_integrated_spectra());
+        }
+
+        delete fit_job_queue;
+        element_fit_count_dict->clear();
+        delete element_fit_count_dict;
     }
 
     real_t energy_offset = 0.0;

@@ -165,6 +165,12 @@ public:
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
+    bool save_fitted_int_spectra(const std::string path,
+                                 const data_struct::Spectra& spectra,
+                                 const data_struct::Range& range,
+								 const data_struct::Spectra& max_spectra,
+								 const data_struct::Spectra& max_10_spectra);
+
     void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
 
     bool save_quantification(data_struct::Quantification_Standard * quantification_standard);

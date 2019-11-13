@@ -71,9 +71,15 @@ public:
 
     virtual const Fit_Parameters& fit_parameters() const { return _fit_parameters; }
 
+    // single threaded
     virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           const struct Range energy_range);
+
+    // multi threaded
+    virtual const Spectra model_spectrum_mp(const Fit_Parameters * const fit_params,
+                                            const Fit_Element_Map_Dict * const elements_to_fit,
+                                            const struct Range energy_range);
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
@@ -102,7 +108,7 @@ public:
      */
     virtual const ArrayXr step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const;
 
-    virtual const ArrayXr tail(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t gamma) const;
+    virtual const ArrayXr tail(real_t gain, real_t sigma, ArrayXr delta_energy, real_t gamma) const;
 
     virtual const ArrayXr elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
 

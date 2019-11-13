@@ -310,10 +310,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
 	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
     ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
 
-
-// multicore start
-    std::vector<std::string> keys;
-    for (const auto& itr : (*elements_to_fit))
+    for(const auto& itr : (*elements_to_fit))
     {
         if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
         {
@@ -321,34 +318,9 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
         }
         else
         {
-            keys.push_back(itr.first);
+            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
         }
     }
-#pragma omp parallel for
-    for (int i=0; i < (int)keys.size(); i++)
-    {
-        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
-#pragma omp critical
-        {
-            agr_spectra += tmp;
-        }
-    }
-// multicore end
-	
-
-// single core start
-//    for(const auto& itr : (*elements_to_fit))
-//    {
-//        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
-//        {
-//            continue;
-//        }
-//        else
-//        {
-//            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
-//        }
-//    }
-// single core end
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
@@ -380,6 +352,50 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     }
 
 */
+
+    return agr_spectra;
+}
+
+// ----------------------------------------------------------------------------
+
+const Spectra Gaussian_Model::model_spectrum_mp(const Fit_Parameters * const fit_params,
+                                                const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
+                                                const struct Range energy_range)
+{
+
+    Spectra agr_spectra(energy_range.count());
+
+    real_t energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+    real_t energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+    real_t energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+
+    ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
+
+    std::vector<std::string> keys;
+    for (const auto& itr : (*elements_to_fit))
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        else
+        {
+            keys.push_back(itr.first);
+        }
+    }
+#pragma omp parallel for
+    for (int i=0; i < (int)keys.size(); i++)
+    {
+        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
+#pragma omp critical
+        {
+            agr_spectra += tmp;
+        }
+    }
+
+    agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
     return agr_spectra;
 }
@@ -447,42 +463,10 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
                 break;
         }
 
-//        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-//        {
-//            faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
-//        }
-//        if (er_struct.ptype == Element_Param_Type::Ka1_Line || er_struct.ptype == Element_Param_Type::Ka2_Line || er_struct.ptype == Element_Param_Type::L_Line)
-//        {
-//            faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-//        }
-
 
         // peak, gauss
-        //value = faktor * this->peak(fit_params->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
         spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-
-/*      //separates counts into which lines they are
-        peak_counts = faktor * this->peak(fit_params->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-        switch(er_struct.ptype)
-        {
-            case Element_Param_Type::Ka_Line:
-                counts_arr->ka += peak_counts;
-            break;
-            case Element_Param_Type::Kb_Line:
-                counts_arr->kb += peak_counts;
-            break;
-            case Element_Param_Type::L_Line:
-                counts_arr->l += peak_counts;
-            break;
-            case Element_Param_Type::M_Line:
-                counts_arr->m += peak_counts;
-            break;
-            default:
-            break;
-        }
-        (*counts) += peak_counts;
-*/
-
+        ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) ) );
 
         //  peak, step
         if (f_step > 0.0)
@@ -509,37 +493,30 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 const ArrayXr Gaussian_Model::peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const
 {
     // gain / (sigma * sqrt( 2.0 * M_PI) ) * exp( -0.5 * ( (delta_energy / sigma) ** 2 )
-    return gain / ( sigma * SQRT_2xPI ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) );
+    return gain / ( sigma * (real_t)(SQRT_2xPI) ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) );
 }
 
 // ----------------------------------------------------------------------------
 
 const ArrayXr Gaussian_Model::step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const
 {
-	ArrayXr counts(delta_energy.size());
+    //delta_energy = delta_energy.unaryExpr([sigma](real_t v) { return  (real_t)std::erfc(v  /( M_SQRT2*sigma)); } );
+    //return (gain / (real_t)2.0 / peak_E * delta_energy );
+    ArrayXr counts(delta_energy.size());
 	for (unsigned int i = 0; i < delta_energy.size(); i++)
 	{
-		counts[i] = gain / (real_t)2.0 / peak_E * std::erfc((real_t)delta_energy[i] / (M_SQRT2 * sigma));
+        counts[i] = gain / (real_t)2.0 / peak_E * std::erfc((real_t)delta_energy[i] / ((real_t)(M_SQRT2) * sigma));
 	}
     return counts;
+
 }
 
 // ----------------------------------------------------------------------------
 
-const ArrayXr Gaussian_Model::tail(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t gamma) const
+const ArrayXr Gaussian_Model::tail(real_t gain, real_t sigma, ArrayXr delta_energy, real_t gamma) const
 {
-	ArrayXr counts(delta_energy.size());
-
-    for (unsigned int i=0; i<delta_energy.size(); i++)
-    {
-        real_t temp_a = 1.0;
-        if (delta_energy[i] < 0.0)
-        {
-            temp_a = exp(delta_energy[i]/ (gamma * sigma));
-        }
-        counts[i] = gain / 2. / gamma / sigma / exp((real_t)-0.5/pow(gamma, (real_t)2.0)) * temp_a * std::erfc((real_t)delta_energy[i]  /( M_SQRT2*sigma) + ((real_t)1.0/(gamma*M_SQRT2) )  );
-    }
-    return counts;
+    delta_energy = delta_energy.unaryExpr([sigma,gamma](real_t v) { return  (v < (real_t)0.0) ? std::exp(v/ (gamma * sigma)) * std::erfc(v / ((real_t)(M_SQRT2)*sigma) + ((real_t)1.0/(gamma*(real_t)(M_SQRT2)))) : std::erfc(v / ((real_t)(M_SQRT2)*sigma) + ((real_t)1.0/(gamma*(real_t)(M_SQRT2)))); } );
+    return( gain / (real_t)2.0 / gamma / sigma / exp((real_t)-0.5/pow(gamma, (real_t)2.0)) * delta_energy);
 }
 
 // ----------------------------------------------------------------------------
@@ -559,11 +536,12 @@ const ArrayXr Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, co
     // elastic peak, gaussian
     real_t fvalue = (real_t)1.0;
 
-    fvalue = fvalue * std::pow(10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
+    fvalue = fvalue * std::pow((real_t)10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
     //Spectra value = fvalue * this->peak(gain, *sigma, delta_energy);
     //counts = counts + value;
     counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
+    ////counts += fvalue * (gain / ( sigma * (real_t)(SQRT_2xPI) ) * Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) ) );
 
     return counts;
 }
@@ -575,9 +553,9 @@ const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, co
 	ArrayXr counts(ev.size());
 	counts.setZero();
 
-    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/(1. +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (real_t)511.0 ) * (1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * 2.0 * M_PI / 360.0 )));
+    real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((real_t)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (real_t)511.0 ) * ((real_t)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (real_t)2.0 * (real_t)(M_PI) / (real_t)360.0 )));
 
-    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/2.3548), 62.0) + compton_E * 2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
+    real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(real_t)2.3548), (real_t)62.0) + compton_E * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
     if(std::isnan(sigma))
     {
         return counts;
@@ -591,7 +569,8 @@ const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, co
 
     faktor = faktor * std::pow((real_t)10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
 
-	counts += faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
+    counts += faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
+    ////counts += faktor * (gain / ( (sigma * fitp->at(STR_COMPTON_FWHM_CORR).value) * (real_t)(SQRT_2xPI) ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / (sigma*fitp->at(STR_COMPTON_FWHM_CORR).value)), (real_t)2.0) ) );
 
     // compton peak, step
     if ( fitp->at(STR_COMPTON_F_STEP).value > 0.0 )
@@ -601,13 +580,12 @@ const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, co
     }
     // compton peak, tail on the low side
     real_t fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
-	counts += fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
+    counts += fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
 
     // compton peak, tail on the high side
     fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
-    delta_energy *= -1.0;
-	counts += ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
-
+    delta_energy *= (real_t)-1.0;
+    counts += ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
     return counts;
 }
 

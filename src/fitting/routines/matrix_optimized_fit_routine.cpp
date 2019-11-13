@@ -209,6 +209,11 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
     //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
 
+    {
+        std::lock_guard<std::mutex> lock(_int_spec_mutex);
+        _integrated_fitted_spectra.setZero(energy_range.count());
+    }
+
 }
 
 // ----------------------------------------------------------------------------
@@ -244,6 +249,44 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         if(fit_params.contains(STR_NUM_ITR))
         {
             counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
+        }
+
+		//get max and top 10 max channels
+		vector<pair<int, real_t> > max_map;
+		data_struct::Spectra max_vals = *spectra;
+		data_struct::Spectra::Index idx;
+		for (int i = 0; i < 10; i++)
+		{
+			real_t max_val = max_vals.maxCoeff(&idx);
+			max_map.push_back({ idx, max_val });
+			max_vals[idx] = 0;
+		}
+
+		//model fit spectra
+        Spectra model(_energy_range.count());
+        this->model_spectrum(&fit_params, &_energy_range, &model);
+        
+		//lock and integrate results
+		{
+            std::lock_guard<std::mutex> lock(_int_spec_mutex);
+            _integrated_fitted_spectra.add(model);
+
+			//we don't know the spectra size during initlaize() will have to resize here
+			if (_max_channels_spectra.size() < spectra->size())
+			{
+				_max_channels_spectra.setZero(spectra->size());
+			}
+			if (_max_10_channels_spectra.size() < spectra->size())
+			{
+				_max_10_channels_spectra.setZero(spectra->size());
+			}
+
+			_max_channels_spectra[max_map[0].first] += max_map[0].second;
+
+			for (auto &itr : max_map)
+			{
+				_max_10_channels_spectra[itr.first] += itr.second;
+			}
         }
     }
     return counts_dict;

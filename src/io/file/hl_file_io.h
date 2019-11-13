@@ -186,11 +186,6 @@ DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
 										std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
 										const std::vector<size_t>& detector_num_arr);
 
-DLL_EXPORT bool save_results(std::string save_loc,
-                  data_struct::Fit_Count_Dict * element_counts,
-                  std::queue<std::future<bool> >* job_queue,
-                  std::chrono::time_point<std::chrono::system_clock> start);
-
 DLL_EXPORT void save_quantification_plots(data_struct::Analysis_Job* analysis_job,
                                           map<string, data_struct::Quantification_Standard*> *standard,
                                           int detector_num);
