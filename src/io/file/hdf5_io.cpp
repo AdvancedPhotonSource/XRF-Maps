@@ -3353,11 +3353,12 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     int j = 0;
     for(int i= spectra_range.min; i <= spectra_range.max; i++)
     {
-        save_spectra[i] = spectra[j];
+        if(std::isfinite(spectra[j]))
+        {
+            save_spectra[i] = spectra[j];
+        }
         j++;
     }
-
-    save_spectra = save_spectra.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 
     dset_id = H5Dopen (_cur_file_id, dset_name.c_str(), H5P_DEFAULT);
     if(dset_id < 0)
