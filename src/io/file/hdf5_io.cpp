@@ -3341,8 +3341,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
     std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
-	std::string max_name = "/MAPS/XRF_Analyzed/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/XRF_Analyzed/10_Max_Channels_Integrated_Spectra";
+	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/10_Max_Channels_Integrated_Spectra";
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
@@ -6728,6 +6728,8 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     hid_t memtype = H5Tcopy(H5T_C_S1);
     H5Tset_size(memtype, 255);
     char tmp_char1[256] = { 0 };
+	hsize_t offset2d[2] = { 0,0 };
+	hsize_t count2d[2] = { 1,1 };
 
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
@@ -6767,7 +6769,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     {
         logW  << " Couldn't create soft link for scaler_units"<<  "\n";
     }
-
+	
     //Spectra
     if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
@@ -6786,6 +6788,66 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
         logW  << " Couldn't create soft link for mca_arr"<<  "\n";
     }
 
+
+	std::string fit_int_name = "/MAPS/XRF_Analyzed/Matrix/Fitted_Integrated_Spectra";
+	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/10_Max_Channels_Integrated_Spectra";
+	std::string v9_max_name = "/MAPS/max_chan_spec";
+	hid_t fit_int_id, max_id, max_10_id, max_space, max_type, v9_max_id, v9_space;
+	
+	max_id = H5Dopen(file_id, max_name.c_str(), H5P_DEFAULT);
+	if (max_id > -1)
+	{
+		fit_int_id = H5Dopen(file_id, fit_int_name.c_str(), H5P_DEFAULT);
+		max_10_id = H5Dopen(file_id, max10_name.c_str(), H5P_DEFAULT);
+
+		max_space = H5Aget_space(max_id);
+		max_type = H5Dget_type(max_id);
+		H5Sget_simple_extent_dims(max_space, &count2d[0], nullptr);
+		//make 5 x spectra_size matrix
+		count2d[1] = count2d[0];
+		count2d[0] = 5;
+		v9_space = H5Screate_simple(2, &count2d[0], &count2d[0]);
+
+		v9_max_id = H5Dcreate(file_id, v9_max_name.c_str(), max_type, v9_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if (v9_max_id > -1)
+		{
+			real_t *buf = new real_t[count2d[1]];
+			count2d[0] = 1;
+			
+			if (H5Dread(max_id, max_type, max_space, max_space, H5P_DEFAULT, (void*)buf) > -1)
+			{
+				offset2d[0] = 0;
+				H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
+				H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
+			}
+			if (max_10_id > -1)
+			{
+				if (H5Dread(max_10_id, max_type, max_space, max_space, H5P_DEFAULT, (void*)buf) > -1)
+				{
+					offset2d[0] = 1;
+					H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
+					H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
+				}
+				H5Dclose(max_10_id);
+			}
+			if (fit_int_id > -1)
+			{
+				if (H5Dread(fit_int_id, max_type, max_space, max_space, H5P_DEFAULT, (void*)buf) > -1)
+				{
+					offset2d[0] = 2;
+					H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
+					H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
+				}
+				H5Dclose(fit_int_id);
+			}
+			delete[]buf;
+			H5Dclose(v9_max_id);
+		}
+		H5Sclose(v9_space);
+		H5Dclose(max_id);
+	}
+	
 
     hsize_t quant_dims[3];
     quant_dims[0] = 3;
