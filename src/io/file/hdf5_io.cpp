@@ -3342,7 +3342,7 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     start = std::chrono::system_clock::now();
     std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
 	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/10_Max_Channels_Integrated_Spectra";
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/Max_10_Channels_Integrated_Spectra";
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
@@ -6130,7 +6130,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
             _gen_average("/MAPS/"+group_name+"/Elapsed_Realtime", "Elapsed_Realtime", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
             _gen_average("/MAPS/"+group_name+"/Input_Counts", "Input_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
             _gen_average("/MAPS/"+group_name+"/Output_Counts", "Output_Counts", src_analyzed_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
-
+			
             //for now copy the first detector energy and energy_calib, in the future would be nice to normalize over 4 detectors
             status = H5Ocopy(src_analyzed_grp_id, "Energy", dst_fit_grp_id, "Energy", ocpypl_id, H5P_DEFAULT);
             status = H5Ocopy(src_analyzed_grp_id, "Energy_Calibration", dst_fit_grp_id, "Energy_Calibration", ocpypl_id, H5P_DEFAULT);
@@ -6277,6 +6277,10 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 					float divisor = 1.0;
 					H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
 					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+					if (error > -1)
+					{
+						buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+					}
 					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 					{
 						//hid_t dspace_id = H5Dget_space(analysis_ids[k]);
@@ -6285,6 +6289,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
 						if (error > -1)
 						{
+							buffer2 = buffer2.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 							buffer1 += buffer2;
 							divisor += 1.0;
 						}
@@ -6313,11 +6318,16 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 			data_struct::ArrayXr buffer2(total);
 			float divisor = 1.0;
 			error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+			if (error > -1)
+			{
+				buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+			}
 			for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 			{
 				error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
 				if (error > -1)
 				{
+					buffer2 = buffer2.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 					buffer1 += buffer2;
 					divisor += 1.0;
 				}
@@ -6381,6 +6391,7 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
                     logE<<"coping Calibration_Curve_Labels!\n";
                 }
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Counts_Per_Sec", "Counts_Per_Sec", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+				_gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Fitted_Integrated_Spectra", "Fitted_Integrated_Spectra", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
 
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_SR_Current", "Calibration_Curve_SR_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                 _gen_average(group_name+"/XRF_Analyzed/"+analysis_grp_name+"/Calibration_Curve_DS_IC", "Calibration_Curve_DS_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
@@ -6409,6 +6420,8 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
         _gen_average(group_name+"/Integrated_Spectra/Elapsed_Realtime", "Elapsed_Realtime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Input_Counts", "Input_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Output_Counts", "Output_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/Max_Channels_Integrated_Spectra", "Max_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/Max_10_Channels_Integrated_Spectra", "Max_10_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
 
         //don't average the integrated spectra, just sum it
         _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
@@ -6732,7 +6745,10 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 	hsize_t count2d[2] = { 1,1 };
 
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-
+	if (file_id < 0)
+	{
+		return;
+	}
     //Scan
     if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
@@ -6789,9 +6805,9 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
     }
 
 
-	std::string fit_int_name = "/MAPS/XRF_Analyzed/Matrix/Fitted_Integrated_Spectra";
+	std::string fit_int_name = "/MAPS/XRF_Analyzed/Fitted/Fitted_Integrated_Spectra";
 	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/10_Max_Channels_Integrated_Spectra";
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/Max_10_Channels_Integrated_Spectra";
 	std::string v9_max_name = "/MAPS/max_chan_spec";
 	hid_t fit_int_id, max_id, max_10_id, max_space, max_type, v9_max_id, v9_space;
 	
@@ -6801,7 +6817,7 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 		fit_int_id = H5Dopen(file_id, fit_int_name.c_str(), H5P_DEFAULT);
 		max_10_id = H5Dopen(file_id, max10_name.c_str(), H5P_DEFAULT);
 
-		max_space = H5Aget_space(max_id);
+		max_space = H5Dget_space(max_id);
 		max_type = H5Dget_type(max_id);
 		H5Sget_simple_extent_dims(max_space, &count2d[0], nullptr);
 		//make 5 x spectra_size matrix
@@ -6809,7 +6825,11 @@ void HDF5_IO::_add_v9_layout(std::string dataset_file)
 		count2d[0] = 5;
 		v9_space = H5Screate_simple(2, &count2d[0], &count2d[0]);
 
-		v9_max_id = H5Dcreate(file_id, v9_max_name.c_str(), max_type, v9_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		v9_max_id = H5Dopen(file_id, v9_max_name.c_str(), H5P_DEFAULT);
+		if (v9_max_id < 0)
+		{
+			v9_max_id = H5Dcreate(file_id, v9_max_name.c_str(), max_type, v9_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		}
 		if (v9_max_id > -1)
 		{
 			real_t *buf = new real_t[count2d[1]];
