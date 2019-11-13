@@ -3325,7 +3325,8 @@ bool HDF5_IO::save_element_fits(std::string path,
 bool HDF5_IO::save_fitted_int_spectra(const std::string path,
                                      const data_struct::Spectra& spectra,
                                      const data_struct::Range& spectra_range,
-                                     const int full_spectra_size)
+									const data_struct::Spectra& max_spectra,
+									const data_struct::Spectra& max_10_spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3340,13 +3341,15 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
     std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
+	std::string max_name = "/MAPS/XRF_Analyzed/Max_Channels_Integrated_Spectra";
+	std::string max10_name = "/MAPS/XRF_Analyzed/10_Max_Channels_Integrated_Spectra";
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
-    count[0] = full_spectra_size;
+    count[0] = max_spectra.size();
     dataspace_id = H5Screate_simple(1, count, nullptr);
 
-    data_struct::Spectra save_spectra(full_spectra_size);
+    data_struct::Spectra save_spectra(max_spectra.size());
     int j = 0;
     for(int i= spectra_range.min; i <= spectra_range.max; i++)
     {
@@ -3369,8 +3372,44 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
         ret_val = false;
     }
 
-    H5Sclose(dataspace_id);
     H5Dclose(dset_id);
+
+
+	dset_id = H5Dopen(_cur_file_id, max_name.c_str(), H5P_DEFAULT);
+	if (dset_id < 0)
+		dset_id = H5Dcreate(_cur_file_id, max_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dset_id < 0)
+	{
+		logE << "creating dataset " << max_name << "\n";
+		return false;
+	}
+
+	status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_spectra.data());
+	if (status < 0)
+	{
+		ret_val = false;
+	}
+	H5Dclose(dset_id);
+
+
+	dset_id = H5Dopen(_cur_file_id, max10_name.c_str(), H5P_DEFAULT);
+	if (dset_id < 0)
+		dset_id = H5Dcreate(_cur_file_id, max10_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dset_id < 0)
+	{
+		logE << "creating dataset " << max10_name << "\n";
+		return false;
+	}
+
+	status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_10_spectra.data());
+	if (status < 0)
+	{
+		ret_val = false;
+	}
+	H5Dclose(dset_id);
+
+
+	H5Sclose(dataspace_id);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;

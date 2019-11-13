@@ -270,6 +270,17 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);
             _integrated_fitted_spectra.add(model);
+
+			//we don't know the spectra size during initlaize() will have to resize here
+			if (_max_channels_spectra.size() < spectra->size())
+			{
+				_max_channels_spectra.setZero(spectra->size());
+			}
+			if (_max_10_channels_spectra.size() < spectra->size())
+			{
+				_max_10_channels_spectra.setZero(spectra->size());
+			}
+
 			_max_channels_spectra[max_map[0].first] += max_map[0].second;
 
 			for (auto &itr : max_map)

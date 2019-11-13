@@ -397,7 +397,11 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
-            io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(), matrix_fit->get_fitted_integrated_spectra(), matrix_fit->energy_range(), spectra_volume->samples_size() );
+            io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),
+																matrix_fit->fitted_integrated_spectra(),
+																matrix_fit->energy_range(),
+																matrix_fit->max_integrated_spectra(),
+																matrix_fit->max_10_integrated_spectra());
         }
 
         delete fit_job_queue;

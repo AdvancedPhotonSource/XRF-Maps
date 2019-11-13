@@ -87,7 +87,11 @@ public:
                         const struct Range * const energy_range,
 					    Spectra* spectra_model);
 
-    const Spectra& get_fitted_integrated_spectra() {return _integrated_fitted_spectra;}
+    const Spectra& fitted_integrated_spectra() {return _integrated_fitted_spectra;}
+
+	const Spectra& max_integrated_spectra() { return _max_channels_spectra; }
+
+	const Spectra& max_10_integrated_spectra() { return _max_10_channels_spectra; }
 
 protected:
 
