@@ -417,7 +417,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 else
                 cols = _mda_file->scan->last_point;
                 samples = _mda_file->header->dimensions[1];
-                vol->resize_and_zero(rows, cols, samples);
+                vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
                 _is_single_row = true;
             }
             else
@@ -447,7 +447,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         else
             cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
-        vol->resize_and_zero(rows, cols, samples);
+        vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
     }
     else
     {
