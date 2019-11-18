@@ -447,7 +447,19 @@ bool MDA_IO::load_spectra_volume(std::string path,
         else
             cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
-        vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
+        if(_mda_file->header->dimensions[2] == 2000)
+        {
+            vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
+        }
+        else if(_mda_file->header->dimensions[2] > 4096) // there can be a bug in mda files that the header has incorrect dimensions
+        {
+            samples = _mda_file->scan->sub_scans[0]->sub_scans[0]->requested_points;
+            vol->resize_and_zero(rows, cols, samples);
+        }
+        else
+        {
+            vol->resize_and_zero(rows, cols, samples);
+        }
     }
     else
     {
