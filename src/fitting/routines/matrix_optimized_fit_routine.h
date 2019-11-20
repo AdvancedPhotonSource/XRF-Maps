@@ -103,7 +103,7 @@ private:
 
     unordered_map<string, Spectra> _element_models;
 
-    std::mutex _int_spec_mutex;
+    static std::mutex _int_spec_mutex;
     data_struct::Spectra _integrated_fitted_spectra;
 	data_struct::Spectra _max_channels_spectra;
 	data_struct::Spectra _max_10_channels_spectra;

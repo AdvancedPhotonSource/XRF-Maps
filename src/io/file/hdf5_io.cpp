@@ -3349,7 +3349,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     count[0] = max_spectra.size();
     dataspace_id = H5Screate_simple(1, count, nullptr);
 
-    data_struct::ArrayXr save_spectra(max_spectra.size());
+    data_struct::ArrayXr save_spectra;
+    save_spectra.setZero(max_spectra.size());
     int j = 0;
     for(int i= spectra_range.min; i <= spectra_range.max; i++)
     {
@@ -4165,7 +4166,7 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scale
 
         //Save theta
         dset_id = H5Dcreate(scan_grp_id, "theta", H5T_NATIVE_REAL, memoryspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        if(dset_id > 0)
+        if(dset_id > 0 && mda_scalers->extra != nullptr)
         {
             real_t theta = 0.0;
             struct mda_pv * pv = nullptr;
@@ -6323,8 +6324,8 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 					chunk_total *= chunk_dims[i];
 				}
 			}
-			data_struct::ArrayXr buffer1(chunk_total);
-			data_struct::ArrayXr buffer2(chunk_total);
+            data_struct::ArrayXr buffer1(chunk_total); //don't need to zero because we are reading in full buffer
+            data_struct::ArrayXr buffer2(chunk_total); //don't need to zero because we are reading in full buffer
 			
 			hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
 			for (int w = 0; w < dims_in[1]; w++)
