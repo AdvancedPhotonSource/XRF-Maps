@@ -53,6 +53,8 @@ namespace fitting
 namespace routines
 {
 
+std::mutex Matrix_Optimized_Fit_Routine::_int_spec_mutex;
+
 // ----------------------------------------------------------------------------
 
 Matrix_Optimized_Fit_Routine::Matrix_Optimized_Fit_Routine() : Param_Optimized_Fit_Routine()
