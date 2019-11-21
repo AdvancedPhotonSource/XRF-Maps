@@ -6275,6 +6275,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         }
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
 
+        hsize_t* tmp_dims = new hsize_t[rank];
         hsize_t* dims_in = new hsize_t[rank];
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
         if(status_n < 0)
@@ -6282,19 +6283,41 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
             logE<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
-        long long total = 1;
-        for(int i=0; i< rank; i++)
-        {
-            total *= dims_in[i];
-        }
 
         //get all the other files dataset ids
         for(long unsigned int k=1; k<hdf5_file_ids.size(); k++)
         {
             hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
             if( det_analysis_dset_id > -1 )
-                analysis_ids.push_back(det_analysis_dset_id);
+            {
+                // ran into a bug where detectors had different dims for counts per sec. need to check the min and use that to generate avg
+                hid_t tdataspace_id = H5Dget_space(det_analysis_dset_id);
+                int status_n = H5Sget_simple_extent_dims(tdataspace_id, &tmp_dims[0], NULL);
+                if(status_n > -1)
+                {
+                    for(int i=0; i< rank; i++)
+                    {
+                        if(tmp_dims[i] < dims_in[i] )
+                        {
+                            dims_in[i] = tmp_dims[i];
+                        }
+                    }
+                    analysis_ids.push_back(det_analysis_dset_id);
+                }
+            }
         }
+
+        long long total = 1;
+        hsize_t* offset_rank = new hsize_t[rank];
+        for(int i=0; i< rank; i++)
+        {
+            offset_rank[i] = 0;
+            total *= dims_in[i];
+        }
+
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset_rank, nullptr, dims_in, nullptr);
+
+        delete []offset_rank;
 
 		//long long avail_mem = get_total_mem() * .95;
 		long long avail_mem = get_available_mem();
@@ -6377,14 +6400,14 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 			data_struct::ArrayXr buffer1(total);
 			data_struct::ArrayXr buffer2(total);
 			float divisor = 1.0;
-			error = H5Dread(dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+            error = H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 			if (error > -1)
 			{
 				buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 			}
 			for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 			{
-				error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer2.data());
+                error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
 				if (error > -1)
 				{
 					buffer2 = buffer2.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
@@ -6403,7 +6426,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 			}
 
 			//hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-			error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer1.data());
+            error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 		}
         for(long unsigned int k=0; k<analysis_ids.size(); k++)
         {
@@ -6412,6 +6435,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
         //clean up
         delete [] dims_in;
+        delete [] tmp_dims;
         H5Dclose(dset_id);
         H5Dclose(dst_dset_id);
     }
