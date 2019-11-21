@@ -268,6 +268,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         Spectra model(_energy_range.count());
         this->model_spectrum(&fit_params, &_energy_range, &model);
         
+        model = (ArrayXr)model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+
 		//lock and integrate results
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);
