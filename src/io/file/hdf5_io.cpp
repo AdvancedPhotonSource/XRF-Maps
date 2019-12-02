@@ -3251,12 +3251,37 @@ bool HDF5_IO::save_element_fits(std::string path,
         element_lines.push_back(el_name+"_M");
     }
 
+    //add pileups
+    for (const auto& itr : *element_counts)
+    {
+        if( std::find(element_lines.begin(), element_lines.end(), itr.first) == element_lines.end() )
+        {
+            element_lines.push_back(itr.first);
+        }
+
+        /*
+        int idx = itr.first.find("_");
+        int len = itr.first.length();
+        if(idx > -1)
+        {
+            std::string e1 = itr.first.substr(0, idx);
+            std::string e2 = itr.first.substr(idx+1, len);
+            auto it1 = std::find(element_lines.begin(), element_lines.end(), e1);
+            auto it2 = std::find(element_lines.begin(), element_lines.end(), e2);
+            if(it1 != element_lines.end() && it2 != element_lines.end())
+            {
+                element_lines.push_back(itr.first);
+            }
+        }
+        */
+    }
+/*
     element_lines.push_back(STR_COHERENT_SCT_AMPLITUDE);
     element_lines.push_back(STR_COMPTON_AMPLITUDE);
 	element_lines.push_back(STR_SUM_ELASTIC_INELASTIC_AMP);
     element_lines.push_back(STR_TOTAL_FLUORESCENCE_YIELD);
     element_lines.push_back(STR_NUM_ITR);
-
+*/
     int i=0;
     //save by element Z order
     //for(const auto& iter : *element_counts)
@@ -4970,7 +4995,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                                 scaler_time_normalizer = det_time / time_scaler_clock;
                                 val /= scaler_time_normalizer;
                             }
-							scaler_mat(0, i) = val;
+                            if(std::isfinite(val))
+                            {
+                                scaler_mat(0, i) = val;
+                            }
                         }
                     }
                     else
@@ -4987,7 +5015,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                                     scaler_time_normalizer = det_time / time_scaler_clock;
 									val /= scaler_time_normalizer;
                                 }
-								scaler_mat(i, j) = val;
+                                if(std::isfinite(val))
+                                {
+                                    scaler_mat(i, j) = val;
+                                }
                             }
                         }
                     }
@@ -5030,7 +5061,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                                     scaler_time_normalizer = det_time / time_scaler_clock;
                                     val /= scaler_time_normalizer;
                                 }
-                                scaler_mat(0, i) += val;
+                                if(std::isfinite(val))
+                                {
+                                    scaler_mat(0, i) += val;
+                                }
                             }
                         }
                     }
@@ -5055,7 +5089,10 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                                         scaler_time_normalizer = det_time / time_scaler_clock;
                                         val /= scaler_time_normalizer;
                                     }
-                                    scaler_mat(i, j) += val;
+                                    if(std::isfinite(val))
+                                    {
+                                        scaler_mat(i, j) += val;
+                                    }
                                 }
                             }
                         }
@@ -5175,12 +5212,26 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                             real_t t_5 = mda_scalers->scan->detectors_data[cfg_5_idx][j];
 
                             real_t t_abs = t_2 + t_3 + t_4 + t_5;
-                            scaler_mat(0,j) = ds_ic / us_ic;
-                            abs_cfg_mat(0,j) = t_abs / us_ic;
-                            H_dpc_cfg_mat(0, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
-                            V_dpc_cfg_mat(0, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
-                            dia1_dpc_cfg_mat(0, j) = (t_2 - t_4) / t_abs;
-                            dia2_dpc_cfg_mat(0, j) = (t_3 - t_5) / t_abs;
+
+                            real_t val;
+
+                            val = ds_ic / us_ic;
+                            if(std::isfinite(val))
+                            {
+                                scaler_mat(0,j) = val;
+                            }
+                            val = t_abs / us_ic;
+                            if(std::isfinite(val))
+                            {
+                                abs_cfg_mat(0,j) = val;
+                            }
+                            if(t_abs != 0.0)
+                            {
+                                H_dpc_cfg_mat(0, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
+                                V_dpc_cfg_mat(0, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
+                                dia1_dpc_cfg_mat(0, j) = (t_2 - t_4) / t_abs;
+                                dia2_dpc_cfg_mat(0, j) = (t_3 - t_5) / t_abs;
+                            }
 							/*
 							if (itr.normalize_by_time)
 							{
@@ -5209,12 +5260,25 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, dat
                                 real_t t_5 = mda_scalers->scan->sub_scans[i]->detectors_data[cfg_5_idx][j];
 
                                 real_t t_abs = t_2 + t_3 + t_4 + t_5;
-								scaler_mat(i, j) = ds_ic / us_ic;
-								abs_cfg_mat(i, j) = t_abs / us_ic;
-								H_dpc_cfg_mat(i, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
-								V_dpc_cfg_mat(i, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
-								dia1_dpc_cfg_mat(i, j) = (t_2 - t_4) / t_abs;
-								dia2_dpc_cfg_mat(i, j) = (t_3 - t_5) / t_abs;
+                                real_t val;
+
+                                val = ds_ic / us_ic;
+                                if(std::isfinite(val))
+                                {
+                                    scaler_mat(i, j) = val;
+                                }
+                                val = t_abs / us_ic;
+                                if(std::isfinite(val))
+                                {
+                                    abs_cfg_mat(i, j) = val;
+                                }
+                                if(t_abs != 0.0)
+                                {
+                                    H_dpc_cfg_mat(i, j) = (t_2 - t_3 - t_4 + t_5) / t_abs;
+                                    V_dpc_cfg_mat(i, j) = (t_2 + t_3 - t_4 - t_5) / t_abs;
+                                    dia1_dpc_cfg_mat(i, j) = (t_2 - t_4) / t_abs;
+                                    dia2_dpc_cfg_mat(i, j) = (t_3 - t_5) / t_abs;
+                                }
                             }
                         }
                     }
