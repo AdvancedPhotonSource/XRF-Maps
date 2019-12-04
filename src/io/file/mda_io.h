@@ -111,6 +111,8 @@ public:
 
     inline bool is_single_row_scan() {return _is_single_row;}
 
+    bool load_header(std::string filePath);
+
 private:
 
     bool _get_scaler_value( struct mda_file* _mda_file, data_struct::Params_Override *override_values, string scaler_name, real_t *store_loc, bool isFlyScan);

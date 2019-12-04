@@ -135,6 +135,29 @@ void MDA_IO::lazy_load()
 
 //-----------------------------------------------------------------------------
 
+bool MDA_IO::load_header(std::string filePath)
+{
+
+    std::FILE *fptr = std::fopen(filePath.c_str(), "rb");
+
+    if (fptr == nullptr)
+    {
+        return false;
+    }
+
+    mda_header *ptr_header = mda_header_load(fptr);
+    std::fclose(fptr);
+    if( ptr_header != nullptr)
+    {
+        free(ptr_header);
+        return true;
+    }
+    return false;
+
+}
+
+//-----------------------------------------------------------------------------
+
 int MDA_IO::find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string &units)
 {
 
