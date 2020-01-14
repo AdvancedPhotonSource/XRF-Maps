@@ -209,6 +209,13 @@ public:
 							std::string dataset_file,
 							const std::vector<size_t>& detector_num_arr);
 
+	// update theta value based on new pv name
+	void update_theta(std::string dataset_directory,
+					std::string dataset_file,
+					const std::vector<size_t>& detector_num_arr,
+					std::string theta_pv_str);
+
+
     bool end_save_seq(bool loginfo=true);
 
 private:
@@ -240,6 +247,8 @@ private:
 
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true, bool close_on_fail=true);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
+
+	void _update_theta(std::string dataset_file, std::string theta_pv_str);
 
     struct scaler_struct
     {
