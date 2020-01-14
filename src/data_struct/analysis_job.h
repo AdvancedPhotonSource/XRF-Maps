@@ -179,6 +179,7 @@ public:
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
+	std::string update_theta_str;
 
 	std::vector<size_t> detector_num_arr;
 

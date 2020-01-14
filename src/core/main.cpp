@@ -62,6 +62,7 @@ void help()
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
+	logit_s<< "--update-theta : <theta_pv_string> Update the theta dataset value using theta_pv_string as new pv string ref.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
 	logit_s << "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
@@ -249,6 +250,11 @@ int main(int argc, char *argv[])
         analysis_job.add_v9_layout = true;
     }
 
+	if (clp.option_exists("--update-theta"))
+	{
+		analysis_job.update_theta_str = clp.get_option("--update-theta");
+	}
+
     //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
     if(clp.option_exists("--add-exchange"))
     {
@@ -338,7 +344,13 @@ int main(int argc, char *argv[])
 	}
 
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fitting_routines.size() == 0 && optimize_fit_override_params == false && !analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout && !analysis_job.stream_over_network)
+    if (analysis_job.fitting_routines.size() == 0 &&
+		optimize_fit_override_params == false &&
+		!analysis_job.generate_average_h5 &&
+		!analysis_job.add_v9_layout &&
+		!analysis_job.add_exchange_layout &&
+		!analysis_job.stream_over_network &&
+		analysis_job.update_theta_str.length() == 0)
     {
         help();
         return -1;
@@ -524,6 +536,15 @@ int main(int argc, char *argv[])
             }
         }
 
+		//update theta based on new PV
+		if (analysis_job.update_theta_str.length() > 0)
+		{
+			for (const auto& dataset_file : analysis_job.dataset_files)
+			{
+				//data_struct::Params_Override* params_override
+				io::file::HDF5_IO::inst()->update_theta(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, analysis_job.update_theta_str);
+			}
+		}
     }
     else
     {
@@ -555,7 +576,17 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout)
+		//update theta based on new PV
+		if (analysis_job.update_theta_str.length() > 0)
+		{
+			for (const auto& dataset_file : analysis_job.dataset_files)
+			{
+				//data_struct::Params_Override* params_override
+				io::file::HDF5_IO::inst()->update_theta(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, analysis_job.update_theta_str);
+			}
+		}
+
+		if (!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout && analysis_job.update_theta_str.length() == 0)
 		{
 			logE << "initializing analysis job" << "\n";
 		}
