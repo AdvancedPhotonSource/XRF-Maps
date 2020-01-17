@@ -168,8 +168,12 @@ public:
     bool save_fitted_int_spectra(const std::string path,
                                  const data_struct::Spectra& spectra,
                                  const data_struct::Range& range,
-								 const data_struct::Spectra& max_spectra,
-								 const data_struct::Spectra& max_10_spectra);
+								 const size_t save_spectra_size);
+	
+	bool save_max_10_spectra(const std::string path,
+							const data_struct::Range& range,
+							const data_struct::Spectra& max_spectra,
+							const data_struct::Spectra& max_10_spectra);
 
     void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
 

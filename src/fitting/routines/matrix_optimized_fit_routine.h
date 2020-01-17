@@ -99,14 +99,16 @@ protected:
                                                             const Fit_Element_Map_Dict * const elements_to_fit,
                                                             struct Range energy_range);
 
+	data_struct::Spectra _integrated_fitted_spectra;
+	data_struct::Spectra _max_channels_spectra;
+	data_struct::Spectra _max_10_channels_spectra;
+
 private:
 
     unordered_map<string, Spectra> _element_models;
 
     static std::mutex _int_spec_mutex;
-    data_struct::Spectra _integrated_fitted_spectra;
-	data_struct::Spectra _max_channels_spectra;
-	data_struct::Spectra _max_10_channels_spectra;
+
 };
 
 } //namespace routines
