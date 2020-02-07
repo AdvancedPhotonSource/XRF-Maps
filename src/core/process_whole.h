@@ -165,5 +165,8 @@ DLL_EXPORT void average_quantification(std::vector<data_struct::Quantification_S
 
 // ----------------------------------------------------------------------------
 
+DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job);
+
+// ----------------------------------------------------------------------------
 
 #endif

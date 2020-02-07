@@ -4710,6 +4710,8 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers)
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::_save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf)
 {
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1, memoryspace_str_id = -1;
@@ -6659,34 +6661,7 @@ bool HDF5_IO::close_dataset(size_t d_hash)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::add_v9_layout(std::string dataset_directory,
-                            std::string dataset_file,
-                            const std::vector<size_t>& detector_num_arr)
-{
-    for(size_t detector_num : detector_num_arr)
-    {
-        _add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
-    }
-    _add_v9_layout(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5");
-}
-
-//-----------------------------------------------------------------------------
-
-void HDF5_IO::update_theta(std::string dataset_directory,
-							std::string dataset_file,
-							const std::vector<size_t>& detector_num_arr,
-							std::string theta_pv_str)
-{
-	for (size_t detector_num : detector_num_arr)
-	{
-		_update_theta(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num), theta_pv_str);
-	}
-	_update_theta(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5", theta_pv_str);
-}
-
-//-----------------------------------------------------------------------------
-
-void HDF5_IO::_update_theta(std::string dataset_file, std::string theta_pv_str)
+void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 {
 	hid_t file_id, theta_id, extra_names, extra_values;
 	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
@@ -6747,6 +6722,86 @@ void HDF5_IO::_update_theta(std::string dataset_file, std::string theta_pv_str)
 
 	_close_h5_objects(close_map);
 
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::update_scalers(std::string hdf_dataset_file, std::string mda_dataset_file, data_struct::Params_Override* params_override)
+{
+    
+    MDA_IO mda_file;
+
+    if (false == mda_file.load_struct(mda_dataset_file) || params_override == nullptr)
+    {
+        return;
+    }
+
+    hid_t maps_grp_id;
+
+    _save_scalers(maps_grp_id, mda_file.get_scan_ptr(), nullptr, params_override, false);
+
+    /*
+    struct mda_file* mda_scalers;
+    data_struct::Params_Override* params_override;
+    hid_t file_id, theta_id, extra_names, extra_values;
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+    char tmp_char[256] = { 0 };
+    hsize_t dims_in[1] = { 0 };
+    hsize_t offset_1d[1] = { 0 };
+    hsize_t count_1d[1] = { 1 };
+    hid_t rerror = 0;
+    real_t theta_value = 0;
+
+    file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (file_id < 0)
+        return;
+    close_map.push({ file_id, H5O_FILE });
+    //if (false == _open_h5_object(file_id, H5O_FILE, close_map, dataset_file, -1))
+    //	return;
+
+    if (false == _open_h5_object(theta_id, H5O_DATASET, close_map, "/MAPS/Scan/theta", file_id))
+        return;
+
+    if (false == _open_h5_object(extra_names, H5O_DATASET, close_map, "/MAPS/Scan/Extra_PVs/Names", file_id))
+        return;
+
+    if (false == _open_h5_object(extra_values, H5O_DATASET, close_map, "/MAPS/Scan/Extra_PVs/Values", file_id))
+        return;
+
+
+    hid_t theta_space = H5Dget_space(theta_id);
+    //hid_t theta_type = H5Dget_type(theta_id);
+    hid_t name_space = H5Dget_space(extra_names);
+    hid_t name_type = H5Dget_type(extra_names);
+    H5Sget_simple_extent_dims(name_space, &dims_in[0], nullptr);
+    hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+    close_map.push({ memoryspace_id, H5O_DATASPACE });
+
+    for (hsize_t i = 0; i < dims_in[0]; i++)
+    {
+        for (int z = 0; z < 256; z++)
+            tmp_char[z] = 0;
+
+        offset_1d[0] = i;
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+        rerror = H5Dread(extra_names, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+
+        std::string value(tmp_char, 255);
+        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+        if (theta_pv_str == value)
+        {
+            for (int z = 0; z < 256; z++)
+                tmp_char[z] = 0;
+            rerror = H5Dread(extra_values, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
+            theta_value = atof(tmp_char);
+            rerror = H5Dwrite(theta_id, H5T_NATIVE_REAL, memoryspace_id, theta_space, H5P_DEFAULT, (void*)&theta_value);
+            break;
+        }
+
+    }
+
+    _close_h5_objects(close_map);
+    */
 }
 
 //-----------------------------------------------------------------------------
@@ -6992,7 +7047,7 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_v9_layout(std::string dataset_file)
+void HDF5_IO::add_v9_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -7608,7 +7663,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_exchange_layout(std::string dataset_file)
+void HDF5_IO::add_exchange_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -7633,21 +7688,6 @@ void HDF5_IO::_add_exchange_layout(std::string dataset_file)
     logI<<"closing file"<<"\n";
 
     _cur_file_id = saved_file_id;
-}
-
-//-----------------------------------------------------------------------------
-
-void HDF5_IO::add_exchange_layout(std::string dataset_directory,
-								std::string dataset_file,
-								const std::vector<size_t>& detector_num_arr)
-{
-	
-	for (size_t detector_num : detector_num_arr)
-	{
-		_add_exchange_layout(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
-	}
-	_add_exchange_layout(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
-
 }
 
 //-----------------------------------------------------------------------------

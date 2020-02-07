@@ -346,6 +346,31 @@ bool MDA_IO::load_quantification_scalers(std::string path,
 
 //-----------------------------------------------------------------------------
 
+bool MDA_IO::load_struct(std::string path)
+{
+    std::FILE* fptr = std::fopen(path.c_str(), "rb");
+
+    size_t cols = 1;
+    size_t rows = 1;
+    size_t samples = 1;
+
+    if (fptr == nullptr)
+    {
+        return false;
+    }
+
+    _mda_file = mda_load(fptr);
+    std::fclose(fptr);
+    if (_mda_file == nullptr )
+    {
+        return false;
+    }
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 bool MDA_IO::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::Spectra_Volume* vol,
@@ -372,7 +397,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     _mda_file = mda_load(fptr);
     std::fclose(fptr);
-    if (_mda_file == nullptr)
+    if (_mda_file == nullptr || vol == nullptr)
     {
         return false;
     }

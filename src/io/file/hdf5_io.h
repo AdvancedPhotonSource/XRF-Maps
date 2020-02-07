@@ -204,22 +204,17 @@ public:
 								int col_idx_end = -1);
 
 	// Add links to dataset and set version to 9 so legacy software can load it
-    void add_v9_layout(std::string dataset_directory,
-                       std::string dataset_file,
-                       const std::vector<size_t>& detector_num_arr);
+    void add_v9_layout(std::string dataset_file);
 
 	// Add exchange layout to be loadable by external software
-	void add_exchange_layout(std::string dataset_directory,
-							std::string dataset_file,
-							const std::vector<size_t>& detector_num_arr);
+    void add_exchange_layout(std::string dataset_file);
 
 	// update theta value based on new pv name
-	void update_theta(std::string dataset_directory,
-					std::string dataset_file,
-					const std::vector<size_t>& detector_num_arr,
-					std::string theta_pv_str);
+    void update_theta(std::string dataset_file, std::string theta_pv_str);
 
-
+    //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
+    void update_scalers(std::string hdf_dataset_file, std::string mda_dataset_file, data_struct::Params_Override* params_override);
+    
     bool end_save_seq(bool loginfo=true);
 
 private:
@@ -242,17 +237,13 @@ private:
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
-    void _add_v9_layout(std::string dataset_file);
     void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
     void _add_extra_pvs(hid_t file_id, std::string group_name);
 
     bool _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler);
-	void _add_exchange_layout(std::string dataset_file);
-
+	
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true, bool close_on_fail=true);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
-
-	void _update_theta(std::string dataset_file, std::string theta_pv_str);
 
     struct scaler_struct
     {

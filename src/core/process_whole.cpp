@@ -929,3 +929,60 @@ void average_quantification(std::vector<data_struct::Quantification_Standard>* q
 }
 
 // ----------------------------------------------------------------------------
+
+void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
+{
+    for (const auto& dataset_file : analysis_job.dataset_files)
+    {
+        //average all detectors to one files
+        if (analysis_job.generate_average_h5)
+        {
+            io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
+        }
+
+        //generate a list of dataset to update
+        std::vector<std::string> hdf5_dataset_list;
+
+        for (size_t detector_num : analysis_job.detector_num_arr)
+        {
+            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+        }
+        hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
+
+
+        for (std::string hdf5_dataset_name : hdf5_dataset_list)
+        {
+            //add v9 layout soft links
+            if (analysis_job.add_v9_layout)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(hdf5_dataset_name);
+            }
+
+            //add exchange
+            if (analysis_job.add_exchange_layout)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
+            }
+
+            //update theta based on new PV
+            if (analysis_job.update_theta_str.length() > 0)
+            {
+                //data_struct::Params_Override* params_override
+                io::file::HDF5_IO::inst()->update_theta(hdf5_dataset_name, analysis_job.update_theta_str);
+            }
+
+            //update scalers table in hdf5 with new values from mda files
+            if (analysis_job.update_scalers)
+            {
+                size_t len = dataset_file.length();
+                if (len > 4 && dataset_file[len - 4] == '.' && dataset_file[len - 3] == 'm' && dataset_file[len - 2] == 'd' && dataset_file[len - 1] == 'a')
+                {
+                    data_struct::Detector *det = analysis_job.get_detector(detector_num);
+                    io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &det->fit_params_override_dict);
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------

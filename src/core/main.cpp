@@ -63,8 +63,9 @@ void help()
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
 	logit_s<< "--update-theta : <theta_pv_string> Update the theta dataset value using theta_pv_string as new pv string ref.\n";
+    logit_s<< "--update-scalers : If scalers pv's have been changed in maps_fit_parameters_override.txt file, you can run this to just update scaler values without refitting.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
-	logit_s << "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
+	logit_s<< "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
@@ -255,6 +256,11 @@ int main(int argc, char *argv[])
 		analysis_job.update_theta_str = clp.get_option("--update-theta");
 	}
 
+    if (clp.option_exists("--update-scalers"))
+    {
+        analysis_job.update_scalers = true;
+    }
+
     //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
     if(clp.option_exists("--add-exchange"))
     {
@@ -343,14 +349,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+    bool update_h5_without_fitting = analysis_job.generate_average_h5 || analysis_job.add_v9_layout || analysis_job.add_exchange_layout || analysis_job.update_theta_str.length() == 0 || analysis_job.update_scalers;
+    bool update_h5_fit = analysis_job.fitting_routines.size() > 0 || optimize_fit_override_params || analysis_job.stream_over_network || update_h5_without_fitting;
+
     //Check to make sure we have something to do. If not then show the help screen
-    if (analysis_job.fitting_routines.size() == 0 &&
-		optimize_fit_override_params == false &&
-		!analysis_job.generate_average_h5 &&
-		!analysis_job.add_v9_layout &&
-		!analysis_job.add_exchange_layout &&
-		!analysis_job.stream_over_network &&
-		analysis_job.update_theta_str.length() == 0)
+    if (update_h5_fit == false)
     {
         help();
         return -1;
@@ -508,88 +511,15 @@ int main(int argc, char *argv[])
 			}
         }
 
-        //average all detectors to one files
-        if(analysis_job.generate_average_h5)
-        {
-            for(const auto& dataset_file : analysis_job.dataset_files)
-            {
-                io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-            }
-        }
-
-        //add v9 layout soft links
-        if(analysis_job.add_v9_layout)
-        {
-            for(const auto& dataset_file : analysis_job.dataset_files)
-            {
-                io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-            }
-        }
-
-
-        //add exchange
-        if(analysis_job.add_exchange_layout)
-        {
-            for(const auto& dataset_file : analysis_job.dataset_files)
-            {
-                io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-            }
-        }
-
-		//update theta based on new PV
-		if (analysis_job.update_theta_str.length() > 0)
-		{
-			for (const auto& dataset_file : analysis_job.dataset_files)
-			{
-				//data_struct::Params_Override* params_override
-				io::file::HDF5_IO::inst()->update_theta(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, analysis_job.update_theta_str);
-			}
-		}
+        interate_datasets_and_update(analysis_job);
+    }
+    else if( update_h5_without_fitting )
+    {
+        interate_datasets_and_update(analysis_job);
     }
     else
     {
-		//average all detectors to one files
-		if (analysis_job.generate_average_h5)
-		{
-			for (const auto& dataset_file : analysis_job.dataset_files)
-			{
-				io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-			}
-		}
-
-		//add v9 layout soft links
-		if (analysis_job.add_v9_layout)
-		{
-			for (const auto& dataset_file : analysis_job.dataset_files)
-			{
-				io::file::HDF5_IO::inst()->add_v9_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-			}
-		}
-
-
-		//add exchange
-		if (analysis_job.add_exchange_layout)
-		{
-			for (const auto& dataset_file : analysis_job.dataset_files)
-			{
-				io::file::HDF5_IO::inst()->add_exchange_layout(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
-			}
-		}
-
-		//update theta based on new PV
-		if (analysis_job.update_theta_str.length() > 0)
-		{
-			for (const auto& dataset_file : analysis_job.dataset_files)
-			{
-				//data_struct::Params_Override* params_override
-				io::file::HDF5_IO::inst()->update_theta(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, analysis_job.update_theta_str);
-			}
-		}
-
-		if (!analysis_job.generate_average_h5 && !analysis_job.add_v9_layout && !analysis_job.add_exchange_layout && analysis_job.update_theta_str.length() == 0)
-		{
-			logE << "initializing analysis job" << "\n";
-		}
+        logE << "could not initialize analysis job. Check if maps_fit_parameters_override.txt exits.\n";
     }
 
     data_struct::Element_Info_Map::inst()->clear();

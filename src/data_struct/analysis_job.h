@@ -185,6 +185,8 @@ public:
 
     size_t num_threads;
 
+    bool update_scalers;
+
     bool quick_and_dirty;
 
     bool generate_average_h5;
