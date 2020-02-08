@@ -80,7 +80,7 @@ public:
 
     void unload();
 
-    struct mda_file* get_scan_ptr() { return _mda_file; }
+    //struct mda_file* get_scan_ptr() { return _mda_file; }
 
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
@@ -92,6 +92,8 @@ public:
 										const std::vector<size_t>& detector_num_arr,
                                         bool hasNetCDF,
                                         data_struct::Analysis_Job *analysis_job,
+                                        size_t& out_rows,
+                                        size_t& out_cols,
 										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
@@ -105,15 +107,13 @@ public:
 
     int get_rank_and_dims(std::string path, size_t* dims);
 
-    int rows() { return _rows; }
-
-    int cols() { return _cols; }
-
-    inline bool is_single_row_scan() {return _is_single_row;}
+    void search_and_update_amps(std::string path, data_struct::Params_Override* params_override);
 
     bool load_header(std::string filePath);
 
-    bool load_struct(std::string path);
+    bool generate_scaler_volume(std::string filename, data_struct::Params_Override* params_override, std::map<std::string, data_struct::ArrayXr> &scalers_map);
+
+    void generate_extra_pvs_vector(std::string filename, std::vector<data_struct::Extra_PV>& extra_pvs);
 
 private:
 
@@ -121,8 +121,7 @@ private:
 
     bool _find_theta(std::string pv_name, float* theta_out);
 
-    //void _load_detector_meta_data(data_struct::Detector * detector);
-    bool _is_single_row;
+    //bool _is_single_row;
 
     /**
      * @brief _mda_file: mda helper structure
@@ -133,10 +132,6 @@ private:
      * @brief _mda_file_info: lazy load struct
      */
     mda_fileinfo *_mda_file_info;
-
-    int _rows;
-
-    int _cols;
 
 };
 

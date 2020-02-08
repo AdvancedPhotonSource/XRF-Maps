@@ -68,6 +68,14 @@ struct Summed_Scaler
   bool normalize_by_time;
 };
 
+struct Extra_PV
+{
+    std::string name;
+    std::string description;
+    std::string value;
+    std::string unit;
+};
+
 //-----------------------------------------------------------------------------
 /**
  * @brief The Params_Override struct

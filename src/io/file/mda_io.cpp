@@ -75,10 +75,8 @@ namespace file
 
 MDA_IO::MDA_IO()
 {
-
     _mda_file = nullptr;
     _mda_file_info = nullptr;
-    _is_single_row = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -107,33 +105,6 @@ void MDA_IO::unload()
 }
 
 //-----------------------------------------------------------------------------
-/*
-void MDA_IO::lazy_load()
-{
-
-    std::FILE *fptr = std::fopen(_filename.c_str(), "r");
-
-    _mda_file_info = mda_info_load(fptr);
-
-    std::fclose(fptr);
-
-	if (_mda_file_info == nullptr)
-	{
-        logE << "Error loading mda file:" << _filename<<"\n";
-		return;
-	}
-
-    logD<<"mda info ver:"<<_mda_file_info->version<<" data rank:"<<_mda_file_info->data_rank;
-    for(int16_t i = 0; i < _mda_file_info->data_rank; i++)
-    {
-        logit_s<<" dims["<<i<<"]:"<<_mda_file_info->dimensions[i];
-    }
-    logit_s<<"\n";
-
-}
-*/
-
-//-----------------------------------------------------------------------------
 
 bool MDA_IO::load_header(std::string filePath)
 {
@@ -154,6 +125,42 @@ bool MDA_IO::load_header(std::string filePath)
     }
     return false;
 
+}
+
+struct mda_file* open_mda(std::string path)
+{
+    struct mda_file* mda_file = nullptr;
+    std::FILE* fptr = std::fopen(path.c_str(), "rb");
+
+    if (fptr == nullptr)
+    {
+        return nullptr;
+    }
+
+    mda_file = mda_load(fptr);
+    std::fclose(fptr);
+    return mda_file;
+
+}
+
+void MDA_IO::search_and_update_amps(std::string path, data_struct::Params_Override* params_override)
+{
+
+    std::string units;
+    struct mda_file* mda_file = open_mda(path);
+    if (mda_file == nullptr || params_override == nullptr)
+    {
+        return;
+    }
+
+    // we want to search through the mda scalers for us_amp_sens_num_pv, if it isn't found then us_amp_sens_num is unchanged (uses the maps_fit_paramters_override file value)
+    find_scaler_index(mda_file, params_override->us_amp_sens_num_pv, params_override->us_amp_sens_num, units);
+    find_scaler_index(mda_file, params_override->us_amp_sens_unit_pv, params_override->us_amp_sens_unit, units);
+
+    find_scaler_index(mda_file, params_override->ds_amp_sens_num_pv, params_override->ds_amp_sens_num, units);
+    find_scaler_index(mda_file, params_override->ds_amp_sens_unit_pv, params_override->ds_amp_sens_unit, units);
+
+    mda_unload(mda_file);
 }
 
 //-----------------------------------------------------------------------------
@@ -302,69 +309,30 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_quantification_scalers(std::string path,
-                                        data_struct::Params_Override *override_values)
+bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_Override *override_values)
 {
     std::string units;
-    std::FILE *fptr = std::fopen(path.c_str(), "rb");
-
-    if (fptr == nullptr)
+    struct mda_file* mda_file = open_mda(path);
+    if (mda_file == nullptr || override_values == nullptr)
     {
         return false;
     }
-
-
-    _mda_file = mda_load(fptr);
-    std::fclose(fptr);
-    if (_mda_file == nullptr)
-    {
-        return false;
-    }
-
-    if(override_values == nullptr)
-    {
-        return false;
-    }
-
 
     //Look for fly scan pv first then step scan
-    if(false == _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, true))
+    if(false == _get_scaler_value(mda_file, override_values, "SRCURRENT", &override_values->sr_current, true))
     {
-        _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, false);
+        _get_scaler_value(mda_file, override_values, "SRCURRENT", &override_values->sr_current, false);
     }
-    if(false == _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, true))
+    if(false == _get_scaler_value(mda_file, override_values, "US_IC", &override_values->US_IC, true))
     {
-        _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, false);
+        _get_scaler_value(mda_file, override_values, "US_IC", &override_values->US_IC, false);
     }
-    if(false == _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, true))
+    if(false == _get_scaler_value(mda_file, override_values, "DS_IC", &override_values->DS_IC, true))
     {
-        _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, false);
-    }
-
-    return true;
-}
-
-//-----------------------------------------------------------------------------
-
-bool MDA_IO::load_struct(std::string path)
-{
-    std::FILE* fptr = std::fopen(path.c_str(), "rb");
-
-    size_t cols = 1;
-    size_t rows = 1;
-    size_t samples = 1;
-
-    if (fptr == nullptr)
-    {
-        return false;
+        _get_scaler_value(mda_file, override_values, "DS_IC", &override_values->DS_IC, false);
     }
 
-    _mda_file = mda_load(fptr);
-    std::fclose(fptr);
-    if (_mda_file == nullptr )
-    {
-        return false;
-    }
+    mda_unload(mda_file);
 
     return true;
 }
@@ -382,6 +350,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     int ert_idx = -1;
     int incnt_idx = -1;
     int outcnt_idx = -1;
+    bool is_single_row = false;
 
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
@@ -466,7 +435,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
                 cols = _mda_file->scan->last_point;
                 samples = _mda_file->header->dimensions[1];
                 vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
-                _is_single_row = true;
+                is_single_row = true;
             }
             else
             {
@@ -520,7 +489,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     try
     {
-        if( _is_single_row )
+        if( is_single_row )
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
@@ -540,7 +509,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
         {
             // update num rows if header is incorrect and not single row scan
 
-            if(false == _is_single_row)
+            if(false == is_single_row)
             {
                 if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
                 {
@@ -558,7 +527,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
 //
 
 
-                if (_is_single_row)
+                if (is_single_row)
                 {
                     if(elt_idx > -1)
                     {
@@ -637,6 +606,8 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
                                                  bool hasNetCDF,
                                                  data_struct::Analysis_Job *analysis_job,
+                                                 size_t &out_rows,
+                                                 size_t &out_cols,
 												 data_struct::IO_Callback_Func_Def callback_func,
                                                  void *user_data)
 {
@@ -645,6 +616,8 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
     int incnt_idx = -1;
     int outcnt_idx = -1;
     size_t max_detecotr_num = 0;
+    bool is_single_row = false;
+
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
     size_t samples = 1;
@@ -681,13 +654,13 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         if(hasNetCDF)
         {
             if(_mda_file->scan->last_point == 0)
-                _rows = 1;
+                out_rows = 1;
             else
-                _rows = _mda_file->scan->last_point;
+                out_rows = _mda_file->scan->last_point;
             if(_mda_file->scan->sub_scans[0]->last_point == 0)
-                _cols = 1;
+                out_cols = 1;
             else
-                _cols = _mda_file->scan->sub_scans[0]->last_point;
+                out_cols = _mda_file->scan->sub_scans[0]->last_point;
             return true;
         }
         else
@@ -701,13 +674,17 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     return false;
                 }
 
-                _rows = 1;
-                if(_mda_file->scan->last_point == 0)
-                    _cols = 1;
+                out_rows = 1;
+                if (_mda_file->scan->last_point == 0)
+                {
+                    out_cols = 1;
+                }
                 else
-                _cols = _mda_file->scan->last_point;
+                {
+                    out_cols = _mda_file->scan->last_point;
+                }
                 samples = _mda_file->header->dimensions[1];
-                _is_single_row = true;
+                is_single_row = true;
             }
             else
             {
@@ -728,13 +705,13 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
         }
 
         if(_mda_file->scan->last_point == 0)
-            _rows = 1;
+            out_rows = 1;
         else
-            _rows = _mda_file->scan->last_point;
+            out_rows = _mda_file->scan->last_point;
         if(_mda_file->scan->sub_scans[0]->last_point == 0)
-            _cols = 1;
+            out_cols = 1;
         else
-            _cols = _mda_file->scan->sub_scans[0]->last_point;
+            out_cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
     }
     else
@@ -794,33 +771,33 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
     try
     {
-        if( _is_single_row )
+        if(is_single_row )
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
-                _cols = _mda_file->scan->last_point;
+                out_cols = _mda_file->scan->last_point;
             }
         }
         else
         {
             if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
             {
-                _rows = _mda_file->scan->last_point;
+                out_rows = _mda_file->scan->last_point;
             }
         }
 
-        for(int i=0; i<_rows; i++)
+        for(int i=0; i< out_rows; i++)
         {
             // update num rows if header is incorrect and not single row scan
 
-            if(false == _is_single_row)
+            if(false == is_single_row)
             {
                 if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
                 {
-                    _cols = _mda_file->scan->sub_scans[i]->last_point;
+                    out_cols = _mda_file->scan->sub_scans[i]->last_point;
                 }
             }
-            for(int j=0; j<_cols; j++)
+            for(int j=0; j< out_cols; j++)
             {
 /* TODO: we might need to do the same check for samples size
                 if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
@@ -834,7 +811,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                     data_struct::Spectra* spectra = new data_struct::Spectra(samples);
 
 
-                    if (_is_single_row)
+                    if (is_single_row)
                     {
                         if(elt_idx > -1)
                         {
@@ -863,7 +840,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
                             (*spectra)[k] = (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
                         }
-                        callback_func(i, j, _rows, _cols, detector_num, spectra, user_data);
+                        callback_func(i, j, out_rows, out_cols, detector_num, spectra, user_data);
                     }
                     else
                     {
@@ -893,7 +870,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
                         {
                             (*spectra)[k] = (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[detector_num][k]);
                         }
-                        callback_func(i, j, _rows, _cols, detector_num, spectra, user_data);
+                        callback_func(i, j, out_rows, out_cols, detector_num, spectra, user_data);
                     }
                 }
             }
@@ -1018,6 +995,362 @@ int MDA_IO::get_rank_and_dims(std::string path, size_t* dims)
     mda_header_unload(header);
 
     return rank;
+}
+
+//-----------------------------------------------------------------------------
+
+bool MDA_IO::generate_scaler_volume(std::string filename, data_struct::Params_Override* params_override, std::map<std::string, data_struct::ArrayXr>& scalers_map)
+{
+    /*
+    struct mda_file* mda_file = open_mda(filename);
+    if (mda_file == nullptr)
+    {
+        return false;
+    }
+
+    int mda_time_scaler_idx = -1;
+    real_t time_scaler_clock = 1.0;
+
+    bool single_row_scan = false;
+
+    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> scaler_mat, abs_cfg_mat, H_dpc_cfg_mat, V_dpc_cfg_mat, dia1_dpc_cfg_mat, dia2_dpc_cfg_mat;
+
+    //don't save these scalers
+    std::list<std::string> ignore_scaler_strings = { "ELT1", "ERT1", "ICR1", "OCR1" };
+    std::list<struct scaler_struct> scalers;
+    std::list<data_struct::Summed_Scaler> summed_scalers;
+
+
+    for (int k = 0; k < mda_file->scan->sub_scans[0]->number_detectors; k++)
+    {
+        if (strcmp(mda_file->scan->sub_scans[0]->detectors[k]->name, det_name.c_str()) == 0)
+        {
+            val = mda_file->scan->sub_scans[0]->detectors_data[k][0];
+            units = std::string(mda_file->scan->sub_scans[0]->detectors[k]->unit);
+            return k;
+        }
+    }
+
+    real_t val;
+    std::string units;
+    bool save_cfg_abs = false;
+    if (params_override != nullptr && mda_file->scan->scan_rank > 1)
+    {
+        int us_ic_idx = -1;
+        int ds_ic_idx = -1;
+        int cfg_2_idx = -1;
+        int cfg_3_idx = -1;
+        int cfg_4_idx = -1;
+        int cfg_5_idx = -1;
+
+        int hdf_idx = 0;
+
+        if (params_override->time_scaler_clock.length() > 0)
+        {
+            time_scaler_clock = std::stod(params_override->time_scaler_clock);
+        }
+
+        for (auto itr : params_override->scaler_pvs)
+        {
+            //don't save ELT1, ERT1, ICR1, OCR1. these are saved elsewhere
+            std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
+            if (s_itr != ignore_scaler_strings.end())
+                continue;
+
+            int mda_idx = find_scaler_index(mda_file, itr.second, val, units);
+            scalers.push_back(scaler_struct(itr.first, units, mda_idx, hdf_idx, false));
+            hdf_idx++;
+            std::string scaler_name = itr.first;
+            std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
+            if (mda_idx > -1)
+            {
+                if (scaler_name == "US_IC")
+                    us_ic_idx = mda_idx;
+                else if (scaler_name == "DS_IC")
+                    ds_ic_idx = mda_idx;
+                else if (scaler_name == "CFG_2")
+                    cfg_2_idx = mda_idx;
+                else if (scaler_name == "CFG_3")
+                    cfg_3_idx = mda_idx;
+                else if (scaler_name == "CFG_4")
+                    cfg_4_idx = mda_idx;
+                else if (scaler_name == "CFG_5")
+                    cfg_5_idx = mda_idx;
+            }
+        }
+        for (auto itr : params_override->time_normalized_scalers)
+        {
+            //don't save ELT1, ERT1, ICR1, OCR1. these are saved elsewhere
+            std::list<std::string>::iterator s_itr = std::find(ignore_scaler_strings.begin(), ignore_scaler_strings.end(), itr.first);
+            if (s_itr != ignore_scaler_strings.end())
+                continue;
+
+            std::string scaler_name = itr.first;
+            std::transform(scaler_name.begin(), scaler_name.end(), scaler_name.begin(), ::toupper);
+
+
+            int mda_idx = find_scaler_index(mda_file, itr.second, val, units);
+            if (mda_idx > -1)
+            {
+                bool found_scaler = false;
+                for (auto& subitr : scalers)
+                {
+                    if (subitr.hdf_name == itr.first)
+                    {
+                        subitr.mda_idx = mda_idx;
+                        subitr.normalize_by_time = true;
+                        subitr.hdf_units = units;
+                        found_scaler = true;
+                        break;
+                    }
+                }
+                if (found_scaler == false)
+                {
+                    scalers.push_back(scaler_struct(itr.first, units, mda_idx, hdf_idx, true));
+                    hdf_idx++;
+                }
+                if (scaler_name == "US_IC")
+                    us_ic_idx = mda_idx;
+                else if (scaler_name == "DS_IC")
+                    ds_ic_idx = mda_idx;
+                else if (scaler_name == "CFG_2")
+                    cfg_2_idx = mda_idx;
+                else if (scaler_name == "CFG_3")
+                    cfg_3_idx = mda_idx;
+                else if (scaler_name == "CFG_4")
+                    cfg_4_idx = mda_idx;
+                else if (scaler_name == "CFG_5")
+                    cfg_5_idx = mda_idx;
+            }
+        }
+
+        // Maps summed scaler name to scaler mda index
+        for (auto& itr : params_override->summed_scalers)
+        {
+            bool found = false;
+            for (auto& scaler_itr : itr.scalers_to_sum)
+            {
+                for (auto& found_scalers_itr : scalers)
+                {
+                    if (scaler_itr.first == found_scalers_itr.hdf_name && itr.normalize_by_time == found_scalers_itr.normalize_by_time)
+                    {
+                        scaler_itr.second = found_scalers_itr.mda_idx;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (found)
+            {
+                summed_scalers.push_back(itr);
+            }
+        }
+
+        //search for time scaler index
+        mda_time_scaler_idx = find_scaler_index(mda_scalers, params_override->time_scaler, val, units);
+
+        if (scalers.size() > 0)
+        {
+
+            if (mda_scalers->header->data_rank == 2)
+            {
+                if (hasNetcdf)
+                {
+                    count_3d[0] = 1;
+                    if (mda_scalers->scan->last_point == 0)
+                        count_3d[1] = 1;
+                    else
+                        count_3d[1] = mda_scalers->scan->last_point;
+                    if (mda_scalers->scan->sub_scans[0]->last_point == 0)
+                        count_3d[2] = 1;
+                    else
+                        count_3d[2] = mda_scalers->scan->sub_scans[0]->last_point;
+                }
+                else
+                {
+                    if (mda_scalers->header->dimensions[1] == 2000)
+                    {
+                        count_3d[0] = 1;
+                        count_3d[1] = 1;
+                        if (mda_scalers->scan->last_point == 0)
+                            count_3d[2] = 1;
+                        else
+                            count_3d[2] = mda_scalers->scan->last_point;
+                        single_row_scan = true;
+                    }
+                    else
+                    {
+                        logE << "Unknown or bad mda file" << "\n";
+                    }
+                }
+            }
+            else if (mda_scalers->header->data_rank == 3)
+            {
+                count_3d[0] = 1;
+                if (mda_scalers->scan->last_point == 0)
+                    count_3d[1] = 1;
+                else
+                    count_3d[1] = mda_scalers->scan->last_point;
+                if (mda_scalers->scan->sub_scans[0]->last_point == 0)
+                    count_3d[2] = 1;
+                else
+                    count_3d[2] = mda_scalers->scan->sub_scans[0]->last_point;
+            }
+            else
+            {
+                logE << "Unsupported rank " << mda_scalers->header->data_rank << " . Skipping scalers" << "\n";
+                return false;
+            }
+            
+
+            //save scalers
+            if (single_row_scan)
+            {
+                count_2d[0] = 1;
+                if (mda_scalers->scan->last_point == 0)
+                    count_2d[1] = 1;
+                else
+                    count_2d[1] = mda_scalers->scan->last_point;
+            }
+            else
+            {
+                if (mda_scalers->scan->last_point == 0)
+                    count_2d[0] = 1;
+                else
+                    count_2d[0] = mda_scalers->scan->last_point;
+                if (mda_scalers->scan->sub_scans[0]->last_point == 0)
+                    count_2d[1] = 1;
+                else
+                    count_2d[1] = mda_scalers->scan->sub_scans[0]->last_point;
+            }
+            count_3d[1] = count_2d[0];
+            count_3d[2] = count_2d[1];
+
+            scaler_mat.resize(count_2d[0], count_2d[1]);
+            scaler_mat.setZero(count_2d[0], count_2d[1]);
+
+            for (auto& itr : scalers)
+            {
+                scaler_mat.Zero(count_2d[0], count_2d[1]);
+
+                if (single_row_scan)
+                {
+                    for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
+                    {
+                        val = mda_scalers->scan->detectors_data[itr.mda_idx][i];
+                        if (itr.normalize_by_time && mda_time_scaler_idx > -1)
+                        {
+                            real_t scaler_time_normalizer = 1.0;
+                            real_t det_time = mda_scalers->scan->detectors_data[mda_time_scaler_idx][i];
+                            scaler_time_normalizer = det_time / time_scaler_clock;
+                            val /= scaler_time_normalizer;
+                        }
+                        if (std::isfinite(val))
+                        {
+                            scaler_mat(0, i) = val;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int32_t i = 0; i < mda_scalers->scan->last_point; i++)
+                    {
+                        for (int32_t j = 0; j < mda_scalers->scan->sub_scans[0]->last_point; j++)
+                        {
+                            val = mda_scalers->scan->sub_scans[i]->detectors_data[itr.mda_idx][j];
+                            if (itr.normalize_by_time && mda_time_scaler_idx > -1)
+                            {
+                                real_t scaler_time_normalizer = 1.0;
+                                real_t det_time = mda_scalers->scan->sub_scans[i]->detectors_data[mda_time_scaler_idx][j];
+                                scaler_time_normalizer = det_time / time_scaler_clock;
+                                val /= scaler_time_normalizer;
+                            }
+                            if (std::isfinite(val))
+                            {
+                                scaler_mat(i, j) = val;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        }
+    }
+    mda_unload(mda_file);
+    */
+    return true;
+}
+
+void MDA_IO::generate_extra_pvs_vector(std::string filename, std::vector<data_struct::Extra_PV> &extra_pvs)
+{
+
+    struct mda_file* mda_file = open_mda(filename);
+    if (mda_file == nullptr)
+    {
+        return;
+    }
+
+    for (int16_t i = 0; i < mda_file->extra->number_pvs; i++)
+    {
+        std::string str_val;
+        short* s_val;
+        int* i_val;
+        float* f_val;
+        double* d_val;
+
+        struct mda_pv* pv = mda_file->extra->pvs[i];
+        if (pv == nullptr)
+        {
+            continue;
+        }
+        data_struct::Extra_PV e_pv;
+        switch (pv->type)
+        {
+
+        case EXTRA_PV_STRING:
+            e_pv.value = std::string(pv->values);
+            break;
+            //case EXTRA_PV_INT8:
+
+            //    break;
+        case EXTRA_PV_INT16:
+            s_val = (short*)pv->values;
+            e_pv.value = std::to_string(*s_val);
+            break;
+        case EXTRA_PV_INT32:
+            i_val = (int*)pv->values;
+            e_pv.value = std::to_string(*i_val);
+            break;
+        case EXTRA_PV_FLOAT:
+            f_val = (float*)pv->values;
+            e_pv.value = std::to_string(*f_val);
+            break;
+        case EXTRA_PV_DOUBLE:
+            d_val = (double*)pv->values;
+            e_pv.value = std::to_string(*d_val);
+            break;
+
+        }
+
+        if (pv->name != nullptr)
+        {
+            e_pv.name = std::string(pv->name);
+        }
+
+        if (pv->description != nullptr)
+        {
+            e_pv.description = std::string(pv->description);
+        }
+
+        if (pv->unit != nullptr)
+        {
+            e_pv.unit = std::string(pv->unit);
+        }
+        extra_pvs.push_back(e_pv);
+    }
+
+    mda_unload(mda_file);
 }
 
 //-----------------------------------------------------------------------------

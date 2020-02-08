@@ -382,10 +382,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("load_spectra_volume_with_callback", &io::file::MDA_IO::load_spectra_volume_with_callback)
     .def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
     .def("get_multiplied_dims", &io::file::MDA_IO::get_multiplied_dims)
-    .def("get_rank_and_dims", &io::file::MDA_IO::get_rank_and_dims)
-    .def("rows", &io::file::MDA_IO::rows)
-    .def("cols", &io::file::MDA_IO::cols)
-    .def("is_single_row_scan", &io::file::MDA_IO::is_single_row_scan);
+    .def("get_rank_and_dims", &io::file::MDA_IO::get_rank_and_dims);
 
     //NetCDF_IO
     io_file.def("netcdf_load_spectra_line", [](std::string path,

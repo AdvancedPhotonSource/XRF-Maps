@@ -278,7 +278,8 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
     //    continue;
     //}
 
-
+    size_t row_size = 0;
+    size_t col_size = 0;
     _current_dataset_directory = new std::string(dataset_directory);
     _current_dataset_name = new std::string(dataset_file);
     //load spectra
@@ -286,6 +287,8 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                                                         detector_num_arr,
                                                         hasNetcdf | hasBnpNetcdf | hasHdf,
                                                         _analysis_job,
+                                                        row_size,
+                                                        col_size,
                                                         callback_fun,
                                                         nullptr) )
     {
@@ -303,8 +306,6 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
             {
                 file_io.close();
                 std::string full_filename;
-                int row_size = mda_io.rows();
-                int col_size = mda_io.cols();
                 for(int i=0; i<row_size; i++)
                 {
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
@@ -326,8 +327,6 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
             {
                 file_io.close();
                 std::string full_filename;
-                int row_size = mda_io.rows();
-                int col_size = mda_io.cols();
                 for(int i=0; i<row_size; i++)
                 {
                     std::string row_idx_str = std::to_string(i+1);

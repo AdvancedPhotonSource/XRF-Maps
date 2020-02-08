@@ -58,10 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "hdf5.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/fit_element_map.h"
-
-//Include mda data structures to save scalers
-#include "io/file/mda_io.h"
-
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
 
@@ -180,9 +176,10 @@ public:
     bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
 
     bool save_scan_scalers(size_t detector_num,
-                           struct mda_file *mda_scalers,
+                           std::map<std::string, data_struct::ArrayXr> *scalers_map,
                            data_struct::Spectra_Volume * spectra_volume,
                            data_struct::Params_Override * params_override,
+                           std::vector<data_struct::Extra_PV> *extra_pvs,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
@@ -213,7 +210,7 @@ public:
     void update_theta(std::string dataset_file, std::string theta_pv_str);
 
     //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
-    void update_scalers(std::string hdf_dataset_file, std::string mda_dataset_file, data_struct::Params_Override* params_override);
+    void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override, std::map<std::string, data_struct::ArrayXr>* scalers_map);
     
     bool end_save_seq(bool loginfo=true);
 
@@ -228,9 +225,9 @@ private:
 	bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
     bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
-	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
-    void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
+	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
+    bool _save_scalers(hid_t maps_grp_id, std::map<std::string, data_struct::ArrayXr> *scalers_map, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
+    void _save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);

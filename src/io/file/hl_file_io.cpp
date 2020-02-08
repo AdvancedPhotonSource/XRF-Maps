@@ -772,8 +772,16 @@ bool load_spectra_volume(std::string dataset_directory,
 
     if(save_scalers)
     {
+        std::string mda_path = dataset_directory + "mda" + DIR_END_CHAR + dataset_file;
+        std::map<std::string, ArrayXr> scaler_map;
+        std::vector<data_struct::Extra_PV> extra_pvs;
+
+        mda_io.generate_scaler_volume(mda_path, scaler_map);
+        mda_io.search_and_update_amps(mda_path, params_override);
+        mda_io.generate_extra_pvs_vector(mda_path, extra_pvs);
+
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), spectra_volume, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scaler_map, spectra_volume, params_override, &extra_pvs, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();
