@@ -698,7 +698,7 @@ bool load_spectra_volume(std::string dataset_directory,
 		return true;
 	}
 
-    //load spectra
+    // try to load spectra from mda file
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
@@ -772,16 +772,8 @@ bool load_spectra_volume(std::string dataset_directory,
 
     if(save_scalers)
     {
-        std::string mda_path = dataset_directory + "mda" + DIR_END_CHAR + dataset_file;
-        std::map<std::string, ArrayXr> scaler_map;
-        std::vector<data_struct::Extra_PV> extra_pvs;
-
-        mda_io.generate_scaler_volume(mda_path, scaler_map);
-        mda_io.search_and_update_amps(mda_path, params_override);
-        mda_io.generate_extra_pvs_vector(mda_path, extra_pvs);
-
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scaler_map, spectra_volume, params_override, &extra_pvs, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_info(), spectra_volume, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();
@@ -927,7 +919,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             int rank;
             size_t dims[10];
             dims[0] = 0;
-            rank = mda_io.get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
+            rank = io::file::mda_get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
             if(rank == 3)
             {
                 integrated_spectra->resize(dims[2]);

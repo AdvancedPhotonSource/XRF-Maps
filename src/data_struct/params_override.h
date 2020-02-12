@@ -60,22 +60,18 @@ namespace data_struct
 
 using namespace std;
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
 struct Summed_Scaler
 {
-  string scaler_name;
-  //  name    mda_idx
-  map<string, int> scalers_to_sum;
-  bool normalize_by_time;
+    string scaler_name;
+    //  name    mda_idx
+    map<string, int> scalers_to_sum;
+    bool normalize_by_time;
 };
 
-struct Extra_PV
-{
-    std::string name;
-    std::string description;
-    std::string value;
-    std::string unit;
-};
-
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 /**
  * @brief The Params_Override struct

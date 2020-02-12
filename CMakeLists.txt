@@ -191,6 +191,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/fit_parameters.h
     src/data_struct/fit_element_map.h
     src/data_struct/params_override.h
+    src/data_struct/scan_info.h
     src/data_struct/spectra.h
     src/data_struct/spectra_line.h
     src/data_struct/spectra_volume.h

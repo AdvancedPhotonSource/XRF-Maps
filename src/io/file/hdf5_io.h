@@ -60,6 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/fit_element_map.h"
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
+#include "data_struct/scan_info.h"
 
 #include "core/mem_info.h"
 
@@ -176,10 +177,9 @@ public:
     bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
 
     bool save_scan_scalers(size_t detector_num,
-                           std::map<std::string, data_struct::ArrayXr> *scalers_map,
+                           data_struct::Scan_Info* scan_info,
                            data_struct::Spectra_Volume * spectra_volume,
                            data_struct::Params_Override * params_override,
-                           std::vector<data_struct::Extra_PV> *extra_pvs,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
@@ -224,9 +224,9 @@ private:
 
 	bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
-    bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
+    bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
 	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
-    bool _save_scalers(hid_t maps_grp_id, std::map<std::string, data_struct::ArrayXr> *scalers_map, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
     void _save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 

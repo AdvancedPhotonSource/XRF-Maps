@@ -982,7 +982,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                     {
                         std::map<std::string, data_struct::ArrayXr> scalers_map;
                         io::file::MDA_IO mda_io;
-                        mda_io.generate_scaler_volume(analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, scalers_map);
+                        mda_io.generate_scaler_volume(analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &det->fit_params_override_dict, scalers_map);
                         io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict, &scalers_map);
                     }
                 }
