@@ -88,7 +88,7 @@ MDA_IO::~MDA_IO()
 
 }
 
-bool MDA_IO::load(std::string path)
+bool MDA_IO::load(std::string path, data_struct::Params_Override* override_values)
 {
     if (_mda_file != nullptr)
     {

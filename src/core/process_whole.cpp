@@ -980,10 +980,10 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                     data_struct::Detector* det = analysis_job.get_first_detector();
                     if (det != nullptr)
                     {
-                        std::map<std::string, data_struct::ArrayXr> scalers_map;
+                        //std::map<std::string, data_struct::ArrayXr> scalers_map;
                         io::file::MDA_IO mda_io;
-                        mda_io.generate_scaler_volume(analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &det->fit_params_override_dict, scalers_map);
-                        io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict, &scalers_map);
+                        mda_io.load(analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &det->fit_params_override_dict);
+                        io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict, mda_io.get_scan_info());
                     }
                 }
             }

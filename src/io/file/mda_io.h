@@ -78,7 +78,7 @@ public:
      */
     ~MDA_IO();
 
-    bool load(std::string path);
+    bool load(std::string path, data_struct::Params_Override* override_values);
 
     bool load_header_only(std::string filePath);
 
@@ -99,7 +99,6 @@ public:
 
     bool load_quantification_scalers(std::string path,
                                      data_struct::Params_Override *override_values);
-
 
     void unload();
 	

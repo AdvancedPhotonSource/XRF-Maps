@@ -1165,11 +1165,11 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
         if (itr.compare(itr.length() - ending.length(), ending.length(), ending) == 0 )
         {
             std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
-            int fsize = mda_io.get_multiplied_dims(full_path);
+            int fsize = file::mda_get_multiplied_dims(full_path);
             f_list.push_back(file_name_size(itr, fsize));
         }
     }
-
+    
     f_list.sort(compare_file_size);
 
     dataset_files->clear();

@@ -6864,14 +6864,14 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override, data_struct::Scan_Info* scna_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (scalers_map == nullptr || params_override == nullptr)
+    if (scna_info == nullptr || params_override == nullptr)
     {
         return;
     }
 
     hid_t maps_grp_id;
 
-    _save_scalers(maps_grp_id, scalers_map, nullptr, params_override, false);
+    _save_scalers(maps_grp_id, &(scna_info->scaler_maps), nullptr, params_override, false);
 
 }
 
