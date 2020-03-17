@@ -156,6 +156,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool& tp);
+
+// ----------------------------------------------------------------------------
+
 DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------

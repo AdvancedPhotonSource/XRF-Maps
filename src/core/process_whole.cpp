@@ -458,67 +458,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
         //if quick and dirty then sum all detectors to 1 spectra volume and process it
         if(analysis_job->quick_and_dirty)
         {
-            std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5";
-
-            data_struct::Detector* detector_struct = analysis_job->get_detector(0);
-            //Spectra volume data
-            data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
-            data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
-
-            io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
-            //load the first one
-            size_t detector_num = analysis_job->detector_num_arr[0];
-            bool is_loaded_from_analyzed_h5;
-            if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true) )
-            {
-                logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
-                delete spectra_volume;
-                delete tmp_spectra_volume;
-                return;
-            }
-
-            //load spectra volume
-            for(int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
-            {
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
-                {
-                    logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
-                    delete spectra_volume;
-                    delete tmp_spectra_volume;
-                    return;
-                }
-                //add all detectors up
-                for(size_t j=0; j<spectra_volume->rows(); j++)
-                {
-                    for(size_t k=0; k<spectra_volume->cols(); k++)
-                    {
-                        real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
-                        real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
-                        real_t input_counts = (*spectra_volume)[j][k].input_counts();
-                        real_t output_counts = (*spectra_volume)[j][k].output_counts();
-
-
-                        (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
-
-                        elapsed_livetime += (*tmp_spectra_volume)[j][k].elapsed_livetime();
-                        elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
-                        input_counts += (*tmp_spectra_volume)[j][k].input_counts();
-                        output_counts += (*tmp_spectra_volume)[j][k].output_counts();
-
-                        (*spectra_volume)[j][k].elapsed_livetime(elapsed_livetime);
-                        (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
-                        (*spectra_volume)[j][k].input_counts(input_counts);
-                        (*spectra_volume)[j][k].output_counts(output_counts);
-                    }
-                }
-            }
-            delete tmp_spectra_volume;
-
-            analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-
-            proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
-			delete spectra_volume;
+            process_dataset_files_quick_and_dirty(dataset_file, analysis_job, tp);
         }
         //otherwise process each detector separately
         else
@@ -550,6 +490,73 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
             }
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool &tp)
+{
+    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+
+    data_struct::Detector* detector_struct = analysis_job->get_detector(0);
+    //Spectra volume data
+    data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
+    data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
+
+    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+
+    //load the first one
+    size_t detector_num = analysis_job->detector_num_arr[0];
+    bool is_loaded_from_analyzed_h5;
+    if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
+    {
+        logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
+        delete spectra_volume;
+        delete tmp_spectra_volume;
+        return;
+    }
+
+    //load spectra volume
+    for (int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
+    {
+        if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
+        {
+            logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
+            delete spectra_volume;
+            delete tmp_spectra_volume;
+            return;
+        }
+        //add all detectors up
+        for (size_t j = 0; j < spectra_volume->rows(); j++)
+        {
+            for (size_t k = 0; k < spectra_volume->cols(); k++)
+            {
+                real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
+                real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
+                real_t input_counts = (*spectra_volume)[j][k].input_counts();
+                real_t output_counts = (*spectra_volume)[j][k].output_counts();
+
+
+                (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
+
+                elapsed_livetime += (*tmp_spectra_volume)[j][k].elapsed_livetime();
+                elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
+                input_counts += (*tmp_spectra_volume)[j][k].input_counts();
+                output_counts += (*tmp_spectra_volume)[j][k].output_counts();
+
+                (*spectra_volume)[j][k].elapsed_livetime(elapsed_livetime);
+                (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
+                (*spectra_volume)[j][k].input_counts(input_counts);
+                (*spectra_volume)[j][k].output_counts(output_counts);
+            }
+        }
+    }
+    delete tmp_spectra_volume;
+
+    analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
+
+    proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
+    delete spectra_volume;
 }
 
 // ----------------------------------------------------------------------------
