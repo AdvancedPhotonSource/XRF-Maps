@@ -773,7 +773,13 @@ bool load_spectra_volume(std::string dataset_directory,
     if(save_scalers)
     {
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_info(), spectra_volume, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        data_struct::Scan_Info* scan_info = mda_io.get_scan_info();
+        // add ELT, ERT, INCNT, OUTCNT to scaler map
+        if (spectra_volume != nullptr && scan_info != nullptr)
+        {
+            spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
+        }
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();

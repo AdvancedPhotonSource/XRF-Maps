@@ -67,7 +67,9 @@ enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIM
 
 //-----------------------------------------------------------------------------
 
-typedef std::unordered_map<std::string, Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > Fit_Count_Dict;
+typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ArrayXXr;
+
+typedef std::unordered_map<std::string, ArrayXXr > Fit_Count_Dict;
 
 /**
 * @brief The Range struct to determine size of spectra we want to fit or model

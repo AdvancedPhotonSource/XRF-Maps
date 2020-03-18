@@ -66,8 +66,8 @@ using namespace std;
 struct Summed_Scaler
 {
     string scaler_name;
-    //  name    mda_idx
-    map<string, int> scalers_to_sum;
+    //  name    
+    std::vector<string> scalers_to_sum;
     bool normalize_by_time;
 };
 
@@ -138,9 +138,8 @@ public:
     Fit_Element_Map_Dict elements_to_fit;
     string time_scaler;
     string time_scaler_clock;
-    map< string, string > time_normalized_scalers;
     string detector_element;
-    map< string, string > scaler_pvs;
+    
     real_t si_escape_factor;
     real_t ge_escape_factor;
     bool si_escape_enabled;
@@ -164,6 +163,8 @@ public:
 
     string theta_pv;
 
+    map< string, string > scaler_pvs;
+    map< string, string > time_normalized_scalers;
     list<struct Summed_Scaler> summed_scalers;
 
     real_t sr_current;

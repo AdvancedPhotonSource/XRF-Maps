@@ -1,5 +1,5 @@
 /***
--Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
+-Copyright (c) 2020, UChicago Argonne, LLC. All rights reserved.
 -
 -Copyright 2016. UChicago Argonne, LLC. This software was produced
 -under U.S. Government contract DE-AC02-06CH11357 for Argonne National
@@ -52,7 +52,7 @@
 #include <vector>
 #include "core/defines.h"
 
-#include <Eigen/core>
+#include "fit_parameters.h" // for ArrayXXr 
 
 namespace data_struct
 {
@@ -77,7 +77,7 @@ struct Scaler_Map
 {
     string name;
     string unit;
-    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> values;
+    ArrayXXr values;
 };
 
 //-----------------------------------------------------------------------------

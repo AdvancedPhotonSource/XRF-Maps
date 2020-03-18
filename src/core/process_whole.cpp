@@ -58,23 +58,23 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
     data_struct::Fit_Count_Dict* element_fit_counts_dict = new data_struct::Fit_Count_Dict();
     for(auto& e_itr : *elements_to_fit)
     {
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(e_itr.first, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ()) );
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(e_itr.first, data_struct::ArrayXXr()) );
         element_fit_counts_dict->at(e_itr.first).resize(height, width);
     }
 
     if (alloc_iter_count)
     {
         //Allocate memeory to save number of fit iterations
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_NUM_ITR, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>() ));
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_NUM_ITR, data_struct::ArrayXXr() ));
         element_fit_counts_dict->at(STR_NUM_ITR).resize(height, width);
     }
 
 	//  TOTAL_FLUORESCENCE_YIELD
-	element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_TOTAL_FLUORESCENCE_YIELD, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>()));
+	element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_TOTAL_FLUORESCENCE_YIELD, data_struct::ArrayXXr()));
 	element_fit_counts_dict->at(STR_TOTAL_FLUORESCENCE_YIELD).resize(height, width);
 
 	//SUM_ELASTIC_INELASTIC
-	element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_SUM_ELASTIC_INELASTIC_AMP , Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>()));
+	element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_SUM_ELASTIC_INELASTIC_AMP , data_struct::ArrayXXr()));
 	element_fit_counts_dict->at(STR_SUM_ELASTIC_INELASTIC_AMP).resize(height, width);
 
 
@@ -584,19 +584,19 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
             *(pointer_arr[i]) = 0.0;
             for (auto &jitr : sscaler->scalers_to_sum)
             {
-                if(override_params->time_normalized_scalers.count(jitr.first)
-               && pv_map.count(override_params->time_normalized_scalers[jitr.first])
+                if(override_params->time_normalized_scalers.count(jitr)
+               && pv_map.count(override_params->time_normalized_scalers[jitr])
                && pv_map.count(override_params->time_scaler))
                 {
-                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr.first]]);
+                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr]]);
                     real_t det_time = std::stof(pv_map[override_params->time_scaler]);
                     det_time /= scaler_clock;
                     val /= det_time;
                     *(pointer_arr[i]) += val;
                 }
-                else if(override_params->scaler_pvs.count(jitr.first) && pv_map.count(override_params->scaler_pvs[jitr.first]) > 0)
+                else if(override_params->scaler_pvs.count(jitr) && pv_map.count(override_params->scaler_pvs[jitr]) > 0)
                 {
-                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr.first]]);
+                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr]]);
                 }
             }
         }

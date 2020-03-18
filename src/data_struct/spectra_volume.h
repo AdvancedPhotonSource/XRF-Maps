@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define SPECTRAVOLUME_H
 
 #include "data_struct/spectra_line.h"
+#include "scan_info.h"
 
 namespace data_struct
 {
@@ -73,10 +74,7 @@ public:
 
     Spectra integrate();
 
-    void generate_scaler_maps(Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * elt_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * ert_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * in_cnt_map,
-                              Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * out_cnt_map);
+    void generate_scaler_maps(vector<Scaler_Map>* scaler_maps);
 
 	size_t cols() const { if (_data_vol.size() > 0) return _data_vol[0].size(); else return 0; }
 

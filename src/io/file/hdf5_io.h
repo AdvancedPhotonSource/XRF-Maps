@@ -178,7 +178,6 @@ public:
 
     bool save_scan_scalers(size_t detector_num,
                            data_struct::Scan_Info* scan_info,
-                           data_struct::Spectra_Volume * spectra_volume,
                            data_struct::Params_Override * params_override,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
@@ -226,7 +225,7 @@ private:
 
     bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
 	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
-    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, data_struct::Params_Override * params_override, bool hasNetcdf);
     void _save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 

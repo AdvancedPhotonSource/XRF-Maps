@@ -238,7 +238,7 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 
                         if(itr.normalize_by_time && found_time == true)
                         {
-                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2.first), tmp_val, units) > -1)
+                            if(find_scaler_index(_mda_file, override_values->time_normalized_scalers.at(itr2), tmp_val, units) > -1)
                             {
                                 tmp_val /= (time_scaler_val / time_scaler_clock);
                             }
@@ -279,7 +279,7 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
                 {
                     tmp_val = 0;
 
-                    if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2.first), tmp_val, units) == -1)
+                    if(find_scaler_index(_mda_file, override_values->scaler_pvs.at(itr2), tmp_val, units) == -1)
                     {
                         tmp_val = 0;
                     }
