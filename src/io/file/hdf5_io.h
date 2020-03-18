@@ -209,7 +209,7 @@ public:
     void update_theta(std::string dataset_file, std::string theta_pv_str);
 
     //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
-    void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override, data_struct::Scan_Info* scna_info);
+    void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
     
     bool end_save_seq(bool loginfo=true);
 

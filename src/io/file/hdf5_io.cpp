@@ -4595,11 +4595,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                             }
                         }
                     }
-                    if (summed_scaler_itr.normalize_by_time == true)
-                    {
-                        s_map.values /= (*time_map);
-
-                    }
+                    // already normalized by time
+                    //if (summed_scaler_itr.normalize_by_time == true)
+                    //{
+                    //    s_map.values /= (*time_map);
+                    //}
                     scalers_map->push_back(s_map);
                 }
             }
@@ -6147,18 +6147,197 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override, data_struct::Scan_Info* scna_info)
+void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    if (scna_info == nullptr || params_override == nullptr)
+    if (params_override == nullptr)
     {
         return;
     }
 
     hid_t maps_grp_id;
+    real_t time_scaler_clock = 1;
+    try
+    {
+        hid_t scaler_dset_id = -1;
+        hid_t scaler_names_id = -1;
+        int time_idx = -1;
+        std::map<std::string, int> scaler_name_idx_map;
+        data_struct::ArrayXXr time_map;
+        data_struct::ArrayXXr val_map;
+        hid_t status;
+        hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        if (file_id > -1)
+        {
+            scaler_dset_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
+            scaler_names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
+        }
+        if (scaler_dset_id > 0 && scaler_names_id > 0)
+        {
+            hsize_t offset_1d[1] = { 0 };
+            hsize_t count_1d[1] = { 1 };
+            hsize_t offset_2d[2] = { 0,0 };
+            hsize_t count_2d[2] = { 1,1 };
+            hsize_t offset_3d[3] = { 0,0,0 };
+            hsize_t count_3d[3] = { 1,1,1 };
 
-    _save_scalers(maps_grp_id, &(scna_info->scaler_maps), params_override, false);
+            hsize_t scaler_dims[3] = { 1,1,1 };
 
+            hid_t scalername_space = H5Dget_space(scaler_names_id);
+            hid_t scalername_type = H5Dget_type(scaler_names_id);
+            hid_t scaler_space = H5Dget_space(scaler_dset_id);
+            hid_t scaler_type = H5Dget_type(scaler_dset_id);
+
+            H5Sget_simple_extent_dims(scaler_space, &scaler_dims[0], nullptr);
+
+            time_map.resize(scaler_dims[1], scaler_dims[2]);
+            val_map.resize(scaler_dims[1], scaler_dims[2]);
+            count_2d[0] = count_3d[1] = scaler_dims[1];
+            count_2d[1] = count_3d[2] = scaler_dims[2];
+
+            hid_t space_2d = H5Screate_simple(2, &count_2d[0], nullptr);
+
+            std::string scaler_name_str;
+            char char_data[256] = { 0 };
+
+            // scaler name , hdf offset
+            hid_t single_space = H5Screate_simple(1, &count_1d[0], nullptr);
+            hid_t status;
+            // read in all scaler names and generate offset map
+            for (hsize_t i = 0; i < scaler_dims[0]; i++)
+            {
+                offset_1d[0] = i;
+
+                H5Sselect_hyperslab(scalername_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+                status = H5Dread(scaler_names_id, scalername_type, single_space, scalername_space, H5P_DEFAULT, (void*)&char_data[0]);
+                if (status > -1)
+                {
+                    scaler_name_str = std::string(char_data, 256);
+                    scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
+                    scaler_name_idx_map[scaler_name_str] = i;
+                }
+            }
+
+
+            // search for time scaler pv
+            if (params_override->time_scaler_clock.length() > 0)
+            {
+                time_scaler_clock = std::stod(params_override->time_scaler_clock);
+            }
+
+            for (const auto& itr : scaler_name_idx_map)
+            {
+                if (itr.first == params_override->time_scaler)
+                {
+                    offset_3d[0] = itr.second;
+                    H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                    status = H5Dread(scaler_dset_id, scaler_type, space_2d, scaler_space, H5P_DEFAULT, (void*)time_map.data());
+                    if (status > -1)
+                    {
+                        time_map /= time_scaler_clock;
+                        break;
+                    }
+                }
+            }
+
+
+            for (const auto& ts_itr : params_override->time_normalized_scalers)
+            {
+                for (auto& scaler_name_itr : scaler_name_idx_map)
+                {
+                    if (ts_itr.second == scaler_name_itr.first)
+                    {
+                        ts_itr.first.copy(char_data, 255);
+                        offset_1d[0] = scaler_name_itr.second;
+                        H5Sselect_hyperslab(scalername_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+                        status = H5Dwrite(scaler_names_id, scalername_type, single_space, scalername_space, H5P_DEFAULT, (void*)&char_data[0]);
+
+                        if (status > -1)
+                        {
+                            offset_3d[0] = scaler_name_itr.second;
+                            H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                            status = H5Dread(scaler_dset_id, scaler_type, space_2d, scaler_space, H5P_DEFAULT, (void*)val_map.data());
+                            if (status > -1)
+                            {
+                                val_map /= time_map;
+                                status = H5Dwrite(scaler_dset_id, scaler_type, space_2d, scaler_space, H5P_DEFAULT, (void*)val_map.data());
+                                if (status < 0)
+                                {
+                                    logW << "Failed to write normalize values for scaler " << char_data << "!\n";
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // similar as above but don't have to normalize by time, just update name
+            for (const auto& s_itr : params_override->scaler_pvs)
+            {
+                for (auto& scaler_name_itr : scaler_name_idx_map)
+                {
+                    if (s_itr.second == scaler_name_itr.first)
+                    {
+                        s_itr.first.copy(char_data, 255);
+                        offset_1d[0] = scaler_name_itr.second;
+                        H5Sselect_hyperslab(scalername_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+                        status = H5Dwrite(scaler_names_id, scalername_type, single_space, scalername_space, H5P_DEFAULT, (void*)&char_data[0]);
+                        break;
+                    }
+                }
+            }
+
+            //  summed_scalers
+            for (const auto& summed_scaler_itr : params_override->summed_scalers)
+            {
+                for (const auto& scaler : scaler_name_idx_map)
+                {
+                    // look for scaler to update
+                    if (summed_scaler_itr.scaler_name == scaler.first)
+                    {
+                        //now we have to search through pv's and add them up
+                        data_struct::ArrayXXr summed_map;
+                        summed_map.resize(val_map.rows(), val_map.cols());
+                        for (const auto& scaler_names_itr : summed_scaler_itr.scalers_to_sum)
+                        {
+                            for (const auto& scaler2 : scaler_name_idx_map)
+                            {
+                                if (scaler2.first == scaler_names_itr)
+                                {
+                                    //read and add
+                                    offset_3d[0] = scaler2.second;
+                                    H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                                    status = H5Dread(scaler_dset_id, scaler_type, space_2d, scaler_space, H5P_DEFAULT, (void*)val_map.data());
+                                    if (status > -1)
+                                    {
+                                        summed_map += val_map;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        // pre normalized from above
+                        //if (summed_scaler_itr.normalize_by_time == true)
+                        //{
+                        //    summed_map /= time_map;
+                        //}
+
+                        //write back
+                        status = H5Dwrite(scaler_dset_id, scaler_type, space_2d, scaler_space, H5P_DEFAULT, (void*)val_map.data());
+                        if (status < 0)
+                        {
+                            logW << "Failed to write normalize values for summed scaler "<<char_data<<"!\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+
+    }
 }
 
 //-----------------------------------------------------------------------------

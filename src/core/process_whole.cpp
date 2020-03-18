@@ -978,20 +978,36 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                 io::file::HDF5_IO::inst()->update_theta(hdf5_dataset_name, analysis_job.update_theta_str);
             }
 
-            //update scalers table in hdf5 with new values from mda files
+            //update scalers table in hdf5
             if (analysis_job.update_scalers)
             {
-                size_t len = dataset_file.length();
-                if (len > 4 && dataset_file[len - 4] == '.' && dataset_file[len - 3] == 'm' && dataset_file[len - 2] == 'd' && dataset_file[len - 1] == 'a')
+                data_struct::Detector* det = nullptr;
+                size_t len = hdf5_dataset_name.length();
+
+                if (len > 4 && hdf5_dataset_name[len - 3] == '.' && hdf5_dataset_name[len - 2] == 'h' && hdf5_dataset_name[len - 1] == '5')
                 {
-                    data_struct::Detector* det = analysis_job.get_first_detector();
-                    if (det != nullptr)
-                    {
-                        //std::map<std::string, data_struct::ArrayXr> scalers_map;
-                        io::file::MDA_IO mda_io;
-                        mda_io.load(analysis_job.dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &det->fit_params_override_dict);
-                        io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict, mda_io.get_scan_info());
-                    }
+                    det = analysis_job.get_detector(-1);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '0')
+                {
+                    det = analysis_job.get_detector(0);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '1')
+                {
+                    det = analysis_job.get_detector(1);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '2')
+                {
+                    det = analysis_job.get_detector(2);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '3')
+                {
+                    det = analysis_job.get_detector(3);
+                }
+
+                if (det != nullptr)
+                {
+                    io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict);
                 }
             }
         }
