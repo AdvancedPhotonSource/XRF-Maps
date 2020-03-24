@@ -167,6 +167,10 @@ public:
     map< string, string > time_normalized_scalers;
     list<struct Summed_Scaler> summed_scalers;
 
+    vector<string> branching_family_L;
+    vector<string> branching_ratio_L;
+    vector<string> branching_ratio_K;
+
     real_t sr_current;
     real_t US_IC;
     real_t DS_IC;

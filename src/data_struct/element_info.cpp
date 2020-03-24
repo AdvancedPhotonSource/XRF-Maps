@@ -320,7 +320,6 @@ void Element_Info_Map::add_element(Element_Info* element)
 {
     // set global energies pointer
     element->energies = &_energies;
-    // TODO: check if it exists
     _number_element_info_map[element->number] = element;
     _name_element_info_map[element->name] = element;
 }
