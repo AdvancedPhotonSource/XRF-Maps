@@ -80,7 +80,7 @@ public:
 
     bool load(std::string path, data_struct::Params_Override* override_values);
 
-    bool load_header_only(std::string filePath);
+   // bool load_header_only(std::string filePath);
 
     bool load_spectra_volume(std::string path,
                             size_t detector_num,

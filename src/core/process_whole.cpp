@@ -343,8 +343,21 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
                   data_struct::Detector * detector_struct,
                   ThreadPool* tp,
-                  bool save_spec_vol)
+                  bool save_spec_vol,
+                  Callback_Func_Status_Def* status_callback)
 {
+    if (detector_struct == nullptr)
+    {
+        logE << "Detector meta information not loaded. Cannot process!\n";
+        return;
+    }
+
+    if (spectra_volume == nullptr)
+    {
+        logE << "Spectra Volume not loaded. Cannot process!\n";
+        return;
+    }
+
     data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
     //Range of energy in spectra to fit
@@ -380,12 +393,19 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
             }
         }
 
+        size_t total_blocks = (spectra_volume->rows() * spectra_volume->cols()) - 1;
+        size_t cur_block = 0;
         //wait for queue to finish processing
         while(!fit_job_queue->empty())
         {
             auto ret = std::move(fit_job_queue->front());
             fit_job_queue->pop();
             ret.get();
+            if (status_callback != nullptr)
+            {
+                (*status_callback)(cur_block, total_blocks);
+            }
+            cur_block++;
         }
 
         std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
@@ -449,7 +469,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files(data_struct::Analysis_Job* analysis_job)
+void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Func_Status_Def* status_callback)
 {
     ThreadPool tp(analysis_job->num_threads);
 
@@ -481,11 +501,15 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                 {
                     logW<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
+                    if (status_callback != nullptr)
+                    {
+                        (*status_callback)(0, 1);
+                    }
                     continue;
                 }
 
                 analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-                proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5);
+                proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5, status_callback);
 				delete spectra_volume;
             }
         }
@@ -494,7 +518,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool &tp)
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool &tp, Callback_Func_Status_Def* status_callback)
 {
     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
 
@@ -513,6 +537,10 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
         delete spectra_volume;
         delete tmp_spectra_volume;
+        if (status_callback != nullptr)
+        {
+            (*status_callback)(0, 1);
+        }
         return;
     }
 
@@ -524,6 +552,10 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
             logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
             delete spectra_volume;
             delete tmp_spectra_volume;
+            if (status_callback != nullptr)
+            {
+                (*status_callback)(0, 1);
+            }
             return;
         }
         //add all detectors up
@@ -555,7 +587,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
     analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
 
-    proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
+    proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5, status_callback);
     delete spectra_volume;
 }
 
