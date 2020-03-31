@@ -491,10 +491,20 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 //Spectra volume data
                 data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
 
-                std::string str_detector_num = std::to_string(detector_num);
-                std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+str_detector_num;
-                io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
+                std::string fullpath;
+                size_t dlen = dataset_file.length();
+                if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
+                {
+                    std::string str_detector_num = std::to_string(detector_num);
+                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
+                else
+                {
+                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file;
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
+                
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )

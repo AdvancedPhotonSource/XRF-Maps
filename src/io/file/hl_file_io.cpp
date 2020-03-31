@@ -648,8 +648,16 @@ bool load_spectra_volume(std::string dataset_directory,
             }
         }
     }
-
-    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath;
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen -4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
+    {
+        fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+    }
+    else
+    {
+        fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+    }
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
@@ -1165,26 +1173,34 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
     logI<<dataset_directory<<" "<<dataset_files->size()<<" files"<<"\n";
     std::list<file_name_size> f_list;
 
-    for (auto &itr : *dataset_files)
+    for (const auto &itr : *dataset_files)
     {
         //check if file ends with .mda
         if (itr.compare(itr.length() - ending.length(), ending.length(), ending) == 0 )
         {
             std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
-            int fsize = file::mda_get_multiplied_dims(full_path);
+            long fsize = file::mda_get_multiplied_dims(full_path);
+            f_list.push_back(file_name_size(itr, fsize));
+        }
+        else
+        {
+            std::string full_path = dataset_directory + DIR_END_CHAR + itr;
+            std::ifstream in(full_path.c_str(), std::ifstream::ate | std::ifstream::binary);
+            long fsize = in.tellg();
             f_list.push_back(file_name_size(itr, fsize));
         }
     }
     
     f_list.sort(compare_file_size);
-
-    dataset_files->clear();
-
-    for(auto &itr : f_list)
+    if (f_list.size() > 0)
     {
-        dataset_files->push_back(itr.filename);
-    }
+        dataset_files->clear();
 
+        for (auto& itr : f_list)
+        {
+            dataset_files->push_back(itr.filename);
+        }
+    }
     logI<<"done"<<"\n";
 }
 

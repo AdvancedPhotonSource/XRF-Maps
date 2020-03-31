@@ -189,6 +189,7 @@ bool APS_Fit_Params_Import::load(std::string path,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
+                //tag.erase(std::remove_if(tag.begin(), tag.end(), ::isspace), tag.end());
                 //logD<<"tag : "<<tag<<"\n";
                 if (tag == "VERSION" || tag == "DATE")
                 {
@@ -806,7 +807,7 @@ bool APS_Fit_Params_Import::save(std::string path,
     {
         out_stream << "   This file will override default fit settings for the maps program for a 3 element detector remove : removeme_ * elementdetector_to make it work. \n";
         out_stream << "   NOTE : the filename MUST be maps_fit_parameters_override.txt\n";
-        out_stream << "VERSION : 5.00000\n";
+        out_stream << "VERSION: 5.00000\n";
         out_stream << "DATE: \n";
         out_stream << "   put below the number of detectors that were used to acquire spectra. IMPORTANT: \n";
         out_stream << "   this MUST come after VERSION, and before all other options!\n";
@@ -853,7 +854,7 @@ bool APS_Fit_Params_Import::save(std::string path,
         out_stream << "    energy dependence of the energy resolution\n";
         out_stream << "FWHM_FANOPRIME: " << params_override->fit_params.at(STR_FWHM_FANOPRIME).value << "\n";
         out_stream << "    incident energy\n";
-        out_stream << "COHERENT_SCT_ENERGY: : " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).value << "\n";
+        out_stream << "COHERENT_SCT_ENERGY: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).value << "\n";
         out_stream << "    upper contstraint for the incident energy\n";
         out_stream << "COHERENT_SCT_ENERGY_MAX: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).max_val << "\n";
         out_stream << "    lower contstraint for the incident energy\n";
