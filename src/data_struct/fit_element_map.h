@@ -150,7 +150,7 @@ public:
 
     const std::string& full_name() const { return _full_name; }
 
-    const std::string symbol() const { return _element_info==nullptr?"":_element_info->name; }
+    const std::string symbol() const { return _element_info==nullptr?"NULLPTR":_element_info->name; }
 
     int Z() const {return _element_info==nullptr? -1:_element_info->number;}
 
