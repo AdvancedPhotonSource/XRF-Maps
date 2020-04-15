@@ -648,6 +648,10 @@ bool load_spectra_volume(std::string dataset_directory,
             }
         }
     }
+
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+
+    /*
     std::string fullpath;
     size_t dlen = dataset_file.length();
     if (dataset_file[dlen -4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
@@ -658,6 +662,7 @@ bool load_spectra_volume(std::string dataset_directory,
     {
         fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
     }
+    */
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
