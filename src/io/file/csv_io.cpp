@@ -61,27 +61,19 @@ namespace io
 {
 namespace file
 {
-
-CSV_IO::CSV_IO()
+namespace csv
 {
 
-}
-
-CSV_IO::~CSV_IO()
-{
-
-}
-
-bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background)
+bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background)
 {
     std::ofstream file_stream(fullpath);
-    if(file_stream.is_open())
+    if (file_stream.is_open())
     {
-        file_stream<<"Energy,Spectrum,Fitted,Background"<<"\n";
+        file_stream << "Energy,Spectrum,Fitted,Background,K alpha, K beta, L Lines, M Lines, step, tail, elastic, compton, pileip, escape" << "\n";
 
-        for (int i=0; i<energy.size(); i++)
+        for (int i = 0; i < energy.size(); i++)
         {
-            file_stream<<energy(i)<<","<<spectra(i)<<","<<spectra_model(i)<<","<<background(i)<<"\n";
+            file_stream << energy(i) << "," << spectra(i) << "," << spectra_model(i) << "," << background(i) << ",0,0,0,0,0,0,0,0,0,0\n";
         }
         file_stream.close();
     }
@@ -92,9 +84,9 @@ bool CSV_IO::save_fit_parameters(std::string fullpath, data_struct::ArrayXr& ene
     return true;
 }
 
-bool load_element_info_from_csv(std::string filename)
+bool load_element_info(std::string filename)
 {
-    data_struct::Element_Info_Map *element_map = data_struct::Element_Info_Map::inst();
+    data_struct::Element_Info_Map* element_map = data_struct::Element_Info_Map::inst();
 
     std::ifstream file_stream(filename);
     try
@@ -123,10 +115,10 @@ bool load_element_info_from_csv(std::string filename)
                 std::getline(strstream, el_name, ',');
                 if (element == nullptr)
                 {
-                     element = new Element_Info();
-                     element->number = element_number;
-                     element->name = el_name;
-                     element_map->add_element(element);
+                    element = new Element_Info();
+                    element->number = element_number;
+                    element->name = el_name;
+                    element_map->add_element(element);
                 }
                 else
                 {
@@ -327,9 +319,9 @@ bool load_element_info_from_csv(std::string filename)
             }
         }
     }
-    catch(std::exception& e)
+    catch (std::exception & e)
     {
-        if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()) )
+        if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()))
         {
             std::cerr << "ios Exception happened: " << e.what() << "\n"
                 << "Error bits are: "
@@ -343,6 +335,6 @@ bool load_element_info_from_csv(std::string filename)
     return true;
 }
 
-
-} //end namespace file
+}// end namespace csv
+}// end namespace file
 }// end namespace io

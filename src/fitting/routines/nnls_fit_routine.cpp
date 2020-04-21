@@ -56,6 +56,8 @@ namespace fitting
 namespace routines
 {
 
+std::mutex NNLS_Fit_Routine::_int_spec_mutex;
+
 NNLS_Fit_Routine::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 {
 
@@ -112,7 +114,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 	data_struct::ArrayXr* result;
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
-
+	Spectra spectra_model(_energy_range.count());
 	ArrayXr rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
 	nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
 
@@ -127,9 +129,24 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
     for(const auto& itr : *elements_to_fit)
     {
         counts_dict[itr.first] = (*result)[_element_row_index[itr.first]];
+
+		for (int j = 0; j < _energy_range.count(); j++)
+		{
+			real_t val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
+			if (std::isfinite(val))
+			{
+				spectra_model[j] += val;
+			}
+		}
     }
 
     counts_dict[STR_NUM_ITR] = static_cast<real_t>(num_iter);
+
+	//lock and integrate results
+	{
+		std::lock_guard<std::mutex> lock(_int_spec_mutex);
+		_integrated_fitted_spectra.add(spectra_model);
+	}
 
     return counts_dict;
 
@@ -147,6 +164,10 @@ void NNLS_Fit_Routine::initialize(models::Base_Model * const model,
 
     _generate_fitmatrix(&element_models, energy_range);
 
+	{
+		std::lock_guard<std::mutex> lock(_int_spec_mutex);
+		_integrated_fitted_spectra.setZero(energy_range.count());
+	}
 }
 
 // ----------------------------------------------------------------------------

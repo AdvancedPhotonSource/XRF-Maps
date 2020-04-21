@@ -240,7 +240,7 @@ void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
 {
     if (idx > 0 && idx < _energy_ratio_custom_multipliers.size())
     {
-        _energy_ratio_custom_multipliers[idx] = multi;
+        _energy_ratio_custom_multipliers[idx] *= multi;
     }
 }
 

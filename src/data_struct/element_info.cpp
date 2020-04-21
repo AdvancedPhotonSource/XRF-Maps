@@ -63,56 +63,56 @@ Element_Info::Element_Info()
 
 	real_t zero = (real_t)0.0;
 
-    xrf.emplace(std::make_pair("Ka1", zero));
-    xrf.emplace(std::make_pair("Ka2", zero));
-    xrf.emplace(std::make_pair("Kb1", zero));
-    xrf.emplace(std::make_pair("Kb2", zero));
+    xrf.emplace(std::make_pair("ka1", zero));
+    xrf.emplace(std::make_pair("ka2", zero));
+    xrf.emplace(std::make_pair("kb1", zero));
+    xrf.emplace(std::make_pair("kb2", zero));
 
-    xrf.emplace(std::make_pair("La1", zero));
-    xrf.emplace(std::make_pair("La2", zero));
-    xrf.emplace(std::make_pair("Lb1", zero));
-    xrf.emplace(std::make_pair("Lb2", zero));
-    xrf.emplace(std::make_pair("Lb3", zero));
-    xrf.emplace(std::make_pair("Lb4", zero));
-    xrf.emplace(std::make_pair("Lb5", zero));
+    xrf.emplace(std::make_pair("la1", zero));
+    xrf.emplace(std::make_pair("la2", zero));
+    xrf.emplace(std::make_pair("lb1", zero));
+    xrf.emplace(std::make_pair("lb2", zero));
+    xrf.emplace(std::make_pair("lb3", zero));
+    xrf.emplace(std::make_pair("lb4", zero));
+    xrf.emplace(std::make_pair("lb5", zero));
 
-    xrf.emplace(std::make_pair("Lg1", zero));
-    xrf.emplace(std::make_pair("Lg2", zero));
-    xrf.emplace(std::make_pair("Lg3", zero));
-    xrf.emplace(std::make_pair("Lg4", zero));
-    xrf.emplace(std::make_pair("Ll", zero));
-    xrf.emplace(std::make_pair("Ln", zero));
+    xrf.emplace(std::make_pair("lg1", zero));
+    xrf.emplace(std::make_pair("lg2", zero));
+    xrf.emplace(std::make_pair("lg3", zero));
+    xrf.emplace(std::make_pair("lg4", zero));
+    xrf.emplace(std::make_pair("ll", zero));
+    xrf.emplace(std::make_pair("ln", zero));
 
-    xrf.emplace(std::make_pair("Ma1", zero));
-    xrf.emplace(std::make_pair("Ma2", zero));
-    xrf.emplace(std::make_pair("Mb", zero));
-    xrf.emplace(std::make_pair("Mg", zero));
+    xrf.emplace(std::make_pair("ma1", zero));
+    xrf.emplace(std::make_pair("ma2", zero));
+    xrf.emplace(std::make_pair("mb", zero));
+    xrf.emplace(std::make_pair("mg", zero));
 
 
-    xrf_abs_yield.emplace(std::make_pair("Ka1", zero));
-    xrf_abs_yield.emplace(std::make_pair("Ka2", zero));
-    xrf_abs_yield.emplace(std::make_pair("Kb1", zero));
-    xrf_abs_yield.emplace(std::make_pair("Kb2", zero));
+    xrf_abs_yield.emplace(std::make_pair("ka1", zero));
+    xrf_abs_yield.emplace(std::make_pair("ka2", zero));
+    xrf_abs_yield.emplace(std::make_pair("kb1", zero));
+    xrf_abs_yield.emplace(std::make_pair("kb2", zero));
 
-    xrf_abs_yield.emplace(std::make_pair("La1", zero));
-    xrf_abs_yield.emplace(std::make_pair("La2", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lb1", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lb2", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lb3", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lb4", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lb5", zero));
+    xrf_abs_yield.emplace(std::make_pair("la1", zero));
+    xrf_abs_yield.emplace(std::make_pair("la2", zero));
+    xrf_abs_yield.emplace(std::make_pair("lb1", zero));
+    xrf_abs_yield.emplace(std::make_pair("lb2", zero));
+    xrf_abs_yield.emplace(std::make_pair("lb3", zero));
+    xrf_abs_yield.emplace(std::make_pair("lb4", zero));
+    xrf_abs_yield.emplace(std::make_pair("lb5", zero));
 
-    xrf_abs_yield.emplace(std::make_pair("Lg1", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lg2", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lg3", zero));
-    xrf_abs_yield.emplace(std::make_pair("Lg4", zero));
-    xrf_abs_yield.emplace(std::make_pair("Ll", zero));
-    xrf_abs_yield.emplace(std::make_pair("Ln", zero));
+    xrf_abs_yield.emplace(std::make_pair("lg1", zero));
+    xrf_abs_yield.emplace(std::make_pair("lg2", zero));
+    xrf_abs_yield.emplace(std::make_pair("lg3", zero));
+    xrf_abs_yield.emplace(std::make_pair("lg4", zero));
+    xrf_abs_yield.emplace(std::make_pair("ll", zero));
+    xrf_abs_yield.emplace(std::make_pair("ln", zero));
 
-    xrf_abs_yield.emplace(std::make_pair("Ma1", zero));
-    xrf_abs_yield.emplace(std::make_pair("Ma2", zero));
-    xrf_abs_yield.emplace(std::make_pair("Mb", zero));
-    xrf_abs_yield.emplace(std::make_pair("Mg", zero));
+    xrf_abs_yield.emplace(std::make_pair("ma1", zero));
+    xrf_abs_yield.emplace(std::make_pair("ma2", zero));
+    xrf_abs_yield.emplace(std::make_pair("mb", zero));
+    xrf_abs_yield.emplace(std::make_pair("mg", zero));
 
     yieldD.emplace(std::make_pair("k", zero));
     yieldD.emplace(std::make_pair("l1", zero));
@@ -320,7 +320,6 @@ void Element_Info_Map::add_element(Element_Info* element)
 {
     // set global energies pointer
     element->energies = &_energies;
-    // TODO: check if it exists
     _number_element_info_map[element->number] = element;
     _name_element_info_map[element->name] = element;
 }

@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/element_info.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/quantification_standard.h"
-#include "data_struct/params_override.h"
+#include "data_struct/scan_info.h"
 #include "data_struct/analysis_job.h"
 
 namespace io
@@ -78,9 +78,9 @@ public:
      */
     ~MDA_IO();
 
-    void unload();
+    bool load(std::string path, data_struct::Params_Override* override_values);
 
-    struct mda_file* get_scan_ptr() { return _mda_file; }
+   // bool load_header_only(std::string filePath);
 
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
@@ -92,35 +92,39 @@ public:
 										const std::vector<size_t>& detector_num_arr,
                                         bool hasNetCDF,
                                         data_struct::Analysis_Job *analysis_job,
+                                        size_t& out_rows,
+                                        size_t& out_cols,
 										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
     bool load_quantification_scalers(std::string path,
                                      data_struct::Params_Override *override_values);
 
-	// find index in mda file, if found, fill in value and units 
-    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string &units);
+    void unload();
+	
 
-    int get_multiplied_dims(std::string path);
 
-    int get_rank_and_dims(std::string path, size_t* dims);
+    void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, real_t& out_us_amp, real_t& out_ds_amp);
 
-    int rows() { return _rows; }
-
-    int cols() { return _cols; }
-
-    inline bool is_single_row_scan() {return _is_single_row;}
-
-    bool load_header(std::string filePath);
+    data_struct::Scan_Info* get_scan_info() { return &_scan_info; }
 
 private:
+
+    void _load_scalers();
+
+    void _load_extra_pvs_vector();
+
+    void _load_meta_info();
+
+    // find index in mda file, if found, fill in value and units 
+    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string& units);
+
 
     bool _get_scaler_value( struct mda_file* _mda_file, data_struct::Params_Override *override_values, string scaler_name, real_t *store_loc, bool isFlyScan);
 
     bool _find_theta(std::string pv_name, float* theta_out);
 
-    //void _load_detector_meta_data(data_struct::Detector * detector);
-    bool _is_single_row;
+    //bool _is_single_row;
 
     /**
      * @brief _mda_file: mda helper structure
@@ -132,13 +136,17 @@ private:
      */
     mda_fileinfo *_mda_file_info;
 
-    int _rows;
+    bool _hasNetcdf;
 
-    int _cols;
+    data_struct::Scan_Info _scan_info;
 
+    std::string _theta_pv_str;
 };
 
 DLL_EXPORT bool load_henke_from_xdr(std::string filename);
+DLL_EXPORT int mda_get_multiplied_dims(std::string path);
+DLL_EXPORT int mda_get_rank_and_dims(std::string path, size_t* dims);
+
 
 }// end namespace file
 }// end namespace io

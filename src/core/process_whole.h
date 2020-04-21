@@ -99,6 +99,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 using namespace std::placeholders; //for _1, _2,
 
+DLL_EXPORT typedef std::function<void(size_t, size_t)> Callback_Func_Status_Def;
+
 // ----------------------------------------------------------------------------
 
 template<typename T>
@@ -148,11 +150,16 @@ DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
                              data_struct::Detector* detector_struct,
                              ThreadPool* tp,
-                             bool save_spec_vol);
+                             bool save_spec_vol,
+                             Callback_Func_Status_Def* status_callback = nullptr);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job);
+DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Func_Status_Def* status_callback = nullptr);
+
+// ----------------------------------------------------------------------------
+
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
 
 // ----------------------------------------------------------------------------
 
@@ -165,5 +172,8 @@ DLL_EXPORT void average_quantification(std::vector<data_struct::Quantification_S
 
 // ----------------------------------------------------------------------------
 
+DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job);
+
+// ----------------------------------------------------------------------------
 
 #endif

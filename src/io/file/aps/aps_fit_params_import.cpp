@@ -189,6 +189,7 @@ bool APS_Fit_Params_Import::load(std::string path,
             {
                 std::istringstream strstream(line);
                 std::getline(strstream, tag, ':');
+                //tag.erase(std::remove_if(tag.begin(), tag.end(), ::isspace), tag.end());
                 //logD<<"tag : "<<tag<<"\n";
                 if (tag == "VERSION" || tag == "DATE")
                 {
@@ -340,14 +341,17 @@ bool APS_Fit_Params_Import::load(std::string path,
 
                     if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L")
                     {
+                        params_override->branching_family_L.push_back(line);
                         cnt = 3;
                     }
                     else if (tag == "BRANCHING_RATIO_ADJUSTMENT_K")
                     {
+                        params_override->branching_ratio_K.push_back(line);
                         cnt = 4;
                     }
                     else if (tag == "BRANCHING_RATIO_ADJUSTMENT_L")
                     {
+                        params_override->branching_ratio_L.push_back(line);
                         cnt = 12;
                     }
 
@@ -361,12 +365,43 @@ bool APS_Fit_Params_Import::load(std::string path,
                     if(params_override->elements_to_fit.count(element_symb) > 0)
                     {
                         fit_map = params_override->elements_to_fit[element_symb];
-                        for (unsigned int i = 0; i<cnt; i++)
+                        if (cnt == 3) // family
                         {
                             float factor = 1.0;
+
+                            // 1
                             std::getline(strstream, str_value, ',');
                             factor = std::stof(str_value);
-                            fit_map->set_custom_multiply_ratio(i, factor);
+                            fit_map->set_custom_multiply_ratio(4, factor);
+                            fit_map->set_custom_multiply_ratio(5, factor);
+                            fit_map->set_custom_multiply_ratio(7, factor);
+                            fit_map->set_custom_multiply_ratio(8, factor);
+                            fit_map->set_custom_multiply_ratio(9, factor);
+
+                            // 2
+                            std::getline(strstream, str_value, ',');
+                            factor = std::stof(str_value);
+                            fit_map->set_custom_multiply_ratio(2, factor);
+                            fit_map->set_custom_multiply_ratio(6, factor);
+                            fit_map->set_custom_multiply_ratio(11, factor);
+
+                            //3
+                            std::getline(strstream, str_value, ',');
+                            factor = std::stof(str_value);
+                            fit_map->set_custom_multiply_ratio(0, factor);
+                            fit_map->set_custom_multiply_ratio(1, factor);
+                            fit_map->set_custom_multiply_ratio(3, factor);
+                            fit_map->set_custom_multiply_ratio(10, factor);
+                        }
+                        else // ratio's
+                        {
+                            for (unsigned int i = 0; i < cnt; i++)
+                            {
+                                float factor = 1.0;
+                                std::getline(strstream, str_value, ',');
+                                factor = std::stof(str_value);
+                                fit_map->set_custom_multiply_ratio(i, factor);
+                            }
                         }
                     }
                 }
@@ -709,7 +744,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
                         last_scaler = scaler_name;
                         // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
-                        s_scaler.scalers_to_sum[scaler_name]= -1;
+                        s_scaler.scalers_to_sum.push_back(scaler_name);
                         std::getline(strstream, scaler_name, ',');
                     }
                     params_override->summed_scalers.push_back(s_scaler);
@@ -735,7 +770,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
                         last_scaler = scaler_name;
                         // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
-                        s_scaler.scalers_to_sum[scaler_name] = -1;
+                        s_scaler.scalers_to_sum.push_back(scaler_name);
                         std::getline(strstream, scaler_name, ',');
                     }
                     params_override->summed_scalers.push_back(s_scaler);
@@ -780,7 +815,206 @@ bool APS_Fit_Params_Import::save(std::string path,
                                  Params_Override *params_override)
 {
 
+    /*
+    else if (tag == "AIRPATH")
 
+    else if (tag == "TAIL_FRACTION_ADJUST_SI")
+
+    else if (tag == "TAIL_WIDTH_ADJUST_SI")
+    */
+
+
+    if (params_override == nullptr)
+    {
+        logE << "No parameters to save in " << path << "\n";
+        return false;
+    }
+
+    std::ofstream out_stream(path);
+
+    logI << path << "\n";
+
+    if (out_stream.is_open())
+    {
+        out_stream << "   This file will override default fit settings for the maps program for a 3 element detector remove : removeme_ * elementdetector_to make it work. \n";
+        out_stream << "   NOTE : the filename MUST be maps_fit_parameters_override.txt\n";
+        out_stream << "VERSION: 5.00000\n";
+        out_stream << "DATE: \n";
+        out_stream << "   put below the number of detectors that were used to acquire spectra. IMPORTANT: \n";
+        out_stream << "   this MUST come after VERSION, and before all other options!\n";
+        out_stream << "DETECTOR_ELEMENTS:       1\n";
+        out_stream << "   give this file an internal name, whatever you like\n";
+        out_stream << "IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]:automatic\n";
+        out_stream << "   list the elements that you want to be fit. For K lines, just use the element\n";
+        out_stream << "   name, for L lines add _L, e.g., Au_L, for M lines add _M\n";
+        out_stream << "ELEMENTS_TO_FIT: ";
+        for (const auto& itr : params_override->elements_to_fit)
+        {
+            // if not pileup
+            if (itr.second->pileup_element() == nullptr && (itr.first != "COHERENT_SCT_AMPLITUDE" || itr.first != "COMPTON_AMPLITUDE"))
+            {
+                out_stream << itr.first << " , ";
+            }
+        }
+        out_stream << "\n";
+        out_stream << "   list the element combinations you want to fit for pileup, e.g., Si_Si, Si_Si_Si, Si_Cl, etc\n";
+        out_stream << "ELEMENTS_WITH_PILEUP: ";
+        for (const auto& itr : params_override->elements_to_fit)
+        {
+            // if not pileup
+            if (itr.second->pileup_element() != nullptr)
+            {
+                out_stream << itr.first << " , ";
+            }
+        }
+        out_stream << "\n";
+        out_stream << "   offset of energy calibration, in kev\n";
+        out_stream << "CAL_OFFSET_[E_OFFSET]:   "<< params_override->fit_params.at(STR_ENERGY_OFFSET).value <<"\n";
+        out_stream << "CAL_OFFSET_[E_OFFSET]_MIN:   "<< params_override->fit_params.at(STR_ENERGY_OFFSET).min_val <<"\n";
+        out_stream << "CAL_OFFSET_[E_OFFSET]_MAX:   "<< params_override->fit_params.at(STR_ENERGY_OFFSET).max_val <<"\n";
+        out_stream << "   slope of energy calibration, in leV / channel\n";
+        out_stream << "CAL_SLOPE_[E_LINEAR]:   "<< params_override->fit_params.at(STR_ENERGY_SLOPE).value <<"\n";
+        out_stream << "CAL_SLOPE_[E_LINEAR]_MIN:   "<< params_override->fit_params.at(STR_ENERGY_SLOPE).min_val <<"\n";
+        out_stream << "CAL_SLOPE_[E_LINEAR]_MAX:   "<< params_override->fit_params.at(STR_ENERGY_SLOPE).max_val <<"\n";
+        out_stream << "   quadratic correction for energy calibration, unless you know exactly what you are doing, please leave it at 0.\n";
+        out_stream << "CAL_QUAD_[E_QUADRATIC]:   "<< params_override->fit_params.at(STR_ENERGY_QUADRATIC).value <<"\n";
+        out_stream << "CAL_QUAD_[E_QUADRATIC]_MIN:   "<< params_override->fit_params.at(STR_ENERGY_QUADRATIC).min_val <<"\n";
+        out_stream << "CAL_QUAD_[E_QUADRATIC]_MAX:   "<< params_override->fit_params.at(STR_ENERGY_QUADRATIC).max_val <<"\n";
+        out_stream << "    energy_resolution at 0keV\n";
+        out_stream << "FWHM_OFFSET: "<< params_override->fit_params.at(STR_FWHM_OFFSET).value << "\n";
+        out_stream << "    energy dependence of the energy resolution\n";
+        out_stream << "FWHM_FANOPRIME: " << params_override->fit_params.at(STR_FWHM_FANOPRIME).value << "\n";
+        out_stream << "    incident energy\n";
+        out_stream << "COHERENT_SCT_ENERGY: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).value << "\n";
+        out_stream << "    upper contstraint for the incident energy\n";
+        out_stream << "COHERENT_SCT_ENERGY_MAX: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).max_val << "\n";
+        out_stream << "    lower contstraint for the incident energy\n";
+        out_stream << "COHERENT_SCT_ENERGY_MIN: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).min_val << "\n";
+        out_stream << "    angle for the compton scatter (in degrees)\n";
+        out_stream << "COMPTON_ANGLE: " << params_override->fit_params.at(STR_COMPTON_ANGLE).value << "\n";
+        out_stream << "COMPTON_ANGLE_MAX: " << params_override->fit_params.at(STR_COMPTON_ANGLE).max_val << "\n";
+        out_stream << "COMPTON_ANGLE_MIN: " << params_override->fit_params.at(STR_COMPTON_ANGLE).min_val << "\n";
+        out_stream << "    additional width of the compton\n";
+        out_stream << "COMPTON_FWHM_CORR: " << params_override->fit_params.at(STR_COMPTON_FWHM_CORR).value << "\n";
+        out_stream << "COMPTON_STEP: " << params_override->fit_params.at(STR_COMPTON_F_STEP).value << "\n";
+        out_stream << "COMPTON_F_TAIL: " << params_override->fit_params.at(STR_COMPTON_F_TAIL).value << "\n";
+        out_stream << "COMPTON_GAMMA: " << params_override->fit_params.at(STR_COMPTON_GAMMA).value << "\n";
+        out_stream << "COMPTON_HI_F_TAIL: " << params_override->fit_params.at(STR_COMPTON_HI_F_TAIL).value << "\n";
+        out_stream << "COMPTON_HI_GAMMA: " << params_override->fit_params.at(STR_COMPTON_HI_GAMMA).value << "\n";
+        out_stream << "    tailing parameters, see also Grieken, Markowicz, Handbook of X-ray spectrometry\n";
+        out_stream << "    2nd ed, van Espen spectrum evaluation page 287.  _A corresponds to f_S, _B to\n";
+        out_stream << "    f_T and _C to gamma\n";
+        out_stream << "STEP_OFFSET: " << params_override->fit_params.at(STR_F_STEP_OFFSET).value << "\n";
+        out_stream << "STEP_LINEAR: " << params_override->fit_params.at(STR_F_STEP_LINEAR).value << "\n";
+        out_stream << "STEP_QUADRATIC: " << params_override->fit_params.at(STR_F_STEP_QUADRATIC).value << "\n";
+        out_stream << "F_TAIL_OFFSET: " << params_override->fit_params.at(STR_F_TAIL_OFFSET).value << "\n";
+        out_stream << "F_TAIL_LINEAR: " << params_override->fit_params.at(STR_F_TAIL_LINEAR).value << "\n";
+        out_stream << "F_TAIL_QUADRATIC: " << params_override->fit_params.at(STR_F_TAIL_QUADRATIC).value << "\n";
+        out_stream << "KB_F_TAIL_OFFSET: " << params_override->fit_params.at(STR_KB_F_TAIL_OFFSET).value << "\n";
+        out_stream << "KB_F_TAIL_LINEAR: " << params_override->fit_params.at(STR_KB_F_TAIL_LINEAR).value << "\n";
+        out_stream << "KB_F_TAIL_QUADRATIC: " << params_override->fit_params.at(STR_KB_F_TAIL_QUADRATIC).value << "\n";
+        out_stream << "GAMMA_OFFSET: " << params_override->fit_params.at(STR_GAMMA_OFFSET).value << "\n";
+        out_stream << "GAMMA_LINEAR: " << params_override->fit_params.at(STR_GAMMA_LINEAR).value << "\n";
+        out_stream << "GAMMA_QUADRATIC: " << params_override->fit_params.at(STR_GAMMA_QUADRATIC).value << "\n";
+        out_stream << "    snip width is the width used for estimating background. 0.5 is typically a good start\n";
+        out_stream << "SNIP_WIDTH: " << params_override->fit_params.at(STR_SNIP_WIDTH).value << "\n";
+        out_stream << "    set FIT_SNIP_WIDTH to 1 to fit the width of the snipping for background estimate, set to 0 not to. Only use if you know what it is doing!\n";
+        out_stream << "FIT_SNIP_WIDTH: " << params_override->fit_snip_width << "\n";
+        out_stream << "    detector material: 0= Germanium, 1 = Si\n";
+        out_stream << "DETECTOR_MATERIAL: ";
+        if(params_override->detector_element == "Si")
+            out_stream << "1\n";
+        else
+            out_stream << "0\n";
+        out_stream << "    beryllium window thickness, in micrometers, typically 8 or 24\n";
+        out_stream << "BE_WINDOW_THICKNESS: " << params_override->be_window_thickness << "\n";
+        out_stream << "    thickness of the detector chip, e.g., 350 microns for an SDD\n";
+        out_stream << "DET_CHIP_THICKNESS: " << params_override->det_chip_thickness << "\n";
+        out_stream << "    thickness of the Germanium detector dead layer, in microns, for the purposes of the NBS calibration\n";
+        out_stream << "GE_DEAD_LAYER: " << params_override->ge_dead_layer << "\n";
+        out_stream << "    maximum energy value to fit up to [keV]\n";
+        out_stream << "MAX_ENERGY_TO_FIT: " << params_override->fit_params.at(STR_MAX_ENERGY_TO_FIT).value << "\n";
+        out_stream << "    minimum energy value [keV]\n";
+        out_stream << "MIN_ENERGY_TO_FIT: " << params_override->fit_params.at(STR_MIN_ENERGY_TO_FIT).value << "\n";
+        out_stream << "    this allows manual adjustment of the branhcing ratios between the different lines of L1, L2, and L3.\n";
+        out_stream << "    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,\n";
+        out_stream << "    0.8 will correspond to to 80% of that, etc.\n";
+        for (const auto& itr : params_override->branching_family_L)
+        {
+            out_stream << itr <<"\n";
+        }
+        out_stream << "    this allows manual adjustment of the branhcing ratios between the different L lines, such as La 1, la2, etc.\n";
+        out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
+        out_stream << "    all will be normalized to the La1 line, and the values need to be in the following order:\n";
+        out_stream << "    La1, La2, Lb1, Lb2, Lb3, Lb4, Lg1, Lg2, Lg3, Lg4, Ll, Ln\n";
+        out_stream << "    please note, the first value (la1) MUST BE A 1. !!!\n";
+        for (const auto& itr : params_override->branching_ratio_L)
+        {
+            out_stream << itr << "\n";
+        }
+        out_stream << "    this allows manual adjustment of the branhcing ratios between the different K lines, such as Ka1, Ka2, Kb1, Kb2\n";
+        out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
+        out_stream << "    all will be normalized to the Ka1 line, and the values need to be in the following order:\n";
+        out_stream << "    Ka1, Ka2, Kb1(+3), Kb2\n";
+        out_stream << "    please note, the first value (Ka1) MUST BE A 1. !!!\n";
+        for (const auto& itr : params_override->branching_ratio_K)
+        {
+            out_stream << itr << "\n";
+        }
+        out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
+        out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
+        out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
+        out_stream << "    this parameter adds a component to the escape peak that depends linear on energy\n";
+        out_stream << "LINEAR_ESCAPE_FACTOR: 0.0\n";
+        out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
+        out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
+        out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";
+        out_stream << "    the lines below(if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file\n";
+        out_stream << "    for the amps, the _NUM value should be between 0 and 8 where 0 = 1, 1 = 2, 2 = 5, 3 = 10, 4 = 20, 5 = 50, 6 = 100, 7 = 200, 8 = 500\n";
+        out_stream << "    for the amps, the _UNIT value should be between 0 and 3 where 0 = pa / v, 1 = na / v, 2 = ua / v 3 = ma / v\n";
+        out_stream << "US_AMP_SENS_NUM: " << params_override->us_amp_sens_num << "\n";
+        out_stream << "US_AMP_SENS_UNIT: " << params_override->us_amp_sens_unit << "\n";
+        out_stream << "DS_AMP_SENS_NUM: " << params_override->ds_amp_sens_num << "\n";
+        out_stream << "DS_AMP_SENS_UNIT: "<< params_override->ds_amp_sens_unit <<"\n";
+        out_stream << "THETA_PV: " << params_override->theta_pv << "\n";
+        out_stream << "    the lines (if any) below will override the detector names built in to maps. please modify only if you are sure you understand the effect\n";
+        for (const auto& itr : params_override->scaler_pvs)
+        {
+            out_stream << itr.first << ":" << itr.second << "\n";
+        }
+        out_stream << "TIME_SCALER_PV: " << params_override->time_scaler << "\n";
+        out_stream << "TIME_SCALER_CLOCK: " << params_override->time_scaler_clock << "\n";
+        for (const auto& itr : params_override->time_normalized_scalers)
+        {
+            out_stream <<"TIME_NORMALIZED_SCALER: "<< itr.first << ";" << itr.second << "\n";
+        }
+
+        for (const auto& itr : params_override->summed_scalers)
+        {
+            if (itr.normalize_by_time)
+            {
+                out_stream << "TIME_NORMALIZED_SUMMED_SCALER: " << itr.scaler_name << ":";
+                for (const auto& inner_itr : itr.scalers_to_sum)
+                {
+                    out_stream << inner_itr << ",";
+                }
+                out_stream << "\n";
+            }
+            else
+            {
+                out_stream << "SUMMED_SCALER: "<< itr.scaler_name<<":";
+                for (const auto& inner_itr : itr.scalers_to_sum)
+                {
+                    out_stream << inner_itr << ",";
+                }
+                out_stream << "\n";
+            }
+        }
+
+        out_stream.close();
+        return true;
+    }
+    logE << "Failed to open file " << path << "\n";
     return false;
 }
 

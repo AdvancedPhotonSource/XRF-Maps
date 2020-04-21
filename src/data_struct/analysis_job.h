@@ -185,6 +185,8 @@ public:
 
     size_t num_threads;
 
+    bool update_scalers;
+
     bool quick_and_dirty;
 
     bool generate_average_h5;
@@ -196,6 +198,8 @@ public:
     bool is_network_source;
 
     bool stream_over_network;
+
+    bool export_int_fitted_to_csv;
 
 	long long mem_limit;
 

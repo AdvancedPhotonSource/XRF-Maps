@@ -1,5 +1,5 @@
 /***
--Copyright (c) 2016, UChicago Argonne, LLC. All rights reserved.
+-Copyright (c) 2020, UChicago Argonne, LLC. All rights reserved.
 -
 -Copyright 2016. UChicago Argonne, LLC. This software was produced
 -under U.S. Government contract DE-AC02-06CH11357 for Argonne National
@@ -43,17 +43,16 @@
 -POSSIBILITY OF SUCH DAMAGE.
 -***/
 
-#ifndef PARAMS_OVERRIDE_H
-#define PARAMS_OVERRIDE_H
+#ifndef SCAN_INFO_H
+#define SCAN_INFO_H
 
 
 #include <map>
 #include <string>
-#include <list>
+#include <vector>
 #include "core/defines.h"
 
-#include "data_struct/fit_parameters.h"
-#include "data_struct/fit_element_map.h"
+#include "fit_parameters.h" // for ArrayXXr 
 
 namespace data_struct
 {
@@ -63,12 +62,37 @@ using namespace std;
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-struct Summed_Scaler
+struct Extra_PV
 {
-    string scaler_name;
-    //  name    
-    std::vector<string> scalers_to_sum;
-    bool normalize_by_time;
+    string name;
+    string description;
+    string value;
+    string unit;
+};
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+struct Scaler_Map
+{
+    string name;
+    string unit;
+    ArrayXXr values;
+};
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+struct Scan_Meta_Info
+{
+    string name;
+    string scan_time_stamp;
+    vector<real_t> x_axis;
+    vector<real_t> y_axis;
+    int requested_cols;
+    int requested_rows;
+    real_t theta;
+    
 };
 
 //-----------------------------------------------------------------------------
@@ -76,114 +100,29 @@ struct Summed_Scaler
 /**
  * @brief The Params_Override struct
  */
-class DLL_EXPORT Params_Override
+class DLL_EXPORT Scan_Info
 {
 
 public:
 
-    Params_Override()
+    Scan_Info()
     {
-        detector_num = 0;
-        si_escape_factor = 0.0;
-        ge_escape_factor = 0.0;
-        si_escape_enabled = false;
-        ge_escape_enabled = false;
-        fit_snip_width = 0.0;
-        us_amp_sens_num = 0.0;
-        us_amp_sens_unit = 0.0;
-        ds_amp_sens_num = 0.0;
-        ds_amp_sens_unit = 0.0;
-        theta_pv = "";
-        time_scaler_clock = "1.0";
-        sr_current = 0.0;
-        US_IC = 0.0;
-        DS_IC = 0.0;
+        
     }
-    Params_Override(string dir, int detector)
-    {
-
-        si_escape_factor = 0.0;
-        ge_escape_factor = 0.0;
-        si_escape_enabled = false;
-        ge_escape_enabled = false;
-        fit_snip_width = 0.0;
-        us_amp_sens_num = 0.0;
-        us_amp_sens_unit = 0.0;
-        ds_amp_sens_num = 0.0;
-        ds_amp_sens_unit = 0.0;
-        theta_pv = "";
-        time_scaler_clock = "1.0";
-        sr_current = 0.0;
-        US_IC = 0.0;
-        DS_IC = 0.0;
-
-        dataset_directory = dir;
-        detector_num = detector;
-    }
-    ~Params_Override()
-    {
-        time_normalized_scalers.clear();
-        scaler_pvs.clear();
-        // TODO: fix this: this memeory is used when optimising and is copyed to another data struct
-//		for (auto& itr : elements_to_fit)
-//		{
-//			delete itr.second;
-//		}
-		elements_to_fit.clear();
-    }
-
-    string dataset_directory;
-    int detector_num;
-    Fit_Parameters fit_params;
-    Fit_Element_Map_Dict elements_to_fit;
-    string time_scaler;
-    string time_scaler_clock;
-    string detector_element;
     
-    real_t si_escape_factor;
-    real_t ge_escape_factor;
-    bool si_escape_enabled;
-    bool ge_escape_enabled;
-    real_t fit_snip_width;
+    ~Scan_Info()
+    {
+        
+    }
 
-    string be_window_thickness;
-    string det_chip_thickness;
-    string ge_dead_layer;
-    string airpath;
-
-    string elt_pv;
-    string ert_pv;
-    string in_cnt_pv;
-    string out_cnt_pv;
-
-    string us_amp_sens_num_pv;
-    string us_amp_sens_unit_pv;
-    string ds_amp_sens_num_pv;
-    string ds_amp_sens_unit_pv;
-
-    string theta_pv;
-
-    map< string, string > scaler_pvs;
-    map< string, string > time_normalized_scalers;
-    list<struct Summed_Scaler> summed_scalers;
-
-    vector<string> branching_family_L;
-    vector<string> branching_ratio_L;
-    vector<string> branching_ratio_K;
-
-    real_t sr_current;
-    real_t US_IC;
-    real_t DS_IC;
-
-    real_t us_amp_sens_num;
-    real_t us_amp_sens_unit;
-    real_t ds_amp_sens_num;
-    real_t ds_amp_sens_unit;
-
+    Scan_Meta_Info meta_info;
+    vector<Scaler_Map> scaler_maps;
+    vector<Extra_PV> extra_pvs;
+    bool has_netcdf; 
 };
 
 //-----------------------------------------------------------------------------
 
 } //namespace data_struct
 
-#endif // PARAMS_OVERRIDE_H
+#endif // Scan_Info_H

@@ -78,6 +78,7 @@ public:
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Range energy_range,
+                               const ArrayXr* background,
                                Gen_Func_Def gen_func);
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,

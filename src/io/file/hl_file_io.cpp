@@ -192,7 +192,7 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 		return false;
 	}
 
-    if (io::file::load_element_info_from_csv(element_csv_filename) == false)
+    if (io::file::csv::load_element_info(element_csv_filename) == false)
 	{
 		logE << "Could not load " << element_csv_filename << "\n";
 		return false;
@@ -226,7 +226,6 @@ void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<stri
 
 void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 {
-    io::file::CSV_IO csv_io;
     std::string full_path = file_and_fit_params->dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
     logI<<full_path<<"\n";
 
@@ -272,7 +271,7 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
 #endif
 
-    csv_io.save_fit_parameters(full_path, ev, spec, model_spectra, background );
+    io::file::csv::save_fit_and_int_spectra(full_path, ev, spec, model_spectra, background);
 
     for(auto &itr : file_and_fit_params->elements_to_fit)
     {
@@ -649,7 +648,20 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+
+    /*
+    std::string fullpath;
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen -4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
+    {
+        fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+    }
+    else
+    {
+        fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+    }
+    */
     //  try to load from a pre analyzed file because they should contain the whole mca_arr spectra volume
     if(true == io::file::HDF5_IO::inst()->load_spectra_vol_analyzed_h5(fullpath, spectra_volume))
     {
@@ -698,7 +710,7 @@ bool load_spectra_volume(std::string dataset_directory,
 		return true;
 	}
 
-    //load spectra
+    // try to load spectra from mda file
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
@@ -773,7 +785,13 @@ bool load_spectra_volume(std::string dataset_directory,
     if(save_scalers)
     {
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, mda_io.get_scan_ptr(), spectra_volume, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        data_struct::Scan_Info* scan_info = mda_io.get_scan_info();
+        // add ELT, ERT, INCNT, OUTCNT to scaler map
+        if (spectra_volume != nullptr && scan_info != nullptr)
+        {
+            spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
+        }
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }
 
     mda_io.unload();
@@ -919,7 +937,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             int rank;
             size_t dims[10];
             dims[0] = 0;
-            rank = mda_io.get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
+            rank = io::file::mda_get_rank_and_dims(dataset_directory + "mda"+ DIR_END_CHAR + dataset_file, &dims[0]);
             if(rank == 3)
             {
                 integrated_spectra->resize(dims[2]);
@@ -1159,26 +1177,34 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
     logI<<dataset_directory<<" "<<dataset_files->size()<<" files"<<"\n";
     std::list<file_name_size> f_list;
 
-    for (auto &itr : *dataset_files)
+    for (const auto &itr : *dataset_files)
     {
         //check if file ends with .mda
         if (itr.compare(itr.length() - ending.length(), ending.length(), ending) == 0 )
         {
             std::string full_path = dataset_directory + DIR_END_CHAR+"mda"+ DIR_END_CHAR +itr;
-            int fsize = mda_io.get_multiplied_dims(full_path);
+            long fsize = file::mda_get_multiplied_dims(full_path);
+            f_list.push_back(file_name_size(itr, fsize));
+        }
+        else
+        {
+            std::string full_path = dataset_directory + DIR_END_CHAR + itr;
+            std::ifstream in(full_path.c_str(), std::ifstream::ate | std::ifstream::binary);
+            long fsize = in.tellg();
             f_list.push_back(file_name_size(itr, fsize));
         }
     }
-
+    
     f_list.sort(compare_file_size);
-
-    dataset_files->clear();
-
-    for(auto &itr : f_list)
+    if (f_list.size() > 0)
     {
-        dataset_files->push_back(itr.filename);
-    }
+        dataset_files->clear();
 
+        for (auto& itr : f_list)
+        {
+            dataset_files->push_back(itr.filename);
+        }
+    }
     logI<<"done"<<"\n";
 }
 

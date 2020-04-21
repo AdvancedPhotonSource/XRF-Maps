@@ -60,34 +60,13 @@ namespace io
 {
 namespace file
 {
-
-class DLL_EXPORT CSV_IO
+namespace csv
 {
-public:
+    DLL_EXPORT bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background);
 
-    /**
-     * @brief CSV_IO
-     * @param filename
-     * @return
-     */
-    CSV_IO();
+    DLL_EXPORT bool load_element_info(std::string filename);
 
-    /**
-     * @brief ~CSV_IO
-     * @return
-     */
-    ~CSV_IO();
-
-    bool save_fit_parameters(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background);
-
-private:
-
-
-};
-
-
-DLL_EXPORT bool load_element_info_from_csv(std::string filename);
-
+}// end namespace CSV
 }// end namespace file
 }// end namespace io
 

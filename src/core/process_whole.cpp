@@ -58,23 +58,23 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
     data_struct::Fit_Count_Dict* element_fit_counts_dict = new data_struct::Fit_Count_Dict();
     for(auto& e_itr : *elements_to_fit)
     {
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(e_itr.first, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ()) );
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(e_itr.first, data_struct::ArrayXXr()) );
         element_fit_counts_dict->at(e_itr.first).resize(height, width);
     }
 
     if (alloc_iter_count)
     {
         //Allocate memeory to save number of fit iterations
-        element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_NUM_ITR, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>() ));
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_NUM_ITR, data_struct::ArrayXXr() ));
         element_fit_counts_dict->at(STR_NUM_ITR).resize(height, width);
     }
 
 	//  TOTAL_FLUORESCENCE_YIELD
-	element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_TOTAL_FLUORESCENCE_YIELD, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>()));
+	element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_TOTAL_FLUORESCENCE_YIELD, data_struct::ArrayXXr()));
 	element_fit_counts_dict->at(STR_TOTAL_FLUORESCENCE_YIELD).resize(height, width);
 
 	//SUM_ELASTIC_INELASTIC
-	element_fit_counts_dict->emplace(std::pair<std::string, Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(STR_SUM_ELASTIC_INELASTIC_AMP , Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>()));
+	element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_SUM_ELASTIC_INELASTIC_AMP , data_struct::ArrayXXr()));
 	element_fit_counts_dict->at(STR_SUM_ELASTIC_INELASTIC_AMP).resize(height, width);
 
 
@@ -343,8 +343,21 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
                   data_struct::Detector * detector_struct,
                   ThreadPool* tp,
-                  bool save_spec_vol)
+                  bool save_spec_vol,
+                  Callback_Func_Status_Def* status_callback)
 {
+    if (detector_struct == nullptr)
+    {
+        logE << "Detector meta information not loaded. Cannot process!\n";
+        return;
+    }
+
+    if (spectra_volume == nullptr)
+    {
+        logE << "Spectra Volume not loaded. Cannot process!\n";
+        return;
+    }
+
     data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
 
     //Range of energy in spectra to fit
@@ -380,12 +393,19 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
             }
         }
 
+        size_t total_blocks = (spectra_volume->rows() * spectra_volume->cols()) - 1;
+        size_t cur_block = 0;
         //wait for queue to finish processing
         while(!fit_job_queue->empty())
         {
             auto ret = std::move(fit_job_queue->front());
             fit_job_queue->pop();
             ret.get();
+            if (status_callback != nullptr)
+            {
+                (*status_callback)(cur_block, total_blocks);
+            }
+            cur_block++;
         }
 
         std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
@@ -394,15 +414,23 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
         io::file::HDF5_IO::inst()->save_element_fits(fit_routine->get_name(), element_fit_count_dict);
 
-        if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
+        if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX || itr.first == data_struct::Fitting_Routines::NNLS)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
             io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),
 																matrix_fit->fitted_integrated_spectra(),
 																matrix_fit->energy_range(),
+                                                                matrix_fit->fitted_integrated_background(),
+																(*spectra_volume)[0][0].size());
+        }
+		if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
+		{
+			fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+			io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
+																matrix_fit->energy_range(),
 																matrix_fit->max_integrated_spectra(),
 																matrix_fit->max_10_integrated_spectra());
-        }
+		}
 
         delete fit_job_queue;
         element_fit_count_dict->clear();
@@ -442,7 +470,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files(data_struct::Analysis_Job* analysis_job)
+void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Func_Status_Def* status_callback)
 {
     ThreadPool tp(analysis_job->num_threads);
 
@@ -451,67 +479,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
         //if quick and dirty then sum all detectors to 1 spectra volume and process it
         if(analysis_job->quick_and_dirty)
         {
-            std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5";
-
-            data_struct::Detector* detector_struct = analysis_job->get_detector(0);
-            //Spectra volume data
-            data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
-            data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
-
-            io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
-            //load the first one
-            size_t detector_num = analysis_job->detector_num_arr[0];
-            bool is_loaded_from_analyzed_h5;
-            if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true) )
-            {
-                logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
-                delete spectra_volume;
-                delete tmp_spectra_volume;
-                return;
-            }
-
-            //load spectra volume
-            for(int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
-            {
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false) )
-                {
-                    logE<<"Loading all detectors for "<<analysis_job->dataset_directory<< DIR_END_CHAR <<dataset_file<<"\n";
-                    delete spectra_volume;
-                    delete tmp_spectra_volume;
-                    return;
-                }
-                //add all detectors up
-                for(size_t j=0; j<spectra_volume->rows(); j++)
-                {
-                    for(size_t k=0; k<spectra_volume->cols(); k++)
-                    {
-                        real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
-                        real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
-                        real_t input_counts = (*spectra_volume)[j][k].input_counts();
-                        real_t output_counts = (*spectra_volume)[j][k].output_counts();
-
-
-                        (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
-
-                        elapsed_livetime += (*tmp_spectra_volume)[j][k].elapsed_livetime();
-                        elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
-                        input_counts += (*tmp_spectra_volume)[j][k].input_counts();
-                        output_counts += (*tmp_spectra_volume)[j][k].output_counts();
-
-                        (*spectra_volume)[j][k].elapsed_livetime(elapsed_livetime);
-                        (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
-                        (*spectra_volume)[j][k].input_counts(input_counts);
-                        (*spectra_volume)[j][k].output_counts(output_counts);
-                    }
-                }
-            }
-            delete tmp_spectra_volume;
-
-            analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-
-            proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5);
-			delete spectra_volume;
+            process_dataset_files_quick_and_dirty(dataset_file, analysis_job, tp);
         }
         //otherwise process each detector separately
         else
@@ -524,25 +492,114 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job)
                 //Spectra volume data
                 data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
 
-                std::string str_detector_num = std::to_string(detector_num);
-                std::string full_save_path = analysis_job->dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+str_detector_num;
-                io::file::HDF5_IO::inst()->set_filename(full_save_path);
-
+                std::string fullpath;
+                size_t dlen = dataset_file.length();
+                if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
+                {
+                    std::string str_detector_num = std::to_string(detector_num);
+                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
+                else
+                {
+                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file;
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
+                
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
                 if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )
                 {
                     logW<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
+                    if (status_callback != nullptr)
+                    {
+                        (*status_callback)(0, 1);
+                    }
                     continue;
                 }
 
                 analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-                proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5);
+                proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5, status_callback);
 				delete spectra_volume;
             }
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool &tp, Callback_Func_Status_Def* status_callback)
+{
+    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+
+    data_struct::Detector* detector_struct = analysis_job->get_detector(0);
+    //Spectra volume data
+    data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
+    data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
+
+    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+
+    //load the first one
+    size_t detector_num = analysis_job->detector_num_arr[0];
+    bool is_loaded_from_analyzed_h5;
+    if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
+    {
+        logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
+        delete spectra_volume;
+        delete tmp_spectra_volume;
+        if (status_callback != nullptr)
+        {
+            (*status_callback)(0, 1);
+        }
+        return;
+    }
+
+    //load spectra volume
+    for (int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
+    {
+        if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
+        {
+            logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
+            delete spectra_volume;
+            delete tmp_spectra_volume;
+            if (status_callback != nullptr)
+            {
+                (*status_callback)(0, 1);
+            }
+            return;
+        }
+        //add all detectors up
+        for (size_t j = 0; j < spectra_volume->rows(); j++)
+        {
+            for (size_t k = 0; k < spectra_volume->cols(); k++)
+            {
+                real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
+                real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
+                real_t input_counts = (*spectra_volume)[j][k].input_counts();
+                real_t output_counts = (*spectra_volume)[j][k].output_counts();
+
+
+                (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
+
+                elapsed_livetime += (*tmp_spectra_volume)[j][k].elapsed_livetime();
+                elapsed_realtime += (*tmp_spectra_volume)[j][k].elapsed_realtime();
+                input_counts += (*tmp_spectra_volume)[j][k].input_counts();
+                output_counts += (*tmp_spectra_volume)[j][k].output_counts();
+
+                (*spectra_volume)[j][k].elapsed_livetime(elapsed_livetime);
+                (*spectra_volume)[j][k].elapsed_realtime(elapsed_realtime);
+                (*spectra_volume)[j][k].input_counts(input_counts);
+                (*spectra_volume)[j][k].output_counts(output_counts);
+            }
+        }
+    }
+    delete tmp_spectra_volume;
+
+    analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
+
+    proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5, status_callback);
+    delete spectra_volume;
 }
 
 // ----------------------------------------------------------------------------
@@ -570,19 +627,19 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
             *(pointer_arr[i]) = 0.0;
             for (auto &jitr : sscaler->scalers_to_sum)
             {
-                if(override_params->time_normalized_scalers.count(jitr.first)
-               && pv_map.count(override_params->time_normalized_scalers[jitr.first])
+                if(override_params->time_normalized_scalers.count(jitr)
+               && pv_map.count(override_params->time_normalized_scalers[jitr])
                && pv_map.count(override_params->time_scaler))
                 {
-                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr.first]]);
+                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr]]);
                     real_t det_time = std::stof(pv_map[override_params->time_scaler]);
                     det_time /= scaler_clock;
                     val /= det_time;
                     *(pointer_arr[i]) += val;
                 }
-                else if(override_params->scaler_pvs.count(jitr.first) && pv_map.count(override_params->scaler_pvs[jitr.first]) > 0)
+                else if(override_params->scaler_pvs.count(jitr) && pv_map.count(override_params->scaler_pvs[jitr]) > 0)
                 {
-                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr.first]]);
+                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr]]);
                 }
             }
         }
@@ -919,6 +976,91 @@ void average_quantification(std::vector<data_struct::Quantification_Standard>* q
         quantification_standard->
     }
     */
+}
+
+// ----------------------------------------------------------------------------
+
+void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
+{
+    for (const auto& dataset_file : analysis_job.dataset_files)
+    {
+        //average all detectors to one files
+        if (analysis_job.generate_average_h5)
+        {
+            io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
+        }
+
+        //generate a list of dataset to update
+        std::vector<std::string> hdf5_dataset_list;
+
+        for (size_t detector_num : analysis_job.detector_num_arr)
+        {
+            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+        }
+        hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
+
+
+        for (std::string hdf5_dataset_name : hdf5_dataset_list)
+        {
+            //add v9 layout soft links
+            if (analysis_job.add_v9_layout)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(hdf5_dataset_name);
+            }
+
+            //add exchange
+            if (analysis_job.add_exchange_layout)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
+            }
+
+            //add exchange
+            if (analysis_job.export_int_fitted_to_csv)
+            {
+                io::file::HDF5_IO::inst()->export_int_fitted_to_csv(hdf5_dataset_name);
+            }
+
+            //update theta based on new PV
+            if (analysis_job.update_theta_str.length() > 0)
+            {
+                //data_struct::Params_Override* params_override
+                io::file::HDF5_IO::inst()->update_theta(hdf5_dataset_name, analysis_job.update_theta_str);
+            }
+
+            //update scalers table in hdf5
+            if (analysis_job.update_scalers)
+            {
+                data_struct::Detector* det = nullptr;
+                size_t len = hdf5_dataset_name.length();
+
+                if (len > 4 && hdf5_dataset_name[len - 3] == '.' && hdf5_dataset_name[len - 2] == 'h' && hdf5_dataset_name[len - 1] == '5')
+                {
+                    det = analysis_job.get_detector(-1);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '0')
+                {
+                    det = analysis_job.get_detector(0);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '1')
+                {
+                    det = analysis_job.get_detector(1);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '2')
+                {
+                    det = analysis_job.get_detector(2);
+                }
+                else if (len > 4 && hdf5_dataset_name[len - 4] == '.' && hdf5_dataset_name[len - 3] == 'h' && hdf5_dataset_name[len - 2] == '5' && hdf5_dataset_name[len - 1] == '3')
+                {
+                    det = analysis_job.get_detector(3);
+                }
+
+                if (det != nullptr)
+                {
+                    io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict);
+                }
+            }
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------

@@ -58,12 +58,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "hdf5.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/fit_element_map.h"
-
-//Include mda data structures to save scalers
-#include "io/file/mda_io.h"
-
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
+#include "data_struct/scan_info.h"
 
 #include "core/mem_info.h"
 
@@ -168,16 +165,20 @@ public:
     bool save_fitted_int_spectra(const std::string path,
                                  const data_struct::Spectra& spectra,
                                  const data_struct::Range& range,
-								 const data_struct::Spectra& max_spectra,
-								 const data_struct::Spectra& max_10_spectra);
+                                 const data_struct::Spectra& background,
+								 const size_t save_spectra_size);
+	
+	bool save_max_10_spectra(const std::string path,
+							const data_struct::Range& range,
+							const data_struct::Spectra& max_spectra,
+							const data_struct::Spectra& max_10_spectra);
 
     void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
 
     bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
 
     bool save_scan_scalers(size_t detector_num,
-                           struct mda_file *mda_scalers,
-                           data_struct::Spectra_Volume * spectra_volume,
+                           data_struct::Scan_Info* scan_info,
                            data_struct::Params_Override * params_override,
                            bool hasNetcdf,
                            size_t row_idx_start=0,
@@ -200,21 +201,19 @@ public:
 								int col_idx_end = -1);
 
 	// Add links to dataset and set version to 9 so legacy software can load it
-    void add_v9_layout(std::string dataset_directory,
-                       std::string dataset_file,
-                       const std::vector<size_t>& detector_num_arr);
+    void add_v9_layout(std::string dataset_file);
 
 	// Add exchange layout to be loadable by external software
-	void add_exchange_layout(std::string dataset_directory,
-							std::string dataset_file,
-							const std::vector<size_t>& detector_num_arr);
+    void add_exchange_layout(std::string dataset_file);
 
 	// update theta value based on new pv name
-	void update_theta(std::string dataset_directory,
-					std::string dataset_file,
-					const std::vector<size_t>& detector_num_arr,
-					std::string theta_pv_str);
+    void update_theta(std::string dataset_file, std::string theta_pv_str);
 
+    //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
+    void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
+    
+    //export integrated spec, fitted, background into csv
+    void export_int_fitted_to_csv(std::string dataset_file);
 
     bool end_save_seq(bool loginfo=true);
 
@@ -228,27 +227,23 @@ private:
 
 	bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra);
 
-    bool _save_scan_meta_data(hid_t scan_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
-	bool _save_extras(hid_t scan_grp_id, struct mda_file *mda_scalers);
-    bool _save_scalers(hid_t maps_grp_id, struct mda_file *mda_scalers, data_struct::Spectra_Volume * spectra_volume, data_struct::Params_Override * params_override, bool hasNetcdf);
-    void _save_amps(hid_t scalers_grp_id, struct mda_file *mda_scalers, data_struct::Params_Override * params_override);
+    bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
+	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, data_struct::Params_Override * params_override, bool hasNetcdf);
+    void _save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
-    void _add_v9_layout(std::string dataset_file);
     void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
     void _add_extra_pvs(hid_t file_id, std::string group_name);
 
     bool _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler);
-	void _add_exchange_layout(std::string dataset_file);
-
+	
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true, bool close_on_fail=true);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
-
-	void _update_theta(std::string dataset_file, std::string theta_pv_str);
 
     struct scaler_struct
     {

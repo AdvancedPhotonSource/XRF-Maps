@@ -113,27 +113,43 @@ void Spectra_Volume::recalc_elapsed_livetime()
 
 }
 
-void Spectra_Volume::generate_scaler_maps(Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * elt_map,
-                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * ert_map,
-                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * in_cnt_map,
-                                          Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> * out_cnt_map)
+void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
 {
-    elt_map->resize(_data_vol.size(), _data_vol[0].size());
-    ert_map->resize(_data_vol.size(), _data_vol[0].size());
-    in_cnt_map->resize(_data_vol.size(), _data_vol[0].size());
-    out_cnt_map->resize(_data_vol.size(), _data_vol[0].size());
-
-    for(size_t i = 0; i < _data_vol.size(); i++)
+    if (scaler_maps != nullptr)
     {
-        for(size_t j = 0; j < _data_vol[0].size(); j++)
-        {
-            (*elt_map)(i,j) = _data_vol[i][j].elapsed_livetime();
-            (*ert_map)(i,j) = _data_vol[i][j].elapsed_realtime();
-            (*in_cnt_map)(i,j) = _data_vol[i][j].input_counts();
-            (*out_cnt_map)(i,j) = _data_vol[i][j].output_counts();
-        }
-    }
 
+        data_struct::Scaler_Map elt_map, ert_map, in_cnt_map, out_cnt_map;
+
+        elt_map.name = "ELT";
+        ert_map.name = "ERT";
+        in_cnt_map.name = "INCNT";
+        out_cnt_map.name = "OUTCNT";
+        elt_map.unit = "seconds";
+        ert_map.unit = "seconds";
+        in_cnt_map.unit = "cts/s";
+        out_cnt_map.unit = "cts/s";
+
+        elt_map.values.resize(_data_vol.size(), _data_vol[0].size());
+        ert_map.values.resize(_data_vol.size(), _data_vol[0].size());
+        in_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
+        out_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
+
+        for (size_t i = 0; i < _data_vol.size(); i++)
+        {
+            for (size_t j = 0; j < _data_vol[0].size(); j++)
+            {
+                elt_map.values(i, j) = _data_vol[i][j].elapsed_livetime();
+                ert_map.values(i, j) = _data_vol[i][j].elapsed_realtime();
+                in_cnt_map.values(i, j) = _data_vol[i][j].input_counts();
+                out_cnt_map.values(i, j) = _data_vol[i][j].output_counts();
+            }
+        }
+
+        scaler_maps->push_back(elt_map);
+        scaler_maps->push_back(ert_map);
+        scaler_maps->push_back(in_cnt_map);
+        scaler_maps->push_back(out_cnt_map);
+    }
 }
 
 } //namespace data_struct

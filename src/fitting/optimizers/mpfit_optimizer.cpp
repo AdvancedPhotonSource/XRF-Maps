@@ -359,11 +359,12 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
                                     const Range energy_range,
+                                    const ArrayXr* background,
 									Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
 
-    fill_gen_user_data(ud, fit_params, spectra, energy_range, gen_func);
+    fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
     
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
