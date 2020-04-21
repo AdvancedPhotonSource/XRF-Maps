@@ -192,7 +192,7 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 		return false;
 	}
 
-    if (io::file::load_element_info_from_csv(element_csv_filename) == false)
+    if (io::file::csv::load_element_info(element_csv_filename) == false)
 	{
 		logE << "Could not load " << element_csv_filename << "\n";
 		return false;
@@ -226,7 +226,6 @@ void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<stri
 
 void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
 {
-    io::file::CSV_IO csv_io;
     std::string full_path = file_and_fit_params->dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
     logI<<full_path<<"\n";
 
@@ -272,7 +271,7 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
 #endif
 
-    csv_io.save_fit_parameters(full_path, ev, spec, model_spectra, background );
+    io::file::csv::save_fit_and_int_spectra(full_path, ev, spec, model_spectra, background);
 
     for(auto &itr : file_and_fit_params->elements_to_fit)
     {

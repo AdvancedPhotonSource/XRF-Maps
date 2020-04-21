@@ -60,6 +60,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_struct/element_info.h"
 
+#include "csv_io.h"
+
 #define HDF5_SAVE_VERSION 10.0
 
 #define HDF5_EXCHANGE_VERSION 1.0
@@ -7227,6 +7229,103 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
 }
 
 //-----------------------------------------------------------------------------
+
+void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    logI << dataset_file << "\n";
+
+    hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+
+    std::string exchange_fits[4] = { "Fitted", "ROI", "NNLS"};
+
+    if (file_id > 0)
+    {
+        ArrayXr energy_array;
+        ArrayXr int_spectra;
+        ArrayXr model_spectra;
+        ArrayXr background_array;
+        std::string csv_path;
+
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        hid_t dset_id, dataspace_id;
+        hsize_t dims_in[1] = { 0 };
+
+        if (_open_h5_object(dset_id, H5O_DATASET, close_map, "/MAPS/Spectra/Integrated_Spectra/Spectra", file_id))
+        {
+            dataspace_id = H5Dget_space(dset_id);
+            close_map.push({ dataspace_id, H5O_DATASPACE });
+
+            int rank = H5Sget_simple_extent_ndims(dataspace_id);
+            if (rank == 1)
+            {
+                int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], nullptr);
+                if (status_n > -1)
+                {
+                    int_spectra.resize(dims_in[0]);
+                    background_array.resize(dims_in[0]);
+                    H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, int_spectra.data());
+                }
+            }
+        }
+
+        if (_open_h5_object(dset_id, H5O_DATASET, close_map, "/MAPS/Spectra/Energy", file_id))
+        {
+            if (dims_in[0] > 0)
+            {
+                dataspace_id = H5Dget_space(dset_id);
+                close_map.push({ dataspace_id, H5O_DATASPACE });
+                energy_array.resize(dims_in[0]);
+                H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, energy_array.data());
+            }
+        }
+
+        for (const auto& fit_itr : exchange_fits)
+        {
+
+            int s_idx = dataset_file.find("img.dat");
+            if (s_idx > 0)
+            {
+                csv_path = dataset_file.substr(0, s_idx);
+                csv_path += "output";
+                csv_path += DIR_END_CHAR;
+                csv_path += dataset_file.substr(s_idx+8);
+            }
+            else
+            {
+                csv_path = dataset_file;
+            }
+            csv_path += "_";
+            csv_path += fit_itr;
+            csv_path += ".csv";
+
+            std::string h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Spectra";
+            if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
+            {
+                if (dims_in[0] > 0)
+                {
+                    model_spectra.resize(dims_in[0]);
+                    dataspace_id = H5Dget_space(dset_id);
+                    close_map.push({ dataspace_id, H5O_DATASPACE });
+                    H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, model_spectra.data());
+                    csv::save_fit_and_int_spectra(csv_path, energy_array, int_spectra, model_spectra, background_array);
+                }
+            }
+            
+        }
+        _close_h5_objects(close_map);
+    }
+
+
+    hid_t saved_file_id = _cur_file_id;
+    _cur_file_id = file_id;
+    end_save_seq();
+    logI << "closing file" << "\n";
+    _cur_file_id = saved_file_id;
+}
 
 } //end namespace file
 }// end namespace io

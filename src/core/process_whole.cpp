@@ -1013,6 +1013,12 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                 io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
             }
 
+            //add exchange
+            if (analysis_job.export_int_fitted_to_csv)
+            {
+                io::file::HDF5_IO::inst()->export_int_fitted_to_csv(hdf5_dataset_name);
+            }
+
             //update theta based on new PV
             if (analysis_job.update_theta_str.length() > 0)
             {

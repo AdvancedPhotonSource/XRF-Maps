@@ -325,33 +325,7 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
-
-/*
-    //escape
-    //if (np.sum(np.abs(pall[keywords.added_params[1:4]])) >= 0.0)
-    {
-        // si escape
-        if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
-        //if (pall[keywords.added_params[1]] > 0.0)
-        {
-            real_t escape_E = (real_t)1.73998;
-            for (size_t i=0; i<ev.size(); i++)
-            {
-                if( ev[i] > (escape_E+ev[0]) )
-                {
-                    escape_factor = pall[keywords.added_params[1]] + pall[keywords.added_params[3]] * ev;
-
-                    for ( int ii=0; ii<len(wo[0]); ii++ )
-                    {
-                        fit_counts.escape[ii] = counts[wo[0][ii]] * std::max(np.append(escape_factor[wo[0][ii]], 0.0));
-                    }
-                }
-            }
-        }
-        *(agr_spectra.buffer()) += fit_counts.escape;
-    }
-
-*/
+ //   agr_spectra += escape_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
     return agr_spectra;
 }
@@ -590,6 +564,37 @@ const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, co
 }
 
 // ----------------------------------------------------------------------------
+
+const ArrayXr Gaussian_Model::escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t  gain) const
+{
+    ArrayXr counts(ev.size());
+    counts.setZero();
+    /*
+    //escape
+    //if (np.sum(np.abs(pall[keywords.added_params[1:4]])) >= 0.0)
+    {
+        // si escape
+        if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
+            //if (pall[keywords.added_params[1]] > 0.0)
+        {
+            real_t escape_E = (real_t)1.73998;
+            for (size_t i = 0; i < ev.size(); i++)
+            {
+                if (ev[i] > (escape_E + ev[0]))
+                {
+                    escape_factor = pall[keywords.added_params[1]] + pall[keywords.added_params[3]] * ev;
+
+                    for (int ii = 0; ii < len(wo[0]); ii++)
+                    {
+                        fit_counts.escape[ii] = counts[wo[0][ii]] * std::max(np.append(escape_factor[wo[0][ii]], 0.0));
+                    }
+                }
+            }
+        }
+    }
+    */
+    return counts;
+}
 
 } //namespace models
 } //namespace fitting

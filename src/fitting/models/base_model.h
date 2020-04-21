@@ -125,6 +125,8 @@ public:
 
     virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const = 0;
 
+    virtual const ArrayXr escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t gain) const = 0;
+
     virtual void reset_to_default_fit_params() = 0;
 
     virtual void update_fit_params_values(Fit_Parameters *fit_params) = 0;

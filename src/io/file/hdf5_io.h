@@ -211,6 +211,9 @@ public:
     //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
     void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
     
+    //export integrated spec, fitted, background into csv
+    void export_int_fitted_to_csv(std::string dataset_file);
+
     bool end_save_seq(bool loginfo=true);
 
 private:

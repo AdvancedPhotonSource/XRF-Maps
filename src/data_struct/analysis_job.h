@@ -199,6 +199,8 @@ public:
 
     bool stream_over_network;
 
+    bool export_int_fitted_to_csv;
+
 	long long mem_limit;
 
 protected:

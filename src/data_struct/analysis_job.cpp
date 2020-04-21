@@ -69,6 +69,7 @@ Analysis_Job::Analysis_Job()
     is_network_source = false;
     stream_over_network = false;
     update_scalers = false;
+    export_int_fitted_to_csv = false;
     command_line = "";
     theta_pv = "";
     network_source_ip = "";

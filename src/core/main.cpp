@@ -62,6 +62,7 @@ void help()
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
+    logit_s<< "--export-csv : Export Integrated spec, fitted, background to csv file.\n";
 	logit_s<< "--update-theta : <theta_pv_string> Update the theta dataset value using theta_pv_string as new pv string ref.\n";
     logit_s<< "--update-scalers : If scalers pv's have been changed in maps_fit_parameters_override.txt file, you can run this to just update scaler values without refitting.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
@@ -267,6 +268,12 @@ int main(int argc, char *argv[])
         analysis_job.add_exchange_layout = true;
     }
 
+    if (clp.option_exists("--export-csv"))
+    {
+        analysis_job.export_int_fitted_to_csv = true;
+    }
+    
+
     if( clp.option_exists("--streamin"))
     {
         analysis_job.is_network_source = true;
@@ -349,7 +356,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-    bool update_h5_without_fitting = analysis_job.generate_average_h5 || analysis_job.add_v9_layout || analysis_job.add_exchange_layout || analysis_job.update_theta_str.length() == 0 || analysis_job.update_scalers;
+    bool update_h5_without_fitting = analysis_job.generate_average_h5 || analysis_job.add_v9_layout || analysis_job.add_exchange_layout || analysis_job.update_theta_str.length() == 0 || analysis_job.update_scalers || analysis_job.export_int_fitted_to_csv;
     bool update_h5_fit = analysis_job.fitting_routines.size() > 0 || optimize_fit_override_params || analysis_job.stream_over_network || update_h5_without_fitting;
 
     //Check to make sure we have something to do. If not then show the help screen
