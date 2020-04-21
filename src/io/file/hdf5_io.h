@@ -165,6 +165,7 @@ public:
     bool save_fitted_int_spectra(const std::string path,
                                  const data_struct::Spectra& spectra,
                                  const data_struct::Range& range,
+                                 const data_struct::Spectra& background,
 								 const size_t save_spectra_size);
 	
 	bool save_max_10_spectra(const std::string path,

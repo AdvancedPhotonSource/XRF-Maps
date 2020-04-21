@@ -102,6 +102,7 @@ namespace optimizers
                             Fit_Parameters *fit_params,
                             const Spectra * const spectra,
                             const Range energy_range,
+                            const ArrayXr* background,
                             Gen_Func_Def gen_func)
 	{
 		ud.func = gen_func;
@@ -118,10 +119,10 @@ namespace optimizers
 		weights = Eigen::abs(weights);
 		weights /= weights.maxCoeff();
 		ud.weights = weights.segment(energy_range.min, energy_range.count());
-
+        /*
         ArrayXr background(spectra->size());
         background.setZero(spectra->size());
-
+        
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
             real_t spectral_binning = 0.0;
@@ -134,9 +135,10 @@ namespace optimizers
                                          energy_range.min,
                                          energy_range.max);
         }
-
-		ud.spectra_background = background.segment(energy_range.min, energy_range.count());
+        */
+		ud.spectra_background = background->segment(energy_range.min, energy_range.count());
         ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+        
 		ud.spectra_model.resize(energy_range.count());
 	}
 

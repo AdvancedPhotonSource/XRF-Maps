@@ -420,6 +420,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
             io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),
 																matrix_fit->fitted_integrated_spectra(),
 																matrix_fit->energy_range(),
+                                                                matrix_fit->fitted_integrated_background(),
 																(*spectra_volume)[0][0].size());
         }
 		if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)

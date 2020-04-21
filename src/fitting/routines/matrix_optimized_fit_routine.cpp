@@ -214,6 +214,7 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
     {
         std::lock_guard<std::mutex> lock(_int_spec_mutex);
         _integrated_fitted_spectra.setZero(energy_range.count());
+        _integrated_background.setZero(energy_range.count());
     }
 
 }
@@ -235,9 +236,27 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
     if(_optimizer != nullptr)
     {
+        //todo : snip background here and pass to optimizer, then add to integrated background to save in h5
+        
+        ArrayXr background(spectra->size());
+        background.setZero(spectra->size());
+        
+        if(fit_params.contains(STR_SNIP_WIDTH))
+        {
+            real_t spectral_binning = 0.0;
+            background = snip_background(spectra,
+                                         fit_params.value(STR_ENERGY_OFFSET),
+                                         fit_params.value(STR_ENERGY_SLOPE),
+                                         fit_params.value(STR_ENERGY_QUADRATIC),
+                                         spectral_binning,
+                                         fit_params.value(STR_SNIP_WIDTH),
+                                         _energy_range.min,
+                                         _energy_range.max);
+        }
+
         //Spectra sub_spectra = spectra->sub_spectra(_energy_range);
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-        _optimizer->minimize_func(&fit_params, spectra, _energy_range, gen_func);
+        _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
@@ -274,6 +293,7 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);
             _integrated_fitted_spectra.add(model);
+            _integrated_background.add(background);
 
 			//we don't know the spectra size during initlaize() will have to resize here
 			if (_max_channels_spectra.size() < spectra->size())

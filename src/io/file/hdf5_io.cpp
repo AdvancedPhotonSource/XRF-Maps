@@ -3352,6 +3352,7 @@ bool HDF5_IO::save_element_fits(std::string path,
 bool HDF5_IO::save_fitted_int_spectra(const std::string path,
                                      const data_struct::Spectra& spectra,
                                      const data_struct::Range& spectra_range,
+                                     const data_struct::Spectra& background,
 									 const size_t save_spectra_size)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -3367,14 +3368,19 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
     std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
+    std::string background_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Background";
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
     count[0] = save_spectra_size;
     dataspace_id = H5Screate_simple(1, count, nullptr);
 
+    // resize to the size of collected spectra
     data_struct::ArrayXr save_spectra;
     save_spectra.setZero(save_spectra_size);
+    data_struct::ArrayXr save_background;
+    save_background.setZero(save_spectra_size);
+
     int j = 0;
     for(int i= spectra_range.min; i <= spectra_range.max; i++)
     {
@@ -3382,9 +3388,14 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
         {
             save_spectra[i] = spectra[j];
         }
+        if (std::isfinite(background[j]))
+        {
+            save_background[i] = background[j];
+        }
         j++;
     }
 
+    // save spectra
     dset_id = H5Dopen (_cur_file_id, dset_name.c_str(), H5P_DEFAULT);
     if(dset_id < 0)
     {
@@ -3401,6 +3412,29 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
         if (status < 0)
         {
             logW<<"Failed to save "<< dset_name <<"\n";
+            ret_val = false;
+        }
+
+        H5Dclose(dset_id);
+    }
+
+    // save background
+    dset_id = H5Dopen(_cur_file_id, background_name.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dset_id = H5Dcreate2(_cur_file_id, background_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (dset_id < 0)
+    {
+        logE << "creating dataset " << background_name << "\n";
+        ret_val = false;
+    }
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)save_background.data());
+        if (status < 0)
+        {
+            logW << "Failed to save " << background_name << "\n";
             ret_val = false;
         }
 
@@ -7266,7 +7300,6 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
                 if (status_n > -1)
                 {
                     int_spectra.resize(dims_in[0]);
-                    background_array.resize(dims_in[0]);
                     H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, int_spectra.data());
                 }
             }
@@ -7302,7 +7335,19 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
             csv_path += fit_itr;
             csv_path += ".csv";
 
-            std::string h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Spectra";
+            std::string h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Background";
+            if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
+            {
+                if (dims_in[0] > 0)
+                {
+                    background_array.resize(dims_in[0]);
+                    dataspace_id = H5Dget_space(dset_id);
+                    close_map.push({ dataspace_id, H5O_DATASPACE });
+                    H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, background_array.data());
+                }
+            }
+
+            h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Spectra";
             if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
             {
                 if (dims_in[0] > 0)
@@ -7314,7 +7359,6 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
                     csv::save_fit_and_int_spectra(csv_path, energy_array, int_spectra, model_spectra, background_array);
                 }
             }
-            
         }
         _close_h5_objects(close_map);
     }

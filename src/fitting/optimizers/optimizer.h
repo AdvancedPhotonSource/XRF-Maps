@@ -119,6 +119,7 @@ void fill_gen_user_data(Gen_User_Data &ud,
                         Fit_Parameters *fit_params,
                         const Spectra * const spectra,
                         const Range energy_range,
+                        const ArrayXr* background,
                         Gen_Func_Def gen_func);
 
 void update_background_user_data(User_Data *ud);
@@ -142,6 +143,7 @@ public:
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Range energy_range,
+                               const ArrayXr* background,
                                Gen_Func_Def gen_func) = 0;
 
 

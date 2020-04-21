@@ -89,6 +89,8 @@ public:
 
     const Spectra& fitted_integrated_spectra() {return _integrated_fitted_spectra;}
 
+    const Spectra& fitted_integrated_background() { return _integrated_background; }
+
 	const Spectra& max_integrated_spectra() { return _max_channels_spectra; }
 
 	const Spectra& max_10_integrated_spectra() { return _max_10_channels_spectra; }
@@ -100,6 +102,7 @@ protected:
                                                             struct Range energy_range);
 
 	data_struct::Spectra _integrated_fitted_spectra;
+    data_struct::Spectra _integrated_background;
 	data_struct::Spectra _max_channels_spectra;
 	data_struct::Spectra _max_10_channels_spectra;
 
