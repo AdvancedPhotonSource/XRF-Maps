@@ -114,7 +114,7 @@ public:
 
     virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
 
-    virtual const ArrayXr Gaussian_Model::escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t  gain) const;
+    virtual const ArrayXr escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t  gain) const;
 
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 
