@@ -106,8 +106,6 @@ protected:
 	data_struct::Spectra _max_channels_spectra;
 	data_struct::Spectra _max_10_channels_spectra;
 
-private:
-
     unordered_map<string, Spectra> _element_models;
 
     static std::mutex _int_spec_mutex;

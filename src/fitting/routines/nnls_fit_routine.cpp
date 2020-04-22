@@ -56,12 +56,10 @@ namespace fitting
 namespace routines
 {
 
-std::mutex NNLS_Fit_Routine::_int_spec_mutex;
-
 NNLS_Fit_Routine::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 {
 
-    _max_iter = 100;
+    _max_iter = 200;
 
 }
 
@@ -83,15 +81,15 @@ NNLS_Fit_Routine::~NNLS_Fit_Routine()
 
 // ----------------------------------------------------------------------------
 
-void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
-                                           const struct Range energy_range)
+//void NNLS_Fit_Routine::_generate_fitmatrix(const unordered_map<string, Spectra> * const element_models, const struct Range energy_range)
+void NNLS_Fit_Routine::_generate_fitmatrix()
 {
 
     _element_row_index.clear();
-    _fitmatrix.resize(energy_range.count(), element_models->size());
+    _fitmatrix.resize(_energy_range.count(), _element_models.size());
 
     int i = 0;
-    for(const auto& itr : *element_models)
+    for(const auto& itr : _element_models)
     {
         //Spectra element_model = itr.second;
         for (int j=0; j<itr.second.size(); j++)
@@ -158,16 +156,8 @@ void NNLS_Fit_Routine::initialize(models::Base_Model * const model,
                                   const Fit_Element_Map_Dict * const elements_to_fit,
                                   const struct Range energy_range)
 {
-
-    _energy_range = energy_range;
-    unordered_map<string, Spectra> element_models = _generate_element_models(model, elements_to_fit, energy_range);
-
-    _generate_fitmatrix(&element_models, energy_range);
-
-	{
-		std::lock_guard<std::mutex> lock(_int_spec_mutex);
-		_integrated_fitted_spectra.setZero(energy_range.count());
-	}
+    Matrix_Optimized_Fit_Routine::initialize(model, elements_to_fit, energy_range);
+    _generate_fitmatrix();
 }
 
 // ----------------------------------------------------------------------------
