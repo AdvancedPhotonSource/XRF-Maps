@@ -289,6 +289,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         
         model = (ArrayXr)model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 
+        background = background.segment(_energy_range.min, _energy_range.count());
+
 		//lock and integrate results
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);

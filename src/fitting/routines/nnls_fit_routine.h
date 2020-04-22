@@ -83,14 +83,11 @@ public:
 
 protected:
 
-    void _generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
-                             const struct Range energy_range);
+    void _generate_fitmatrix();
 
 private:
 
     size_t _max_iter;
-
-	static std::mutex _int_spec_mutex;
 
     Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
 
