@@ -273,7 +273,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                 break;
             }
 
-            par[fit.opt_array_index].step = 0;      // Step size for finite difference
+            par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
             par[fit.opt_array_index].parname = 0;
             par[fit.opt_array_index].relstep = 0;   // Relative step size for finite difference
             par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative
