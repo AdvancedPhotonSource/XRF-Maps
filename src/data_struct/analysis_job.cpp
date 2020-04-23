@@ -59,7 +59,7 @@ Analysis_Job::Analysis_Job()
     _optimizer = &_lmfit_optimizer;
     _last_init_sample_size = 0;
 	_first_init = true;
-    num_threads = std::thread::hardware_concurrency();;
+    num_threads = std::thread::hardware_concurrency();
     //default mode for which parameters to fit when optimizing fit parameters
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
     quick_and_dirty = false;

@@ -132,10 +132,9 @@ void Fit_Parameters::sum_values(Fit_Parameters fit_params)
 {
     for(const auto &itr : _params)
     {
-        if(fit_params.contains(itr.first))
+        if(fit_params.contains(itr.first) && itr.second.bound_type > E_Bound_Type::FIXED)
         {
             _params[itr.first].value += fit_params[itr.first].value;
-
         }
     }
 }
