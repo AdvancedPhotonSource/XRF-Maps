@@ -159,7 +159,10 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
     painter.drawPixmap(x, y, w, h, pix);
 
     painter.end();
-    pix.save(QString(path.c_str()), "png");
+    if (false == pix.save(QString(path.c_str()), "png"))
+    {
+        logE << "Failed to save " << path << "\n";
+    }
 
 }
 
