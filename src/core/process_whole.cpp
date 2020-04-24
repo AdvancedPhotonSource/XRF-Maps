@@ -166,67 +166,54 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
- struct io::file_name_fit_params* optimize_integrated_fit_params(std::string dataset_directory,
-                                                                std::string  dataset_filename,
-                                                                size_t detector_num,
-                                                                fitting::models::Fit_Params_Preset optimize_fit_params_preset,
-                                                                fitting::optimizers::Optimizer *optimizer)
+bool optimize_integrated_fit_params(std::string dataset_directory,
+                                    std::string  dataset_filename,
+                                    size_t detector_num,
+                                    data_struct::Params_Override* params_override,
+                                    fitting::models::Fit_Params_Preset optimize_fit_params_preset,
+                                    fitting::optimizers::Optimizer* optimizer,
+                                    data_struct::Spectra* out_spectra)
 {
-
-    //return structure
-    struct io::file_name_fit_params* ret_struct = new struct::io::file_name_fit_params();
-
-    ret_struct->dataset_dir = dataset_directory;
-    ret_struct->dataset_filename = dataset_filename;
-    ret_struct->detector_num = detector_num;
-
     fitting::models::Gaussian_Model model;
+    bool ret_val = false;
 
-    data_struct::Params_Override params_override;
-
-    //load override parameters
-    if(false == io::load_override_params(dataset_directory, detector_num, &params_override) )
+    if (params_override != nullptr)
     {
-        if(false == io::load_override_params(dataset_directory, -1, &params_override))
+        //load the quantification standard dataset
+        if (false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, detector_num, out_spectra, params_override))
         {
-            logE<<"Loading maps_fit_parameters_override.txt"<<dataset_filename<<" for detector"<<detector_num<<"\n";
-            ret_struct->success = false;
-            return ret_struct;
+            logE << "In optimize_integrated_dataset loading dataset" << dataset_filename << " for detector" << detector_num << "\n";
+            return false;
         }
+        if (out_spectra == nullptr)
+        {
+            return false;
+        }
+
+        //Range of energy in spectra to fit
+        fitting::models::Range energy_range = data_struct::get_energy_range(out_spectra->size(), &(params_override->fit_params));
+
+        //Fitting routines
+        fitting::routines::Param_Optimized_Fit_Routine fit_routine;
+        fit_routine.set_optimizer(optimizer);
+
+        //reset model fit parameters to defaults
+        model.reset_to_default_fit_params();
+        //Update fit parameters by override values
+        model.update_fit_params_values(&(params_override->fit_params));
+        //set fixed/fit preset
+        model.set_fit_params_preset(optimize_fit_params_preset);
+
+        //Initialize the fit routine
+        fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
+        //Fit the spectra saving the element counts in element_fit_count_dict
+        data_struct::Fit_Parameters fitp = fit_routine.fit_spectra_parameters(&model, out_spectra, &params_override->elements_to_fit);
+        params_override->fit_params.append_and_update(&fitp);
+
+        ret_val = true;
     }
-
-    ret_struct->elements_to_fit = params_override.elements_to_fit;
-
-    //load the quantification standard dataset
-    if(false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, detector_num, &ret_struct->spectra, &params_override) )
-    {
-        logE<<"In optimize_integrated_dataset loading dataset"<<dataset_filename<<" for detector"<<detector_num<<"\n";
-        ret_struct->success = false;
-        return ret_struct;
-    }
-
-    //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(ret_struct->spectra.size(), &(params_override.fit_params));
-
-    //Fitting routines
-    fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-    fit_routine.set_optimizer(optimizer);
-
-    //reset model fit parameters to defaults
-    model.reset_to_default_fit_params();
-    //Update fit parameters by override values
-    model.update_fit_params_values(&(params_override.fit_params));
-    //set fixed/fit preset
-    model.set_fit_params_preset(optimize_fit_params_preset);
     
-    //Initialize the fit routine
-    fit_routine.initialize(&model, &ret_struct->elements_to_fit, energy_range);
-    //Fit the spectra saving the element counts in element_fit_count_dict
-    ret_struct->fit_params = fit_routine.fit_spectra_parameters(&model, &ret_struct->spectra, &ret_struct->elements_to_fit);
-
-    ret_struct->success = true;
-
-    return ret_struct;
+    return ret_val;
 
 }
 
@@ -235,31 +222,68 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 {
     std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
+    std::unordered_map<int, data_struct::Params_Override*> params;
+    data_struct::Params_Override* params_override = nullptr;
+    data_struct::Spectra int_spectra;
+
     int file_cnt = 0;
     for(auto &itr : analysis_job->optimize_dataset_files)
     {
         file_cnt += 1.0;
         for(size_t detector_num : analysis_job->detector_num_arr)
         {
-            struct io::file_name_fit_params* f_struct = optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, analysis_job->optimize_fit_params_preset, analysis_job->optimizer());
-            if(f_struct->success)
+            //reuse previous param override if it exists
+            if (params.count(detector_num) > 0)
             {
-                if (fit_params_avgs.count(f_struct->detector_num) > 0)
+                params_override = params[detector_num];
+            }
+            else
+            {
+                params_override = new data_struct::Params_Override();
+                //load override parameters
+                if (false == io::load_override_params(analysis_job->dataset_directory, detector_num, params_override))
                 {
-                    fit_params_avgs[f_struct->detector_num].sum_values(f_struct->fit_params);
+                    if (false == io::load_override_params(analysis_job->dataset_directory, -1, params_override))
+                    {
+                        logE << "Loading maps_fit_parameters_override.txt\n";
+                        delete params_override;
+                        params_override = nullptr;
+                        continue;
+                    }
+                }
+                if (params_override != nullptr)
+                {
+                    params[detector_num] = params_override;
+                }
+            }
+
+            if(optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), &int_spectra))
+            {
+                if (fit_params_avgs.count(detector_num) > 0)
+                {
+                    fit_params_avgs[detector_num].sum_values(params_override->fit_params);
                 }
                 else
                 {
-                    fit_params_avgs[f_struct->detector_num] = f_struct->fit_params;
+                    fit_params_avgs[detector_num] = params_override->fit_params;
                 }
-                io::save_optimized_fit_params(f_struct);
+                io::save_optimized_fit_params(analysis_job->dataset_directory, itr, detector_num, &(params_override->fit_params), &int_spectra, &(params_override->elements_to_fit));
             }
-            delete f_struct;
         }
     }
     for(size_t detector_num : analysis_job->detector_num_arr)
     {
         fit_params_avgs[detector_num].divide_fit_values_by(file_cnt);
+
+        if (params.count(detector_num) > 0)
+        {
+            params_override = params[detector_num];
+            if (params_override != nullptr)
+            {
+                delete params_override;
+            }
+            params.erase(detector_num);
+        }
     }
 
     io::save_averaged_fit_params(analysis_job->dataset_directory, fit_params_avgs, analysis_job->detector_num_arr);
@@ -655,7 +679,6 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
 
 bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 {
-    io::file::MCA_IO mca_io;
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -739,10 +762,10 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                    quantification_standard->standard_filename[fn_str_len - 1] == 'a')
                 {
                     //try with adding detector_num on the end for 2ide datasets
-                    if(false == mca_io.load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map) )
+                    if(false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map) )
                     {
                         //try without detector number on end 2idd
-                        if(false == mca_io.load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map) )
+                        if(false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map) )
                         {
 
                             //legacy code would load mca files, check for mca and replace with mda

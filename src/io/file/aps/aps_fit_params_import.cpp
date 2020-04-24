@@ -75,7 +75,7 @@ const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
     {"CAL_SLOPE_[E_LINEAR]_MIN", STR_ENERGY_SLOPE},
     {"CAL_QUAD_[E_QUADRATIC]", STR_ENERGY_QUADRATIC},
     {"CAL_QUAD_[E_QUADRATIC]_MAX", STR_ENERGY_QUADRATIC},
-    {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC},
+ //   {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC}, //ignore quadratic min because we don't want it to be negative
     {"FWHM_OFFSET", STR_FWHM_OFFSET},
     {"FWHM_FANOPRIME", STR_FWHM_FANOPRIME},
     {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
@@ -151,25 +151,9 @@ const std::vector<std::string> Updatable_detector_dependand_TAGS = {
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-APS_Fit_Params_Import::APS_Fit_Params_Import()
-{
-
-
-}
-
 //-----------------------------------------------------------------------------
 
-APS_Fit_Params_Import::~APS_Fit_Params_Import()
-{
-
-
-}
-
-//-----------------------------------------------------------------------------
-
-bool APS_Fit_Params_Import::load(std::string path,
-                                 Params_Override *params_override)
+bool load_parameters_override(std::string path, Params_Override *params_override)
 {
 
     data_struct::Element_Info_Map *element_info_map = data_struct::Element_Info_Map::inst();
@@ -239,7 +223,7 @@ bool APS_Fit_Params_Import::load(std::string path,
                         std::string efull_name2;
 
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        logI<<"Element with pileup : "<<element_symb<<"\n";
+                        //logI<<"Element with pileup : "<<element_symb<<"\n";
                         std::string orig_el_symb = element_symb;
 
                         std::vector<std::string> string_list;
@@ -811,8 +795,7 @@ bool APS_Fit_Params_Import::load(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool APS_Fit_Params_Import::save(std::string path,
-                                 Params_Override *params_override)
+bool save_parameters_override(std::string path, Params_Override *params_override)
 {
 
     /*
@@ -1020,9 +1003,7 @@ bool APS_Fit_Params_Import::save(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool APS_Fit_Params_Import::save(std::string path,
-                                 Fit_Parameters fit_params,
-                                 int detector_num)
+bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num)
 {
 
     std::ifstream in_stream(path);

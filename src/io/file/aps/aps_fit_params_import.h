@@ -68,28 +68,11 @@ namespace aps
 	#define str_to_real std::stof
 #endif
 
-class DLL_EXPORT APS_Fit_Params_Import
-{
-public:
+DLL_EXPORT bool load_parameters_override(std::string path, Params_Override *params_override);
 
-    APS_Fit_Params_Import();
+DLL_EXPORT bool save_parameters_override(std::string path, Params_Override *params_override);
 
-    ~APS_Fit_Params_Import();
-
-    bool load(std::string path,
-              data_struct::Params_Override *params_override);
-
-    bool save(std::string path,
-              Params_Override *params_override);
-
-    bool save(std::string path,
-              data_struct::Fit_Parameters fit_params,
-              int detector_num);
-
-private:
-
-
-};
+DLL_EXPORT bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num);
 
 }// end namespace aps
 }// end namespace file

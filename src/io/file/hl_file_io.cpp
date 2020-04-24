@@ -131,10 +131,16 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
     //initialize models and fit routines for all detectors
     for(size_t detector_num : analysis_job->detector_num_arr)
     {
-        analysis_job->detectors_meta_data[detector_num] = data_struct::Detector();
+        if (analysis_job->detectors_meta_data.count(detector_num) < 1)
+        {
+            analysis_job->detectors_meta_data[detector_num] = data_struct::Detector();
+        }
         data_struct::Detector *detector = &analysis_job->detectors_meta_data[detector_num];
 
-        detector->model = new fitting::models::Gaussian_Model();
+        if (detector->model == nullptr)
+        {
+            detector->model = new fitting::models::Gaussian_Model();
+        }
         data_struct::Params_Override * override_params = &(detector->fit_params_override_dict);
 
         override_params->dataset_directory = analysis_job->dataset_directory;
@@ -224,37 +230,50 @@ void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<stri
 
 // ----------------------------------------------------------------------------
 
-void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
+void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
 {
-    std::string full_path = file_and_fit_params->dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +file_and_fit_params->dataset_filename+std::to_string(file_and_fit_params->detector_num)+".csv";
+    std::string full_path = dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +dataset_filename+std::to_string(detector_num)+".csv";
     logI<<full_path<<"\n";
+
+    if (fit_params == nullptr)
+    {
+        logE << "Fit Parameters == nullptr. Can not save!\n";
+    }
+
+    if (spectra == nullptr)
+    {
+        logE << "int Spectra == nullptr. Can not save!\n";
+    }
+
+    if (elements_to_fit == nullptr)
+    {
+        logE << "Elements to Fit == nullptr. Can not save!\n";
+    }
 
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(file_and_fit_params->spectra.size(), &(file_and_fit_params->fit_params));
-    //fitting::models::Range energy_range = fitting::models::Range(0.0, file_and_fit_params->spectra.size()-1);
+    fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
+    *spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
-    data_struct::Spectra model_spectra = model.model_spectrum_mp(&file_and_fit_params->fit_params, &file_and_fit_params->elements_to_fit, energy_range);
+    data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
     data_struct::ArrayXr background;
 
-    real_t energy_offset = file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET);
-    real_t energy_slope = file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE);
-    real_t energy_quad = file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC);
+    real_t energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+    real_t energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+    real_t energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
 
     data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
     data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
-
-    ArrayXr spec = file_and_fit_params->spectra.segment(energy_range.min, energy_range.count());
-
-    if (file_and_fit_params->fit_params.contains(STR_SNIP_WIDTH))
+    
+    if (fit_params->contains(STR_SNIP_WIDTH))
 	{
         real_t spectral_binning = 0.0;
-        data_struct::ArrayXr s_background = data_struct::snip_background(&file_and_fit_params->spectra,
-                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_OFFSET),
-                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_SLOPE),
-                                                                        file_and_fit_params->fit_params.value(STR_ENERGY_QUADRATIC),
+        data_struct::ArrayXr s_background = data_struct::snip_background(spectra,
+                                                                        fit_params->value(STR_ENERGY_OFFSET),
+                                                                        fit_params->value(STR_ENERGY_SLOPE),
+                                                                        fit_params->value(STR_ENERGY_QUADRATIC),
                                                                         spectral_binning,
-                                                                        file_and_fit_params->fit_params.value(STR_SNIP_WIDTH),
+                                                                        fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
         background = s_background.segment(energy_range.min, energy_range.count());
@@ -267,28 +286,23 @@ void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params)
     }
 
 #ifdef _BUILD_WITH_QT
-    std::string str_path = file_and_fit_params->dataset_dir+"/output/fit_"+file_and_fit_params->dataset_filename+"_det"+std::to_string(file_and_fit_params->detector_num)+".png";
-    visual::SavePlotSpectras(str_path, &ev, &spec, &model_spectra, &background, true);
+    std::string str_path = dataset_dir+"/output/fit_"+dataset_filename+"_det"+std::to_string(detector_num)+".png";
+    visual::SavePlotSpectras(str_path, &ev, spectra, &model_spectra, &background, true);
 #endif
 
-    io::file::csv::save_fit_and_int_spectra(full_path, ev, spec, model_spectra, background);
+    io::file::csv::save_fit_and_int_spectra(full_path, ev, *spectra, model_spectra, background);
 
-    for(auto &itr : file_and_fit_params->elements_to_fit)
-    {
-        delete itr.second;
-    }
 }
 
 // ----------------------------------------------------------------------------
 
 void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, const std::vector<size_t>& detector_num_arr)
 {
-    io::file::aps::APS_Fit_Params_Import aps_io;
     int i =0;
     std::string full_path = dataset_dir+ DIR_END_CHAR+"maps_fit_parameters_override.txt";
     for(size_t detector_num : detector_num_arr)
     {
-        aps_io.save(full_path, fit_params_avgs[i], detector_num );
+        io::file::aps::save_parameters_override(full_path, fit_params_avgs[i], detector_num );
         i++;
     }
 }
@@ -512,15 +526,11 @@ bool load_override_params(std::string dataset_directory,
                           int detector_num,
                           data_struct::Params_Override *params_override)
 {
-    //Importer for APS datasets
-    io::file::aps::APS_Fit_Params_Import fit_param_importer;
-
     std::string det_num = "";
     if(detector_num > -1)
         det_num = std::to_string(detector_num);
 
-    if(false == fit_param_importer.load(dataset_directory+"maps_fit_parameters_override.txt"+det_num,
-                                        params_override))
+    if(false == io::file::aps::load_parameters_override(dataset_directory+"maps_fit_parameters_override.txt"+det_num, params_override))
     {
         logE<<"Loading fit param override file: "<<dataset_directory+"maps_fit_parameters_override.txt"+det_num<<"\n";
         return false;

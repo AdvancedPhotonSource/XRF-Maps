@@ -63,19 +63,10 @@ namespace io
 {
 namespace file
 {
-
-MCA_IO::MCA_IO()
+namespace mca
 {
 
-}
-
-MCA_IO::~MCA_IO()
-{
-
-}
-
-
-bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map)
+bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map)
 {
     std::ifstream paramFileStream(path);
 
@@ -240,6 +231,6 @@ bool MCA_IO::load_integrated_spectra(std::string path, data_struct::Spectra* spe
 
 }
 
-
+} //end namespace mca
 } //end namespace file
 }// end namespace io

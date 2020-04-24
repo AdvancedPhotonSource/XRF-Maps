@@ -60,29 +60,11 @@ namespace io
 namespace file
 {
 
-class DLL_EXPORT MCA_IO
+namespace mca
 {
-public:
 
-    /**
-     * @brief MCA_IO
-     * @param filename
-     * @return
-     */
-    MCA_IO();
-
-    /**
-     * @brief ~MCA_IO
-     * @return
-     */
-    ~MCA_IO();
-
-    bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map);
-
-private:
-
-
-};
+DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map);
+}// end namespace mca
 
 
 DLL_EXPORT bool load_element_info_from_csv(std::string filename);
