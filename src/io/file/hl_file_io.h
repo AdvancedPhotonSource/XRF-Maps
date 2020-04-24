@@ -99,17 +99,6 @@ struct DLL_EXPORT file_name_size
     long total_rank_size;
 };
 
-struct DLL_EXPORT file_name_fit_params
-{
-    std::string dataset_dir;
-    std::string dataset_filename;
-    int detector_num;
-    data_struct::Fit_Parameters fit_params;
-    data_struct::Spectra spectra;
-    data_struct::Fit_Element_Map_Dict elements_to_fit;
-    bool success;
-};
-
 struct DLL_EXPORT element_weights_struct
 {
     std::string standard_file_name;
@@ -190,7 +179,7 @@ DLL_EXPORT void save_quantification_plots(data_struct::Analysis_Job* analysis_jo
                                           map<string, data_struct::Quantification_Standard*> *standard,
                                           int detector_num);
 
-DLL_EXPORT void save_optimized_fit_params(struct file_name_fit_params* file_and_fit_params);
+DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, data_struct::Fit_Parameters* fit_params, data_struct::Spectra *spectra, data_struct::Fit_Element_Map_Dict *elements_to_fit);
 
 DLL_EXPORT bool save_volume(data_struct::Spectra_Volume *spectra_volume,
                              real_t energy_offset,
