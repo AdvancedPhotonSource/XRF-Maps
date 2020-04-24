@@ -208,7 +208,7 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
         //Fit the spectra saving the element counts in element_fit_count_dict
         data_struct::Fit_Parameters fitp = fit_routine.fit_spectra_parameters(&model, out_spectra, &params_override->elements_to_fit);
-        params_override->fit_params.update_values(&fitp);
+        params_override->fit_params.append_and_update(&fitp);
 
         ret_val = true;
     }
@@ -249,10 +249,6 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
                         delete params_override;
                         params_override = nullptr;
                         continue;
-                    }
-                    if (params_override != nullptr)
-                    {
-                        params[detector_num] = params_override;
                     }
                 }
                 if (params_override != nullptr)

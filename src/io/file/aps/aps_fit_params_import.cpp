@@ -151,25 +151,9 @@ const std::vector<std::string> Updatable_detector_dependand_TAGS = {
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-APS_Fit_Params_Import::APS_Fit_Params_Import()
-{
-
-
-}
-
 //-----------------------------------------------------------------------------
 
-APS_Fit_Params_Import::~APS_Fit_Params_Import()
-{
-
-
-}
-
-//-----------------------------------------------------------------------------
-
-bool APS_Fit_Params_Import::load(std::string path,
-                                 Params_Override *params_override)
+bool load_parameters_override(std::string path, Params_Override *params_override)
 {
 
     data_struct::Element_Info_Map *element_info_map = data_struct::Element_Info_Map::inst();
@@ -811,8 +795,7 @@ bool APS_Fit_Params_Import::load(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool APS_Fit_Params_Import::save(std::string path,
-                                 Params_Override *params_override)
+bool save_parameters_override(std::string path, Params_Override *params_override)
 {
 
     /*
@@ -1020,9 +1003,7 @@ bool APS_Fit_Params_Import::save(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool APS_Fit_Params_Import::save(std::string path,
-                                 Fit_Parameters fit_params,
-                                 int detector_num)
+bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num)
 {
 
     std::ifstream in_stream(path);
