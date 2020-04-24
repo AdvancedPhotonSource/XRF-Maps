@@ -223,7 +223,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                         std::string efull_name2;
 
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        logI<<"Element with pileup : "<<element_symb<<"\n";
+                        //logI<<"Element with pileup : "<<element_symb<<"\n";
                         std::string orig_el_symb = element_symb;
 
                         std::vector<std::string> string_list;

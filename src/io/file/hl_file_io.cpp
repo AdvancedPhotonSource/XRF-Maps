@@ -253,7 +253,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
-    //fitting::models::Range energy_range = fitting::models::Range(0.0, file_and_fit_params->spectra.size()-1);
+    *spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
     data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
     data_struct::ArrayXr background;
