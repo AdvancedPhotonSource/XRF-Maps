@@ -679,7 +679,6 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
 
 bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 {
-    io::file::MCA_IO mca_io;
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -763,10 +762,10 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                    quantification_standard->standard_filename[fn_str_len - 1] == 'a')
                 {
                     //try with adding detector_num on the end for 2ide datasets
-                    if(false == mca_io.load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map) )
+                    if(false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map) )
                     {
                         //try without detector number on end 2idd
-                        if(false == mca_io.load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map) )
+                        if(false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map) )
                         {
 
                             //legacy code would load mca files, check for mca and replace with mda
