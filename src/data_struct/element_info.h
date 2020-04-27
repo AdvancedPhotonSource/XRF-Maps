@@ -75,6 +75,8 @@ struct DLL_EXPORT Element_Info
 
     real_t calc_beta(real_t density_val, real_t energy);
 
+    real_t get_f2(real_t energy);
+
     int number;
     std::string name;
     real_t density;
@@ -172,16 +174,16 @@ const std::unordered_map<std::string, real_t> Henke_Compound_Density_Map = {
     std::pair<std::string, real_t>{"silicon",     (real_t)2.33},
     std::pair<std::string, real_t>{"germanium",   (real_t)5.323},
 //Formulas
-    std::pair<std::string, real_t>{"H2O",                            (real_t)1.0},
-    std::pair<std::string, real_t>{"H48.6C32.9N8.9O8.9S0.6",         (real_t)1.35},
-    std::pair<std::string, real_t>{"H62.5C31.5O6.3",                 (real_t)1.0},
-    std::pair<std::string, real_t>{"H42.1C31.9N10.3O13.9P1.6S0.3",   (real_t)1.5},
-    std::pair<std::string, real_t>{"H35.5C30.8N11.7O18.9P3.1", (real_t)1.7},
+    std::pair<std::string, real_t>{"H:2,O",                            (real_t)1.0},
+    std::pair<std::string, real_t>{"H:48.6,C:32.9,N:8.9,O:8.9,S:0.6",         (real_t)1.35},
+    std::pair<std::string, real_t>{"H:62.5C31.5O6.3",                 (real_t)1.0},
+    std::pair<std::string, real_t>{"H:42.1C31.9N10.3O13.9P1.6S0.3",   (real_t)1.5},
+    std::pair<std::string, real_t>{"H:35.5C30.8N11.7O18.9P3.1", (real_t)1.7},
     std::pair<std::string, real_t>{"He", (real_t)1.66E-04},
-    std::pair<std::string, real_t>{"H49.95C24.64N8.66O15.57P1.07S0.03", (real_t)1.527},
-    std::pair<std::string, real_t>{"N78.08O20.95Ar0.93", (real_t)1.20E-03},
-    std::pair<std::string, real_t>{"C5H8O2", (real_t)1.18},
-    std::pair<std::string, real_t>{"Si3N4", (real_t)3.44},
+    std::pair<std::string, real_t>{"H:49.95,C:24.64,N:8.66,O:15.57,P:1.07,S:0.03", (real_t)1.527},
+    std::pair<std::string, real_t>{"N:78.08,O:20.95,Ar:0.93", (real_t)1.20E-03},
+    std::pair<std::string, real_t>{"C:5,H:8,O:2", (real_t)1.18},
+    std::pair<std::string, real_t>{"Si:3,N:4", (real_t)3.44},
     std::pair<std::string, real_t>{"Ni", (real_t)8.876},
     std::pair<std::string, real_t>{"Be", (real_t)1.845},
     std::pair<std::string, real_t>{"Cu", (real_t)8.96},
@@ -189,7 +191,7 @@ const std::unordered_map<std::string, real_t> Henke_Compound_Density_Map = {
     std::pair<std::string, real_t>{"Al", (real_t)2.7},
     std::pair<std::string, real_t>{"Au", (real_t)19.3},
     std::pair<std::string, real_t>{"C", (real_t)1.0},
-    std::pair<std::string, real_t>{"C8H8", (real_t)1.06},
+    std::pair<std::string, real_t>{"C:8,H:8", (real_t)1.06},
     std::pair<std::string, real_t>{"Si", (real_t)2.33},
     std::pair<std::string, real_t>{"Ge", (real_t)5.323}
 };
