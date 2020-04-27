@@ -195,7 +195,7 @@ void Quantification_Standard::init_element_quants(string proc_type_str,
 void Quantification_Standard::generate_calibration_curve(string proc_type_str, int quant_id, real_t val)
 {
     quantification::models::Quantification_Model quantification_model;
-    quantifier_map.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers(93)) );
+    quantifier_map.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers()) );
     Quantifiers *quantifiers = &quantifier_map.at(proc_type_str);
     vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
     for(auto shell : shells_to_quant)
@@ -208,8 +208,8 @@ void Quantification_Standard::generate_calibration_curve(string proc_type_str, i
                                                                                        detector_chip_thickness,
                                                                                        beryllium_window_thickness,
                                                                                        germanium_dead_layer,
-                                                                                       1,
-                                                                                       92);
+                                                                                       1, // H
+                                                                                       92); // U
 
             quantifiers->calib_curves[quant_id].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
             //change nan's to zeros
