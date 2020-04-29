@@ -1764,7 +1764,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
    hid_t    file_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
-   herr_t   error;
+   herr_t   error = -1;
    std::string detector_path;
    hsize_t offset_row[2] = {0,0};
    hsize_t count_row[2] = {0,0};
@@ -3826,31 +3826,40 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         //data_struct::Quantifiers quantifiers = quantification_standard->quantifier_map.at(path);
         //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
-        q_dims_out[0] = 3;// shells K, L, and M
-        q_dims_out[1] = 93; // elements 1 - 92
-
-        offset[0] = 0;
-        offset[1] = 0;
-        offset[2] = 0;
-
-        count[0] = 1;
-        count[1] = 1;
-        count[2] = 0;
-
-        q_memoryspace_label_id = H5Screate_simple(2, count, nullptr);
-
-        count[0] = 1;
-        count[1] = q_dims_out[1];
-        count[2] = 0;
-
-        q_memoryspace_id = H5Screate_simple(2, count, nullptr);
-        q_filespace_id = H5Screate_simple(2, q_dims_out, nullptr);
-        q_dataspace_label_id = H5Screate_simple (2, q_dims_out, nullptr);
-        q_dataspace_id = H5Screate_simple (2, q_dims_out, nullptr);
-        //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
-
 		if (quantification_standard->element_counts.size() > 0)
 		{
+            int element_cnt = 92; // from element H to U
+            // get the size from the first one
+            for (auto& qitr : quantification_standard->quantifier_map)
+            {
+                int element_cnt = qitr.second.calib_curves.size();
+                break;
+            }
+
+            q_dims_out[0] = 3;// shells K, L, and M
+            q_dims_out[1] = element_cnt; 
+
+            offset[0] = 0;
+            offset[1] = 0;
+            offset[2] = 0;
+
+            count[0] = 1;
+            count[1] = 1;
+            count[2] = 0;
+
+            q_memoryspace_label_id = H5Screate_simple(2, count, nullptr);
+
+            count[0] = 1;
+            count[1] = q_dims_out[1];
+            count[2] = 0;
+
+            q_memoryspace_id = H5Screate_simple(2, count, nullptr);
+            q_filespace_id = H5Screate_simple(2, q_dims_out, nullptr);
+            q_dataspace_label_id = H5Screate_simple(2, q_dims_out, nullptr);
+            q_dataspace_id = H5Screate_simple(2, q_dims_out, nullptr);
+            //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
+
+
 			for (auto& qitr : quantification_standard->quantifier_map)
 			{
 
@@ -6410,6 +6419,8 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 		hid_t chan_units = H5Dopen(file_id, "/MAPS/channel_units", H5P_DEFAULT);
         //share the space between sr_current, us_ic, and ds_ic
         hid_t cc_space = H5Dget_space(cc_current);
+        hid_t us_space = H5Dget_space(cc_us_ic);
+        hid_t ds_space = H5Dget_space(cc_ds_ic);
         
         hsize_t count_1d[1] = {1};
         hsize_t count_2d[2] = {1,1};
@@ -6422,6 +6433,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         char us_ic_carr[255] = "US_IC";
         char ds_ic_carr[255] = "DS_IC";
         real_t real_val = 0.0;
+        hid_t err;
 
         count_1d[0] = 3;
         hid_t quant_name_space = H5Screate_simple(1, count_1d, nullptr);
@@ -6457,64 +6469,75 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 			
             H5Sselect_hyperslab(chan_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
             char tmp_char[256] = {0};
-            H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char);
-            std::string el_name_str = std::string(tmp_char);
-            unsigned long underscore_idx = el_name_str.find("_");
-            //can check if > 0 instead of -1 since it shouldn't start with an '_'
-            if (underscore_idx > 0 && underscore_idx < el_name_str.length())
+            if (H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char) > -1)
             {
-                if(el_name_str[underscore_idx+1] == 'L')
-                    offset_2d[0] = 1;
-                if(el_name_str[underscore_idx+1] == 'M')
-                    offset_2d[0] = 2;
-            }
-            else
-            {
-                offset_2d[0] = 0;
-            }
-            auto element = data_struct::Element_Info_Map::inst()->get_element(el_name_str);
-            if(element != nullptr)
-            {
-                offset_2d[1] = element->number - 1;
-                H5Sselect_hyperslab(cc_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+                std::string el_name_str = std::string(tmp_char);
+                unsigned long underscore_idx = el_name_str.find("_");
+                //can check if > 0 instead of -1 since it shouldn't start with an '_'
+                if (underscore_idx > 0 && underscore_idx < el_name_str.length())
+                {
+                    if(el_name_str[underscore_idx+1] == 'L')
+                        offset_2d[0] = 1;
+                    if(el_name_str[underscore_idx+1] == 'M')
+                        offset_2d[0] = 2;
+                }
+                else
+                {
+                    offset_2d[0] = 0;
+                }
+                auto element = data_struct::Element_Info_Map::inst()->get_element(el_name_str);
+                if (element != nullptr)
+                {
+                    offset_2d[1] = element->number - 1;
+                    H5Sselect_hyperslab(cc_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+                    H5Sselect_hyperslab(us_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+                    H5Sselect_hyperslab(ds_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
 
-                offset_3d[2] = chan_idx;
-                offset_3d[0] = 0;
-                H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                H5Dread(cc_current, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val);
-                H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
-                offset_3d[0] = 1;
-                H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                H5Dread(cc_us_ic, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val);
-                H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
-                offset_3d[0] = 2;
-                H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                H5Dread(cc_ds_ic, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val);
-                H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
-
-                //change /MAPS/channel_units from cts/s to ug/cm2 for the first 3 of 4 in dim[0]
-				if (chan_units > -1)
-				{
-					hid_t unit_type = H5Dget_type(chan_units);
-					hid_t unit_space = H5Dget_space(chan_units);
-					std::string update = "ug/cm2";
-					for (int z = 0; z < 256; z++)
+                    offset_3d[2] = chan_idx;
+                    offset_3d[0] = 0;
+                    real_val = 0.0;
+                    H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                    if (H5Dread(cc_current, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val) > -1)
                     {
-						tmp_char1[z] = 0;
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
                     }
-                    update.copy(tmp_char1, 256);
-                    for(int i=0; i < 3; i++)
+                    offset_3d[0] = 1;
+                    real_val = 0.0;
+                    H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                    if (H5Dread(cc_us_ic, H5T_NATIVE_REAL, memoryspace_id, us_space, H5P_DEFAULT, (void*)&real_val) > -1)
                     {
-                        for(int j=0; j < chan_amt; j++)
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+                    }
+                    offset_3d[0] = 2;
+                    real_val = 0.0;
+                    H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+                    if (H5Dread(cc_ds_ic, H5T_NATIVE_REAL, memoryspace_id, ds_space, H5P_DEFAULT, (void*)&real_val) > -1)
+                    {
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+                    }
+                    //change /MAPS/channel_units from cts/s to ug/cm2 for the first 3 of 4 in dim[0]
+                    if (chan_units > -1)
+                    {
+                        hid_t unit_type = H5Dget_type(chan_units);
+                        hid_t unit_space = H5Dget_space(chan_units);
+                        std::string update = "ug/cm2";
+                        for (int z = 0; z < 256; z++)
                         {
-                            offset_2d[0] = i;
-                            offset_2d[1] = j;
-                            H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
-                            H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+                            tmp_char1[z] = 0;
+                        }
+                        update.copy(tmp_char1, 256);
+                        for (int i = 0; i < 3; i++)
+                        {
+                            for (int j = 0; j < chan_amt; j++)
+                            {
+                                offset_2d[0] = i;
+                                offset_2d[1] = j;
+                                H5Sselect_hyperslab(unit_space, H5S_SELECT_SET, offset_2d, nullptr, count_2d, nullptr);
+                                H5Dwrite(chan_units, unit_type, memoryspace_id, unit_space, H5P_DEFAULT, (void*)tmp_char1);
+                            }
                         }
                     }
-				}
-
+                }
             }
         }
 		if (quant_dset > -1)
@@ -6771,7 +6794,11 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     {
         if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
-            logW  << " Couldn't create soft link for channel_names"<<  "\n";
+            if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logW << " Couldn't create soft link for channel_names, can't save quatification" << "\n";
+                return;
+            }
         }
     }
 

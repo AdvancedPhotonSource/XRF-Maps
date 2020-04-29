@@ -53,6 +53,8 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
+// ----------------------------------------------------------------------------
+
 Element_Info::Element_Info()
 {
 
@@ -174,6 +176,8 @@ Element_Info::Element_Info()
     jump.emplace(std::make_pair("O3", zero));
 }
 
+// ----------------------------------------------------------------------------
+
 Element_Info::~Element_Info()
 {
     xrf.clear();
@@ -189,11 +193,15 @@ Element_Info::~Element_Info()
     extra_f2.clear();
 }
 
+// ----------------------------------------------------------------------------
+
 void Element_Info::init_f_energies(int len)
 {
     f1_atomic_scattering_real.resize(len);
     f2_atomic_scattering_imaginary.resize(len);
 }
+
+// ----------------------------------------------------------------------------
 
 void Element_Info::init_extra_energies(int len)
 {
@@ -201,6 +209,8 @@ void Element_Info::init_extra_energies(int len)
     extra_f1.resize(len);
     extra_f2.resize(len);
 }
+
+// ----------------------------------------------------------------------------
 
 void Element_Info::get_energies_between(real_t energy, real_t* out_low, real_t* out_high, size_t* out_low_idx, size_t* out_high_idx)
 {
@@ -225,6 +235,8 @@ void Element_Info::get_energies_between(real_t energy, real_t* out_low, real_t* 
         }
     }
 }
+
+// ----------------------------------------------------------------------------
 
 real_t Element_Info::calc_beta(real_t density_val, real_t energy)
 {
@@ -283,8 +295,45 @@ real_t Element_Info::calc_beta(real_t density_val, real_t energy)
     return beta;
 }
 
-// -----------------------------Element_Info_Map-------------------------------
+// ----------------------------------------------------------------------------
 
+real_t Element_Info::get_f2(real_t energy)
+{
+    real_t f2 = 0.0;
+    real_t molecules_per_cc = 0.0;
+   
+    size_t low_e_idx = 0, high_e_idx = 0;
+    bool found_indexes = false;
+
+    for (size_t i = 1; i < energies->size(); i++)
+    {
+        if ((*energies)[i] > energy)
+        {
+            low_e_idx = i - 1;
+            high_e_idx = i;
+            found_indexes = true;
+            break;
+        }
+    }
+    if (false == found_indexes)
+    {
+        return f2;
+    }
+
+    real_t ln_lower_energy = std::log((*energies)[low_e_idx]);
+    real_t ln_higher_energy = std::log((*energies)[high_e_idx]);
+    real_t fraction = (std::log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
+
+    real_t ln_f2_lower = std::log(std::abs(f2_atomic_scattering_imaginary[low_e_idx]));
+    real_t ln_f2_higher = std::log(std::abs(f2_atomic_scattering_imaginary[high_e_idx]));
+    f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
+
+    return f2;
+}
+
+// ----------------------------------------------------------------------------
+// -----------------------------Element_Info_Map-------------------------------
+// ----------------------------------------------------------------------------
 Element_Info_Map* Element_Info_Map::_this_inst(0);
 
 Element_Info_Map* Element_Info_Map::inst()
@@ -345,58 +394,66 @@ real_t Element_Info_Map::calc_beta(std::string element_name, real_t density, rea
 real_t Element_Info_Map::calc_compound_beta(std::string compound_name, real_t density, real_t energy)
 {
 
-    return 0;
-    //TODO: finish this function
-//    real_t beta = 0.0;
-//    real_t molecules_per_cc = 0.0;
-//    real_t atwt = //loop through compound and sum it up.
-//    size_t low_e_idx=0, high_e_idx=0;
-//    bool found_indexes = false;
+    //    return 0;
+        //TODO: finish this function
+    real_t beta = 0.0;
+    real_t molecules_per_cc = 0.0;
+    real_t atwt = 0.0;
+    real_t f2 = 0;
+    //"N:78.08,O:20.95,Ar:0.93"
+    int idx = compound_name.find(",");
+    while (idx > -1 || compound_name.length() > 0)
+    {
+        std::string sub_compound;
+        if (idx > -1)
+        {
+            sub_compound = compound_name.substr(0, idx);
+            compound_name = compound_name.substr(idx + 1);
+        }
+        else
+        {
+            sub_compound = compound_name;
+            compound_name = "";
+        }
 
-//    ////z = wo+1
-//    if (atwt != 0.0)
-//    {
-//        molecules_per_cc = density * AVOGADRO / atwt;
-//    }
 
-//    real_t wavelength_angstroms = HC_ANGSTROMS / energy;
-//    // This constant has wavelength in angstroms and then
-//    // they are converted to centimeters.
-//    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
+        int idx2 = sub_compound.find(":");
+        if (idx2 > -1)
+        {
+            std::string el_symb = sub_compound.substr(0, idx2);
+            std::string str_amt = sub_compound.substr(idx2+1);
 
+            Element_Info* element_info = Element_Info_Map::inst()->get_element(el_symb);
+            if (element_info != nullptr)
+            {
+                //beta += element_info->calc_beta(density, energy);
+                
+                real_t amt = std::atof(str_amt.c_str());
+                if (amt > 0 && Element_Weight.count(element_info->number) > 0)
+                {
+                    real_t weight = Element_Weight.at(element_info->number);
+                    atwt += (amt * weight);
+                    f2 += element_info->get_f2(energy);
+                }
+            }
+        }
 
-//    for(size_t i=1; i< _energies.size(); i++)
-//    {
-//        if( _energies[i] > energy)
-//        {
-//            low_e_idx = i - 1;
-//            high_e_idx = i;
-//            found_indexes = true;
-//            break;
-//        }
-//    }
-//    if(false == found_indexes)
-//    {
-//        logW<<"Could not find energy index! Defaulting to 0\n";
-//        return beta;
-//    }
+        idx = compound_name.find(",");
+    }
 
-//    real_t ln_lower_energy = std::log( _energies[low_e_idx] );
-//    real_t ln_higher_energy = std::log( _energies[high_e_idx] );
-//    real_t fraction = (std::log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
+    if (atwt != 0.0)
+    {
+        molecules_per_cc = density * AVOGADRO / atwt;
+    }
 
-//    ////real_t f1_lower = f1_atomic_scattering_real[low_e_idx];
-//    ////real_t f1_higher = f1_atomic_scattering_real[high_e_idx];
-//    ////real_t f1_array = f1_lower + fraction * (f1_higher - f1_lower);
+    real_t wavelength_angstroms = HC_ANGSTROMS / energy;
+    // This constant has wavelength in angstroms and then
+    // they are converted to centimeters.
+    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
 
-//    real_t ln_f2_lower = std::log( std::abs(f2_atomic_scattering_imaginary[low_e_idx]) );
-//    real_t ln_f2_higher = std::log( std::abs(f2_atomic_scattering_imaginary[high_e_idx]) );
-//    real_t f2_array = std::exp( ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower) );
+    beta = constant * f2;
 
-//    ////delta_array = constant * f1_array
-//    beta = constant * f2_array;
-
-//    return beta;
+    return beta;
 }
 
 Element_Info* Element_Info_Map::get_element(int element_number)
