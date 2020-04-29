@@ -934,7 +934,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                     fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
                     Fit_Parameters fit_params;
-                    fit_params.add_parameter(Fit_Param("quantifier", 0.0, 0.0, 1.0, 0.001, E_Bound_Type::FIT));
+                    fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<real_t>::max(), 1.0, 0.1, E_Bound_Type::FIT));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
                     fit_params["quantifier"].value = (real_t)100000.0 / (*quant_itr.second);
                     optimizer->minimize_quantification(&fit_params, &detector_struct->all_element_quants[itr.first][quant_itr.first], &quantification_model);

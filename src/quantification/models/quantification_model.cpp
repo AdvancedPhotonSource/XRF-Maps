@@ -239,7 +239,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
     ////aux_arr[mm, 3] = yieldd
     //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
 
-    if (detector_element->name == "Si" && detector_chip_thickness > 0,0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
+    if (detector_element->name == "Si" && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
         beta  = Element_Info_Map::inst()->calc_beta("Si", (real_t)2.3, ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (real_t)1239.852 / ev);
