@@ -1764,7 +1764,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
    hid_t    file_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
-   herr_t   error;
+   herr_t   error = -1;
    std::string detector_path;
    hsize_t offset_row[2] = {0,0};
    hsize_t count_row[2] = {0,0};

@@ -77,6 +77,7 @@ MDA_IO::MDA_IO()
 {
     _mda_file = nullptr;
     _mda_file_info = nullptr;
+    _hasNetcdf = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -299,27 +300,26 @@ bool MDA_IO::_get_scaler_value( struct mda_file* _mda_file, data_struct::Params_
 bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_Override *override_values)
 {
     std::string units;
-    struct mda_file* mda_file;//TODO  = open_mda(path);
-    if (mda_file == nullptr || override_values == nullptr)
+    if (_mda_file == nullptr || override_values == nullptr)
     {
         return false;
     }
 
     //Look for fly scan pv first then step scan
-    if(false == _get_scaler_value(mda_file, override_values, "SRCURRENT", &override_values->sr_current, true))
+    if(false == _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, true))
     {
-        _get_scaler_value(mda_file, override_values, "SRCURRENT", &override_values->sr_current, false);
+        _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, false);
     }
-    if(false == _get_scaler_value(mda_file, override_values, "US_IC", &override_values->US_IC, true))
+    if(false == _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, true))
     {
-        _get_scaler_value(mda_file, override_values, "US_IC", &override_values->US_IC, false);
+        _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, false);
     }
-    if(false == _get_scaler_value(mda_file, override_values, "DS_IC", &override_values->DS_IC, true))
+    if(false == _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, true))
     {
-        _get_scaler_value(mda_file, override_values, "DS_IC", &override_values->DS_IC, false);
+        _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, false);
     }
 
-    mda_unload(mda_file);
+    mda_unload(_mda_file);
 
     return true;
 }
