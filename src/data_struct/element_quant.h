@@ -68,6 +68,19 @@ struct DLL_EXPORT Element_Quant
         zero();
         weight = weight_;
     }
+    Element_Quant(const Element_Quant& e)
+    {
+        weight = e.weight;
+        absorption = e.absorption;
+        transmission_Be = e.transmission_Be;
+        transmission_Ge = e.transmission_Ge;
+        yield = e.yield;
+        transmission_through_Si_detector = e.transmission_through_Si_detector;
+        transmission_through_air = e.transmission_through_air;
+        e_cal_ratio = e.e_cal_ratio;
+        Z = e.Z;
+        name = e.name;
+    }
     void zero()
     {
         weight = 0.0;
@@ -78,6 +91,8 @@ struct DLL_EXPORT Element_Quant
         transmission_through_Si_detector = 0.0;
         transmission_through_air = 0.0;// (N2)
         e_cal_ratio = 0.0;
+        Z = 0;
+        name = "";
     }
 
     real_t weight;  // in ug/cm2
@@ -87,8 +102,9 @@ struct DLL_EXPORT Element_Quant
     real_t yield;
     real_t transmission_through_Si_detector;
     real_t transmission_through_air;// (N2)
-
+    real_t Z;
     real_t e_cal_ratio;
+    std::string name;
 
 };
 

@@ -477,16 +477,16 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
-    struct mp_par<real_t> *mp_par = nullptr;
-	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
+//    struct mp_par<real_t> *mp_par = nullptr;
+//	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
 
-	/*
+	
 	vector<struct mp_par<real_t> > par;
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
     info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &mp_config, (void *) &ud, &result);
-*/
+
 	_print_info(info);
 
     fit_params->from_array(fitp_arr);

@@ -168,24 +168,21 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 
 // ----------------------------------------------------------------------------
 
-bool contains_shell(quantification::models::Electron_Shell shell_idx, string proc_type, int quant_id, map<string, data_struct::Quantification_Standard *> *standards)
+bool contains_shell(quantification::models::Electron_Shell shell_idx, int quant_id, map<string, data_struct::Quantification_Standard *> *standards)
 {
+    
     for(auto& s_itr: *standards)
     {
         data_struct::Quantification_Standard* quant_standard = s_itr.second;
-		if (quant_standard->fitted_e_cal_ratio.size() > 0)
-		{
-			QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
-			e_series->setName(QString::fromStdString(s_itr.first));
-			for (auto& itr : quant_standard->fitted_e_cal_ratio.at(proc_type).at(quant_id))
-			{
-				quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
-				if (shell == shell_idx)
-				{
-					return true;
-				}
-			}
-		}
+		
+        for (auto& itr : quant_standard->element_quants.at(quant_id))
+        {
+            quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+            if (shell == shell_idx)
+            {
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -203,15 +200,15 @@ void SavePlotQuantification(std::string path, map<string, data_struct::Quantific
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for(auto& itr2 : itr1.second.calib_curves)
         {
-            if(contains_shell(quantification::models::K_SHELL, itr1.first, itr2.quant_id, standards))
+            if(contains_shell(quantification::models::K_SHELL, itr2.quant_id, standards))
             {
                 std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_K_det"+std::to_string(detector_num)+".png";
-                SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::K_SHELL, 13, 30);
+                SavePlotCalibrationCurve(str_path_full, standards, itr1.first, &itr2, quantification::models::K_SHELL, 13, 30);
             }
-            if(contains_shell(quantification::models::L_SHELL, itr1.first, itr2.quant_id, standards))
+            if(contains_shell(quantification::models::L_SHELL, itr2.quant_id, standards))
             {
                 std::string str_path_full = path + "calib_"+itr1.first+"_"+itr2.quantifier_name+"_L_det"+std::to_string(detector_num)+".png";
-                SavePlotCalibrationCurve(str_path_full, standards, &itr2, itr1.first, quantification::models::L_SHELL, 39, 58);
+                SavePlotCalibrationCurve(str_path_full, standards, itr1.first, &itr2, quantification::models::L_SHELL, 39, 58);
             }
         }
     }
@@ -221,8 +218,8 @@ void SavePlotQuantification(std::string path, map<string, data_struct::Quantific
 
 void SavePlotCalibrationCurve(std::string path,
                               map<string, data_struct::Quantification_Standard *> *standards,
-                              data_struct::Calibration_Curve *calib_curve,
                               string proc_type,
+                              data_struct::Calibration_Curve *calib_curve,
                               quantification::models::Electron_Shell shell_idx,
                               int zstart, int zstop)
 {
@@ -277,26 +274,26 @@ void SavePlotCalibrationCurve(std::string path,
     series->attachAxis(axisYLog10);
     //series->attachAxis(axisY);
 
-
     for(auto& s_itr: *standards)
     {
         data_struct::Quantification_Standard* quant_standard = s_itr.second;
         QtCharts::QScatterSeries *e_series = new QtCharts::QScatterSeries();
         e_series->setName(QString::fromStdString(s_itr.first));
-        for(auto& itr : quant_standard->fitted_e_cal_ratio.at(proc_type).at(calib_curve->quant_id))
+
+        for(const auto& itr : quant_standard->element_quants.at(calib_curve->quant_id))
         {
             data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
             quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
-            real_t plot_val = itr.second;
+            real_t plot_val = itr.second.e_cal_ratio;
             if(element_info != nullptr && shell == shell_idx)
             {
-                if(std::isinf(plot_val) || std::isnan(plot_val) || plot_val <= 0.0)
+                if(false == std::isfinite(plot_val) || plot_val <= 0.0)
                 {
                     plot_val = 0.000000001;
                 }
                 e_series->append(((element_info->number -1) - zstart), plot_val);
-                min_y = std::min(min_y, itr.second);
-                max_y = std::max(max_y, itr.second);
+                min_y = std::min(min_y, plot_val);
+                max_y = std::max(max_y, plot_val);
             }
         }
         chart->addSeries(e_series);
@@ -304,6 +301,7 @@ void SavePlotCalibrationCurve(std::string path,
         e_series->attachAxis(axisYLog10);
         //e_series->attachAxis(axisY);
     }
+    
     //min_y -= 1.0;
     //max_y += 0.01;
 

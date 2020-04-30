@@ -387,7 +387,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 
     real_t pre_faktor = std::pow((real_t)10.0 , fitp->at(element_to_fit->full_name()).value);
 
-    if(std::isnan(pre_faktor))
+    if(false == std::isfinite(pre_faktor))
         return spectra_model;
 
     //real_t fwhm_offset = fitp->value(STR_FWHM_OFFSET);
@@ -500,7 +500,7 @@ const ArrayXr Gaussian_Model::elastic_peak(const Fit_Parameters * const fitp, co
     Spectra counts(ev.size());
 	counts.setZero();
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (real_t)2.3548), (real_t)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
-    if(std::isnan(sigma))
+    if(false == std::isfinite(sigma))
     {
         return counts;
     }
@@ -530,7 +530,7 @@ const ArrayXr Gaussian_Model::compton_peak(const Fit_Parameters * const fitp, co
     real_t compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((real_t)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (real_t)511.0 ) * ((real_t)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (real_t)2.0 * (real_t)(M_PI) / (real_t)360.0 )));
 
     real_t sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(real_t)2.3548), (real_t)62.0) + compton_E * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
-    if(std::isnan(sigma))
+    if(false == std::isfinite(sigma))
     {
         return counts;
     }

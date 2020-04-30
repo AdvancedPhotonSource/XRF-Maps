@@ -165,22 +165,22 @@ public:
     {
         *this += (TArrayXr)spectra;
         real_t val = spectra.elapsed_livetime();
-        if(std::isnan(val) == false)
+        if(std::isfinite(val))
         {
             _elapsed_livetime += val;
         }
         val = spectra.elapsed_realtime();
-        if(std::isnan(val) == false)
+        if(std::isfinite(val))
         {
             _elapsed_realtime += val;
         }
         val = spectra.input_counts();
-        if(std::isnan(val) == false)
+        if(std::isfinite(val))
         {
             _input_counts += val;
         }
         val = spectra.output_counts();
-        if(std::isnan(val) == false)
+        if(std::isfinite(val))
         {
             _output_counts += val;
         }

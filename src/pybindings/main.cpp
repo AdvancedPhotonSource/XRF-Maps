@@ -221,7 +221,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("quantifier_map", &data_struct::Quantification_Standard::quantifier_map)
     .def_readwrite("element_quants", &data_struct::Quantification_Standard::element_quants)
     .def_readwrite("element_counts", &data_struct::Quantification_Standard::element_counts)
-    .def_readwrite("fitted_e_cal_ratio", &data_struct::Quantification_Standard::fitted_e_cal_ratio)
     .def_readwrite("integrated_spectra", &data_struct::Quantification_Standard::integrated_spectra)
     .def_readwrite("standard_filename", &data_struct::Quantification_Standard::standard_filename)
     .def_readwrite("sr_current", &data_struct::Quantification_Standard::sr_current)

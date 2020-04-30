@@ -76,38 +76,6 @@ Quantification_Model::~Quantification_Model()
 }
 
 //-----------------------------------------------------------------------------
-/*
-std::unordered_map<std::string, Element_Quant> Quantification_Model::generate_quant_map(real_t incident_energy,
-                                                                                           Element_Info* detector_element,
-                                                                                           Electron_Shell shell,
-                                                                                           bool airpath,
-                                                                                           real_t detector_chip_thickness,
-                                                                                           real_t beryllium_window_thickness,
-                                                                                           real_t germanium_dead_layer,
-                                                                                           size_t start_z,
-                                                                                           size_t end_z)
-{
-    std::unordered_map<std::string, Element_Quant> element_quant_map;
-    start_z = std::max(start_z, (size_t)1);
-    end_z = std::min(end_z, (size_t)92);
-
-    for (int i=start_z; i <= end_z; i ++)
-    {
-        Element_Quant element_quant = generate_element_quant(incident_energy,
-                                                             detector_element,
-                                                             shell,
-                                                             airpath,
-                                                             detector_chip_thickness,
-                                                             beryllium_window_thickness,
-                                                             germanium_dead_layer,
-                                                             i);
-        Element_Info * element_info = Element_Info_Map::inst()->get_element(i);
-        element_quant_map.emplace( std::pair <std::string, Element_Quant>(element_info->name, element_quant) );
-    }
-
-    return element_quant_map;
-}
-*/
 
 std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incident_energy,
                                                                    Element_Info* detector_element,
@@ -143,15 +111,31 @@ std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incid
 //-----------------------------------------------------------------------------
 
 Element_Quant Quantification_Model::generate_element_quant(real_t incident_energy,
-                                                              Element_Info* detector_element,
-                                                              Electron_Shell shell,
-                                                              real_t airpath,
-                                                              real_t detector_chip_thickness,
-                                                              real_t beryllium_window_thickness,
-                                                              real_t germanium_dead_layer,
-                                                              size_t z_number)
+    Element_Info* detector_element,
+    Electron_Shell shell,
+    real_t airpath,
+    real_t detector_chip_thickness,
+    real_t beryllium_window_thickness,
+    real_t germanium_dead_layer,
+    size_t z_number)
 {
+    Element_Quant eq;
+    init_element_quant(eq, incident_energy, detector_element, shell, airpath, detector_chip_thickness, beryllium_window_thickness, germanium_dead_layer, z_number);
+    return eq;
+}
 
+//-----------------------------------------------------------------------------
+
+void Quantification_Model::init_element_quant(Element_Quant& element_quant,
+                                            real_t incident_energy,
+                                            Element_Info* detector_element,
+                                            Electron_Shell shell,
+                                            real_t airpath,
+                                            real_t detector_chip_thickness,
+                                            real_t beryllium_window_thickness,
+                                            real_t germanium_dead_layer,
+                                            size_t z_number)
+                    {
     //incident_E(incident_energy) == COHERENT_SCT_ENERGY: Maps_fit_params
     //fit_t_be == BE_WINDOW_THICKNESS * 1000
     //fit_t_ge == GE_DEAD_LAYER * 1000 if detector is not Si
@@ -162,12 +146,18 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
     real_t ev;
     real_t jump_factor = 0.0;
     real_t total_jump_factor = 0.0;
-    Element_Quant element_quant;
+
+    
+
     Element_Info* element_info = Element_Info_Map::inst()->get_element(z_number);
     if(element_info == nullptr)
     {
-        return element_quant;
+        return;
     }
+
+    element_quant.name = element_info->name;
+    element_quant.Z = z_number;
+
     switch(shell)
     {
     case K_SHELL:
@@ -201,6 +191,9 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         throw "Unsupported shell. Currently only support for K, L, and M ";
         break;
     }
+
+    ////aux_arr[mm, 3] = yieldd
+ //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
 
     if( jump_factor != 0.0 )
     {
@@ -236,8 +229,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
         element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (real_t)1239.852 / ev);
     }
-    ////aux_arr[mm, 3] = yieldd
-    //element_quant.yield = element_info->yieldD["K"]; //yieldd === newrel_yield * info_elements[element_temp].yieldD['k']
+ 
 
     if (detector_element->name == "Si" && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
@@ -262,15 +254,13 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
         beta = Element_Info_Map::inst()->calc_beta("N:78.08,O:20.95,Ar:0.93", density, ev); // air
         ////aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  // airpath is read in microns, transmission function expects nm
         // airpath is read in microns, transmission function expects nm
-        element_quant.transmission_through_air = transmission( airpath * (real_t)1000.0, beta, (real_t)1239.852 / ev);
+        element_quant.transmission_through_air = transmission( airpath , beta, (real_t)1239.852 / ev);
     }
     else
     {
         ////aux_arr[mm, 5] = 1.
         element_quant.transmission_through_air = 1.0;
     }
-
-    return element_quant;
 }
 
 //-----------------------------------------------------------------------------
@@ -310,6 +300,10 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
     for(auto& itr : quant_map)
     {
         real_t val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((real_t)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
+        if(false == std::isfinite(val))
+        {
+            val = 0;
+        }
         result_map.emplace(std::pair<std::string, real_t>(itr.first, val));
     }
 
@@ -324,7 +318,12 @@ std::vector<real_t> Quantification_Model::model_calibrationcurve(std::vector<Ele
     std::vector<real_t> result_vec(quant_vec.size());
     for(size_t i=0; i < quant_vec.size(); i++)
     {
-        result_vec[i] = p * quant_vec[i].absorption * quant_vec[i].transmission_Be * quant_vec[i].transmission_Ge * quant_vec[i].yield * ( 1. - quant_vec[i].transmission_through_Si_detector) * quant_vec[i].transmission_through_air;
+        real_t val = p * quant_vec[i].absorption * quant_vec[i].transmission_Be * quant_vec[i].transmission_Ge * quant_vec[i].yield * ((real_t)1. - quant_vec[i].transmission_through_Si_detector) * quant_vec[i].transmission_through_air;
+        if (false == std::isfinite(val))
+        {
+            val = 0;
+        }
+        result_vec[i] = val;
     }
 
     return result_vec;

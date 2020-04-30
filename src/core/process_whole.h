@@ -131,21 +131,7 @@ DLL_EXPORT bool optimize_integrated_fit_params(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-//DLL_EXPORT struct io::file_name_fit_params* optimize_integrated_fit_params_preloaded(std::string dataset_directory,
-//                                                                                     std::string  dataset_filename,
-//                                                                                     size_t detector_num,
-//                                                                                     data_struct::Spectra * integrated_spectra,
-//                                                                                     data_struct::Params_Override *params_override,
-//                                                                                     fitting::models::Fit_Params_Preset optimize_fit_params_preset,
-//                                                                                     fitting::optimizers::Optimizer *optimizer);
-
-// ----------------------------------------------------------------------------
-
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job* analysis_job);
-
-// ----------------------------------------------------------------------------
-
-//DLL_EXPORT void generate_optimal_params_mp(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
@@ -162,6 +148,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job, C
 // ----------------------------------------------------------------------------
 
 void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
+
+// ----------------------------------------------------------------------------
+
+bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num, vector<io::element_weights_struct> &standard_element_weights, unordered_map<size_t, real_t> &quant_map);
 
 // ----------------------------------------------------------------------------
 
