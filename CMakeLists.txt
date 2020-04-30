@@ -73,6 +73,7 @@ option(BUILD_WITH_QT "Build with QT" OFF)
 option(DOUBLE_PREC "Double Precision" OFF)
 # If compiled on some intel mahcines this causes crashes so let user set it for compile
 option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
+option(AVX "Compule with arch AVX on MSVC" OFF)
 option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
 
 # Opitons for getting YouCompleteMe plugin working with this project
@@ -153,6 +154,9 @@ ELSEIF(MSVC)
   IF (AVX2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+  ELIF (AVX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
   ELIF(SSE2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
