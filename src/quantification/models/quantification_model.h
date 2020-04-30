@@ -100,6 +100,16 @@ public:
                                                   real_t germanium_dead_layer = 0.0,
                                                   size_t start_z = 0,
                                                   size_t end_z = 95);
+    
+    void init_element_quant(Element_Quant& out_quant,
+                            real_t incident_energy,
+                            Element_Info* detector_element,
+                            Electron_Shell shell,
+                            real_t airpath,
+                            real_t detector_chip_thickness,
+                            real_t beryllium_window_thickness,
+                            real_t germanium_dead_layer,
+                            size_t z_number);
 
     real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
 

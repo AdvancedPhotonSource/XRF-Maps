@@ -222,8 +222,10 @@ bool save_volume(data_struct::Spectra_Volume *spectra_volume,
 
 void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<string, data_struct::Quantification_Standard *> *standards, int detector_num)
 {
+    std::string str_path = analysis_job->dataset_directory + "/output/";
+
+    file::csv::save_quantification(str_path, standards, detector_num);
 #ifdef _BUILD_WITH_QT
-    std::string str_path = analysis_job->dataset_directory+"/output/";
     visual::SavePlotQuantification(str_path, standards, detector_num);
 #endif
 }

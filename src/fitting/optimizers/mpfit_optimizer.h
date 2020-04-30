@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MPFit_Optimizer_H
 
 #include "fitting/optimizers/optimizer.h"
+#include "support/cmpfit-1.3a/mpfit.hpp"
 
 namespace fitting
 {
@@ -86,7 +87,8 @@ public:
                                          quantification::models::Quantification_Model * quantification_model);
 
 private:
-
+	void _fill_limits(Fit_Parameters *fit_params, vector<struct mp_par<real_t> > &par);
+	inline void _print_info(int info);
 
 };
 

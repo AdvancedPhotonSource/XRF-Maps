@@ -87,8 +87,9 @@ Quantification_Standard::~Quantification_Standard()
 
 void Quantification_Standard::append_element(string name, real_t weight)
 {
-
-    element_quants[name] = Element_Quant(weight);
+    element_quants[Quantifiers::Q_KEYS::CURRENT][name] = Element_Quant(weight);
+    element_quants[Quantifiers::Q_KEYS::US_IC][name] = Element_Quant(weight);
+    element_quants[Quantifiers::Q_KEYS::DS_IC][name] = Element_Quant(weight);
 
 }
 
@@ -148,7 +149,7 @@ void Quantification_Standard::init_element_quants(string proc_type_str,
 {
     element_counts[proc_type_str] = *e_counts;
 
-    for(auto &itr : element_quants)
+    for(auto &itr : element_quants.at(quant_id))
     {
         quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
 
@@ -157,37 +158,20 @@ void Quantification_Standard::init_element_quants(string proc_type_str,
         {
             continue;
         }
-        Element_Quant element_quant = quantification_model->generate_element_quant(incident_energy,
-                                                                                   detector_element,
-                                                                                   shell,
-                                                                                   airpath,
-                                                                                   detector_chip_thickness,
-                                                                                   beryllium_window_thickness,
-                                                                                   germanium_dead_layer,
-                                                                                   element->number);
-        itr.second.absorption = element_quant.absorption;
-        itr.second.transmission_Be = element_quant.transmission_Be;
-        itr.second.transmission_Ge = element_quant.transmission_Ge;
-        itr.second.transmission_through_air = element_quant.transmission_through_air;
-        itr.second.transmission_through_Si_detector = element_quant.transmission_through_Si_detector;
-        itr.second.yield = element_quant.yield;
+        quantification_model->init_element_quant(itr.second,
+                                                 incident_energy,
+                                                 detector_element,
+                                                 shell,
+                                                 airpath,
+                                                 detector_chip_thickness,
+                                                 beryllium_window_thickness,
+                                                 germanium_dead_layer,
+                                                 element->number);
 
-        //factor = quant_itr.second;
         real_t e_cal_factor = (itr.second.weight * (ic_quantifier));
         real_t e_cal = e_cal_factor / e_counts->at(itr.first);
         itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
-
-        if(std::isnan(itr.second.e_cal_ratio) || std::isinf(itr.second.e_cal_ratio))
-        {
-            fitted_e_cal_ratio[proc_type_str][quant_id][itr.first] = 0.0;
-        }
-        else
-        {
-            fitted_e_cal_ratio[proc_type_str][quant_id][itr.first] = itr.second.e_cal_ratio;
-        }
-
     }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -200,30 +184,45 @@ void Quantification_Standard::generate_calibration_curve(string proc_type_str, i
     vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
     for(auto shell : shells_to_quant)
     {
-        //generate calibration curve for all elements
-        vector<Element_Quant> element_quant_vec = quantification_model.generate_quant_vec(incident_energy,
-                                                                                       detector_element,
-                                                                                       shell,
-                                                                                       airpath,
-                                                                                       detector_chip_thickness,
-                                                                                       beryllium_window_thickness,
-                                                                                       germanium_dead_layer,
-                                                                                       1, // H
-                                                                                       92); // U
+        if (element_quant_vec.count(proc_type_str) == 0)
+        {
+            //generate calibration curve for all elements
+            element_quant_vec[proc_type_str] = quantification_model.generate_quant_vec(incident_energy,
+                                                                                        detector_element,
+                                                                                        shell,
+                                                                                        airpath,
+                                                                                        detector_chip_thickness,
+                                                                                        beryllium_window_thickness,
+                                                                                        germanium_dead_layer,
+                                                                                        1, // H
+                                                                                        92); // U
 
-            quantifiers->calib_curves[quant_id].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec, val);
+            for (const auto& itr : element_quants.at(quant_id))
+            {
+                if (itr.second.Z < element_quant_vec[proc_type_str].size())
+                {
+                    element_quant_vec[proc_type_str][itr.second.Z - 1].e_cal_ratio = itr.second.e_cal_ratio;
+                    element_quant_vec[proc_type_str][itr.second.Z - 1].weight = itr.second.weight;
+                }
+            }
+        }
+            quantifiers->calib_curves[quant_id].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec.at(proc_type_str), val);
             //change nan's to zeros
             quantifiers->calib_curves[quant_id].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_id].shell_curves[shell].size());
             for(size_t l = 0; l<quantifiers->calib_curves[quant_id].shell_curves[shell].size(); l++)
             {
                 quantifiers->calib_curves[quant_id].shell_curves_labels[shell][l] = get_shell_element_label(shell, l+1);
-                if( std::isnan(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) || std::isinf(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) )
+                if(false == std::isfinite(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) )
                 {
                     quantifiers->calib_curves[quant_id].shell_curves[shell][l] = 0.0;
                 }
 
             }
      }
+
+    
+    
+
     _processed = true;
 }
 

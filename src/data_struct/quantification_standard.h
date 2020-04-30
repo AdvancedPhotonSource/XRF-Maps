@@ -169,14 +169,14 @@ public:
     //           proc_type  quantifier
     unordered_map<string, Quantifiers> quantifier_map;
 
-    //             element    quant
-    unordered_map<string, Element_Quant> element_quants;
+    //             quant_type          element     quant
+    unordered_map<int, unordered_map<string,Element_Quant> > element_quants;
+
+    //              proc_type       array of H -> U element quants
+    unordered_map < string, vector<Element_Quant> > element_quant_vec;
 
     //          proc_type               Element   Counts
     unordered_map<string, unordered_map<string, real_t> > element_counts;
-
-    //  proc_type quantifier  name   e_cal_ratio
-    map<string, map<int, map<string, real_t>>> fitted_e_cal_ratio;
 
     Spectra integrated_spectra;
 

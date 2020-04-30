@@ -64,6 +64,8 @@ namespace file
 namespace csv
 {
 
+// ----------------------------------------------------------------------------
+
 bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background)
 {
     std::ofstream file_stream(fullpath);
@@ -83,6 +85,134 @@ bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr& energy
     }
     return true;
 }
+
+// ----------------------------------------------------------------------------
+
+void save_quantification(std::string path, map<string, data_struct::Quantification_Standard*>* standards, int detector_num)
+{
+    const auto& itr = standards->begin();
+    data_struct::Quantification_Standard* standard = itr->second;
+
+    //iterate through proc_type {roi, nnls, fitted}
+    for (auto& itr1 : standard->quantifier_map)
+    {
+        //iterate through quantifier {sr_current, us_ic, ds_ic}
+        for (auto& itr2 : itr1.second.calib_curves)
+        {
+            std::string str_path_full = path + "calib_" + itr1.first + "_" + itr2.quantifier_name + "_K_det" + std::to_string(detector_num) + ".csv";
+            save_calibration_curve(str_path_full, standards, itr1.first, &itr2);
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+bool save_calibration_curve(std::string path, map<string, data_struct::Quantification_Standard*>* standards, string proc_type, data_struct::Calibration_Curve* calib_curve)
+{
+    if (standards == nullptr || calib_curve == nullptr)
+        return false;
+
+    std::ofstream file_stream(path);
+    if (file_stream.is_open())
+    {
+        for (auto& s_itr : *standards)
+        {
+            data_struct::Quantification_Standard* quant_standard = s_itr.second;
+
+            file_stream << "Standard Filename: " << quant_standard->standard_filename<<"\n";
+            file_stream << "beryllium_window_thickness : " << quant_standard->beryllium_window_thickness << "\n";
+            file_stream << "germanium_dead_layer : " << quant_standard->germanium_dead_layer << "\n";
+            file_stream << "detector_chip_thickness : " << quant_standard->detector_chip_thickness << "\n";
+            file_stream << "incident_energy : " << quant_standard->incident_energy << "\n";
+            file_stream << "airpath : " << quant_standard->airpath << "\n";
+            file_stream << "detector_element : " << quant_standard->detector_element->name << "\n";
+            if (calib_curve->quant_id == Quantifiers::Q_KEYS::CURRENT)
+            {
+                file_stream << "sr_current : " << quant_standard->sr_current << "\n";
+            }
+            if (calib_curve->quant_id == Quantifiers::Q_KEYS::US_IC)
+            {
+                file_stream << "US_IC : " << quant_standard->US_IC << "\n";
+            }
+            if (calib_curve->quant_id == Quantifiers::Q_KEYS::DS_IC)
+            {
+                file_stream << "DS_IC : " << quant_standard->DS_IC << "\n";
+            }
+
+            file_stream << "\n\n";
+
+            if (quant_standard->element_counts.count(proc_type) > 0)
+            {
+                file_stream << "Element,Counts,e_cal_ratio,absorption,transmission_Be,transmission_Ge,yield,transmission_through_Si_detector,transmission_through_air,weight  \n";
+                for (const auto& itr : quant_standard->element_counts[proc_type])
+                {
+                    if (quant_standard->element_quants.count(calib_curve->quant_id) > 0)
+                    {
+                        if (quant_standard->element_quants.at(calib_curve->quant_id).count(itr.first) > 0)
+                        {
+                            file_stream << itr.first << "," <<
+                                itr.second << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).e_cal_ratio << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).absorption << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).transmission_Be << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).transmission_Ge << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).yield << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).transmission_through_Si_detector << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).transmission_through_air << "," <<
+                                quant_standard->element_quants.at(calib_curve->quant_id).at(itr.first).weight << "\n";
+                        }
+                        else
+                        {
+                            file_stream << itr.first << "," << itr.second << ",0,0,0,0,0,0,0,0 \n";
+                        }
+                    }
+                    else
+                    {
+                        file_stream << itr.first << "," << itr.second << ",0,0,0,0,0,0,0,0 \n";
+                    }
+                    
+                }
+            }
+
+            file_stream << "\n\n";
+            
+            if (quant_standard->element_quant_vec.count(proc_type) > 0)
+            {
+                file_stream << "Element,Z,e_cal_ratio,absorption,transmission_Be,transmission_Ge,yield,transmission_through_Si_detector,transmission_through_air,weight  \n";
+                for (const auto& itr : quant_standard->element_quant_vec[proc_type])
+                {
+                    file_stream << itr.name << "," <<
+                        itr.Z << "," <<
+                        itr.e_cal_ratio << "," <<
+                        itr.absorption << "," <<
+                        itr.transmission_Be << "," <<
+                        itr.transmission_Ge << "," <<
+                        itr.yield << "," <<
+                        1.0-itr.transmission_through_Si_detector << "," <<
+                        itr.transmission_through_air << "," <<
+                        itr.weight << "\n";
+                }
+            }
+
+            file_stream << "\n\n";
+
+            file_stream << "Element,Z,K Shell, L Shell, M Shell\n";
+            for(int i=0; i< calib_curve->shell_curves[0].size(); i++)
+            {
+                file_stream << calib_curve->shell_curves_labels[0][i] << "," << i+1 << "," << calib_curve->shell_curves[0][i] << ","<< calib_curve->shell_curves[1][i] << "," << calib_curve->shell_curves[2][i]<< "\n";
+            }
+            file_stream << "\n\n";
+        }
+        file_stream.close();
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
+
+// ----------------------------------------------------------------------------
 
 bool load_element_info(std::string filename)
 {
@@ -334,6 +464,8 @@ bool load_element_info(std::string filename)
 
     return true;
 }
+
+// ----------------------------------------------------------------------------
 
 }// end namespace csv
 }// end namespace file

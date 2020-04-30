@@ -52,8 +52,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <algorithm>
 #include <math.h>
-
-#include "support/cmpfit-1.3a/mpfit.hpp"
 #include <string.h>
 
 using namespace data_struct;
@@ -166,6 +164,135 @@ MPFit_Optimizer::~MPFit_Optimizer()
 
 //-----------------------------------------------------------------------------
 
+void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp_par<real_t> > &par)
+{
+	for (auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
+	{
+		Fit_Param fit = (*fit_params)[itr->first];
+		if (fit.opt_array_index > -1)
+		{
+
+			if (fit.value > fit.max_val)
+			{
+				fit.max_val = fit.value + (real_t)1.0;
+				(*fit_params)[itr->first].max_val = fit.value + (real_t)1.0;
+			}
+			if (fit.value < fit.min_val)
+			{
+				fit.min_val = fit.value - (real_t)1.0;
+				(*fit_params)[itr->first].min_val = fit.value - (real_t)1.0;
+			}
+			if (fit.bound_type == E_Bound_Type::LIMITED_HI
+				|| fit.bound_type == E_Bound_Type::LIMITED_LO
+				|| fit.bound_type == E_Bound_Type::LIMITED_LO_HI)
+			{
+				if (fit.max_val == fit.min_val)
+				{
+					fit.max_val += (real_t)0.1;
+					fit.min_val -= (real_t)0.1;
+					(*fit_params)[itr->first].max_val += (real_t)1.0;
+					(*fit_params)[itr->first].min_val -= (real_t)1.0;
+				}
+			}
+
+
+			par[fit.opt_array_index].fixed = 0;              // 1 = fixed; 0 = free
+			switch (fit.bound_type)
+			{
+			case E_Bound_Type::LIMITED_HI:
+				par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
+				par[fit.opt_array_index].limited[1] = 1;
+				par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[1] = fit.max_val;
+				break;
+			case E_Bound_Type::LIMITED_LO:
+				par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
+				par[fit.opt_array_index].limited[1] = 0;
+				par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+				break;
+			case E_Bound_Type::LIMITED_LO_HI:
+				par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
+				par[fit.opt_array_index].limited[1] = 1;
+				par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[1] = fit.max_val;
+				break;
+			default:
+				par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
+				par[fit.opt_array_index].limited[1] = 0;
+				par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+				break;
+			}
+
+			par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
+			par[fit.opt_array_index].parname = 0;
+			par[fit.opt_array_index].relstep = 0;   // Relative step size for finite difference
+			par[fit.opt_array_index].side = -1;         // Sidedness of finite difference derivative
+					 //     0 - one-sided derivative computed automatically
+					 //     1 - one-sided derivative (f(x+h) - f(x)  )/h
+					 //    -1 - one-sided derivative (f(x)   - f(x-h))/h
+					 //     2 - two-sided derivative (f(x+h) - f(x-h))/(2*h)
+					 // 3 - user-computed analytical derivatives
+
+			par[fit.opt_array_index].deriv_debug = 0;  // Derivative debug mode: 1 = Yes; 0 = No;
+
+						   //      If yes, compute both analytical and numerical
+						   //      derivatives and print them to the console for
+						   //      comparison.
+
+					   //  NOTE: when debugging, do *not* set side = 3,
+					   //  but rather to the kind of numerical derivative
+					   //  you want to compare the user-analytical one to
+					   //  (0, 1, -1, or 2).
+
+			par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
+			par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+
+void MPFit_Optimizer::_print_info(int info)
+{
+	switch (info)
+	{
+	case 0:
+		logI << "> Improper input parameters." << "\n";
+		break;
+	case 1:
+		logI << "> Both actual and predicted relative reductions in the sum of squares are at most ftol. " << "\n";
+		break;
+	case 2:
+		logI << "> Relative error between two consecutive iterates is at most xtol" << "\n";
+		break;
+	case 3:
+		logI << "> Conditions for info = 1 and info = 2 both hold. " << "\n";
+		break;
+	case 4:
+		logI << "> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value." << "\n";
+		break;
+	case 5:
+		logI << "> Number of calls to fcn has reached or exceeded maxfev." << "\n";
+		break;
+	case 6:
+		logI << "> Ftol is too small. no further reduction in the sum of squares is possible." << "\n";
+		break;
+	case 7:
+		logI << "> Xtol is too small. no further improvement in the approximate solution x is possible." << "\n";
+		break;
+	case 8:
+		logI << "> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision." << "\n";
+		break;
+	default:
+		logI << "!> Unknown info status" << "\n";
+		break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+
 void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Fit_Element_Map_Dict * const elements_to_fit,
@@ -210,139 +337,18 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
 
     /////////////// init params limits /////////////////////////
-	std::vector<struct mp_par<real_t> > par;
+	vector<struct mp_par<real_t> > par;
 	par.resize(fitp_arr.size());
-    //struct mp_par<real_t> *par = new struct mp_par<real_t>[fitp_arr.size()];
 
-    for(auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
-    {
-        Fit_Param fit = (*fit_params)[itr->first];
-        if (fit.opt_array_index > -1)
-        {
-
-            if(fit.value > fit.max_val)
-            {
-                fit.max_val = fit.value + (real_t)1.0;
-                (*fit_params)[itr->first].max_val = fit.value + (real_t)1.0;
-            }
-            if(fit.value < fit.min_val)
-            {
-                fit.min_val = fit.value - (real_t)1.0;
-                (*fit_params)[itr->first].min_val = fit.value - (real_t)1.0;
-            }
-            if(fit.bound_type == E_Bound_Type::LIMITED_HI
-            || fit.bound_type == E_Bound_Type::LIMITED_LO
-            || fit.bound_type == E_Bound_Type::LIMITED_LO_HI )
-            {
-                if(fit.max_val == fit.min_val)
-                {
-                    fit.max_val += (real_t)0.1;
-                    fit.min_val -= (real_t)0.1;
-                    (*fit_params)[itr->first].max_val += (real_t)1.0;
-                    (*fit_params)[itr->first].min_val -= (real_t)1.0;
-                }
-            }
-
-
-            par[fit.opt_array_index].fixed = 0;              // 1 = fixed; 0 = free
-            switch (fit.bound_type)
-            {
-            case E_Bound_Type::LIMITED_HI:
-                par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                par[fit.opt_array_index].limited[1] = 1;
-                par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                par[fit.opt_array_index].limits[1] = fit.max_val;
-                break;
-            case E_Bound_Type::LIMITED_LO:
-                par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                par[fit.opt_array_index].limited[1] = 0;
-                par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
-                break;
-            case E_Bound_Type::LIMITED_LO_HI:
-                par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                par[fit.opt_array_index].limited[1] = 1;
-                par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                par[fit.opt_array_index].limits[1] = fit.max_val;
-                break;
-            default:
-                par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                par[fit.opt_array_index].limited[1] = 0;
-                par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
-                break;
-            }
-
-            par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
-            par[fit.opt_array_index].parname = 0;
-            par[fit.opt_array_index].relstep = 0;   // Relative step size for finite difference
-            par[fit.opt_array_index].side = -1;         // Sidedness of finite difference derivative
-                     //     0 - one-sided derivative computed automatically
-                     //     1 - one-sided derivative (f(x+h) - f(x)  )/h
-                     //    -1 - one-sided derivative (f(x)   - f(x-h))/h
-                     //     2 - two-sided derivative (f(x+h) - f(x-h))/(2*h)
-                     // 3 - user-computed analytical derivatives
-
-            par[fit.opt_array_index].deriv_debug = 0;  // Derivative debug mode: 1 = Yes; 0 = No;
-
-                           //      If yes, compute both analytical and numerical
-                           //      derivatives and print them to the console for
-                           //      comparison.
-
-                       //  NOTE: when debugging, do *not* set side = 3,
-                       //  but rather to the kind of numerical derivative
-                       //  you want to compare the user-analytical one to
-                       //  (0, 1, -1, or 2).
-
-            par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
-            par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
-        }
-    }
-
+	_fill_limits(fit_params, par);
 
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
-	//struct mp_config<real_t> *config2 = nullptr;
-	//struct mp_par<real_t> * par2 = nullptr;
-    //info = mpfit(residuals_mpfit, fitp_arr.size(), fitp_arr.size(), &fitp_arr[0], par2, config2, (void *) &ud, &result);
-
     info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
 
-    switch(info)
-    {
-        case 0:
-            logI<<"> Improper input parameters."<<"\n";
-        break;
-        case 1:
-            logI<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
-        break;
-        case 2:
-            logI<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
-        break;
-        case 3:
-            logI<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
-        break;
-        case 4:
-            logI<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
-        break;
-        case 5:
-            logI<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
-        break;
-        case 6:
-            logI<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
-        break;
-        case 7:
-            logI<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
-        break;
-        case 8:
-            logI<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
-        break;
-        default:
-            logI<<"!> Unknown info status"<<"\n";
-        break;
-    }
+	_print_info(info);
 
     fit_params->from_array(fitp_arr);
     if (fit_params->contains(STR_NUM_ITR) )
@@ -399,138 +405,19 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
 
-/*
-    /////////////// init params limits /////////////////////////
-    struct mp_par_struct *mp_par = new struct mp_par_struct[fitp_arr.size()];
-    for(const auto& itr : fit_params->_params)
-    {
-        Fit_Param fit = itr.second;
-        if (fit.opt_array_index > -1)
-        {
 
-            if(fit.value > fit.max_val)
-            {
-                fit.max_val = fit.value + 1.0;
-                fit_params->_params[itr.first].max_val = fit.value + 1.0;
-            }
-            if(fit.value < fit.min_val)
-            {
-                fit.min_val = fit.value - 1.0;
-                fit_params->_params[itr.first].min_val = fit.value - 1.0;
-            }
-            if(fit.bound_type == E_Bound_Type::LIMITED_HI
-            || fit.bound_type == E_Bound_Type::LIMITED_LO
-            || fit.bound_type == E_Bound_Type::LIMITED_LO_HI )
-            {
-                if(fit.max_val == fit.min_val)
-                {
-                    fit.max_val += 0.1;
-                    fit.min_val -= 0.1;
-                    fit_params->_params[itr.first].max_val += 1.0;
-                    fit_params->_params[itr.first].min_val -= 1.0;
-                }
-            }
-
-
-            mp_par[fit.opt_array_index].fixed = 0;              // 1 = fixed; 0 = free
-            switch (fit.bound_type)
-            {
-            case E_Bound_Type::LIMITED_HI:
-                mp_par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 1;
-                mp_par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = fit.max_val;
-                break;
-            case E_Bound_Type::LIMITED_LO:
-                mp_par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 0;
-                mp_par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
-                break;
-            case E_Bound_Type::LIMITED_LO_HI:
-                mp_par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 1;
-                mp_par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = fit.max_val;
-                break;
-            default:
-                mp_par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
-                mp_par[fit.opt_array_index].limited[1] = 0;
-                mp_par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-                mp_par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
-                break;
-            }
-
-            mp_par[fit.opt_array_index].step = fit.step_size;      // Step size for finite difference
-            mp_par[fit.opt_array_index].parname = 0;
-            mp_par[fit.opt_array_index].relstep = fit.step_size;   // Relative step size for finite difference
-            mp_par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative
-                     //     0 - one-sided derivative computed automatically
-                     //     1 - one-sided derivative (f(x+h) - f(x)  )/h
-                     //    -1 - one-sided derivative (f(x)   - f(x-h))/h
-                     //     2 - two-sided derivative (f(x+h) - f(x-h))/(2*h)
-                     // 3 - user-computed analytical derivatives
-
-            mp_par[fit.opt_array_index].deriv_debug = 0;  // Derivative debug mode: 1 = Yes; 0 = No;
-
-                           //      If yes, compute both analytical and numerical
-                           //      derivatives and print them to the console for
-                           //      comparison.
-
-                       //  NOTE: when debugging, do *not* set side = 3,
-                       //  but rather to the kind of numerical derivative
-                       //  you want to compare the user-analytical one to
-                       //  (0, 1, -1, or 2).
-
-            mp_par[fit.opt_array_index].deriv_reltol = 0.00001; // Relative tolerance for derivative debug printout
-            mp_par[fit.opt_array_index].deriv_abstol = 0.00001; // Absolute tolerance for derivative debug printout
-        }
-    }
-*/
+	struct mp_par<real_t> *mp_par = nullptr;
+	//vector<struct mp_par<real_t> > par;
+	//par.resize(fitp_arr.size());
+	//_fill_limits(fit_params, par);
 
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
-    struct mp_par<real_t> *mp_par = nullptr;
-
     info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
-
-  //  delete [] mp_par;
 /*
-    switch(info)
-    {
-        case 0:
-            logI<<"> Improper input parameters."<<"\n";
-        break;
-        case 1:
-            logI<<"> Both actual and predicted relative reductions in the sum of squares are at most ftol. "<<"\n";
-        break;
-        case 2:
-            logI<<"> Relative error between two consecutive iterates is at most xtol"<<"\n";
-        break;
-        case 3:
-            logI<<"> Conditions for info = 1 and info = 2 both hold. "<<"\n";
-        break;
-        case 4:
-            logI<<"> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value."<<"\n";
-        break;
-        case 5:
-            logI<<"> Number of calls to fcn has reached or exceeded maxfev."<<"\n";
-        break;
-        case 6:
-            logI<<"> Ftol is too small. no further reduction in the sum of squares is possible."<<"\n";
-        break;
-        case 7:
-            logI<<"> Xtol is too small. no further improvement in the approximate solution x is possible."<<"\n";
-        break;
-        case 8:
-            logI<<"> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision."<<"\n";
-        break;
-        default:
-            logI<<"!> Unknown info status"<<"\n";
-        break;
-    }
+    
 */
     fit_params->from_array(fitp_arr);
 
@@ -590,9 +477,17 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
 
-    struct mp_par<real_t> *mp_par = nullptr;
+//    struct mp_par<real_t> *mp_par = nullptr;
+//	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
 
-    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
+	
+	vector<struct mp_par<real_t> > par;
+	par.resize(fitp_arr.size());
+	_fill_limits(fit_params, par);
+
+    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &mp_config, (void *) &ud, &result);
+
+	_print_info(info);
 
     fit_params->from_array(fitp_arr);
 
