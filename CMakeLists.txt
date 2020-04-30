@@ -71,6 +71,9 @@ option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
 option(DOUBLE_PREC "Double Precision" OFF)
+# If compiled on some intel mahcines this causes crashes so let user set it for compile
+option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
+option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
 
 # Opitons for getting YouCompleteMe plugin working with this project
 SET( CMAKE_EXPORT_COMPILE_COMMANDS ON )
@@ -146,8 +149,16 @@ ELSEIF(MSVC)
   ELSE()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   ENDIF()
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /arch:AVX2 /openmp")
+
+  IF (AVX2)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+  ELIF(SSE2)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
+  ENDIF()
+    
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /openmp")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ot /Qvec-report:2 /GL /MP /bigobj")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
