@@ -692,11 +692,11 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
         avg_DS_IC += quantification_standard->DS_IC;
         avg_cnt += 1.0;
 
-        analysis_job->init_fit_routines(quantification_standard->integrated_spectra.size(), true);
+        //analysis_job->init_fit_routines(quantification_standard->integrated_spectra.size(), true);
 
         //First we integrate the spectra and get the elemental counts
-        energy_range.max = quantification_standard->integrated_spectra.size() - 1;
-
+        //energy_range.max = quantification_standard->integrated_spectra.size() - 1;
+        energy_range = get_energy_range(quantification_standard->integrated_spectra.size(), &(override_params->fit_params));
 
         for (auto& itr : detector_struct->fit_routines)
         {
@@ -715,9 +715,38 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
             //Initialize the fit routine
             fit_routine->initialize(&model, &elements_to_fit, energy_range);
             //Fit the spectra
-            std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model,
-                &quantification_standard->integrated_spectra,
-                &elements_to_fit);
+            std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit);
+
+            //Save csv and png if matrix or nnls
+            if (itr.first == Fitting_Routines::GAUSS_MATRIX || itr.first == Fitting_Routines::NNLS)
+            {
+                Fit_Parameters fit_params = model.fit_parameters();
+                
+                //add elements to fit parameters if they don't exist
+                for (auto& itr2 : elements_to_fit)
+                {
+                    if (false == override_params->fit_params.contains(itr2.first))
+                    {
+                        fit_params.add_parameter(Fit_Param(itr2.first, counts_dict[itr2.first]));
+                    }
+                }
+                fitting::routines::Matrix_Optimized_Fit_Routine* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+                real_t energy_offset = fit_params.value(STR_ENERGY_OFFSET);
+                real_t energy_slope = fit_params.value(STR_ENERGY_SLOPE);
+                real_t energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
+
+                data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+                data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+                data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
+
+                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_"+ fit_routine->get_name()+"_"+ standard_itr.standard_file_name + std::to_string(detector_num);
+                logI << full_path << "\n";
+                #ifdef _BUILD_WITH_QT
+                visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
+                #endif
+
+                io::file::csv::save_fit_and_int_spectra(full_path + ".csv", ev, sub_spectra, (ArrayXr)(f_routine->fitted_integrated_spectra()), (ArrayXr)(f_routine->fitted_integrated_background()));
+            }
 
             for (auto& itr2 : elements_to_fit)
             {

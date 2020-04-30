@@ -255,7 +255,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
-    *spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    data_struct::Spectra snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
     data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
     data_struct::ArrayXr background;
@@ -278,8 +278,16 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
                                                                         fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
-        background = s_background.segment(energy_range.min, energy_range.count());
-        model_spectra += background;
+        if (background.size() >= energy_range.count())
+        {
+            background = s_background.segment(energy_range.min, energy_range.count());
+            model_spectra += background;
+        }
+        if (background.size() == 0)
+        {
+            background.resize(energy_range.count());
+            background.setZero();
+        }
 	}
     else
     {
@@ -289,10 +297,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
 #ifdef _BUILD_WITH_QT
     std::string str_path = dataset_dir+"/output/fit_"+dataset_filename+"_det"+std::to_string(detector_num)+".png";
-    visual::SavePlotSpectras(str_path, &ev, spectra, &model_spectra, &background, true);
+    visual::SavePlotSpectras(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
-    io::file::csv::save_fit_and_int_spectra(full_path, ev, *spectra, model_spectra, background);
+    io::file::csv::save_fit_and_int_spectra(full_path, ev, snip_spectra, model_spectra, background);
 
 }
 
