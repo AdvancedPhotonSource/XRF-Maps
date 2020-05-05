@@ -136,7 +136,7 @@ void Detector::update_element_quants(Fitting_Routines routine,
     {
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
         {
-            for (const auto& shell_itr : Shells_To_Quant)
+            for (const auto& shell_itr : Shells_Quant_List)
             {
                 for (auto& eq_itr : fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr))
                 {
@@ -277,7 +277,7 @@ void Detector::update_calibration_curve(Fitting_Routines routine,
     {
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
         {
-            for (const auto& shell_itr : Shells_To_Quant)
+            for (const auto& shell_itr : Shells_Quant_List)
             {
                 vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
                 quantification_model->model_calibrationcurve(quant_vec, val);

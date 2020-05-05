@@ -65,7 +65,8 @@ namespace data_struct
 using namespace std;
 using namespace quantification::models;
 
-const static vector<Electron_Shell> Shells_To_Quant({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
+const static vector<Electron_Shell> Shells_Quant_List({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -79,7 +80,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
         {
             e_quants.emplace_back(Element_Quant(i + 1));
         }
-        for (const auto& itr : Shells_To_Quant)
+        for (const auto& itr : Shells_Quant_List)
         {
             curve_quant_map[itr] = e_quants;
         }

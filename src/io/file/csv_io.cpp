@@ -148,7 +148,7 @@ bool save_calibration_curve(std::string path, Detector* detector, std::map<strin
 
         file_stream << "\n\n";
 
-        for (const auto& shell_itr : Shells_To_Quant)
+        for (const auto& shell_itr : Shells_Quant_List)
         {
             file_stream << "\n\n";
             file_stream << "Element,Z,Counts,e_cal_ratio,absorption,transmission_Be,transmission_Ge,yield,transmission_through_Si_detector,transmission_through_air,weight  \n";

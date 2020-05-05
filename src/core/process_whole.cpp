@@ -756,6 +756,7 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                {
                     fitting::routines::Base_Fit_Routine *fit_routine = fit_itr.second;
 
+                    logI << Fitting_Routine_To_Str.at(fit_itr.first) << " "<< quant_itr.first  << "\n";
                     Fit_Parameters fit_params;
                     fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<real_t>::max(), 1.0, 0.1, E_Bound_Type::FIT));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
