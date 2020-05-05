@@ -3663,11 +3663,12 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
             return false;
         }
 
-        
-        auto& tmp_itr = detector->quantification_standards.begin();
-        Quantification_Standard* quantification_standard = &((*tmp_itr).second);
-        
+// ----------------------------------------- start per standard  ------------------------------------------------
 
+        //TODO :iterate thought standards and save them to hdf5
+        auto tmp_itr = detector->quantification_standards.begin();
+        Quantification_Standard* quantification_standard = &(tmp_itr->second);
+        
         //save quantification_standard element weights
         count[0] = quantification_standard->element_standard_weights.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
@@ -3824,6 +3825,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
         q_dataspace_id = H5Screate_simple(2, q_dims_out, nullptr);
         //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
 
+// ----------------------------------------- end per standard  ------------------------------------------------
 
 		for (const auto& qitr : detector->fitting_quant_map)
 		{
