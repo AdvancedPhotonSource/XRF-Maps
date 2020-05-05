@@ -27,7 +27,9 @@ freely, subject to the following restrictions:
 #include <valarray>
 #include "core/defines.h"
 #include "data_struct/spectra.h"
-#include "data_struct/quantification_standard.h"
+#include "data_struct/detector.h"
+
+using namespace data_struct;
 
 namespace visual
 {
@@ -39,15 +41,15 @@ void SavePlotSpectras(std::string path,
                       data_struct::ArrayXr *background,
                       bool log_them);
 
-bool contains_shell(quantification::models::Electron_Shell shell_idx, int quant_id, map<string, data_struct::Quantification_Standard *> *standards);
+bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, real_t>* element_counts);
 
-void SavePlotQuantification(std::string path, map<string, data_struct::Quantification_Standard *> *standards, int detector_num);
+void SavePlotQuantification(std::string path, Detector* detector);
 
 void SavePlotCalibrationCurve(std::string path,
-                              map<string, data_struct::Quantification_Standard *> *standards,
-                              string proc_type,
-                              data_struct::Calibration_Curve *calib_curve,
-                              quantification::models::Electron_Shell shell_idx,
+                              Detector* detector,
+                              string quantifier_scaler_name,
+                              unordered_map<string, Element_Quant*>* all_elements_with_weights,
+                              vector<Element_Quant>* calibration_curve,
                               int zstart,
                               int zstop);
 

@@ -151,7 +151,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 // ----------------------------------------------------------------------------
 
-bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num, vector<io::element_weights_struct> &standard_element_weights, unordered_map<size_t, real_t> &quant_map);
+void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num, vector<Quantification_Standard> &standard_element_weights, unordered_map<size_t, real_t> &quant_map);
 
 // ----------------------------------------------------------------------------
 

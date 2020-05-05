@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Analysis_Job_H
 
 #include "core/defines.h"
+#include "data_struct/detector.h"
 #include "data_struct/element_info.h"
 #include "fitting/routines/base_fit_routine.h"
 #include <vector>
@@ -65,72 +66,7 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-
-//-----------------------------------------------------------------------------
-
-///
-/// \brief The Detector class
-///
-struct DLL_EXPORT Detector
-{
-
-	Detector()
-	{
-		model = nullptr;
-	}
-
-	~Detector()
-	{
-		if (model != nullptr)
-		{
-			delete model;
-			model = nullptr;
-		}
-		for (auto &itr : fit_routines)
-		{
-			fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
-			if (fit_routine != nullptr)
-			{
-				delete fit_routine;
-			}
-		}
-		fit_routines.clear();
-
-		for (auto &itr : quant_standards)
-		{
-			if (itr.second != nullptr)
-			{
-				delete itr.second;
-			}
-		}
-		quant_standards.clear();
-		for (auto &itr : all_element_quants)
-		{
-			for (auto &itr2 : itr.second)
-			{
-				itr2.second.clear();
-			}
-			itr.second.clear();
-		}
-		all_element_quants.clear();
-	}
-
-    // Fitting routines map
-    std::unordered_map<int, fitting::routines::Base_Fit_Routine *> fit_routines;
-
-    // Fitting model
-    fitting::models::Base_Model * model;
-
-    // Quantification
-    std::map<string, Quantification_Standard*> quant_standards;
-
-    //  proc_type   quantifier        element     quant_prop
-    map<int, map<int, unordered_map<string, Element_Quant>>> all_element_quants;
-
-    // Fit Parameters Override for model
-    Params_Override fit_params_override_dict;
-
-};
+// ----------------------------------------------------------------------------
 
 ///
 /// \brief The Analysis_Job class
@@ -175,7 +111,7 @@ public:
 
     std::vector<Fitting_Routines> fitting_routines;
 
-    std::map<int, struct Detector> detectors_meta_data;
+    std::map<int, Detector> detectors_meta_data;
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
@@ -202,6 +138,9 @@ public:
     bool export_int_fitted_to_csv;
 
 	long long mem_limit;
+
+    //list of quantification standards to use
+    vector<Quantification_Standard> standard_element_weights;
 
 protected:
 

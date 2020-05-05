@@ -63,11 +63,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::module io_file = io.def_submodule("file", "file submodule");
 
     py::enum_<data_struct::Fitting_Routines>(m, "FittingRoutines")
-    .value("ROI", data_struct::ROI)
-    .value("GAUSS_TAILS", data_struct::GAUSS_TAILS)
-    .value("MATRIX", data_struct::GAUSS_MATRIX)
-    .value("SVD", data_struct::SVD)
-    .value("NNLS", data_struct::NNLS);
+    .value("ROI", data_struct::Fitting_Routines::ROI)
+    .value("GAUSS_TAILS", data_struct::Fitting_Routines::GAUSS_TAILS)
+    .value("MATRIX", data_struct::Fitting_Routines::GAUSS_MATRIX)
+    .value("SVD", data_struct::Fitting_Routines::SVD)
+    .value("NNLS", data_struct::Fitting_Routines::NNLS);
 
 
     //data structures
@@ -200,7 +200,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("us_amp_sens_unit", &data_struct::Params_Override::us_amp_sens_unit)
     .def_readwrite("ds_amp_sens_num", &data_struct::Params_Override::ds_amp_sens_num)
     .def_readwrite("ds_amp_sens_unit", &data_struct::Params_Override::ds_amp_sens_unit);
-
+    /*
     py::class_<data_struct::Calibration_Curve>(m, "CalibrationCurve")
     .def(py::init<>())
     .def_readwrite("quantifier_name", &data_struct::Calibration_Curve::quantifier_name)
@@ -232,7 +232,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("incident_energy", &data_struct::Quantification_Standard::incident_energy)
     .def_readwrite("airpath", &data_struct::Quantification_Standard::airpath)
     .def_readwrite("detector_element", &data_struct::Quantification_Standard::detector_element);
-
+    */
     py::class_<data_struct::Stream_Fitting_Block>(m, "StreamFittingBlock")
     .def(py::init<>())
     .def_readwrite("fit_routine", &data_struct::Stream_Fitting_Block::fit_routine)
@@ -262,7 +262,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def_readwrite("fit_routines", &data_struct::Detector::fit_routines)
     .def_readwrite("model", &data_struct::Detector::model)
-    .def_readwrite("quant_standards", &data_struct::Detector::quant_standards)
+    .def_readwrite("quant_standards", &data_struct::Detector::quantification_standards)
     .def_readwrite("fit_params_override_dict", &data_struct::Detector::fit_params_override_dict);
 
     py::class_<data_struct::Analysis_Job>(m, "AnalysisJob")
@@ -355,7 +355,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("load_element_info", &io::load_element_info);
     m.def("load_and_integrate_spectra_volume", &io::load_and_integrate_spectra_volume);
     m.def("load_override_params", &io::load_override_params);
-    m.def("load_quantification_standard", &io::load_quantification_standard);
+  ///  m.def("load_quantification_standard", &io::load_quantification_standard);
     m.def("load_spectra_volume", &io::load_spectra_volume);
     m.def("populate_netcdf_hdf5_files", &io::populate_netcdf_hdf5_files);
     m.def("save_averaged_fit_params", &io::save_averaged_fit_params);

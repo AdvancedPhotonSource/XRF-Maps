@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/spectra.h"
 #include "data_struct/element_info.h"
 #include "data_struct/fit_parameters.h"
-#include "data_struct/quantification_standard.h"
+#include "data_struct/detector.h"
 
 using namespace data_struct;
 
@@ -63,11 +63,15 @@ namespace file
 {
 namespace csv
 {
-    DLL_EXPORT bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr& energy, data_struct::ArrayXr& spectra, data_struct::ArrayXr& spectra_model, data_struct::ArrayXr& background);
+    DLL_EXPORT bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* spectra_model, data_struct::ArrayXr* background);
 
-    DLL_EXPORT void save_quantification(std::string path, map<string, data_struct::Quantification_Standard*>* standards, int detector_num);
+    DLL_EXPORT void save_quantification(std::string path, Detector* detector);
 
-    DLL_EXPORT bool save_calibration_curve(std::string path, map<string, data_struct::Quantification_Standard*>* standards, string proc_type, data_struct::Calibration_Curve* calib_curve);
+    DLL_EXPORT bool save_calibration_curve(std::string path,
+                                            Detector* detector,
+                                            unordered_map<string, real_t>* element_counts,
+                                            string quantifier_scaler_name, 
+                                            Quantification_Scaler_Struct* quants_map);
 
     DLL_EXPORT bool load_element_info(std::string filename);
 

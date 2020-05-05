@@ -47,99 +47,87 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#ifndef Stream_Block_H
-#define Stream_Block_H
+#ifndef DETECTOR_H
+#define DETECTOR_H
 
 #include "core/defines.h"
 #include "data_struct/element_info.h"
 #include "fitting/routines/base_fit_routine.h"
+#include <vector>
+#include <string>
+#include "data_struct/quantification_standard.h"
+#include "data_struct/params_override.h"
+#include "fitting/optimizers/lmfit_optimizer.h"
+#include "fitting/optimizers/mpfit_optimizer.h"
 
 namespace data_struct
 {
 
-//-----------------------------------------------------------------------------
-
-///
-/// \brief The Stream_Fitting_Block struct
-///
-struct Stream_Fitting_Block
-{
-    fitting::routines::Base_Fit_Routine * fit_routine;
-    std::unordered_map<std::string, real_t> fit_counts;
-};
 
 //-----------------------------------------------------------------------------
 
 ///
-/// \brief The Stream_Block class
+/// \brief The Detector class
 ///
-class DLL_EXPORT Stream_Block
+class DLL_EXPORT Detector
 {
-
 public:
+    Detector(unsigned int detector_num = -1);
 
-	Stream_Block();
+    ~Detector();
 
-    Stream_Block(size_t row, size_t col, size_t height, size_t width);
+    void append_element(Fitting_Routines routine, string name, string quant_scaler, real_t weight);
 
-	Stream_Block(const Stream_Block& stream_block);
+    void update_element_quants(Fitting_Routines routine,
+        string quantifier_scaler,
+        Quantification_Model* quantification_model,
+        real_t ic_quantifier);
 
-	Stream_Block& operator=(const Stream_Block&);
+    void update_calibration_curve(Fitting_Routines routine,
+        string quantifier_scaler,
+        Quantification_Model* quantification_model,
+        real_t val);
 
-    ~Stream_Block();
+    void normalize_counts_by_time(Fitting_Routines routine, real_t elapsed_livetime);
 
-    void init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+    void update_from_fit_paramseters();
 
-    const size_t& row() { return _row; }
+    void generage_avg_quantification_scalers();
 
-    const size_t& col() { return _col; }
+    unsigned int number() { return _number; }
 
-    const size_t& height() { return _height; }
+    // Fitting routines map
+    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> fit_routines;
 
-    const size_t& width() { return _width; }
-
-    inline bool is_end_of_row() { return (_col == _width-1); }
-
-    inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
-
-	inline bool is_end_block() { return (_row == -1 && _height == -1 && _col == -1 && _width == -1); }
-
-    //by Fitting_Routines
-    std::unordered_map<Fitting_Routines, Stream_Fitting_Block> fitting_blocks;
-
-    size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}
-
-    std::string *dataset_directory;
-
-    std::string *dataset_name;
-
-    int detector_number;
-
-    Spectra * spectra;
-
-    Fit_Element_Map_Dict * elements_to_fit;
-    //data_struct::Params_Override *fit_params_override_dict;
-
-    fitting::models::Fit_Params_Preset optimize_fit_params_preset;
-
+    // Fitting model
     fitting::models::Base_Model * model;
 
-    float theta;
+    // Quantification
+    std::map<string, Quantification_Standard> quantification_standards;
 
-    bool del_str_ptr;
+    unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct> fitting_quant_map;
 
-protected:
+    //  proc_type          quantifier            element    quant_prop
+    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant*>>> all_element_quants;
 
-    size_t _row;
+    // Fit Parameters Override for model
+    Params_Override fit_params_override_dict;
 
-    size_t _col;
+    real_t beryllium_window_thickness;
+    real_t germanium_dead_layer;
+    real_t detector_chip_thickness;
+    real_t incident_energy;
+    real_t airpath;
+    data_struct::Element_Info* detector_element;
 
-    size_t _height;
+    // SR_CURRENT, US_IC, DS_IC  : average if we have multiple standards
+    unordered_map<string, real_t> avg_quantification_scaler_map;
 
-    size_t _width;
+private:
+    unsigned int _number;
 
 };
 
 } //namespace data_struct
 
-#endif // Stream_Block_H
+#endif // DETECTOR_H

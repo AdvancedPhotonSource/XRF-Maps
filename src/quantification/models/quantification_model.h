@@ -66,7 +66,7 @@ namespace models
 using namespace data_struct;
 
 
-enum Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
+enum class Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
 
 
 //-----------------------------------------------------------------------------
@@ -82,25 +82,6 @@ public:
 
     ~Quantification_Model();
 
-    Element_Quant generate_element_quant(real_t incident_energy,
-                                        Element_Info* detector_element,
-                                        Electron_Shell shell,
-                                        real_t airpath,
-                                        real_t detector_chip_thickness,
-                                        real_t beryllium_window_thickness,
-                                        real_t germanium_dead_layer,
-                                        size_t z_number);
-
-    std::vector<Element_Quant> generate_quant_vec(real_t incident_energy,
-                                                  Element_Info* detector_element,
-                                                  Electron_Shell shell,
-                                                  real_t airpath = 0.0,
-                                                  real_t detector_chip_thickness = 0.0,
-                                                  real_t beryllium_window_thickness = 0.0,
-                                                  real_t germanium_dead_layer = 0.0,
-                                                  size_t start_z = 0,
-                                                  size_t end_z = 95);
-    
     void init_element_quant(Element_Quant& out_quant,
                             real_t incident_energy,
                             Element_Info* detector_element,
@@ -117,7 +98,7 @@ public:
 
     std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
 
-    std::vector<real_t> model_calibrationcurve(std::vector<Element_Quant> quant_vec, real_t p);
+    void model_calibrationcurve(std::vector<Element_Quant>* quant_vec, real_t p);
 
 protected:
 
@@ -128,8 +109,8 @@ protected:
 DLL_EXPORT Electron_Shell get_shell_by_name(std::string element_name);
 
 
-} //namespace xrf
+} //namespace models
 
-} //namespace data_struct
+} //namespace quantification
 
 #endif // Quantification_Model_H

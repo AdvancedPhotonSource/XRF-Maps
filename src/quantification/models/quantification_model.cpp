@@ -76,7 +76,7 @@ Quantification_Model::~Quantification_Model()
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incident_energy,
                                                                    Element_Info* detector_element,
                                                                    Electron_Shell shell,
@@ -88,7 +88,7 @@ std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incid
                                                                    size_t end_z)
 {
     start_z = std::max(start_z, (size_t)1);
-    end_z = std::min(end_z, (size_t)92);
+    end_z = std::min(end_z, (size_t)CALIBRATION_CURVE_SIZE);
     std::vector<Element_Quant> element_quant_vec( end_z - start_z + 1 );
 
     size_t idx = 0;
@@ -123,7 +123,7 @@ Element_Quant Quantification_Model::generate_element_quant(real_t incident_energ
     init_element_quant(eq, incident_energy, detector_element, shell, airpath, detector_chip_thickness, beryllium_window_thickness, germanium_dead_layer, z_number);
     return eq;
 }
-
+*/
 //-----------------------------------------------------------------------------
 
 void Quantification_Model::init_element_quant(Element_Quant& element_quant,
@@ -135,7 +135,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
                                             real_t beryllium_window_thickness,
                                             real_t germanium_dead_layer,
                                             size_t z_number)
-                    {
+{
     //incident_E(incident_energy) == COHERENT_SCT_ENERGY: Maps_fit_params
     //fit_t_be == BE_WINDOW_THICKNESS * 1000
     //fit_t_ge == GE_DEAD_LAYER * 1000 if detector is not Si
@@ -160,7 +160,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
 
     switch(shell)
     {
-    case K_SHELL:
+    case Electron_Shell::K_SHELL:
         ev = element_info->xrf.at("ka1") * (real_t)1000.0;
         element_quant.yield = element_info->yieldD.at("k");
         if( incident_energy > element_info->bindingE.at("K") )
@@ -168,7 +168,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
             jump_factor = element_info->jump.at("K");
         }
         break;
-    case L_SHELL:
+    case Electron_Shell::L_SHELL:
         ev = element_info->xrf.at("la1") * (real_t)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("la1");
         jump_factor = element_info->jump.at("L3");
@@ -181,7 +181,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
             total_jump_factor = total_jump_factor * element_info->jump.at("L1");
         }
         break;
-    case M_SHELL:
+    case Electron_Shell::M_SHELL:
         ev = element_info->xrf.at("ma1") * (real_t)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("ma1");
         jump_factor = element_info->jump.at("M5");
@@ -313,20 +313,17 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
 
 //-----------------------------------------------------------------------------
 
-std::vector<real_t> Quantification_Model::model_calibrationcurve(std::vector<Element_Quant> quant_vec, real_t p)
+void Quantification_Model::model_calibrationcurve(std::vector<Element_Quant> *quant_vec, real_t p)
 {
-    std::vector<real_t> result_vec(quant_vec.size());
-    for(size_t i=0; i < quant_vec.size(); i++)
+    for(auto &itr : *quant_vec)
     {
-        real_t val = p * quant_vec[i].absorption * quant_vec[i].transmission_Be * quant_vec[i].transmission_Ge * quant_vec[i].yield * ((real_t)1. - quant_vec[i].transmission_through_Si_detector) * quant_vec[i].transmission_through_air;
+        real_t val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((real_t)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
         if (false == std::isfinite(val))
         {
             val = 0;
         }
-        result_vec[i] = val;
+        itr.calib_curve_val = val;
     }
-
-    return result_vec;
 }
 
 //-----------------------------------------------------------------------------
@@ -338,22 +335,22 @@ Electron_Shell get_shell_by_name(std::string element_name)
     std::string shell_type =  element_name.substr(idx);
     if(idx == 0)
     {
-        return quantification::models::K_SHELL;
+        return quantification::models::Electron_Shell::K_SHELL;
     }
     else
     {
         if(shell_type == "L")
         {
-            return quantification::models::L_SHELL;
+            return quantification::models::Electron_Shell::L_SHELL;
         }
         if(shell_type == "M")
         {
-            return quantification::models::M_SHELL;
+            return quantification::models::Electron_Shell::M_SHELL;
         }
     }
 
 
-    return quantification::models::K_SHELL;
+    return quantification::models::Electron_Shell::K_SHELL;
 }
 
 } //namespace models

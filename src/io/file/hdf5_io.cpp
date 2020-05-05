@@ -3577,24 +3577,10 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants)
+bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 {
-    for(auto& itr: quants)
-    {
-        HDF5_IO::save_quantification(itr.second);
-    }
-}
 
-//-----------------------------------------------------------------------------
-
-bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantification_standard)
-{
     std::lock_guard<std::mutex> lock(_mutex);
-
-    
-
-//hid_t error_stack = H5Eget_current_stack();
-//H5Eset_auto2(error_stack, nullptr, nullptr);
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
@@ -3623,23 +3609,6 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
     count[0] = 1;
     count[1] = 0;
     count[2] = 0;
-//    chunk_dims[0] = 1;
-//    chunk_dims[1] = 1;
-//    chunk_dims[2] = dims_out[2];
-
-//    dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-//    H5Pset_chunk(dcpl_id, 3, chunk_dims);
-//    H5Pset_deflate (dcpl_id, 7);
-
-//    memoryspace = H5Screate_simple(3, count, nullptr);
-//    filespace = H5Screate_simple(3, dims_out, nullptr);
-
-//    dataspace_id = H5Screate_simple (3, dims_out, nullptr);
-
-//    dataspace_ch_id = H5Screate_simple (1, dims_out, nullptr);
-
-
-//    H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
     maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
     if(maps_grp_id < 0)
@@ -3664,7 +3633,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
 
     //--                        save calibration curve                  --
 
-    if( quantification_standard != nullptr && quantification_standard->processed() == true)
+    if( detector != nullptr)
     {
 
         q_grp_id = H5Gopen(maps_grp_id, "Quantification", H5P_DEFAULT);
@@ -3694,15 +3663,13 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
             return false;
         }
 
-        // get the first one
-        std::unordered_map<std::string, data_struct::Element_Quant> e_weights;
+        
+        auto& tmp_itr = detector->quantification_standards.begin();
+        Quantification_Standard* quantification_standard = &((*tmp_itr).second);
+        
+
         //save quantification_standard element weights
-        for (const auto& itr : quantification_standard->element_quants)
-        {
-            e_weights = itr.second;
-            break;
-        }
-        count[0] = e_weights.size();
+        count[0] = quantification_standard->element_standard_weights.size();
         memoryspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
         dataspace_id = H5Screate_simple (1, count, nullptr);
@@ -3713,12 +3680,12 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         count[0] = 1;
         H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         int offset_idx = 0;
-        for(auto itr: e_weights)
+        for(auto itr: quantification_standard->element_standard_weights)
         {
             offset[0] = offset_idx;
             H5Sselect_hyperslab (filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
-            status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(itr.second.weight));
+            status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&(itr.second));
             char tmp_char[256] = {0};
             itr.first.copy(tmp_char, 254);
             status = H5Dwrite (dset_ch_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)tmp_char);
@@ -3832,165 +3799,173 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
         //data_struct::Quantifiers quantifiers = quantification_standard->quantifier_map.at(path);
         //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
-		if (quantification_standard->element_counts.size() > 0)
+		
+        int element_cnt = CALIBRATION_CURVE_SIZE; // from element H to U
+        q_dims_out[0] = 3;// shells K, L, and M
+        q_dims_out[1] = element_cnt; 
+
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+
+        count[0] = 1;
+        count[1] = 1;
+        count[2] = 0;
+
+        q_memoryspace_label_id = H5Screate_simple(2, count, nullptr);
+
+        count[0] = 1;
+        count[1] = q_dims_out[1];
+        count[2] = 0;
+
+        q_memoryspace_id = H5Screate_simple(2, count, nullptr);
+        q_filespace_id = H5Screate_simple(2, q_dims_out, nullptr);
+        q_dataspace_label_id = H5Screate_simple(2, q_dims_out, nullptr);
+        q_dataspace_id = H5Screate_simple(2, q_dims_out, nullptr);
+        //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
+
+
+		for (const auto& qitr : detector->fitting_quant_map)
 		{
-            int element_cnt = 92; // from element H to U
-            // get the size from the first one
-            for (auto& qitr : quantification_standard->quantifier_map)
-            {
-                int element_cnt = qitr.second.calib_curves.size();
-                break;
-            }
+            
+			q_fit_grp_id = H5Gopen(xrf_fits_grp_id, Fitting_Routine_To_Str.at(qitr.first).c_str(), H5P_DEFAULT);
+			if (q_fit_grp_id < 0)
+				q_fit_grp_id = H5Gcreate(xrf_fits_grp_id, Fitting_Routine_To_Str.at(qitr.first).c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			if (q_fit_grp_id < 0)
+			{
+				logE << "creating group MAPS/Quantification/" << Fitting_Routine_To_Str.at(qitr.first).c_str() << "\n";
+				return false;
+			}
 
-            q_dims_out[0] = 3;// shells K, L, and M
-            q_dims_out[1] = element_cnt; 
+			//save quantification_standard counts
+            std::unordered_map<std::string, real_t> element_counts = qitr.second.element_counts;
+			count[0] = element_counts.size();
+			dataspace_id = H5Screate_simple(1, count, nullptr);
+			memoryspace_id = H5Screate_simple(1, count, nullptr);
+			filespace_id = H5Screate_simple(1, count, nullptr);
+			dset_id = H5Dcreate(q_fit_grp_id, "Counts_Per_Sec", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dset_ch_id = H5Dcreate(q_fit_grp_id, "Channel_Names", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			//create save ordered vector by element Z number with K , L, M lines
+			std::vector<std::string> element_lines;
+			for (std::string el_name : data_struct::Element_Symbols)
+			{
+				element_lines.push_back(el_name);
+			}
+			for (std::string el_name : data_struct::Element_Symbols)
+			{
+				element_lines.push_back(el_name + "_L");
+			}
+			for (std::string el_name : data_struct::Element_Symbols)
+			{
+				element_lines.push_back(el_name + "_M");
+			}
 
-            offset[0] = 0;
-            offset[1] = 0;
-            offset[2] = 0;
+			element_lines.push_back(STR_NUM_ITR);
 
-            count[0] = 1;
-            count[1] = 1;
-            count[2] = 0;
+			offset_idx = 0;
+			offset[0] = 0;
+			count[0] = 1;
+			H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+			//save by element Z order
+			for (std::string el_name : element_lines)
+			{
+				if (element_counts.count(el_name) < 1)
+				{
+					continue;
+				}
+				offset[0] = offset_idx;
+				real_t val = element_counts.at(el_name);
 
-            q_memoryspace_label_id = H5Screate_simple(2, count, nullptr);
+				H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+				std::memset(&tmp_char[0], 0, 255);
+				el_name.copy(tmp_char, 254);
+				status = H5Dwrite(dset_ch_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)tmp_char);
+				status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&val);
 
-            count[0] = 1;
-            count[1] = q_dims_out[1];
-            count[2] = 0;
-
-            q_memoryspace_id = H5Screate_simple(2, count, nullptr);
-            q_filespace_id = H5Screate_simple(2, q_dims_out, nullptr);
-            q_dataspace_label_id = H5Screate_simple(2, q_dims_out, nullptr);
-            q_dataspace_id = H5Screate_simple(2, q_dims_out, nullptr);
-            //q_dataspace_ch_id = H5Screate_simple (1, q_dims_out, nullptr);
+				offset_idx++;
+			}
+			H5Dclose(dset_id);
+			H5Dclose(dset_ch_id);
+			H5Sclose(memoryspace_id);
+			H5Sclose(filespace_id);
+			H5Sclose(dataspace_id);
 
 
-			for (auto& qitr : quantification_standard->quantifier_map)
+			dset_labels_id = H5Dopen(q_fit_grp_id, "Calibration_Curve_Labels", H5P_DEFAULT);
+			if (dset_labels_id < 0)
+				dset_labels_id = H5Dcreate(q_fit_grp_id, "Calibration_Curve_Labels", filetype_label, q_dataspace_label_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+
+			for (const auto & quant_scaler_itr : qitr.second.quant_scaler_map)
 			{
 
-				q_fit_grp_id = H5Gopen(xrf_fits_grp_id, qitr.first.c_str(), H5P_DEFAULT);
-				if (q_fit_grp_id < 0)
-					q_fit_grp_id = H5Gcreate(xrf_fits_grp_id, qitr.first.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				if (q_fit_grp_id < 0)
+				std::string q_dset_name = "Calibration_Curve_" + quant_scaler_itr.first;
+
+				q_dset_id = H5Dopen(q_fit_grp_id, q_dset_name.c_str(), H5P_DEFAULT);
+				if (q_dset_id < 0)
+					q_dset_id = H5Dcreate(q_fit_grp_id, q_dset_name.c_str(), H5T_INTEL_R, q_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				if (q_dset_id < 0)
 				{
-					logE << "creating group MAPS/Quantification/" << qitr.first << "\n";
-					return false;
+					logE << "creating dataset MAPS/Quantification/" << q_dset_name << "/" << q_dset_name << "\n";
+					continue;
 				}
 
-				//save quantification_standard counts
-				const std::unordered_map<std::string, std::unordered_map<std::string, real_t> > all_element_counts = quantification_standard->element_counts;
-				std::unordered_map<std::string, real_t> element_counts = all_element_counts.at(qitr.first);
-				count[0] = element_counts.size();
-				dataspace_id = H5Screate_simple(1, count, nullptr);
-				memoryspace_id = H5Screate_simple(1, count, nullptr);
-				filespace_id = H5Screate_simple(1, count, nullptr);
-				dset_id = H5Dcreate(q_fit_grp_id, "Counts_Per_Sec", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				dset_ch_id = H5Dcreate(q_fit_grp_id, "Channel_Names", filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-				//create save ordered vector by element Z number with K , L, M lines
-				std::vector<std::string> element_lines;
-				for (std::string el_name : data_struct::Element_Symbols)
+                int j = 0;
+				//for(auto& shell_itr : quant_itr.second)
+				for(const auto & calib_itr : quant_scaler_itr.second.curve_quant_map)
 				{
-					element_lines.push_back(el_name);
-				}
-				for (std::string el_name : data_struct::Element_Symbols)
-				{
-					element_lines.push_back(el_name + "_L");
-				}
-				for (std::string el_name : data_struct::Element_Symbols)
-				{
-					element_lines.push_back(el_name + "_M");
-				}
+					char label[10] = { 0 };
+					//int element_offset = 0;
+					//create dataset for different shell curves
+                    std::vector<real_t> calibration_curve;
+                    std::vector<std::string> calibration_curve_labels;
 
-				element_lines.push_back(STR_NUM_ITR);
+                    for (const auto& citr : calib_itr.second)
+                    {
+                        string name = citr.name;
+                        if (calib_itr.first == Electron_Shell::L_SHELL)
+                        {
+                            name += "_L";
+                        }
+                        if (calib_itr.first == Electron_Shell::M_SHELL)
+                        {
+                            name += "_M";
+                        }
+                        calibration_curve.push_back(citr.calib_curve_val);
+                        calibration_curve_labels.push_back(name);
+                    }
 
-				offset_idx = 0;
-				offset[0] = 0;
-				count[0] = 1;
-				H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-				//save by element Z order
-				for (std::string el_name : element_lines)
-				{
-					if (element_counts.count(el_name) < 1)
+					offset[0] = j;
+					offset[1] = 0;
+
+					count[0] = 1;
+					count[1] = q_dims_out[1];
+					//H5Sselect_hyperslab (q_dataspace_ch_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+					//H5Sselect_hyperslab (q_dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], nullptr, count, nullptr);
+					//status = H5Dwrite (q_dset_ch_id, memtype, q_dataspace_ch_off_id, q_dataspace_ch_id, H5P_DEFAULT, (void*)(el_name.c_str()));
+
+					H5Sselect_hyperslab(q_filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+					status = H5Dwrite(q_dset_id, H5T_NATIVE_REAL, q_memoryspace_id, q_filespace_id, H5P_DEFAULT, (void*)&calibration_curve[0]);
+
+					for (size_t k = 0; k < calibration_curve_labels.size(); k++)
 					{
-						continue;
+						memset(label, 0, 10);
+						calibration_curve_labels[k].copy(&label[0], 9);
+						offset[1] = k;
+						count[1] = 1;
+						status = H5Sselect_hyperslab(q_filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+						status = H5Dwrite(dset_labels_id, memtype_label, q_memoryspace_label_id, q_filespace_id, H5P_DEFAULT, (void*)&label[0]);
 					}
-					offset[0] = offset_idx;
-					real_t val = element_counts.at(el_name);
+                    j++;
 
-					H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-					std::memset(&tmp_char[0], 0, 255);
-					el_name.copy(tmp_char, 254);
-					status = H5Dwrite(dset_ch_id, memtype, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)tmp_char);
-					status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, filespace_id, H5P_DEFAULT, (void*)&val);
-
-					offset_idx++;
 				}
-				H5Dclose(dset_id);
-				H5Dclose(dset_ch_id);
-				H5Sclose(memoryspace_id);
-				H5Sclose(filespace_id);
-				H5Sclose(dataspace_id);
-
-
-				dset_labels_id = H5Dopen(q_fit_grp_id, "Calibration_Curve_Labels", H5P_DEFAULT);
-				if (dset_labels_id < 0)
-					dset_labels_id = H5Dcreate(q_fit_grp_id, "Calibration_Curve_Labels", filetype_label, q_dataspace_label_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-
-				for (size_t i = 0; i < qitr.second.calib_curves.size(); i++)
-				{
-
-					std::string q_dset_name = "Calibration_Curve_" + qitr.second.calib_curves[i].quantifier_name;
-
-					q_dset_id = H5Dopen(q_fit_grp_id, q_dset_name.c_str(), H5P_DEFAULT);
-					if (q_dset_id < 0)
-						q_dset_id = H5Dcreate(q_fit_grp_id, q_dset_name.c_str(), H5T_INTEL_R, q_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-					if (q_dset_id < 0)
-					{
-						logE << "creating dataset MAPS/Quantification/" << q_dset_name << "/" << q_dset_name << "\n";
-						continue;
-					}
-
-
-					//for(auto& shell_itr : quant_itr.second)
-					for (size_t j = 0; j < 3; j++)
-					{
-						char label[10] = { 0 };
-						//int element_offset = 0;
-						//create dataset for different shell curves
-						std::vector<real_t> calibration_curve = qitr.second.calib_curves[i].shell_curves[j];
-						std::vector<std::string> calibration_curve_labels = qitr.second.calib_curves[i].shell_curves_labels[j];
-						offset[0] = j;
-						offset[1] = 0;
-
-						count[0] = 1;
-						count[1] = q_dims_out[1];
-						//H5Sselect_hyperslab (q_dataspace_ch_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-						//H5Sselect_hyperslab (q_dataspace_ch_off_id, H5S_SELECT_SET, &offset[2], nullptr, count, nullptr);
-						//status = H5Dwrite (q_dset_ch_id, memtype, q_dataspace_ch_off_id, q_dataspace_ch_id, H5P_DEFAULT, (void*)(el_name.c_str()));
-
-						H5Sselect_hyperslab(q_filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-						status = H5Dwrite(q_dset_id, H5T_NATIVE_REAL, q_memoryspace_id, q_filespace_id, H5P_DEFAULT, (void*)&calibration_curve[0]);
-
-						for (size_t k = 0; k < calibration_curve_labels.size(); k++)
-						{
-							memset(label, 0, 10);
-							calibration_curve_labels[k].copy(&label[0], 9);
-							offset[1] = k;
-							count[1] = 1;
-							status = H5Sselect_hyperslab(q_filespace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-							status = H5Dwrite(dset_labels_id, memtype_label, q_memoryspace_label_id, q_filespace_id, H5P_DEFAULT, (void*)&label[0]);
-						}
-
-					}
-					H5Dclose(q_dset_id);
-				}
-
-				H5Dclose(dset_labels_id);
-				H5Gclose(q_fit_grp_id);
+				H5Dclose(q_dset_id);
 			}
+
+			H5Dclose(dset_labels_id);
+			H5Gclose(q_fit_grp_id);
 		}
+		
         //H5Dclose(q_dset_ch_id);
         H5Sclose(q_filespace_id);
         H5Sclose(q_memoryspace_id);
@@ -4034,7 +4009,7 @@ bool HDF5_IO::save_quantification(data_struct::Quantification_Standard * quantif
 
 
     return true;
-
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7390,7 +7365,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
                     dataspace_id = H5Dget_space(dset_id);
                     close_map.push({ dataspace_id, H5O_DATASPACE });
                     H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, model_spectra.data());
-                    csv::save_fit_and_int_spectra(csv_path, energy_array, int_spectra, model_spectra, background_array);
+                    csv::save_fit_and_int_spectra(csv_path, &energy_array, &int_spectra, &model_spectra, &background_array);
                 }
             }
         }

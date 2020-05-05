@@ -59,88 +59,84 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/element_quant.h"
 #include "fitting/optimizers/optimizer.h"
 
-
 namespace data_struct
 {
 
 using namespace std;
+using namespace quantification::models;
+
+const static vector<Electron_Shell> Shells_To_Quant({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-struct Calibration_Curve
+struct DLL_EXPORT Quantification_Scaler_Struct
 {
-    //enum C_KEYS {K_SHELL, L_SHELL, M_SHELL};
-
-    Calibration_Curve()
+    Quantification_Scaler_Struct(unsigned int max_z= CALIBRATION_CURVE_SIZE)
     {
-        quant_id = -1;
-        shell_curves.resize(3);
-        shell_curves_labels.resize(3);
-    }
-
-    Calibration_Curve(size_t i)
-    {
-        quant_id = -1;
-        shell_curves.resize(3);
-        shell_curves_labels.resize(3);
-        resize(i);
-    }
-
-    void resize(size_t i)
-    {
-        for(auto& curve : shell_curves)
+        vector<Element_Quant> e_quants;
+        for (int i = 0; i < max_z; i++)
         {
-            curve.resize(i);
+            e_quants.emplace_back(Element_Quant(i + 1));
+        }
+        for (const auto& itr : Shells_To_Quant)
+        {
+            curve_quant_map[itr] = e_quants;
+        }
+    }
+    /*
+    void update_weight(Electron_Shell shell, unsigned int Z, real_t weight)
+    {
+        if(curve_quant_map.count(shell) > 0)
+        {
+            curve_quant_map.at(shell).at(Z - 1).weight = weight;
+        }
+    }
+    */
+    unordered_map<Electron_Shell, vector<Element_Quant> > curve_quant_map;
+};
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+struct DLL_EXPORT Fitting_Quantification_Struct
+{
+    Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 92 (U)
+    {
+        vector<string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
+        init(quant_scalers, max_z);
+    }
+
+    Fitting_Quantification_Struct(vector<string> quantifier_scalers, unsigned int max_z= CALIBRATION_CURVE_SIZE)
+    {
+        init(quantifier_scalers, max_z);
+    }
+
+    void init(vector<string> quantifier_scalers, unsigned int max_z)
+    {
+        for (const auto& itr : quantifier_scalers)
+        {
+            quant_scaler_map[itr] = Quantification_Scaler_Struct(max_z);
         }
     }
 
-    int quant_id;
-    string quantifier_name;
-    vector<vector<real_t> > shell_curves;
-    vector<vector<std::string> > shell_curves_labels;
+    void update_weight(Electron_Shell shell, unsigned int Z, real_t weight)
+    {
+        for (auto& itr : quant_scaler_map)
+        {
+            itr.second.curve_quant_map.at(shell).at(Z - 1).weight = weight;
+        }
+    }
+
+    //            Quantifier {SR_Current, US_IC, DS_IC}
+    unordered_map<string, Quantification_Scaler_Struct> quant_scaler_map;
+
+    // element name       cts
+    unordered_map<string, real_t>  element_counts;
 
 };
 
 //-----------------------------------------------------------------------------
-
-struct Quantifiers
-{
-    enum Q_KEYS {CURRENT, US_IC, DS_IC};
-
-    Quantifiers()
-    {
-        calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "SR_Current";
-        calib_curves[CURRENT].quant_id = CURRENT;
-        calib_curves[US_IC].quantifier_name = "US_IC";
-        calib_curves[US_IC].quant_id = US_IC;
-        calib_curves[DS_IC].quantifier_name = "DS_IC";
-        calib_curves[DS_IC].quant_id = DS_IC;
-    }
-
-    Quantifiers(size_t i)
-    {
-        calib_curves.resize(3);
-        calib_curves[CURRENT].quantifier_name = "SR_Current";
-        calib_curves[CURRENT].quant_id = CURRENT;
-        calib_curves[US_IC].quantifier_name = "US_IC";
-        calib_curves[US_IC].quant_id = US_IC;
-        calib_curves[DS_IC].quantifier_name = "DS_IC";
-        calib_curves[DS_IC].quant_id = DS_IC;
-        resize(i);
-    }
-
-    void resize(size_t i)
-    {
-        for(auto& curve : calib_curves)
-        {
-            curve.resize(i);
-        }
-    }
-
-    vector<Calibration_Curve> calib_curves;
-};
-
 //-----------------------------------------------------------------------------
 
 ///
@@ -152,53 +148,24 @@ class DLL_EXPORT Quantification_Standard
 public:
     Quantification_Standard();
 
+    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights);
+
+    Quantification_Standard(std::string standard_file, std::unordered_map<std::string, real_t> e_standard_weights);
+
     ~Quantification_Standard();
 
-    void append_element(string name, real_t weight);
+    void init_defaults();
 
-    bool processed() {return _processed;}
+    void init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights);
 
-    void init_element_quants(string proc_type_str,
-                             unordered_map<string, real_t>  *e_counts,
-                             quantification::models::Quantification_Model *quantification_model,
-                             int quant_id,
-                             real_t ic_quantifier);
-
-    void generate_calibration_curve(string proc_type_str,  int quant_id, real_t val);
-
-    //           proc_type  quantifier
-    unordered_map<string, Quantifiers> quantifier_map;
-
-    //             quant_type          element     quant
-    unordered_map<int, unordered_map<string,Element_Quant> > element_quants;
-
-    //              proc_type       array of H -> U element quants
-    unordered_map < string, vector<Element_Quant> > element_quant_vec;
-
-    //          proc_type               Element   Counts
-    unordered_map<string, unordered_map<string, real_t> > element_counts;
+    //per standard
+    std::string standard_filename;
+    std::unordered_map<std::string, real_t> element_standard_weights;
 
     Spectra integrated_spectra;
-
-    std::string standard_filename;
-
     real_t sr_current;
     real_t US_IC;
     real_t DS_IC;
-
-    real_t beryllium_window_thickness;
-    real_t germanium_dead_layer;
-    real_t detector_chip_thickness;
-    real_t incident_energy;
-    real_t airpath;
-
-    data_struct::Element_Info* detector_element;
-
-protected:
-
-    bool _processed;
-
-
 };
 
 //-----------------------------------------------------------------------------

@@ -137,6 +137,11 @@ int main(int argc, char *argv[])
 			std::string item;
 			while (std::getline(ss, item, ','))
 			{
+                for (std::string::size_type x = 0; x < item.length(); ++x)
+                {
+                    item[x] = std::toupper(item[x]);
+                }
+
 				if (item == STR_FIT_ROI)
 				{
 					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
@@ -149,7 +154,7 @@ int main(int argc, char *argv[])
 				{
 					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
 				}
-				else if (item == STR_FIT_GAUSS_MATRIX)
+				else if (item == STR_FIT_GAUSS_MATRIX || item == "MATRIX")
 				{
 					analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
 				}
@@ -157,6 +162,11 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
+            for (std::string::size_type x = 0; x < fitting.length(); ++x)
+            {
+                fitting[x] = std::toupper(fitting[x]);
+            }
+
 			if (fitting == STR_FIT_ROI)
 			{
 				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::ROI);
@@ -169,7 +179,7 @@ int main(int argc, char *argv[])
 			{
 				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
 			}
-			else if (fitting == STR_FIT_GAUSS_MATRIX)
+			else if (fitting == STR_FIT_GAUSS_MATRIX || fitting == "MATRIX")
 			{
 				analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
 			}

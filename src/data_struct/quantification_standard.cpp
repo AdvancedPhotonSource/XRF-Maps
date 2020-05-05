@@ -61,19 +61,27 @@ namespace data_struct
 
 Quantification_Standard::Quantification_Standard()
 {
+    init_defaults();
+}
 
-    detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
-    beryllium_window_thickness = 0.0; //24.000000
-    germanium_dead_layer = 0.0; //350.0
-    detector_chip_thickness = 0.0;
-    incident_energy = 10.0;
-    airpath = 0.0;
-    sr_current = 1.0;
-    US_IC = 1.0;
-    DS_IC = 1.0;
+//-----------------------------------------------------------------------------
 
-    _processed = false;
+Quantification_Standard::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+{
+    init_defaults();
+    init_weights_struct(standard_file, element_names, element_weights);
+}
 
+//-----------------------------------------------------------------------------
+
+Quantification_Standard::Quantification_Standard(std::string standard_file, std::unordered_map<std::string, real_t> e_standard_weights)
+{
+    init_defaults();
+    this->standard_filename = standard_file;
+    for (const auto& itr : e_standard_weights)
+    {
+        element_standard_weights[itr.first] = itr.second;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -85,147 +93,145 @@ Quantification_Standard::~Quantification_Standard()
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::append_element(string name, real_t weight)
+void Quantification_Standard::init_defaults()
 {
-    element_quants[Quantifiers::Q_KEYS::CURRENT][name] = Element_Quant(weight);
-    element_quants[Quantifiers::Q_KEYS::US_IC][name] = Element_Quant(weight);
-    element_quants[Quantifiers::Q_KEYS::DS_IC][name] = Element_Quant(weight);
 
+    sr_current = 1.0;
+    US_IC = 1.0;
+    DS_IC = 1.0;
 }
 
 //-----------------------------------------------------------------------------
+
+void Quantification_Standard::init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+{
+    standard_filename = standard_file;
+    for (size_t i = 0; i < element_names.size(); i++)
+    {
+        element_standard_weights[element_names[i]] = element_weights[i];
+    }
+}
 /*
-void Quantification_Standard::element_counts(string proc_type_str, unordered_map<string, real_t> map)
-{
-    element_counts[proc_type_str].clear();
-    for(auto itr: map)
-    {
-          element_counts[proc_type_str][itr.first] = itr.second;
-    }
-}
-*/
 //-----------------------------------------------------------------------------
 
-std::string get_shell_element_label(int shell, size_t l)
+Element_Quant* Quantification_Standard::append_element(Fitting_Routines routine, string quant_scaler, string name, real_t weight)
 {
-    std::string shell_str = "";
-    switch(shell)
+    if (fitting_quant_map.count(routine) == 0)
     {
-    case quantification::models::K_SHELL:
-        //shell_str = "_K";
-        break;
-    case quantification::models::L_SHELL:
-        shell_str = "_L";
-        break;
-    case quantification::models::M_SHELL:
-        shell_str = "_M";
-        break;
-    case quantification::models::N_SHELL:
-        shell_str = "_N";
-        break;
-    case quantification::models::O_SHELL:
-        shell_str = "_O";
-        break;
-    case quantification::models::P_SHELL:
-        shell_str = "_P";
-        break;
-    case quantification::models::Q_SHELL:
-        shell_str = "_Q";
-        break;
-    default:
-        break;
+        fitting_quant_map[routine] = Fitting_Quantification_Struct();
     }
 
-    return Element_Symbols[l]+shell_str;
-}
-
-//-----------------------------------------------------------------------------
-
-void Quantification_Standard::init_element_quants(string proc_type_str,
-                                                 unordered_map<string, real_t>  *e_counts,
-                                                 quantification::models::Quantification_Model *quantification_model,
-                                                 int quant_id,
-                                                 real_t ic_quantifier)
-{
-    element_counts[proc_type_str] = *e_counts;
-
-    for(auto &itr : element_quants.at(quant_id))
+    Element_Info* element = Element_Info_Map::inst()->get_element(name);
+    if (element != nullptr)
     {
-        quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+        Electron_Shell shell = get_shell_by_name(name);
 
-        Element_Info* element = Element_Info_Map::inst()->get_element(itr.first);
-        if (element == nullptr)
+        //set initial counts to 0;
+        fitting_quant_map.at(routine).element_counts[name] = 0;
+        fitting_quant_map.at(routine).update_weight(shell, element->number, weight);
+
+
+        if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) == 0)
         {
-            continue;
+            return &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
         }
-        quantification_model->init_element_quant(itr.second,
-                                                 incident_energy,
-                                                 detector_element,
-                                                 shell,
-                                                 airpath,
-                                                 detector_chip_thickness,
-                                                 beryllium_window_thickness,
-                                                 germanium_dead_layer,
-                                                 element->number);
 
-        real_t e_cal_factor = (itr.second.weight * (ic_quantifier));
-        real_t e_cal = e_cal_factor / e_counts->at(itr.first);
-        itr.second.e_cal_ratio = (real_t)1.0 / e_cal;
     }
+    else
+    {
+        logW << "Could not add element " << name << ". Not found in Element_Info_Map\n";
+    }
+
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::generate_calibration_curve(string proc_type_str, int quant_id, real_t val)
+void Quantification_Standard::update_element_quants(Fitting_Routines routine,
+                                                    string quantifier_scaler,
+                                                    Quantification_Model *quantification_model,
+                                                    real_t ic_quantifier)
 {
-    quantification::models::Quantification_Model quantification_model;
-    quantifier_map.emplace(pair<string, Quantifiers>(proc_type_str, Quantifiers()) );
-    Quantifiers *quantifiers = &quantifier_map.at(proc_type_str);
-    vector<quantification::models::Electron_Shell> shells_to_quant = {quantification::models::K_SHELL, quantification::models::L_SHELL, quantification::models::M_SHELL};
-    for(auto shell : shells_to_quant)
-    {
-        if (element_quant_vec.count(proc_type_str) == 0)
-        {
-            //generate calibration curve for all elements
-            element_quant_vec[proc_type_str] = quantification_model.generate_quant_vec(incident_energy,
-                                                                                        detector_element,
-                                                                                        shell,
-                                                                                        airpath,
-                                                                                        detector_chip_thickness,
-                                                                                        beryllium_window_thickness,
-                                                                                        germanium_dead_layer,
-                                                                                        1, // H
-                                                                                        92); // U
 
-            for (const auto& itr : element_quants.at(quant_id))
+    if (fitting_quant_map.count(routine) > 0)
+    {
+        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        {
+            for (const auto& shell_itr : Shells_To_Quant)
             {
-                if (itr.second.Z < element_quant_vec[proc_type_str].size())
+                for (auto& eq_itr : fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr))
                 {
-                    element_quant_vec[proc_type_str][itr.second.Z - 1].e_cal_ratio = itr.second.e_cal_ratio;
-                    element_quant_vec[proc_type_str][itr.second.Z - 1].weight = itr.second.weight;
+                    Element_Info* element = Element_Info_Map::inst()->get_element(eq_itr.Z);
+                    if (element == nullptr)
+                    {
+                        continue;
+                    }
+                    quantification_model->init_element_quant(eq_itr,
+                                                            incident_energy,
+                                                            detector_element,
+                                                            shell_itr,
+                                                            airpath,
+                                                            detector_chip_thickness,
+                                                            beryllium_window_thickness,
+                                                            germanium_dead_layer,
+                                                            element->number);
+
+                    // if we have weight for this element, update e_cal_ratio
+                    if (fitting_quant_map.at(routine).element_counts.count(eq_itr.name) > 0)
+                    {
+                        real_t counts = fitting_quant_map.at(routine).element_counts.at(eq_itr.name);
+                        real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
+                        real_t e_cal = e_cal_factor / counts;
+                        eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                    }
                 }
             }
         }
-            quantifiers->calib_curves[quant_id].shell_curves[shell] = quantification_model.model_calibrationcurve(element_quant_vec.at(proc_type_str), val);
-            //change nan's to zeros
-            quantifiers->calib_curves[quant_id].shell_curves_labels[shell].resize(quantifiers->calib_curves[quant_id].shell_curves[shell].size());
-            for(size_t l = 0; l<quantifiers->calib_curves[quant_id].shell_curves[shell].size(); l++)
-            {
-                quantifiers->calib_curves[quant_id].shell_curves_labels[shell][l] = get_shell_element_label(shell, l+1);
-                if(false == std::isfinite(quantifiers->calib_curves[quant_id].shell_curves[shell][l]) )
-                {
-                    quantifiers->calib_curves[quant_id].shell_curves[shell][l] = 0.0;
-                }
+        else
+        {
+            logW << "Could not find quantifier scalers : " << quantifier_scaler << " .\n";
+        }
+    }
+    else
+    {
+        logW << "Could not find fitting routine " << Fitting_Routine_To_Str.at(routine) << " .\n";
+    }
+}
 
+//-----------------------------------------------------------------------------
+
+void Quantification_Standard::update_calibration_curve(Fitting_Routines routine,
+                                                        string quantifier_scaler,
+                                                        Quantification_Model* quantification_model,
+                                                        real_t val)
+{
+    if (fitting_quant_map.count(routine) > 0)
+    {
+        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        {
+            for (const auto& shell_itr : Shells_To_Quant)
+            {               
+                vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
+                quantification_model->model_calibrationcurve(quant_vec, val);
             }
-     }
-
-    
-    
-
+        }
+    }
     _processed = true;
 }
 
+//-----------------------------------------------------------------------------
+
+void Quantification_Standard::normalize_counts_by_time(Fitting_Routines routine)
+{
+    if (fitting_quant_map.count(routine) > 0)
+    {
+        for (auto& itr : fitting_quant_map.at(routine).element_counts)
+        {
+            itr.second /= integrated_spectra.elapsed_livetime();
+        }
+    }
+}
+*/
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 

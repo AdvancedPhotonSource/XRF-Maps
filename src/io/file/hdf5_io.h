@@ -58,7 +58,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "hdf5.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/fit_element_map.h"
-#include "data_struct/quantification_standard.h"
+#include "data_struct/detector.h"
 #include "data_struct/params_override.h"
 #include "data_struct/scan_info.h"
 
@@ -173,9 +173,7 @@ public:
 							const data_struct::Spectra& max_spectra,
 							const data_struct::Spectra& max_10_spectra);
 
-    void save_quantifications(std::map<string, data_struct::Quantification_Standard*> &quants);
-
-    bool save_quantification(data_struct::Quantification_Standard * quantification_standard);
+    bool save_quantification(data_struct::Detector * detector);
 
     bool save_scan_scalers(size_t detector_num,
                            data_struct::Scan_Info* scan_info,
