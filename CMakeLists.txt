@@ -224,6 +224,7 @@ set(libxrf_fit_HEADERS
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
+    src/data_struct/detector.h
     src/data_struct/analysis_job.h
     src/workflow/threadpool.h
 )
@@ -249,6 +250,7 @@ set(libxrf_fit_SOURCE
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/lmfit_optimizer.cpp
+    src/data_struct/detector.cpp
     src/data_struct/analysis_job.cpp
 )
 

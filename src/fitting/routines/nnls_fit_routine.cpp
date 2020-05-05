@@ -112,9 +112,38 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 	data_struct::ArrayXr* result;
     int num_iter;
     std::unordered_map<std::string, real_t> counts_dict;
-	Spectra spectra_model(_energy_range.count());
-	ArrayXr rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
-	nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
+    Fit_Parameters fit_params = model->fit_parameters();
+
+    ArrayXr background;
+    if (fit_params.contains(STR_SNIP_WIDTH))
+    {
+        real_t spectral_binning = 0.0;
+        ArrayXr bkg = snip_background(spectra,
+            fit_params.value(STR_ENERGY_OFFSET),
+            fit_params.value(STR_ENERGY_SLOPE),
+            fit_params.value(STR_ENERGY_QUADRATIC),
+            spectral_binning,
+            fit_params.value(STR_SNIP_WIDTH),
+            _energy_range.min,
+            _energy_range.max);
+
+        background = bkg.segment(_energy_range.min, _energy_range.count());
+    }
+    else
+    {
+        background.setZero(_energy_range.count());
+    }
+
+    ArrayXr spectra_sub_background = spectra->segment(_energy_range.min, _energy_range.count());
+    spectra_sub_background -= background;
+    spectra_sub_background = spectra_sub_background.unaryExpr([](real_t v) { return v>0.0 ? v : (real_t)0.0; });
+    nsNNLS::nnls<real_t> solver(&_fitmatrix, &spectra_sub_background, _max_iter);
+
+    Spectra spectra_model = background;
+
+	//Spectra spectra_model(_energy_range.count());
+	//ArrayXr rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
+	//nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
 
     num_iter = solver.optimize();
     if (num_iter < 0)
@@ -144,6 +173,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 	{
 		std::lock_guard<std::mutex> lock(_int_spec_mutex);
 		_integrated_fitted_spectra.add(spectra_model);
+        _integrated_background.add(background);
 	}
 
     return counts_dict;

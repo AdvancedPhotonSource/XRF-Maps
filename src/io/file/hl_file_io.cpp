@@ -133,7 +133,7 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
     {
         if (analysis_job->detectors_meta_data.count(detector_num) < 1)
         {
-            analysis_job->detectors_meta_data[detector_num] = data_struct::Detector();
+            analysis_job->detectors_meta_data[detector_num] = data_struct::Detector(detector_num);
         }
         data_struct::Detector *detector = &analysis_job->detectors_meta_data[detector_num];
 
@@ -160,6 +160,8 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
                 }
             }
         }
+
+        detector->update_from_fit_paramseters();
 
         if (override_params->elements_to_fit.size() < 1)
         {
@@ -220,13 +222,13 @@ bool save_volume(data_struct::Spectra_Volume *spectra_volume,
 
 // ----------------------------------------------------------------------------
 
-void save_quantification_plots(data_struct::Analysis_Job* analysis_job, map<string, data_struct::Quantification_Standard *> *standards, int detector_num)
+void save_quantification_plots(string path, Detector* detector)
 {
-    std::string str_path = analysis_job->dataset_directory + "/output/";
-
-    file::csv::save_quantification(str_path, standards, detector_num);
+    std::string str_path = path + "/output/";
+    //if(analysis_job->get_detector(detector_num))
+    file::csv::save_quantification(str_path, detector);
 #ifdef _BUILD_WITH_QT
-    visual::SavePlotQuantification(str_path, standards, detector_num);
+    visual::SavePlotQuantification(str_path, detector);
 #endif
 }
 
@@ -255,7 +257,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Gaussian_Model model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
-    *spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    data_struct::Spectra snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
     data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
     data_struct::ArrayXr background;
@@ -278,8 +280,16 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
                                                                         fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
-        background = s_background.segment(energy_range.min, energy_range.count());
-        model_spectra += background;
+        if (background.size() >= energy_range.count())
+        {
+            background = s_background.segment(energy_range.min, energy_range.count());
+            model_spectra += background;
+        }
+        if (background.size() == 0)
+        {
+            background.resize(energy_range.count());
+            background.setZero();
+        }
 	}
     else
     {
@@ -289,10 +299,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
 #ifdef _BUILD_WITH_QT
     std::string str_path = dataset_dir+"/output/fit_"+dataset_filename+"_det"+std::to_string(detector_num)+".png";
-    visual::SavePlotSpectras(str_path, &ev, spectra, &model_spectra, &background, true);
+    visual::SavePlotSpectras(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
-    io::file::csv::save_fit_and_int_spectra(full_path, ev, *spectra, model_spectra, background);
+    io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
 
 }
 
@@ -423,7 +433,7 @@ bool load_quantification_standard(std::string dataset_directory,
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                  std::string quantification_info_file,
-                                                 vector<element_weights_struct> &standard_element_weights)
+                                                 vector<Quantification_Standard> &standards)
 {
     std::string path = dataset_directory + quantification_info_file;
     std::ifstream paramFileStream(path);
@@ -433,8 +443,6 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
         paramFileStream.exceptions(std::ifstream::failbit);
         bool has_filename = false;
         bool has_elements = false;
-        //bool has_weights = false;
-        //std::string line;
         std::string tag;
 
         std::vector<std::string> element_names;
@@ -483,19 +491,19 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     {
                         if(element_names.size() == element_weights.size())
                         {
-                            standard_element_weights.emplace_back( element_weights_struct(standard_filename, element_names, element_weights) );
+                            standards.emplace_back(Quantification_Standard(standard_filename, element_names, element_weights));
                         }
                         else
                         {
                             logE<<"Number of element names ["<<element_names.size()<<"] does not match number of element weights ["<<element_weights.size()<<"]!"<<"\n";
                         }
                     }
+                    standard_filename = "";
                     element_names.clear();
                     element_weights.clear();
                     has_filename = false;
                     has_elements = false;
                 }
-
             }
         }
         catch(std::exception& e)

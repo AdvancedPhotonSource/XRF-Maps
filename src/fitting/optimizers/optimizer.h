@@ -105,7 +105,7 @@ struct Quant_User_Data
 {
     quantification::models::Quantification_Model * quantification_model;
     Fit_Parameters * fit_parameters;
-    std::unordered_map<std::string, Element_Quant> * quant_map;
+    std::unordered_map<std::string, Element_Quant> quant_map;
 };
 
 void fill_user_data(User_Data &ud,
@@ -148,7 +148,7 @@ public:
 
 
     virtual void minimize_quantification(Fit_Parameters *fit_params,
-                                         std::unordered_map<std::string, Element_Quant> * quant_map,
+                                         std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model) = 0;
 
 private:

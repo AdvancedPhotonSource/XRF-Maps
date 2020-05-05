@@ -134,10 +134,10 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(*(ud->quant_map), params[0]);
+    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, params[0]);
 
     int idx = 0;
-    for(auto& itr : *(ud->quant_map))
+    for(auto& itr : ud->quant_map)
     {
         dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
         idx++;
@@ -431,12 +431,18 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 //-----------------------------------------------------------------------------
 
 void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
-                                              std::unordered_map<std::string, Element_Quant> * quant_map,
+                                              std::unordered_map<std::string, Element_Quant*> * quant_map,
                                               quantification::models::Quantification_Model * quantification_model)
 {
     Quant_User_Data ud;
 
-    ud.quant_map = quant_map;
+    if (quant_map != nullptr)
+    {
+        for (const auto& itr : *quant_map)
+        {
+            ud.quant_map[itr.first] = *(itr.second);
+        }
+    }
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 

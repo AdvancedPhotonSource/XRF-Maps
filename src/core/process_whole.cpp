@@ -241,12 +241,12 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 // ----------------------------------------------------------------------------
 
 void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
-                  data_struct::Detector * detector_struct,
+                  data_struct::Detector * detector,
                   ThreadPool* tp,
                   bool save_spec_vol,
                   Callback_Func_Status_Def* status_callback)
 {
-    if (detector_struct == nullptr)
+    if (detector == nullptr)
     {
         logE << "Detector meta information not loaded. Cannot process!\n";
         return;
@@ -258,14 +258,14 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         return;
     }
 
-    data_struct::Params_Override * override_params = &(detector_struct->fit_params_override_dict);
+    data_struct::Params_Override * override_params = &(detector->fit_params_override_dict);
 
     //Range of energy in spectra to fit
-    fitting::models::Range energy_range = data_struct::get_energy_range(spectra_volume->samples_size(), &(detector_struct->fit_params_override_dict.fit_params) );
+    fitting::models::Range energy_range = data_struct::get_energy_range(spectra_volume->samples_size(), &(detector->fit_params_override_dict.fit_params) );
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
-    for(auto &itr : detector_struct->fit_routines)
+    for(auto &itr : detector->fit_routines)
     {
         fitting::routines::Base_Fit_Routine *fit_routine = itr.second;
 
@@ -289,7 +289,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
             for(size_t j=0; j<spectra_volume->cols(); j++)
             {
                 //logD<< i<<" "<<j<<"\n";
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector_struct->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
             }
         }
 
@@ -340,7 +340,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
     real_t energy_offset = 0.0;
     real_t energy_slope = 0.0;
     real_t energy_quad = 0.0;
-    data_struct::Fit_Parameters fit_params = detector_struct->model->fit_parameters();
+    data_struct::Fit_Parameters fit_params = detector->model->fit_parameters();
     if(fit_params.contains(STR_ENERGY_OFFSET))
     {
         energy_offset = fit_params[STR_ENERGY_OFFSET].value;
@@ -356,13 +356,13 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
     if(save_spec_vol)
     {
-        io::file::HDF5_IO::inst()->save_quantifications(detector_struct->quant_standards);
+        io::file::HDF5_IO::inst()->save_quantification(detector);
         io::save_volume(spectra_volume, energy_offset, energy_slope, energy_quad);
         io::file::HDF5_IO::inst()->end_save_seq();
     }
     else
     {
-        io::file::HDF5_IO::inst()->save_quantifications(detector_struct->quant_standards);
+        io::file::HDF5_IO::inst()->save_quantification(detector);
         io::file::HDF5_IO::inst()->end_save_seq();
     }
 
@@ -387,7 +387,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
             for(size_t detector_num : analysis_job->detector_num_arr)
             {
 
-                data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
+                data_struct::Detector* detector = analysis_job->get_detector(detector_num);
 
                 //Spectra volume data
                 data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
@@ -408,7 +408,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )
+                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &loaded_from_analyzed_hdf5, true) )
                 {
                     logW<<"Skipping detector "<<detector_num<<"\n";
                     delete spectra_volume;
@@ -420,7 +420,7 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 }
 
                 analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-                proc_spectra(spectra_volume, detector_struct, &tp, !loaded_from_analyzed_hdf5, status_callback);
+                proc_spectra(spectra_volume, detector, &tp, !loaded_from_analyzed_hdf5, status_callback);
 				delete spectra_volume;
             }
         }
@@ -433,7 +433,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 {
     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
 
-    data_struct::Detector* detector_struct = analysis_job->get_detector(0);
+    data_struct::Detector* detector = analysis_job->get_detector(0);
     //Spectra volume data
     data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
     data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
@@ -443,7 +443,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
     bool is_loaded_from_analyzed_h5;
-    if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
+    if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
     {
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
         delete spectra_volume;
@@ -458,7 +458,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     //load spectra volume
     for (int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
     {
-        if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector_struct->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
+        if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
         {
             logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
             delete spectra_volume;
@@ -498,7 +498,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
     analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
 
-    proc_spectra(spectra_volume, detector_struct, &tp, !is_loaded_from_analyzed_h5, status_callback);
+    proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, status_callback);
     delete spectra_volume;
 }
 
@@ -557,56 +557,23 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
 
 // ----------------------------------------------------------------------------
 
-bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num, vector<io::element_weights_struct> &standard_element_weights, unordered_map<size_t, real_t> &quant_map)
+void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num)
 {
-    real_t avg_sr_current = 0.0;
-    real_t avg_US_IC = 0.0;
-    real_t avg_DS_IC = 0.0;
-    real_t avg_cnt = 0.0;
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
 
-    data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
-    data_struct::Params_Override* override_params = &(detector_struct->fit_params_override_dict);
+    data_struct::Detector* detector = analysis_job->get_detector(detector_num);
+    data_struct::Params_Override* override_params = &(detector->fit_params_override_dict);
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
     energy_range.min = 0;
 
-    for (io::element_weights_struct& standard_itr : standard_element_weights)
+    for (Quantification_Standard& standard_itr : analysis_job->standard_element_weights)
     {
-        Quantification_Standard* quantification_standard = new Quantification_Standard();
         // detecotr_struct descructor will delete this memory
-        detector_struct->quant_standards[standard_itr.standard_file_name] = quantification_standard;
-
-        //Parameters for calibration curve
-        if (override_params->detector_element.length() > 0)
-        {
-            // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-            quantification_standard->detector_element = (data_struct::Element_Info_Map::inst()->get_element(override_params->detector_element));
-        }
-        if (override_params->be_window_thickness.length() > 0)
-        {
-            quantification_standard->beryllium_window_thickness = std::stof(override_params->be_window_thickness) * 1000.0;
-        }
-        if (override_params->ge_dead_layer.length() > 0)
-        {
-            quantification_standard->germanium_dead_layer = std::stof(override_params->ge_dead_layer) * 1000.0;
-        }
-        if (override_params->det_chip_thickness.length() > 0)
-        {
-            quantification_standard->detector_chip_thickness = std::stof(override_params->det_chip_thickness) * 1000.0;
-        }
-        if (override_params->airpath.length() > 0)
-        {
-            quantification_standard->airpath = std::stof(override_params->airpath) * 1000.0;
-        }
-        if (override_params->fit_params.contains(STR_COHERENT_SCT_ENERGY))
-        {
-            quantification_standard->incident_energy = (override_params->fit_params.at(STR_COHERENT_SCT_ENERGY).value);
-        }
-
-        quantification_standard->standard_filename = standard_itr.standard_file_name;
+        detector->quantification_standards[standard_itr.standard_filename] = Quantification_Standard(standard_itr.standard_filename, standard_itr.element_standard_weights);
+        Quantification_Standard* quantification_standard = &(detector->quantification_standards[standard_itr.standard_filename]);
 
         //Output of fits for elements specified
         std::unordered_map<std::string, data_struct::Fit_Element_Map*> elements_to_fit;
@@ -614,7 +581,7 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
         {
             data_struct::Element_Info* e_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
             elements_to_fit[itr.first] = new data_struct::Fit_Element_Map(itr.first, e_info);
-            elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(quantification_standard->detector_element);
+            elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element);
         }
 
         unordered_map<string, string> pv_map;
@@ -634,14 +601,14 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
                 {
 
                     //legacy code would load mca files, check for mca and replace with mda
-                    size_t std_str_len = standard_itr.standard_file_name.length();
-                    if (standard_itr.standard_file_name[std_str_len - 4] == '.' && standard_itr.standard_file_name[std_str_len - 3] == 'm' && standard_itr.standard_file_name[std_str_len - 2] == 'c' && standard_itr.standard_file_name[std_str_len - 1] == 'a')
+                    size_t std_str_len = standard_itr.standard_filename.length();
+                    if (standard_itr.standard_filename[std_str_len - 4] == '.' && standard_itr.standard_filename[std_str_len - 3] == 'm' && standard_itr.standard_filename[std_str_len - 2] == 'c' && standard_itr.standard_filename[std_str_len - 1] == 'a')
                     {
-                        standard_itr.standard_file_name[std_str_len - 2] = 'd';
-                        quantification_standard->standard_filename = standard_itr.standard_file_name;
+                        standard_itr.standard_filename[std_str_len - 2] = 'd';
+                        quantification_standard->standard_filename = standard_itr.standard_filename;
                         if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
                         {
-                            logE << "Could not load file " << standard_itr.standard_file_name << " for detector" << detector_num << "\n";
+                            logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
                             continue;
                         }
                         else
@@ -653,7 +620,7 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
                     }
                     else
                     {
-                        logE << "Could not load file " << standard_itr.standard_file_name << " for detector" << detector_num << "\n";
+                        logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
                         continue;
                     }
                 }
@@ -671,7 +638,7 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
         {
             if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
             {
-                logE << "Could not load file " << standard_itr.standard_file_name << " for detector" << detector_num << "\n";
+                logE << "Could not load file " << standard_itr.standard_filename << " for detector " << detector_num << "\n";
                 continue;
             }
             else
@@ -681,31 +648,26 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
                 quantification_standard->DS_IC = override_params->DS_IC;
             }
         }
+        
         if (quantification_standard->integrated_spectra.size() == 0)
         {
             logE << "Spectra size == 0! Can't process it!\n";
             continue;
         }
 
-        avg_sr_current += quantification_standard->sr_current;
-        avg_US_IC += quantification_standard->US_IC;
-        avg_DS_IC += quantification_standard->DS_IC;
-        avg_cnt += 1.0;
-
-        analysis_job->init_fit_routines(quantification_standard->integrated_spectra.size(), true);
-
+        energy_range = get_energy_range(quantification_standard->integrated_spectra.size(), &(override_params->fit_params));
         //First we integrate the spectra and get the elemental counts
-        energy_range.max = quantification_standard->integrated_spectra.size() - 1;
-
-
-        for (auto& itr : detector_struct->fit_routines)
+        for (auto& fit_itr : detector->fit_routines)
         {
 
-            fitting::routines::Base_Fit_Routine* fit_routine = itr.second;
+            fitting::routines::Base_Fit_Routine* fit_routine = fit_itr.second;
             for (auto& el_itr : standard_itr.element_standard_weights)
             {
-                //    element_quants[el_itr.first] = Element_Quant(el_itr.second);
-                quantification_standard->append_element(el_itr.first, el_itr.second);
+                quantification_standard->element_counts[fit_itr.first][el_itr.first] = 0;
+
+                detector->append_element(fit_itr.first, STR_SR_CURRENT, el_itr.first, el_itr.second);
+                detector->append_element(fit_itr.first, STR_US_IC, el_itr.first, el_itr.second);
+                detector->append_element(fit_itr.first, STR_DS_IC, el_itr.first, el_itr.second);
             }
 
             //reset model fit parameters to defaults
@@ -715,31 +677,44 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
             //Initialize the fit routine
             fit_routine->initialize(&model, &elements_to_fit, energy_range);
             //Fit the spectra
-            std::unordered_map<std::string, real_t>counts_dict = fit_routine->fit_spectra(&model,
-                &quantification_standard->integrated_spectra,
-                &elements_to_fit);
+            quantification_standard->element_counts[fit_itr.first] = fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit);
 
-            for (auto& itr2 : elements_to_fit)
+            //Save csv and png if matrix or nnls
+            if (fit_itr.first == Fitting_Routines::GAUSS_MATRIX || fit_itr.first == Fitting_Routines::NNLS)
             {
-                counts_dict[itr2.first] /= quantification_standard->integrated_spectra.elapsed_livetime();
-            }
-
-            unordered_map<size_t, real_t*> quant_list =
-            {
-                {Quantifiers::CURRENT, &quantification_standard->sr_current},
-                {Quantifiers::US_IC, &quantification_standard->US_IC},
-                {Quantifiers::DS_IC, &quantification_standard->DS_IC}
-            };
-            //get all standards into all_element_quants to be fitted 
-            for (auto& quant_itr : quant_list)
-            {
-                quantification_standard->init_element_quants(fit_routine->get_name(), &counts_dict, &quantification_model, quant_itr.first, *quant_itr.second);
-                for (auto& q_itr : quantification_standard->element_quants.at(quant_itr.first))
+                Fit_Parameters fit_params = model.fit_parameters();
+                
+                //add elements to fit parameters if they don't exist
+                for (auto& itr2 : elements_to_fit)
                 {
-                    detector_struct->all_element_quants[itr.first][quant_itr.first][q_itr.first] = q_itr.second;
+                    if (false == override_params->fit_params.contains(itr2.first))
+                    {
+                        fit_params.add_parameter(Fit_Param(itr2.first, quantification_standard->element_counts.at(fit_itr.first).at(itr2.first)));
+                    }
                 }
+                fitting::routines::Matrix_Optimized_Fit_Routine* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+                real_t energy_offset = fit_params.value(STR_ENERGY_OFFSET);
+                real_t energy_slope = fit_params.value(STR_ENERGY_SLOPE);
+                real_t energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
+
+                data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+                data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+                data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
+
+                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_"+ fit_routine->get_name()+"_"+ standard_itr.standard_filename + std::to_string(detector_num);
+                logI << full_path << "\n";
+                #ifdef _BUILD_WITH_QT
+                visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
+                #endif
+
+                io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
             }
 
+            quantification_standard->normalize_counts_by_time(fit_itr.first);
+
+            detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, quantification_standard, &quantification_model, quantification_standard->sr_current);
+            detector->update_element_quants(fit_itr.first, STR_US_IC, quantification_standard, &quantification_model, quantification_standard->US_IC);
+            detector->update_element_quants(fit_itr.first, STR_DS_IC, quantification_standard, &quantification_model, quantification_standard->DS_IC);
         }
 
         //cleanup
@@ -749,45 +724,6 @@ bool load_all_quatification_datasets(data_struct::Analysis_Job* analysis_job, si
         }
         elements_to_fit.clear();
     }
-
-    if (avg_sr_current == 0 && avg_US_IC == 0 && avg_DS_IC == 0)
-    {
-        logE << "Could not find SR_Current, US_IC, and DS_IC. Not going to perform quantification\n";
-        return false;
-    }
-
-    if (avg_sr_current == 0)
-    {
-        logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
-        avg_sr_current = 1.0;
-    }
-    else
-    {
-        avg_sr_current /= avg_cnt;
-    }
-    if (avg_US_IC == 0)
-    {
-        logW"US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
-        avg_US_IC = 1.0;
-    }
-    else
-    {
-        avg_US_IC /= avg_cnt;
-    }
-    if (avg_DS_IC == 0)
-    {
-        logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
-        avg_DS_IC = 1.0;
-    }
-    else
-    {
-        avg_DS_IC /= avg_cnt;
-    }
-
-    quant_map[Quantifiers::CURRENT] = avg_sr_current;
-    quant_map[Quantifiers::US_IC] = avg_US_IC;
-    quant_map[Quantifiers::DS_IC] = avg_DS_IC;
-
 }
 
 // ----------------------------------------------------------------------------
@@ -800,42 +736,32 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
     logI << "Perform_quantification()"<<"\n";
 
-    vector<io::element_weights_struct> standard_element_weights;
+    vector<string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
 
-    if( io::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, standard_element_weights) )
+    if( io::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, analysis_job->standard_element_weights) )
     {
         for(size_t detector_num : analysis_job->detector_num_arr)
         {
-            //                    Proc_type   counts
-            //std::unordered_map<std::string, real_t> all_element_counts;
-            //  proc_type   quantifier        element     quant_prop
-            //map<int, map<int, unordered_map<string, Element_Quant>>> all_element_quants;
+            data_struct::Detector* detector = analysis_job->get_detector(detector_num);
+            data_struct::Params_Override* override_params = &(detector->fit_params_override_dict);
 
+            
+            load_and_fit_quatification_datasets(analysis_job, detector_num);
+            detector->generage_avg_quantification_scalers();
 
-            data_struct::Detector* detector_struct = analysis_job->get_detector(detector_num);
-            data_struct::Params_Override* override_params = &(detector_struct->fit_params_override_dict);
-
-            unordered_map<size_t, real_t> quant_map;
-
-
-            if (false == load_all_quatification_datasets(analysis_job, detector_num, standard_element_weights, quant_map))
-            {
-                logE << "Error loading and fitting quantification datasets\n";
-                return false;
-            }
-
-            for(auto &itr_fit : detector_struct->fit_routines)
+            for(auto &fit_itr : detector->fit_routines)
             {
                fitting::optimizers::Optimizer* optimizer = analysis_job->optimizer();
-               for (auto& quant_itr : quant_map)
+               for (auto& quant_itr : detector->avg_quantification_scaler_map)
                {
-                    fitting::routines::Base_Fit_Routine *fit_routine = itr_fit.second;
+                    fitting::routines::Base_Fit_Routine *fit_routine = fit_itr.second;
 
+                    logI << Fitting_Routine_To_Str.at(fit_itr.first) << " "<< quant_itr.first  << "\n";
                     Fit_Parameters fit_params;
                     fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<real_t>::max(), 1.0, 0.1, E_Bound_Type::FIT));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
                     fit_params["quantifier"].value = (real_t)100000.0 / quant_itr.second;
-                    optimizer->minimize_quantification(&fit_params, &detector_struct->all_element_quants[itr_fit.first][quant_itr.first], &quantification_model);
+                    optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
                     real_t val = fit_params["quantifier"].value;
 
                     if(false == std::isfinite(val))
@@ -847,14 +773,12 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                     {
                         logI<<"Quantifier Value = "<<val<<"\n";
                     }
-                    for(auto &dq_itr: detector_struct->quant_standards)
-                    {
-                        dq_itr.second->generate_calibration_curve(fit_routine->get_name(), quant_itr.first, val);
-                    }
+
+                    detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, val);
                 }
             }
 
-        io::save_quantification_plots(analysis_job, &detector_struct->quant_standards, detector_num);
+        io::save_quantification_plots(analysis_job->dataset_directory, detector);
         }
     }
     else

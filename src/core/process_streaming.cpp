@@ -54,14 +54,13 @@ data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream
 
     for(auto &itr : stream_block->fitting_blocks)
     {
-        int i = itr.first;
-        std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[i].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
+        std::unordered_map<std::string, real_t> counts_dict = stream_block->fitting_blocks[itr.first].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit);
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
         {
-            stream_block->fitting_blocks[i].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_livetime();
+            stream_block->fitting_blocks[itr.first].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_livetime();
         }
-        stream_block->fitting_blocks[i].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
+        stream_block->fitting_blocks[itr.first].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
     }
     return stream_block;
 }

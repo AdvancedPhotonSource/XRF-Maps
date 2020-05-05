@@ -124,10 +124,10 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(*(ud->quant_map), par[0]);
+    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, par[0]);
 
     int idx = 0;
-    for(auto& itr : *(ud->quant_map))
+    for(auto& itr : ud->quant_map)
     {
         fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
         idx++;
@@ -256,12 +256,18 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 }
 
 void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
-                                              std::unordered_map<std::string, Element_Quant> * quant_map,
+                                              std::unordered_map<std::string, Element_Quant*> * quant_map,
                                               quantification::models::Quantification_Model * quantification_model)
 {
     Quant_User_Data ud;
 
-    ud.quant_map = quant_map;
+    if (quant_map != nullptr)
+    {
+        for (const auto& itr : *quant_map)
+        {
+            ud.quant_map[itr.first] = *(itr.second);
+        }
+    }
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 

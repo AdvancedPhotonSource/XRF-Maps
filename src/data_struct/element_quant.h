@@ -63,10 +63,10 @@ struct DLL_EXPORT Element_Quant
     {
         zero();
     }
-    Element_Quant(real_t weight_)
+    Element_Quant(real_t Z)
     {
         zero();
-        weight = weight_;
+        this->Z = Z;
     }
     Element_Quant(const Element_Quant& e)
     {
@@ -80,6 +80,7 @@ struct DLL_EXPORT Element_Quant
         e_cal_ratio = e.e_cal_ratio;
         Z = e.Z;
         name = e.name;
+        calib_curve_val = e.calib_curve_val;
     }
     void zero()
     {
@@ -93,6 +94,7 @@ struct DLL_EXPORT Element_Quant
         e_cal_ratio = 0.0;
         Z = 0;
         name = "";
+        calib_curve_val = 0;
     }
 
     real_t weight;  // in ug/cm2
@@ -104,6 +106,7 @@ struct DLL_EXPORT Element_Quant
     real_t transmission_through_air;// (N2)
     real_t Z;
     real_t e_cal_ratio;
+    real_t calib_curve_val;
     std::string name;
 
 };

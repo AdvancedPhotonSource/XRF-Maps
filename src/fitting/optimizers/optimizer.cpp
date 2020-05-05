@@ -119,24 +119,8 @@ namespace optimizers
 		weights = Eigen::abs(weights);
 		weights /= weights.maxCoeff();
 		ud.weights = weights.segment(energy_range.min, energy_range.count());
-        /*
-        ArrayXr background(spectra->size());
-        background.setZero(spectra->size());
-        
-        if(fit_params->contains(STR_SNIP_WIDTH))
-        {
-            real_t spectral_binning = 0.0;
-            background = snip_background(spectra,
-                                         fit_params->value(STR_ENERGY_OFFSET),
-                                         fit_params->value(STR_ENERGY_SLOPE),
-                                         fit_params->value(STR_ENERGY_QUADRATIC),
-                                         spectral_binning,
-                                         fit_params->value(STR_SNIP_WIDTH),
-                                         energy_range.min,
-                                         energy_range.max);
-        }
-        */
-		ud.spectra_background = background->segment(energy_range.min, energy_range.count());
+       
+        ud.spectra_background = *background;
         ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
         
 		ud.spectra_model.resize(energy_range.count());

@@ -238,13 +238,13 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
     {
         //todo : snip background here and pass to optimizer, then add to integrated background to save in h5
         
-        ArrayXr background(spectra->size());
-        background.setZero(spectra->size());
+        ArrayXr background;
+        
         
         if(fit_params.contains(STR_SNIP_WIDTH))
         {
             real_t spectral_binning = 0.0;
-            background = snip_background(spectra,
+            ArrayXr bkg = snip_background(spectra,
                                          fit_params.value(STR_ENERGY_OFFSET),
                                          fit_params.value(STR_ENERGY_SLOPE),
                                          fit_params.value(STR_ENERGY_QUADRATIC),
@@ -252,9 +252,13 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
                                          fit_params.value(STR_SNIP_WIDTH),
                                          _energy_range.min,
                                          _energy_range.max);
+            background = bkg.segment(_energy_range.min, _energy_range.count());
+        }
+        else
+        {
+            background.setZero(_energy_range.count());
         }
 
-        //Spectra sub_spectra = spectra->sub_spectra(_energy_range);
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
@@ -287,9 +291,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
         Spectra model(_energy_range.count());
         this->model_spectrum(&fit_params, &_energy_range, &model);
         
+        model += background;
         model = (ArrayXr)model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
-
-        background = background.segment(_energy_range.min, _energy_range.count());
 
 		//lock and integrate results
 		{

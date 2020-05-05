@@ -147,7 +147,7 @@ Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
 
 //-----------------------------------------------------------------------------
 
-void Stream_Block::init_fitting_blocks(std::unordered_map<int, fitting::routines::Base_Fit_Routine *> *fit_routines,
+void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines,
                                        Fit_Element_Map_Dict * elements_to_fit_)
 {
     elements_to_fit = elements_to_fit_;

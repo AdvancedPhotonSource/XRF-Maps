@@ -100,6 +100,8 @@ static std::time_t now_c;
 // STRING KEYS
 using namespace std;
 
+#define CALIBRATION_CURVE_SIZE 92
+
 //namespace keys
 //{
 
@@ -172,13 +174,15 @@ const string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
 
 const string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
 
+const string STR_FIT_ROI = "ROI";
+const string STR_FIT_SVD = "SVD";
+const string STR_FIT_NNLS = "NNLS";
+const string STR_FIT_GAUSS_MATRIX = "Fitted";
+const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 
-
-const string STR_FIT_ROI = "roi";
-const string STR_FIT_SVD = "svd";
-const string STR_FIT_NNLS = "nnls";
-const string STR_FIT_GAUSS_MATRIX = "matrix";
-
+const string STR_SR_CURRENT = "SR_Current";
+const string STR_US_IC = "US_IC";
+const string STR_DS_IC = "DS_IC";
 
 //}
 
