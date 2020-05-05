@@ -3838,7 +3838,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 			}
 
 			//save quantification_standard counts
-            std::unordered_map<std::string, real_t> element_counts = qitr.second.element_counts;
+            std::unordered_map<std::string, real_t> element_counts = quantification_standard->element_counts.at(qitr.first);
 			count[0] = element_counts.size();
 			dataspace_id = H5Screate_simple(1, count, nullptr);
 			memoryspace_id = H5Screate_simple(1, count, nullptr);

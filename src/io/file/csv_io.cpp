@@ -70,7 +70,7 @@ bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr* energy
 {
     if (energy == nullptr || spectra == nullptr || spectra_model == nullptr || background == nullptr)
     {
-        return false;
+return false;
     }
 
     std::ofstream file_stream(fullpath);
@@ -93,7 +93,7 @@ bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr* energy
 
 // ----------------------------------------------------------------------------
 
-void save_quantification(std::string path, Detector * detector)
+void save_quantification(std::string path, Detector* detector)
 {
     if (detector == nullptr)
     {
@@ -107,18 +107,18 @@ void save_quantification(std::string path, Detector * detector)
         for (auto& itr2 : itr1.second.quant_scaler_map)
         {
             std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det" + std::to_string(detector->number()) + ".csv";
-            save_calibration_curve(str_path_full, detector, &(itr1.second.element_counts), itr2.first, &(itr2.second));
+            save_calibration_curve(str_path_full, detector, &(detector->quantification_standards), itr1.first, itr2.first, &(itr2.second));
         }
     }
 }
 
 // ----------------------------------------------------------------------------
 
-bool save_calibration_curve(std::string path, Detector* detector, unordered_map<string, real_t>  *element_counts, string quantifier_scaler_name, Quantification_Scaler_Struct*quants_map)
+bool save_calibration_curve(std::string path, Detector* detector, std::map<string, Quantification_Standard>* standards, Fitting_Routines routine, string quantifier_scaler_name, Quantification_Scaler_Struct* quants_map)
 {
-    if (element_counts == nullptr || quants_map == nullptr || detector == nullptr)
+    if (standards == nullptr || quants_map == nullptr || detector == nullptr)
     {
-        logW << "element_counts or quants_map or detector are null. Cannot save csv " << path << ". \n";
+        logW << "standards or quants_map or detector are null. Cannot save csv " << path << ". \n";
         return false;
     }
 
@@ -152,41 +152,46 @@ bool save_calibration_curve(std::string path, Detector* detector, unordered_map<
         {
             file_stream << "\n\n";
             file_stream << "Element,Z,Counts,e_cal_ratio,absorption,transmission_Be,transmission_Ge,yield,transmission_through_Si_detector,transmission_through_air,weight  \n";
+
             for (const auto& itr : quants_map->curve_quant_map[shell_itr])
             {
-                if (element_counts->count(itr.name) > 0)
+                string name = itr.name;
+                real_t counts = 0.0;
+                if (shell_itr == Electron_Shell::L_SHELL)
                 {
-                    file_stream << itr.name << "," <<
-                        itr.Z << "," <<
-                        element_counts->at(itr.name) << "," <<
-                        itr.e_cal_ratio << "," <<
-                        itr.absorption << "," <<
-                        itr.transmission_Be << "," <<
-                        itr.transmission_Ge << "," <<
-                        itr.yield << "," <<
-                        itr.transmission_through_Si_detector << "," <<
-                        itr.transmission_through_air << "," <<
-                        itr.weight << "\n";
+                    name += "_L";
                 }
-                else
+                else if (shell_itr == Electron_Shell::M_SHELL)
                 {
-                    file_stream << itr.name << "," <<
-                        "0," <<
-                        itr.e_cal_ratio << "," <<
-                        itr.absorption << "," <<
-                        itr.transmission_Be << "," <<
-                        itr.transmission_Ge << "," <<
-                        itr.yield << "," <<
-                        itr.transmission_through_Si_detector << "," <<
-                        itr.transmission_through_air << "," <<
-                        itr.weight << "\n";
+                    name += "_M";
                 }
+
+                for (const auto& s_itr : *standards)
+                {
+                    if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                    {
+                        counts = s_itr.second.element_counts.at(routine).at(name);
+                        break;
+                    }
+                }
+                
+                file_stream << name << "," <<
+                    itr.Z << "," <<
+                    counts << "," <<
+                    itr.e_cal_ratio << "," <<
+                    itr.absorption << "," <<
+                    itr.transmission_Be << "," <<
+                    itr.transmission_Ge << "," <<
+                    itr.yield << "," <<
+                    itr.transmission_through_Si_detector << "," <<
+                    itr.transmission_through_air << "," <<
+                    itr.weight << "\n";
             }
         }
         file_stream << "\n\n";
         file_stream << "\n\n";
             
-        file_stream << "Element,Z,K Shell, L Shell, M Shell\n";
+        file_stream << "Element,Z,K Shell,L Shell,M Shell\n";
         for (int i=0; i < quants_map->curve_quant_map[Electron_Shell::K_SHELL].size() ; i++)
         {
             file_stream << quants_map->curve_quant_map[Electron_Shell::K_SHELL][i].name << ","

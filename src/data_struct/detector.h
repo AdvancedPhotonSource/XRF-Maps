@@ -79,16 +79,15 @@ public:
     void append_element(Fitting_Routines routine, string name, string quant_scaler, real_t weight);
 
     void update_element_quants(Fitting_Routines routine,
-        string quantifier_scaler,
-        Quantification_Model* quantification_model,
-        real_t ic_quantifier);
+                                string quantifier_scaler,
+                                Quantification_Standard * standard,
+                                Quantification_Model* quantification_model,
+                                real_t ic_quantifier);
 
     void update_calibration_curve(Fitting_Routines routine,
-        string quantifier_scaler,
-        Quantification_Model* quantification_model,
-        real_t val);
-
-    void normalize_counts_by_time(Fitting_Routines routine, real_t elapsed_livetime);
+                                string quantifier_scaler,
+                                Quantification_Model* quantification_model,
+                                real_t val);
 
     void update_from_fit_paramseters();
 

@@ -168,9 +168,34 @@ void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struc
 
 // ----------------------------------------------------------------------------
 
-bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, real_t> *element_counts)
+void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*>* all_elements_with_weights, int &zstart, int& zstop)
 {
-    for (auto& itr : *element_counts)
+    int low = CALIBRATION_CURVE_SIZE;
+    int high = 0;
+    for (const auto& itr : *all_elements_with_weights)
+    {
+        quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+        if (shell == shell_idx)
+        {
+            if (itr.second->Z < low)
+            {
+                low = itr.second->Z;
+            }
+            if (itr.second->Z > high)
+            {
+                high = itr.second->Z;
+            }
+        }
+    }
+    zstart = low;
+    zstop = high;
+}
+
+// ----------------------------------------------------------------------------
+
+bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*> * element_quants)
+{
+    for (auto& itr : *element_quants)
     {
         quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
         if (shell == shell_idx)
@@ -190,6 +215,7 @@ void SavePlotQuantification(std::string path, Detector* detector)
         logW << "Detector == nullptr, can't save quantification\n";
     }
 
+    
 
     //iterate through proc_type {roi, nnls, fitted}
     for (auto& itr1 : detector->fitting_quant_map)
@@ -197,15 +223,28 @@ void SavePlotQuantification(std::string path, Detector* detector)
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for (auto& itr2 : itr1.second.quant_scaler_map)
         {
-            std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det" + std::to_string(detector->number()) + ".png";
-            SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(Electron_Shell::K_SHELL)), 13, 30);
+            
+            if (contains_shell(Electron_Shell::K_SHELL, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
+            {
+                int zstart = 0;
+                int zstop = CALIBRATION_CURVE_SIZE;
+                find_shell_Z_offset(Electron_Shell::K_SHELL, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
 
-            str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_L_det" + std::to_string(detector->number()) + ".png";
-            SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(Electron_Shell::L_SHELL)), 39, 58);
+                std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det" + std::to_string(detector->number()) + ".png";
+                SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(Electron_Shell::K_SHELL)), zstart, zstop);
+            }
+            if (contains_shell(Electron_Shell::L_SHELL, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
+            {
+                int zstart = 0;
+                int zstop = CALIBRATION_CURVE_SIZE;
+                find_shell_Z_offset(Electron_Shell::L_SHELL, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
 
+                std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_L_det" + std::to_string(detector->number()) + ".png";
+                SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(Electron_Shell::L_SHELL)), zstart, zstop);
+            }
 
             //std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_det" + std::to_string(detector->number()) + ".png";
-            //SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second), 13, 58);
+            //SavePlotCalibrationCurveAll(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second));
 
         }
     }    
@@ -218,7 +257,8 @@ void SavePlotCalibrationCurve(std::string path,
                               string quantifier_scaler_name,
                               unordered_map<string, Element_Quant*>* all_elements_with_weights,
                               vector<Element_Quant>* calibration_curve,
-                              int zstart, int zstop)
+                              int zstart,
+                              int zstop)
 {
     if (all_elements_with_weights == nullptr || detector == nullptr || calibration_curve == nullptr)
     {
@@ -229,8 +269,22 @@ void SavePlotCalibrationCurve(std::string path,
     int width_res = 1920;
     int height_res = 1080;
     //index starts at 0 so subtract one so we have correct z number
+
     zstart--;
-    zstop--;
+
+    while ((zstop - zstart + 1) < 16)
+    {
+        if (zstart > 0)
+        {
+            zstart--;
+        }
+        if (zstop < CALIBRATION_CURVE_SIZE - 1)
+        {
+            zstop++;
+        }
+    }
+
+    
     int argc = 0;
     char ** argv = nullptr;
     QApplication app(argc, argv);
@@ -331,6 +385,124 @@ void SavePlotCalibrationCurve(std::string path,
     pix.save(QString(path.c_str()), "png");
 
 }
+/*
+void SavePlotCalibrationCurveAll(std::string path,
+    Detector* detector,
+    string quantifier_scaler_name,
+    unordered_map<string, Element_Quant*>* all_elements_with_weights,
+    unordered_map<Electron_Shell, vector<Element_Quant> > *curve_quant_map,
+    int zstart, int zstop)
+{
+    if (all_elements_with_weights == nullptr || detector == nullptr || curve_quant_map == nullptr)
+    {
+        logW << "detector is null. Cannot save png " << path << ". \n";
+        return;
+    }
+
+    int width_res = 1920;
+    int height_res = 1080;
+    //index starts at 0 so subtract one so we have correct z number
+    zstart--;
+    zstop--;
+    int argc = 0;
+    char** argv = nullptr;
+    QApplication app(argc, argv);
+
+    QtCharts::QLogValueAxis* axisYLog10 = new QtCharts::QLogValueAxis();
+    axisYLog10->setTitleText("Log10");
+    axisYLog10->setLabelFormat("%.1e");
+    axisYLog10->setBase(10.0);
+
+    //QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
 
 
+    QtCharts::QChartView* chartView = new QtCharts::QChartView();
+    chartView->setRenderHint(QPainter::Antialiasing);
+    chartView->resize(width_res, height_res);
+
+    QtCharts::QChart* chart = chartView->chart();
+    chart->addAxis(axisYLog10, Qt::AlignLeft);
+    //chart->addAxis(axisY, Qt::AlignLeft);
+
+
+    QtCharts::QBarCategoryAxis* axisX = new QtCharts::QBarCategoryAxis();
+    QStringList categories;
+    QtCharts::QBarSet* set0 = new QtCharts::QBarSet("Element");
+
+    QtCharts::QBarSeries* series = new QtCharts::QBarSeries();
+    series->setName(QString::fromStdString(quantifier_scaler_name));
+
+    real_t min_y = 9999999.0;
+    real_t max_y = -9999999.0;
+    for (int i = zstart; i <= zstop; i++)
+    {
+        real_t val = (*calibration_curve)[i].calib_curve_val;
+        if (val <= 0)
+        {
+            val = 0.00000001;
+        }
+        categories << QString::fromStdString((*calibration_curve)[i].name);
+        *set0 << val;
+        min_y = std::min(min_y, val);
+        max_y = std::max(max_y, val);
+    }
+    series->append(set0);
+    chart->addSeries(series);
+
+    axisX->append(categories);
+    chart->addAxis(axisX, Qt::AlignBottom);
+    series->attachAxis(axisX);
+    series->attachAxis(axisYLog10);
+    //series->attachAxis(axisY);
+
+    for (auto& s_itr : detector->quantification_standards)
+    {
+        QtCharts::QScatterSeries* e_series = new QtCharts::QScatterSeries();
+        e_series->setName(QString::fromStdString(s_itr.first));
+
+        for (const auto& itr : s_itr.second.element_standard_weights)
+        {
+            if (all_elements_with_weights->count(itr.first) > 0)
+            {
+                data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
+                quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+                real_t plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
+                if (element_info != nullptr)
+                {
+                    if (false == std::isfinite(plot_val) || plot_val <= 0.0)
+                    {
+                        plot_val = 0.000000001;
+                    }
+                    e_series->append(((element_info->number - 1) - zstart), plot_val);
+                    min_y = std::min(min_y, plot_val);
+                    max_y = std::max(max_y, plot_val);
+                }
+            }
+        }
+        chart->addSeries(e_series);
+        e_series->attachAxis(axisX);
+        e_series->attachAxis(axisYLog10);
+        //e_series->attachAxis(axisY);
+    }
+
+    //min_y -= 1.0;
+    //max_y += 0.01;
+
+    axisYLog10->setMin(min_y);
+    axisYLog10->setMax(max_y);
+
+
+    QPixmap pix = chartView->grab();
+    QPainter painter(&pix);
+    int h = height_res;
+    int w = width_res;
+    int x = 0;
+    int y = 0;
+    painter.drawPixmap(x, y, w, h, pix);
+
+    painter.end();
+    pix.save(QString(path.c_str()), "png");
+
+}
+*/
 } //namespace visual

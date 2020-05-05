@@ -130,10 +130,6 @@ struct DLL_EXPORT Fitting_Quantification_Struct
 
     //            Quantifier {SR_Current, US_IC, DS_IC}
     unordered_map<string, Quantification_Scaler_Struct> quant_scaler_map;
-
-    // element name       cts
-    unordered_map<string, real_t>  element_counts;
-
 };
 
 //-----------------------------------------------------------------------------
@@ -158,9 +154,14 @@ public:
 
     void init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights);
 
+    void normalize_counts_by_time(Fitting_Routines routine);
+
     //per standard
     std::string standard_filename;
     std::unordered_map<std::string, real_t> element_standard_weights;
+
+    // element name       cts
+    unordered_map<Fitting_Routines, unordered_map<string, real_t> > element_counts;
 
     Spectra integrated_spectra;
     real_t sr_current;

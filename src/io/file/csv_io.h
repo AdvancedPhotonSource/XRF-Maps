@@ -69,7 +69,8 @@ namespace csv
 
     DLL_EXPORT bool save_calibration_curve(std::string path,
                                             Detector* detector,
-                                            unordered_map<string, real_t>* element_counts,
+                                            std::map<string, Quantification_Standard>* standards,
+                                            Fitting_Routines routine,
                                             string quantifier_scaler_name, 
                                             Quantification_Scaler_Struct* quants_map);
 

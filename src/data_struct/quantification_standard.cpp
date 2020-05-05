@@ -111,127 +111,21 @@ void Quantification_Standard::init_weights_struct(std::string standard_file, std
         element_standard_weights[element_names[i]] = element_weights[i];
     }
 }
-/*
-//-----------------------------------------------------------------------------
-
-Element_Quant* Quantification_Standard::append_element(Fitting_Routines routine, string quant_scaler, string name, real_t weight)
-{
-    if (fitting_quant_map.count(routine) == 0)
-    {
-        fitting_quant_map[routine] = Fitting_Quantification_Struct();
-    }
-
-    Element_Info* element = Element_Info_Map::inst()->get_element(name);
-    if (element != nullptr)
-    {
-        Electron_Shell shell = get_shell_by_name(name);
-
-        //set initial counts to 0;
-        fitting_quant_map.at(routine).element_counts[name] = 0;
-        fitting_quant_map.at(routine).update_weight(shell, element->number, weight);
-
-
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) == 0)
-        {
-            return &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
-        }
-
-    }
-    else
-    {
-        logW << "Could not add element " << name << ". Not found in Element_Info_Map\n";
-    }
-
-    return nullptr;
-}
-
-//-----------------------------------------------------------------------------
-
-void Quantification_Standard::update_element_quants(Fitting_Routines routine,
-                                                    string quantifier_scaler,
-                                                    Quantification_Model *quantification_model,
-                                                    real_t ic_quantifier)
-{
-
-    if (fitting_quant_map.count(routine) > 0)
-    {
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
-        {
-            for (const auto& shell_itr : Shells_To_Quant)
-            {
-                for (auto& eq_itr : fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr))
-                {
-                    Element_Info* element = Element_Info_Map::inst()->get_element(eq_itr.Z);
-                    if (element == nullptr)
-                    {
-                        continue;
-                    }
-                    quantification_model->init_element_quant(eq_itr,
-                                                            incident_energy,
-                                                            detector_element,
-                                                            shell_itr,
-                                                            airpath,
-                                                            detector_chip_thickness,
-                                                            beryllium_window_thickness,
-                                                            germanium_dead_layer,
-                                                            element->number);
-
-                    // if we have weight for this element, update e_cal_ratio
-                    if (fitting_quant_map.at(routine).element_counts.count(eq_itr.name) > 0)
-                    {
-                        real_t counts = fitting_quant_map.at(routine).element_counts.at(eq_itr.name);
-                        real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
-                        real_t e_cal = e_cal_factor / counts;
-                        eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
-                    }
-                }
-            }
-        }
-        else
-        {
-            logW << "Could not find quantifier scalers : " << quantifier_scaler << " .\n";
-        }
-    }
-    else
-    {
-        logW << "Could not find fitting routine " << Fitting_Routine_To_Str.at(routine) << " .\n";
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void Quantification_Standard::update_calibration_curve(Fitting_Routines routine,
-                                                        string quantifier_scaler,
-                                                        Quantification_Model* quantification_model,
-                                                        real_t val)
-{
-    if (fitting_quant_map.count(routine) > 0)
-    {
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
-        {
-            for (const auto& shell_itr : Shells_To_Quant)
-            {               
-                vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
-                quantification_model->model_calibrationcurve(quant_vec, val);
-            }
-        }
-    }
-    _processed = true;
-}
 
 //-----------------------------------------------------------------------------
 
 void Quantification_Standard::normalize_counts_by_time(Fitting_Routines routine)
 {
-    if (fitting_quant_map.count(routine) > 0)
+   
+    if (element_counts.count(routine) > 0)
     {
-        for (auto& itr : fitting_quant_map.at(routine).element_counts)
+        for (auto& itr : element_counts.at(routine))
         {
             itr.second /= integrated_spectra.elapsed_livetime();
         }
     }
 }
-*/
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 

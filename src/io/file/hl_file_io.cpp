@@ -498,6 +498,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                             logE<<"Number of element names ["<<element_names.size()<<"] does not match number of element weights ["<<element_weights.size()<<"]!"<<"\n";
                         }
                     }
+                    standard_filename = "";
                     element_names.clear();
                     element_weights.clear();
                     has_filename = false;

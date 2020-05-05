@@ -663,6 +663,8 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             fitting::routines::Base_Fit_Routine* fit_routine = fit_itr.second;
             for (auto& el_itr : standard_itr.element_standard_weights)
             {
+                quantification_standard->element_counts[fit_itr.first][el_itr.first] = 0;
+
                 detector->append_element(fit_itr.first, STR_SR_CURRENT, el_itr.first, el_itr.second);
                 detector->append_element(fit_itr.first, STR_US_IC, el_itr.first, el_itr.second);
                 detector->append_element(fit_itr.first, STR_DS_IC, el_itr.first, el_itr.second);
@@ -675,7 +677,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             //Initialize the fit routine
             fit_routine->initialize(&model, &elements_to_fit, energy_range);
             //Fit the spectra
-            detector->fitting_quant_map[fit_itr.first].element_counts = fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit);
+            quantification_standard->element_counts[fit_itr.first] = fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit);
 
             //Save csv and png if matrix or nnls
             if (fit_itr.first == Fitting_Routines::GAUSS_MATRIX || fit_itr.first == Fitting_Routines::NNLS)
@@ -687,7 +689,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 {
                     if (false == override_params->fit_params.contains(itr2.first))
                     {
-                        fit_params.add_parameter(Fit_Param(itr2.first, detector->fitting_quant_map[fit_itr.first].element_counts[itr2.first]));
+                        fit_params.add_parameter(Fit_Param(itr2.first, quantification_standard->element_counts.at(fit_itr.first).at(itr2.first)));
                     }
                 }
                 fitting::routines::Matrix_Optimized_Fit_Routine* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
@@ -708,11 +710,11 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
             }
 
-            detector->normalize_counts_by_time(fit_itr.first, quantification_standard->integrated_spectra.elapsed_livetime());
+            quantification_standard->normalize_counts_by_time(fit_itr.first);
 
-            detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, &quantification_model, quantification_standard->sr_current);
-            detector->update_element_quants(fit_itr.first, STR_US_IC, &quantification_model, quantification_standard->US_IC);
-            detector->update_element_quants(fit_itr.first, STR_DS_IC, &quantification_model, quantification_standard->DS_IC);
+            detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, quantification_standard, &quantification_model, quantification_standard->sr_current);
+            detector->update_element_quants(fit_itr.first, STR_US_IC, quantification_standard, &quantification_model, quantification_standard->US_IC);
+            detector->update_element_quants(fit_itr.first, STR_DS_IC, quantification_standard, &quantification_model, quantification_standard->DS_IC);
         }
 
         //cleanup

@@ -107,7 +107,7 @@ void Detector::append_element(Fitting_Routines routine, string quant_scaler, str
         Electron_Shell shell = get_shell_by_name(name);
 
         //set initial counts to 0;
-        fitting_quant_map.at(routine).element_counts[name] = 0;
+        //fitting_quant_map.at(routine).element_counts[name] = 0;
         fitting_quant_map.at(routine).update_weight(shell, element->number, weight);
 
 
@@ -127,9 +127,10 @@ void Detector::append_element(Fitting_Routines routine, string quant_scaler, str
 //-----------------------------------------------------------------------------
 
 void Detector::update_element_quants(Fitting_Routines routine,
-    string quantifier_scaler,
-    Quantification_Model* quantification_model,
-    real_t ic_quantifier)
+                                    string quantifier_scaler,
+                                    Quantification_Standard* standard,
+                                    Quantification_Model* quantification_model,
+                                    real_t ic_quantifier)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -166,10 +167,14 @@ void Detector::update_element_quants(Fitting_Routines routine,
                         {
                             name += "_M";
                         }
-                        real_t counts = fitting_quant_map.at(routine).element_counts.at(name);
-                        real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
-                        real_t e_cal = e_cal_factor / counts;
-                        eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                        // with 2 standards we can have weights from another standard so we have to check if we have counts
+                        if (standard->element_counts.at(routine).count(name) > 0)
+                        {
+                            real_t counts = standard->element_counts.at(routine).at(name);
+                            real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
+                            real_t e_cal = e_cal_factor / counts;
+                            eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                        }
                     }
                 }
             }
@@ -264,9 +269,9 @@ void Detector::generage_avg_quantification_scalers()
 //-----------------------------------------------------------------------------
 
 void Detector::update_calibration_curve(Fitting_Routines routine,
-    string quantifier_scaler,
-    Quantification_Model* quantification_model,
-    real_t val)
+                                        string quantifier_scaler,
+                                        Quantification_Model* quantification_model,
+                                        real_t val)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -277,19 +282,6 @@ void Detector::update_calibration_curve(Fitting_Routines routine,
                 vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
                 quantification_model->model_calibrationcurve(quant_vec, val);
             }
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-
-void Detector::normalize_counts_by_time(Fitting_Routines routine, real_t elapsed_livetime)
-{
-    if (fitting_quant_map.count(routine) > 0)
-    {
-        for (auto& itr : fitting_quant_map.at(routine).element_counts)
-        {
-            itr.second /= elapsed_livetime;
         }
     }
 }
