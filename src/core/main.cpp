@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/command_line_parser.h"
 #include "core/process_streaming.h"
 #include "core/process_whole.h"
+#include <cctype>
 
 // ----------------------------------------------------------------------------
 
