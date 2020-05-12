@@ -803,24 +803,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void average_quantification(std::vector<data_struct::Quantification_Standard>* quant_stand_list,
-                            std::vector<size_t>& detector_num_arr)
-{
-    /*
-    data_struct::Quantification_Standard q_standard_0;
-    q_standard_0.
-
-
-    for(size_t detector_num : detector_num_arr)
-    {
-        data_struct::Quantification_Standard * quantification_standard = &(*quant_stand_list)[detector_num];
-        quantification_standard->
-    }
-    */
-}
-
-// ----------------------------------------------------------------------------
-
 void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 {
     for (const auto& dataset_file : analysis_job.dataset_files)
@@ -855,7 +837,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                 io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
             }
 
-            //add exchange
+            //export csv
             if (analysis_job.export_int_fitted_to_csv)
             {
                 io::file::HDF5_IO::inst()->export_int_fitted_to_csv(hdf5_dataset_name);
