@@ -60,7 +60,8 @@ namespace optimizers
                         const Spectra * const spectra,
                         const Fit_Element_Map_Dict * const elements_to_fit,
                         const Base_Model * const model,
-                        const Range energy_range)
+                        const Range energy_range,
+                        bool use_weights)
 	{
 		ud.fit_model = (Base_Model*)model;
 		// set spectra to fit
@@ -73,11 +74,19 @@ namespace optimizers
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
 
-		ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
-		weights = convolve1d(weights, 5);
-		weights = Eigen::abs(weights);
-		weights /= weights.maxCoeff();
-		ud.weights = weights.segment(energy_range.min, energy_range.count());
+        if (use_weights)
+        {
+            ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+            weights = convolve1d(weights, 5);
+            weights = Eigen::abs(weights);
+            weights /= weights.maxCoeff();
+            ud.weights = weights.segment(energy_range.min, energy_range.count());
+        }
+        else
+        {
+            ud.weights.resize(energy_range.count());
+            ud.weights.fill(1.0);
+        }
 
         ArrayXr background(spectra->size());
         background.setZero(spectra->size());
@@ -103,7 +112,8 @@ namespace optimizers
                             const Spectra * const spectra,
                             const Range energy_range,
                             const ArrayXr* background,
-                            Gen_Func_Def gen_func)
+                            Gen_Func_Def gen_func,
+                            bool use_weights)
 	{
 		ud.func = gen_func;
 		// set spectra to fit
@@ -114,12 +124,19 @@ namespace optimizers
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
 
-		ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
-		weights = convolve1d(weights, 5);
-		weights = Eigen::abs(weights);
-		weights /= weights.maxCoeff();
-		ud.weights = weights.segment(energy_range.min, energy_range.count());
-       
+        if(use_weights)
+        {
+		    ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
+		    weights = convolve1d(weights, 5);
+		    weights = Eigen::abs(weights);
+		    weights /= weights.maxCoeff();
+		    ud.weights = weights.segment(energy_range.min, energy_range.count());
+        }
+        else
+        {
+            ud.weights.resize(energy_range.count());
+            ud.weights.fill(1.0);
+        }
         ud.spectra_background = *background;
         ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
         

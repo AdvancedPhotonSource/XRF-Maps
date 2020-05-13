@@ -113,14 +113,16 @@ void fill_user_data(User_Data &ud,
                     const Spectra * const spectra,
                     const Fit_Element_Map_Dict * const elements_to_fit,
                     const Base_Model * const model,
-                    const Range energy_range);
+                    const Range energy_range,
+                    bool use_weights = false);
 
 void fill_gen_user_data(Gen_User_Data &ud,
                         Fit_Parameters *fit_params,
                         const Spectra * const spectra,
                         const Range energy_range,
                         const ArrayXr* background,
-                        Gen_Func_Def gen_func);
+                        Gen_Func_Def gen_func,
+                        bool use_weights = false);
 
 void update_background_user_data(User_Data *ud);
 

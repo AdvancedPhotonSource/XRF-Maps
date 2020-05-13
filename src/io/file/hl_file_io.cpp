@@ -280,7 +280,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
                                                                         fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
-        if (background.size() >= energy_range.count())
+        if (s_background.size() >= energy_range.count())
         {
             background = s_background.segment(energy_range.min, energy_range.count());
             model_spectra += background;

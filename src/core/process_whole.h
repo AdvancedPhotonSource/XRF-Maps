@@ -159,11 +159,6 @@ DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void average_quantification(std::vector<data_struct::Quantification_Standard>* quant_stand_list,
-										const std::vector<size_t>& detector_num_arr);
-
-// ----------------------------------------------------------------------------
-
 DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job);
 
 // ----------------------------------------------------------------------------
