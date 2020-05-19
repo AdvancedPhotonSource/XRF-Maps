@@ -257,8 +257,6 @@ DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters* params);
 */
 DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
 
-
-
 } //namespace data_struct
 
 #endif // Fit_Parameters_H

@@ -286,6 +286,4 @@ Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size
 
 }
 
-
-
 } //namespace data_struct

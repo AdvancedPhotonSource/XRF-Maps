@@ -130,6 +130,10 @@ protected:
 
 };
 
+DLL_EXPORT ArrayXr generate_ev_array(Range energy_range, Fit_Parameters& fit_params);
+
+DLL_EXPORT ArrayXr generate_ev_array(Range energy_range, real_t energy_offset, real_t energy_slope, real_t energy_quad);
+
 } //namespace models
 
 } //namespace fitting
