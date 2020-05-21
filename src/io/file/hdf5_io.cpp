@@ -4084,10 +4084,9 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Inf
 		memtype = H5Tcopy(H5T_C_S1);
         status = H5Tset_size(memtype, 255);
 
-        memoryspace_id = H5Screate_simple(1, count, nullptr);
-		
         //save y axis
         count[0] = meta_info->y_axis.size();
+        memoryspace_id = H5Screate_simple(1, count, nullptr);
         dataspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
         dset_id = H5Dcreate(scan_grp_id, "y_axis", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -4097,10 +4096,12 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Inf
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
             H5Sclose(filespace_id);
+            H5Sclose(memoryspace_id);
 		}
 
         
         count[0] = meta_info->x_axis.size();
+        memoryspace_id = H5Screate_simple(1, count, nullptr);
         dataspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
         dset_id = H5Dcreate(scan_grp_id, "x_axis", H5T_INTEL_F64, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -4110,10 +4111,12 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Inf
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
             H5Sclose(filespace_id);
+            H5Sclose(memoryspace_id);
 		}
 		
         //save requested rows
         count[0] = 1;
+        memoryspace_id = H5Screate_simple(1, count, nullptr);
         dataspace_id = H5Screate_simple(1, count, nullptr);
         filespace_id = H5Screate_simple(1, count, nullptr);
         dset_id = H5Dcreate(scan_grp_id, "requested_rows", H5T_INTEL_I32, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
