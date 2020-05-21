@@ -4653,11 +4653,6 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                             }
                         }
                     }
-                    // already normalized by time
-                    //if (summed_scaler_itr.normalize_by_time == true)
-                    //{
-                    //    s_map.values /= (*time_map);
-                    //}
                     scalers_map->push_back(s_map);
                 }
             }
