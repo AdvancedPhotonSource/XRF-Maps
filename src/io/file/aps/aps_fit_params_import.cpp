@@ -75,7 +75,7 @@ const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
     {"CAL_SLOPE_[E_LINEAR]_MIN", STR_ENERGY_SLOPE},
     {"CAL_QUAD_[E_QUADRATIC]", STR_ENERGY_QUADRATIC},
     {"CAL_QUAD_[E_QUADRATIC]_MAX", STR_ENERGY_QUADRATIC},
- //   {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC}, //ignore quadratic min because we don't want it to be negative
+    {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC},
     {"FWHM_OFFSET", STR_FWHM_OFFSET},
     {"FWHM_FANOPRIME", STR_FWHM_FANOPRIME},
     {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
@@ -296,6 +296,12 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                 }
                 else if(FILE_TAGS_TRANSLATION.count(tag)> 0)
                 {
+                    //ignore quadratic min because we don't want it to be negative so we default min to 0
+                    if (tag == "CAL_QUAD_[E_QUADRATIC]_MIN")
+                    {
+                        continue;
+                    }
+
                     std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
                     if( false == params_override->fit_params.contains(tag_name))
                     {
@@ -733,6 +739,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     }
                     params_override->summed_scalers.push_back(s_scaler);
                 }
+                /* // we don't need this anymore since the time normalization will happen before summing.
                 else if (tag == "TIME_NORMALIZED_SUMMED_SCALER")
                 {
                     data_struct::Summed_Scaler s_scaler;
@@ -759,6 +766,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     }
                     params_override->summed_scalers.push_back(s_scaler);
                 }
+                */
                 else
                 {
                     if (tag.length() > 0 && tag[0] != ' ' && tag[0] != '\t' && (line.find(":") != std::string::npos))

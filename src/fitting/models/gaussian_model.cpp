@@ -596,5 +596,41 @@ const ArrayXr Gaussian_Model::escape_peak(const Fit_Parameters* const fitp, cons
     return counts;
 }
 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+ArrayXr generate_ev_array(Range energy_range, Fit_Parameters& fit_params)
+{
+    real_t energy_offset = 0.0;
+    real_t energy_slope = 0.0;
+    real_t energy_quad = 0.0;
+    if (fit_params.contains(STR_ENERGY_OFFSET))
+    {
+        energy_offset = fit_params.at(STR_ENERGY_OFFSET).value;
+    }
+    if (fit_params.contains(STR_ENERGY_SLOPE))
+    {
+        energy_slope = fit_params.at(STR_ENERGY_SLOPE).value;
+    }
+    if (fit_params.contains(STR_ENERGY_QUADRATIC))
+    {
+        energy_quad = fit_params.at(STR_ENERGY_QUADRATIC).value;
+    }
+
+
+    return generate_ev_array(energy_range, energy_offset, energy_slope, energy_quad);
+}
+
+// ----------------------------------------------------------------------------
+
+ArrayXr generate_ev_array(Range energy_range, real_t energy_offset, real_t energy_slope, real_t energy_quad)
+{
+    data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+    return ev;
+}
+
+// ----------------------------------------------------------------------------
+
 } //namespace models
 } //namespace fitting

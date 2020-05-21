@@ -78,7 +78,7 @@ public:
      */
     ~MDA_IO();
 
-    bool load(std::string path, data_struct::Params_Override* override_values);
+    bool load_scalers(std::string path);
 
    // bool load_header_only(std::string filePath);
 
@@ -102,11 +102,13 @@ public:
 
     void unload();
 	
-
-
     void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, real_t& out_us_amp, real_t& out_ds_amp);
 
     data_struct::Scan_Info* get_scan_info() { return &_scan_info; }
+
+    unsigned int get_num_integreated_spectra() { return _integrated_spectra_map.size(); }
+
+    data_struct::ArrayXr* get_integrated_spectra(unsigned int detector);
 
 private:
 
@@ -118,7 +120,6 @@ private:
 
     // find index in mda file, if found, fill in value and units 
     int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string& units);
-
 
     bool _get_scaler_value( struct mda_file* _mda_file, data_struct::Params_Override *override_values, string scaler_name, real_t *store_loc, bool isFlyScan);
 
@@ -141,6 +142,8 @@ private:
     data_struct::Scan_Info _scan_info;
 
     std::string _theta_pv_str;
+
+    std::unordered_map<unsigned int, data_struct::ArrayXr> _integrated_spectra_map;
 };
 
 DLL_EXPORT bool load_henke_from_xdr(std::string filename);
