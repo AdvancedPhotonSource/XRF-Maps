@@ -6306,7 +6306,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
                 status = H5Dread(scaler_names_id, scalername_type, single_space, scalername_space, H5P_DEFAULT, (void*)&char_data[0]);
                 if (status > -1)
                 {
-                    scaler_name_str = std::string(char_data, 256);
+                    scaler_name_str = std::string(char_data, 255);
                     scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
                     scaler_name_idx_map[scaler_name_str] = i;
                 }
@@ -6341,6 +6341,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
                 {
                     if (ts_itr.second == scaler_name_itr.first)
                     {
+                        memset(char_data, 0, 256);
                         ts_itr.first.copy(char_data, 255);
                         offset_1d[0] = scaler_name_itr.second;
                         H5Sselect_hyperslab(scalername_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
@@ -6373,6 +6374,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
                 {
                     if (s_itr.second == scaler_name_itr.first)
                     {
+                        memset(char_data, 0, 256);
                         s_itr.first.copy(char_data, 255);
                         offset_1d[0] = scaler_name_itr.second;
                         H5Sselect_hyperslab(scalername_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
@@ -6588,28 +6590,27 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
                 }
             }
         }
-		if (quant_dset > -1)
-		{
-			H5Dclose(quant_dset);
-		}
-		if (chan_units > -1)
-		{
-			H5Dclose(chan_units);
-		}
-		if (cc_current > -1)
-		{
-			H5Dclose(cc_current);
-		}
-		if (cc_us_ic > -1)
-		{
-			H5Dclose(cc_us_ic);
-		}
-		if (cc_ds_ic > -1)
-		{
-			H5Dclose(cc_ds_ic);
-		}
+        if (chan_units > -1)
+        {
+            H5Dclose(chan_units);
+        }
     }
-
+    if (quant_dset > -1)
+    {
+        H5Dclose(quant_dset);
+    }
+    if (cc_current > -1)
+    {
+        H5Dclose(cc_current);
+    }
+    if (cc_us_ic > -1)
+    {
+        H5Dclose(cc_us_ic);
+    }
+    if (cc_ds_ic > -1)
+    {
+        H5Dclose(cc_ds_ic);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -6686,7 +6687,21 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
             H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
         }
         delete [] dims_in;
+
+        if (extra_pvs > -1)
+            H5Dclose(extra_pvs);
+        if (extra_pvs_as_csv > -1)
+            H5Dclose(extra_pvs_as_csv);
     }
+
+    if (extra_names > -1)
+        H5Dclose(extra_names);
+    if (extra_units > -1)
+        H5Dclose(extra_units);
+    if (extra_values > -1)
+        H5Dclose(extra_values);
+    if (extra_desc > -1)
+        H5Dclose(extra_desc);
 }
 
 //-----------------------------------------------------------------------------
@@ -6709,32 +6724,55 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	if (file_id < 0)
 	{
+        _cur_file_id = saved_file_id;
 		return;
 	}
     //Scan
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for x_axis"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for x_axis" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+
+    if (H5Gget_objinfo(file_id, "/MAPS/y_axis", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for y_axis"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for y_axis" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scan/scan_time_stamp", H5L_SAME_LOC, "/MAPS/scan_time_stamp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+
+    if (H5Gget_objinfo(file_id, "/MAPS/scan_time_stamp", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for scan_time_stamp"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Scan/scan_time_stamp", H5L_SAME_LOC, "/MAPS/scan_time_stamp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for scan_time_stamp" << "\n";
+        }
     }
     //create extra_pvs, extra_pvs_as_csv, extra_strings
 
     //Scalers
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/ds_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/ds_amp", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for ds_amp"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/ds_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for ds_amp" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/us_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+
+    if (H5Gget_objinfo(file_id, "/MAPS/us_amp", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for us_amp"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/us_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for us_amp" << "\n";
+        }
     }
+
+    //need to only add scalers that were in maps_fit_parameter_override since old GUI doesn't support having a lot of scalers
+    _add_v9_scalers(file_id);
+    /*
     if( H5Lcreate_hard(file_id, "/MAPS/Scalers/Names", H5L_SAME_LOC, "/MAPS/scaler_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
     {
         logW  << " Couldn't create soft link for scaler_names"<<  "\n";
@@ -6747,23 +6785,37 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     {
         logW  << " Couldn't create soft link for scaler_units"<<  "\n";
     }
-	
+	*/
+
+
     //Spectra
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/energy", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for energy"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for energy" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy_Calibration", H5L_SAME_LOC, "/MAPS/energy_calib", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/energy_calib", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for energy_calib"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy_Calibration", H5L_SAME_LOC, "/MAPS/energy_calib", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for energy_calib" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/Integrated_Spectra/Spectra", H5L_SAME_LOC, "/MAPS/int_spec", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/int_spec", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for int_spec"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Integrated_Spectra/Spectra", H5L_SAME_LOC, "/MAPS/int_spec", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for int_spec" << "\n";
+        }
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/Spectra/mca_arr", H5L_SAME_LOC, "/MAPS/mca_arr", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/mca_arr", 0, NULL) != 0)
     {
-        logW  << " Couldn't create soft link for mca_arr"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/Spectra/mca_arr", H5L_SAME_LOC, "/MAPS/mca_arr", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            logW << " Couldn't create soft link for mca_arr" << "\n";
+        }
     }
 
 
@@ -6838,20 +6890,26 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
 
     //XRF_Analyzed
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/channel_names", 0, NULL) != 0)
     {
-        if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", 0, NULL) != 0)
         {
-            if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT) < 0)
-            {
-                logW << " Couldn't create soft link for channel_names, can't save quatification" << "\n";
-            }
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", 0, NULL) != 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", 0, NULL) != 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
         }
     }
 
     hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
     if (chan_names < 0)
     {
+        _cur_file_id = saved_file_id;
         return;
     }
         
@@ -6866,87 +6924,124 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
     //Channel Units are a 4 x channels so we can't do a hardlink
     // the 4 are SR_current, US_IC, DS_IC, and cts/s
-    hsize_t unit_dims[2];
-    hsize_t offset_dims[2] = {0,0};
-    unit_dims[0] = 4;
-    unit_dims[1] = quant_dims[2];
-    hid_t units_space = H5Screate_simple(2, &unit_dims[0], &unit_dims[0]);
-    hid_t ch_unit_id = H5Dcreate1(file_id, "/MAPS/channel_units", filetype, units_space, H5P_DEFAULT);
-    if(ch_unit_id > 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/channel_units", 0, NULL) != 0)
     {
-        hsize_t mem_dims[1] = {1};
-        hsize_t count_2d[2] = {1,1};
-        hid_t mem_space = H5Screate_simple(1, &mem_dims[0], &mem_dims[0]);
+        hsize_t unit_dims[2];
+        hsize_t offset_dims[2] = { 0,0 };
+        unit_dims[0] = 4;
+        unit_dims[1] = quant_dims[2];
+        hid_t units_space = H5Screate_simple(2, &unit_dims[0], &unit_dims[0]);
+        hid_t ch_unit_id = H5Dcreate1(file_id, "/MAPS/channel_units", filetype, units_space, H5P_DEFAULT);
+        if (ch_unit_id > 0)
+        {
+            hsize_t mem_dims[1] = { 1 };
+            hsize_t count_2d[2] = { 1,1 };
+            hid_t mem_space = H5Screate_simple(1, &mem_dims[0], &mem_dims[0]);
 
-        std::string str_val = "cts/s";
-        for (int z = 0; z < 256; z++)
-        {
-            tmp_char1[z] = 0;
-        }
-        str_val.copy(tmp_char1, 256);
-        for(hsize_t i=0; i < unit_dims[0] ; i++)
-        {
-            for(hsize_t j=0; j < unit_dims[1]; j++)
+            std::string str_val = "cts/s";
+            for (int z = 0; z < 256; z++)
             {
-                offset_dims[0] = i;
-                offset_dims[1] = j;
-                H5Sselect_hyperslab (units_space, H5S_SELECT_SET, offset_dims, nullptr, count_2d, nullptr);
-                H5Dwrite(ch_unit_id, filetype, mem_space, units_space, H5P_DEFAULT, (void*)&str_val[0]);
+                tmp_char1[z] = 0;
+            }
+            str_val.copy(tmp_char1, 256);
+            for (hsize_t i = 0; i < unit_dims[0]; i++)
+            {
+                for (hsize_t j = 0; j < unit_dims[1]; j++)
+                {
+                    offset_dims[0] = i;
+                    offset_dims[1] = j;
+                    H5Sselect_hyperslab(units_space, H5S_SELECT_SET, offset_dims, nullptr, count_2d, nullptr);
+                    H5Dwrite(ch_unit_id, filetype, mem_space, units_space, H5P_DEFAULT, (void*)&str_val[0]);
+                }
+            }
+            H5Dclose(ch_unit_id);
+        }
+        else
+        {
+            logW << "Couldn't create /MAPS/channel_units" << "\n";
+        }
+    }
+
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) != 0)
+    {
+        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi", H5P_DEFAULT);
+            if (ana_id > -1)
+            {
+                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+                H5Dclose(ana_id);
+            }
+            else
+            {
+                logW << "Couldn't create soft link for XRF_roi" << "\n";
             }
         }
+        else
+        {
+            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+        }
     }
-    else
-    {
-        logW << "Couldn't create /MAPS/channel_units" << "\n";
-    }
-
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
-    {
-		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi", H5P_DEFAULT);
-		if (ana_id > -1)
-		{
-			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
-			H5Dclose(ana_id);
-		}
-		else
-		{
-			logW << "Couldn't create soft link for XRF_roi" << "\n";
-		}
-    }
-    else
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_quant", 0, NULL) != 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
+
+
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) != 0)
     {
-		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi_plus", H5P_DEFAULT);
-		if (ana_id > -1)
-		{
-			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
-			H5Dclose(ana_id);
-		}
-        logW  << " Couldn't create soft link for XRF_roi_plus"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi_plus", H5P_DEFAULT);
+            if (ana_id > -1)
+            {
+                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
+                H5Dclose(ana_id);
+            }
+            logW << " Couldn't create soft link for XRF_roi_plus" << "\n";
+        }
+        else
+        {
+            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
+        }
     }
-    else
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus_quant", 0, NULL) != 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
     }
-    if( H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
+
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) != 0)
     {
-		hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_fits", H5P_DEFAULT);
-		if (ana_id > -1)
-		{
-			_add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
-			H5Dclose(ana_id);
-		}
-        logW  << " Couldn't create soft link for XRF_fits"<<  "\n";
+        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        {
+            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_fits", H5P_DEFAULT);
+            if (ana_id > -1)
+            {
+                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
+                H5Dclose(ana_id);
+            }
+            logW << " Couldn't create soft link for XRF_fits" << "\n";
+        }
+        else
+        {
+            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
+        }
     }
-    else
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits_quant", 0, NULL) != 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
     }
 
     _add_extra_pvs(file_id, "/MAPS");
+
+    if (chan_names > -1)
+    {
+        H5Dclose(chan_names);
+    }
+    if (quant_space > -1)
+    {
+        H5Sclose(quant_space);
+    }
 
     //change version to 9
     real_t version = 9;
@@ -6959,6 +7054,198 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     _cur_file_id = file_id;
     end_save_seq();
     _cur_file_id = saved_file_id;
+
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::_add_v9_scalers(hid_t file_id)
+{
+
+    std::map<std::string, int> scaler_map;
+    hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    H5Tset_size(filetype, 256);
+    hid_t memtype = H5Tcopy(H5T_C_S1);
+
+    hid_t names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
+    hid_t values_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
+    hid_t units_id = H5Dopen(file_id, "/MAPS/Scalers/Units", H5P_DEFAULT);
+    if (names_id < 0 || values_id < 0 || units_id < 0)
+    {
+        logW << "Could not open /MAPS/Scalers/Names Values, or Units dataset to add v9 layout\n";
+        return;
+    }
+
+    hid_t name_space = H5Dget_space(names_id);
+    hid_t value_space = H5Dget_space(values_id);
+    hid_t unit_space = H5Dget_space(units_id);
+
+
+    hsize_t name_size = 1;
+    hsize_t value_size[3] = { 1,1,1 };
+    H5Sget_simple_extent_dims(name_space, &name_size, nullptr);
+    H5Sget_simple_extent_dims(value_space, &value_size[0], nullptr);
+
+    hsize_t offset_1d[1] = { 0 };
+    hsize_t count_1d[1] = { 1 };
+    hsize_t offset_3d[3] = { 0,0,0 };
+    hsize_t count_3d[3] = { 1,1,1 };
+
+    hsize_t new_offset_1d[1] = { 0 };
+    hsize_t new_offset_3d[3] = { 0,0,0 };
+
+    hsize_t new_max_1d[1] = { name_size };
+    hsize_t new_max_3d[3] = { name_size, value_size[1], value_size[2] };
+
+    count_3d[1] = value_size[1];
+    count_3d[2] = value_size[2];
+
+
+    hid_t mem_space_1d = H5Screate_simple(1, &count_1d[0], &count_1d[0]);
+
+    for (hsize_t i = 0; i < name_size; i++)
+    {
+        offset_1d[0] = i;
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+        char tmp_char[256] = { 0 };
+        if (H5Dread(names_id, filetype, mem_space_1d, name_space, H5P_DEFAULT, (void*)tmp_char) > -1)
+        {
+            std::string scaler_name_str = std::string(tmp_char, 255);
+            scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
+            int c_idx = scaler_name_str.find(':');
+
+            if (c_idx < 0 && scaler_name_str.length() > 0)
+            {
+                scaler_map[scaler_name_str] = i;
+            }
+        }
+    }
+
+    count_1d[0] = { scaler_map.size() };
+    hid_t new_name_space = H5Screate_simple(1, &count_1d[0], &new_max_1d[0]);
+
+    count_3d[0] = { scaler_map.size() };
+    hid_t new_value_space = H5Screate_simple(3, &count_3d[0], &new_max_3d[0]);
+
+    hid_t dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(dcpl_id, 1, count_1d);
+    H5Pset_deflate(dcpl_id, 7);
+
+    hid_t dcpl_id2 = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(dcpl_id2, 3, count_3d);
+    H5Pset_deflate(dcpl_id, 7);
+
+    hid_t new_names_id = H5Dopen(file_id, "/MAPS/scaler_names", H5P_DEFAULT);
+    if (new_names_id < 0)
+    {
+        new_names_id = H5Dcreate(file_id, "/MAPS/scaler_names", filetype, new_name_space, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
+    }
+    else
+    {
+        H5Pclose(new_name_space);
+        herr_t err = H5Dset_extent(new_names_id, &count_1d[0]);
+        if (err < 0)
+        {
+            logW << "Error extending dataset /MAPS/scaler_names";
+        }
+        new_name_space = H5Dget_space(new_names_id);
+    }
+
+    hid_t new_units_id = H5Dopen(file_id, "/MAPS/scaler_units", H5P_DEFAULT);
+    if (new_units_id < 0)
+    {
+        new_units_id = H5Dcreate(file_id, "/MAPS/scaler_units", filetype, new_name_space, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
+    }
+    else
+    {
+        herr_t err = H5Dset_extent(new_units_id, &count_1d[0]);
+        if (err < 0)
+        {
+            logW << "Error extending dataset /MAPS/scaler_units";
+        }
+    }
+
+    hid_t new_values_id = H5Dopen(file_id, "/MAPS/scalers", H5P_DEFAULT);
+    if (new_values_id < 0)
+    {
+        new_values_id = H5Dcreate(file_id, "/MAPS/scalers", H5T_NATIVE_REAL, new_value_space, H5P_DEFAULT, dcpl_id2, H5P_DEFAULT);
+    }
+    else
+    {
+        H5Pclose(new_value_space);
+        herr_t err = H5Dset_extent(new_values_id, &count_3d[0]);
+        if (err < 0)
+        {
+            logW << "Error extending dataset /MAPS/scalers";
+        }
+        new_value_space = H5Dget_space(new_values_id);
+    }
+
+
+    if (new_names_id < 0 || new_units_id < 0 || new_values_id < 0)
+    {
+        logW << "Could not open /MAPS/scalers _names, or _units dataset to add v9 layout\n";
+        return;
+    }
+
+    count_1d[0] = 1;
+    count_3d[0] = 1;
+
+    hid_t value_mem_space = H5Screate_simple(3, &count_3d[0], &count_3d[0]);
+
+    data_struct::ArrayXXr tmp_values;
+    tmp_values.resize(count_3d[1], count_3d[2]);
+
+    hsize_t i = 0;
+    for (const auto& itr : scaler_map)
+    {
+        offset_1d[0] = itr.second;
+        offset_3d[0] = itr.second;
+
+        new_offset_1d[0] = i;
+        new_offset_3d[0] = i;
+
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+        H5Sselect_hyperslab(new_name_space, H5S_SELECT_SET, new_offset_1d, nullptr, count_1d, nullptr);
+        
+
+        char tmp_char_name[256] = { 0 };
+        itr.first.copy(tmp_char_name, 254);
+        H5Dwrite(new_names_id, filetype, mem_space_1d, new_name_space, H5P_DEFAULT, (void*)&tmp_char_name[0]);
+
+        char tmp_char[256] = { 0 };
+        if (H5Dread(units_id, filetype, mem_space_1d, name_space, H5P_DEFAULT, (void*)tmp_char) > -1)
+        {
+            H5Dwrite(new_units_id, filetype, mem_space_1d, new_name_space, H5P_DEFAULT, (void*)tmp_char);
+        }
+
+        H5Sselect_hyperslab(value_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
+        if (H5Dread(values_id, H5T_NATIVE_REAL, value_mem_space, value_space, H5P_DEFAULT, (void*)tmp_values.data()) > -1)
+        {
+            H5Sselect_hyperslab(new_value_space, H5S_SELECT_SET, new_offset_3d, nullptr, count_3d, nullptr);
+            H5Dwrite(new_values_id, H5T_NATIVE_REAL, value_mem_space, new_value_space, H5P_DEFAULT, (void*)tmp_values.data());
+        }
+
+        i++;
+    }
+
+    H5Pclose(dcpl_id);
+    H5Pclose(dcpl_id2);
+
+    H5Sclose(value_mem_space);
+    H5Sclose(new_name_space);
+    H5Sclose(new_value_space);
+    H5Sclose(mem_space_1d);
+    H5Sclose(unit_space);
+    H5Sclose(name_space);
+    H5Sclose(value_space);
+
+    H5Dclose(names_id);
+    H5Dclose(units_id);
+    H5Dclose(values_id);
+    H5Dclose(new_names_id);
+    H5Dclose(new_units_id);
+    H5Dclose(new_values_id);
 
 }
 
