@@ -825,18 +825,6 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (std::string hdf5_dataset_name : hdf5_dataset_list)
         {
-            //add v9 layout soft links
-            if (analysis_job.add_v9_layout)
-            {
-                io::file::HDF5_IO::inst()->add_v9_layout(hdf5_dataset_name);
-            }
-
-            //add exchange
-            if (analysis_job.add_exchange_layout)
-            {
-                io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
-            }
-
             //export csv
             if (analysis_job.export_int_fitted_to_csv)
             {
@@ -881,6 +869,19 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                 {
                     io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict);
                 }
+            }
+
+
+            //add v9 layout soft links
+            if (analysis_job.add_v9_layout)
+            {
+                io::file::HDF5_IO::inst()->add_v9_layout(hdf5_dataset_name);
+            }
+
+            //add exchange
+            if (analysis_job.add_exchange_layout)
+            {
+                io::file::HDF5_IO::inst()->add_exchange_layout(hdf5_dataset_name);
             }
         }
     }
