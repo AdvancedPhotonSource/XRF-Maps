@@ -64,6 +64,8 @@ namespace mca
 {
 
 DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map);
+DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map);
+
 }// end namespace mca
 
 

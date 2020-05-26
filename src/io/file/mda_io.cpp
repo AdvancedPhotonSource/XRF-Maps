@@ -111,7 +111,7 @@ bool MDA_IO::load_scalers(std::string path)
         return false;
     }
 
-    _load_scalers();
+    _load_scalers(false);
     _load_meta_info();
     _load_extra_pvs_vector();
 
@@ -310,13 +310,13 @@ bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_O
     {
         _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, false);
     }
-    if(false == _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, true))
+    if(false == _get_scaler_value(_mda_file, override_values, STR_US_IC, &override_values->US_IC, true))
     {
-        _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, false);
+        _get_scaler_value(_mda_file, override_values, STR_US_IC, &override_values->US_IC, false);
     }
-    if(false == _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, true))
+    if(false == _get_scaler_value(_mda_file, override_values, STR_DS_IC, &override_values->DS_IC, true))
     {
-        _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, false);
+        _get_scaler_value(_mda_file, override_values, STR_DS_IC, &override_values->DS_IC, false);
     }
 
     mda_unload(_mda_file);
@@ -359,7 +359,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
-    _load_scalers();
+    _load_scalers(false);
     _load_meta_info();
     _load_extra_pvs_vector();
 
@@ -386,8 +386,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
         }
 
         _get_scaler_value(_mda_file, override_values, "SRCURRENT", &override_values->sr_current, hasNetCDF);
-        _get_scaler_value(_mda_file, override_values, "US_IC", &override_values->US_IC, hasNetCDF);
-        _get_scaler_value(_mda_file, override_values, "DS_IC", &override_values->DS_IC, hasNetCDF);
+        _get_scaler_value(_mda_file, override_values, STR_US_IC, &override_values->US_IC, hasNetCDF);
+        _get_scaler_value(_mda_file, override_values, STR_DS_IC, &override_values->DS_IC, hasNetCDF);
     }
 
     if (_mda_file->header->data_rank == 2)
@@ -915,7 +915,7 @@ bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_scalers()
+void MDA_IO::_load_scalers(bool load_int_spec)
 {
     if (_mda_file == nullptr)
     {
@@ -953,7 +953,7 @@ void MDA_IO::_load_scalers()
             {
                 s_map.values(0, i) = _mda_file->scan->detectors_data[k][i];
 
-                if (_mda_file->scan->sub_scans != nullptr)
+                if (_mda_file->scan->sub_scans != nullptr && load_int_spec)
                 {
                     for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
                     {
@@ -994,7 +994,7 @@ void MDA_IO::_load_scalers()
                 {
                     s_map.values(i,j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
 
-                    if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr)
+                    if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
                     {
                         for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
                         {

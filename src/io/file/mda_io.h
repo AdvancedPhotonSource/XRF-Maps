@@ -112,7 +112,7 @@ public:
 
 private:
 
-    void _load_scalers();
+    void _load_scalers(bool load_int_spec);
 
     void _load_extra_pvs_vector();
 

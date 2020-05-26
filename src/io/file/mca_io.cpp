@@ -55,16 +55,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <fstream>
 #include <sstream>
 
-#include <iostream>
-
-
-
 namespace io
 {
 namespace file
 {
 namespace mca
 {
+
+//-----------------------------------------------------------------------------
 
 bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map)
 {
@@ -230,6 +228,83 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
     return false;
 
 }
+
+//-----------------------------------------------------------------------------
+
+bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map)
+{
+    std::ofstream paramFileStream(path);
+
+    real_t sr_current = 0.0;
+    real_t us_ic = 0.0;
+    real_t ds_ic = 0.0;
+    real_t offset = 0.0;
+    real_t slope = 0.0;
+    real_t quad = 0.0;
+
+    if (pv_map.count(STR_SR_CURRENT) > 0)
+    {
+        sr_current = pv_map.at(STR_SR_CURRENT);
+    }
+    if (pv_map.count(STR_US_IC) > 0)
+    {
+        us_ic = pv_map.at(STR_US_IC);
+    }
+    if (pv_map.count(STR_DS_IC) > 0)
+    {
+        ds_ic = pv_map.at(STR_DS_IC);
+    }
+    if (pv_map.count(STR_ENERGY_OFFSET) > 0)
+    {
+        offset = pv_map.at(STR_ENERGY_OFFSET);
+    }
+    if (pv_map.count(STR_ENERGY_SLOPE) > 0)
+    {
+        slope = pv_map.at(STR_ENERGY_SLOPE);
+    }
+    if (pv_map.count(STR_ENERGY_QUADRATIC) > 0)
+    {
+        quad = pv_map.at(STR_ENERGY_QUADRATIC);
+    }
+
+
+    logI << "Saving:  " << path << "\n";
+
+    if (spectra == nullptr)
+    {
+        return false;
+    }
+    if (paramFileStream.is_open())
+    {
+
+
+        paramFileStream << "VERSION: 3.1\n";
+        paramFileStream << "ELEMENTS: 1\n";
+        paramFileStream << "DATE: \n";
+        paramFileStream << "CHANNELS: " << spectra->size() << "\n";
+        paramFileStream << "REAL_TIME: "<< spectra->elapsed_realtime() << "\n";
+        paramFileStream << "LIVE_TIME: " << spectra->elapsed_livetime() << "\n";
+        paramFileStream << "SRCURRENT: "<< sr_current<<"\n";
+        paramFileStream << "UPSTREAM_IONCHAMBER: " << us_ic << "\n";
+        paramFileStream << "DOWNSTREAM_IONCHAMBER: " << ds_ic << "\n";
+        paramFileStream << "CAL_OFFSET: " << offset << "\n";
+        paramFileStream << "CAL_SLOPE: " << slope << "\n";
+        paramFileStream << "CAL_QUAD: " << quad << "\n";
+        //paramFileStream << "ENVIRONMENT: \n";
+        paramFileStream << "DATA: \n";
+        for (int i = 0; i < spectra->size(); i++)
+        {
+            paramFileStream << (*spectra)(i) << "\n";
+        }
+         
+        paramFileStream.close();
+        return true;
+    }
+    return false;
+
+}
+
+//-----------------------------------------------------------------------------
 
 } //end namespace mca
 } //end namespace file
