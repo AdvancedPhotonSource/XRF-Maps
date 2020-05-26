@@ -304,6 +304,13 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
 
+    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename + std::to_string(detector_num) + ".txt";
+    std::unordered_map<std::string, real_t> scaler_map;
+    scaler_map[STR_ENERGY_OFFSET] = energy_offset;
+    scaler_map[STR_ENERGY_SLOPE] = energy_slope;
+    scaler_map[STR_ENERGY_QUADRATIC] = energy_quad;
+    io::file::mca::save_integrated_spectra(mca_full_path, spectra, scaler_map);
+
 }
 
 // ----------------------------------------------------------------------------

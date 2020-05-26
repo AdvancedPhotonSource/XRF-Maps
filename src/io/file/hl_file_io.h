@@ -56,6 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "io/file/netcdf_io.h"
 #include "io/file/mda_io.h"
+#include "io/file/mca_io.h"
 #include "io/file/hdf5_io.h"
 #include "io/file/csv_io.h"
 
