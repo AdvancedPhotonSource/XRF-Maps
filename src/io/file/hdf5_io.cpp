@@ -6728,7 +6728,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 		return;
 	}
     //Scan
-    if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6736,7 +6736,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         }
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/y_axis", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/y_axis", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6744,7 +6744,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         }
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/scan_time_stamp", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/scan_time_stamp", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Scan/scan_time_stamp", H5L_SAME_LOC, "/MAPS/scan_time_stamp", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6754,7 +6754,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     //create extra_pvs, extra_pvs_as_csv, extra_strings
 
     //Scalers
-    if (H5Gget_objinfo(file_id, "/MAPS/ds_amp", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/ds_amp", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/ds_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6762,7 +6762,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         }
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/us_amp", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/us_amp", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/us_amp", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6789,28 +6789,28 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
 
     //Spectra
-    if (H5Gget_objinfo(file_id, "/MAPS/energy", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/energy", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy", H5L_SAME_LOC, "/MAPS/energy", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
             logW << " Couldn't create soft link for energy" << "\n";
         }
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/energy_calib", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/energy_calib", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Energy_Calibration", H5L_SAME_LOC, "/MAPS/energy_calib", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
             logW << " Couldn't create soft link for energy_calib" << "\n";
         }
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/int_spec", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/int_spec", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Spectra/Integrated_Spectra/Spectra", H5L_SAME_LOC, "/MAPS/int_spec", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
             logW << " Couldn't create soft link for int_spec" << "\n";
         }
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/mca_arr", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/mca_arr", 0, NULL) < 0)
     {
         if (H5Lcreate_hard(file_id, "/MAPS/Spectra/mca_arr", H5L_SAME_LOC, "/MAPS/mca_arr", H5P_DEFAULT, H5P_DEFAULT) < 0)
         {
@@ -6890,17 +6890,17 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
 
     //XRF_Analyzed
-    if (H5Gget_objinfo(file_id, "/MAPS/channel_names", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/channel_names", 0, NULL) < 0)
     {
-        if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", 0, NULL) != 0)
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", 0, NULL) >= 0)
         {
             H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
         }
-        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", 0, NULL) != 0)
+        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", 0, NULL) >= 0)
         {
             H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
         }
-        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", 0, NULL) != 0)
+        else if (H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", 0, NULL) >= 0)
         {
             H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Channel_Names", H5L_SAME_LOC, "/MAPS/channel_names", H5P_DEFAULT, H5P_DEFAULT);
         }
@@ -6924,7 +6924,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
     //Channel Units are a 4 x channels so we can't do a hardlink
     // the 4 are SR_current, US_IC, DS_IC, and cts/s
-    if (H5Gget_objinfo(file_id, "/MAPS/channel_units", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/channel_units", 0, NULL) < 0)
     {
         hsize_t unit_dims[2];
         hsize_t offset_dims[2] = { 0,0 };
@@ -6962,72 +6962,29 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         }
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", 0, NULL) >= 0)
     {
-        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi", H5P_DEFAULT);
-            if (ana_id > -1)
-            {
-                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
-                H5Dclose(ana_id);
-            }
-            else
-            {
-                logW << "Couldn't create soft link for XRF_roi" << "\n";
-            }
-        }
-        else
-        {
-            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
-        }
+        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT);
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_quant", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) >= 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
     }
 
-
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", 0, NULL) >= 0)
     {
-        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_roi_plus", H5P_DEFAULT);
-            if (ana_id > -1)
-            {
-                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
-                H5Dclose(ana_id);
-            }
-            logW << " Couldn't create soft link for XRF_roi_plus" << "\n";
-        }
-        else
-        {
-            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
-        }
+        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT);
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus_quant", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) >= 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", 0, NULL) >= 0)
     {
-        if (H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT) < 0)
-        {
-            hid_t ana_id = H5Dopen(file_id, "/MAPS/XRF_fits", H5P_DEFAULT);
-            if (ana_id > -1)
-            {
-                _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
-                H5Dclose(ana_id);
-            }
-            logW << " Couldn't create soft link for XRF_fits" << "\n";
-        }
-        else
-        {
-            _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
-        }
+        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT);
     }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits_quant", 0, NULL) != 0)
+    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) >= 0)
     {
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
     }
