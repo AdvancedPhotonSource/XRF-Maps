@@ -4639,6 +4639,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                 {
                     data_struct::Scaler_Map s_map;
                     s_map.values.resize(rows, cols);
+                    s_map.values.setZero(rows, cols);
                     s_map.name = summed_scaler_itr.scaler_name;
                     s_map.unit = " ";
                     // look for scaler names and add them up

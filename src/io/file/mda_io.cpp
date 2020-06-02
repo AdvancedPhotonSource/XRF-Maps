@@ -946,6 +946,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         {
             data_struct::Scaler_Map s_map;
             s_map.values.resize(rows, cols);
+            s_map.values.setZero(rows, cols);
             s_map.name = std::string(_mda_file->scan->detectors[k]->name);
             s_map.unit = std::string(_mda_file->scan->detectors[k]->unit);
 
@@ -985,12 +986,13 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         {
             data_struct::Scaler_Map s_map;
             s_map.values.resize(rows, cols);
+            s_map.values.setZero(rows, cols);
             s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
             s_map.unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
 
             for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
             {
-                for (int32_t j = 0; j < _mda_file->scan->sub_scans[0]->last_point; j++)
+                for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
                 {
                     s_map.values(i,j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
 
