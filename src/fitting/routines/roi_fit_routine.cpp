@@ -97,14 +97,8 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
             left_roi = right_roi - 1;
         }
 
-        //element->left_roi = left_roi;
-        //element->right_roi = right_roi;
-
         size_t spec_size = (right_roi - left_roi) + 1;
-        real_t counts = 0.0;
-        counts = spectra->segment(left_roi, spec_size).sum();
-
-        counts_dict[e_itr.first] = counts;
+        counts_dict[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
     }
     return counts_dict;
 }

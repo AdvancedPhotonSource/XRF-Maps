@@ -73,6 +73,18 @@ bool compare_file_size (const file_name_size& first, const file_name_size& secon
 
 void populate_netcdf_hdf5_files(std::string dataset_dir)
 {
+    netcdf_files.clear();
+    bnp_netcdf_files.clear();
+    hdf_files.clear();
+    hdf_xspress_files.clear();
+    hdf_emd_files.clear();
+
+    std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
+    if (dataset_dir[dataset_dir.length() - 1] != DIR_END_CHAR)
+    {
+        dataset_dir += DIR_END_CHAR;
+    }
+
     //populate netcdf and hdf5 files for fly scans
     netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF"+ DIR_END_CHAR, "_0.nc");
     bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF"+ DIR_END_CHAR, "_001.nc");

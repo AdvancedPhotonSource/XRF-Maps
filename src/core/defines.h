@@ -72,6 +72,7 @@ static std::time_t now_c;
 #if defined _WIN32 || defined __CYGWIN__
   #pragma warning( disable : 4251 4127 4996 4505 4244 )
   #define DIR_END_CHAR '\\'
+  #define DIR_END_CHAR_OPPOSITE '/'
   #ifdef BUILDING_DLL
     #ifdef __GNUC__
       #define DLL_EXPORT __attribute__ ((dllexport))
@@ -88,6 +89,7 @@ static std::time_t now_c;
   #define DLL_LOCAL
 #else
   #define DIR_END_CHAR '/'
+  #define DIR_END_CHAR_OPPOSITE '\\'
   #if __GNUC__ >= 4
     #define DLL_EXPORT __attribute__ ((visibility ("default")))
     #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))

@@ -111,7 +111,7 @@ bool MDA_IO::load_scalers(std::string path)
         return false;
     }
 
-    _load_scalers(false);
+    _load_scalers(true);
     _load_meta_info();
     _load_extra_pvs_vector();
 
@@ -942,34 +942,47 @@ void MDA_IO::_load_scalers(bool load_int_spec)
             cols = _mda_file->scan->last_point;
 
 
-        for (int k = 0; k < _mda_file->scan->number_detectors; k++)
+        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         {
-            data_struct::Scaler_Map s_map;
-            s_map.values.resize(rows, cols);
-            s_map.values.setZero(rows, cols);
-            s_map.name = std::string(_mda_file->scan->detectors[k]->name);
-            s_map.unit = std::string(_mda_file->scan->detectors[k]->unit);
-
-            for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+            for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
-                s_map.values(0, i) = _mda_file->scan->detectors_data[k][i];
-
-                if (_mda_file->scan->sub_scans != nullptr && load_int_spec)
+                if (i == 0)
                 {
-                    for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
+                    data_struct::Scaler_Map s_map;
+                    s_map.values.resize(rows, cols);
+                    s_map.values.setZero(rows, cols);
+                    s_map.name = std::string(_mda_file->scan->detectors[k]->name);
+                    s_map.unit = std::string(_mda_file->scan->detectors[k]->unit);
+                    _scan_info.scaler_maps.push_back(s_map);
+                }
+
+                _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+            }
+
+            if (_mda_file->scan->sub_scans != nullptr && load_int_spec)
+            {
+                for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
+                {
+                    data_struct::ArrayXr* int_spec;
+                    if (_integrated_spectra_map.count(d) == 0)
                     {
-                        data_struct::ArrayXr* int_spec = &(_integrated_spectra_map[d]);
+                        // if this is the first one then zero it out
+                        int_spec = &(_integrated_spectra_map[d]);
                         int_spec->resize(_mda_file->scan->sub_scans[i]->last_point);
                         int_spec->setZero(_mda_file->scan->sub_scans[i]->last_point);
-                        for (int32_t k = 0; k < _mda_file->scan->sub_scans[i]->last_point; k++)
-                        {
-                            (*int_spec)[k] += (_mda_file->scan->sub_scans[i]->detectors_data[d][k]);
-                        }
+                    }
+                    else
+                    {
+                        int_spec = &(_integrated_spectra_map[d]);
+                    }
+                    for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->last_point; m++)
+                    {
+                        (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->detectors_data[d][m]);
                     }
                 }
             }
-            _scan_info.scaler_maps.push_back(s_map);
         }
+        
     }
     else
     {
@@ -982,36 +995,49 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         else
             cols = _mda_file->scan->sub_scans[0]->last_point;
 
-        for (int k = 0; k < _mda_file->scan->sub_scans[0]->number_detectors; k++)
+
+
+        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         {
-            data_struct::Scaler_Map s_map;
-            s_map.values.resize(rows, cols);
-            s_map.values.setZero(rows, cols);
-            s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
-            s_map.unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
-
-            for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
             {
-                for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
+                for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
-                    s_map.values(i,j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
-
-                    if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
+                    if (i == 0 && j == 0)
                     {
-                        for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
+                        data_struct::Scaler_Map s_map;
+                        s_map.values.resize(rows, cols);
+                        s_map.values.setZero(rows, cols);
+                        s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
+                        s_map.unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
+                        _scan_info.scaler_maps.push_back(s_map);
+                    }
+
+                    _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                }
+                if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
+                {
+                    for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
+                    {
+                        data_struct::ArrayXr* int_spec;
+                        if (_integrated_spectra_map.count(d) == 0)
                         {
-                            data_struct::ArrayXr * int_spec = &(_integrated_spectra_map[d]);
+                            // if this is the first one then zero it out
+                            int_spec = &(_integrated_spectra_map[d]);
                             int_spec->resize(_mda_file->scan->sub_scans[i]->sub_scans[j]->last_point);
                             int_spec->setZero(_mda_file->scan->sub_scans[i]->sub_scans[j]->last_point);
-                            for (int32_t k = 0; k < _mda_file->scan->sub_scans[i]->sub_scans[j]->last_point; k++)
-                            {
-                                (*int_spec)[k] += (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[d][k]);
-                            }
+                        }
+                        else
+                        {
+                            int_spec = &(_integrated_spectra_map[d]);
+                        }
+                        for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->sub_scans[j]->last_point; m++)
+                        {
+                            (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[d][m]);
                         }
                     }
                 }
             }
-            _scan_info.scaler_maps.push_back(s_map);
         }
     }
 }
@@ -1202,6 +1228,13 @@ data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
         return &(_integrated_spectra_map.at(detector));
     }
     return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+void MDA_IO::append_integrated_spectra(int detector, data_struct::ArrayXr* spectra)
+{
+    _integrated_spectra_map[detector] = *spectra;
 }
 
 //-----------------------------------------------------------------------------

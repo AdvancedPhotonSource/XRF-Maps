@@ -110,6 +110,8 @@ public:
 
     data_struct::ArrayXr* get_integrated_spectra(unsigned int detector);
 
+    void append_integrated_spectra(int detector, data_struct::ArrayXr* spectra);
+
 private:
 
     void _load_scalers(bool load_int_spec);
