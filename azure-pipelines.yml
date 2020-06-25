@@ -13,8 +13,7 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - powershell:
-      script: |
+    - powershell: |
         $Webclient = New-Object net.webclient
         $Webclient.Downloadfile("http://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip", "vcpkg.zip")
     - task: ExtractFiles@1
