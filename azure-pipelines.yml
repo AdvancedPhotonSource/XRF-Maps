@@ -15,8 +15,7 @@ jobs:
       submodules: true
     - task: DownloadFileshareArtifacts@1
       inputs:
-        filesharePath: https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
-        artifactName: vcpkg.zip
+        script: curl --output https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
     - task: ExtractFiles@1
       inputs:
         archiveFilePatterns: 'vcpkg.zip' 
