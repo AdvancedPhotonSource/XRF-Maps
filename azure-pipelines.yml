@@ -16,7 +16,7 @@ jobs:
     - powershell: |
         $Webclient = New-Object net.webclient
         $Webclient.Downloadfile("http://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip", "vcpkg.zip")
-        [System.IO.Compression.ZipFile]::ExtractToDirectory('vcpkg.zip', '.\')
+        Expand-Archive -Force -Path .\vcpkg.zip -DestinationPath .\
     - script: mkdir build
     - task: CMake@1
       inputs:
