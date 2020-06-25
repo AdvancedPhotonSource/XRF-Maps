@@ -13,9 +13,14 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - script: .\vcpkg\bootstrap-vcpkg.bat
-    - script: echo set(VCPKG_BUILD_TYPE release)>>vcpkg\triplets\x64-windows.cmake
-    - script: .\vcpkg\vcpkg.exe install netcdf-c zeromq --vcpkg-root .\vcpkg
+    - task: DownloadFileshareArtifacts@1
+      inputs:
+        filesharePath: https://anl.box.com/s/z2ckxkdvejoakg1do2e5c4x6zfva51qk
+        artifactName: vcpkg.zip
+    - task: ExtractFiles@1
+      inputs:
+        archiveFilePatterns: 'vcpkg.zip' 
+        destinationFolder: vcpkg
     - script: mkdir build
     - task: CMake@1
       inputs:
