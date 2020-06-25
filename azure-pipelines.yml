@@ -13,10 +13,13 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - powershell: curl https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
+    - powershell:
+      script: |
+        $Webclient = New-Object net.webclient
+        $Webclient.Downloadfile("http://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip", "vcpkg.zip")
     - task: ExtractFiles@1
       inputs:
-        archiveFilePatterns: 'vcpkg.zip' 
+        archiveFilePatterns: '.zip' 
         destinationFolder: vcpkg
     - script: mkdir build
     - task: CMake@1
