@@ -13,7 +13,7 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - task: DownloadFileshareArtifacts@1
+    - task: CmdLine@2
       inputs:
         script: curl --output https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
     - task: ExtractFiles@1
