@@ -13,9 +13,9 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - task: CmdLine@2
+    - task: PowerShell@2
       inputs:
-        script: curl --output vcpkg.zip https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
+        script: curl https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
     - task: ExtractFiles@1
       inputs:
         archiveFilePatterns: 'vcpkg.zip' 
