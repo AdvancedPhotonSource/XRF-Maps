@@ -15,7 +15,7 @@ jobs:
       submodules: true
     - task: CmdLine@2
       inputs:
-        script: curl --output https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
+        script: curl --output vcpkg.zip https://anl.box.com/shared/static/z2ckxkdvejoakg1do2e5c4x6zfva51qk.zip
     - task: ExtractFiles@1
       inputs:
         archiveFilePatterns: 'vcpkg.zip' 
