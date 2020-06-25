@@ -28,8 +28,3 @@ jobs:
         solution: 'build/ALL_BUILD.vcxproj'
         maximumCpuCount: true
         platform: 'x64'
-    - script: |
-        xcopy vcpkg\installed\x64-windows\bin\*.dll .\bin /s /y
-    - script: |
-        cd bin
-        .\xrf_maps.exe 
