@@ -229,7 +229,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
@@ -270,11 +271,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
             counts_dict[el_itr.first] = value;
         }
 
-        //check if we are saving the number of iterations and save if so
-        if(fit_params.contains(STR_NUM_ITR))
-        {
-            counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
-        }
+        counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
+        counts_dict[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
 
 		//get max and top 10 max channels
 		vector<pair<int, real_t> > max_map;

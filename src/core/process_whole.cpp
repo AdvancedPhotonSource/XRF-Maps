@@ -67,6 +67,8 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
         //Allocate memeory to save number of fit iterations
         element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_NUM_ITR, data_struct::ArrayXXr() ));
         element_fit_counts_dict->at(STR_NUM_ITR).resize(height, width);
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(STR_RESIDUAL, data_struct::ArrayXXr()));
+        element_fit_counts_dict->at(STR_RESIDUAL).resize(height, width);
     }
 
 	//  TOTAL_FLUORESCENCE_YIELD
@@ -98,6 +100,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
         (*out_fit_counts)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
     }
     (*out_fit_counts)[STR_NUM_ITR](i,j) = counts_dict[STR_NUM_ITR];
+    (*out_fit_counts)[STR_RESIDUAL](i, j) = counts_dict[STR_RESIDUAL];
 	// add total fluorescense yield
 	if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
 	{

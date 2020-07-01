@@ -355,6 +355,10 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = result.nfev;
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = *(result.resid);
+    }
 
     //delete [] mp_par;
 
@@ -375,6 +379,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+    std::vector<real_t> resid(energy_range.count());
 
     int info;
 
@@ -414,6 +419,7 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
+    result.resid = &resid[0];
 
     info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
 /*
@@ -424,6 +430,15 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+    }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        real_t sum_resid = 0.0;
+        for (int i = 0; i< energy_range.count(); i++)
+        {
+             sum_resid += resid[i];
+        }
+        (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
 }
@@ -501,6 +516,11 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = *(result.resid);
+    }
+
 
 }
 

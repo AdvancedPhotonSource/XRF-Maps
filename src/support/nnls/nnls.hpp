@@ -89,7 +89,7 @@ namespace nsNNLS
         void setData(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic>* A, TArrayXr* b) { this->A = A; this->b = b; }
 
 		// The functions that actually launch the ship, and land it!
-		int optimize()
+		void optimize(int &num_itr, _T& npg)
 		{
 			initialize();
 
@@ -123,7 +123,8 @@ namespace nsNNLS
 					checkDescentUpdateBeta();
 				}
 			}
-			return out.iter;
+			num_itr = out.iter;
+			npg = out.npg;
 		}
 		
     // The variables used during compute time

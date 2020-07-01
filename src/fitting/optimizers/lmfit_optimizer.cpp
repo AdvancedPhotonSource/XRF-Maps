@@ -225,6 +225,10 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+    }
 
 }
 
@@ -255,6 +259,10 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = status.nfev;
+    }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 
 }
@@ -291,6 +299,10 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
+    }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 }
 

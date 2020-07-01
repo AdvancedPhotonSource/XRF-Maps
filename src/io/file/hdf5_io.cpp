@@ -3307,7 +3307,7 @@ bool HDF5_IO::save_element_fits(std::string path,
 		{
 			tmp_char[z] = '\0';
 		}
-		if (el_name != STR_NUM_ITR)
+		if (el_name != STR_NUM_ITR && el_name != STR_RESIDUAL)
 		{
 			units.copy(tmp_char, 256);
 		}
@@ -3863,6 +3863,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
                 }
 
                 element_lines.push_back(STR_NUM_ITR);
+                element_lines.push_back(STR_RESIDUAL);
 
                 offset_idx = 0;
                 offset[0] = 0;
