@@ -679,6 +679,8 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             //Fit the spectra
             quantification_standard->element_counts[fit_itr.first] = fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit);
 
+            quantification_standard->normalize_counts_by_time(fit_itr.first);
+
             //Save csv and png if matrix or nnls
             if (fit_itr.first == Fitting_Routines::GAUSS_MATRIX || fit_itr.first == Fitting_Routines::NNLS)
             {
@@ -709,8 +711,6 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
 
                 io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
             }
-
-            quantification_standard->normalize_counts_by_time(fit_itr.first);
 
             detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, quantification_standard, &quantification_model, quantification_standard->sr_current);
             detector->update_element_quants(fit_itr.first, STR_US_IC, quantification_standard, &quantification_model, quantification_standard->US_IC);

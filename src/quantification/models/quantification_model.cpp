@@ -76,55 +76,6 @@ Quantification_Model::~Quantification_Model()
 }
 
 //-----------------------------------------------------------------------------
-/*
-std::vector<Element_Quant> Quantification_Model::generate_quant_vec(real_t incident_energy,
-                                                                   Element_Info* detector_element,
-                                                                   Electron_Shell shell,
-                                                                   real_t airpath,
-                                                                   real_t detector_chip_thickness,
-                                                                   real_t beryllium_window_thickness,
-                                                                   real_t germanium_dead_layer,
-                                                                   size_t start_z,
-                                                                   size_t end_z)
-{
-    start_z = std::max(start_z, (size_t)1);
-    end_z = std::min(end_z, (size_t)CALIBRATION_CURVE_SIZE);
-    std::vector<Element_Quant> element_quant_vec( end_z - start_z + 1 );
-
-    size_t idx = 0;
-    for (size_t i=start_z; i <= end_z; i ++)
-    {
-        element_quant_vec[idx] = generate_element_quant(incident_energy,
-                                                         detector_element,
-                                                         shell,
-                                                         airpath,
-                                                         detector_chip_thickness,
-                                                         beryllium_window_thickness,
-                                                         germanium_dead_layer,
-                                                         i);
-        idx++;
-    }
-
-    return element_quant_vec;
-}
-
-//-----------------------------------------------------------------------------
-
-Element_Quant Quantification_Model::generate_element_quant(real_t incident_energy,
-    Element_Info* detector_element,
-    Electron_Shell shell,
-    real_t airpath,
-    real_t detector_chip_thickness,
-    real_t beryllium_window_thickness,
-    real_t germanium_dead_layer,
-    size_t z_number)
-{
-    Element_Quant eq;
-    init_element_quant(eq, incident_energy, detector_element, shell, airpath, detector_chip_thickness, beryllium_window_thickness, germanium_dead_layer, z_number);
-    return eq;
-}
-*/
-//-----------------------------------------------------------------------------
 
 void Quantification_Model::init_element_quant(Element_Quant& element_quant,
                                             real_t incident_energy,

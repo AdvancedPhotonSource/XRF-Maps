@@ -85,15 +85,6 @@ struct DLL_EXPORT Quantification_Scaler_Struct
             curve_quant_map[itr] = e_quants;
         }
     }
-    /*
-    void update_weight(Electron_Shell shell, unsigned int Z, real_t weight)
-    {
-        if(curve_quant_map.count(shell) > 0)
-        {
-            curve_quant_map.at(shell).at(Z - 1).weight = weight;
-        }
-    }
-    */
     unordered_map<Electron_Shell, vector<Element_Quant> > curve_quant_map;
 };
 

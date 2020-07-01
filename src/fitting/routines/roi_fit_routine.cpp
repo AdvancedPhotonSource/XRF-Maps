@@ -85,8 +85,8 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
         Fit_Element_Map* element = e_itr.second;
-        left_roi = (unsigned int)( ( (element->center() - element->width()) - energy_offset) / energy_slope);
-        right_roi = (unsigned int)( ( (element->center() + element->width()) - energy_offset) / energy_slope);
+        left_roi = static_cast<unsigned int>(std::round( ( (element->center() - element->width()) - energy_offset) / energy_slope));
+        right_roi = static_cast<unsigned int>(std::round( ( (element->center() + element->width()) - energy_offset) / energy_slope));
 
         if (right_roi >= n_mca_channels)
         {

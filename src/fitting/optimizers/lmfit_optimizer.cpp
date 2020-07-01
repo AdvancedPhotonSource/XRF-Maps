@@ -130,6 +130,10 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
     for(auto& itr : ud->quant_map)
     {
         fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+        if (std::isfinite(fvec[idx]) == false)
+        {
+            fvec[idx] = std::numeric_limits<real_t>::max();
+        }
         idx++;
     }
 }
