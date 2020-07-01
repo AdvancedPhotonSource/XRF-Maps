@@ -235,7 +235,7 @@ void Detector::generage_avg_quantification_scalers()
     if (avg_sr_current == 0.0)
     {
         logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
-        avg_sr_current = 1.0;
+        avg_sr_current = 100.0;
     }
     else
     {
