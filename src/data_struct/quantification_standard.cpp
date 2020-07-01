@@ -96,9 +96,9 @@ Quantification_Standard::~Quantification_Standard()
 void Quantification_Standard::init_defaults()
 {
 
-    sr_current = 1.0;
-    US_IC = 1.0;
-    DS_IC = 1.0;
+    sr_current = 0.0;
+    US_IC = 0.0;
+    DS_IC = 0.0;
 }
 
 //-----------------------------------------------------------------------------

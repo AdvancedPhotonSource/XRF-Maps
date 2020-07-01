@@ -105,23 +105,17 @@ void Detector::append_element(Fitting_Routines routine, string quant_scaler, str
     if (element != nullptr)
     {
         Electron_Shell shell = get_shell_by_name(name);
-
-        //set initial counts to 0;
-        //fitting_quant_map.at(routine).element_counts[name] = 0;
         fitting_quant_map.at(routine).update_weight(shell, element->number, weight);
-
 
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) > 0)
         {
             all_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
         }
-
     }
     else
     {
         logW << "Could not add element " << name << ". Not found in Element_Info_Map\n";
     }
-
 }
 
 //-----------------------------------------------------------------------------
@@ -170,6 +164,11 @@ void Detector::update_element_quants(Fitting_Routines routine,
                         // with 2 standards we can have weights from another standard so we have to check if we have counts
                         if (standard->element_counts.at(routine).count(name) > 0)
                         {
+                            if (ic_quantifier == 0.0)
+                            {
+                                ic_quantifier = 1.0;
+                            }
+
                             real_t counts = standard->element_counts.at(routine).at(name);
                             real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
                             real_t e_cal = e_cal_factor / counts;
@@ -205,24 +204,24 @@ void Detector::generage_avg_quantification_scalers()
     //average quantification scalers
     for (const auto& itr : quantification_standards)
     {
-        if (itr.second.sr_current > 0)
+        if (itr.second.sr_current > 0.0)
         {
             avg_sr_current += itr.second.sr_current;
             crnt_cnt += 1.0;
         }
-        if (itr.second.US_IC > 0)
+        if (itr.second.US_IC > 0.0)
         {
             avg_US_IC += itr.second.US_IC;
             us_cnt += 1.0;
         }
-        if (itr.second.DS_IC > 0)
+        if (itr.second.DS_IC > 0.0)
         {
             avg_DS_IC += itr.second.DS_IC;
             ds_cnt += 1.0;
         }
     }
     
-    if (avg_sr_current == 0 && avg_US_IC == 0 && avg_DS_IC == 0)
+    if (avg_sr_current == 0.0 && avg_US_IC == 0.0 && avg_DS_IC == 0.0)
     {
         logE << "Could not find SR_Current, US_IC, and DS_IC. Not going to perform quantification\n";
     }
@@ -233,7 +232,7 @@ void Detector::generage_avg_quantification_scalers()
     }
 
 
-    if (avg_sr_current == 0)
+    if (avg_sr_current == 0.0)
     {
         logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_sr_current = 1.0;
@@ -242,7 +241,7 @@ void Detector::generage_avg_quantification_scalers()
     {
         avg_sr_current /= crnt_cnt;
     }
-    if (avg_US_IC == 0)
+    if (avg_US_IC == 0.0)
     {
         logW"US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_US_IC = 1.0;
@@ -251,7 +250,7 @@ void Detector::generage_avg_quantification_scalers()
     {
         avg_US_IC /= us_cnt;
     }
-    if (avg_DS_IC == 0)
+    if (avg_DS_IC == 0.0)
     {
         logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_DS_IC = 1.0;

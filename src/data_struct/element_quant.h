@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Element_Quant_H
 
 #include "core/defines.h"
+#include <utility>
 
 namespace data_struct
 {
@@ -63,25 +64,46 @@ struct DLL_EXPORT Element_Quant
     {
         zero();
     }
-    Element_Quant(real_t Z)
+
+    Element_Quant(int Z)
     {
         zero();
         this->Z = Z;
     }
-    Element_Quant(const Element_Quant& e)
+
+    Element_Quant(const Element_Quant& e) :
+        name(e.name),
+        weight(e.weight),
+        absorption(e.absorption),
+        transmission_Be(e.transmission_Be),
+        transmission_Ge(e.transmission_Ge),
+        yield(e.yield),
+        transmission_through_Si_detector(e.transmission_through_Si_detector),
+        transmission_through_air(e.transmission_through_air),
+        e_cal_ratio(e.e_cal_ratio),
+        Z(e.Z),
+        calib_curve_val(e.calib_curve_val)
     {
-        weight = e.weight;
-        absorption = e.absorption;
-        transmission_Be = e.transmission_Be;
-        transmission_Ge = e.transmission_Ge;
-        yield = e.yield;
-        transmission_through_Si_detector = e.transmission_through_Si_detector;
-        transmission_through_air = e.transmission_through_air;
-        e_cal_ratio = e.e_cal_ratio;
-        Z = e.Z;
-        name = e.name;
-        calib_curve_val = e.calib_curve_val;
+        
     }
+
+    Element_Quant(Element_Quant&& e) noexcept:
+        name(std::move(e.name)),
+        weight(std::exchange(e.weight, 0.0)),
+        absorption(std::exchange(e.absorption, 0.0)),
+        transmission_Be(std::exchange(e.transmission_Be, 0.0)),
+        transmission_Ge(std::exchange(e.transmission_Ge, 0.0)),
+        yield(std::exchange(e.yield, 0.0)),
+        transmission_through_Si_detector(std::exchange(e.transmission_through_Si_detector, 0.0)),
+        transmission_through_air(std::exchange(e.transmission_through_air, 0.0)),
+        e_cal_ratio(std::exchange(e.e_cal_ratio, 0.0)),
+        Z(std::exchange(e.Z, 0)),
+        calib_curve_val(std::exchange(e.calib_curve_val, 0.0))
+    {
+    }
+
+    Element_Quant& operator=(const Element_Quant&) = default;
+
     void zero()
     {
         weight = 0.0;
@@ -104,7 +126,7 @@ struct DLL_EXPORT Element_Quant
     real_t yield;
     real_t transmission_through_Si_detector;
     real_t transmission_through_air;// (N2)
-    real_t Z;
+    int Z;
     real_t e_cal_ratio;
     real_t calib_curve_val;
     std::string name;
