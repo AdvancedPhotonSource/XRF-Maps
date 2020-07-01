@@ -7008,6 +7008,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     hid_t ver_type = H5Dget_type(version_id);
     H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
     H5Dclose(version_id);
+    H5Lcreate_hard(file_id, "/MAPS/version", H5L_SAME_LOC, "/version", H5P_DEFAULT, H5P_DEFAULT);
 
     _cur_file_id = file_id;
     end_save_seq();
