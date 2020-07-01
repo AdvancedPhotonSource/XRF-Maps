@@ -655,6 +655,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             continue;
         }
 
+        //This is what IDL MAPS DID
+        if (quantification_standard->sr_current == 0.0 )
+        {
+            quantification_standard->sr_current = 100.0;
+        }
+
         energy_range = get_energy_range(quantification_standard->integrated_spectra.size(), &(override_params->fit_params));
         //First we integrate the spectra and get the elemental counts
         for (auto& fit_itr : detector->fit_routines)
@@ -785,11 +791,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
     {
         logE<<"Loading quantification standard "<<analysis_job->quantification_standard_filename<<"\n";
         return false;
-    }
-
-    if(analysis_job->quick_and_dirty)
-    {
-        ////average_quantification(quant_stand_list, analysis_job->detector_num_arr);
     }
 
     end = std::chrono::system_clock::now();
