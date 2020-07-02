@@ -119,10 +119,13 @@ void Quantification_Standard::normalize_counts_by_time(Fitting_Routines routine)
    
     if (element_counts.count(routine) > 0)
     {
-        for (auto& itr : element_counts.at(routine))
-        {
-            itr.second /= integrated_spectra.elapsed_livetime();
-        }
+		for (auto& itr : element_counts.at(routine))
+		{
+			if (itr.first != STR_NUM_ITR)
+			{
+				itr.second /= integrated_spectra.elapsed_livetime();
+			}
+		}
     }
 }
 
