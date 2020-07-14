@@ -75,7 +75,8 @@ public:
                           const Spectra * const spectra,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model,
-                          const Range energy_range);
+                          const Range energy_range,
+                          Callback_Func_Status_Def* status_callback = nullptr);
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,

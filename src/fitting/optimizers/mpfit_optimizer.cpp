@@ -86,6 +86,12 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 		dy[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
     }
 	
+    ud->cur_itr++;
+    if (ud->status_callback != nullptr)
+    {
+        (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+    }
+
 	return 0;
 }
 
@@ -297,11 +303,12 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                const Base_Model * const model,
-                               const Range energy_range)
+                               const Range energy_range,
+                               Callback_Func_Status_Def* status_callback)
 {
     User_Data ud;
-
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range);
+    size_t num_itr = 1000;
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, num_itr);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
@@ -316,7 +323,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    config.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    config.maxiter = num_itr;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
