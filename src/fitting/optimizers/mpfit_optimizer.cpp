@@ -308,10 +308,12 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 {
     User_Data ud;
     size_t num_itr = 1000;
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, num_itr);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+
+    size_t total_itr = num_itr * (fitp_arr.size() + 1);
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
     int info;
 

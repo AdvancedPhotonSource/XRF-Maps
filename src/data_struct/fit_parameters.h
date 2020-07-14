@@ -225,6 +225,10 @@ public:
 
     void update_and_add_values_gt_zero(Fit_Parameters *override_fit_params);
 
+    void remove(Fit_Parameters* override_fit_params);
+
+    void remove(std::string key);
+
     inline const real_t& value(std::string key) const { return _params.at(key).value; }
 
     void print();
