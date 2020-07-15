@@ -132,6 +132,95 @@ public:
 		elements_to_fit.clear();
     }
 
+	void parse_and_gen_branching_ratios()
+	{
+		branching_ratios.clear();
+		for (const auto& itr : branching_family_L)
+		{
+			istringstream f(itr);
+			string s;
+			string el_name;
+			getline(f, s, ':');
+			getline(f, el_name, ',');
+			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
+
+			float factor = 1.0;
+			// 1
+			std::getline(f, s, ',');
+			factor = std::stof(s);
+			branching_ratios[el_name][4] = factor;
+			branching_ratios[el_name][5] = factor;
+			branching_ratios[el_name][7] = factor;
+			branching_ratios[el_name][8] = factor;
+			branching_ratios[el_name][9] = factor;
+
+			// 2
+			std::getline(f, s, ',');
+			factor = std::stof(s);
+			branching_ratios[el_name][2] = factor;
+			branching_ratios[el_name][6] = factor;
+			branching_ratios[el_name][11] = factor;
+			
+			//3
+			std::getline(f, s, ',');
+			factor = std::stof(s);
+			branching_ratios[el_name][0] = factor;
+			branching_ratios[el_name][1] = factor;
+			branching_ratios[el_name][3] = factor;
+			branching_ratios[el_name][10] = factor;
+
+		}
+		for (const auto& itr : branching_ratio_L)
+		{
+			istringstream f(itr);
+			string s;
+			string el_name;
+			getline(f, s, ':');
+			getline(f, el_name, ',');
+			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
+
+			
+			for (unsigned int i = 0; i < 12; i++)
+			{
+				float factor = 1.0;
+				std::getline(f, s, ',');
+				factor = std::stof(s);
+				branching_ratios[el_name][i] = factor;
+			}
+		}
+		for (const auto& itr : branching_ratio_K)
+		{
+			istringstream f(itr);
+			string s;
+			string el_name;
+			getline(f, s, ':');
+			getline(f, el_name, ',');
+			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
+
+
+			for (unsigned int i = 0; i < 4; i++)
+			{
+				float factor = 1.0;
+				std::getline(f, s, ',');
+				factor = std::stof(s);
+				branching_ratios[el_name][i] = factor;
+			}
+		}
+
+	}
+
+
+	map<int, float> get_custom_factor(string el_name)
+	{
+		map<int, float> factors;
+		if (branching_ratios.count(el_name) > 0)
+		{
+			return branching_ratios.at(el_name);
+		}
+
+		return factors;
+	}
+
     string dataset_directory;
     int detector_num;
     Fit_Parameters fit_params;
@@ -170,6 +259,8 @@ public:
     vector<string> branching_family_L;
     vector<string> branching_ratio_L;
     vector<string> branching_ratio_K;
+
+	unordered_map< string, map<int, float> > branching_ratios;
 
     real_t sr_current;
     real_t US_IC;
