@@ -7008,7 +7008,10 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     hid_t ver_type = H5Dget_type(version_id);
     H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
     H5Dclose(version_id);
-    H5Lcreate_hard(file_id, "/MAPS/version", H5L_SAME_LOC, "/version", H5P_DEFAULT, H5P_DEFAULT);
+    if (H5Gget_objinfo(file_id, "/version", 0, NULL) < 0)
+    {
+        H5Lcreate_hard(file_id, "/MAPS/version", H5L_SAME_LOC, "/version", H5P_DEFAULT, H5P_DEFAULT);
+    }
 
     _cur_file_id = file_id;
     end_save_seq();
@@ -7577,6 +7580,10 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
         {
             ex_idx++;
         }
+    }
+    if (H5Gget_objinfo(file_id, "/version", 0, NULL) < 0)
+    {
+        H5Lcreate_hard(file_id, "/MAPS/version", H5L_SAME_LOC, "/version", H5P_DEFAULT, H5P_DEFAULT);
     }
 
     _cur_file_id = file_id;

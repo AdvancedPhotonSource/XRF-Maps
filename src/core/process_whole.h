@@ -63,6 +63,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdlib.h>
 
+#include "defines.h"
+
 #if defined _WIN32
 #include "support/direct/dirent.h"
 #else
@@ -98,8 +100,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 using namespace std::placeholders; //for _1, _2,
-
-DLL_EXPORT typedef std::function<void(size_t, size_t)> Callback_Func_Status_Def;
 
 // ----------------------------------------------------------------------------
 

@@ -76,7 +76,8 @@ public:
 
     Fit_Parameters fit_spectra_parameters(const models::Base_Model * const model,
                                           const Spectra * const spectra,
-                                          const Fit_Element_Map_Dict * const elements_to_fit);
+                                          const Fit_Element_Map_Dict * const elements_to_fit,
+                                          Callback_Func_Status_Def* status_callback = nullptr);
 
     virtual std::string get_name() { return "Params"; }
 
