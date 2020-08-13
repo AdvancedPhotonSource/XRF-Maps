@@ -182,7 +182,7 @@ typedef int (*mp_func)(int m, // Number of functions (elts of fvec)
   #define MP_RGIANT  (sqrt(MP_GIANT)*0.1)
 #else
 /* Float precision */
-  #define MP_MACHEP0 1.19209e-07f
+  #define MP_MACHEP0 1.19209e-10f
   #define MP_DWARF   1.17549e-38f
   #define MP_GIANT   3.40282e+38f
   #define MP_RDWARF  (sqrt(MP_DWARF*1.5f)*10.0f)

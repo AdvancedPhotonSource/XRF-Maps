@@ -121,7 +121,7 @@ void fill_user_data(User_Data &ud,
                     const Base_Model * const model,
                     const Range energy_range,
                     Callback_Func_Status_Def* status_callback,
-                    int total_itr,
+                    size_t total_itr,
                     bool use_weights = false);
 
 void fill_gen_user_data(Gen_User_Data &ud,
