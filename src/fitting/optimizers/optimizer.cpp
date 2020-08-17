@@ -62,7 +62,7 @@ namespace optimizers
                         const Base_Model* const model,
                         const Range energy_range,
                         Callback_Func_Status_Def* status_callback,
-                        int total_itr,
+                        size_t total_itr,
                         bool use_weights)
 	{
 		ud.fit_model = (Base_Model*)model;
