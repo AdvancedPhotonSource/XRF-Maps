@@ -194,8 +194,8 @@ void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp
 			{
 				if (fit.max_val == fit.min_val)
 				{
-					fit.max_val += (real_t)0.1;
-					fit.min_val -= (real_t)0.1;
+					fit.max_val += (real_t)1.0;
+					fit.min_val -= (real_t)1.0;
 					(*fit_params)[itr->first].max_val += (real_t)1.0;
 					(*fit_params)[itr->first].min_val -= (real_t)1.0;
 				}
@@ -307,7 +307,7 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                Callback_Func_Status_Def* status_callback)
 {
     User_Data ud;
-    size_t num_itr = 1000;
+    size_t num_itr = 2000;
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());

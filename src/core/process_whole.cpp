@@ -144,6 +144,7 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         //Fitting routines
         fitting::routines::Param_Optimized_Fit_Routine fit_routine;
         fit_routine.set_optimizer(optimizer);
+		fit_routine.set_update_coherent_amplitude_on_fit(false);
 
         //reset model fit parameters to defaults
         model.reset_to_default_fit_params();
