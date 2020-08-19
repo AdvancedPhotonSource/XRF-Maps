@@ -204,6 +204,7 @@ public:
 
     bool save_scan_scalers_bnl(std::string path,
         size_t detector_num,
+        data_struct::Params_Override* params_override,
         size_t row_idx_start = 0,
         int row_idx_end = -1,
         size_t col_idx_start = 0,

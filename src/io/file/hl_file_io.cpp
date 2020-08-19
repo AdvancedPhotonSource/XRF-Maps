@@ -754,7 +754,7 @@ bool load_spectra_volume(std::string dataset_directory,
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, params_override);
         }
         return true;
     }
