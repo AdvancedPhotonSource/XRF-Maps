@@ -397,7 +397,11 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 size_t dlen = dataset_file.length();
                 if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
                 {
-                    std::string str_detector_num = std::to_string(detector_num);
+                    std::string str_detector_num = "";
+                    if (detector_num != -1)
+                    {
+                        str_detector_num = std::to_string(detector_num);
+                    }
                     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
