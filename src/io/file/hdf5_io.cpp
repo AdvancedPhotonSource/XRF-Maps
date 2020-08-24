@@ -627,7 +627,14 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
     if (log_error)
     {
-        logI << path << " detector : " << detector_num << "\n";
+        if (detector_num == -1)
+        {
+            logI << path <<  "\n";
+        }
+        else
+        {
+            logI << path << " detector : " << detector_num << "\n";
+        }
     }
     hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id, memoryspace_id2;
     //hid_t    dset_xpos_id, dset_ypos_id, dataspace_xpos_id, dataspace_ypos_id;
@@ -2964,8 +2971,7 @@ bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
-                                                  data_struct::Params_Override *override_values)
+bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override *override_values)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3117,6 +3123,142 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path,
     logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
 
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override* override_values)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    logI << path << "\n";
+
+    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
+    hid_t    file_id, src_maps_grp_id;
+    hid_t    dataspace_detectors_id, dset_detectors_id;
+    hid_t   xypos_dataspace_id, xypos_id;
+    hid_t x_dataspace_id, y_dataspace_id, x_dataset_id, y_dataset_id;
+    char* detector_names[256];
+    int det_rank;
+    hsize_t* det_dims_in = nullptr;
+    hsize_t* val_dims_in = nullptr;;
+    hsize_t scaler_offset[3] = { 0,0,0 };
+    hsize_t single_offset[1] = { 0 };
+    hsize_t single_count[1] = { 1 };
+    hsize_t mem_offset[2] = { 0,0 };
+    hsize_t mem_count[2] = { 1,1 };
+    hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+    double* buffer = nullptr;
+
+    std::string ds_ic_search = "";
+
+    if (override_values->scaler_pvs.count(STR_DS_IC) == 0)
+    {
+        logW << "Need to set " << STR_DS_IC << ":scaler_name in maps_fit_parameter_override.txt\n";
+        return false;
+    }
+    else
+    {
+        ds_ic_search = override_values->scaler_pvs.at(STR_DS_IC);
+    }
+
+    
+    if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        return false;
+
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    {
+        return false;
+    }
+
+    //Save scalers
+    // name, val
+    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
+    {
+        return false;
+    }
+
+    hid_t name_type = H5Dget_type(scaler_name_id);
+    hid_t scaler_type = H5Dget_type(scaler_val_id);
+    hid_t scaler_val_space = H5Dget_space(scaler_val_id);
+    hid_t val_rank = H5Sget_simple_extent_ndims(scaler_val_space);
+    val_dims_in = new hsize_t[val_rank];
+    H5Sget_simple_extent_dims(scaler_val_space, &val_dims_in[0], NULL);
+
+    mem_count[0] = val_dims_in[0];
+    mem_count[1] = val_dims_in[1];
+    //names
+    hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    single_count[0] = val_dims_in[2];
+    hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    single_count[0] = 1;
+
+    char tmp_char[255] = { 0 };
+    buffer = new double[val_dims_in[0] * val_dims_in[1]];
+    hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
+    close_map.push({ mem_space, H5O_DATASPACE });
+    size_t scaler_cnt = val_dims_in[2];
+    val_dims_in[2] = 1;
+    for (hsize_t i = 0; i < scaler_cnt; i++)
+    {
+        single_offset[0] = i;
+        scaler_offset[2] = i;
+
+        H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
+
+        status = H5Dread(scaler_name_id, name_type, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+        if (status > -1)
+        {
+            std::string read_name = std::string(tmp_char, 255);
+            read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
+            read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
+            if (read_name == ds_ic_search)
+            {
+                status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
+                override_values->DS_IC = 0.0;
+                if (status > -1)
+                {
+                    for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
+                    {
+                        override_values->DS_IC += (real_t)buffer[x];
+                    }
+                    
+                }
+                break;
+            }
+        }
+    }
+
+    _close_h5_objects(close_map);
+
+    if (det_dims_in != nullptr)
+        delete[] det_dims_in;
+    if (val_dims_in != nullptr)
+        delete[] val_dims_in;
+    if (buffer != nullptr)
+        delete[] buffer;
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+    return true;
+
 }
 
 //-----------------------------------------------------------------------------

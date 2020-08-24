@@ -714,7 +714,11 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
                 data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
-                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_"+ fit_routine->get_name()+"_"+ standard_itr.standard_filename + std::to_string(detector_num);
+                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;
+                if (detector_num != -1)
+                {
+                    full_path += std::to_string(detector_num);
+                }
                 logI << full_path << "\n";
                 #ifdef _BUILD_WITH_QT
                 visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);

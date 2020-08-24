@@ -620,9 +620,14 @@ bool load_spectra_volume(std::string dataset_directory,
     io::file::MDA_IO mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
-
-    logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
-
+    if (detector_num == -1)
+    {
+        logI << "Loading dataset " << dataset_directory << dataset_file << "\n";
+    }
+    else
+    {
+        logI << "Loading dataset " << dataset_directory << "mda" << DIR_END_CHAR << dataset_file << " detector " << detector_num << "\n";
+    }
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
     bool hasNetcdf = false;
@@ -687,7 +692,11 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+    if (detector_num != -1)
+    {
+        fullpath += std::to_string(detector_num);
+    }
 
     /*
     std::string fullpath;
@@ -974,7 +983,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, false))
     {
-        // load quantification bnl
+        fullpath = dataset_directory + DIR_END_CHAR + dataset_file;
+        if (false == io::file::HDF5_IO::inst()->load_quantification_scalers_BNL(fullpath, params_override))
+        {
+            logW << "Failed to load ION chamber scalers from h5.\n";
+        }
         return true;
     }
 
