@@ -155,6 +155,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 
+// This is for HDF5 files only
+DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info* scan_info);
+
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,

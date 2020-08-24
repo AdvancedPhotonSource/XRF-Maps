@@ -1231,13 +1231,6 @@ data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
 }
 
 //-----------------------------------------------------------------------------
-
-void MDA_IO::append_integrated_spectra(int detector, data_struct::ArrayXr* spectra)
-{
-    _integrated_spectra_map[detector] = *spectra;
-}
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 bool load_henke_from_xdr(std::string filename)

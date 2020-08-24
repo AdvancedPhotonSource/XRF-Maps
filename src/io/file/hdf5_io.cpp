@@ -3157,6 +3157,11 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
 
     std::string ds_ic_search = "";
 
+    if (override_values == nullptr)
+    {
+        return false;
+    }
+
     if (override_values->scaler_pvs.count(STR_DS_IC) == 0)
     {
         logW << "Need to set " << STR_DS_IC << ":scaler_name in maps_fit_parameter_override.txt\n";
@@ -3405,6 +3410,261 @@ bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::S
     ////std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 
     //logI << "elapsed time: " << elapsed_seconds.count() << "s"<<"\n";
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    logI << path << "\n";
+    hid_t    file_id, src_maps_grp_id;
+    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+
+    if (scan_info == nullptr)
+    {
+        return false;
+    }
+
+    if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+    {
+        return false;
+    }
+    /*
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
+    {
+        return false;
+    }
+    */
+
+    return false;
+    //return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    logI << path << "\n";
+    hid_t    file_id, src_maps_grp_id;
+    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+
+    if (scan_info == nullptr)
+    {
+        return false;
+    }
+
+    if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+    {
+        return false;
+    }
+    /*
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
+    {
+        return false;
+    }
+    */
+    return false;
+    //return true;
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    logI << path << "\n";
+    hid_t    file_id, src_maps_grp_id;
+    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+    hid_t meta_data_id, tmp_id, status;
+    hsize_t* val_dims_in = nullptr;
+    hsize_t mem_offset[2] = { 0,0 };
+    hsize_t mem_count[2] = { 1,1 };
+    hsize_t single_offset[1] = { 0 };
+    hsize_t single_count[1] = { 1 };
+    hsize_t scaler_offset[3] = { 0,0,0 };
+
+    if (scan_info == nullptr)
+    {
+        return false;
+    }
+
+    if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
+    {
+        return false;
+    }
+    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
+    {
+        return false;
+    }
+    
+    hid_t name_type = H5Dget_type(scaler_name_id);
+    hid_t scaler_type = H5Dget_type(scaler_val_id);
+    hid_t scaler_val_space = H5Dget_space(scaler_val_id);
+    hid_t val_rank = H5Sget_simple_extent_ndims(scaler_val_space);
+    val_dims_in = new hsize_t[val_rank];
+    H5Sget_simple_extent_dims(scaler_val_space, &val_dims_in[0], NULL);
+
+    mem_count[0] = val_dims_in[0];
+    mem_count[1] = val_dims_in[1];
+
+    scan_info->meta_info.requested_cols = val_dims_in[0];
+    scan_info->meta_info.requested_rows = val_dims_in[1];
+    //names
+    hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    single_count[0] = val_dims_in[2];
+    hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    single_count[0] = 1;
+
+    char tmp_char[255] = { 0 };
+    hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
+    close_map.push({ mem_space, H5O_DATASPACE });
+    size_t scaler_cnt = val_dims_in[2];
+    val_dims_in[2] = 1;
+    for (hsize_t i = 0; i < scaler_cnt; i++)
+    {
+        data_struct::Scaler_Map scaler_map;
+        scaler_map.values.resize(val_dims_in[1], val_dims_in[0]);
+        scaler_map.unit = "cts";
+
+        single_offset[0] = i;
+        scaler_offset[2] = i;
+
+        H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
+
+        status = H5Dread(scaler_name_id, name_type, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+        if (status > -1)
+        {
+            scaler_map.name = std::string(tmp_char, 255);
+            scaler_map.name.erase(std::remove_if(scaler_map.name.begin(), scaler_map.name.end(), ::isspace), scaler_map.name.end());
+            scaler_map.name.erase(std::find(scaler_map.name.begin(), scaler_map.name.end(), '\0'), scaler_map.name.end());
+        }
+        status = H5Dread(scaler_val_id, H5T_NATIVE_REAL, mem_space, scaler_val_space, H5P_DEFAULT, scaler_map.values.data());
+
+        scan_info->scaler_maps.push_back(scaler_map);
+    }
+
+
+    if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det1", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(0);
+    }
+    if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det2", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(1);
+    }
+    if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det3", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(2);
+    }
+    if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det4", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(3);
+    }
+    if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "detsum", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(-1);
+    }
+    
+    if(_open_h5_object(tmp_id, H5O_GROUP, close_map, "scan_metadata", src_maps_grp_id))
+    {
+    
+        // load attributes from this folder
+        int na = H5Aget_num_attrs(tmp_id);
+
+        for (int i = 0; i < na; i++) 
+        {
+            hid_t aid = H5Aopen_idx(tmp_id, (unsigned int)i);
+            hid_t atype;
+            hid_t aspace;
+            char buf[1000];
+            char* adata;
+            ssize_t len = H5Aget_name(aid, 1000, buf);
+            data_struct::Extra_PV e_pv;
+            e_pv.name = std::string(buf, len);
+      
+            aspace = H5Aget_space(aid); 
+
+            atype = H5Aget_type(aid);
+            hid_t ftype = H5Tcopy(H5T_C_S1);
+            if (H5Aread(aid, ftype, &adata) > -1)
+            {
+                e_pv.value = std::string(adata);
+                free(adata);
+            }
+
+            scan_info->extra_pvs.push_back(e_pv);
+
+            H5Tclose(atype);
+            H5Sclose(aspace);
+            H5Aclose(aid);
+        }
+        
+    }
+    
+    _close_h5_objects(close_map);
+
+    if (val_dims_in != nullptr)
+        delete[] val_dims_in;
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
     return true;
 }

@@ -1111,6 +1111,31 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+bool get_scalers_and_metadata_h5(std::string dataset_directory,
+    std::string dataset_file,
+    data_struct::Scan_Info* scan_info)
+{
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_confocal(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_bnl(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    logE << "Failed to load any meta info!\n";
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
 							const std::vector<size_t>& detector_num_arr)

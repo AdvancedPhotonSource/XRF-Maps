@@ -135,6 +135,12 @@ public:
                                  size_t height,
                                  size_t width);
 
+    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info);
+
+    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info);
+
+    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info);
+
     bool save_stream_row(size_t d_hash,
                          size_t detector_num,
                          size_t row,
