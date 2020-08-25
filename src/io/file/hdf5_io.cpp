@@ -3516,6 +3516,7 @@ bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_I
     std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
     logI << path << "\n";
+    char* adata[255];
     hid_t    file_id, src_maps_grp_id;
     hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
     hid_t meta_data_id, tmp_id, status;
@@ -3633,31 +3634,34 @@ bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_I
             hid_t atype;
             hid_t aspace;
             char buf[1000];
-            char* adata;
             ssize_t len = H5Aget_name(aid, 1000, buf);
             data_struct::Extra_PV e_pv;
             e_pv.name = std::string(buf, len);
       
-            aspace = H5Aget_space(aid); 
-
             atype = H5Aget_type(aid);
-            hid_t ftype = H5Tcopy(H5T_C_S1);
-            if (H5Aread(aid, ftype, &adata) > -1)
+            if(H5Tis_variable_str(atype) > 0)
             {
-                e_pv.value = std::string(adata);
-                free(adata);
+                //size_t alen = H5Tget_size(atype);
+                hid_t type = H5Tget_native_type(atype, H5T_DIR_ASCEND);
+                if (H5Aread(aid, type, &adata) > -1)
+                {
+                    //e_pv.value = std::string(adata[0], alen);
+                    e_pv.value = std::string(adata[0]);
+                }
+                
             }
 
             scan_info->extra_pvs.push_back(e_pv);
 
             H5Tclose(atype);
-            H5Sclose(aspace);
             H5Aclose(aid);
         }
         
     }
-    
+
     _close_h5_objects(close_map);
+
+    //free(adata[0]);
 
     if (val_dims_in != nullptr)
         delete[] val_dims_in;
@@ -6474,11 +6478,12 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
             status = H5Dwrite(dataset_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, detector_names);
             H5Sclose(dataspace_id);
             H5Dclose(dataset_id);
-            for (size_t z = 0; z < det_dims_in[2]; z++)
-            {
+            //for (size_t z = 0; z < det_dims_in[2]; z++)
+            //{
                 //TODO: look into why this is causing exception in windows
-                //free(detector_names[z]);
-            }
+                
+            //}
+            //free(detector_names);
         }
         delete[] det_dims_in;
     }
