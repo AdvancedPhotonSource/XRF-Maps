@@ -397,7 +397,11 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 size_t dlen = dataset_file.length();
                 if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
                 {
-                    std::string str_detector_num = std::to_string(detector_num);
+                    std::string str_detector_num = "";
+                    if (detector_num != -1)
+                    {
+                        str_detector_num = std::to_string(detector_num);
+                    }
                     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
@@ -595,7 +599,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             quantification_standard->standard_filename[fn_str_len - 1] == 'a')
         {
             //try with adding detector_num on the end for 2ide datasets
-            if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map))
+            std::string qfilepath = analysis_job->dataset_directory + quantification_standard->standard_filename;
+            if (detector_num != -1)
+            {
+                qfilepath += std::to_string(detector_num);
+            }
+            if (false == io::file::mca::load_integrated_spectra(qfilepath, &quantification_standard->integrated_spectra, pv_map))
             {
                 //try without detector number on end 2idd
                 if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map))
@@ -710,7 +719,11 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
                 data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
-                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_"+ fit_routine->get_name()+"_"+ standard_itr.standard_filename + std::to_string(detector_num);
+                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;
+                if (detector_num != -1)
+                {
+                    full_path += std::to_string(detector_num);
+                }
                 logI << full_path << "\n";
                 #ifdef _BUILD_WITH_QT
                 visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
@@ -827,7 +840,14 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (size_t detector_num : analysis_job.detector_num_arr)
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            if (detector_num == -1)
+            {
+                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" );
+            }
+            else
+            {
+                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            }
         }
         hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
 

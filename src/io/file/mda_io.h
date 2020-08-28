@@ -110,7 +110,7 @@ public:
 
     data_struct::ArrayXr* get_integrated_spectra(unsigned int detector);
 
-    void append_integrated_spectra(int detector, data_struct::ArrayXr* spectra);
+    void unload_int_spectra() { _integrated_spectra_map.clear(); }
 
 private:
 

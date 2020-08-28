@@ -319,9 +319,9 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     /////// init config ////////////
     struct mp_config<real_t> config;
-    config.ftol = MP_MACHEP0;       // Relative chi-square convergence criterium  Default: 1e-10
-    config.xtol = MP_MACHEP0;       // Relative parameter convergence criterium   Default: 1e-10
-    config.gtol = MP_MACHEP0;       // Orthogonality convergence criterium        Default: 1e-10
+    config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
@@ -389,9 +389,9 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
-    mp_config.ftol = MP_MACHEP0;       // Relative chi-square convergence criterium  Default: 1e-10
-    mp_config.xtol = MP_MACHEP0;       // Relative parameter convergence criterium   Default: 1e-10
-    mp_config.gtol = MP_MACHEP0;       // Orthogonality convergence criterium        Default: 1e-10
+    mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    mp_config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    mp_config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
@@ -462,9 +462,9 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
-    mp_config.ftol = MP_MACHEP0;       // Relative chi-square convergence criterium  Default: 1e-10
-    mp_config.xtol = MP_MACHEP0;       // Relative parameter convergence criterium   Default: 1e-10
-    mp_config.gtol = MP_MACHEP0;       // Orthogonality convergence criterium        Default: 1e-10
+    mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    mp_config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    mp_config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
@@ -475,7 +475,8 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
                                     //    Default: 200
 
 
-    mp_config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
+    //mp_config.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
+    mp_config.maxfev = 0;
                                        // Default: 0 (no limit)
     mp_config.nprint = 0;           // Default: 1
     mp_config.douserscale = 0;      // Scale variables by user values?

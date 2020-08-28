@@ -106,6 +106,10 @@ public:
 
 	bool load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error = true);
 
+    bool load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error = true);
+
+    bool load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra* spec, bool log_error);
+
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra);
 
     bool load_spectra_vol_analyzed_h5(std::string path,
@@ -121,6 +125,8 @@ public:
 
     bool load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override *override_values);
 
+    bool load_quantification_scalers_BNL(std::string path, data_struct::Params_Override* override_values);
+
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
 
     bool generate_stream_dataset(std::string dataset_directory,
@@ -128,6 +134,12 @@ public:
                                  int detector_num,
                                  size_t height,
                                  size_t width);
+
+    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info);
+
+    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info);
+
+    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info);
 
     bool save_stream_row(size_t d_hash,
                          size_t detector_num,
@@ -197,6 +209,14 @@ public:
 								int row_idx_end = -1,
 								size_t col_idx_start = 0,
 								int col_idx_end = -1);
+
+    bool save_scan_scalers_bnl(std::string path,
+        size_t detector_num,
+        data_struct::Params_Override* params_override,
+        size_t row_idx_start = 0,
+        int row_idx_end = -1,
+        size_t col_idx_start = 0,
+        int col_idx_end = -1);
 
 	// Add links to dataset and set version to 9 so legacy software can load it
     void add_v9_layout(std::string dataset_file);
