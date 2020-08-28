@@ -599,7 +599,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             quantification_standard->standard_filename[fn_str_len - 1] == 'a')
         {
             //try with adding detector_num on the end for 2ide datasets
-            if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map))
+            std::string qfilepath = analysis_job->dataset_directory + quantification_standard->standard_filename;
+            if (detector_num != -1)
+            {
+                qfilepath += std::to_string(detector_num);
+            }
+            if (false == io::file::mca::load_integrated_spectra(qfilepath, &quantification_standard->integrated_spectra, pv_map))
             {
                 //try without detector number on end 2idd
                 if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map))
@@ -835,7 +840,14 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (size_t detector_num : analysis_job.detector_num_arr)
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            if (detector_num == -1)
+            {
+                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" );
+            }
+            else
+            {
+                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            }
         }
         hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
 

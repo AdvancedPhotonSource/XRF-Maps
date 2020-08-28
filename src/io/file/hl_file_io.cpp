@@ -248,7 +248,19 @@ void save_quantification_plots(string path, Detector* detector)
 
 void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
 {
-    std::string full_path = dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +dataset_filename+std::to_string(detector_num)+".csv";
+    std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
+    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
+    
+    if (detector_num != -1)
+    {
+        full_path += std::to_string(detector_num) + ".csv";
+        mca_full_path += std::to_string(detector_num) + ".txt";
+    }
+    else
+    {
+        full_path += ".csv";
+        mca_full_path += ".txt";
+    }
     logI<<full_path<<"\n";
 
     if (fit_params == nullptr)
@@ -310,13 +322,19 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     }
 
 #ifdef _BUILD_WITH_QT
-    std::string str_path = dataset_dir+"/output/fit_"+dataset_filename+"_det"+std::to_string(detector_num)+".png";
+    std::string str_path = dataset_dir + "/output/fit_" + dataset_filename + "_det";
+    if (detector_num != -1)
+    {
+        str_path += std::to_string(detector_num) + ".png";
+    }
+    else
+    {
+        str_path += ".png";
+    }
     visual::SavePlotSpectras(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
-
-    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename + std::to_string(detector_num) + ".txt";
     std::unordered_map<std::string, real_t> scaler_map;
     scaler_map[STR_ENERGY_OFFSET] = energy_offset;
     scaler_map[STR_ENERGY_SLOPE] = energy_slope;
@@ -944,7 +962,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //  try to load from a pre analyzed file because they should contain the integrated spectra
-    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+    if (detector_num != -1)
+    {
+        fullpath += std::to_string(detector_num);
+    }
     if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, false))
     {
 		logI << "Loaded integradted spectra from h5.\n";
