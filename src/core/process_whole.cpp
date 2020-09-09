@@ -840,17 +840,20 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (size_t detector_num : analysis_job.detector_num_arr)
         {
-            if (detector_num == -1)
-            {
-                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" );
-            }
-            else
+            if (detector_num > -1)
             {
                 hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
             }
         }
-        hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
-
+		size_t dlen = dataset_file.length();
+		if(dlen > 4 && dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
+		{
+			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
+		}
+		else
+		{
+			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
+		}
 
         for (std::string hdf5_dataset_name : hdf5_dataset_list)
         {
