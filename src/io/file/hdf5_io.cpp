@@ -758,10 +758,10 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
         dataspace_detectors_id = H5Dget_space(dset_detectors_id);
         close_map.push({ dataspace_detectors_id, H5O_DATASPACE });
         attr_detector_names_id = H5Aopen(dset_detectors_id, "Detector Names", H5P_DEFAULT);
-        close_map.push({ dataspace_detectors_id, H5O_ATTRIBUTE });
+        close_map.push({ attr_detector_names_id, H5O_ATTRIBUTE });
     }
     attr_timebase_id = H5Aopen(dset_detectors_id, "TIMEBASE", H5P_DEFAULT);
-    close_map.push({ dataspace_detectors_id, H5O_ATTRIBUTE });
+    close_map.push({ attr_timebase_id, H5O_ATTRIBUTE });
     
 //    if ( false == _open_h5_object(dset_xpos_id, H5O_DATASET, close_map, "X Positions", maps_grp_id) )
 //    {
@@ -3425,8 +3425,21 @@ bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::S
     std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
     logI << path << "\n";
-    hid_t    file_id, src_maps_grp_id;
-    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+    hid_t    file_id, src_maps_grp_id, detectors_grp_id, x_id, y_id;
+    hid_t scaler_name_id, scaler_val_id, scaler_grp_id, attr_detector_names_id;
+    hsize_t names_off[1] = { 0 };
+    hsize_t names_cnt[1] = { 1 };
+    hsize_t scalers_offset[3] = { 0,0,0 };
+    hsize_t scalers_count[3] = { 1,1,1 };
+    hsize_t value_offset[3] = { 0,0,0 };
+    hsize_t value_count[3] = { 1,1,1 };
+    hsize_t mem_count[2] = { 1,1 };
+    hsize_t x_offset[3] = { 0,0,0 };
+    hsize_t x_count[3] = { 1,1,1 };
+    hsize_t y_offset[2] = { 0,0 };
+    hsize_t y_count[2] = { 1,1 };
+    char* detector_names[256];
+
 
     if (scan_info == nullptr)
     {
@@ -3437,27 +3450,130 @@ bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::S
     {
         return false;
     }
+    
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "2D Scan", file_id))
+    {
+        return false;
+    }
+
+
+    //  post 2020 version
+    if (_open_h5_object(detectors_grp_id, H5O_GROUP, close_map, "Detectors", src_maps_grp_id, false, false))
+    {
+        bool first_save = true;
+        real_t* buffer = nullptr;
+        hsize_t nobj = 0;
+        H5Gget_num_objs(detectors_grp_id, &nobj);
+        hid_t values_id;
+        hid_t value_space;
+        hid_t mem_space;
+        hid_t names_id;
+        hid_t name_space;
+        hid_t mem_name_space = H5Screate_simple(1, &names_cnt[0], &names_cnt[0]);
+        close_map.push({ mem_name_space, H5O_DATASPACE });
+        hid_t name_type = H5Tcopy(H5T_C_S1);
+        hid_t status = H5Tset_size(name_type, 255);
+
+
+        for (hsize_t i = 0; i < nobj; i++)
+        {
+            char str_dset_name[2048] = { 0 };
+            hid_t dsid;
+            hsize_t len = H5Gget_objname_by_idx(detectors_grp_id, i, str_dset_name, 2048);
+            if (_open_h5_object(dsid, H5O_DATASET, close_map, str_dset_name, detectors_grp_id))
+            {
+                hid_t scaler_space = H5Dget_space(dsid);
+                close_map.push({ scaler_space, H5O_DATASPACE });
+                hid_t scalers_type = H5Dget_type(dsid);
+
+                if (first_save)
+                {
+                    H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
+                    scan_info->meta_info.requested_cols = scalers_count[0];
+                    scan_info->meta_info.requested_rows = scalers_count[1];
+                    first_save = false;
+                }
+                Scaler_Map sm;
+                sm.name = string(str_dset_name, len);
+                sm.values.resize(scalers_count[0], scalers_count[1]);
+                status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, sm.values.data());
+                scan_info->scaler_maps.push_back(sm);
+            }
+        }
+    }
+    // pre 2020 version
+    if (_open_h5_object(detectors_grp_id, H5O_DATASET, close_map, "Detectors", src_maps_grp_id, false, false))
+    {
+        hid_t scaler_space = H5Dget_space(detectors_grp_id);
+        close_map.push({ scaler_space, H5O_DATASPACE });
+        H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
+        hid_t scalers_type = H5Dget_type(detectors_grp_id);
+        hsize_t scaler_amt = scalers_count[2];
+        scalers_count[2] = 1;
+        mem_count[0] = scalers_count[0];
+        mem_count[1] = scalers_count[1];
+        scan_info->meta_info.requested_cols = scalers_count[0];
+        scan_info->meta_info.requested_rows = scalers_count[1];
+        hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
+        close_map.push({ mem_space, H5O_DATASPACE });
+
+        for (hsize_t s = 0; s < scaler_amt; s++)
+        {
+            Scaler_Map sm;
+            sm.values.resize(scalers_count[0], scalers_count[1]);
+            scalers_offset[2] = s;
+            H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, scalers_offset, nullptr, scalers_count, nullptr);
+            H5Dread(detectors_grp_id, scalers_type, mem_space, scaler_space, H5P_DEFAULT, sm.values.data());
+            scan_info->scaler_maps.push_back(sm);
+        }
+
+        //save the scalers names
+        attr_detector_names_id = H5Aopen(detectors_grp_id, "Detector Names", H5P_DEFAULT);
+        close_map.push({ attr_detector_names_id, H5O_ATTRIBUTE });
+
+        hid_t ftype = H5Aget_type(attr_detector_names_id);
+        hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        hid_t error = H5Aread(attr_detector_names_id, type, detector_names);
+
+        if (error == 0)
+        {
+            int i = 0;
+            for (auto& itr : scan_info->scaler_maps)
+            {
+                itr.name = string(detector_names[i], strlen(detector_names[i]));
+                i++;
+            }
+        }
+    }
+
+    if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 1", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(0);
+    }
+    if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 2", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(1);
+    }
+    if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 3", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(2);
+    }
+    if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 4", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(3);
+    }
+
     /*
-    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    if (_open_h5_object(x_id, H5O_DATASET, close_map, "X Positions", src_maps_grp_id, false, false))
     {
-        return false;
+        
     }
-    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+    if (_open_h5_object(y_id, H5O_DATASET, close_map, "Y Positions", src_maps_grp_id, false, false))
     {
-        return false;
-    }
-    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
-    {
-        return false;
-    }
-    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
-    {
-        return false;
+        
     }
     */
-
-    return false;
-    //return true;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -3471,8 +3587,12 @@ bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Sc
     std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
     logI << path << "\n";
-    hid_t    file_id, src_maps_grp_id;
-    hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
+    hid_t    file_id, src_maps_grp_id, scalers_grp_id, pos_grp_id;
+    hid_t config_grp_id, environ_grp_id, scaler_grp_id, name_id, value_id;
+
+    hsize_t single_offset[1] = { 0 };
+    hsize_t single_count[1] = { 1 };
+    hsize_t* val_dims_in = nullptr;
 
     if (scan_info == nullptr)
     {
@@ -3483,26 +3603,106 @@ bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Sc
     {
         return false;
     }
-    /*
-    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+    
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrmmap", file_id, false, false))
     {
-        return false;
+        if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id))
+        {
+            return false;
+        }
     }
-    if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id))
+
+    hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    close_map.push({ mem_single_space, H5O_DATASPACE });
+
+    if (_open_h5_object(config_grp_id, H5O_GROUP, close_map, "config", src_maps_grp_id, false, false))
     {
-        return false;
+        if (_open_h5_object(environ_grp_id, H5O_GROUP, close_map, "environ", config_grp_id, false, false))
+        {
+            if (_open_h5_object(name_id, H5O_DATASET, close_map, "name", environ_grp_id, false, false))
+            {
+                if (_open_h5_object(value_id, H5O_DATASET, close_map, "value", environ_grp_id, false, false))
+                {
+                    hid_t name_type = H5Dget_type(name_id);
+                    hid_t value_type = H5Dget_type(value_id);
+                    hid_t value_space = H5Dget_space(value_id);
+                    hid_t val_rank = H5Sget_simple_extent_ndims(value_space);
+                    val_dims_in = new hsize_t[val_rank];
+                    H5Sget_simple_extent_dims(value_space, &val_dims_in[0], NULL);
+
+                    hsize_t amt = val_dims_in[0];
+                    //for (hsize_t i = 0; i < amt; i++)
+                    //{
+                        //Extra_PV epv;
+                        //scan_info->extra_pvs.push_back(epv);
+                    //}
+                }
+            }
+        }
     }
-    if (false == _open_h5_object(scaler_name_id, H5O_DATASET, close_map, "name", scaler_grp_id))
+
+    //if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "positions", src_maps_grp_id, false, false))
+    //{
+
+    //}
+
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca1", src_maps_grp_id, false, false))
     {
-        return false;
+        scan_info->meta_info.detectors.push_back(0);
     }
-    if (false == _open_h5_object(scaler_val_id, H5O_DATASET, close_map, "val", scaler_grp_id))
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca2", src_maps_grp_id, false, false))
     {
-        return false;
+        scan_info->meta_info.detectors.push_back(1);
     }
-    */
-    return false;
-    //return true;
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca3", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(2);
+    }
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca4", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(3);
+    }
+
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det1", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(0);
+    }
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det2", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(1);
+    }
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det3", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(2);
+    }
+    if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det4", src_maps_grp_id, false, false))
+    {
+        scan_info->meta_info.detectors.push_back(3);
+    }
+
+    if (_open_h5_object(scalers_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id, false, false))
+    {
+        /*
+        hsize_t amt = val_dims_in[0];
+        for (hsize_t i = 0; i < amt; i++)
+        {
+            Scaler_Map sm;
+            scan_info->scaler_maps.push_back(sm);
+        }
+        */
+    }
+
+    _close_h5_objects(close_map);
+
+    
+    if (val_dims_in != nullptr)
+        delete[] val_dims_in;
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -3567,8 +3767,10 @@ bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_I
     scan_info->meta_info.requested_rows = val_dims_in[1];
     //names
     hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    close_map.push({ mem_single_space, H5O_DATASPACE });
     single_count[0] = val_dims_in[2];
     hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
+    close_map.push({ name_space, H5O_DATASPACE });
     single_count[0] = 1;
 
     char tmp_char[255] = { 0 };
