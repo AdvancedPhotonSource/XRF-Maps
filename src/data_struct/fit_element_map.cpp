@@ -223,13 +223,24 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
 
     real_t ln_lower_energy = std::log(lower_energy);
     real_t ln_higher_energy = std::log(high_energy);
-    real_t fraction = (std::log(e_tmp)-ln_lower_energy)/(ln_higher_energy-ln_lower_energy);
-    real_t ln_f2_lower = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[lo_e_ind]));
-    real_t ln_f2_higher = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[hi_e_ind]));
-    real_t f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
-    real_t beta = constant * f2;
+    if (ln_lower_energy == ln_higher_energy)
+    {
+        mu_fraction = 0.0f;
+    }
+    else
+    {
+        real_t fraction = (std::log(e_tmp) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
+        real_t ln_f2_lower = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[lo_e_ind]));
+        real_t ln_f2_higher = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[hi_e_ind]));
+        real_t f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
+        real_t beta = constant * f2;
 
-    mu_fraction = (e_tmp * (real_t)4.0 * (real_t)M_PI * beta) / (density * (real_t)1.239852 ) * (real_t)10000.0;
+        mu_fraction = (e_tmp * (real_t)4.0 * (real_t)M_PI * beta) / (density * (real_t)1.239852) * (real_t)10000.0;
+    }
+    if (false == std::isfinite(mu_fraction))
+    {
+        mu_fraction = 0.0f;
+    }
 
     _energy_ratios.push_back(Element_Energy_Ratio(energy, ratio, mu_fraction, et));
 }
