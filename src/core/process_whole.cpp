@@ -452,11 +452,11 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
     data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
 
-    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+    io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true); // force to create new file for quick and dirty
 
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
-    bool is_loaded_from_analyzed_h5;
+    bool is_loaded_from_analyzed_h5 = false;
     if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
     {
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
@@ -470,7 +470,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     }
 
     //load spectra volume
-    for (int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
+    for (int i = 1; i < analysis_job->detector_num_arr.size(); i++)
     {
         if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
         {
@@ -511,7 +511,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     delete tmp_spectra_volume;
 
     analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-
+	
     proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, status_callback);
     delete spectra_volume;
 }
