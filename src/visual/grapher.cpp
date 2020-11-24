@@ -231,7 +231,15 @@ void SavePlotQuantification(std::string path, Detector* detector)
                     int zstop = CALIBRATION_CURVE_SIZE;
                     find_shell_Z_offset(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
 
-                    std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_" + quantification::models::Shell_To_String.at(shell_itr) +"_det" + std::to_string(detector->number()) + ".png";
+                    std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_" + quantification::models::Shell_To_String.at(shell_itr) + "_det";
+                    if (detector->number() != -1)
+                    {
+                        str_path_full += std::to_string(detector->number()) + ".png";
+                    }
+                    else
+                    {
+                        str_path_full += ".png";
+                    }
                     SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(shell_itr)), zstart, zstop);
                 }
             }

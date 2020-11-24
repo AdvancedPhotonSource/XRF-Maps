@@ -80,7 +80,11 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     {
 		fvec[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
     }
-
+    ud->cur_itr++;
+    if (ud->status_callback != nullptr)
+    {
+        (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+    }
 }
 
 
@@ -157,15 +161,18 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Fit_Element_Map_Dict * const elements_to_fit,
                                const Base_Model * const model,
-                               const Range energy_range)
+                               const Range energy_range,
+                               Callback_Func_Status_Def* status_callback)
 {
 
     User_Data ud;
-
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range);
-
+    size_t num_itr = 2000;
+    
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+
+    size_t total_itr = num_itr * (fitp_arr.size() + 1);
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
     lm_status_struct<real_t> status;
 
@@ -173,7 +180,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
         */
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 1000, 1, NULL, 0, -1, -1};
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., num_itr, 1, NULL, 0, -1, -1};
 
 //    control.ftol = 1.0e-10;
 //    /* Relative error desired in the sum of squares.
@@ -249,7 +256,7 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     lm_status_struct<real_t> status;
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 200, 1, NULL, 0, -1, -1};
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., 200, 1, NULL, 0, -1, -1};
 
 
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &control, &status );
@@ -288,7 +295,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     lm_status_struct<real_t> status;
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_USERTOL, 100., 2000, 1, NULL, 0, -1, -1};
+    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., 2000, 1, NULL, 0, -1, -1};
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &control, &status );
 

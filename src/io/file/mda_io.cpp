@@ -1052,64 +1052,67 @@ void MDA_IO::_load_extra_pvs_vector()
         return;
     }
 
-    for (int16_t i = 0; i < _mda_file->extra->number_pvs; i++)
-    {
-        std::string str_val;
-        short* s_val;
-        int* i_val;
-        float* f_val;
-        double* d_val;
+	if (_mda_file->extra != nullptr)
+	{
+		for (int16_t i = 0; i < _mda_file->extra->number_pvs; i++)
+		{
+			std::string str_val;
+			short* s_val;
+			int* i_val;
+			float* f_val;
+			double* d_val;
 
-        struct mda_pv* pv = _mda_file->extra->pvs[i];
-        if (pv == nullptr)
-        {
-            continue;
-        }
-        data_struct::Extra_PV e_pv;
-        switch (pv->type)
-        {
+			struct mda_pv* pv = _mda_file->extra->pvs[i];
+			if (pv == nullptr)
+			{
+				continue;
+			}
+			data_struct::Extra_PV e_pv;
+			switch (pv->type)
+			{
 
-        case EXTRA_PV_STRING:
-            e_pv.value = std::string(pv->values);
-            break;
-            //case EXTRA_PV_INT8:
+			case EXTRA_PV_STRING:
+				e_pv.value = std::string(pv->values);
+				break;
+				//case EXTRA_PV_INT8:
 
-            //    break;
-        case EXTRA_PV_INT16:
-            s_val = (short*)pv->values;
-            e_pv.value = std::to_string(*s_val);
-            break;
-        case EXTRA_PV_INT32:
-            i_val = (int*)pv->values;
-            e_pv.value = std::to_string(*i_val);
-            break;
-        case EXTRA_PV_FLOAT:
-            f_val = (float*)pv->values;
-            e_pv.value = std::to_string(*f_val);
-            break;
-        case EXTRA_PV_DOUBLE:
-            d_val = (double*)pv->values;
-            e_pv.value = std::to_string(*d_val);
-            break;
+				//    break;
+			case EXTRA_PV_INT16:
+				s_val = (short*)pv->values;
+				e_pv.value = std::to_string(*s_val);
+				break;
+			case EXTRA_PV_INT32:
+				i_val = (int*)pv->values;
+				e_pv.value = std::to_string(*i_val);
+				break;
+			case EXTRA_PV_FLOAT:
+				f_val = (float*)pv->values;
+				e_pv.value = std::to_string(*f_val);
+				break;
+			case EXTRA_PV_DOUBLE:
+				d_val = (double*)pv->values;
+				e_pv.value = std::to_string(*d_val);
+				break;
 
-        }
+			}
 
-        if (pv->name != nullptr)
-        {
-            e_pv.name = std::string(pv->name);
-        }
+			if (pv->name != nullptr)
+			{
+				e_pv.name = std::string(pv->name);
+			}
 
-        if (pv->description != nullptr)
-        {
-            e_pv.description = std::string(pv->description);
-        }
+			if (pv->description != nullptr)
+			{
+				e_pv.description = std::string(pv->description);
+			}
 
-        if (pv->unit != nullptr)
-        {
-            e_pv.unit = std::string(pv->unit);
-        }
-        _scan_info.extra_pvs.push_back(e_pv);
-    }
+			if (pv->unit != nullptr)
+			{
+				e_pv.unit = std::string(pv->unit);
+			}
+			_scan_info.extra_pvs.push_back(e_pv);
+		}
+	}
 
 }
 
@@ -1228,13 +1231,6 @@ data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
         return &(_integrated_spectra_map.at(detector));
     }
     return nullptr;
-}
-
-//-----------------------------------------------------------------------------
-
-void MDA_IO::append_integrated_spectra(int detector, data_struct::ArrayXr* spectra)
-{
-    _integrated_spectra_map[detector] = *spectra;
 }
 
 //-----------------------------------------------------------------------------

@@ -57,6 +57,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "quantification/models/quantification_model.h"
 
 
+DLL_EXPORT typedef std::function<void(size_t, size_t)> Callback_Func_Status_Def;
+
+
 namespace fitting
 {
 namespace optimizers
@@ -87,6 +90,9 @@ struct User_Data
     Range energy_range;
     Spectra  spectra_model;
     const Spectra *orig_spectra;
+    Callback_Func_Status_Def* status_callback;
+    size_t cur_itr;
+    size_t total_itr;
 };
 
 struct Gen_User_Data
@@ -114,6 +120,8 @@ void fill_user_data(User_Data &ud,
                     const Fit_Element_Map_Dict * const elements_to_fit,
                     const Base_Model * const model,
                     const Range energy_range,
+                    Callback_Func_Status_Def* status_callback,
+                    size_t total_itr,
                     bool use_weights = false);
 
 void fill_gen_user_data(Gen_User_Data &ud,
@@ -140,7 +148,8 @@ public:
                           const Spectra * const spectra,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model,
-                          const Range energy_range) = 0;
+                          const Range energy_range,
+                          Callback_Func_Status_Def* status_callback = nullptr) = 0;
 
     virtual void minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,

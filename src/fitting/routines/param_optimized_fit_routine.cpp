@@ -234,7 +234,8 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 
 Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
                                                         const Spectra * const spectra,
-                                                        const Fit_Element_Map_Dict * const elements_to_fit)
+                                                        const Fit_Element_Map_Dict * const elements_to_fit,
+                                                        Callback_Func_Status_Def* status_callback)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
@@ -258,7 +259,7 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
     {
         if(_optimizer != nullptr)
         {
-            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
+            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
         }
     }
 

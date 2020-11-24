@@ -55,12 +55,14 @@ namespace fitting
 namespace optimizers
 {
 
-	void fill_user_data(User_Data &ud,
-                        Fit_Parameters *fit_params,
-                        const Spectra * const spectra,
-                        const Fit_Element_Map_Dict * const elements_to_fit,
-                        const Base_Model * const model,
+    void fill_user_data(User_Data& ud,
+                        Fit_Parameters* fit_params,
+                        const Spectra* const spectra,
+                        const Fit_Element_Map_Dict* const elements_to_fit,
+                        const Base_Model* const model,
                         const Range energy_range,
+                        Callback_Func_Status_Def* status_callback,
+                        size_t total_itr,
                         bool use_weights)
 	{
 		ud.fit_model = (Base_Model*)model;
@@ -73,6 +75,10 @@ namespace optimizers
 		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
+
+        ud.status_callback = status_callback;
+        ud.cur_itr = 0;
+        ud.total_itr = total_itr;
 
         if (use_weights)
         {

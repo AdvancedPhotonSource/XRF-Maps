@@ -100,6 +100,7 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
         (*out_fit_counts)[el_itr.first](i,j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
     }
     (*out_fit_counts)[STR_NUM_ITR](i,j) = counts_dict[STR_NUM_ITR];
+
     (*out_fit_counts)[STR_RESIDUAL](i, j) = counts_dict[STR_RESIDUAL];
 	// add total fluorescense yield
 	if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
@@ -110,7 +111,20 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 	if (out_fit_counts->count(STR_SUM_ELASTIC_INELASTIC_AMP) > 0  && counts_dict.count(STR_COHERENT_SCT_AMPLITUDE) > 0 && counts_dict.count(STR_COMPTON_AMPLITUDE) > 0)
 	{
 		(*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) = counts_dict[STR_COHERENT_SCT_AMPLITUDE] + counts_dict[STR_COMPTON_AMPLITUDE];
+        // add total fluorescense yield
+        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
+        {                   //                                      (sum - (elastic + inelastic)) / live time
+            (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = ( spectra->sum() - (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) ) / spectra->elapsed_livetime();
+        }
 	}
+    else
+    {
+        // add total fluorescense yield
+        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
+        {
+            (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
+        }
+    }
 
     return true;
 }
@@ -147,6 +161,7 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         //Fitting routines
         fitting::routines::Param_Optimized_Fit_Routine fit_routine;
         fit_routine.set_optimizer(optimizer);
+		fit_routine.set_update_coherent_amplitude_on_fit(false);
 
         //reset model fit parameters to defaults
         model.reset_to_default_fit_params();
@@ -399,7 +414,11 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
                 size_t dlen = dataset_file.length();
                 if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
                 {
-                    std::string str_detector_num = std::to_string(detector_num);
+                    std::string str_detector_num = "";
+                    if (detector_num != -1)
+                    {
+                        str_detector_num = std::to_string(detector_num);
+                    }
                     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
@@ -441,11 +460,11 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     data_struct::Spectra_Volume* spectra_volume = new data_struct::Spectra_Volume();
     data_struct::Spectra_Volume* tmp_spectra_volume = new data_struct::Spectra_Volume();
 
-    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+    io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true); // force to create new file for quick and dirty
 
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
-    bool is_loaded_from_analyzed_h5;
+    bool is_loaded_from_analyzed_h5 = false;
     if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
     {
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
@@ -459,7 +478,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     }
 
     //load spectra volume
-    for (int i = 1; i <= analysis_job->detector_num_arr.size(); i++)
+    for (int i = 1; i < analysis_job->detector_num_arr.size(); i++)
     {
         if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
         {
@@ -500,7 +519,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
     delete tmp_spectra_volume;
 
     analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-
+	
     proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, status_callback);
     delete spectra_volume;
 }
@@ -597,7 +616,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             quantification_standard->standard_filename[fn_str_len - 1] == 'a')
         {
             //try with adding detector_num on the end for 2ide datasets
-            if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename + std::to_string(detector_num), &quantification_standard->integrated_spectra, pv_map))
+            std::string qfilepath = analysis_job->dataset_directory + quantification_standard->standard_filename;
+            if (detector_num != -1)
+            {
+                qfilepath += std::to_string(detector_num);
+            }
+            if (false == io::file::mca::load_integrated_spectra(qfilepath, &quantification_standard->integrated_spectra, pv_map))
             {
                 //try without detector number on end 2idd
                 if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map))
@@ -658,6 +682,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             continue;
         }
 
+        //This is what IDL MAPS DID
+        if (quantification_standard->sr_current == 0.0 )
+        {
+            quantification_standard->sr_current = 100.0;
+        }
+
         energy_range = get_energy_range(quantification_standard->integrated_spectra.size(), &(override_params->fit_params));
         //First we integrate the spectra and get the elemental counts
         for (auto& fit_itr : detector->fit_routines)
@@ -706,7 +736,11 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
                 data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
-                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_"+ fit_routine->get_name()+"_"+ standard_itr.standard_filename + std::to_string(detector_num);
+                std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;
+                if (detector_num != -1)
+                {
+                    full_path += std::to_string(detector_num);
+                }
                 logI << full_path << "\n";
                 #ifdef _BUILD_WITH_QT
                 visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
@@ -759,6 +793,13 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                {
                     fitting::routines::Base_Fit_Routine *fit_routine = fit_itr.second;
 
+                    // update e_cal_ratio for elements in standards by average value
+                    for (auto& s_itr : detector->quantification_standards)
+                    {
+                        Quantification_Standard* quantification_standard = &(s_itr.second);
+                        detector->update_element_quants(fit_itr.first, quant_itr.first, quantification_standard, &quantification_model, quant_itr.second);
+                    }
+
                     logI << Fitting_Routine_To_Str.at(fit_itr.first) << " "<< quant_itr.first  << "\n";
                     Fit_Parameters fit_params;
                     fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<real_t>::max(), 1.0, 0.1, E_Bound_Type::FIT));
@@ -790,11 +831,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
         return false;
     }
 
-    if(analysis_job->quick_and_dirty)
-    {
-        ////average_quantification(quant_stand_list, analysis_job->detector_num_arr);
-    }
-
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
@@ -821,10 +857,20 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (size_t detector_num : analysis_job.detector_num_arr)
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            if (detector_num > -1)
+            {
+                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+            }
         }
-        hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
-
+		size_t dlen = dataset_file.length();
+		if(dlen > 4 && dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
+		{
+			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
+		}
+		else
+		{
+			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
+		}
 
         for (std::string hdf5_dataset_name : hdf5_dataset_list)
         {

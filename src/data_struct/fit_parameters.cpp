@@ -256,6 +256,25 @@ void Fit_Parameters::print_non_fixed()
 
 }
 
+void Fit_Parameters::remove(Fit_Parameters* override_fit_params)
+{
+    for (auto& itr : *override_fit_params)
+    {
+        if (_params.count(itr.first) > 0)
+        {
+            _params.erase(itr.first);
+        }
+    }
+}
+
+void Fit_Parameters::remove(std::string key)
+{
+    if (_params.count(key) > 0)
+    {
+        _params.erase(key);
+    }
+
+}
 
 Range get_energy_range(size_t spectra_size, Fit_Parameters* params)
 {

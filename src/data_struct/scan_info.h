@@ -91,6 +91,7 @@ struct Scan_Meta_Info
     vector<real_t> y_axis;
     int requested_cols;
     int requested_rows;
+    vector<int> detectors;
     real_t theta;
     
 };
@@ -107,7 +108,7 @@ public:
 
     Scan_Info()
     {
-        
+        has_netcdf = false;
     }
     
     ~Scan_Info()

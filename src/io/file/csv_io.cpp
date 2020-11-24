@@ -106,7 +106,15 @@ void save_quantification(std::string path, Detector* detector)
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for (auto& itr2 : itr1.second.quant_scaler_map)
         {
-            std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det" + std::to_string(detector->number()) + ".csv";
+            std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det";
+            if (detector->number() != -1)
+            {
+                str_path_full += std::to_string(detector->number()) + ".csv";
+            }
+            else
+            {
+                str_path_full += ".csv";
+            }
             save_calibration_curve(str_path_full, detector, &(detector->quantification_standards), itr1.first, itr2.first, &(itr2.second));
         }
     }

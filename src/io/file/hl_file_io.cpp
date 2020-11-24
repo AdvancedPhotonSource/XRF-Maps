@@ -248,7 +248,19 @@ void save_quantification_plots(string path, Detector* detector)
 
 void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
 {
-    std::string full_path = dataset_dir+ DIR_END_CHAR+"output"+ DIR_END_CHAR +dataset_filename+std::to_string(detector_num)+".csv";
+    std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
+    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
+    
+    if (detector_num != -1)
+    {
+        full_path += std::to_string(detector_num) + ".csv";
+        mca_full_path += std::to_string(detector_num) + ".txt";
+    }
+    else
+    {
+        full_path += ".csv";
+        mca_full_path += ".txt";
+    }
     logI<<full_path<<"\n";
 
     if (fit_params == nullptr)
@@ -310,13 +322,19 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     }
 
 #ifdef _BUILD_WITH_QT
-    std::string str_path = dataset_dir+"/output/fit_"+dataset_filename+"_det"+std::to_string(detector_num)+".png";
+    std::string str_path = dataset_dir + "/output/fit_" + dataset_filename + "_det";
+    if (detector_num != -1)
+    {
+        str_path += std::to_string(detector_num) + ".png";
+    }
+    else
+    {
+        str_path += ".png";
+    }
     visual::SavePlotSpectras(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
-
-    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename + std::to_string(detector_num) + ".txt";
     std::unordered_map<std::string, real_t> scaler_map;
     scaler_map[STR_ENERGY_OFFSET] = energy_offset;
     scaler_map[STR_ENERGY_SLOPE] = energy_slope;
@@ -620,9 +638,14 @@ bool load_spectra_volume(std::string dataset_directory,
     io::file::MDA_IO mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
-
-    logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
-
+    if (detector_num == -1)
+    {
+        logI << "Loading dataset " << dataset_directory << dataset_file << "\n";
+    }
+    else
+    {
+        logI << "Loading dataset " << dataset_directory << "mda" << DIR_END_CHAR << dataset_file << " detector " << detector_num << "\n";
+    }
     //check if we have a netcdf file associated with this dataset.
     tmp_dataset_file = tmp_dataset_file.substr(0, tmp_dataset_file.size()-4);
     bool hasNetcdf = false;
@@ -687,7 +710,11 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+    if (detector_num != -1)
+    {
+        fullpath += std::to_string(detector_num);
+    }
 
     /*
     std::string fullpath;
@@ -720,7 +747,11 @@ bool load_spectra_volume(std::string dataset_directory,
         if(true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, spectra_volume))
         {
             //*is_loaded_from_analyazed_h5 = true;//test to not save volume
-            std::string str_detector_num = std::to_string(detector_num);
+            std::string str_detector_num = "";
+            if (detector_num != -1)
+            {
+                str_detector_num = std::to_string(detector_num);
+            }
             std::string full_save_path = dataset_directory + DIR_END_CHAR + "img.dat"+ DIR_END_CHAR +dataset_file+"_frame_"+str_detector_num+".h5";
             io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true);
             return true;
@@ -748,6 +779,16 @@ bool load_spectra_volume(std::string dataset_directory,
 		}
 		return true;
 	}
+
+    if (true == io::file::HDF5_IO::inst()->load_spectra_volume_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
+    {
+        if (save_scalers)
+        {
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, params_override);
+        }
+        return true;
+    }
 
     // try to load spectra from mda file
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
@@ -921,7 +962,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //  try to load from a pre analyzed file because they should contain the integrated spectra
-    std::string fullpath = dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file + ".h5" + std::to_string(detector_num);
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+    if (detector_num != -1)
+    {
+        fullpath += std::to_string(detector_num);
+    }
     if(true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, false))
     {
 		logI << "Loaded integradted spectra from h5.\n";
@@ -957,6 +1002,16 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 		*integrated_spectra = spectra_volume.integrate();
 		return true;
 	}
+
+    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, false))
+    {
+        fullpath = dataset_directory + DIR_END_CHAR + dataset_file;
+        if (false == io::file::HDF5_IO::inst()->load_quantification_scalers_BNL(fullpath, params_override))
+        {
+            logW << "Failed to load ION chamber scalers from h5.\n";
+        }
+        return true;
+    }
 
     //load spectra
     if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
@@ -1074,6 +1129,31 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     logI<<"Finished Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<" detector "<<detector_num<<"\n";
     return ret_val;
+}
+
+// ----------------------------------------------------------------------------
+
+bool get_scalers_and_metadata_h5(std::string dataset_directory,
+    std::string dataset_file,
+    data_struct::Scan_Info* scan_info)
+{
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_confocal(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_bnl(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
+    logE << "Failed to load any meta info!\n";
+    return false;
 }
 
 // ----------------------------------------------------------------------------

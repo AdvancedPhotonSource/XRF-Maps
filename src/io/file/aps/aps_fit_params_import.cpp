@@ -352,48 +352,48 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                     Fit_Element_Map* fit_map;
-                    if(params_override->elements_to_fit.count(element_symb) > 0)
-                    {
-                        fit_map = params_override->elements_to_fit[element_symb];
-                        if (cnt == 3) // family
-                        {
-                            float factor = 1.0;
+					if (params_override->elements_to_fit.count(element_symb) > 0)
+					{
+						fit_map = params_override->elements_to_fit[element_symb];
+						if (cnt == 3) // family
+						{
+							float factor = 1.0;
 
-                            // 1
-                            std::getline(strstream, str_value, ',');
-                            factor = std::stof(str_value);
-                            fit_map->set_custom_multiply_ratio(4, factor);
-                            fit_map->set_custom_multiply_ratio(5, factor);
-                            fit_map->set_custom_multiply_ratio(7, factor);
-                            fit_map->set_custom_multiply_ratio(8, factor);
-                            fit_map->set_custom_multiply_ratio(9, factor);
+							// 1
+							std::getline(strstream, str_value, ',');
+							factor = std::stof(str_value);
+							fit_map->set_custom_multiply_ratio(4, factor);
+							fit_map->set_custom_multiply_ratio(5, factor);
+							fit_map->set_custom_multiply_ratio(7, factor);
+							fit_map->set_custom_multiply_ratio(8, factor);
+							fit_map->set_custom_multiply_ratio(9, factor);
 
-                            // 2
-                            std::getline(strstream, str_value, ',');
-                            factor = std::stof(str_value);
-                            fit_map->set_custom_multiply_ratio(2, factor);
-                            fit_map->set_custom_multiply_ratio(6, factor);
-                            fit_map->set_custom_multiply_ratio(11, factor);
+							// 2
+							std::getline(strstream, str_value, ',');
+							factor = std::stof(str_value);
+							fit_map->set_custom_multiply_ratio(2, factor);
+							fit_map->set_custom_multiply_ratio(6, factor);
+							fit_map->set_custom_multiply_ratio(11, factor);
 
-                            //3
-                            std::getline(strstream, str_value, ',');
-                            factor = std::stof(str_value);
-                            fit_map->set_custom_multiply_ratio(0, factor);
-                            fit_map->set_custom_multiply_ratio(1, factor);
-                            fit_map->set_custom_multiply_ratio(3, factor);
-                            fit_map->set_custom_multiply_ratio(10, factor);
-                        }
-                        else // ratio's
-                        {
-                            for (unsigned int i = 0; i < cnt; i++)
-                            {
-                                float factor = 1.0;
-                                std::getline(strstream, str_value, ',');
-                                factor = std::stof(str_value);
-                                fit_map->set_custom_multiply_ratio(i, factor);
-                            }
-                        }
-                    }
+							//3
+							std::getline(strstream, str_value, ',');
+							factor = std::stof(str_value);
+							fit_map->set_custom_multiply_ratio(0, factor);
+							fit_map->set_custom_multiply_ratio(1, factor);
+							fit_map->set_custom_multiply_ratio(3, factor);
+							fit_map->set_custom_multiply_ratio(10, factor);
+						}
+						else // ratio's
+						{
+							for (unsigned int i = 0; i < cnt; i++)
+							{
+								float factor = 1.0;
+								std::getline(strstream, str_value, ',');
+								factor = std::stof(str_value);
+								fit_map->set_custom_multiply_ratio(i, factor);
+							}
+						}
+					}
                 }
                 else if (tag == STR_FIT_SNIP_WIDTH)
                 {
@@ -793,6 +793,8 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     << "\nbadbit: " << paramFileStream.bad() << "\n";
             }
         }
+
+		params_override->parse_and_gen_branching_ratios();
 
         paramFileStream.close();
         return true;

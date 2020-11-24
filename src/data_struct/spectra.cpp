@@ -127,8 +127,9 @@ ArrayXr snip_background(const Spectra* const spectra,
 									  real_t xmax)
 {
 	ArrayXr energy = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
-    //ArrayXr background = *spectra;
-	
+    
+	ArrayXr background;
+
 	if (spectral_binning > 0)
 	{
 		energy = energy * spectral_binning;
@@ -155,9 +156,22 @@ ArrayXr snip_background(const Spectra* const spectra,
         boxcar.setConstant(5, 1.0);
 	}
 
-
-	//convolve 1d
-    ArrayXr background = convolve1d(*spectra, boxcar);
+	if (spectra != nullptr)
+	{
+		if (spectra->size() > 0)
+		{
+			//convolve 1d
+			background = convolve1d(*spectra, boxcar);
+		}
+		else
+		{
+			return background;
+		}
+	}
+	else
+	{
+		return background;
+	}
 	//fwhm
 	current_width = width * current_width / energy_linear;  // in channels
 	if (spectral_binning > 0)
