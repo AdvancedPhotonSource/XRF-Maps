@@ -78,7 +78,7 @@ public:
 		_output_counts = 1.0;
 	}
 
-        Spectra_T(const Spectra_T &spectra) : TArrayXr(spectra)
+    Spectra_T(const Spectra_T &spectra) : TArrayXr(spectra)
 	{
         _elapsed_livetime = spectra._elapsed_livetime;
 		_elapsed_realtime = spectra._elapsed_realtime;
