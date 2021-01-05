@@ -103,6 +103,7 @@ public:
      */
     virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
                                          const Fit_Element_Map_Dict * const elements_to_fit,
+                                         unordered_map<string, ArrayXr>* labeled_spectras,
                                          const struct Range energy_range) = 0;
 
 
@@ -113,7 +114,8 @@ public:
 
     virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
                                                  const Fit_Element_Map * const element_to_fit,
-                                                 const ArrayXr &ev) = 0;
+                                                 const ArrayXr &ev,
+                                                 unordered_map<string, ArrayXr>* labeled_spectras) = 0;
 
     virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const = 0;
 

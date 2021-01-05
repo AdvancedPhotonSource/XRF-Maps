@@ -111,9 +111,10 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 {
 	data_struct::ArrayXr* result;
     int num_iter;
+    real_t npg;
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
-
+    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     ArrayXr background;
     if (fit_params.contains(STR_SNIP_WIDTH))
     {
@@ -145,7 +146,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 	//ArrayXr rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
 	//nsNNLS::nnls<real_t> solver(&_fitmatrix, &rhs, _max_iter);
 
-    num_iter = solver.optimize();
+    solver.optimize(num_iter, npg);
     if (num_iter < 0)
     {
         logE<<"NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<"\n";
@@ -168,6 +169,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
     }
 
     counts_dict[STR_NUM_ITR] = static_cast<real_t>(num_iter);
+    counts_dict[STR_RESIDUAL] = npg;
 
 	//lock and integrate results
 	{

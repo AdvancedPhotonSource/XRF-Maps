@@ -136,7 +136,14 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
         Fit_Param fp(STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
         (*fit_params)[STR_NUM_ITR] = fp;
     }
+    if (false == fit_params->contains(STR_RESIDUAL))
+    {
+        //add number of iteration it took
+        Fit_Param fp(STR_RESIDUAL, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
+        (*fit_params)[STR_RESIDUAL] = fp;
+    }
     (*fit_params)[STR_NUM_ITR].value = 0.0;
+    (*fit_params)[STR_RESIDUAL].value = 0.0;
 }
 
 // ----------------------------------------------------------------------------
@@ -214,6 +221,10 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
         {
             counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
         }
+        if (fit_params.contains(STR_RESIDUAL))
+        {
+            counts_dict[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
+        }
     }
 
     return counts_dict;
@@ -231,7 +242,8 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
 
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {

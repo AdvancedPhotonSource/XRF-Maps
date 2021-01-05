@@ -153,7 +153,7 @@ unordered_map<string, Spectra> Matrix_Optimized_Fit_Routine::_generate_element_m
         {
             fit_parameters[itr.first].value = 0.0;
         }
-        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev);
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, nullptr);
     }
 
     //i = elements_to_fit->size();
@@ -229,7 +229,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
     std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
 
@@ -259,7 +260,11 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
             background.setZero(_energy_range.count());
         }
 
+        //set num iter to 200;
+        unordered_map<string, real_t> opt_options{ {STR_OPT_MAXITER, 200.} };
+
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        _optimizer->set_options(opt_options);
         _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -270,11 +275,8 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
             counts_dict[el_itr.first] = value;
         }
 
-        //check if we are saving the number of iterations and save if so
-        if(fit_params.contains(STR_NUM_ITR))
-        {
-            counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
-        }
+        counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
+        counts_dict[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
 
 		//get max and top 10 max channels
 		vector<pair<int, real_t> > max_map;

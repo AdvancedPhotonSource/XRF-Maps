@@ -127,6 +127,7 @@ const string STR_PILEUP7 = "PILEUP7";
 const string STR_PILEUP8 = "PILEUP8";
 
 const string STR_NUM_ITR = "Num_Iter";
+const string STR_RESIDUAL = "Fit_Residual";
 const string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
 const string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
 const string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
@@ -185,6 +186,19 @@ const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 const string STR_SR_CURRENT = "SR_Current";
 const string STR_US_IC = "US_IC";
 const string STR_DS_IC = "DS_IC";
+
+
+const string STR_K_A_LINES = "K Alpha";
+const string STR_K_B_LINES = "K Beta";
+const string STR_L_LINES = "L Lines";
+const string STR_M_LINES = "M Lines";
+const string STR_STEP_LINES = "Step";
+const string STR_TAIL_LINES = "Tail";
+const string STR_ELASTIC_LINES = "Elastic";
+const string STR_COMPTON_LINES = "Compton";
+const string STR_PILEUP_LINES = "Pile Up";
+const string STR_ESCAPE_LINES = "Escape";
+
 
 //}
 

@@ -51,8 +51,6 @@
 
 #include <string.h>
 
-#include "support/lmfit_6.1/lmmin.hpp"
-
 using namespace data_struct;
 
 
@@ -148,14 +146,78 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
 
 LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
 {
-
+    _options.ftol = LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
+    _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
+    _options.gtol = LM_USERTOL; // Orthogonality desired between fvec and its derivs. Termination occurs when the cosine of the angle between fvec and any column of the Jacobian is at most gtol in absolute value.
+    _options.epsilon = LM_MACHEP; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
+    _options.stepbound = (real_t)100.; // Used in determining the initial step bound. This bound is set to the product of stepbound and the Euclidean norm of diag*x if nonzero, or else to stepbound itself. In most cases stepbound should lie in the interval (0.1,100.0). Generally, the value 100.0 is recommended.
+    _options.patience = 2000; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
+    _options.scale_diag = 1; // If 1, the variables will be rescaled internally. Recommended value is 1.
+    _options.msgfile = NULL; //  Progress messages will be written to this file.
+    _options.verbosity = 0; //  OR'ed: 1: print some messages; 2: print Jacobian. 
+    _options.n_maxpri = -1; // -1, or max number of parameters to print.
+    _options.m_maxpri = -1; // -1, or max number of residuals to print. 
 }
+
+// ----------------------------------------------------------------------------
 
 LMFit_Optimizer::~LMFit_Optimizer()
 {
 
 
 }
+
+// ----------------------------------------------------------------------------
+
+unordered_map<string, real_t> LMFit_Optimizer::get_options()
+{
+    unordered_map<string, float> opts{
+        {STR_OPT_FTOL, _options.ftol},
+        {STR_OPT_XTOL, _options.xtol},
+        {STR_OPT_GTOL, _options.gtol},
+        {STR_OPT_EPSILON, _options.epsilon},
+        {STR_OPT_STEP, _options.stepbound},
+        {STR_OPT_SCALE_DIAG, _options.scale_diag},
+        {STR_OPT_MAXITER, _options.patience}
+    };
+    return opts;
+}
+
+// ----------------------------------------------------------------------------
+
+void LMFit_Optimizer::set_options(unordered_map<string, real_t> opt)
+{
+    if (opt.count(STR_OPT_FTOL) > 0)
+    {
+        _options.ftol = opt.at(STR_OPT_FTOL);
+    }
+    if (opt.count(STR_OPT_XTOL) > 0)
+    {
+        _options.xtol = opt.at(STR_OPT_XTOL);
+    }
+    if (opt.count(STR_OPT_GTOL) > 0)
+    {
+        _options.gtol = opt.at(STR_OPT_GTOL);
+    }
+    if (opt.count(STR_OPT_EPSILON) > 0)
+    {
+        _options.epsilon = opt.at(STR_OPT_EPSILON);
+    }
+    if (opt.count(STR_OPT_STEP) > 0)
+    {
+        _options.stepbound= opt.at(STR_OPT_STEP);
+    }
+    if (opt.count(STR_OPT_SCALE_DIAG) > 0)
+    {
+        _options.scale_diag = (int)opt.at(STR_OPT_SCALE_DIAG);
+    }
+    if (opt.count(STR_OPT_MAXITER) > 0)
+    {
+        _options.patience = (int)opt.at(STR_OPT_MAXITER);
+    }
+}
+
+// ----------------------------------------------------------------------------
 
 void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
@@ -166,21 +228,13 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 {
 
     User_Data ud;
-    size_t num_itr = 2000;
-    
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
 
-    size_t total_itr = num_itr * (fitp_arr.size() + 1);
+    size_t total_itr = _options.patience * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
     lm_status_struct<real_t> status;
-
-    /* Predefined control parameter sets (msgfile=NULL means stdout).
-
-        */
-
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., num_itr, 1, NULL, 0, -1, -1};
 
 //    control.ftol = 1.0e-10;
 //    /* Relative error desired in the sum of squares.
@@ -223,7 +277,7 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     //control.verbosity = 3;
 
     /* perform the fit */
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &_options, &status );
     logI<< "Status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
 
     fit_params->from_array(fitp_arr);
@@ -232,9 +286,14 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+    }
 
 }
 
+// ----------------------------------------------------------------------------
 
 void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     const Spectra * const spectra,
@@ -252,10 +311,7 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     lm_status_struct<real_t> status;
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., 200, 1, NULL, 0, -1, -1};
-
-
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
 
     fit_params->from_array(fitp_arr);
 
@@ -263,8 +319,14 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = status.nfev;
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+    }
 
 }
+
+// ----------------------------------------------------------------------------
 
 void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
                                               std::unordered_map<std::string, Element_Quant*> * quant_map,
@@ -287,9 +349,7 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     lm_status_struct<real_t> status;
 
-    lm_control_struct<real_t> control = {LM_USERTOL, LM_USERTOL, LM_USERTOL, LM_MACHEP, (real_t)100., 2000, 1, NULL, 0, -1, -1};
-
-    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &control, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
 
     logI<<lm_infmsg[status.outcome]<<"\n";
 
@@ -299,7 +359,13 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+    }
 }
+
+// ----------------------------------------------------------------------------
 
 } //namespace optimizers
 } //namespace fitting

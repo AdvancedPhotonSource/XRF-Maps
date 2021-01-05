@@ -51,7 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Optimizer_H
 
 #include <functional>
-
 #include "data_struct/fit_parameters.h"
 #include "fitting/models/base_model.h"
 #include "quantification/models/quantification_model.h"
@@ -68,6 +67,17 @@ namespace optimizers
 using namespace std;
 using namespace data_struct;
 using namespace fitting::models;
+
+#define STR_OPT_FTOL "ftol"
+#define STR_OPT_XTOL "xtol"
+#define STR_OPT_GTOL "gtol"
+#define STR_OPT_EPSILON "epsilon"
+#define STR_OPT_STEP "stepbound"
+//LM
+#define STR_OPT_SCALE_DIAG "scale_diag"
+#define STR_OPT_MAXITER "maxiter"
+//MP
+#define STR_OPT_COVTOL "covtol"
 
 
 enum OPTIMIZER_INFO { IMPROPER_INPUT, MOST_TOL, EXCEED_CALL, TOL_TOO_SMALL, NO_PROGRESS };
@@ -162,6 +172,9 @@ public:
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model) = 0;
 
+    virtual unordered_map<string, real_t> get_options() = 0;
+
+    virtual void set_options(unordered_map<string, real_t> opt) = 0;
 private:
 
 

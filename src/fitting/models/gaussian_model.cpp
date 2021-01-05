@@ -298,10 +298,26 @@ void Gaussian_Model::set_fit_params_preset(Fit_Params_Preset preset)
 
 const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_params,
                                              const unordered_map<string, Fit_Element_Map*> * const elements_to_fit,
+                                             unordered_map<string, ArrayXr>* labeled_spectras,
                                              const struct Range energy_range)
 {
 
+    vector<string> spectra_labels = { STR_K_A_LINES, STR_K_B_LINES, STR_L_LINES, STR_M_LINES, STR_STEP_LINES, STR_TAIL_LINES, STR_ELASTIC_LINES, STR_COMPTON_LINES, STR_PILEUP_LINES, STR_ESCAPE_LINES };
+
+    if (labeled_spectras != nullptr) // if this stucture is not null then initialize
+    {
+        for (auto& itr : spectra_labels)
+        {
+            if (labeled_spectras->count(itr) > 1)
+            {
+                labeled_spectras->erase(itr);
+            }
+            labeled_spectras->insert({ itr, Spectra(energy_range.count()) });
+        }
+    }
+
     Spectra agr_spectra(energy_range.count());
+    Spectra tmp_spec(energy_range.count());
 
     real_t energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     real_t energy_slope = fit_params->value(STR_ENERGY_SLOPE);
@@ -318,12 +334,31 @@ const Spectra Gaussian_Model::model_spectrum(const Fit_Parameters * const fit_pa
         }
         else
         {
-            agr_spectra += model_spectrum_element(fit_params, itr.second, ev);
+            agr_spectra += model_spectrum_element(fit_params, itr.second, ev, labeled_spectras);
         }
     }
 
-    agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-    agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    if (labeled_spectras != nullptr)
+    {
+        tmp_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        (*labeled_spectras)[STR_ELASTIC_LINES] += tmp_spec;
+        agr_spectra += tmp_spec;
+    }
+    else
+    {
+        agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    }
+
+    if (labeled_spectras != nullptr)
+    {
+        tmp_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        (*labeled_spectras)[STR_COMPTON_LINES] += tmp_spec;
+        agr_spectra += tmp_spec;
+    }
+    else
+    {
+        agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    }
 
  //   agr_spectra += escape_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
@@ -361,7 +396,7 @@ const Spectra Gaussian_Model::model_spectrum_mp(const Fit_Parameters * const fit
 #pragma omp parallel for
     for (int i=0; i < (int)keys.size(); i++)
     {
-        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev);
+        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev, nullptr);
 #pragma omp critical
         {
             agr_spectra += tmp;
@@ -376,7 +411,10 @@ const Spectra Gaussian_Model::model_spectrum_mp(const Fit_Parameters * const fit
 
 // ----------------------------------------------------------------------------
 
-const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp, const Fit_Element_Map * const element_to_fit, const ArrayXr &ev)
+const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * const fitp,
+                                                     const Fit_Element_Map * const element_to_fit,
+                                                     const ArrayXr &ev,
+                                                     unordered_map<string, ArrayXr>* labeled_spectras)
 {
     Spectra spectra_model(ev.size());
 
@@ -410,15 +448,22 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         // gaussian peak shape
 		ArrayXr delta_energy = ev - er_struct.energy;
 
+        string label = "";
+
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
         switch(er_struct.ptype)
         {
             case Element_Param_Type::Kb1_Line:
+                label = STR_K_A_LINES;
             case Element_Param_Type::Kb2_Line:
+                label = STR_K_B_LINES;
                 faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
                 break;
             case Element_Param_Type::Ka1_Line:
             case Element_Param_Type::Ka2_Line:
+                label = STR_K_A_LINES;
+                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+                break;
             case Element_Param_Type::La1_Line:
             case Element_Param_Type::La2_Line:
             case Element_Param_Type::Lb1_Line:
@@ -431,6 +476,7 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
             case Element_Param_Type::Lg4_Line:
             case Element_Param_Type::Ll_Line:
             case Element_Param_Type::Ln_Line:
+                label = STR_L_LINES;
                 faktor = faktor / ((real_t)1.0 + f_tail + f_step);
                 break;
             default:
@@ -438,25 +484,56 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         }
 
 
-        // peak, gauss
-        spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-        ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) ) );
+        if (labeled_spectras != nullptr && label.length() > 0)
+        {
+            Spectra tmp_spec(ev.size());
+            // peak, gauss
+            tmp_spec += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+            ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) ) );
 
-        //  peak, step
-        if (f_step > 0.0)
-        {
-            value = faktor * f_step;
-            //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
-            spectra_model += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
-            //counts_arr->step = fit_counts.step + value;
+            //  peak, step
+            if (f_step > 0.0)
+            {
+                value = faktor * f_step;
+                //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
+                tmp_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
+                //counts_arr->step = fit_counts.step + value;
+            }
+            //  peak, tail;; use different tail for K beta vs K alpha lines
+            if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+            {
+                real_t gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * kb_f_tail;
+                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                //fit_counts.tail = fit_counts.tail + value;
+            }
+
+            (*labeled_spectras)[label] += tmp_spec;
+            spectra_model += tmp_spec;
+
         }
-        //  peak, tail;; use different tail for K beta vs K alpha lines
-        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+        else
         {
-            real_t gamma = std::abs( fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy) ) * element_to_fit->width_multi();
-            value = faktor * kb_f_tail;
-            spectra_model += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-            //fit_counts.tail = fit_counts.tail + value;
+            // peak, gauss
+            spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+            ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((real_t)-0.5 * Eigen::pow((delta_energy / sigma), (real_t)2.0) ) );
+
+            //  peak, step
+            if (f_step > 0.0)
+            {
+                value = faktor * f_step;
+                //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
+                spectra_model += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
+                //counts_arr->step = fit_counts.step + value;
+            }
+            //  peak, tail;; use different tail for K beta vs K alpha lines
+            if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+            {
+                real_t gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * kb_f_tail;
+                spectra_model += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                //fit_counts.tail = fit_counts.tail + value;
+            }
         }
     }
     return spectra_model;

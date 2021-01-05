@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define LMFit_Optimizer_H
 
 #include "fitting/optimizers/optimizer.h"
+#include "support/lmfit_6.1/lmmin.hpp"
 
 namespace fitting
 {
@@ -88,9 +89,13 @@ public:
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model);
 
+    virtual unordered_map<string, real_t> get_options();
+
+    virtual void set_options(unordered_map<string, real_t> opt);
+
 private:
 
-
+    struct lm_control_struct<real_t> _options;
 };
 
 } //namespace optimizers

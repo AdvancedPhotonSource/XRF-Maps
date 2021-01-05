@@ -157,7 +157,31 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
 
 MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
 {
+    //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
+    _options.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    _options.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
+    _options.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
+    _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    _options.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
+    _options.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    _options.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+                                    //    then basic error checking is done, and parameter
+                                    //    errors/covariances are estimated based on input
+                                    //    parameter values, but no fitting iterations are done.
+                                    //    Default: 200
 
+    _options.maxfev = 0;
+    //_options.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
+                                       // Default: 0 (no limit)
+    _options.nprint = 0;           // Default: 1
+    _options.douserscale = 0;      // Scale variables by user values?
+                                    //    1 = yes, user scale values in diag;
+                                    //    0 = no, variables scaled internally (Default)
+    _options.nofinitecheck = 0;    // Disable check for infinite quantities from user?
+                                    //    0 = do not perform check (Default)
+                                    //    1 = perform check
+
+    _options.iterproc = 0;         // Placeholder pointer - must set to 0
 }
 
 //-----------------------------------------------------------------------------
@@ -168,7 +192,60 @@ MPFit_Optimizer::~MPFit_Optimizer()
 
 }
 
+// ----------------------------------------------------------------------------
+
+unordered_map<string, real_t> MPFit_Optimizer::get_options()
+{
+    unordered_map<string, float> opts{
+    {STR_OPT_FTOL, _options.ftol},
+    {STR_OPT_XTOL, _options.xtol},
+    {STR_OPT_GTOL, _options.gtol},
+    {STR_OPT_EPSILON, _options.epsfcn},
+    {STR_OPT_STEP, _options.stepfactor},
+    {STR_OPT_COVTOL, _options.covtol},
+    {STR_OPT_MAXITER, _options.maxiter}
+    };
+
+    return opts;
+}
+
+// ----------------------------------------------------------------------------
+
+void MPFit_Optimizer::set_options(unordered_map<string, real_t> opt)
+{
+    if (opt.count(STR_OPT_FTOL) > 0)
+    {
+        _options.ftol = opt.at(STR_OPT_FTOL);
+    }
+    if (opt.count(STR_OPT_XTOL) > 0)
+    {
+        _options.xtol = opt.at(STR_OPT_XTOL);
+    }
+    if (opt.count(STR_OPT_GTOL) > 0)
+    {
+        _options.gtol = opt.at(STR_OPT_GTOL);
+    }
+    if (opt.count(STR_OPT_EPSILON) > 0)
+    {
+        _options.epsfcn = opt.at(STR_OPT_EPSILON);
+    }
+    if (opt.count(STR_OPT_STEP) > 0)
+    {
+        _options.stepfactor = opt.at(STR_OPT_STEP);
+    }
+    if (opt.count(STR_OPT_COVTOL) > 0)
+    {
+        _options.covtol = opt.at(STR_OPT_COVTOL);
+    }
+    if (opt.count(STR_OPT_MAXITER) > 0)
+    {
+        _options.maxiter = opt.at(STR_OPT_MAXITER);
+    }
+}
+
 //-----------------------------------------------------------------------------
+
+
 
 void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp_par<real_t> > &par)
 {
@@ -311,12 +388,13 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+    std::vector<real_t> resid(energy_range.count());
 
     size_t total_itr = num_itr * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
     int info;
-
+    /*
     /////// init config ////////////
     struct mp_config<real_t> config;
     config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
@@ -344,18 +422,21 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     config.iterproc = 0;         // Placeholder pointer - must set to 0
 
-
+    */
     /////////////// init params limits /////////////////////////
 	vector<struct mp_par<real_t> > par;
 	par.resize(fitp_arr.size());
+
+    _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
 	_fill_limits(fit_params, par);
 
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
+    result.resid = &resid[0];
 
-    info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &config, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 
@@ -364,9 +445,15 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = result.nfev;
     }
-
-    //delete [] mp_par;
-
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        real_t sum_resid = 0.0;
+        for (int i = 0; i < energy_range.count(); i++)
+        {
+            sum_resid += resid[i];
+        }
+        (*fit_params)[STR_RESIDUAL].value = sum_resid;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -384,9 +471,10 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+    std::vector<real_t> resid(energy_range.count());
 
     int info;
-
+    /*
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
     mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
@@ -413,7 +501,9 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
                                     //    1 = perform check
 
     mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
+    */
 
+    _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
 	struct mp_par<real_t> *mp_par = nullptr;
 	//vector<struct mp_par<real_t> > par;
@@ -423,8 +513,9 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
+    result.resid = &resid[0];
 
-    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *) &ud, &result);
+    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &_options, (void *) &ud, &result);
 /*
     
 */
@@ -433,6 +524,15 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+    }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        real_t sum_resid = 0.0;
+        for (int i = 0; i< energy_range.count(); i++)
+        {
+             sum_resid += resid[i];
+        }
+        (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
 }
@@ -457,9 +557,10 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
+    std::vector<real_t> resid(quant_map->size());
 
     int info;
-
+    /*
     /////// init config ////////////
     struct mp_config<real_t> mp_config;
     mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
@@ -487,12 +588,14 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
                                     //    1 = perform check
 
     mp_config.iterproc = 0;         // Placeholder pointer - must set to 0
+    */
 
+    _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
-
+    result.resid = &resid[0];
 //    struct mp_par<real_t> *mp_par = nullptr;
 //	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
 
@@ -501,7 +604,7 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &mp_config, (void *) &ud, &result);
+    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 
@@ -511,6 +614,16 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
     }
+    if (fit_params->contains(STR_RESIDUAL))
+    {
+        real_t sum_resid = 0.0;
+        for (int i = 0; i < quant_map->size(); i++)
+        {
+            sum_resid += resid[i];
+        }
+        (*fit_params)[STR_RESIDUAL].value = sum_resid;
+    }
+
 
 }
 
