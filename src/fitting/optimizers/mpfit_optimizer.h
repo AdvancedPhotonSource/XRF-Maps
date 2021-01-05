@@ -87,9 +87,17 @@ public:
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model);
 
+    virtual unordered_map<string, real_t> get_options();
+
+    virtual void set_options(unordered_map<string, real_t> opt);
+
 private:
+
 	void _fill_limits(Fit_Parameters *fit_params, vector<struct mp_par<real_t> > &par);
-	inline void _print_info(int info);
+	
+    inline void _print_info(int info);
+
+    struct mp_config<real_t> _options;
 
 };
 

@@ -674,7 +674,7 @@ const lm_control_struct lm_control_float = {
 /*  Message texts (indexed by status.info)                                    */
 /******************************************************************************/
 
-const char* lm_infmsg[] = {
+static const char* lm_infmsg[] = {
     "found zero (sum of squares below underflow limit)",
     "converged  (the relative error in the sum of squares is at most tol)",
     "converged  (the relative error of the parameter vector is at most tol)",
@@ -689,7 +689,7 @@ const char* lm_infmsg[] = {
     "stopped    (break requested within function evaluation)",
     "found nan  (function value is not-a-number or infinite)"};
 
-const char* lm_shortmsg[] = {
+static const char* lm_shortmsg[] = {
     "found zero",
     "converged (f)",
     "converged (p)",

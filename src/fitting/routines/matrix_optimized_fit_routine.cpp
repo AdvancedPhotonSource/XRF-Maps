@@ -260,7 +260,11 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
             background.setZero(_energy_range.count());
         }
 
+        //set num iter to 200;
+        unordered_map<string, real_t> opt_options{ {STR_OPT_MAXITER, 200.} };
+
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        _optimizer->set_options(opt_options);
         _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
