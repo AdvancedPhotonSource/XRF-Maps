@@ -3,11 +3,10 @@
 ### MSVC
 
 #### Prepare environment
-* git clone https://github.com/advancedphotonsource/XRF-Maps.git
+* git clone --recurse-submodules https://github.com/advancedphotonsource/XRF-Maps.git
 * download and install cmake https://cmake.org/download/ 
 * download and install netcdf 3 library https://cmake.org/download/
 * download and install hdf5 library https://support.hdfgroup.org/HDF5/release/obtain5.html
-* download eigen 3 library http://eigen.tuxfamily.org/index.php?title=Main_Page
 * (optional) git clone https://github.com/zeromq/libzmq.git
 
 
@@ -15,7 +14,7 @@
 ### No Streaming
 * mkdir build
 * cd build
-* CC=icc CXX=icpc cmake -DEIGEN3_INCLUDES=/usr/common/software/eigen3/3.3.3/include/eigen3/ ../
+* CC=icc CXX=icpc cmake ../
 * cmake --build . --config Release
 
 ### Streaming
@@ -28,11 +27,19 @@
 ### Nersc Cori
 #### Intel Phi
 * module swap craype-haswell craype-mic-knl
-* module add gcc/7.3.0
-* module add eigen3/3.3.3
+* module add gcc/9.3.0
 * module add netcdf/4.6.1
 * module add hdf5/1.10.1
 * mkdir build
 * cd build
 * CC=icc CXX=icpc cmake -DBUILD_FOR_PHI=ON -DEIGEN3_INCLUDES=/usr/common/software/eigen3/3.3.3/include/eigen3/ ../
+* cmake --build . --config Release
+### ALCF Theta
+#### Intel Phi
+* module add cmake/3.18.0
+* module add cray-hdf5-parallel/1.10.6.0
+* module add cray-netcdf-hdf5parallel/4.7.3.3
+* mkdir build
+* cd build
+* cmake -DBUILD_FOR_PHI=ON ../
 * cmake --build . --config Release
