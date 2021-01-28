@@ -44,12 +44,12 @@ if(NETCDF_USE_DEFAULT_PATHS)
 endif()
 
 find_path (NETCDF_INCLUDE_DIR netcdf.h
-  PATHS "${NETCDF_DIR}/include")
+  PATHS "${NETCDF_DIR}/include" "$ENV{NETCDF_ROOT}/include")
 mark_as_advanced (NETCDF_INCLUDE_DIR)
 set (NETCDF_C_INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})
 
 find_library (NETCDF_LIBRARY NAMES netcdf
-  PATHS "${NETCDF_DIR}/lib"
+  PATHS "${NETCDF_DIR}/lib" "$ENV{NETCDF_ROOT}/lib"
   HINTS "${NETCDF_INCLUDE_DIR}/../lib")
 mark_as_advanced (NETCDF_LIBRARY)
 
