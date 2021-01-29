@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/aglowacki/XRF-Maps.svg?branch=master)](https://travis-ci.org/aglowacki/XRF-Maps)
-![Build Status](https://github.com/aglowacki/XRF-Maps/workflows/cmake/badge.svg)
+[![Actions Status](https://github.com/aglowacki/XRF-Maps/workflows/cmake/badge.svg)](https://github.com/aglowacki/XRF-Maps/actions)
 [![Build Status](https://dev.azure.com/aglow/XRF-Maps/_apis/build/status/aglowacki.XRF-Maps?branchName=master)](https://dev.azure.com/aglow/XRF-Maps/_build/latest?definitionId=2&branchName=master)
 
 # XRF-Maps
