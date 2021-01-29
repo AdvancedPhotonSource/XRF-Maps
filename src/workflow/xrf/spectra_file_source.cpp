@@ -106,13 +106,13 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 
 // ----------------------------------------------------------------------------
 
-data_struct::Stream_Block* Spectra_File_Source::_alloc_stream_block(size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
+data_struct::Stream_Block* Spectra_File_Source::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
 {
 	if (_max_num_stream_blocks == -1)
 	{
 		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(real_t));
 	}
-	return new data_struct::Stream_Block(row, col, height, width);
+	return new data_struct::Stream_Block(detector, row, col, height, width);
 }
 
 // ----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
 
     if(_output_callback_func != nullptr)
     {
-		data_struct::Stream_Block * stream_block = _alloc_stream_block(row, col, height, width, spectra->size());
+		data_struct::Stream_Block * stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
 
         if(_init_fitting_routines && _analysis_job != nullptr)
         {
@@ -149,7 +149,6 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
         stream_block->spectra = spectra;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
-        stream_block->detector_number = detector_num;
 
         _output_callback_func(stream_block);
     }
@@ -195,7 +194,7 @@ void Spectra_File_Source::run()
         }
 
 		//send end of file stream block
-		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1);
+		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1, -1);
 		end_block->dataset_directory = _current_dataset_directory;
 		end_block->dataset_name = _current_dataset_name;
 		end_block->del_str_ptr = true;

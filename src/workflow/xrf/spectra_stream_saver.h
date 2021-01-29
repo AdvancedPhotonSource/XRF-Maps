@@ -112,7 +112,10 @@ protected:
             delete dataset_name;
             for(auto& itr : detector_map)
             {
-                delete itr.second;
+                if (itr.second != nullptr)
+                {
+                    delete itr.second;
+                }
             }
             detector_map.clear();
         }

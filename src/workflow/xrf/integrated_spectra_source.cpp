@@ -81,7 +81,7 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
     //init
     if(_stream_block_list.count(detector_num) == 0)
     {
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
+        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(detector_num, row, col, height, width);
 
         if(_analysis_job != nullptr)
         {
@@ -108,7 +108,6 @@ void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, siz
         stream_block->spectra = new data_struct::Spectra(spectra->size());
         stream_block->spectra->add(*spectra);
         delete spectra;
-        stream_block->detector_number = detector_num;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
         _stream_block_list.insert({detector_num, stream_block});

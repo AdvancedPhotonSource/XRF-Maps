@@ -68,7 +68,8 @@ Stream_Block::Stream_Block()
 
 //-----------------------------------------------------------------------------
 
-Stream_Block::Stream_Block(size_t row,
+Stream_Block::Stream_Block(int detector,
+                           size_t row,
                            size_t col,
                            size_t height,
                            size_t width)
@@ -77,6 +78,7 @@ Stream_Block::Stream_Block(size_t row,
     _col = col;
     _height = height;
     _width = width;
+    _detector = detector;
     theta = 0;
 	elements_to_fit = nullptr;
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
@@ -122,7 +124,7 @@ Stream_Block::Stream_Block(const Stream_Block& stream_block)
 	this->dataset_directory = stream_block.dataset_directory;
 	this->dataset_name = stream_block.dataset_name;
 	this->fitting_blocks = stream_block.fitting_blocks;
-	this->detector_number = stream_block.detector_number;
+	this->_detector = stream_block._detector;
 	this->spectra = stream_block.spectra;
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
@@ -138,7 +140,7 @@ Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
 	this->dataset_directory = stream_block.dataset_directory;
 	this->dataset_name = stream_block.dataset_name;
 	this->fitting_blocks = stream_block.fitting_blocks;
-	this->detector_number = stream_block.detector_number;
+	this->_detector = stream_block._detector;
 	this->spectra = stream_block.spectra;
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
@@ -168,6 +170,18 @@ void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitt
         fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
     }
 }
+
+//-----------------------------------------------------------------------------
+
+size_t Stream_Block::dataset_hash()
+{
+    if (dataset_directory != nullptr && dataset_name != nullptr)
+    {
+        return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name)) + _detector;
+    }
+    return -1;
+}
+
 //-----------------------------------------------------------------------------
 
 } //namespace data_struct
