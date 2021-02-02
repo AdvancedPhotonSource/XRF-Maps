@@ -82,17 +82,7 @@ void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
         if (_dataset_map.count(d_hash) > 0)
         {
             Dataset_Save* dataset = _dataset_map.at(d_hash);
-            if (dataset != nullptr && dataset->detector_map.count(detector_num) > 0)
-            {
-                Detector_Save* detector = dataset->detector_map.at(detector_num);
-                if (detector != nullptr)
-                {
-                    io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-                }
-                delete dataset;
-            }
-            io::file::HDF5_IO::inst()->close_dataset(d_hash);
-            _dataset_map.erase(d_hash);
+            _finalize_dataset(dataset);
         }
     }
     else
@@ -145,30 +135,6 @@ void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
                 detector->spectra_line[stream_block->col()] = stream_block->spectra;
                 stream_block->spectra = nullptr;
             }
-
-            //TODO: this won't work because netcdf lines may be corrupt and last row/col won't match height/width
-          ///  if (stream_block->is_end_of_detector())
-            {
-                //_finalize_dataset();
-                Detector_Save* detector = dataset->detector_map.at(detector_num);
-
-                //save and close hdf5 for this detector
-                ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
-                io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-                io::file::HDF5_IO::inst()->close_dataset(d_hash);
-                ///delete stream_block->mda_io;
-
-                delete detector;
-                dataset->detector_map.erase(detector_num);
-            }
-
-            if (dataset->detector_map.size() == 0)
-            {
-                //done with dataset
-                delete dataset;
-                _dataset_map.erase(d_hash);
-            }
-
         }
     }
 }
@@ -204,22 +170,24 @@ void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::Str
 
 void Spectra_Stream_Saver::_finalize_dataset(Dataset_Save *dataset)
 {
-    for(auto itr : dataset->detector_map)
+    if (dataset != nullptr)
     {
-        Detector_Save *detector = itr.second;
-
-        //save and close hdf5 for this detector
-        ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
-        io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-//        io::file::HDF5_IO::inst()->close_dataset(d_hash);
-        ///delete stream_block->mda_io;
-
-        delete detector;
+        for (auto itr : dataset->detector_map)
+        {
+            Detector_Save* detector = itr.second;
+            //save and close hdf5 for this detector
+            if (detector != nullptr)
+            {
+                io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
+                ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
+                //io::file::HDF5_IO::inst()->close_dataset(d_hash);
+            }
+            ///delete stream_block->mda_io;
+            delete detector;
+        }
+        dataset->detector_map.clear();
+        delete dataset;
     }
-
-    dataset->detector_map.clear();
-
-    delete dataset;
 }
 
 // ----------------------------------------------------------------------------

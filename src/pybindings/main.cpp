@@ -247,16 +247,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("width", &data_struct::Stream_Block::width)
     .def("is_end_of_row", &data_struct::Stream_Block::is_end_of_row)
     .def("dataset_hash", &data_struct::Stream_Block::dataset_hash)
+    .def("detector_number", &data_struct::Stream_Block::detector_number)
+    .def("is_end_block", &data_struct::Stream_Block::is_end_block)
     .def_readwrite("fitting_blocks", &data_struct::Stream_Block::fitting_blocks)
     .def_readwrite("dataset_directory", &data_struct::Stream_Block::dataset_directory)
     .def_readwrite("dataset_name", &data_struct::Stream_Block::dataset_name)
-    .def_readwrite("detector_number", &data_struct::Stream_Block::detector_number)
     .def_readwrite("spectra", &data_struct::Stream_Block::spectra)
     .def_readwrite("elements_to_fit", &data_struct::Stream_Block::elements_to_fit)
     .def_readwrite("optimize_fit_params_preset", &data_struct::Stream_Block::optimize_fit_params_preset)
     .def_readwrite("model", &data_struct::Stream_Block::model)
     .def_readwrite("theta", &data_struct::Stream_Block::theta);
-    //.def("is_end_of_detector", &data_struct::Stream_Block::is_end_of_detector)
+    
 
     py::class_<data_struct::Detector>(m, "Detector")
     .def(py::init<>())
