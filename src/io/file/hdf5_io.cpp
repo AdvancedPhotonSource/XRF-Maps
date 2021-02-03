@@ -2711,7 +2711,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
                   }
               }
 
-             logI<<"read row "<<row<<"\n";
+             //logI<<"read row "<<row<<"\n";
           }
           else
           {
