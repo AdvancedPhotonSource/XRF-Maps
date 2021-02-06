@@ -110,7 +110,7 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
 
     if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && _output_callback_func != nullptr)
     {
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(row, col, height, width);
+        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(-1, row, col, height, width);
 
         if(_analysis_job != nullptr)
         {
@@ -137,8 +137,7 @@ void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, s
         stream_block->spectra = _spectra;
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
-        stream_block->detector_number = 0;
-
+        
         _output_callback_func(stream_block);
 
         _spectra = new data_struct::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);

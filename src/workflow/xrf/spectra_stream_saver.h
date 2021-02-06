@@ -108,11 +108,22 @@ protected:
         Dataset_Save(){}
         ~Dataset_Save()
         {
-            delete dataset_directory;
-            delete dataset_name;
+            if (dataset_directory != nullptr)
+            {
+                delete dataset_directory;
+            }
+            dataset_directory = nullptr;
+            if (dataset_name != nullptr)
+            {
+                delete dataset_name;
+            }
+            dataset_name = nullptr;
             for(auto& itr : detector_map)
             {
-                delete itr.second;
+                if (itr.second != nullptr)
+                {
+                    delete itr.second;
+                }
             }
             detector_map.clear();
         }

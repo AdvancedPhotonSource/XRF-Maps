@@ -111,6 +111,12 @@ bool MDA_IO::load_scalers(std::string path)
         return false;
     }
 
+    if (_mda_file->header->data_rank == 1)
+    {
+        logE << "Cannot load mda file data rank == 1" << "\n";
+        return false;
+    }
+
     _load_scalers(true);
     _load_meta_info();
     _load_extra_pvs_vector();
@@ -358,6 +364,12 @@ bool MDA_IO::load_spectra_volume(std::string path,
         return false;
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
+
+    if (_mda_file->header->data_rank == 1)
+    {
+        logE << "Cannot load mda file data rank == 1" << "\n";
+        return false;
+    }
 
     _load_scalers(false);
     _load_meta_info();
@@ -924,6 +936,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
     size_t rows = 0;
     size_t cols = 0;
     bool single_row_scan = false;
+
     if (_mda_file->header->data_rank == 2)
     {
         if (_hasNetcdf == false && _mda_file->header->dimensions[1] == 2000)

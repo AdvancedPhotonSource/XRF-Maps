@@ -80,7 +80,7 @@ public:
 
 	Stream_Block();
 
-    Stream_Block(size_t row, size_t col, size_t height, size_t width);
+    Stream_Block(int detector, size_t row, size_t col, size_t height, size_t width);
 
 	Stream_Block(const Stream_Block& stream_block);
 
@@ -98,22 +98,21 @@ public:
 
     const size_t& width() { return _width; }
 
+    const int& detector_number() { return _detector; }
+
     inline bool is_end_of_row() { return (_col == _width-1); }
 
-    inline bool is_end_of_detector() { return (_row == _height-1 && _col == _width-1); }
+	inline bool is_end_block() { return (_detector == -1 && _row == -1 && _height == -1 && _col == -1 && _width == -1); }
 
-	inline bool is_end_block() { return (_row == -1 && _height == -1 && _col == -1 && _width == -1); }
 
     //by Fitting_Routines
     std::unordered_map<Fitting_Routines, Stream_Fitting_Block> fitting_blocks;
 
-    size_t dataset_hash() { return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name));}
+    size_t dataset_hash();
 
     std::string *dataset_directory;
 
     std::string *dataset_name;
-
-    int detector_number;
 
     Spectra * spectra;
 
@@ -137,6 +136,8 @@ protected:
     size_t _height;
 
     size_t _width;
+
+    int _detector;
 
 };
 

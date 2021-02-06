@@ -81,7 +81,7 @@ void Basic_Serializer::_encode_meta(data_struct::Stream_Block* stream_block, std
 {
     //TODO:
     // add something to tell if 4 or 8 byte real
-    _convert_var_to_bytes(&raw_msg, _tmp_uint, stream_block->detector_number, sizeof(unsigned int));
+    _convert_var_to_bytes(&raw_msg, _tmp_uint, stream_block->detector_number(), sizeof(unsigned int));
     _convert_var_to_bytes(&raw_msg, _tmp_size_t, stream_block->row(), sizeof(size_t));
     _convert_var_to_bytes(&raw_msg, _tmp_size_t, stream_block->col(), sizeof(size_t));
     _convert_var_to_bytes(&raw_msg, _tmp_size_t, stream_block->height(), sizeof(size_t));
@@ -128,9 +128,7 @@ data_struct::Stream_Block* Basic_Serializer::_decode_meta(char* message, size_t 
     memcpy(&theta, message + idx, sizeof(real_t));
     idx += sizeof(real_t);
 
-    data_struct::Stream_Block* out_stream_block = new data_struct::Stream_Block(row, col, height, width);
-    out_stream_block->detector_number = detector_number;
-
+    data_struct::Stream_Block* out_stream_block = new data_struct::Stream_Block(detector_number, row, col, height, width);
 
     //find dataset name
     for(size_t i=idx; i < message_len; i++)
