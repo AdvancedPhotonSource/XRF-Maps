@@ -857,7 +857,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 
         for (size_t detector_num : analysis_job.detector_num_arr)
         {
-            if (detector_num > -1)
+            if (detector_num != -1)
             {
                 hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
             }
