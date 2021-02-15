@@ -743,7 +743,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 }
                 logI << full_path << "\n";
                 #ifdef _BUILD_WITH_QT
-                visual::SavePlotSpectras(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
+                visual::SavePlotSpectrasFromConsole(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
                 #endif
 
                 io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
