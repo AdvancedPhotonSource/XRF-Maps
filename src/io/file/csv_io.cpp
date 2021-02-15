@@ -64,13 +64,77 @@ namespace file
 namespace csv
 {
 
+bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background)
+{
+    return save_fit_and_int_spectra(fullpath, energy, spectra, spectra_model, background, nullptr);
+}
+
 // ----------------------------------------------------------------------------
 
-bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* spectra_model, data_struct::ArrayXr* background)
+bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background, unordered_map<string, data_struct::ArrayXr>* labeled_spectras)
 {
     if (energy == nullptr || spectra == nullptr || spectra_model == nullptr || background == nullptr)
     {
-return false;
+        return false;
+    }
+
+    data_struct::ArrayXr temp_zero(energy->size());
+    temp_zero.setZero(energy->size());
+    // set detailed lines to zero
+    data_struct::ArrayXr* k_alpha = &temp_zero;
+    data_struct::ArrayXr* k_beta = &temp_zero;
+    data_struct::ArrayXr* l_line = &temp_zero;
+    data_struct::ArrayXr* m_line = &temp_zero;
+    data_struct::ArrayXr* step = &temp_zero;
+    data_struct::ArrayXr* tail = &temp_zero;
+    data_struct::ArrayXr* elastic = &temp_zero;
+    data_struct::ArrayXr* compton = &temp_zero;
+    data_struct::ArrayXr* pileup = &temp_zero;
+    data_struct::ArrayXr* escape = &temp_zero;
+
+
+    if (labeled_spectras != nullptr)
+    {      
+        if (labeled_spectras->count(STR_K_A_LINES) > 0)
+        {
+            k_alpha = &(labeled_spectras->at(STR_K_A_LINES));
+        }
+        if (labeled_spectras->count(STR_K_B_LINES) > 0)
+        {
+            k_beta = &(labeled_spectras->at(STR_K_B_LINES));
+        }
+        if (labeled_spectras->count(STR_L_LINES) > 0)
+        {
+            l_line = &(labeled_spectras->at(STR_L_LINES));
+        }
+        if (labeled_spectras->count(STR_M_LINES) > 0 )
+        {
+            m_line = &(labeled_spectras->at(STR_M_LINES));
+        }
+        if (labeled_spectras->count(STR_STEP_LINES) > 0)
+        {
+            step = &(labeled_spectras->at(STR_STEP_LINES));
+        }
+        if (labeled_spectras->count(STR_TAIL_LINES) > 0)
+        {
+            tail = &(labeled_spectras->at(STR_TAIL_LINES));
+        }
+        if (labeled_spectras->count(STR_ELASTIC_LINES) > 0)
+        {
+            elastic = &(labeled_spectras->at(STR_ELASTIC_LINES));
+        }
+        if (labeled_spectras->count(STR_COMPTON_LINES) > 0)
+        {
+            compton = &(labeled_spectras->at(STR_COMPTON_LINES));
+        }
+        if (labeled_spectras->count(STR_PILEUP_LINES) > 0)
+        {
+            pileup = &(labeled_spectras->at(STR_PILEUP_LINES));
+        }
+        if (labeled_spectras->count(STR_ESCAPE_LINES) > 0)
+        {
+            escape = &(labeled_spectras->at(STR_ESCAPE_LINES));
+        }
     }
 
     std::ofstream file_stream(fullpath);
@@ -80,8 +144,9 @@ return false;
 
         for (int i = 0; i < energy->size(); i++)
         {
-            file_stream << (*energy)(i) << "," << (*spectra)(i) << "," << (*spectra_model)(i) << "," << (*background)(i) << ",0,0,0,0,0,0,0,0,0,0\n";
+            file_stream << (*energy)(i) << "," << (*spectra)(i) << "," << (*spectra_model)(i) << "," << (*background)(i) << "," << (*k_alpha)(i) << "," << (*k_beta)(i) << "," << (*l_line)(i) << "," << (*m_line)(i) << "," << (*step)(i) << "," << (*tail)(i) << "," << (*elastic)(i) << "," << (*compton)(i) << "," << (*pileup)(i) << "," << (*escape)(i) << "\n";
         }
+
         file_stream.close();
     }
     else

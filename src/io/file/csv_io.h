@@ -63,7 +63,9 @@ namespace file
 {
 namespace csv
 {
-    DLL_EXPORT bool save_fit_and_int_spectra(std::string fullpath, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* spectra_model, data_struct::ArrayXr* background);
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background);
+
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background, unordered_map<string, data_struct::ArrayXr>* labeled_spectras);
 
     DLL_EXPORT void save_quantification(std::string path, Detector* detector);
 
