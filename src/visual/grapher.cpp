@@ -40,12 +40,23 @@ freely, subject to the following restrictions:
 namespace visual
 {
 
-void SavePlotSpectras(std::string path, data_struct::ArrayXr *energy, data_struct::ArrayXr *spectra, data_struct::ArrayXr *model, data_struct::ArrayXr *background, bool log_them)
+void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* model, data_struct::ArrayXr* background, bool log_them)
 {
-    int argc = 0;
-    char ** argv = nullptr;
-    QApplication app(argc, argv);
+    if (QCoreApplication::startingUp())
+    {
+        int argc = 0;
+        char** argv = nullptr;
+        QApplication app(argc, argv);
+        SavePlotSpectras(path, energy, spectra, model, background, log_them);
+    }
+    else
+    {
+        SavePlotSpectras(path, energy, spectra, model, background, log_them);
+    }
+}
 
+void SavePlotSpectras(std::string path, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* model, data_struct::ArrayXr* background, bool log_them)
+{
     QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
     axisYLog10->setTitleText("Counts Log10");
     axisYLog10->setLabelFormat("%.1e");
@@ -208,14 +219,30 @@ bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_
 
 // ----------------------------------------------------------------------------
 
+void SavePlotQuantificationFromConsole(std::string path, Detector* detector)
+{
+    if (QCoreApplication::startingUp())
+    {
+        int argc = 0;
+        char** argv = nullptr;
+        QApplication app(argc, argv);
+        SavePlotQuantification(path, detector);
+    }
+    else
+    {
+        SavePlotQuantification(path, detector);
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
 void SavePlotQuantification(std::string path, Detector* detector)
 {
     if (detector == nullptr)
     {
         logW << "Detector == nullptr, can't save quantification\n";
     }
-
-    
 
     //iterate through proc_type {roi, nnls, fitted}
     for (auto& itr1 : detector->fitting_quant_map)
@@ -280,11 +307,6 @@ void SavePlotCalibrationCurve(std::string path,
             zstop++;
         }
     }
-
-    
-    int argc = 0;
-    char ** argv = nullptr;
-    QApplication app(argc, argv);
 
     QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
     axisYLog10->setTitleText("Log10");

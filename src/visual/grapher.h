@@ -33,6 +33,12 @@ using namespace data_struct;
 
 namespace visual
 {
+void SavePlotSpectrasFromConsole(std::string path,
+                                data_struct::ArrayXr* energy,
+                                data_struct::ArrayXr* spectra,
+                                data_struct::ArrayXr* model,
+                                data_struct::ArrayXr* background,
+                                bool log_them);
 
 void SavePlotSpectras(std::string path,
                       data_struct::ArrayXr *energy,
@@ -44,6 +50,8 @@ void SavePlotSpectras(std::string path,
 void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*>* all_elements_with_weights, int& zstart, int& zstop);
 
 bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*>* element_quants);
+
+void SavePlotQuantificationFromConsole(std::string path, Detector* detector);
 
 void SavePlotQuantification(std::string path, Detector* detector);
 

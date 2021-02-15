@@ -240,7 +240,7 @@ void save_quantification_plots(string path, Detector* detector)
     //if(analysis_job->get_detector(detector_num))
     file::csv::save_quantification(str_path, detector);
 #ifdef _BUILD_WITH_QT
-    visual::SavePlotQuantification(str_path, detector);
+    visual::SavePlotQuantificationFromConsole(str_path, detector);
 #endif
 }
 
@@ -331,7 +331,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     {
         str_path += ".png";
     }
-    visual::SavePlotSpectras(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
+    visual::SavePlotSpectrasFromConsole(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
