@@ -881,6 +881,36 @@ bool load_spectra_volume(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
+{
+    data_struct::Spectra* integrated_spectra = nullptr;
+
+    if (user_data != nullptr)
+    {
+        integrated_spectra = static_cast<data_struct::Spectra*>(user_data);
+    }
+
+    if (integrated_spectra != nullptr && spectra != nullptr)
+    {
+        if (integrated_spectra->size() != spectra->size())
+        {
+            *integrated_spectra = *spectra;
+        }
+        else
+        {
+            integrated_spectra->add(*spectra);
+        }
+    }
+
+    if (spectra != nullptr)
+    {
+        delete spectra;
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        size_t detector_num,
@@ -892,6 +922,13 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
+
+    if (dataset_directory.back() != DIR_END_CHAR)
+    {
+        dataset_directory += DIR_END_CHAR;
+    }
+    //replace / with \ for windows, won't do anything for linux
+    std::replace(dataset_directory.begin(), dataset_directory.end(), '/', DIR_END_CHAR);
 
     data_struct::Spectra_Volume spectra_volume;
 
@@ -980,6 +1017,17 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
         return true;
     }
 
+    //try loading emd dataset
+    std::vector<size_t> detector_num_arr;
+    detector_num_arr.push_back(detector_num);
+    data_struct::IO_Callback_Func_Def  cb_function = std::bind(&cb_load_spectra_data_helper, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+
+    if(io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(dataset_directory + DIR_END_CHAR + dataset_file, detector_num_arr, cb_function, integrated_spectra))
+    //if (true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
+    {
+        logI << "Loaded spectra volume confocal from h5.\n";
+        return true;
+    }
 
     //try loading confocal dataset
     if(true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, false))
@@ -1137,6 +1185,11 @@ bool get_scalers_and_metadata_h5(std::string dataset_directory,
     std::string dataset_file,
     data_struct::Scan_Info* scan_info)
 {
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_emd(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    {
+        return true;
+    }
+
     if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_confocal(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {
         return true;
