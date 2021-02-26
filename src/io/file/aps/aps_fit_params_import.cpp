@@ -1063,18 +1063,53 @@ bool save_parameters_override(std::string path, Fit_Parameters fit_params, int d
                     OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
                     */
                     std::string str_det_num = std::to_string(detector_num + 1);
-                    int idx = line.find(":mca");
+                    int idx = line.rfind(":mca1");
                     if(idx > -1)
                     {
                         line[idx+4] = str_det_num[0];
                     }
+                    idx = line.rfind(":mca2");
+                    if (idx > -1)
+                    {
+                        line[idx + 4] = str_det_num[0];
+                    }
+                    idx = line.rfind(":mca3");
+                    if (idx > -1)
+                    {
+                        line[idx + 4] = str_det_num[0];
+                    }
+                    idx = line.rfind(":mca4");
+                    if (idx > -1)
+                    {
+                        line[idx + 4] = str_det_num[0];
+                    }
 
-                    idx = line.find(":dxp");
+
+                    idx = line.rfind(":dxp1");
                     if(idx > -1)
                     {
 
                         line[idx+4] = str_det_num[0];
                     }
+                    idx = line.rfind(":dxp2");
+                    if (idx > -1)
+                    {
+
+                        line[idx + 4] = str_det_num[0];
+                    }
+                    idx = line.rfind(":dxp3");
+                    if (idx > -1)
+                    {
+
+                        line[idx + 4] = str_det_num[0];
+                    }
+                    idx = line.rfind(":dxp4");
+                    if (idx > -1)
+                    {
+
+                        line[idx + 4] = str_det_num[0];
+                    }
+
                     out_stream<<line<<"\n";
                 }
                 else

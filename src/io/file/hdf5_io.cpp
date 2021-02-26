@@ -1742,8 +1742,9 @@ int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::st
 //-----------------------------------------------------------------------------
 
 bool HDF5_IO::load_spectra_volume_emd(std::string path,
-    size_t frame_num,
-    data_struct::Spectra_Volume *spec_vol)
+                                        size_t frame_num,
+                                        data_struct::Spectra_Volume *spec_vol,
+                                        bool logerr)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1796,7 +1797,10 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
     }
     else
     {
-        logE<<"Could not get image dimensions from /Data/Image/"<<str_grp_name<<"/Data\n ";
+        if (logerr)
+        {
+            logE << "Could not get image dimensions from /Data/Image/" << str_grp_name << "/Data\n ";
+        }
         _close_h5_objects(close_map);
         return false;
     }
@@ -3416,6 +3420,120 @@ bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::S
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info* scan_info)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    hid_t    file_id, src_maps_grp_id, detectors_grp_id, hash_grp_id, data_id, spectrumstream_grp_id, hash2_grp_id, data2_id;
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
+    if (scan_info == nullptr)
+    {
+        return false;
+    }
+
+    if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+    {
+        return false;
+    }
+
+    if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, close_map, "Data", file_id))
+    {
+        return false;
+    }
+
+    if (_open_h5_object(detectors_grp_id, H5O_GROUP, close_map, "Image", src_maps_grp_id, false, false))
+    {
+        herr_t err;
+        ssize_t len;
+        hsize_t nobj;
+        int otype;
+        char group_name[1024];
+        char memb_name[1024];
+
+
+        err = H5Gget_num_objs(detectors_grp_id, &nobj);
+        if(nobj > 0)
+        {
+            len = H5Gget_objname_by_idx(detectors_grp_id, (hsize_t)0, memb_name, (size_t)1024);
+            //printf("   %d ", len); fflush(stdout);
+            //printf("  Member: %s ", memb_name); fflush(stdout);
+            otype = H5Gget_objtype_by_idx(detectors_grp_id, (size_t)0);
+            if (otype == H5G_GROUP)
+            {
+                if (_open_h5_object(hash_grp_id, H5O_GROUP, close_map, memb_name, detectors_grp_id, false, false))
+                {
+                    if (_open_h5_object(data_id, H5O_DATASET, close_map, "Data", hash_grp_id, false, false))
+                    {
+                        hid_t dspace_id = H5Dget_space(data_id);
+                        close_map.push({ dspace_id, H5O_DATASPACE });
+                    }
+                }
+            }
+        }
+    }
+
+    if (_open_h5_object(spectrumstream_grp_id, H5O_GROUP, close_map, "SpectrumStream", src_maps_grp_id, false, false))
+    {
+        herr_t err;
+        ssize_t len;
+        hsize_t nobj;
+        int otype;
+        hsize_t names_cnt[1] = { 1 };
+        char group_name[1024];
+        char memb_name[1024];
+
+        char acqui_data[10240];
+
+
+        err = H5Gget_num_objs(spectrumstream_grp_id, &nobj);
+        if (nobj > 0)
+        {
+            len = H5Gget_objname_by_idx(spectrumstream_grp_id, (hsize_t)0, memb_name, (size_t)1024);
+            //printf("   %d ", len); fflush(stdout);
+            //printf("  Member: %s ", memb_name); fflush(stdout);
+            otype = H5Gget_objtype_by_idx(spectrumstream_grp_id, (size_t)0);
+            if (otype == H5G_GROUP)
+            {
+                if (_open_h5_object(hash2_grp_id, H5O_GROUP, close_map, memb_name, spectrumstream_grp_id, false, false))
+                {
+                    if (_open_h5_object(data2_id, H5O_DATASET, close_map, "AcquisitionSettings", hash2_grp_id, false, false))
+                    {
+                        hid_t name_type = H5Tcopy(H5T_C_S1);
+                        hid_t status = H5Tset_size(name_type, 255);
+
+                        hid_t dspace_id = H5Dget_space(data2_id);
+                        close_map.push({ dspace_id, H5O_DATASPACE });
+
+                        hid_t mem_name_space = H5Screate_simple(1, &names_cnt[0], &names_cnt[0]);
+                        close_map.push({ mem_name_space, H5O_DATASPACE });
+
+                        hid_t scalers_type = H5Dget_type(data2_id);
+
+                        err = H5Dread(data2_id, scalers_type, mem_name_space, dspace_id, H5P_DEFAULT, acqui_data);
+                        if (err > -1)
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    scan_info->meta_info.detectors.push_back(0);
+
+    _close_h5_objects(close_map);
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -3573,6 +3691,12 @@ bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::S
         
     }
     */
+    _close_h5_objects(close_map);
+
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
     return true;
 }
 

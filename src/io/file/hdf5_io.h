@@ -98,7 +98,8 @@ public:
 
     bool load_spectra_volume_emd(std::string path,
                                  size_t frame_num,
-                                 data_struct::Spectra_Volume *spec_vol);
+                                 data_struct::Spectra_Volume *spec_vol,
+                                 bool logerr = true);
 
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row);
 
@@ -134,6 +135,8 @@ public:
                                  int detector_num,
                                  size_t height,
                                  size_t width);
+
+    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info* scan_info);
 
     bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info);
 
