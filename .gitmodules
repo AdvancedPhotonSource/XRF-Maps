@@ -1,9 +1,9 @@
 [submodule "src/support/eigen-git-mirror"]
 	path = src/support/eigen-git-mirror
-	url = git@github.com:eigenteam/eigen-git-mirror.git
+	url = https://github.com/eigenteam/eigen-git-mirror.git
 [submodule "src/support/pybind11"]
 	path = src/support/pybind11
-	url = git@github.com:pybind/pybind11.git
+	url = https://github.com/pybind/pybind11.git
 [submodule "vcpkg"]
 	path = vcpkg
-	url = git@github.com:Microsoft/vcpkg
+	url = https://github.com/Microsoft/vcpkg
