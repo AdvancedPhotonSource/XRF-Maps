@@ -196,7 +196,7 @@ MPFit_Optimizer::~MPFit_Optimizer()
 
 unordered_map<string, real_t> MPFit_Optimizer::get_options()
 {
-    unordered_map<string, float> opts{
+    unordered_map<string, real_t> opts{
     {STR_OPT_FTOL, _options.ftol},
     {STR_OPT_XTOL, _options.xtol},
     {STR_OPT_GTOL, _options.gtol},
