@@ -73,12 +73,12 @@ public:
     /**
      * @brief Base_Fit_Routine : Constructor
      */
-    Base_Fit_Routine();
+    Base_Fit_Routine() {}
 
     /**
      * @brief ~Base_Fit_Routine : Destructor
      */
-    virtual ~Base_Fit_Routine();
+    virtual ~Base_Fit_Routine() {}
 
     /**
      * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
