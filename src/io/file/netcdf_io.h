@@ -90,6 +90,8 @@ public:
                                         data_struct::IO_Callback_Func_Def callback_fun,
                                         void* user_data);
 
+    size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra* spectra);
+
 private:
 
     NetCDF_IO();

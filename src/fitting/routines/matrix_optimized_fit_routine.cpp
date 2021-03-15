@@ -221,19 +221,19 @@ void Matrix_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
 // ----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
-                                                const Spectra * const spectra,
-                                                const Fit_Element_Map_Dict * const elements_to_fit)
+OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_Model * const model,
+                                                            const Spectra * const spectra,
+                                                            const Fit_Element_Map_Dict * const elements_to_fit,
+                                                            std::unordered_map<std::string, real_t>& out_counts)
 {
 
-    std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
-
+    OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
     if(_optimizer != nullptr)
     {
@@ -265,18 +265,18 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         _optimizer->set_options(opt_options);
-        _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
+        ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
             real_t value =  fit_params.at(el_itr.first).value;
             //convert from log10
             value = std::pow((real_t)10.0, value);
-            counts_dict[el_itr.first] = value;
+            out_counts[el_itr.first] = value;
         }
 
-        counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
-        counts_dict[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
+        out_counts[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
+        out_counts[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
 
 		//get max and top 10 max channels
 		vector<pair<int, real_t> > max_map;
@@ -320,7 +320,7 @@ std::unordered_map<std::string, real_t> Matrix_Optimized_Fit_Routine:: fit_spect
 			}
         }
     }
-    return counts_dict;
+    return ret_val;
 
 }
 

@@ -157,13 +157,20 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
     _options.verbosity = 0; //  OR'ed: 1: print some messages; 2: print Jacobian. 
     _options.n_maxpri = -1; // -1, or max number of parameters to print.
     _options.m_maxpri = -1; // -1, or max number of residuals to print. 
-}
 
-// ----------------------------------------------------------------------------
 
-LMFit_Optimizer::~LMFit_Optimizer()
-{
-
+    _outcome_map[0] = OPTIMIZER_OUTCOME::FOUND_ZERO;
+    _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
+    _outcome_map[5] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[6] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[7] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[8] = OPTIMIZER_OUTCOME::CRASHED;
+    _outcome_map[9] = OPTIMIZER_OUTCOME::EXPLODED;
+    _outcome_map[10] = OPTIMIZER_OUTCOME::STOPPED;
+    _outcome_map[11] = OPTIMIZER_OUTCOME::FOUND_NAN;
 
 }
 
@@ -219,12 +226,12 @@ void LMFit_Optimizer::set_options(unordered_map<string, real_t> opt)
 
 // ----------------------------------------------------------------------------
 
-void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               const Base_Model * const model,
-                               const Range energy_range,
-                               Callback_Func_Status_Def* status_callback)
+OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
+                                           const Spectra * const spectra,
+                                           const Fit_Element_Map_Dict * const elements_to_fit,
+                                           const Base_Model * const model,
+                                           const Range energy_range,
+                                           Callback_Func_Status_Def* status_callback)
 {
 
     User_Data ud;
@@ -291,15 +298,20 @@ void LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 
+    if(_outcome_map.count(status.outcome)>0)
+        return _outcome_map[status.outcome];
+
+    return OPTIMIZER_OUTCOME::FAILED;
+
 }
 
 // ----------------------------------------------------------------------------
 
-void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
-                                    const Spectra * const spectra,
-                                    const Range energy_range,
-                                    const ArrayXr *background,
-                                    Gen_Func_Def gen_func)
+OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
+                                                const Spectra * const spectra,
+                                                const Range energy_range,
+                                                const ArrayXr *background,
+                                                Gen_Func_Def gen_func)
 {
 
     Gen_User_Data ud;
@@ -324,13 +336,18 @@ void LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 
+    if (_outcome_map.count(status.outcome) > 0)
+        return _outcome_map[status.outcome];
+
+    return OPTIMIZER_OUTCOME::FAILED;
+
 }
 
 // ----------------------------------------------------------------------------
 
-void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
-                                              std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                              quantification::models::Quantification_Model * quantification_model)
+OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
+                                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                          quantification::models::Quantification_Model * quantification_model)
 {
     Quant_User_Data ud;
 
@@ -363,6 +380,11 @@ void LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
+
+    if (_outcome_map.count(status.outcome) > 0)
+        return _outcome_map[status.outcome];
+
+    return OPTIMIZER_OUTCOME::FAILED;
 }
 
 // ----------------------------------------------------------------------------

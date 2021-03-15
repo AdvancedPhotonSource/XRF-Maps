@@ -70,11 +70,11 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
 
 // --------------------------------------------------------------------------------------------------------------------
 
- std::unordered_map<std::string, real_t> ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                                      const Spectra * const spectra,
-                                                                      const Fit_Element_Map_Dict * const elements_to_fit)
-{
-    std::unordered_map<std::string, real_t> counts_dict;
+optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                            const Spectra * const spectra,
+                                                            const Fit_Element_Map_Dict * const elements_to_fit,
+                                                            std::unordered_map<std::string, real_t>& out_counts)
+ {    
     Fit_Parameters fitp = model->fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
@@ -98,9 +98,9 @@ ROI_Fit_Routine::~ROI_Fit_Routine()
         }
 
         size_t spec_size = (right_roi - left_roi) + 1;
-        counts_dict[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
+        out_counts[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
     }
-    return counts_dict;
+    return optimizers::OPTIMIZER_OUTCOME::CONVERGED;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
