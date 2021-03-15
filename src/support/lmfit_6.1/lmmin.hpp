@@ -24,13 +24,13 @@
 /******************************************************************************/
 
 /* Set machine-dependent constants to values from float.h. */
-#ifdef _REAL_DOUBLE
+//#ifdef _REAL_DOUBLE
   #define LM_MACHEP DBL_EPSILON       /* resolution of arithmetic */
   #define LM_DWARF DBL_MIN            /* smallest nonzero number */
   #define LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
   #define LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
   #define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
-#else
+//#else
 /*
   #define LM_MACHEP FLT_EPSILON       // resolution of arithmetic 
   #define LM_DWARF FLT_MIN            // smallest nonzero number 
@@ -38,14 +38,14 @@
   #define LM_SQRT_GIANT sqrt(FLT_MAX) // square should not overflow 
   #define LM_USERTOL 1.e-7   // users are recommended to require this 
   */
-#define LM_MACHEP 1.19209e-7f       // resolution of arithmetic 
-#define LM_DWARF 1.17549e-38f           // smallest nonzero number 
-#define LM_GIANT   3.40282e+38f
-#define LM_SQRT_DWARF (sqrt(LM_DWARF*1.5f)*10.0f) // square should not underflow 
-#define LM_SQRT_GIANT (sqrt(LM_GIANT)*0.1f) // square should not overflow 
-#define LM_USERTOL 1.19209e-10f  // users are recommended to require this 
+//#define LM_MACHEP 1.19209e-7f       // resolution of arithmetic 
+//#define LM_DWARF 1.17549e-38f           // smallest nonzero number 
+//#define LM_GIANT   3.40282e+38f
+//#define LM_SQRT_DWARF (sqrt(LM_DWARF*1.5f)*10.0f) // square should not underflow 
+//#define LM_SQRT_GIANT (sqrt(LM_GIANT)*0.1f) // square should not overflow 
+//#define LM_USERTOL 1.19209e-10f  // users are recommended to require this 
 
-#endif
+//#endif
 /* If the above values do not work, the following seem good for an x86:
  LM_MACHEP     .555e-16
  LM_DWARF      9.9e-324

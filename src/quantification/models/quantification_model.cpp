@@ -234,7 +234,7 @@ real_t Quantification_Model::absorption(real_t thickness, real_t beta, real_t ll
 
 //-----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p)
+std::unordered_map<std::string, double> Quantification_Model::model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, double p)
 {
     // aux_arr[mm, 0] = absorption
     // aux_arr[mm, 1] = transmission, Be
@@ -247,15 +247,15 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
 //returns array size 3
     //z_prime is array size 3 of element index of calibraion elements
     //std::vector<real_t> result(aux_arr.size);
-    std::unordered_map<std::string, real_t> result_map;
+    std::unordered_map<std::string, double> result_map;
     for(auto& itr : quant_map)
     {
-        real_t val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((real_t)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
+        double val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * (1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
         if(false == std::isfinite(val))
         {
             val = 0;
         }
-        result_map.emplace(std::pair<std::string, real_t>(itr.first, val));
+        result_map.emplace(std::pair<std::string, double>(itr.first, val));
     }
 
     return result_map;
@@ -264,11 +264,11 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Model::model_calibrationcurve(std::vector<Element_Quant> *quant_vec, real_t p)
+void Quantification_Model::model_calibrationcurve(std::vector<Element_Quant> *quant_vec, double p)
 {
     for(auto &itr : *quant_vec)
     {
-        real_t val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((real_t)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
+        double val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * (1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
         if (false == std::isfinite(val))
         {
             val = 0;

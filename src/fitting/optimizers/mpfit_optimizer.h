@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define MPFit_Optimizer_H
 
 #include "fitting/optimizers/optimizer.h"
-#include "support/cmpfit-1.3a/mpfit.hpp"
+#include "support/cmpfit-1.4/mpfit.h"
 
 namespace fitting
 {
@@ -87,17 +87,17 @@ public:
                                                      std::unordered_map<std::string, Element_Quant*> * quant_map,
                                                      quantification::models::Quantification_Model * quantification_model);
 
-    virtual unordered_map<string, real_t> get_options();
+    virtual unordered_map<string, double> get_options();
 
-    virtual void set_options(unordered_map<string, real_t> opt);
+    virtual void set_options(unordered_map<string, double> opt);
 
 private:
 
-	void _fill_limits(Fit_Parameters *fit_params, vector<struct mp_par<real_t> > &par);
+	void _fill_limits(Fit_Parameters *fit_params, vector<struct mp_par_struct > &par);
 	
     inline void _print_info(int info);
 
-    struct mp_config<real_t> _options;
+    mp_config_struct _options;
 
 };
 

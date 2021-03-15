@@ -60,7 +60,7 @@ namespace optimizers
 {
 
 
-void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
+void residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
 {
     User_Data* ud = (User_Data*)(data);
 
@@ -110,7 +110,7 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
 
 //-----------------------------------------------------------------------------
 
-void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
+void quantification_residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
 {
     ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
 
@@ -126,7 +126,7 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, par[0]);
+    std::unordered_map<std::string, double> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, par[0]);
 
     int idx = 0;
     for(auto& itr : ud->quant_map)
@@ -134,7 +134,7 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
         fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
         if (std::isfinite(fvec[idx]) == false)
         {
-            fvec[idx] = std::numeric_limits<real_t>::max();
+            fvec[idx] = std::numeric_limits<double>::max();
         }
         idx++;
     }
@@ -176,9 +176,9 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
 
 // ----------------------------------------------------------------------------
 
-unordered_map<string, real_t> LMFit_Optimizer::get_options()
+unordered_map<string, double> LMFit_Optimizer::get_options()
 {
-    unordered_map<string, real_t> opts{
+    unordered_map<string, double> opts{
         {STR_OPT_FTOL, _options.ftol},
         {STR_OPT_XTOL, _options.xtol},
         {STR_OPT_GTOL, _options.gtol},
@@ -192,7 +192,7 @@ unordered_map<string, real_t> LMFit_Optimizer::get_options()
 
 // ----------------------------------------------------------------------------
 
-void LMFit_Optimizer::set_options(unordered_map<string, real_t> opt)
+void LMFit_Optimizer::set_options(unordered_map<string, double> opt)
 {
     if (opt.count(STR_OPT_FTOL) > 0)
     {
@@ -235,13 +235,13 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 {
 
     User_Data ud;
-    std::vector<real_t> fitp_arr = fit_params->to_array();
-    std::vector<real_t> perror(fitp_arr.size());
+    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> perror(fitp_arr.size());
 
     size_t total_itr = _options.patience * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
-    lm_status_struct<real_t> status;
+    lm_status_struct<double> status;
 
 //    control.ftol = 1.0e-10;
 //    /* Relative error desired in the sum of squares.
@@ -318,12 +318,26 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
-    std::vector<real_t> fitp_arr = fit_params->to_array();
+    std::vector<real_t> fitp_arr = fit_params->to_array_f();
     std::vector<real_t> perror(fitp_arr.size());
 
     lm_status_struct<real_t> status;
 
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
+    //convert options from double to real
+    struct lm_control_struct<real_t> options;
+    options.ftol = (real_t)_options.ftol;
+    options.xtol = (real_t)_options.xtol;
+    options.gtol = (real_t)_options.gtol;
+    options.epsilon = (real_t)_options.epsilon;
+    options.stepbound = _options.stepbound;
+    options.patience = _options.patience;
+    options.scale_diag = _options.scale_diag;
+    options.msgfile = _options.msgfile;
+    options.verbosity = _options.verbosity;
+    options.n_maxpri = _options.n_maxpri;
+    options.m_maxpri = _options.m_maxpri;
+
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &options, &status );
 
     fit_params->from_array(fitp_arr);
 
@@ -361,10 +375,10 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 
-    std::vector<real_t> fitp_arr = fit_params->to_array();
-    std::vector<real_t> perror(fitp_arr.size());
+    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> perror(fitp_arr.size());
 
-    lm_status_struct<real_t> status;
+    lm_status_struct<double> status;
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
 

@@ -103,9 +103,9 @@ public:
 
     real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
 
-    std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
+    std::unordered_map<std::string, double> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, double p);
 
-    void model_calibrationcurve(std::vector<Element_Quant>* quant_vec, real_t p);
+    void model_calibrationcurve(std::vector<Element_Quant>* quant_vec, double p);
 
 protected:
 

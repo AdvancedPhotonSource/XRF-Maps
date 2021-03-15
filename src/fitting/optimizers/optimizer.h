@@ -171,9 +171,9 @@ public:
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model) = 0;
 
-    virtual unordered_map<string, real_t> get_options() = 0;
+    virtual unordered_map<string, double> get_options() = 0;
 
-    virtual void set_options(unordered_map<string, real_t> opt) = 0;
+    virtual void set_options(unordered_map<string, double> opt) = 0;
 
 protected:
     map<int, OPTIMIZER_OUTCOME> _outcome_map;
