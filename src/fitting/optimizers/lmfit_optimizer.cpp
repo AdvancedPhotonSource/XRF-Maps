@@ -149,7 +149,7 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
     _options.ftol = LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
     _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
     _options.gtol = LM_USERTOL; // Orthogonality desired between fvec and its derivs. Termination occurs when the cosine of the angle between fvec and any column of the Jacobian is at most gtol in absolute value.
-    _options.epsilon = LM_MACHEP; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
+    _options.epsilon = LM_USERTOL; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
     _options.stepbound = (real_t)100.; // Used in determining the initial step bound. This bound is set to the product of stepbound and the Euclidean norm of diag*x if nonzero, or else to stepbound itself. In most cases stepbound should lie in the interval (0.1,100.0). Generally, the value 100.0 is recommended.
     _options.patience = 2000; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
     _options.scale_diag = 1; // If 1, the variables will be rescaled internally. Recommended value is 1.
@@ -164,9 +164,9 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
     _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
     _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
     _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[5] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[5] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    _outcome_map[6] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    _outcome_map[7] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
     _outcome_map[8] = OPTIMIZER_OUTCOME::CRASHED;
     _outcome_map[9] = OPTIMIZER_OUTCOME::EXPLODED;
     _outcome_map[10] = OPTIMIZER_OUTCOME::STOPPED;

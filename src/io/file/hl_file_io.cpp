@@ -1083,7 +1083,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
         {
-            *integrated_spectra = spectra_volume.integrate();
             mda_io.unload();
         }
         else
