@@ -50,8 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef LMFit_Optimizer_H
 #define LMFit_Optimizer_H
 
+#include "support/lmfit-6.2/lmmin.h"
 #include "fitting/optimizers/optimizer.h"
-#include "support/lmfit_6.2/lmmin.h"
 
 namespace fitting
 {
@@ -95,7 +95,7 @@ public:
 
 private:
 
-    struct lm_control_struct<double> _options;
+    lm_control_struct _options;
 };
 
 } //namespace optimizers

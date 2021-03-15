@@ -86,7 +86,7 @@ void residuals_lmfit( const double *par, int m_dat, const void *data, double *fv
 }
 
 
-void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fvec, int *userbreak )
+void general_residuals_lmfit( const double *par, int m_dat, const void *data, double *fvec, int *userbreak )
 {
 
     Gen_User_Data* ud = (Gen_User_Data*)(data);
@@ -149,7 +149,7 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
     _options.ftol = LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
     _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
     _options.gtol = LM_USERTOL; // Orthogonality desired between fvec and its derivs. Termination occurs when the cosine of the angle between fvec and any column of the Jacobian is at most gtol in absolute value.
-    _options.epsilon = LM_MACHEP; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
+    _options.epsilon = LM_USERTOL; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
     _options.stepbound = (real_t)100.; // Used in determining the initial step bound. This bound is set to the product of stepbound and the Euclidean norm of diag*x if nonzero, or else to stepbound itself. In most cases stepbound should lie in the interval (0.1,100.0). Generally, the value 100.0 is recommended.
     _options.patience = 2000; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
     _options.scale_diag = 1; // If 1, the variables will be rescaled internally. Recommended value is 1.
@@ -157,7 +157,6 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
     _options.verbosity = 0; //  OR'ed: 1: print some messages; 2: print Jacobian. 
     _options.n_maxpri = -1; // -1, or max number of parameters to print.
     _options.m_maxpri = -1; // -1, or max number of residuals to print. 
-
 
     _outcome_map[0] = OPTIMIZER_OUTCOME::FOUND_ZERO;
     _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
@@ -241,7 +240,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     size_t total_itr = _options.patience * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
 
-    lm_status_struct<double> status;
+    lm_status_struct status;
 
 //    control.ftol = 1.0e-10;
 //    /* Relative error desired in the sum of squares.
@@ -318,26 +317,12 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
-    std::vector<real_t> fitp_arr = fit_params->to_array_f();
-    std::vector<real_t> perror(fitp_arr.size());
+    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> perror(fitp_arr.size());
 
-    lm_status_struct<real_t> status;
+    lm_status_struct status;
 
-    //convert options from double to real
-    struct lm_control_struct<real_t> options;
-    options.ftol = (real_t)_options.ftol;
-    options.xtol = (real_t)_options.xtol;
-    options.gtol = (real_t)_options.gtol;
-    options.epsilon = (real_t)_options.epsilon;
-    options.stepbound = _options.stepbound;
-    options.patience = _options.patience;
-    options.scale_diag = _options.scale_diag;
-    options.msgfile = _options.msgfile;
-    options.verbosity = _options.verbosity;
-    options.n_maxpri = _options.n_maxpri;
-    options.m_maxpri = _options.m_maxpri;
-
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &options, &status );
+    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
 
     fit_params->from_array(fitp_arr);
 
@@ -378,7 +363,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
     std::vector<double> fitp_arr = fit_params->to_array_d();
     std::vector<double> perror(fitp_arr.size());
 
-    lm_status_struct<double> status;
+    lm_status_struct status;
 
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
 
