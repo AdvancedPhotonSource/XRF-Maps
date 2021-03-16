@@ -80,10 +80,9 @@ using namespace fitting::models;
 #define STR_OPT_COVTOL "covtol"
 
 
-enum OPTIMIZER_INFO { IMPROPER_INPUT, MOST_TOL, EXCEED_CALL, TOL_TOO_SMALL, NO_PROGRESS };
-
 typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
 
+enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN };
 
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
@@ -154,29 +153,30 @@ public:
 
     ~Optimizer(){}
 
-    virtual void minimize(Fit_Parameters *fit_params,
+    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters *fit_params,
                           const Spectra * const spectra,
                           const Fit_Element_Map_Dict * const elements_to_fit,
                           const Base_Model * const model,
                           const Range energy_range,
                           Callback_Func_Status_Def* status_callback = nullptr) = 0;
 
-    virtual void minimize_func(Fit_Parameters *fit_params,
+    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters *fit_params,
                                const Spectra * const spectra,
                                const Range energy_range,
                                const ArrayXr* background,
                                Gen_Func_Def gen_func) = 0;
 
 
-    virtual void minimize_quantification(Fit_Parameters *fit_params,
+    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters *fit_params,
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model) = 0;
 
     virtual unordered_map<string, real_t> get_options() = 0;
 
     virtual void set_options(unordered_map<string, real_t> opt) = 0;
-private:
 
+protected:
+    map<int, OPTIMIZER_OUTCOME> _outcome_map;
 
 };
 

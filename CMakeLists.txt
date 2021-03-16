@@ -244,9 +244,7 @@ set(libxrf_fit_SOURCE
     src/data_struct/spectra_volume.cpp
     src/data_struct/stream_block.cpp
     src/quantification/models/quantification_model.cpp
-    src/fitting/models/base_model.cpp
     src/fitting/models/gaussian_model.cpp
-    src/fitting/routines/base_fit_routine.cpp
     src/fitting/routines/param_optimized_fit_routine.cpp
     src/fitting/routines/matrix_optimized_fit_routine.cpp
     src/fitting/routines/roi_fit_routine.cpp

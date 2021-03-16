@@ -79,9 +79,9 @@ public:
 
     ~Analysis_Job();
 
-    struct Detector* get_first_detector();
+    Detector* get_first_detector();
 
-    struct Detector* get_detector(int detector_num);
+    Detector* get_detector(int detector_num);
 
     void set_optimizer(std::string optimizer);
 

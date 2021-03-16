@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <unordered_map>
 
+#include "fitting/optimizers/optimizer.h"
 #include "data_struct/spectra.h"
 #include "fitting/models/base_model.h"
 #include "data_struct/fit_element_map.h"
@@ -73,13 +74,13 @@ public:
     /**
      * @brief Base_Fit_Routine : Constructor
      */
-    Base_Fit_Routine();
+    Base_Fit_Routine() {}
 
     /**
      * @brief ~Base_Fit_Routine : Destructor
      */
-    virtual ~Base_Fit_Routine();
-
+    virtual ~Base_Fit_Routine() {}
+    
     /**
      * @brief fit_spectra : Fit a single specra ( typically 2048 in size )
      * @param fit_params : Fitting parameters required by the routine
@@ -89,9 +90,10 @@ public:
      * @param row_idx : row index used to save the fitted value back into elements_to_fit class
      * @param col_idx : column index used to save the fitted value back into elements_to_fit class
      */
-    virtual std::unordered_map<std::string, real_t> fit_spectra(const models::Base_Model * const model,
-                                                                const Spectra * const spectra,
-                                                                const Fit_Element_Map_Dict * const elements_to_fit) = 0;
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
+                                                      const Spectra * const spectra,
+                                                      const Fit_Element_Map_Dict * const elements_to_fit,
+                                                      std::unordered_map<std::string, real_t>& out_counts) = 0;
 
     /**
      * @brief get_name : Returns fit routine name

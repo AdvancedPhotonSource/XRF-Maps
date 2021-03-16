@@ -70,24 +70,24 @@ class DLL_EXPORT LMFit_Optimizer: public Optimizer
 public:
     LMFit_Optimizer();
 
-    ~LMFit_Optimizer();
+    ~LMFit_Optimizer() {}
 
-    virtual void minimize(Fit_Parameters *fit_params,
-                          const Spectra * const spectra,
-                          const Fit_Element_Map_Dict * const elements_to_fit,
-                          const Base_Model * const model,
-                          const Range energy_range,
-                          Callback_Func_Status_Def* status_callback = nullptr);
+    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters *fit_params,
+                                      const Spectra * const spectra,
+                                      const Fit_Element_Map_Dict * const elements_to_fit,
+                                      const Base_Model * const model,
+                                      const Range energy_range,
+                                      Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual void minimize_func(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               const Range energy_range,
-                               const ArrayXr* background,
-                               Gen_Func_Def gen_func);
+    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters *fit_params,
+                                           const Spectra * const spectra,
+                                           const Range energy_range,
+                                           const ArrayXr* background,
+                                           Gen_Func_Def gen_func);
 
-    virtual void minimize_quantification(Fit_Parameters *fit_params,
-                                         std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                         quantification::models::Quantification_Model * quantification_model);
+    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters *fit_params,
+                                                    std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                    quantification::models::Quantification_Model * quantification_model);
 
     virtual unordered_map<string, real_t> get_options();
 

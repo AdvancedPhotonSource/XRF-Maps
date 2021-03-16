@@ -182,21 +182,24 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
                                     //    1 = perform check
 
     _options.iterproc = 0;         // Placeholder pointer - must set to 0
+
+
+    _outcome_map[0] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
+    _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
+    _outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
+    _outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    _outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    _outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
+
 }
-
-//-----------------------------------------------------------------------------
-
-MPFit_Optimizer::~MPFit_Optimizer()
-{
-
-
-}
-
 // ----------------------------------------------------------------------------
 
 unordered_map<string, real_t> MPFit_Optimizer::get_options()
 {
-    unordered_map<string, float> opts{
+    unordered_map<string, real_t> opts{
     {STR_OPT_FTOL, _options.ftol},
     {STR_OPT_XTOL, _options.xtol},
     {STR_OPT_GTOL, _options.gtol},
@@ -376,13 +379,13 @@ void MPFit_Optimizer::_print_info(int info)
 
 //-----------------------------------------------------------------------------
 
-void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
-                               const Fit_Element_Map_Dict * const elements_to_fit,
-                               const Base_Model * const model,
-                               const Range energy_range,
-                               Callback_Func_Status_Def* status_callback)
-{
+OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
+                                            const Spectra * const spectra,
+                                            const Fit_Element_Map_Dict * const elements_to_fit,
+                                            const Base_Model * const model,
+                                            const Range energy_range,
+                                            Callback_Func_Status_Def* status_callback)
+            {
     User_Data ud;
     size_t num_itr = 2000;
 
@@ -454,15 +457,20 @@ void MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+
+    if (_outcome_map.count(info) > 0)
+        return _outcome_map[info];
+
+    return OPTIMIZER_OUTCOME::FAILED;
 }
 
 //-----------------------------------------------------------------------------
 
-void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
-                                    const Spectra * const spectra,
-                                    const Range energy_range,
-                                    const ArrayXr* background,
-									Gen_Func_Def gen_func)
+OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
+                                                const Spectra * const spectra,
+                                                const Range energy_range,
+                                                const ArrayXr* background,
+									            Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
 
@@ -534,14 +542,17 @@ void MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    if (_outcome_map.count(info) > 0)
+        return _outcome_map[info];
 
+    return OPTIMIZER_OUTCOME::FAILED;
 }
 
 //-----------------------------------------------------------------------------
 
-void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
-                                              std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                              quantification::models::Quantification_Model * quantification_model)
+OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
+                                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                          quantification::models::Quantification_Model * quantification_model)
 {
     Quant_User_Data ud;
 
@@ -623,7 +634,10 @@ void MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    if (_outcome_map.count(info) > 0)
+        return _outcome_map[info];
 
+    return OPTIMIZER_OUTCOME::FAILED;
 
 }
 

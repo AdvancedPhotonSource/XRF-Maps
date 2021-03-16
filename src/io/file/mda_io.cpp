@@ -644,9 +644,12 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 		max_detecotr_num = std::max(det, max_detecotr_num);
 	}
 
-    if(analysis_job->theta_pv.length() > 0)
+    if (analysis_job != nullptr)
     {
-        _find_theta(analysis_job->theta_pv, &analysis_job->theta);
+        if (analysis_job->theta_pv.length() > 0)
+        {
+            _find_theta(analysis_job->theta_pv, &analysis_job->theta);
+        }
     }
 
     if (_mda_file->header->data_rank == 2)

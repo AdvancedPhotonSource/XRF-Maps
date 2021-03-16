@@ -477,5 +477,175 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
+size_t NetCDF_IO::load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra* spectra)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    size_t header_size = 256;
+    int ncid, varid, retval;
+    size_t start[] = { 0, 0, 0 };
+    size_t count[] = { 1, 1, header_size };
+    ptrdiff_t stride[] = { 1, 1, 1 };
+    real_t data_in[1][1][10000];
+    size_t spectra_size;
+    
+    nc_type rh_type;
+    int rh_ndims;
+    int  rh_dimids[NC_MAX_VAR_DIMS] = { 0 };
+    int rh_natts;
+    real_t elapsed_livetime = 0.;
+    real_t elapsed_realtime = 0.;
+    real_t input_counts = 0.;
+    real_t output_counts = 0.;
+
+    size_t dim2size[NC_MAX_VAR_DIMS] = { 0 };
+
+    if ((retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
+    {
+        logE << path << " :: " << nc_strerror(retval) << "\n";
+        return 0;
+    }
+
+
+    if ((retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
+    {
+        logE << path << " :: " << nc_strerror(retval) << "\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    if ((retval = nc_inq_var(ncid, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts)) != 0)
+    {
+        logE << path << " :: " << nc_strerror(retval) << "\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    for (int i = 0; i < rh_ndims; i++)
+    {
+        if ((retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i])) != 0)
+        {
+            logE << path << " :: " << nc_strerror(retval) << "\n";
+            nc_close(ncid);
+            return 0;
+        }
+    }
+
+    if ((retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0])) != 0)
+    {
+        logE << path << " :: " << nc_strerror(retval) << "\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
+    {
+        logE << "NetCDF header not found! Stopping load : " << path << "\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    header_size = data_in[0][0][2];
+    //num_cols = data_in[][0][8];  //sum all across the first dim looking at value 8
+    spectra_size = data_in[0][0][20];
+
+    /*
+    if( num_cols != spec_line->size() )
+    {
+        logW<<"Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< "\n";
+    }
+    */
+    start[2] += header_size;
+    count[2] = header_size;
+    size_t j = 0;
+
+    for (; j < line_size; j++)
+    {
+        //(*spec_line)[j].resize(spectra_size); // should be renames to resize
+
+        //read header
+        if ((retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0])) != 0)
+        {
+            logE << nc_strerror(retval) << "\n";
+            nc_close(ncid);
+            return j;
+        }
+
+        if (data_in[0][0][0] != 13260 || data_in[0][0][1] != -13261)
+        {
+            if (j < line_size - 2)
+            {
+                logE << "NetCDF sub header not found! Stopping load at Col: " << j << " path :" << path << "\n";
+                nc_close(ncid);
+                return j;
+            }
+            //last two may not be filled with data
+            //TODO: send end of row stream_block down pipeline
+            nc_close(ncid);
+            return j;
+        }
+
+        unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET + (detector * 8)];
+        unsigned short i2 = data_in[0][0][ELAPSED_LIVETIME_OFFSET + (detector * 8) + 1];
+        unsigned int ii = i1 | i2 << 16;
+        elapsed_livetime += ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+
+        i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET + (detector * 8)];
+        i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET + (detector * 8) + 1];
+        ii = i1 | i2 << 16;
+        elapsed_realtime += ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+
+        i1 = data_in[0][0][INPUT_COUNTS_OFFSET + (detector * 8)];
+        i2 = data_in[0][0][INPUT_COUNTS_OFFSET + (detector * 8) + 1];
+        ii = i1 | i2 << 16;
+        input_counts += ((float)ii) / elapsed_livetime;
+
+        i1 = data_in[0][0][OUTPUT_COUNTS_OFFSET + (detector * 8)];
+        i2 = data_in[0][0][OUTPUT_COUNTS_OFFSET + (detector * 8) + 1];
+        ii = i1 | i2 << 16;
+        output_counts += ((float)ii) / elapsed_realtime;
+
+        start[2] += header_size + (spectra_size * detector);
+        count[2] = spectra_size;
+
+        if ((retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0])) != 0)
+        {
+            logE << " path :" << path << " : " << nc_strerror(retval) << "\n";
+            nc_close(ncid);
+            return j;
+        }
+
+        for (size_t k = 0; k < spectra_size; k++)
+        {
+            (*spectra)(k) += data_in[0][0][k];
+        }
+
+        start[2] += spectra_size * (4 - detector);
+        count[2] = header_size;
+
+        if (start[2] >= dim2size[2])
+        {
+            start[0]++;
+            start[2] = header_size;
+        }
+
+    }
+
+    spectra->elapsed_livetime(elapsed_livetime);
+    spectra->elapsed_realtime(elapsed_realtime);
+    spectra->input_counts(input_counts);
+    spectra->output_counts(output_counts);
+    // recalculate elapsed lifetime
+    spectra->recalc_elapsed_livetime();
+
+    if ((retval = nc_close(ncid)))
+    {
+        logE << " path :" << path << " : " << nc_strerror(retval) << "\n";
+        return j;
+    }
+
+    return j;
+}
+
 } //end namespace file
 }// end namespace io

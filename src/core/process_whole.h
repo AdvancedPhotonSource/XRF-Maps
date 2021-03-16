@@ -127,7 +127,7 @@ DLL_EXPORT bool optimize_integrated_fit_params(std::string dataset_directory,
                                             data_struct::Params_Override* params_override,
                                             fitting::models::Fit_Params_Preset,
                                             fitting::optimizers::Optimizer *optimizer,
-                                            data_struct::Spectra *out_spectra);
+                                            data_struct::Fit_Parameters& out_fitp);
 
 // ----------------------------------------------------------------------------
 

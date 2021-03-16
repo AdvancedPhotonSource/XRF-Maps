@@ -169,16 +169,17 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
 
 // ----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                                                 const Spectra * const spectra,
-                                                                                 const Fit_Element_Map_Dict * const elements_to_fit)
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                           const Spectra * const spectra,
+                                                           const Fit_Element_Map_Dict * const elements_to_fit,
+                                                           std::unordered_map<std::string, real_t>& out_counts)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     // fitp.g.xmin = MIN_ENERGY_TO_FIT
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
 
-    std::unordered_map<std::string, real_t> counts_dict;
+    OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
@@ -196,14 +197,14 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
 
         for (auto el_itr : *elements_to_fit)
         {
-            counts_dict[el_itr.first] = -10.0;
+            out_counts[el_itr.first] = -10.0;
         }
-        return counts_dict;
+        return OPTIMIZER_OUTCOME::FOUND_ZERO;
     }
 
     if(_optimizer != nullptr)
     {
-        _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
+        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
 
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -211,7 +212,7 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
             real_t value =  fit_params.at(el_itr.first).value;
             //convert from log10
             value = std::pow((real_t)10.0, value);
-            counts_dict[el_itr.first] = value;
+            out_counts[el_itr.first] = value;
         }
 
         //model->update_fit_params_values(fit_params);
@@ -219,26 +220,29 @@ std::unordered_map<std::string, real_t> Param_Optimized_Fit_Routine::fit_spectra
         //check if we are saving the number of iterations and save if so
         if(fit_params.contains(STR_NUM_ITR))
         {
-            counts_dict[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
+            out_counts[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
         }
         if (fit_params.contains(STR_RESIDUAL))
         {
-            counts_dict[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
+            out_counts[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
         }
     }
 
-    return counts_dict;
+    return ret_val;
 }
 
 // ----------------------------------------------------------------------------
 
-Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
-                                                        const Spectra * const spectra,
-                                                        const Fit_Element_Map_Dict * const elements_to_fit,
-                                                        Callback_Func_Status_Def* status_callback)
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
+                                                                    const Spectra * const spectra,
+                                                                    const Fit_Element_Map_Dict * const elements_to_fit,
+                                                                    Fit_Parameters& out_fit_params,
+                                                                    Callback_Func_Status_Def* status_callback)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
+
+    OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
     Fit_Parameters fit_params = model->fit_parameters();
     //Add fit param for number of iterations
@@ -254,16 +258,17 @@ Fit_Parameters Param_Optimized_Fit_Routine::fit_spectra_parameters(const models:
     if(spectra->sum() == 0)
     {
         fit_params.set_all_value(-10.0, E_Bound_Type::FIT);
+        return OPTIMIZER_OUTCOME::FOUND_ZERO;
     }
     else
     {
         if(_optimizer != nullptr)
         {
-            _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
+            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
         }
     }
-
-    return fit_params;
+    out_fit_params.append_and_update(&fit_params);
+    return ret_val;
 }
 
 

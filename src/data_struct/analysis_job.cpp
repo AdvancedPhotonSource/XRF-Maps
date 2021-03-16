@@ -92,9 +92,9 @@ Analysis_Job::~Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-struct Detector* Analysis_Job::get_first_detector()
+Detector* Analysis_Job::get_first_detector()
 {
-       struct Detector* detector = nullptr;
+       Detector* detector = nullptr;
        for(auto &itr : detectors_meta_data)
        {
            detector = &(itr.second);
@@ -105,9 +105,9 @@ struct Detector* Analysis_Job::get_first_detector()
 
 //-----------------------------------------------------------------------------
 
-struct Detector* Analysis_Job::get_detector(int detector_num)
+Detector* Analysis_Job::get_detector(int detector_num)
 {
-       struct Detector* detector = nullptr;
+       Detector* detector = nullptr;
        if(detectors_meta_data.count(detector_num) > 0)
        {
             detector = &(detectors_meta_data.at(detector_num));
