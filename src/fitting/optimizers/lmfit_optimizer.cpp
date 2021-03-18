@@ -356,33 +356,33 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
         {
             ud.quant_map[itr.first] = *(itr.second);
         }
+
+        ud.quantification_model = quantification_model;
+        ud.fit_parameters = fit_params;
+
+        std::vector<double> fitp_arr = fit_params->to_array_d();
+        std::vector<double> perror(fitp_arr.size());
+
+        lm_status_struct status;
+
+        lmmin(fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*)&ud, quantification_residuals_lmfit, &_options, &status);
+
+        logI << lm_infmsg[status.outcome] << "\n";
+
+        fit_params->from_array(fitp_arr);
+
+        if (fit_params->contains(STR_NUM_ITR))
+        {
+            (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
+        }
+        if (fit_params->contains(STR_RESIDUAL))
+        {
+            (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+        }
+
+        if (_outcome_map.count(status.outcome) > 0)
+            return _outcome_map[status.outcome];
     }
-    ud.quantification_model = quantification_model;
-    ud.fit_parameters = fit_params;
-
-    std::vector<double> fitp_arr = fit_params->to_array_d();
-    std::vector<double> perror(fitp_arr.size());
-
-    lm_status_struct status;
-
-    lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
-
-    logI<<lm_infmsg[status.outcome]<<"\n";
-
-    fit_params->from_array(fitp_arr);
-
-    if (fit_params->contains(STR_NUM_ITR) )
-    {
-        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(status.nfev);
-    }
-    if (fit_params->contains(STR_RESIDUAL))
-    {
-        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
-    }
-
-    if (_outcome_map.count(status.outcome) > 0)
-        return _outcome_map[status.outcome];
-
     return OPTIMIZER_OUTCOME::FAILED;
 }
 

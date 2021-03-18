@@ -146,6 +146,10 @@ int quantification_residuals_mpfit(int m, int params_size, double *params, doubl
     for(auto& itr : ud->quant_map)
     {
         dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+        if (std::isfinite(dy[idx]) == false)
+        {
+            dy[idx] = std::numeric_limits<double>::max();
+        }
         idx++;
     }
 
@@ -164,7 +168,7 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
     _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     _options.stepfactor = 100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = 1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    _options.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    _options.maxiter = 4000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
