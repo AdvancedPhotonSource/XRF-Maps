@@ -24,6 +24,9 @@
 #define __END_DECLS   /* empty */
 #endif
 
+#include <float.h>
+#include <assert.h>
+
  /* machine-dependent constants from float.h */
 #define LM_MACHEP     DBL_EPSILON   /* resolution of arithmetic */
 #define LM_DWARF      DBL_MIN       /* smallest nonzero number */
