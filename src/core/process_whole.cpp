@@ -137,7 +137,8 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
                                     size_t detector_num,
                                     data_struct::Params_Override* params_override,
                                     fitting::models::Fit_Params_Preset optimize_fit_params_preset,
-                                    fitting::optimizers::Optimizer* optimizer)
+                                    fitting::optimizers::Optimizer* optimizer,
+                                    data_struct::Fit_Parameters& out_fitp)
 {
     fitting::models::Gaussian_Model model;
     bool ret_val = false;
@@ -169,17 +170,33 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         //Initialize the fit routine
         fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
 
-        data_struct::Fit_Parameters out_fitp;
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
-        if(outcome == fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED || outcome == fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
+
+
+        switch (outcome)
         {
+
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
+            // if we have a good fit, update our fit parameters so we are closer for the next fit
             params_override->fit_params.append_and_update(&out_fitp);
             ret_val = true;
-        }
-        else
-        {
+            break;
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
+            ret_val = true;
+            break;
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FAILED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED:
             ret_val = false;
+            break;
         }
         io::save_optimized_fit_params(dataset_directory, dataset_filename, detector_num, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
     }
@@ -232,16 +249,17 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
                 }
             }
 
-            if(optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()))
+            data_struct::Fit_Parameters out_fitp;
+            if(optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), out_fitp))
             {
                 detector_file_cnt[detector_num] += 1.0;
                 if (fit_params_avgs.count(detector_num) > 0)
                 {
-                    fit_params_avgs[detector_num].sum_values(params_override->fit_params);
+                    fit_params_avgs[detector_num].sum_values(out_fitp);
                 }
                 else
                 {
-                    fit_params_avgs[detector_num] = params_override->fit_params;
+                    fit_params_avgs[detector_num] = out_fitp;
                 }
             }
         }

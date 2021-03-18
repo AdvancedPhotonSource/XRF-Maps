@@ -190,9 +190,9 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
     _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
     _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
     _outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[8] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    _outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    _outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
 
 }
 // ----------------------------------------------------------------------------

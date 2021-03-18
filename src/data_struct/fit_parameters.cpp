@@ -154,7 +154,7 @@ void Fit_Parameters::sum_values(Fit_Parameters fit_params)
     }
 }
 
-void Fit_Parameters::divide_fit_values_by(real_t divisor)
+void Fit_Parameters::divide_fit_values_by(double divisor)
 {
     for(const auto &itr : _params)
     {
@@ -202,7 +202,7 @@ void Fit_Parameters::from_array(const double* arr, size_t arr_size)
     //logit_s<<"\n";
 }
 
-void Fit_Parameters::set_all_value(real_t value, E_Bound_Type btype)
+void Fit_Parameters::set_all_value(double value, E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
