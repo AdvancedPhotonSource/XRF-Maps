@@ -617,7 +617,7 @@ bool load_override_params(std::string dataset_directory,
             logit_s<<itr.first<<" ";
         }
         logit_s<<"\n";
-
+        /*
         if (false == params_override->fit_params.contains(STR_COHERENT_SCT_AMPLITUDE))
         {
             params_override->fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, 5.0));
@@ -626,6 +626,7 @@ bool load_override_params(std::string dataset_directory,
         {
             params_override->fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE, 5.0));
         }
+        */
     }
 
     return true;
@@ -1073,7 +1074,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
-    //if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, nullptr, out_rows, out_cols, cb_function, integrated_spectra))
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";

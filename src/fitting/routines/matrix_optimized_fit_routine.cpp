@@ -261,7 +261,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
         }
 
         //set num iter to 200;
-        unordered_map<string, real_t> opt_options{ {STR_OPT_MAXITER, 200.} };
+        unordered_map<string, double> opt_options{ {STR_OPT_MAXITER, 200.} };
 
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         _optimizer->set_options(opt_options);
@@ -290,16 +290,16 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
 		}
 
 		//model fit spectra
-        Spectra model(_energy_range.count());
-        this->model_spectrum(&fit_params, &_energy_range, &model);
+        Spectra model_spectra(_energy_range.count());
+        this->model_spectrum(&fit_params, &_energy_range, &model_spectra);
         
-        model += background;
-        model = (ArrayXr)model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+        model_spectra += background;
+        model_spectra = (ArrayXr)model_spectra.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 
 		//lock and integrate results
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);
-            _integrated_fitted_spectra.add(model);
+            _integrated_fitted_spectra.add(model_spectra);
             _integrated_background.add(background);
 
 			//we don't know the spectra size during initlaize() will have to resize here

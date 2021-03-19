@@ -172,6 +172,8 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
 
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+
+
         switch (outcome)
         {
 

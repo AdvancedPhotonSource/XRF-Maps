@@ -103,9 +103,9 @@ void Fit_Parameters::append_and_update(Fit_Parameters* fit_params)
 	}
 }
 
-std::vector<real_t> Fit_Parameters::to_array()
+std::vector<float> Fit_Parameters::to_array_f()
 {
-    std::vector<real_t> arr;
+    std::vector<float> arr;
     for(const auto& itr : _params)
     {
         if (itr.second.bound_type > E_Bound_Type::FIXED)
@@ -116,6 +116,21 @@ std::vector<real_t> Fit_Parameters::to_array()
     }
     return arr;
 }
+
+std::vector<double> Fit_Parameters::to_array_d()
+{
+    std::vector<double> arr;
+    for (const auto& itr : _params)
+    {
+        if (itr.second.bound_type > E_Bound_Type::FIXED)
+        {
+            _params[itr.first].opt_array_index = arr.size();
+            arr.push_back(itr.second.value);
+        }
+    }
+    return arr;
+}
+
 
 std::vector<std::string> Fit_Parameters::names_to_array()
 {
@@ -139,7 +154,7 @@ void Fit_Parameters::sum_values(Fit_Parameters fit_params)
     }
 }
 
-void Fit_Parameters::divide_fit_values_by(real_t divisor)
+void Fit_Parameters::divide_fit_values_by(double divisor)
 {
     for(const auto &itr : _params)
     {
@@ -151,12 +166,17 @@ void Fit_Parameters::divide_fit_values_by(real_t divisor)
 
 }
 
-void Fit_Parameters::from_array(std::vector<real_t> &arr)
+void Fit_Parameters::from_array(std::vector<float> &arr)
 {
     from_array(&arr[0], arr.size());
 }
 
-void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
+void Fit_Parameters::from_array(std::vector<double>& arr)
+{
+    from_array(&arr[0], arr.size());
+}
+
+void Fit_Parameters::from_array(const float* arr, size_t arr_size)
 {
     //logit_s<<"\n";
     for(auto& itr : _params)
@@ -169,7 +189,20 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     //logit_s<<"\n";
 }
 
-void Fit_Parameters::set_all_value(real_t value, E_Bound_Type btype)
+void Fit_Parameters::from_array(const double* arr, size_t arr_size)
+{
+    //logit_s<<"\n";
+    for (auto& itr : _params)
+    {
+        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < (int)arr_size)
+        {
+            itr.second.value = arr[itr.second.opt_array_index];
+        }
+    }
+    //logit_s<<"\n";
+}
+
+void Fit_Parameters::set_all_value(double value, E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
