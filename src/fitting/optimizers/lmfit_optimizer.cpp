@@ -234,7 +234,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
 {
 
     User_Data ud;
-    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> fitp_arr = fit_params->to_array();
     std::vector<double> perror(fitp_arr.size());
 
     size_t total_itr = _options.patience * (fitp_arr.size() + 1);
@@ -297,6 +297,12 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 
+    if (fit_params->contains(STR_OUTCOME))
+    {
+        if (_outcome_map.count(status.outcome) > 0)
+            (*fit_params)[STR_OUTCOME].value = (real_t)(_outcome_map[status.outcome]);
+    }
+
     if(_outcome_map.count(status.outcome)>0)
         return _outcome_map[status.outcome];
 
@@ -317,7 +323,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
-    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> fitp_arr = fit_params->to_array();
     std::vector<double> perror(fitp_arr.size());
 
     lm_status_struct status;
@@ -332,7 +338,10 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
-        (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+        data_struct::ArrayXr diff_arr = ud.spectra - ud.spectra_model;
+        diff_arr = diff_arr.unaryExpr([](real_t v) { return std::abs(v); });
+        //(*fit_params)[STR_RESIDUAL].value = status.fnorm;
+        (*fit_params)[STR_RESIDUAL].value = diff_arr.sum();
     }
 
     if (_outcome_map.count(status.outcome) > 0)
@@ -360,7 +369,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
         ud.quantification_model = quantification_model;
         ud.fit_parameters = fit_params;
 
-        std::vector<double> fitp_arr = fit_params->to_array_d();
+        std::vector<double> fitp_arr = fit_params->to_array();
         std::vector<double> perror(fitp_arr.size());
 
         lm_status_struct status;

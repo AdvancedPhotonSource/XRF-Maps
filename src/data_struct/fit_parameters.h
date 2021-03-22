@@ -207,17 +207,11 @@ public:
 
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 
-    std::vector<float> to_array_f();
-
-    std::vector<double> to_array_d();
+    std::vector<double> to_array();
 
     std::vector<std::string> names_to_array();
 
-    void from_array(std::vector<float> &arr);
-
     void from_array(std::vector<double>& arr);
-
-    void from_array(const float* arr, size_t arr_size);
 
     void from_array(const double* arr, size_t arr_size);
 

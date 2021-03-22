@@ -393,7 +393,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     User_Data ud;
     size_t num_itr = 2000;
 
-    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> fitp_arr = fit_params->to_array();
     std::vector<double> perror(fitp_arr.size());
     std::vector<double> resid(energy_range.count());
 
@@ -481,7 +481,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
     
 
-    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> fitp_arr = fit_params->to_array();
     std::vector<double> perror(fitp_arr.size());
     std::vector<double> resid(energy_range.count());
 
@@ -568,7 +568,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 
-    std::vector<double> fitp_arr = fit_params->to_array_d();
+    std::vector<double> fitp_arr = fit_params->to_array();
     std::vector<double> perror(fitp_arr.size());
     std::vector<double> resid(quant_map->size());
 

@@ -261,7 +261,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
         }
 
         //set num iter to 200;
-        unordered_map<string, double> opt_options{ {STR_OPT_MAXITER, 200.} };
+        unordered_map<string, double> opt_options{ {STR_OPT_MAXITER, 400.} };
 
         std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
         _optimizer->set_options(opt_options);
