@@ -557,7 +557,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 void find_quantifier_scalers(data_struct::Params_Override * override_params, unordered_map<string, string> &pv_map, Quantification_Standard* quantification_standard)
 {
-    std::string quant_scalers_names[] = {"US_IC", "DS_IC", "SRCURRENT"};
+    std::string quant_scalers_names[] = { STR_US_IC, STR_DS_IC, "SRCURRENT"};
     real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
     real_t scaler_clock = std::stof(override_params->time_scaler_clock);
     int i =0;

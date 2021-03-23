@@ -68,8 +68,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
                                                        "Element_Weights_Names",
-                                                       "DS_IC",
-                                                       "US_IC",
+													   STR_DS_IC,
+													   STR_US_IC,
                                                        "Standard_Name",
                                                        "Channel_Names",
 													   "Channel_Units",
@@ -5133,21 +5133,21 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 
             //save sr_current
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "SR_Current", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_SR_CURRENT.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.sr_current));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
 
             //save us_ic
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "US_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_US_IC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.US_IC));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
 
             //save ds_ic
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "DS_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_DS_IC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.DS_IC));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
@@ -6065,11 +6065,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                 {
                     std::string upper_scaler_name = scaler.name;
                     std::transform(upper_scaler_name.begin(), upper_scaler_name.end(), upper_scaler_name.begin(), ::toupper);
-                    if (upper_scaler_name == "US_IC")
+                    if (upper_scaler_name == STR_US_IC)
                     {
                         us_ic_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "DS_IC")
+                    if (upper_scaler_name == STR_DS_IC)
                     {
                         ds_ic_map = &(scaler.values);
                     }
@@ -7011,7 +7011,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 	//Save scalers
 	//names
-	std::vector<std::string> names_array = { "US_IC", "DS_IC", "I2", "TSCALER" };
+	std::vector<std::string> names_array = { STR_US_IC, STR_DS_IC, "I2", "TSCALER" };
     std::vector<std::string> units_array = { "cts/us", "cts/us", "cts/us", "us" };
 	hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
 	single_count[0] = 4;
@@ -8670,7 +8670,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) >= 0)
     {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "ROI", "/MAPS/XRF_roi_quant");
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_ROI, "/MAPS/XRF_roi_quant");
     }
 
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", 0, NULL) >= 0)
@@ -8679,7 +8679,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) >= 0)
     {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "NNLS", "/MAPS/XRF_roi_plus_quant");
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_NNLS, "/MAPS/XRF_roi_plus_quant");
     }
 
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", 0, NULL) >= 0)
@@ -8688,7 +8688,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) >= 0)
     {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
     }
 
     _add_extra_pvs(file_id, "/MAPS");
@@ -9271,8 +9271,8 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
     hid_t saved_file_id = _cur_file_id;
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
-    std::string exchange_fits[4] = {"Fitted", "ROI", "NNLS", "Fitted"};
-    std::string exchange_normalize[4] = {"DS_IC", "", "", ""};
+    std::string exchange_fits[4] = { STR_FIT_GAUSS_MATRIX, STR_FIT_ROI, STR_FIT_NNLS, STR_FIT_GAUSS_MATRIX };
+    std::string exchange_normalize[4] = { STR_DS_IC, "", "", ""};
 
     int ex_idx = 0;
     for(int i=0; i < 4; i++)
@@ -9304,7 +9304,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
 
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    std::string exchange_fits[4] = { "Fitted", "ROI", "NNLS"};
+    std::string exchange_fits[4] = { STR_FIT_GAUSS_MATRIX, STR_FIT_ROI, STR_FIT_NNLS };
 
     if (file_id > 0)
     {

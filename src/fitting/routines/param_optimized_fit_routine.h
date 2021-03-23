@@ -81,7 +81,7 @@ public:
                                           Fit_Parameters& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual std::string get_name() { return "Params"; }
+    virtual std::string get_name() { return STR_FIT_GAUSS_TAILS; }
 
     virtual void initialize(models::Base_Model * const model,
                             const Fit_Element_Map_Dict * const elements_to_fit,
