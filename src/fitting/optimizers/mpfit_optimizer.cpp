@@ -540,7 +540,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         real_t sum_resid = 0.0;
         for (int i = 0; i< energy_range.count(); i++)
         {
-             sum_resid += resid[i];
+             sum_resid += std::abs(resid[i]);
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }

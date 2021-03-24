@@ -376,7 +376,8 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 			io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
 																matrix_fit->energy_range(),
 																matrix_fit->max_integrated_spectra(),
-																matrix_fit->max_10_integrated_spectra());
+																matrix_fit->max_10_integrated_spectra(),
+                                                                matrix_fit->fitted_integrated_background());
 		}
 
         delete fit_job_queue;

@@ -200,7 +200,10 @@ const string STR_COMPTON_LINES = "Compton";
 const string STR_PILEUP_LINES = "Pile Up";
 const string STR_ESCAPE_LINES = "Escape";
 
-
+const string STR_FIT_INT_SPEC = "Fitted_Integrated_Spectra";
+const string STR_MAX_CHANNELS_INTEGRATED_SPECTRA = "Max_Channels_Integrated_Spectra";
+const string STR_MAX10_INT_SPEC = "Max_10_Channels_Integrated_Spectra";
+const string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
 //}
 
 //}// namespace keys

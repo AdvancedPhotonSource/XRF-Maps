@@ -186,7 +186,8 @@ public:
 	bool save_max_10_spectra(const std::string path,
 							const data_struct::Range& range,
 							const data_struct::Spectra& max_spectra,
-							const data_struct::Spectra& max_10_spectra);
+							const data_struct::Spectra& max_10_spectra,
+                            const data_struct::Spectra& fit_int_background);
 
     bool save_quantification(data_struct::Detector * detector);
 

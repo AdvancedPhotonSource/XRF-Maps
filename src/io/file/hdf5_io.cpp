@@ -4729,8 +4729,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     hid_t   dset_id, dataspace_id, status;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-    std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
-    std::string background_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Background";
+    std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/" + STR_FIT_INT_SPEC;
+    std::string background_name = "/MAPS/XRF_Analyzed/" + path + "/" + STR_FIT_INT_BACKGROUND;
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
@@ -4821,7 +4821,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
 bool HDF5_IO::save_max_10_spectra(const std::string path,
 	const data_struct::Range& spectra_range,
 	const data_struct::Spectra& max_spectra,
-	const data_struct::Spectra& max_10_spectra)
+	const data_struct::Spectra& max_10_spectra,
+    const data_struct::Spectra& fit_int_background)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 
@@ -4834,9 +4835,7 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 	bool ret_val = true;
 	hid_t   dset_id, maps_grp_id, spec_grp_id, int_spec_grp_id, dataspace_id, status;
 	std::chrono::time_point<std::chrono::system_clock> start, end;
-	start = std::chrono::system_clock::now();
-	std::string max_name = "Max_Channels_Integrated_Spectra";
-	std::string max10_name = "Max_10_Channels_Integrated_Spectra";
+	start = std::chrono::system_clock::now();    
 
 	hsize_t offset[1] = { 0 };
 	hsize_t count[1] = { 1 };
@@ -4871,14 +4870,14 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		ret_val = false;
 	}
 
-	dset_id = H5Dopen(int_spec_grp_id, max_name.c_str(), H5P_DEFAULT);
+	dset_id = H5Dopen(int_spec_grp_id, STR_MAX_CHANNELS_INTEGRATED_SPECTRA.c_str(), H5P_DEFAULT);
 	if (dset_id < 0)
 	{
-		dset_id = H5Dcreate2(int_spec_grp_id, max_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dset_id = H5Dcreate2(int_spec_grp_id, STR_MAX_CHANNELS_INTEGRATED_SPECTRA.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	if (dset_id < 0)
 	{
-		logE << "creating dataset " << max_name << "\n";
+		logE << "creating dataset " << STR_MAX_CHANNELS_INTEGRATED_SPECTRA << "\n";
 		ret_val = false;
 	}
 	else
@@ -4886,20 +4885,20 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_spectra.data());
 		if (status < 0)
 		{
-			logW << "Failed to save " << max_name << "\n";
+			logW << "Failed to save " << STR_MAX_CHANNELS_INTEGRATED_SPECTRA << "\n";
 			ret_val = false;
 		}
 		H5Dclose(dset_id);
 	}
 
-	dset_id = H5Dopen(int_spec_grp_id, max10_name.c_str(), H5P_DEFAULT);
+	dset_id = H5Dopen(int_spec_grp_id, STR_MAX10_INT_SPEC.c_str(), H5P_DEFAULT);
 	if (dset_id < 0)
 	{
-		dset_id = H5Dcreate2(int_spec_grp_id, max10_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dset_id = H5Dcreate2(int_spec_grp_id, STR_MAX10_INT_SPEC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	if (dset_id < 0)
 	{
-		logE << "creating dataset " << max10_name << "\n";
+		logE << "creating dataset " << STR_MAX10_INT_SPEC << "\n";
 		ret_val = false;
 	}
 	else
@@ -4907,11 +4906,32 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_10_spectra.data());
 		if (status < 0)
 		{
-			logW << "Failed to save " << max10_name << "\n";
+			logW << "Failed to save " << STR_MAX10_INT_SPEC << "\n";
 			ret_val = false;
 		}
 		H5Dclose(dset_id);
 	}
+
+    dset_id = H5Dopen(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dset_id = H5Dcreate2(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (dset_id < 0)
+    {
+        logE << "creating dataset " << STR_FIT_INT_BACKGROUND << "\n";
+        ret_val = false;
+    }
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)fit_int_background.data());
+        if (status < 0)
+        {
+            logW << "Failed to save " << STR_FIT_INT_BACKGROUND << "\n";
+            ret_val = false;
+        }
+        H5Dclose(dset_id);
+    }
 
 	if (maps_grp_id > -1)
 	{
@@ -7796,8 +7816,8 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
 
                 if (analysis_grp_name == STR_FIT_NNLS || analysis_grp_name == STR_FIT_GAUSS_MATRIX)
                 {
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/Fitted_Integrated_Spectra", "Fitted_Integrated_Spectra", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/Fitted_Integrated_Background", "Fitted_Integrated_Background", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_SPEC, STR_FIT_INT_SPEC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_BACKGROUND, STR_FIT_INT_BACKGROUND, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
                 }
                 H5Gclose(dst_fit_grp_id);
                 H5Gclose(src_fit_grp_id);
@@ -7822,8 +7842,8 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
         _gen_average(group_name+"/Integrated_Spectra/Elapsed_Realtime", "Elapsed_Realtime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Input_Counts", "Input_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Output_Counts", "Output_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/Max_Channels_Integrated_Spectra", "Max_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/Max_10_Channels_Integrated_Spectra", "Max_10_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/" + STR_MAX_CHANNELS_INTEGRATED_SPECTRA, STR_MAX_CHANNELS_INTEGRATED_SPECTRA, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/" + STR_MAX10_INT_SPEC, STR_MAX10_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
 
         //don't average the integrated spectra, just sum it
         _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
@@ -8521,9 +8541,9 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
 
 
-	std::string fit_int_name = "/MAPS/XRF_Analyzed/Fitted/Fitted_Integrated_Spectra";
-	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/Max_10_Channels_Integrated_Spectra";
+	std::string fit_int_name = "/MAPS/XRF_Analyzed/Fitted/" + STR_FIT_INT_SPEC;
+	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/" + STR_MAX_CHANNELS_INTEGRATED_SPECTRA;
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/" + STR_MAX10_INT_SPEC;
 	std::string v9_max_name = "/MAPS/max_chan_spec";
 	hid_t fit_int_id, max_id, max_10_id, max_space, max_type, v9_max_id, v9_space;
 	
@@ -9379,7 +9399,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
                 }
             }
 
-            h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Spectra";
+            h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/"+ STR_FIT_INT_SPEC;
             if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
             {
                 if (dims_in[0] > 0)
