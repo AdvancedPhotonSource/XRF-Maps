@@ -103,7 +103,7 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
 
     fit_params.add_parameter(Fit_Param(STR_COMPTON_ANGLE,		 (real_t)-0.0001, (real_t)0.0001, (real_t)90.0, (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_COMPTON_FWHM_CORR,    (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE,    (real_t)-0.0001, (real_t)0.0001, (real_t)5.0, (real_t)0.000001,  E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE,    (real_t)-0.0001, (real_t)0.0001, (real_t)5.0, (real_t)0.00001,  E_Bound_Type::FIT));
     fit_params.add_parameter(Fit_Param(STR_COMPTON_F_STEP,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param(STR_COMPTON_F_TAIL,		 (real_t)-0.0001, (real_t)0.0001, (real_t)0.0,  (real_t)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_COMPTON_GAMMA,		 (real_t)-0.0001, (real_t)0.0001, (real_t)1.0,  (real_t)0.1,       E_Bound_Type::FIXED));
