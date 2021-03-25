@@ -137,7 +137,8 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
                                     size_t detector_num,
                                     data_struct::Params_Override* params_override,
                                     fitting::models::Fit_Params_Preset optimize_fit_params_preset,
-                                    fitting::optimizers::Optimizer* optimizer)
+                                    fitting::optimizers::Optimizer* optimizer,
+                                    data_struct::Fit_Parameters& out_fitp)
 {
     fitting::models::Gaussian_Model model;
     bool ret_val = false;
@@ -171,14 +172,29 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
 
         data_struct::Fit_Parameters out_fitp;
         //Fit the spectra saving the element counts in element_fit_count_dict
-        if (fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp) == fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
+        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+        switch (outcome)
         {
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
+            // if we have a good fit, update our fit parameters so we are closer for the next fit
             params_override->fit_params.append_and_update(&out_fitp);
             ret_val = true;
-        }
-        else
-        {
+            break;
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
+            ret_val = true;
+            break;
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FAILED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED:
             ret_val = false;
+            break;
         }
         io::save_optimized_fit_params(dataset_directory, dataset_filename, detector_num, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
     }
@@ -231,7 +247,8 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
                 }
             }
 
-            if(optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer()))
+            data_struct::Fit_Parameters out_fitp;
+            if (optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), out_fitp))
             {
                 detector_file_cnt[detector_num] += 1.0;
                 if (fit_params_avgs.count(detector_num) > 0)
@@ -357,7 +374,8 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 			io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
 																matrix_fit->energy_range(),
 																matrix_fit->max_integrated_spectra(),
-																matrix_fit->max_10_integrated_spectra());
+																matrix_fit->max_10_integrated_spectra(),
+                                                                matrix_fit->fitted_integrated_background());
 		}
 
         delete fit_job_queue;
@@ -538,7 +556,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 void find_quantifier_scalers(data_struct::Params_Override * override_params, unordered_map<string, string> &pv_map, Quantification_Standard* quantification_standard)
 {
-    std::string quant_scalers_names[] = {"US_IC", "DS_IC", "SRCURRENT"};
+    std::string quant_scalers_names[] = {STR_US_IC, STR_DS_IC, "SRCURRENT"};
     real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
     real_t scaler_clock = std::stof(override_params->time_scaler_clock);
     int i =0;

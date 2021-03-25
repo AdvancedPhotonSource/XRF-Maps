@@ -598,17 +598,6 @@ bool load_override_params(std::string dataset_directory,
             detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
         }
 
-
-        //add compton and coherant amp
-        if(params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
-        {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)) );
-        }
-        if(params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
-        {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
-        }
-
         logI<<"Elements to fit:  ";
         //Update element ratios by detector element
         for(auto& itr : params_override->elements_to_fit)
@@ -1073,7 +1062,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
-    //if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+ DIR_END_CHAR +dataset_file, detector_num, &spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
     if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, nullptr, out_rows, out_cols, cb_function, integrated_spectra))
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
@@ -1083,7 +1071,6 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
         {
-            *integrated_spectra = spectra_volume.integrate();
             mda_io.unload();
         }
         else

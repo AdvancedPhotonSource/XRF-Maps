@@ -105,14 +105,14 @@ void NNLS_Fit_Routine::_generate_fitmatrix()
 
 // ----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                                       const Spectra * const spectra,
-                                                                       const Fit_Element_Map_Dict * const elements_to_fit)
+OPTIMIZER_OUTCOME NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
+                                                const Spectra * const spectra,
+                                                const Fit_Element_Map_Dict * const elements_to_fit,
+                                                std::unordered_map<std::string, real_t>& out_counts)
 {
 	data_struct::ArrayXr* result;
     int num_iter;
     real_t npg;
-    std::unordered_map<std::string, real_t> counts_dict;
     Fit_Parameters fit_params = model->fit_parameters();
     fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
     ArrayXr background;
@@ -156,7 +156,7 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 
     for(const auto& itr : *elements_to_fit)
     {
-        counts_dict[itr.first] = (*result)[_element_row_index[itr.first]];
+        out_counts[itr.first] = (*result)[_element_row_index[itr.first]];
 
 		for (int j = 0; j < _energy_range.count(); j++)
 		{
@@ -168,8 +168,8 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
 		}
     }
 
-    counts_dict[STR_NUM_ITR] = static_cast<real_t>(num_iter);
-    counts_dict[STR_RESIDUAL] = npg;
+    out_counts[STR_NUM_ITR] = static_cast<real_t>(num_iter);
+    out_counts[STR_RESIDUAL] = npg;
 
 	//lock and integrate results
 	{
@@ -178,7 +178,11 @@ std::unordered_map<std::string, real_t> NNLS_Fit_Routine::fit_spectra(const mode
         _integrated_background.add(background);
 	}
 
-    return counts_dict;
+    if (num_iter == solver.getMaxit())
+    {
+        return OPTIMIZER_OUTCOME::EXHAUSTED;
+    }
+    return OPTIMIZER_OUTCOME::CONVERGED;
 
 }
 

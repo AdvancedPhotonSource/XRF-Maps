@@ -146,6 +146,10 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
     for(auto& itr : ud->quant_map)
     {
         dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+        if (std::isfinite(dy[idx]) == false)
+        {
+            dy[idx] = std::numeric_limits<double>::max();
+        }
         idx++;
     }
 
@@ -190,9 +194,9 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
     _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
     _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
     _outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[8] = OPTIMIZER_OUTCOME::FAILED;
+    _outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    _outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    _outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
 
 }
 // ----------------------------------------------------------------------------
@@ -538,7 +542,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         real_t sum_resid = 0.0;
         for (int i = 0; i< energy_range.count(); i++)
         {
-             sum_resid += resid[i];
+             sum_resid += std::abs(resid[i]);
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }

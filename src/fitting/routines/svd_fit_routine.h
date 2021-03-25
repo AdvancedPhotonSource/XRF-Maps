@@ -75,7 +75,7 @@ public:
                                                       std::unordered_map<std::string, real_t>& out_counts);
 
 
-    virtual std::string get_name() { return "SVD"; }
+    virtual std::string get_name() { return STR_FIT_SVD; }
 
     virtual void initialize(models::Base_Model * const model,
                             const Fit_Element_Map_Dict * const elements_to_fit,

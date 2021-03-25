@@ -78,7 +78,7 @@ public:
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           std::unordered_map<std::string, real_t>& out_counts);
 
-    virtual std::string get_name() { return "Fitted"; }
+    virtual std::string get_name() { return STR_FIT_GAUSS_MATRIX; }
 
     virtual void initialize(models::Base_Model * const model,
                             const Fit_Element_Map_Dict * const elements_to_fit,

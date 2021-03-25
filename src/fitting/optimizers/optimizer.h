@@ -82,7 +82,7 @@ using namespace fitting::models;
 
 typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
 
-enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN };
+enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL};
 
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
