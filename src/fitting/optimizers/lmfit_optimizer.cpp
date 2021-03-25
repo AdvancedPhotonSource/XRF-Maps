@@ -296,6 +296,11 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize(Fit_Parameters *fit_params,
     {
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
+    if (fit_params->contains(STR_OUTCOME))
+    {
+        if (_outcome_map.count(status.outcome) > 0)
+            (*fit_params)[STR_OUTCOME].value = (real_t)(_outcome_map[status.outcome]);
+    }
 
     if (fit_params->contains(STR_OUTCOME))
     {
@@ -338,9 +343,9 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
+        //(*fit_params)[STR_RESIDUAL].value = status.fnorm;
         data_struct::ArrayXr diff_arr = ud.spectra - ud.spectra_model;
         diff_arr = diff_arr.unaryExpr([](real_t v) { return std::abs(v); });
-        //(*fit_params)[STR_RESIDUAL].value = status.fnorm;
         (*fit_params)[STR_RESIDUAL].value = diff_arr.sum();
     }
 

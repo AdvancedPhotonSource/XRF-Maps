@@ -71,10 +71,11 @@ public:
 
 	virtual ~NNLS_Fit_Routine();
 
-    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
-                                          const Spectra * const spectra,
-                                          const Fit_Element_Map_Dict * const elements_to_fit,
-                                          std::unordered_map<std::string, real_t> & out_counts);
+
+    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model* const model,
+                                        const Spectra* const spectra,
+                                        const Fit_Element_Map_Dict* const elements_to_fit,
+                                        std::unordered_map<std::string, real_t>& out_counts);
 
     virtual std::string get_name() { return STR_FIT_NNLS; }
 

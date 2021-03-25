@@ -108,7 +108,7 @@ void NNLS_Fit_Routine::_generate_fitmatrix()
 OPTIMIZER_OUTCOME NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                                 const Spectra * const spectra,
                                                 const Fit_Element_Map_Dict * const elements_to_fit,
-                                                std::unordered_map<std::string, real_t> &out_counts)
+                                                std::unordered_map<std::string, real_t>& out_counts)
 {
 	data_struct::ArrayXr* result;
     int num_iter;
