@@ -597,18 +597,16 @@ bool load_override_params(std::string dataset_directory,
             logE<<"No detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<"\n";
             detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
         }
-
-
-        //add compton and coherant amp
-        if(params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
+        
+        if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)));
         }
-        if(params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
+        if (params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)) );
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
-
+        
         logI<<"Elements to fit:  ";
         //Update element ratios by detector element
         for(auto& itr : params_override->elements_to_fit)
@@ -617,16 +615,6 @@ bool load_override_params(std::string dataset_directory,
             logit_s<<itr.first<<" ";
         }
         logit_s<<"\n";
-        /*
-        if (false == params_override->fit_params.contains(STR_COHERENT_SCT_AMPLITUDE))
-        {
-            params_override->fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, 5.0));
-        }
-        if (false == params_override->fit_params.contains(STR_COMPTON_AMPLITUDE))
-        {
-            params_override->fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE, 5.0));
-        }
-        */
     }
 
     return true;
@@ -663,6 +651,7 @@ bool load_spectra_volume(std::string dataset_directory,
     bool hasXspress = false;
     std::string file_middle = ""; //_2xfm3_, dxpM, or file index in case of bnp...
     std::string bnp_netcdf_base_name = "bnp_fly_";
+    std::vector<int> bad_rows;
     for(auto &itr : netcdf_files)
     {
         if (itr.find(tmp_dataset_file) == 0)
@@ -846,7 +835,22 @@ bool load_spectra_volume(std::string dataset_directory,
                     }
                     row_idx_str_full += row_idx_str;
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                    io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    size_t prev_size = 0;
+                    size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    //if we failed to load and it isn't the first row, copy the previous one
+                    if (i > 0)
+                    {
+                        prev_size = (*spectra_volume)[i - 1].size();
+                    }
+                    if (spec_size == 0 || spec_size < prev_size)
+                    {
+                        if (i > 0)
+                        {
+                            logW << "Bad row for file " << full_filename << " row " << i << ", using previous line\n";
+                            bad_rows.push_back(i);
+                            (*spectra_volume)[i] = (*spectra_volume)[i - 1];
+                        }
+                    }
                 }
             }
             else
@@ -879,6 +883,17 @@ bool load_spectra_volume(std::string dataset_directory,
         if (spectra_volume != nullptr && scan_info != nullptr)
         {
             spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
+        }
+        for (const auto& line : bad_rows)
+        {
+            for (auto& map : scan_info->scaler_maps)
+            {
+                // copy prev row
+                for (Eigen::Index col = 0; col < map.values.cols(); col++)
+                {
+                    map.values(line, col) = map.values(line - 1, col);
+                }
+            }
         }
         io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
     }

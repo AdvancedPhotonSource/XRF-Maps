@@ -128,6 +128,7 @@ const string STR_PILEUP8 = "PILEUP8";
 
 const string STR_NUM_ITR = "Num_Iter";
 const string STR_RESIDUAL = "Fit_Residual";
+const string STR_OUTCOME = "Fit_Outcome";
 const string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
 const string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
 const string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
@@ -199,6 +200,11 @@ const string STR_COMPTON_LINES = "Compton";
 const string STR_PILEUP_LINES = "Pile Up";
 const string STR_ESCAPE_LINES = "Escape";
 
+const string STR_INT_SPEC = "Integrated_Spectra";
+const string STR_FIT_INT_SPEC = "Fitted_Integrated_Spectra";
+const string STR_MAX_CHANNELS_INT_SPEC = "Max_Channels_Integrated_Spectra";
+const string STR_MAX10_INT_SPEC = "Max_10_Channels_Integrated_Spectra";
+const string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
 
 //}
 

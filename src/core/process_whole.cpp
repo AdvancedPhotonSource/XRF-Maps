@@ -170,13 +170,11 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         //Initialize the fit routine
         fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
 
+        data_struct::Fit_Parameters out_fitp;
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
-
-
         switch (outcome)
         {
-
         case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
             // if we have a good fit, update our fit parameters so we are closer for the next fit
             params_override->fit_params.append_and_update(&out_fitp);
@@ -250,16 +248,16 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             }
 
             data_struct::Fit_Parameters out_fitp;
-            if(optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), out_fitp))
+            if (optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), out_fitp))
             {
                 detector_file_cnt[detector_num] += 1.0;
                 if (fit_params_avgs.count(detector_num) > 0)
                 {
-                    fit_params_avgs[detector_num].sum_values(out_fitp);
+                    fit_params_avgs[detector_num].sum_values(params_override->fit_params);
                 }
                 else
                 {
-                    fit_params_avgs[detector_num] = out_fitp;
+                    fit_params_avgs[detector_num] = params_override->fit_params;
                 }
             }
         }
@@ -376,7 +374,8 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 			io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
 																matrix_fit->energy_range(),
 																matrix_fit->max_integrated_spectra(),
-																matrix_fit->max_10_integrated_spectra());
+																matrix_fit->max_10_integrated_spectra(),
+                                                                matrix_fit->fitted_integrated_background());
 		}
 
         delete fit_job_queue;
@@ -557,7 +556,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 void find_quantifier_scalers(data_struct::Params_Override * override_params, unordered_map<string, string> &pv_map, Quantification_Standard* quantification_standard)
 {
-    std::string quant_scalers_names[] = {"US_IC", "DS_IC", "SRCURRENT"};
+    std::string quant_scalers_names[] = {STR_US_IC, STR_DS_IC, "SRCURRENT"};
     real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
     real_t scaler_clock = std::stof(override_params->time_scaler_clock);
     int i =0;

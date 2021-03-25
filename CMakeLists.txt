@@ -200,11 +200,11 @@ ENDIF()
 #--------------- start xrf lib -----------------
 set(libxrf_fit_HEADERS
     src/core/defines.h
-    src/support/cmpfit-1.4/mpfit.h
-    src/support/lmfit-6.2/lmstruct.h
-    src/support/lmfit-6.2/lmmin.h
-    src/support/lmfit-6.2/lmcurve_tyd.h
-    src/support/lmfit-6.2/lmcurve.h
+    src/support/cmpfit-1.3a/mpfit.hpp
+    src/support/lmfit_6.1/lmstruct.hpp
+    src/support/lmfit_6.1/lmmin.hpp
+    src/support/lmfit_6.1/lmcurve_tyd.hpp
+    src/support/lmfit_6.1/lmcurve.hpp
     src/support/nnls/nnls.hpp
     src/data_struct/quantification_standard.h
     src/data_struct/element_quant.h
@@ -235,10 +235,6 @@ set(libxrf_fit_HEADERS
 )
 
 set(libxrf_fit_SOURCE
-    src/support/cmpfit-1.4/mpfit.c
-    src/support/lmfit-6.2/lmmin.c
-    src/support/lmfit-6.2/lmcurve_tyd.c
-    src/support/lmfit-6.2/lmcurve.c
     src/data_struct/quantification_standard.cpp
     src/data_struct/element_info.cpp
     src/data_struct/fit_parameters.cpp
@@ -266,7 +262,7 @@ set(XRF_IO_HEADERS
 	src/core/mem_info.h
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
-  src/io/file/mca_io.h
+        src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h

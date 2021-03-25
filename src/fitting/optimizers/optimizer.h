@@ -82,7 +82,7 @@ using namespace fitting::models;
 
 typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
 
-enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN };
+enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL};
 
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
@@ -171,9 +171,9 @@ public:
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
                                          quantification::models::Quantification_Model * quantification_model) = 0;
 
-    virtual unordered_map<string, double> get_options() = 0;
+    virtual unordered_map<string, real_t> get_options() = 0;
 
-    virtual void set_options(unordered_map<string, double> opt) = 0;
+    virtual void set_options(unordered_map<string, real_t> opt) = 0;
 
 protected:
     map<int, OPTIMIZER_OUTCOME> _outcome_map;

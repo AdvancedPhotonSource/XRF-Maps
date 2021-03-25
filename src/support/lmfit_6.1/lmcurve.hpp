@@ -31,15 +31,40 @@
 #define __END_DECLS   /* empty */
 #endif
 
-#include<lmstruct.h>
+#include <lmstruct.hpp>
 
 __BEGIN_DECLS
 
-void lmcurve( const int n_par, double *par, const int m_dat,
-              const double *t, const double *y,
-              double (*f)(const double t, const double *par),
-              const lm_control_struct *control,
-              lm_status_struct *status );
+template <typename _T>
+typedef struct {
+    const _T* t;
+    const _T* y;
+    _T (*f)(const _T t, const _T* par);
+} lmcurve_data_struct;
+
+template <typename _T>
+void lmcurve_evaluate(
+    const _T* par, const int m_dat, const void* data, _T* fvec,
+    int* info)
+{
+    lmcurve_data_struct* D = (lmcurve_data_struct*)data;
+    int i;
+    for (i = 0; i < m_dat; i++)
+        fvec[i] = D->y[i] - D->f(D->t[i], par);
+}
+
+template <typename _T>
+void lmcurve(
+    const int n_par, _T* par, const int m_dat,
+    const _T* t, const _T* y,
+    _T (*f)(_T t, const _T* par),
+    const lm_control_struct* control, lm_status_struct* status)
+{
+    lmcurve_data_struct data = { t, y, f };
+
+    lmmin(n_par, par, m_dat, (const void*)&data, lmcurve_evaluate,
+          control, status);
+}
 
 __END_DECLS
 #endif /* LMCURVE_H */

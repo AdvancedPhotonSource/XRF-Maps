@@ -68,8 +68,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
                                                        "Element_Weights_Names",
-                                                       "DS_IC",
-                                                       "US_IC",
+                                                       STR_DS_IC,
+                                                       STR_US_IC,
                                                        "Standard_Name",
                                                        "Channel_Names",
 													   "Channel_Units",
@@ -4316,9 +4316,9 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     H5Pclose(dcpl_id);
 
 
-    int_spec_grp_id = H5Gopen(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+    int_spec_grp_id = H5Gopen(spec_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT);
     if(int_spec_grp_id < 0)
-        int_spec_grp_id = H5Gcreate(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        int_spec_grp_id = H5Gcreate(spec_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     //save quantification_standard integrated spectra
     data_struct::Spectra spectra = spectra_volume->integrate();
@@ -4729,8 +4729,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
     hid_t   dset_id, dataspace_id, status;
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
-    std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Spectra";
-    std::string background_name = "/MAPS/XRF_Analyzed/" + path + "/Fitted_Integrated_Background";
+    std::string dset_name = "/MAPS/XRF_Analyzed/" + path + "/"+ STR_FIT_INT_SPEC;
+    std::string background_name = "/MAPS/XRF_Analyzed/" + path + "/"+ STR_FIT_INT_BACKGROUND;
 
     hsize_t offset[1] = {0};
     hsize_t count[1] = {1};
@@ -4821,7 +4821,8 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
 bool HDF5_IO::save_max_10_spectra(const std::string path,
 	const data_struct::Range& spectra_range,
 	const data_struct::Spectra& max_spectra,
-	const data_struct::Spectra& max_10_spectra)
+	const data_struct::Spectra& max_10_spectra,
+    const data_struct::Spectra& fit_int_background)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 
@@ -4835,8 +4836,7 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 	hid_t   dset_id, maps_grp_id, spec_grp_id, int_spec_grp_id, dataspace_id, status;
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
-	std::string max_name = "Max_Channels_Integrated_Spectra";
-	std::string max10_name = "Max_10_Channels_Integrated_Spectra";
+	
 
 	hsize_t offset[1] = { 0 };
 	hsize_t count[1] = { 1 };
@@ -4860,25 +4860,25 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		ret_val = false;
 	}
 
-	int_spec_grp_id = H5Gopen(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+	int_spec_grp_id = H5Gopen(spec_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT);
 	if (int_spec_grp_id < 0)
 	{
-		int_spec_grp_id = H5Gcreate(spec_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		int_spec_grp_id = H5Gcreate(spec_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	if (int_spec_grp_id < 0)
 	{
-		logE << "creating group MAPS/Spectra/Integrated_Spectra" << "\n";
+		logE << "creating group MAPS/Spectra/"<< STR_INT_SPEC << "\n";
 		ret_val = false;
 	}
 
-	dset_id = H5Dopen(int_spec_grp_id, max_name.c_str(), H5P_DEFAULT);
+	dset_id = H5Dopen(int_spec_grp_id, STR_MAX_CHANNELS_INT_SPEC.c_str(), H5P_DEFAULT);
 	if (dset_id < 0)
 	{
-		dset_id = H5Dcreate2(int_spec_grp_id, max_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dset_id = H5Dcreate2(int_spec_grp_id, STR_MAX_CHANNELS_INT_SPEC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	if (dset_id < 0)
 	{
-		logE << "creating dataset " << max_name << "\n";
+		logE << "creating dataset " << STR_MAX_CHANNELS_INT_SPEC << "\n";
 		ret_val = false;
 	}
 	else
@@ -4886,20 +4886,20 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_spectra.data());
 		if (status < 0)
 		{
-			logW << "Failed to save " << max_name << "\n";
+			logW << "Failed to save " << STR_MAX_CHANNELS_INT_SPEC << "\n";
 			ret_val = false;
 		}
 		H5Dclose(dset_id);
 	}
 
-	dset_id = H5Dopen(int_spec_grp_id, max10_name.c_str(), H5P_DEFAULT);
+	dset_id = H5Dopen(int_spec_grp_id, STR_MAX10_INT_SPEC.c_str(), H5P_DEFAULT);
 	if (dset_id < 0)
 	{
-		dset_id = H5Dcreate2(int_spec_grp_id, max10_name.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		dset_id = H5Dcreate2(int_spec_grp_id, STR_MAX10_INT_SPEC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	}
 	if (dset_id < 0)
 	{
-		logE << "creating dataset " << max10_name << "\n";
+		logE << "creating dataset " << STR_MAX10_INT_SPEC << "\n";
 		ret_val = false;
 	}
 	else
@@ -4907,11 +4907,32 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)max_10_spectra.data());
 		if (status < 0)
 		{
-			logW << "Failed to save " << max10_name << "\n";
+			logW << "Failed to save " << STR_MAX10_INT_SPEC << "\n";
 			ret_val = false;
 		}
 		H5Dclose(dset_id);
 	}
+
+    dset_id = H5Dopen(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dset_id = H5Dcreate2(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    if (dset_id < 0)
+    {
+        logE << "creating dataset " << STR_FIT_INT_BACKGROUND << "\n";
+        ret_val = false;
+    }
+    else
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)fit_int_background.data());
+        if (status < 0)
+        {
+            logW << "Failed to save " << STR_FIT_INT_BACKGROUND << "\n";
+            ret_val = false;
+        }
+        H5Dclose(dset_id);
+    }
 
 	if (maps_grp_id > -1)
 	{
@@ -5093,12 +5114,12 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
             H5Sclose(dataspace_ch_id);
 
 
-            q_int_spec_grp_id = H5Gopen(standard_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+            q_int_spec_grp_id = H5Gopen(standard_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT);
             if (q_int_spec_grp_id < 0)
-                q_int_spec_grp_id = H5Gcreate(standard_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                q_int_spec_grp_id = H5Gcreate(standard_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             if (q_int_spec_grp_id < 0)
             {
-                logE << "creating group MAPS/Quantification/"<< standard_group_name<<"/Integrated_Spectra" << "\n";
+                logE << "creating group MAPS/Quantification/"<< standard_group_name<<"/"<< STR_INT_SPEC << "\n";
                 return false;
             }
 
@@ -5133,21 +5154,21 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 
             //save sr_current
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "SR_Current", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_SR_CURRENT.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.sr_current));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
 
             //save us_ic
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "US_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_US_IC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.US_IC));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
 
             //save ds_ic
             dataspace_id = H5Screate_simple(1, count, nullptr);
-            dset_id = H5Dcreate(scalers_grp_id, "DS_IC", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            dset_id = H5Dcreate(scalers_grp_id, STR_DS_IC.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.DS_IC));
             H5Dclose(dset_id);
             H5Sclose(dataspace_id);
@@ -6065,11 +6086,11 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                 {
                     std::string upper_scaler_name = scaler.name;
                     std::transform(upper_scaler_name.begin(), upper_scaler_name.end(), upper_scaler_name.begin(), ::toupper);
-                    if (upper_scaler_name == "US_IC")
+                    if (upper_scaler_name == STR_US_IC)
                     {
                         us_ic_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "DS_IC")
+                    if (upper_scaler_name == STR_DS_IC)
                     {
                         ds_ic_map = &(scaler.values);
                     }
@@ -7011,7 +7032,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 	//Save scalers
 	//names
-	std::vector<std::string> names_array = { "US_IC", "DS_IC", "I2", "TSCALER" };
+	std::vector<std::string> names_array = { STR_US_IC, STR_DS_IC, "I2", "TSCALER" };
     std::vector<std::string> units_array = { "cts/us", "cts/us", "cts/us", "us" };
 	hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
 	single_count[0] = 4;
@@ -7796,8 +7817,8 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
 
                 if (analysis_grp_name == STR_FIT_NNLS || analysis_grp_name == STR_FIT_GAUSS_MATRIX)
                 {
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/Fitted_Integrated_Spectra", "Fitted_Integrated_Spectra", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/Fitted_Integrated_Background", "Fitted_Integrated_Background", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_SPEC, STR_FIT_INT_SPEC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_BACKGROUND, STR_FIT_INT_BACKGROUND, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
                 }
                 H5Gclose(dst_fit_grp_id);
                 H5Gclose(src_fit_grp_id);
@@ -7813,17 +7834,17 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
 
 void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
 {
-    hid_t src_inner_grp_id = H5Gopen(src_analyzed_grp_id, "Integrated_Spectra", H5P_DEFAULT);
+    hid_t src_inner_grp_id = H5Gopen(src_analyzed_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT);
     if(src_inner_grp_id > -1)
     {
-        hid_t dst_inner_grp_id = H5Gcreate(dst_fit_grp_id, "Integrated_Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t dst_inner_grp_id = H5Gcreate(dst_fit_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         _gen_average(group_name+"/Integrated_Spectra/Elapsed_Livetime", "Elapsed_Livetime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Elapsed_Realtime", "Elapsed_Realtime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Input_Counts", "Input_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Output_Counts", "Output_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/Max_Channels_Integrated_Spectra", "Max_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/Max_10_Channels_Integrated_Spectra", "Max_10_Channels_Integrated_Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC, STR_MAX_CHANNELS_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX10_INT_SPEC, STR_MAX10_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
 
         //don't average the integrated spectra, just sum it
         _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
@@ -8182,10 +8203,13 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         hsize_t offset_3d[3] = {0,0,0};
         hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
         char sr_current_carr[255] = "SRCURRENT";
-        char us_ic_carr[255] = "US_IC";
-        char ds_ic_carr[255] = "DS_IC";
+        char us_ic_carr[255];
+        char ds_ic_carr[255];
         real_t real_val = 0.0;
         hid_t err;
+
+        STR_US_IC.copy(us_ic_carr, 254);
+        STR_DS_IC.copy(ds_ic_carr, 254);
 
         count_1d[0] = 3;
         hid_t quant_name_space = H5Screate_simple(1, count_1d, nullptr);
@@ -8521,9 +8545,9 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
 
 
-	std::string fit_int_name = "/MAPS/XRF_Analyzed/Fitted/Fitted_Integrated_Spectra";
-	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/Max_Channels_Integrated_Spectra";
-	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/Max_10_Channels_Integrated_Spectra";
+	std::string fit_int_name = "/MAPS/XRF_Analyzed/Fitted/"+ STR_FIT_INT_SPEC;
+	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC;
+	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX10_INT_SPEC;
 	std::string v9_max_name = "/MAPS/max_chan_spec";
 	hid_t fit_int_id, max_id, max_10_id, max_space, max_type, v9_max_id, v9_space;
 	
@@ -8688,7 +8712,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
     if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits_quant", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) >= 0)
     {
-        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], "Fitted", "/MAPS/XRF_fits_quant");
+        _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
     }
 
     _add_extra_pvs(file_id, "/MAPS");
@@ -9271,8 +9295,8 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
     hid_t saved_file_id = _cur_file_id;
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
-    std::string exchange_fits[4] = {"Fitted", "ROI", "NNLS", "Fitted"};
-    std::string exchange_normalize[4] = {"DS_IC", "", "", ""};
+    std::string exchange_fits[4] = { STR_FIT_GAUSS_MATRIX, STR_FIT_ROI, STR_FIT_NNLS, STR_FIT_GAUSS_MATRIX };
+    std::string exchange_normalize[4] = {STR_DS_IC, "", "", ""};
 
     int ex_idx = 0;
     for(int i=0; i < 4; i++)
@@ -9304,7 +9328,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
 
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    std::string exchange_fits[4] = { "Fitted", "ROI", "NNLS"};
+    std::string exchange_fits[4] = { STR_FIT_GAUSS_MATRIX, STR_FIT_ROI, STR_FIT_NNLS };
 
     if (file_id > 0)
     {
@@ -9367,7 +9391,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
             csv_path += fit_itr;
             csv_path += ".csv";
 
-            std::string h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Background";
+            std::string h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/"+ STR_FIT_INT_BACKGROUND;
             if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
             {
                 if (dims_in[0] > 0)
@@ -9379,7 +9403,7 @@ void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
                 }
             }
 
-            h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/Fitted_Integrated_Spectra";
+            h5_path = "/MAPS/XRF_Analyzed/" + fit_itr + "/"+ STR_FIT_INT_SPEC;
             if (_open_h5_object(dset_id, H5O_DATASET, close_map, h5_path.c_str(), file_id))
             {
                 if (dims_in[0] > 0)

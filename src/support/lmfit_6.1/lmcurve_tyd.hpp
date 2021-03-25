@@ -1,9 +1,9 @@
 /*
  * Library:   lmfit (Levenberg-Marquardt least squares fitting)
  *
- * File:      lmcurve.c
+ * File:      lmcurve_tyd.h
  *
- * Contents:  Implements lmcurve_tyd(), a variant of lmcurve() that weighs
+ * Contents:  Declares lmcurve_tyd(), a variant of lmcurve() that weighs
  *            data points y(t) with the inverse of the standard deviations dy.
  *
  * Copyright: Joachim Wuttke, Forschungszentrum Juelich GmbH (2004-2013)
@@ -13,17 +13,34 @@
  * Homepage:  apps.jcns.fz-juelich.de/lmfit
  */
 
-#include "lmmin.h"
+#ifndef LMCURVETYD_H
+#define LMCURVETYD_H
+#undef __BEGIN_DECLS
+#undef __END_DECLS
+#ifdef __cplusplus
+#define __BEGIN_DECLS extern "C" {
+#define __END_DECLS }
+#else
+#define __BEGIN_DECLS /* empty */
+#define __END_DECLS   /* empty */
+#endif
 
+#include <lmstruct.hpp>
+
+__BEGIN_DECLS
+
+template <typename _T>
 typedef struct {
-    const double* t;
-    const double* y;
-    const double* dy;
-    double (*f)(const double t, const double* par);
+    const _T* t;
+    const _T* y;
+    const _T* dy;
+    _T (*f)(const _T t, const _T* par);
 } lmcurve_tyd_data_struct;
 
+
+template <typename _T>
 void lmcurve_tyd_evaluate(
-    const double* par, const int m_dat, const void* data, double* fvec,
+    const _T* par, const int m_dat, const void* data, _T* fvec,
     int* info)
 {
     lmcurve_tyd_data_struct* D = (lmcurve_tyd_data_struct*)data;
@@ -32,10 +49,12 @@ void lmcurve_tyd_evaluate(
         fvec[i] = ( D->y[i] - D->f(D->t[i], par) ) / D->dy[i];
 }
 
+
+template <typename _T>
 void lmcurve_tyd(
-    const int n_par, double* par, const int m_dat,
-    const double* t, const double* y, const double* dy,
-    double (*f)(const double t, const double* par),
+    const int n_par, _T* par, const int m_dat,
+    const _T* t, const _T* y, const _T* dy,
+    _T (*f)(_T t, const _T* par),
     const lm_control_struct* control, lm_status_struct* status)
 {
     lmcurve_tyd_data_struct data = { t, y, dy, f };
@@ -43,3 +62,6 @@ void lmcurve_tyd(
     lmmin(n_par, par, m_dat, (const void*)&data, lmcurve_tyd_evaluate,
           control, status);
 }
+
+__END_DECLS
+#endif /* LMCURVETYD_H */

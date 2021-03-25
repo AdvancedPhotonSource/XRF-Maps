@@ -100,10 +100,10 @@ struct DLL_EXPORT Fit_Param
     Fit_Param()
     {
         name = "N/A";
-        min_val = std::numeric_limits<double>::quiet_NaN();
-        max_val = std::numeric_limits<double>::quiet_NaN();
-        value = std::numeric_limits<double>::quiet_NaN();
-        step_size = std::numeric_limits<double>::quiet_NaN();
+        min_val = std::numeric_limits<real_t>::quiet_NaN();
+        max_val = std::numeric_limits<real_t>::quiet_NaN();
+        value = std::numeric_limits<real_t>::quiet_NaN();
+        step_size = std::numeric_limits<real_t>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
         opt_array_index = -1;
     }
@@ -122,37 +122,37 @@ struct DLL_EXPORT Fit_Param
     Fit_Param(std::string name_)
     {
         name = name_;
-        min_val = std::numeric_limits<double>::quiet_NaN();
-        max_val = std::numeric_limits<double>::quiet_NaN();
-        value = std::numeric_limits<double>::quiet_NaN();
-        step_size = std::numeric_limits<double>::quiet_NaN();
+        min_val = std::numeric_limits<real_t>::quiet_NaN();
+        max_val = std::numeric_limits<real_t>::quiet_NaN();
+        value = std::numeric_limits<real_t>::quiet_NaN();
+        step_size = std::numeric_limits<real_t>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
         opt_array_index = -1;
     }
 
-    Fit_Param(std::string name_, double val_)
+    Fit_Param(std::string name_, real_t val_)
     {
         name = name_;
-        min_val = std::numeric_limits<double>::min();
-        max_val = std::numeric_limits<double>::max();
-        step_size = (double)0.000001;
+        min_val = std::numeric_limits<real_t>::min();
+        max_val = std::numeric_limits<real_t>::max();
+        step_size = (real_t)0.000001;
         value = val_;
         bound_type = E_Bound_Type::FIXED;
         opt_array_index = -1;
     }
 
-	Fit_Param(std::string name_, double val_, E_Bound_Type b_type)
+	Fit_Param(std::string name_, real_t val_, E_Bound_Type b_type)
 	{
 		name = name_;
-		min_val = std::numeric_limits<double>::min();
-		max_val = std::numeric_limits<double>::max();
-		step_size = (double)0.000001;
+		min_val = std::numeric_limits<real_t>::min();
+		max_val = std::numeric_limits<real_t>::max();
+		step_size = (real_t)0.000001;
 		value = val_;
 		bound_type = b_type;
 		opt_array_index = -1;
 	}
 
-    Fit_Param(std::string name_, double min_, double max_, double val_, double step_size_, E_Bound_Type b_type)
+    Fit_Param(std::string name_, real_t min_, real_t max_, real_t val_, real_t step_size_, E_Bound_Type b_type)
     {
         name = name_;
         min_val = min_;
@@ -166,10 +166,10 @@ struct DLL_EXPORT Fit_Param
     const std::string bound_type_str() const; 
 
     std::string name;
-    double min_val;
-    double max_val;
-    double value;
-    double step_size;
+    real_t min_val;
+    real_t max_val;
+    real_t value;
+    real_t step_size;
     E_Bound_Type bound_type;
     int opt_array_index;
 };
@@ -203,25 +203,19 @@ public:
 
     void sum_values(Fit_Parameters fit_params);
 
-    void divide_fit_values_by(double divisor);
+    void divide_fit_values_by(real_t divisor);
 
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 
-    std::vector<float> to_array_f();
-
-    std::vector<double> to_array_d();
+    std::vector<real_t> to_array();
 
     std::vector<std::string> names_to_array();
 
-    void from_array(std::vector<float> &arr);
+    void from_array(std::vector<real_t> &arr);
 
-    void from_array(std::vector<double>& arr);
+    void from_array(const real_t* arr, size_t arr_size);
 
-    void from_array(const float* arr, size_t arr_size);
-
-    void from_array(const double* arr, size_t arr_size);
-
-    void set_all_value(double value, E_Bound_Type btype);
+    void set_all_value(real_t value, E_Bound_Type btype);
 
     void set_all(E_Bound_Type btype);
 
@@ -235,7 +229,7 @@ public:
 
     void remove(std::string key);
 
-    inline const double& value(std::string key) const { return _params.at(key).value; }
+    inline const real_t& value(std::string key) const { return _params.at(key).value; }
 
     void print();
 
