@@ -597,7 +597,7 @@ bool load_override_params(std::string dataset_directory,
             logE<<"No detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<"\n";
             detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
         }
-        /*
+        
         if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
         {
             params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)));
@@ -606,7 +606,7 @@ bool load_override_params(std::string dataset_directory,
         {
             params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
-        */
+        
         logI<<"Elements to fit:  ";
         //Update element ratios by detector element
         for(auto& itr : params_override->elements_to_fit)
@@ -615,16 +615,6 @@ bool load_override_params(std::string dataset_directory,
             logit_s<<itr.first<<" ";
         }
         logit_s<<"\n";
-        /*
-        if (false == params_override->fit_params.contains(STR_COHERENT_SCT_AMPLITUDE))
-        {
-            params_override->fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, 5.0));
-        }
-        if (false == params_override->fit_params.contains(STR_COMPTON_AMPLITUDE))
-        {
-            params_override->fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE, 5.0));
-        }
-        */
     }
 
     return true;
