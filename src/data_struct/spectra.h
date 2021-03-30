@@ -217,11 +217,11 @@ private:
 };
 
 #if defined _WIN32 || defined __CYGWIN__
-	template DLL_EXPORT class Spectra_T<real_t>;
+	template DLL_EXPORT class Spectra_T<float>;
 #else
-	template class DLL_EXPORT Spectra_T<real_t>;
+	template class DLL_EXPORT Spectra_T<float>;
 #endif
-typedef Spectra_T<real_t> Spectra;
+typedef Spectra_T<float> Spectra;
 
 DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size);
 DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr& boxcar);
