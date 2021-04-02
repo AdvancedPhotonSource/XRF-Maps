@@ -4913,27 +4913,6 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 		H5Dclose(dset_id);
 	}
 
-    dset_id = H5Dopen(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5P_DEFAULT);
-    if (dset_id < 0)
-    {
-        dset_id = H5Dcreate2(int_spec_grp_id, STR_FIT_INT_BACKGROUND.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    }
-    if (dset_id < 0)
-    {
-        logE << "creating dataset " << STR_FIT_INT_BACKGROUND << "\n";
-        ret_val = false;
-    }
-    else
-    {
-        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)fit_int_background.data());
-        if (status < 0)
-        {
-            logW << "Failed to save " << STR_FIT_INT_BACKGROUND << "\n";
-            ret_val = false;
-        }
-        H5Dclose(dset_id);
-    }
-
 	if (maps_grp_id > -1)
 	{
 		H5Dclose(maps_grp_id);
