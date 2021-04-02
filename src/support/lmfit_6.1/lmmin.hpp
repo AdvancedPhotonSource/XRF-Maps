@@ -38,7 +38,7 @@
   #define LM_SQRT_GIANT sqrt(FLT_MAX) // square should not overflow 
   #define LM_USERTOL 1.e-7   // users are recommended to require this 
   */
-#define LM_MACHEP 1.19209e-7f       // resolution of arithmetic 
+#define LM_MACHEP 1.19209e-10f       // resolution of arithmetic 
 #define LM_DWARF 1.17549e-38f           // smallest nonzero number 
 #define LM_GIANT   3.40282e+38f
 #define LM_SQRT_DWARF (sqrt(LM_DWARF*1.5f)*10.0f) // square should not underflow 
