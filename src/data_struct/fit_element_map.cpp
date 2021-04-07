@@ -249,7 +249,17 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
 
 void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
 {
-    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size())
+    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
+    {
+        _energy_ratio_custom_multipliers[idx] = multi;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+void Fit_Element_Map::multiply_custom_multiply_ratio(unsigned int idx, real_t multi)
+{
+    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
     {
         _energy_ratio_custom_multipliers[idx] *= multi;
     }

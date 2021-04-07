@@ -362,26 +362,26 @@ bool load_parameters_override(std::string path, Params_Override *params_override
 							// 1
 							std::getline(strstream, str_value, ',');
 							factor = std::stof(str_value);
-							fit_map->set_custom_multiply_ratio(4, factor);
-							fit_map->set_custom_multiply_ratio(5, factor);
-							fit_map->set_custom_multiply_ratio(7, factor);
-							fit_map->set_custom_multiply_ratio(8, factor);
-							fit_map->set_custom_multiply_ratio(9, factor);
+							fit_map->multiply_custom_multiply_ratio(4, factor);
+							fit_map->multiply_custom_multiply_ratio(5, factor);
+							fit_map->multiply_custom_multiply_ratio(7, factor);
+							fit_map->multiply_custom_multiply_ratio(8, factor);
+							fit_map->multiply_custom_multiply_ratio(9, factor);
 
 							// 2
 							std::getline(strstream, str_value, ',');
 							factor = std::stof(str_value);
-							fit_map->set_custom_multiply_ratio(2, factor);
-							fit_map->set_custom_multiply_ratio(6, factor);
-							fit_map->set_custom_multiply_ratio(11, factor);
+							fit_map->multiply_custom_multiply_ratio(2, factor);
+							fit_map->multiply_custom_multiply_ratio(6, factor);
+							fit_map->multiply_custom_multiply_ratio(11, factor);
 
 							//3
 							std::getline(strstream, str_value, ',');
 							factor = std::stof(str_value);
-							fit_map->set_custom_multiply_ratio(0, factor);
-							fit_map->set_custom_multiply_ratio(1, factor);
-							fit_map->set_custom_multiply_ratio(3, factor);
-							fit_map->set_custom_multiply_ratio(10, factor);
+							fit_map->multiply_custom_multiply_ratio(0, factor);
+							fit_map->multiply_custom_multiply_ratio(1, factor);
+							fit_map->multiply_custom_multiply_ratio(3, factor);
+							fit_map->multiply_custom_multiply_ratio(10, factor);
 						}
 						else // ratio's
 						{
@@ -390,7 +390,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
 								float factor = 1.0;
 								std::getline(strstream, str_value, ',');
 								factor = std::stof(str_value);
-								fit_map->set_custom_multiply_ratio(i, factor);
+								fit_map->multiply_custom_multiply_ratio(i, factor);
 							}
 						}
 					}
