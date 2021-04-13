@@ -815,7 +815,7 @@ bool save_parameters_override(std::string path, Params_Override *params_override
 
     else if (tag == "TAIL_WIDTH_ADJUST_SI")
     */
-
+	std::vector<std::string> branching_ratios_updated;
 
     if (params_override == nullptr)
     {
@@ -929,31 +929,96 @@ bool save_parameters_override(std::string path, Params_Override *params_override
         out_stream << "MAX_ENERGY_TO_FIT: " << params_override->fit_params.at(STR_MAX_ENERGY_TO_FIT).value << "\n";
         out_stream << "    minimum energy value [keV]\n";
         out_stream << "MIN_ENERGY_TO_FIT: " << params_override->fit_params.at(STR_MIN_ENERGY_TO_FIT).value << "\n";
-        out_stream << "    this allows manual adjustment of the branhcing ratios between the different lines of L1, L2, and L3.\n";
-        out_stream << "    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,\n";
-        out_stream << "    0.8 will correspond to to 80% of that, etc.\n";
+
+
+		for (const auto& itr : params_override->elements_to_fit)
+		{
+			for (float ratio : itr.second->energy_ratio_multipliers())
+			{
+				if (ratio != 1.0)
+				{
+					branching_ratios_updated.push_back(itr.first+",");
+					if (itr.second->shell_type_as_string() == "K")
+					{
+						out_stream << "BRANCHING_RATIO_ADJUSTMENT_K: " << itr.first;
+					}
+					else if (itr.second->shell_type_as_string() == "L")
+					{
+						out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
+					}
+					for (float r : itr.second->energy_ratio_multipliers())
+					{
+						out_stream << "," << r;
+					}
+					out_stream << "\n";
+					break;
+				}
+			}
+		}
+		// we still need these to be saved if not included above
+		out_stream << "    this allows manual adjustment of the branhcing ratios between the different lines of L1, L2, and L3.\n";
+		out_stream << "    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,\n";
+		out_stream << "    0.8 will correspond to to 80% of that, etc.\n";
         for (const auto& itr : params_override->branching_family_L)
         {
-            out_stream << itr <<"\n";
+			bool found = false;
+			for (std::string element_name : branching_ratios_updated)
+			{
+				if (itr.find(element_name) != std::string::npos)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (false == found)
+			{
+				out_stream << itr << "\n";
+			}
         }
-        out_stream << "    this allows manual adjustment of the branhcing ratios between the different L lines, such as La 1, la2, etc.\n";
-        out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
-        out_stream << "    all will be normalized to the La1 line, and the values need to be in the following order:\n";
-        out_stream << "    La1, La2, Lb1, Lb2, Lb3, Lb4, Lg1, Lg2, Lg3, Lg4, Ll, Ln\n";
-        out_stream << "    please note, the first value (la1) MUST BE A 1. !!!\n";
+		out_stream << "    this allows manual adjustment of the branhcing ratios between the different L lines, such as La 1, la2, etc.\n";
+		out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
+		out_stream << "    all will be normalized to the La1 line, and the values need to be in the following order:\n";
+		out_stream << "    La1, La2, Lb1, Lb2, Lb3, Lb4, Lg1, Lg2, Lg3, Lg4, Ll, Ln\n";
+		out_stream << "    please note, the first value (la1) MUST BE A 1. !!!\n";
         for (const auto& itr : params_override->branching_ratio_L)
         {
-            out_stream << itr << "\n";
+			bool found = false;
+			for (std::string element_name : branching_ratios_updated)
+			{
+				if (itr.find(element_name) != std::string::npos)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (false == found)
+			{
+				out_stream << itr << "\n";
+			}
         }
-        out_stream << "    this allows manual adjustment of the branhcing ratios between the different K lines, such as Ka1, Ka2, Kb1, Kb2\n";
-        out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
-        out_stream << "    all will be normalized to the Ka1 line, and the values need to be in the following order:\n";
-        out_stream << "    Ka1, Ka2, Kb1(+3), Kb2\n";
-        out_stream << "    please note, the first value (Ka1) MUST BE A 1. !!!\n";
+		out_stream << "    this allows manual adjustment of the branhcing ratios between the different K lines, such as Ka1, Ka2, Kb1, Kb2\n";
+		out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
+		out_stream << "    all will be normalized to the Ka1 line, and the values need to be in the following order:\n";
+		out_stream << "    Ka1, Ka2, Kb1(+3), Kb2\n";
+		out_stream << "    please note, the first value (Ka1) MUST BE A 1. !!!\n";
         for (const auto& itr : params_override->branching_ratio_K)
         {
-            out_stream << itr << "\n";
+			bool found = false;
+			for (std::string element_name : branching_ratios_updated)
+			{
+				if (itr.find(element_name) != std::string::npos)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (false == found)
+			{
+				out_stream << itr << "\n";
+			}
         }
+		
+
         out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
         out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
         out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";

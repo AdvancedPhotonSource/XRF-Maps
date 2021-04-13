@@ -508,7 +508,14 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
                 //fit_counts.tail = fit_counts.tail + value;
             }
 
-            (*labeled_spectras)[label] += tmp_spec;
+            if (element_to_fit->pileup_element() != nullptr) // check if it is pileup 
+            {
+                (*labeled_spectras)[STR_PILEUP_LINES] += tmp_spec;
+            }
+            else
+            {
+                (*labeled_spectras)[label] += tmp_spec;
+            }
             spectra_model += tmp_spec;
 
         }
