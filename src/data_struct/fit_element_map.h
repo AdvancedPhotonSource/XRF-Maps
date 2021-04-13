@@ -166,6 +166,8 @@ public:
 
     const Element_Info* pileup_element() const { return _pileup_element_info; }
 
+	const string& shell_type_as_string() const { return _shell_type; }
+
 protected:
 
     void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
