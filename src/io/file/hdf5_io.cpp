@@ -7593,7 +7593,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, dataset_name.c_str(), file_type, dataspace_id, H5P_DEFAULT, props, H5P_DEFAULT);
         if(dst_dset_id < 1)
         {
-            logE<<""<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            //logI<<""<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
@@ -7603,7 +7603,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
         if(status_n < 0)
         {
-            logE<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            logW<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
 
