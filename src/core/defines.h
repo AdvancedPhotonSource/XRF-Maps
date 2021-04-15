@@ -206,6 +206,10 @@ const string STR_MAX_CHANNELS_INT_SPEC = "Max_Channels_Integrated_Spectra";
 const string STR_MAX10_INT_SPEC = "Max_10_Channels_Integrated_Spectra";
 const string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
 
+const string STR_CALIB_CURVE_SR_CUR = "Calibration_Curve_SR_Current";
+const string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
+const string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
+const string STR_CALIB_LABELS = "Calibration_Curve_Labels";
 //}
 
 //}// namespace keys

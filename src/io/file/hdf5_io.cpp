@@ -7502,9 +7502,11 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
                     if (src_fit_grp_id > -1)
                     {
                         hid_t dst_fit_grp_id = H5Gcreate(dst_calib_fit_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/Calibration_Curve_SR_Current", "Calibration_Curve_SR_Current", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
-                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/Calibration_Curve_DS_IC", "Calibration_Curve_DS_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
-                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/Calibration_Curve_US_IC", "Calibration_Curve_US_IC", src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                        string chan_name_loc = analysis_grp_name + "/" + STR_CALIB_LABELS;
+                        status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
+                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_SR_CUR, STR_CALIB_CURVE_SR_CUR, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_DS_IC, STR_CALIB_CURVE_DS_IC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_US_IC, STR_CALIB_CURVE_US_IC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         H5Gclose(src_fit_grp_id);
                         H5Gclose(dst_fit_grp_id);
                     }
@@ -7591,7 +7593,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, dataset_name.c_str(), file_type, dataspace_id, H5P_DEFAULT, props, H5P_DEFAULT);
         if(dst_dset_id < 1)
         {
-            logE<<""<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            //logI<<""<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
@@ -7601,7 +7603,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
         if(status_n < 0)
         {
-            logE<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            logW<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
         }
 
@@ -8155,9 +8157,9 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 	char tmp_char1[256] = { 0 };
 
     //create quantification dataset. In v9 the array starts at element Z 10 insead of element Z 1
-    std::string currnt_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/Calibration_Curve_SR_Current";
-    std::string us_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/Calibration_Curve_US_IC";
-    std::string ds_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/Calibration_Curve_DS_IC";
+    std::string currnt_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/" + STR_CALIB_CURVE_SR_CUR;
+    std::string us_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/" + STR_CALIB_CURVE_US_IC;
+    std::string ds_quant_str = "/MAPS/Quantification/Calibration/" + quant_str + "/" + STR_CALIB_CURVE_DS_IC;
 	hid_t cc_current = H5Dopen(file_id, currnt_quant_str.c_str(), H5P_DEFAULT);
 	hid_t cc_us_ic = H5Dopen(file_id, us_quant_str.c_str(), H5P_DEFAULT);
 	hid_t cc_ds_ic = H5Dopen(file_id, ds_quant_str.c_str(), H5P_DEFAULT);
