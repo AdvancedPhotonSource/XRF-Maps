@@ -162,13 +162,13 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
 MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+    _options.ftol = 1e-22;       // Relative chi-square convergence criterium  Default: 1e-10
     _options.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    _options.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
+    _options.gtol = 1e-22;       // Orthogonality convergence criterium        Default: 1e-10
     _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     _options.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    _options.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    _options.maxiter = 4000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
