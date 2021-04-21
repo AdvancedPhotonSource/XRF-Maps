@@ -258,7 +258,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const mode
     if(spectra->sum() == 0)
     {
         fit_params.set_all_value(-10.0, E_Bound_Type::FIT);
-        return OPTIMIZER_OUTCOME::FOUND_ZERO;
+		ret_val = OPTIMIZER_OUTCOME::FOUND_ZERO;
     }
     else
     {
