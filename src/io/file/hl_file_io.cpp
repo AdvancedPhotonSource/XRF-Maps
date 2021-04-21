@@ -266,16 +266,31 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     if (fit_params == nullptr)
     {
         logE << "Fit Parameters == nullptr. Can not save!\n";
+		return;
     }
+	else
+	{
+		unordered_map<string, Fit_Param> * params = fit_params->Params();
+		if (params != nullptr)
+		{
+			if (params->size() == 0)
+			{
+				logE << "Fit Parameters size = 0. Can not save!\n";
+				return;
+			}
+		}
+	}
 
     if (spectra == nullptr)
     {
         logE << "int Spectra == nullptr. Can not save!\n";
+		return;
     }
 
     if (elements_to_fit == nullptr)
     {
         logE << "Elements to Fit == nullptr. Can not save!\n";
+		return;
     }
 
     fitting::models::Gaussian_Model model;
