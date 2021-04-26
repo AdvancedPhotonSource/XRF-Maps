@@ -291,7 +291,7 @@ void Fit_Element_Map::set_as_pileup(std::string name, Element_Info* element_info
 
 //-----------------------------------------------------------------------------
 
-bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ratio_idx)
+bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ratio_idx) const
 {
 	real_t binding_e;
 	if (_element_info != nullptr)
@@ -317,6 +317,23 @@ bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ra
 					return true;
 				}
 				break;
+            case 2:
+            case 6:
+            case 11:
+                if (_element_info->bindingE["L2"] < incident_energy)
+                {
+                    return true;
+                }
+                break;
+            case 0:
+            case 1:
+            case 3:
+            case 10:
+                if (_element_info->bindingE["L3"] < incident_energy)
+                {
+                    return true;
+                }
+                break;
 			default:
 				break;
 			}
