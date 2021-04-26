@@ -451,37 +451,44 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         string label = "";
 
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
-        switch(er_struct.ptype)
-        {
-            case Element_Param_Type::Kb1_Line:
-                label = STR_K_A_LINES;
-            case Element_Param_Type::Kb2_Line:
-                label = STR_K_B_LINES;
-                faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
-                break;
-            case Element_Param_Type::Ka1_Line:
-            case Element_Param_Type::Ka2_Line:
-                label = STR_K_A_LINES;
-                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-                break;
-            case Element_Param_Type::La1_Line:
-            case Element_Param_Type::La2_Line:
-            case Element_Param_Type::Lb1_Line:
-            case Element_Param_Type::Lb2_Line:
-            case Element_Param_Type::Lb3_Line:
-            case Element_Param_Type::Lb4_Line:
-            case Element_Param_Type::Lg1_Line:
-            case Element_Param_Type::Lg2_Line:
-            case Element_Param_Type::Lg3_Line:
-            case Element_Param_Type::Lg4_Line:
-            case Element_Param_Type::Ll_Line:
-            case Element_Param_Type::Ln_Line:
-                label = STR_L_LINES;
-                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-                break;
-            default:
-                break;
-        }
+		if (element_to_fit->check_binding_energy(incident_energy))
+		{
+			switch (er_struct.ptype)
+			{
+			case Element_Param_Type::Kb1_Line:
+				label = STR_K_A_LINES;
+			case Element_Param_Type::Kb2_Line:
+				label = STR_K_B_LINES;
+				faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
+				break;
+			case Element_Param_Type::Ka1_Line:
+			case Element_Param_Type::Ka2_Line:
+				label = STR_K_A_LINES;
+				faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+				break;
+			case Element_Param_Type::La1_Line:
+			case Element_Param_Type::La2_Line:
+			case Element_Param_Type::Lb1_Line:
+			case Element_Param_Type::Lb2_Line:
+			case Element_Param_Type::Lb3_Line:
+			case Element_Param_Type::Lb4_Line:
+			case Element_Param_Type::Lg1_Line:
+			case Element_Param_Type::Lg2_Line:
+			case Element_Param_Type::Lg3_Line:
+			case Element_Param_Type::Lg4_Line:
+			case Element_Param_Type::Ll_Line:
+			case Element_Param_Type::Ln_Line:
+				label = STR_L_LINES;
+				faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+				break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			faktor = (real_t)0.0;
+		}
 
 
         if (labeled_spectras != nullptr && label.length() > 0)

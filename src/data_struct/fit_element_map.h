@@ -168,6 +168,7 @@ public:
 
 	const string& shell_type_as_string() const { return _shell_type; }
 
+	bool check_binding_energy(real_t incident_energy, int energy_ratio_idx);
 protected:
 
     void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
