@@ -429,10 +429,12 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
         return spectra_model;
 
     //real_t fwhm_offset = fitp->value(STR_FWHM_OFFSET);
+    const vector<Element_Energy_Ratio> energy_ratios = element_to_fit->energy_ratios();
 
-    for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
+    //for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
+    for (int idx = 0; idx < energy_ratios.size(); idx++)
     {
-
+        const Element_Energy_Ratio& er_struct = energy_ratios.at(idx);
         real_t sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (real_t)2.3548), (real_t)2.0) + (er_struct.energy) * (real_t)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
         real_t f_step =  std::abs( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
         real_t f_tail = std::abs( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
@@ -450,38 +452,47 @@ const Spectra Gaussian_Model::model_spectrum_element(const Fit_Parameters * cons
 
         string label = "";
 
+        real_t incident_energy = fitp->at(STR_COHERENT_SCT_ENERGY).value;
+
         real_t faktor = real_t(er_struct.ratio * pre_faktor);
-        switch(er_struct.ptype)
-        {
-            case Element_Param_Type::Kb1_Line:
-                label = STR_K_A_LINES;
-            case Element_Param_Type::Kb2_Line:
-                label = STR_K_B_LINES;
-                faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
-                break;
-            case Element_Param_Type::Ka1_Line:
-            case Element_Param_Type::Ka2_Line:
-                label = STR_K_A_LINES;
-                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-                break;
-            case Element_Param_Type::La1_Line:
-            case Element_Param_Type::La2_Line:
-            case Element_Param_Type::Lb1_Line:
-            case Element_Param_Type::Lb2_Line:
-            case Element_Param_Type::Lb3_Line:
-            case Element_Param_Type::Lb4_Line:
-            case Element_Param_Type::Lg1_Line:
-            case Element_Param_Type::Lg2_Line:
-            case Element_Param_Type::Lg3_Line:
-            case Element_Param_Type::Lg4_Line:
-            case Element_Param_Type::Ll_Line:
-            case Element_Param_Type::Ln_Line:
-                label = STR_L_LINES;
-                faktor = faktor / ((real_t)1.0 + f_tail + f_step);
-                break;
-            default:
-                break;
-        }
+		if (element_to_fit->check_binding_energy(incident_energy, idx))
+		{
+			switch (er_struct.ptype)
+			{
+			case Element_Param_Type::Kb1_Line:
+				label = STR_K_A_LINES;
+			case Element_Param_Type::Kb2_Line:
+				label = STR_K_B_LINES;
+				faktor = faktor / ((real_t)1.0 + kb_f_tail + f_step);
+				break;
+			case Element_Param_Type::Ka1_Line:
+			case Element_Param_Type::Ka2_Line:
+				label = STR_K_A_LINES;
+				faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+				break;
+			case Element_Param_Type::La1_Line:
+			case Element_Param_Type::La2_Line:
+			case Element_Param_Type::Lb1_Line:
+			case Element_Param_Type::Lb2_Line:
+			case Element_Param_Type::Lb3_Line:
+			case Element_Param_Type::Lb4_Line:
+			case Element_Param_Type::Lg1_Line:
+			case Element_Param_Type::Lg2_Line:
+			case Element_Param_Type::Lg3_Line:
+			case Element_Param_Type::Lg4_Line:
+			case Element_Param_Type::Ll_Line:
+			case Element_Param_Type::Ln_Line:
+				label = STR_L_LINES;
+				faktor = faktor / ((real_t)1.0 + f_tail + f_step);
+				break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			faktor = (real_t)0.0;
+		}
 
 
         if (labeled_spectras != nullptr && label.length() > 0)

@@ -290,6 +290,63 @@ void Fit_Element_Map::set_as_pileup(std::string name, Element_Info* element_info
 }
 
 //-----------------------------------------------------------------------------
+
+bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ratio_idx) const
+{
+	real_t binding_e;
+	if (_element_info != nullptr)
+	{
+		if (_shell_type == "K")
+		{
+			if (_element_info->bindingE["K"] < incident_energy)
+			{
+				return true;
+			}
+		}
+		else if (_shell_type == "L")
+		{
+			switch (energy_ratio_idx)
+			{
+			case 4:
+			case 5:
+			case 7:
+			case 8:
+			case 9:
+				if (_element_info->bindingE["L1"] < incident_energy)
+				{
+					return true;
+				}
+				break;
+            case 2:
+            case 6:
+            case 11:
+                if (_element_info->bindingE["L2"] < incident_energy)
+                {
+                    return true;
+                }
+                break;
+            case 0:
+            case 1:
+            case 3:
+            case 10:
+                if (_element_info->bindingE["L3"] < incident_energy)
+                {
+                    return true;
+                }
+                break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+
+		}
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 data_struct::Fit_Element_Map* gen_element_map(std::string element_symb)
