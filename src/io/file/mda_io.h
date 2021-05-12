@@ -97,6 +97,12 @@ public:
 										data_struct::IO_Callback_Func_Def callback_func,
                                         void *user_data);
 
+	bool load_integrated_spectra(std::string path,
+								size_t detector_num,
+								data_struct::Spectra *out_integrated_spectra,
+								bool hasNetCDF,
+								data_struct::Params_Override *override_values);
+
     bool load_quantification_scalers(std::string path,
                                      data_struct::Params_Override *override_values);
 

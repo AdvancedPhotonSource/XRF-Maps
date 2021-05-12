@@ -373,9 +373,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
     std::vector<real_t> perror(fitp_arr.size());
 
     lm_status_struct<real_t> status;
-
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
-
     logI<<lm_infmsg[status.outcome]<<"\n";
 
     fit_params->from_array(fitp_arr);

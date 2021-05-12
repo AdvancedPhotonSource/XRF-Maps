@@ -947,14 +947,13 @@ void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t w
     }
 }
 
-
 // ----------------------------------------------------------------------------
 
 bool load_and_integrate_spectra_volume(std::string dataset_directory,
                                        std::string dataset_file,
                                        size_t detector_num,
                                        data_struct::Spectra *integrated_spectra,
-                                       data_struct::Params_Override * params_override)
+									   data_struct::Params_Override * params_override)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;
@@ -1104,7 +1103,10 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
-    if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, nullptr, out_rows, out_cols, cb_function, integrated_spectra))
+	bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
+    //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
+	if(false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files, params_override))
+	
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
