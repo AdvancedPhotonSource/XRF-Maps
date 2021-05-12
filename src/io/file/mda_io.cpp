@@ -1053,6 +1053,8 @@ bool MDA_IO::load_integrated_spectra(std::string path,
 		return false;
 	}
 
+	out_integrated_spectra->setZero(samples);
+
 	logI << " elt_idx " << elt_idx << " ert_idx " << ert_idx << " in cnt idx " << incnt_idx << " out cnt idx " << outcnt_idx << "\n";
 
 	try
