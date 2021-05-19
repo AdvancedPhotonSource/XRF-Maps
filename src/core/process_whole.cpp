@@ -891,7 +891,11 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
             }
         }
 		size_t dlen = dataset_file.length();
-		if(dlen > 4 && dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
+        if (dlen > 6 && dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'h' && dataset_file[dlen - 3] == 'd' && dataset_file[dlen - 2] == 'f' && dataset_file[dlen - 1] == '5')
+        {
+            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
+        }
+		else if(dlen > 4 && dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
 		{
 			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
 		}
@@ -899,6 +903,14 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 		{
 			hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
 		}
+
+        
+
+        // Can scan for all hdf5 files in img.dat but will have to do it for multiple ext and filter out by detector num and avg
+        //for (auto& itr : io::find_all_dataset_files(analysis_job.dataset_directory + "img.dat", ".hdf5"))
+        //{
+        //    hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + itr);
+        //}
 
         for (std::string hdf5_dataset_name : hdf5_dataset_list)
         {
