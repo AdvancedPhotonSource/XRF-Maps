@@ -495,6 +495,8 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
         paramFileStream.exceptions(std::ifstream::failbit);
         bool has_filename = false;
         bool has_elements = false;
+        bool disable_Ka_quant = false;
+        bool disable_La_quant = false;
         std::string tag;
 
         std::vector<std::string> element_names;
@@ -516,6 +518,30 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     standard_filename.erase(std::remove_if(standard_filename.begin(), standard_filename.end(), ::isspace), standard_filename.end());
                     logI << "Standard file name = "<< standard_filename << "\n";
                     has_filename = true;
+                }
+                else if (tag == "DISABLE_KA")
+                {
+                    std::string tmp = "";
+                    logI << line << "\n";
+                    std::getline(strstream, tmp, ':');
+                    tmp.erase(std::remove_if(tmp.begin(), tmp.end(), ::isspace), tmp.end());
+                    if (tmp == "1")
+                    {
+                        disable_Ka_quant = true;
+                    }
+                    logI << "Disable Ka = " << disable_Ka_quant << "\n";
+                }
+                else if (tag == "DISABLE_LA")
+                {
+                    std::string tmp = "";
+                    logI << line << "\n";
+                    std::getline(strstream, tmp, ':');
+                    tmp.erase(std::remove_if(tmp.begin(), tmp.end(), ::isspace), tmp.end());
+                    if (tmp == "1")
+                    {
+                        disable_La_quant = true;
+                    }
+                    logI << "Disable La = " << disable_La_quant << "\n";
                 }
                 else if (tag == "ELEMENTS_IN_STANDARD")
                 {
@@ -543,7 +569,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     {
                         if(element_names.size() == element_weights.size())
                         {
-                            standards.emplace_back(Quantification_Standard(standard_filename, element_names, element_weights));
+                            standards.emplace_back(Quantification_Standard(standard_filename, element_names, element_weights, disable_Ka_quant, disable_La_quant));
                         }
                         else
                         {
@@ -555,6 +581,8 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     element_weights.clear();
                     has_filename = false;
                     has_elements = false;
+                    disable_Ka_quant = false;
+                    disable_La_quant = false;
                 }
             }
         }

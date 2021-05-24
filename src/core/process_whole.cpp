@@ -631,7 +631,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
         {
             data_struct::Element_Info* e_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
             elements_to_fit[itr.first] = new data_struct::Fit_Element_Map(itr.first, e_info);
-            elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element);
+            elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
         }
 
         unordered_map<string, string> pv_map;

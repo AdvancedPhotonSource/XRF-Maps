@@ -140,6 +140,8 @@ public:
 
     Quantification_Standard(std::string standard_file, std::unordered_map<std::string, real_t> e_standard_weights);
 
+    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights, bool disable_Ka, bool disable_La);
+
     ~Quantification_Standard();
 
     void init_defaults();
@@ -156,9 +158,17 @@ public:
     unordered_map<Fitting_Routines, unordered_map<string, real_t> > element_counts;
 
     Spectra integrated_spectra;
+
     real_t sr_current;
+
     real_t US_IC;
+
     real_t DS_IC;
+
+    bool disable_Ka_for_quantification;
+
+    bool disable_La_for_quantification;
+
 };
 
 //-----------------------------------------------------------------------------
