@@ -86,6 +86,16 @@ Quantification_Standard::Quantification_Standard(std::string standard_file, std:
 
 //-----------------------------------------------------------------------------
 
+Quantification_Standard::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights, bool disable_Ka, bool disable_La)
+{
+    init_defaults();
+    disable_Ka_for_quantification = disable_Ka;
+    disable_La_for_quantification = disable_La;
+    init_weights_struct(standard_file, element_names, element_weights);
+}
+
+//-----------------------------------------------------------------------------
+
 Quantification_Standard::~Quantification_Standard()
 {
 
@@ -95,10 +105,11 @@ Quantification_Standard::~Quantification_Standard()
 
 void Quantification_Standard::init_defaults()
 {
-
     sr_current = 0.0;
     US_IC = 0.0;
     DS_IC = 0.0;
+    disable_Ka_for_quantification = false;
+    disable_La_for_quantification = false;
 }
 
 //-----------------------------------------------------------------------------

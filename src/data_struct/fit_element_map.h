@@ -148,7 +148,7 @@ public:
     
     void multiply_custom_multiply_ratio(unsigned int idx, real_t multi);
 
-    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element);
+    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka=false, bool disable_La = false);
 
     const std::string& full_name() const { return _full_name; }
 
