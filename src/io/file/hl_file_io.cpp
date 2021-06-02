@@ -614,15 +614,23 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
 
 bool load_override_params(std::string dataset_directory,
                           int detector_num,
-                          data_struct::Params_Override *params_override)
+                          data_struct::Params_Override *params_override,
+                          bool append_file_name)
 {
     std::string det_num = "";
+    std::string filename = dataset_directory;
     if(detector_num > -1)
         det_num = std::to_string(detector_num);
 
-    if(false == io::file::aps::load_parameters_override(dataset_directory+"maps_fit_parameters_override.txt"+det_num, params_override))
+
+    if (append_file_name)
     {
-        logE<<"Loading fit param override file: "<<dataset_directory+"maps_fit_parameters_override.txt"+det_num<<"\n";
+        filename += "maps_fit_parameters_override.txt" + det_num;
+    }
+
+    if(false == io::file::aps::load_parameters_override(filename, params_override))
+    {
+        logE<<"Loading fit param override file: "<< filename <<"\n";
         return false;
     }
     else
