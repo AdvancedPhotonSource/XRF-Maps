@@ -63,6 +63,11 @@ namespace file
 {
 namespace csv
 {
+
+    DLL_EXPORT bool load_element_info(std::string filename);
+
+    DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data);
+
     DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background);
 
     DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background, unordered_map<string, data_struct::ArrayXr>* labeled_spectras);
@@ -75,8 +80,6 @@ namespace csv
                                             Fitting_Routines routine,
                                             string quantifier_scaler_name, 
                                             Quantification_Scaler_Struct* quants_map);
-
-    DLL_EXPORT bool load_element_info(std::string filename);
 
 }// end namespace CSV
 }// end namespace file

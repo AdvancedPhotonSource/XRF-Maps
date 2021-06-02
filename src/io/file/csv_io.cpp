@@ -64,6 +64,69 @@ namespace file
 namespace csv
 {
 
+bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data)
+{
+    std::ifstream file_stream(filename);
+    try
+    {
+        std::string tmp_line;
+        int num_lines;
+        // First get number of lines in file so we know spectra size
+        for (num_lines = 0; std::getline(file_stream, tmp_line); num_lines++ )
+        {
+            
+        }
+        // rewind file and start reading data
+        file_stream.clear();
+        file_stream.seekg(0);
+
+        // subtract 1 from num lines for header
+        num_lines--;
+        bool first_line = true;
+        int line_num = 0;
+        std::vector<string> names;
+        for (std::string line; std::getline(file_stream, line); )
+        {
+            std::stringstream strstream(line);
+            if (first_line)
+            {
+                for (std::string value; std::getline(strstream, value, ','); )
+                {
+                    names.push_back(value);
+                    data[value] = ArrayXr();
+                    data[value].resize(num_lines);
+                    data[value].setZero(num_lines);
+                }
+                first_line = false;
+            }
+            else
+            {
+                int idx = 0;
+                for (std::string value; std::getline(strstream, value, ','); )
+                {
+                    data[names[idx]](line_num) = stof(value);
+                    idx++;
+                }
+                line_num++;
+            }
+        }
+    }
+    catch (std::exception& e)
+    {
+        if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()))
+        {
+            std::cerr << "ios Exception happened: " << e.what() << "\n"
+                << "Error bits are: "
+                << "\nfailbit: " << file_stream.fail()
+                << "\neofbit: " << file_stream.eof()
+                << "\nbadbit: " << file_stream.bad() << "\n";
+        }
+        return false;
+    }
+
+    return true;
+}
+
 bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background)
 {
     return save_fit_and_int_spectra(fullpath, energy, spectra, spectra_model, background, nullptr);
