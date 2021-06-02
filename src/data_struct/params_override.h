@@ -98,6 +98,7 @@ public:
         sr_current = 0.0;
         US_IC = 0.0;
         DS_IC = 0.0;
+        detector_element = "Si";
     }
     Params_Override(string dir, int detector)
     {
@@ -119,6 +120,7 @@ public:
 
         dataset_directory = dir;
         detector_num = detector;
+        detector_element = "Si";
     }
     ~Params_Override()
     {
