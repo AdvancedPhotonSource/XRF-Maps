@@ -96,7 +96,7 @@ Fit_Parameters Gaussian_Model::_generate_default_fit_parameters()
     fit_params.add_parameter(Fit_Param(STR_ENERGY_QUADRATIC,    (real_t)0.0, (real_t)0.00001, (real_t)0.0,    (real_t)0.000000001,   E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param(STR_FWHM_OFFSET,         (real_t)0.005,    (real_t)0.5,  (real_t)0.11442004,    (real_t)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_FWHM_FANOPRIME,      (real_t)0.000001, (real_t)0.05, (real_t)0.00024609183, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param(STR_FWHM_FANOPRIME,      (real_t)0.000001, (real_t)0.05, (real_t)0.0000024609183, (real_t)0.000001,  E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_ENERGY,	   (real_t)9.4, (real_t)10.4, (real_t)9.99, (real_t)0.001,  E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, (real_t)0.000001, (real_t)10.0, (real_t)5.0,  (real_t)0.00001, E_Bound_Type::FIT));
