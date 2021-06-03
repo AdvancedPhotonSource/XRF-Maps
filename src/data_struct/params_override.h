@@ -83,12 +83,11 @@ public:
 
     Params_Override()
     {
-        detector_num = 0;
         si_escape_factor = 0.0;
         ge_escape_factor = 0.0;
         si_escape_enabled = false;
         ge_escape_enabled = false;
-        fit_snip_width = 0.0;
+        fit_snip_width = 0.5;
         us_amp_sens_num = 0.0;
         us_amp_sens_unit = 0.0;
         ds_amp_sens_num = 0.0;
@@ -98,7 +97,18 @@ public:
         sr_current = 0.0;
         US_IC = 0.0;
         DS_IC = 0.0;
+        detector_element = "Si";
+        dataset_directory = "";
+        detector_num = -1;
+        time_scaler = "";
+        time_scaler_clock = "";
+        be_window_thickness = "24.0";
+        det_chip_thickness = "350.0";
+        ge_dead_layer = "0.0";
+        airpath = "0";
+        theta_pv = "";
     }
+
     Params_Override(string dir, int detector)
     {
 
@@ -119,7 +129,9 @@ public:
 
         dataset_directory = dir;
         detector_num = detector;
+        detector_element = "Si";
     }
+
     ~Params_Override()
     {
         time_normalized_scalers.clear();
@@ -208,7 +220,6 @@ public:
 		}
 
 	}
-
 
 	map<int, float> get_custom_factor(string el_name)
 	{

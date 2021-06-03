@@ -138,8 +138,9 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 													data_struct::Params_Override * params_override);
 
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
-                          int detector_num,
-                          data_struct::Params_Override *params_override);
+                                    int detector_num,
+                                    data_struct::Params_Override* params_override,
+                                    bool append_file_name = true);
 /*
 DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
                                   std::string quantification_info_file,
