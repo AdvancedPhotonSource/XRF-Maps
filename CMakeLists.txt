@@ -54,10 +54,10 @@ set(VCPKG_CRT_LINKAGE dynamic)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${PROJECT_SOURCE_DIR}/../libs/libzmq/build ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PROJECT_SOURCE_DIR}/../libs/libzmq/build)
 
-option(BUILD_WITH_TRIPC "Build tripc library for libxrpc (RedHat 8)" OFF)
+option(BUILD_WITH_TIRPC "Build tripc library for libxrpc (RedHat 8)" OFF)
 
 IF(UNIX)
-  IF(BUILD_WITH_TRIPC)
+  IF(BUILD_WITH_TIRPC)
     set(GCC_INCLUDE_DIR "/usr/include/tirpc/" CACHE PATH "include folder for xrpc (red hat)") 
     include_directories(${GCC_INCLUDE_DIR})
   ENDIF()
@@ -479,11 +479,12 @@ IF (BUILD_WITH_QT)
 
 ENDIF()
 
-IF (BUILD_WITH_TRIPC)
-  target_link_libraries (libxrf_io LINK_PUBLIC optimized /lib64/libtirpc.so  )
-  target_link_libraries (libxrf_io LINK_PUBLIC debug /lib64/libtirpc.so)
+IF (BUILD_WITH_TIRPC)
+  link_directories(AFTER "/lib64" "/usr/lib")
+  target_link_libraries (libxrf_io LINK_PUBLIC optimized libtirpc.so  )
+  target_link_libraries (libxrf_io LINK_PUBLIC debug libtirpc.so)
 
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized /lib64/libtirpc.so)
-  target_link_libraries (xrf_maps LINK_PUBLIC debug /lib64/libtirpc.so)
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libtirpc.so)
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libtirpc.so)
 ENDIF()
 

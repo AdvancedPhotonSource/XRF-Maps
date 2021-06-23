@@ -1291,7 +1291,7 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
 
     switch (detector_num)
     {
-    case -1:
+    case (size_t)-1:
         detector_path = "detsum";
         break;
     case 0:
@@ -1528,7 +1528,7 @@ bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num,
 
     switch (detector_num)
     {
-    case -1:
+    case (size_t)-1:
         detector_path = "detsum";
         break;
     case 0:
