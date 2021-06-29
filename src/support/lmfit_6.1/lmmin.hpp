@@ -44,6 +44,7 @@
 #define LM_SQRT_DWARF (sqrt(LM_DWARF*1.5f)*10.0f) // square should not underflow 
 #define LM_SQRT_GIANT (sqrt(LM_GIANT)*0.1f) // square should not overflow 
 #define LM_USERTOL 1.19209e-10f  // users are recommended to require this 
+#define LM_EPSILON 1.19209e-7f  // MPFit's epsilon
 
 #endif
 /* If the above values do not work, the following seem good for an x86:
