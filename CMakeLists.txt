@@ -236,6 +236,7 @@ set(libxrf_fit_HEADERS
     src/fitting/routines/roi_fit_routine.h
     src/fitting/routines/svd_fit_routine.h
     src/fitting/routines/nnls_fit_routine.h
+    src/fitting/routines/hybrid_param_nnls_fit_routine.h
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
@@ -260,6 +261,7 @@ set(libxrf_fit_SOURCE
     src/fitting/routines/roi_fit_routine.cpp
     src/fitting/routines/svd_fit_routine.cpp
     src/fitting/routines/nnls_fit_routine.cpp
+    src/fitting/routines/hybrid_param_nnls_fit_routine.cpp
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/lmfit_optimizer.cpp
