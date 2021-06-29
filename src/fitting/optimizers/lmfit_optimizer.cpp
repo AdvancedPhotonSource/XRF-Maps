@@ -98,7 +98,7 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    //ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
@@ -321,11 +321,6 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     Gen_User_Data ud;
 
-    real_t saved_ftol = _options.ftol;
-    real_t saved_gtol = _options.gtol;
-    _options.ftol = LM_USERTOL;
-    _options.gtol = LM_USERTOL;
-
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
@@ -348,9 +343,6 @@ OPTIMIZER_OUTCOME LMFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         diff_arr = diff_arr.unaryExpr([](real_t v) { return std::abs(v); });
         (*fit_params)[STR_RESIDUAL].value = diff_arr.sum();
     }
-
-    _options.ftol = saved_ftol;
-    _options.gtol = saved_gtol;
 
     if (_outcome_map.count(status.outcome) > 0)
         return _outcome_map[status.outcome];

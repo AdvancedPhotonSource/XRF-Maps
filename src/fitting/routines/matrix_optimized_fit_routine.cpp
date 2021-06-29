@@ -260,11 +260,14 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
             background.setZero(_energy_range.count());
         }
 
-        //set num iter to 200;
-        unordered_map<string, real_t> opt_options{ {STR_OPT_MAXITER, 200.} };
+        std::function<void(const Fit_Parameters* const, const  Range* const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
-        std::function<void(const Fit_Parameters * const, const  Range * const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        //set num iter to 300;
+        unordered_map<string, real_t> opt_options{ {STR_OPT_MAXITER, 300.}, {STR_OPT_FTOL, 1.0e-11 }, {STR_OPT_GTOL, 1.0e-11 } };
+        unordered_map<string, real_t> saved_options = _optimizer->get_options();        
         _optimizer->set_options(opt_options);
+
+
         ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -319,7 +322,10 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
 				_max_10_channels_spectra[itr.first] += itr.second;
 			}
         }
+
+        _optimizer->set_options(saved_options);
     }
+
     return ret_val;
 
 }

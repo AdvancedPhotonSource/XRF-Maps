@@ -390,7 +390,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                             Callback_Func_Status_Def* status_callback)
             {
     User_Data ud;
-    size_t num_itr = 2000;
+    size_t num_itr = _options.maxiter;
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
@@ -476,12 +476,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 									            Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
-    real_t saved_ftol = _options.ftol;
-    real_t saved_gtol = _options.gtol;
-    _options.ftol = 1e-10;
-    _options.gtol = 1e-10;
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
-    
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
@@ -548,9 +543,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
-
-    _options.ftol = saved_ftol;
-    _options.gtol = saved_gtol;
 
     if (_outcome_map.count(info) > 0)
         return _outcome_map[info];
