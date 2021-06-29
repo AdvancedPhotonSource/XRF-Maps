@@ -558,7 +558,11 @@ void find_quantifier_scalers(data_struct::Params_Override * override_params, uno
 {
     std::string quant_scalers_names[] = {STR_US_IC, STR_DS_IC, "SRCURRENT"};
     real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
-    real_t scaler_clock = std::stof(override_params->time_scaler_clock);
+	real_t scaler_clock = 1.0;
+	if (override_params->time_scaler_clock.length() > 0)
+	{
+		scaler_clock = std::stof(override_params->time_scaler_clock);
+	}
     int i =0;
     for(auto &itr : quant_scalers_names)
     {
