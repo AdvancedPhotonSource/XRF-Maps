@@ -75,10 +75,10 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     update_background_user_data(ud);
     // Model spectra based on new fit parameters
     ud->spectra_model = ud->fit_model->model_spectrum_mp(ud->fit_parameters, ud->elements, ud->energy_range);
-    // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Add background
     ud->spectra_model += ud->spectra_background;
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
 
     //Calculate residuals
     for (int i=0; i<m; i++)
@@ -107,11 +107,10 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
 
     // Model spectra based on new fit parameters
     ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
-    // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Add background
     ud->spectra_model += ud->spectra_background;
-
+    // Remove nan's and inf's
+    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
@@ -148,7 +147,7 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
         dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
         if (std::isfinite(dy[idx]) == false)
         {
-            dy[idx] = std::numeric_limits<double>::max();
+            dy[idx] = std::numeric_limits<real_t>::max();
         }
         idx++;
     }
@@ -162,13 +161,13 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
 MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.ftol = 1e-22;       // Relative chi-square convergence criterium  Default: 1e-10
+    _options.ftol = 1e-15;       // Relative chi-square convergence criterium  Default: 1e-10
     _options.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    _options.gtol = 1e-22;       // Orthogonality convergence criterium        Default: 1e-10
+    _options.gtol = 1e-15;       // Orthogonality convergence criterium        Default: 1e-10
     _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     _options.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    _options.maxiter = 4000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
+    _options.maxiter = 2000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
                                     //    parameter values, but no fitting iterations are done.
@@ -391,7 +390,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
                                             Callback_Func_Status_Def* status_callback)
             {
     User_Data ud;
-    size_t num_itr = 2000;
+    size_t num_itr = _options.maxiter;
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
@@ -477,9 +476,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 									            Gen_Func_Def gen_func)
 {
     Gen_User_Data ud;
-
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
-    
 
     std::vector<real_t> fitp_arr = fit_params->to_array();
     std::vector<real_t> perror(fitp_arr.size());
@@ -546,6 +543,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+
     if (_outcome_map.count(info) > 0)
         return _outcome_map[info];
 
