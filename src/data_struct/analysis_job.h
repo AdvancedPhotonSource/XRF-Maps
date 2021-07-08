@@ -139,6 +139,14 @@ public:
 
 	long long mem_limit;
 
+	std::string update_us_amps_str;
+
+	std::string update_ds_amps_str;
+
+	std::string update_quant_us_amps_str;
+
+	std::string update_quant_ds_amps_str;
+
     //list of quantification standards to use
     vector<Quantification_Standard> standard_element_weights;
 

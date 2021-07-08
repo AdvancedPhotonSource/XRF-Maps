@@ -66,6 +66,8 @@ void help()
     logit_s<< "--export-csv : Export Integrated spec, fitted, background to csv file.\n";
 	logit_s<< "--update-theta : <theta_pv_string> Update the theta dataset value using theta_pv_string as new pv string ref.\n";
     logit_s<< "--update-scalers : If scalers pv's have been changed in maps_fit_parameters_override.txt file, you can run this to just update scaler values without refitting.\n";
+	logit_s << "--update-amps <us_amp>,<ds_amp>: Updates upstream and downstream amps if they changed inbetween scans.\n";
+	logit_s << "--update-quant-amps <us_amp>,<ds_amp>: Updates upstream and downstream amps for quantification if they changed inbetween scans.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
 //	logit_s<< "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
@@ -272,6 +274,36 @@ int main(int argc, char *argv[])
     {
         analysis_job.update_scalers = true;
     }
+	
+	if (clp.option_exists("--update-amps"))
+	{
+		string amps = clp.get_option("--update-amps");
+		size_t idx = amps.find(',');
+		if (idx != string::npos)
+		{
+			analysis_job.update_us_amps_str = amps.substr(0, idx);
+			analysis_job.update_ds_amps_str = amps.substr(idx+1);
+		}
+		else
+		{
+			logW << "Could not find ',' while parsing --update-amps\n";
+		}
+	}
+
+	if (clp.option_exists("--update-quant-amps"))
+	{
+		string amps = clp.get_option("--update-quant-amps");
+		size_t idx = amps.find(',');
+		if (idx != string::npos)
+		{
+			analysis_job.update_quant_us_amps_str = amps.substr(0, idx);
+			analysis_job.update_quant_ds_amps_str = amps.substr(idx + 1);
+		}
+		else
+		{
+			logW << "Could not find ',' while parsing --update-quant-amps\n";
+		}
+	}
 
     //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
     if(clp.option_exists("--add-exchange"))
@@ -367,8 +399,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
-    bool update_h5_without_fitting = analysis_job.generate_average_h5 || analysis_job.add_v9_layout || analysis_job.add_exchange_layout || analysis_job.update_theta_str.length() == 0 || analysis_job.update_scalers || analysis_job.export_int_fitted_to_csv;
-    bool update_h5_fit = analysis_job.fitting_routines.size() > 0 || optimize_fit_override_params || analysis_job.stream_over_network || update_h5_without_fitting;
+    bool update_h5_without_fitting = analysis_job.generate_average_h5 ||
+		analysis_job.add_v9_layout || 
+		analysis_job.add_exchange_layout || 
+		analysis_job.update_theta_str.length() > 0 || 
+		analysis_job.update_scalers || 
+		analysis_job.export_int_fitted_to_csv || 
+		analysis_job.update_us_amps_str.length() > 0 ||
+		analysis_job.update_quant_us_amps_str.length() > 0;
+
+    bool update_h5_fit = analysis_job.fitting_routines.size() > 0 ||
+		optimize_fit_override_params ||
+		analysis_job.stream_over_network ||
+		update_h5_without_fitting;
 
     //Check to make sure we have something to do. If not then show the help screen
     if (update_h5_fit == false)

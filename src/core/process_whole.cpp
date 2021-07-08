@@ -927,9 +927,20 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
             //update theta based on new PV
             if (analysis_job.update_theta_str.length() > 0)
             {
-                //data_struct::Params_Override* params_override
                 io::file::HDF5_IO::inst()->update_theta(hdf5_dataset_name, analysis_job.update_theta_str);
             }
+
+			//update upstream and downstream amps 
+			if (analysis_job.update_us_amps_str.length() > 0 && analysis_job.update_ds_amps_str.length() > 0)
+			{
+				io::file::HDF5_IO::inst()->update_amps(hdf5_dataset_name, analysis_job.update_us_amps_str, analysis_job.update_ds_amps_str);
+			}
+
+			//update quantification upstream and downstream amps
+			if (analysis_job.update_quant_ds_amps_str.length() > 0 && analysis_job.update_quant_ds_amps_str.length() > 0)
+			{
+				io::file::HDF5_IO::inst()->update_quant_amps(hdf5_dataset_name, analysis_job.update_quant_us_amps_str, analysis_job.update_quant_ds_amps_str);
+			}
 
             //update scalers table in hdf5
             if (analysis_job.update_scalers)
