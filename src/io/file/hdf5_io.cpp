@@ -8008,6 +8008,12 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 		H5Sclose(amp_space_id);
 	}
 
+	// try v9 layout 
+	if (us_amp_id < 0)
+	{
+		_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/us_amp", file_id, false, false);
+	}
+
 	if (us_amp_id > -1)
 	{
 		hid_t amp_space = H5Dget_space(us_amp_id);
@@ -8028,6 +8034,12 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 			close_map.push({ ds_amp_id, H5O_DATASET });
 		}
 		H5Sclose(amp_space_id);
+	}
+
+	// try v9 layout 
+	if (ds_amp_id < 0)
+	{
+		_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/ds_amp", file_id, false, false);
 	}
 
 	if (ds_amp_id > -1)
@@ -8120,7 +8132,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
 	close_map.push({ memoryspace_id, H5O_DATASPACE });
 
-	if (_open_h5_object(num_stand_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id, false))
+	if (_open_h5_object(num_stand_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id, false, false))
 	{
 		hid_t stand_space = H5Dget_space(num_stand_id);
 		close_map.push({ stand_space, H5O_DATASPACE });
@@ -8177,6 +8189,29 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 			}
 		}
 	}
+	else
+	{
+		// try v9 layout 
+		if (_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/us_amp", file_id, false, false))
+		{
+			hid_t amp_space = H5Dget_space(us_amp_id);
+			close_map.push({ amp_space, H5O_DATASPACE });
+			offset_1d[0] = 2;
+			count_1d[0] = 1;
+			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+			rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+		}
+		if (_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/ds_amp", file_id, false, false))
+		{
+			hid_t amp_space = H5Dget_space(ds_amp_id);
+			close_map.push({ amp_space, H5O_DATASPACE });
+			offset_1d[0] = 2;
+			count_1d[0] = 1;
+			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+			rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+		}
+	}
+
 	_close_h5_objects(close_map);
 
 }

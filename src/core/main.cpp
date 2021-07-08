@@ -466,6 +466,10 @@ int main(int argc, char *argv[])
             {
                 analysis_job.dataset_files.push_back(itr);
             }
+			for (auto& itr : io::find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
+			{
+				analysis_job.dataset_files.push_back(itr);
+			}
 
             if (analysis_job.dataset_files.size() == 0)
             {
