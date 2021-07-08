@@ -5020,13 +5020,26 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 
         //create dataset telling how many standards there are
         count[0] = 1;
-        count_dataspace_id = H5Screate_simple(1, count, nullptr);
-        count_dset_id = H5Dcreate(q_grp_id, "Number_Of_Standards", H5T_NATIVE_INT, count_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        int quant_size = detector->quantification_standards.size();
+		count_dset_id = H5Dopen(q_grp_id, "Number_Of_Standards", H5P_DEFAULT);
+		if (count_dset_id < 0)
+		{
+			count_dataspace_id = H5Screate_simple(1, count, nullptr);
+			count_dset_id = H5Dcreate(q_grp_id, "Number_Of_Standards", H5T_NATIVE_INT, count_dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		}
+		else
+		{
+			count_dataspace_id = H5Dget_space(count_dset_id);
+		}
+		int quant_size = detector->quantification_standards.size();
         status = H5Dwrite(count_dset_id, H5T_NATIVE_INT, count_dataspace_id, count_dataspace_id, H5P_DEFAULT, (void*)&quant_size);
-        H5Sclose(count_dataspace_id);
-        H5Dclose(count_dset_id);
-
+		if (count_dataspace_id > -1)
+		{
+			H5Sclose(count_dataspace_id);
+		}
+		if (count_dset_id > -1)
+		{
+			H5Dclose(count_dset_id);
+		}
         int standard_idx = 0;
 
         // ----------------------------------------- start per standard  ------------------------------------------------
@@ -7961,6 +7974,250 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 
 //-----------------------------------------------------------------------------
 
+void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	hid_t file_id, us_amp_id, us_amp_num_id, ds_amp_id, ds_amp_num_id;
+	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+	hsize_t dims_in[1] = { 0 };
+	hsize_t offset_1d[1] = { 2 };
+	hsize_t count_1d[1] = { 1 };
+	hid_t rerror = 0;
+	real_t us_amp_value = stof(us_amp_str);
+	real_t ds_amp_value = stof(ds_amp_str);
+
+	file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	if (file_id < 0)
+	{
+		logW << "Could not open file " << dataset_file << "\n";
+		return;
+	}
+	close_map.push({ file_id, H5O_FILE });
+	hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+	close_map.push({ memoryspace_id, H5O_DATASPACE });
+
+	if (false == _open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp", file_id, false, false))
+	{
+		count_1d[0] = 3;
+		hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+		us_amp_id = H5Dcreate1(file_id, "/MAPS/Scalers/us_amp", H5T_NATIVE_REAL, amp_space_id, H5P_DEFAULT);
+		if (us_amp_id > -1)
+		{
+			close_map.push({ us_amp_id, H5O_DATASET });
+		}
+		H5Sclose(amp_space_id);
+	}
+
+	// try v9 layout 
+	if (us_amp_id < 0)
+	{
+		_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/us_amp", file_id, false, false);
+	}
+
+	if (us_amp_id > -1)
+	{
+		hid_t amp_space = H5Dget_space(us_amp_id);
+		close_map.push({ amp_space, H5O_DATASPACE });
+		offset_1d[0] = 2;
+		count_1d[0] = 1;
+		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+		rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+	}
+
+	if (false == _open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp", file_id, false, false))
+	{
+		count_1d[0] = 3;
+		hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+		us_amp_id = H5Dcreate1(file_id, "/MAPS/Scalers/ds_amp", H5T_NATIVE_REAL, amp_space_id, H5P_DEFAULT);
+		if (ds_amp_id > -1)
+		{
+			close_map.push({ ds_amp_id, H5O_DATASET });
+		}
+		H5Sclose(amp_space_id);
+	}
+
+	// try v9 layout 
+	if (ds_amp_id < 0)
+	{
+		_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/ds_amp", file_id, false, false);
+	}
+
+	if (ds_amp_id > -1)
+	{
+		hid_t amp_space = H5Dget_space(ds_amp_id);
+		close_map.push({ amp_space, H5O_DATASPACE });
+		offset_1d[0] = 2;
+		count_1d[0] = 1;
+		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+		rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+	}
+
+
+
+	if (false == _open_h5_object(us_amp_num_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp_num", file_id, false, false))
+	{
+		count_1d[0] = 1;
+		hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+		us_amp_id = H5Dcreate1(file_id, "/MAPS/Scalers/us_amp_num", H5T_NATIVE_REAL, amp_space_id, H5P_DEFAULT);
+		if (us_amp_id > -1)
+		{
+			close_map.push({ us_amp_id, H5O_DATASET });
+		}
+		H5Sclose(amp_space_id);
+	}
+
+	if (us_amp_num_id > -1)
+	{
+		hid_t amp_space = H5Dget_space(us_amp_num_id);
+		close_map.push({ amp_space, H5O_DATASPACE });
+		offset_1d[0] = 0;
+		count_1d[0] = 1;
+		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+		rerror = H5Dwrite(us_amp_num_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+	}
+
+	if (false == _open_h5_object(ds_amp_num_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp_num", file_id, false, false))
+	{
+		count_1d[0] = 1;
+		hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+		ds_amp_id = H5Dcreate1(file_id, "/MAPS/Scalers/ds_amp_num", H5T_NATIVE_REAL, amp_space_id, H5P_DEFAULT);
+		if (ds_amp_id > -1)
+		{
+			close_map.push({ ds_amp_id, H5O_DATASET });
+		}
+		H5Sclose(amp_space_id);
+	}
+
+	if (ds_amp_num_id > -1)
+	{
+		hid_t amp_space = H5Dget_space(ds_amp_num_id);
+		close_map.push({ amp_space, H5O_DATASPACE });
+		offset_1d[0] = 0;
+		count_1d[0] = 1;
+		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+		rerror = H5Dwrite(ds_amp_num_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+	}
+
+	_close_h5_objects(close_map);
+
+}
+
+//-----------------------------------------------------------------------------
+
+void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	hid_t file_id, us_amp_id, ds_amp_id, num_stand_id;
+	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+	hsize_t dims_in[1] = { 0 };
+	hsize_t offset_1d[1] = { 2 };
+	hsize_t count_1d[1] = { 1 };
+	hid_t rerror = 0;
+	real_t us_amp_value = stof(us_amp_str);
+	real_t ds_amp_value = stof(ds_amp_str);
+	int num_stands;
+	string q_loc_pre_str = "/MAPS/Quantification/Standard";
+	string q_loc_post_str = "/Scalers/";
+	string q_us_str = "us_amp";
+	string q_ds_str = "ds_amp";
+
+
+	file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+	if (file_id < 0)
+	{
+		logW << "Could not open file " << dataset_file << "\n";
+		return;
+	}
+	close_map.push({ file_id, H5O_FILE });
+	hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+	close_map.push({ memoryspace_id, H5O_DATASPACE });
+
+	if (_open_h5_object(num_stand_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id, false, false))
+	{
+		hid_t stand_space = H5Dget_space(num_stand_id);
+		close_map.push({ stand_space, H5O_DATASPACE });
+		rerror = H5Dread(num_stand_id, H5T_INTEL_I32, memoryspace_id, stand_space, H5P_DEFAULT, (void*)&num_stands);
+		if (rerror > -1)
+		{
+			for (int i = 0; i < num_stands; ++i)
+			{
+				string q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_us_str;
+				if (false == _open_h5_object(us_amp_id, H5O_DATASET, close_map, q_loc.c_str(), file_id, false, false))
+				{
+					count_1d[0] = 3;
+					hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+					us_amp_id = H5Dcreate(file_id, q_loc.c_str(), H5T_INTEL_R, amp_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+					if (us_amp_id > -1)
+					{
+						close_map.push({ us_amp_id, H5O_DATASET });
+					}
+					H5Sclose(amp_space_id);
+				}
+
+				if (us_amp_id > -1)
+				{
+					hid_t amp_space = H5Dget_space(us_amp_id);
+					close_map.push({ amp_space, H5O_DATASPACE });
+					offset_1d[0] = 2;
+					count_1d[0] = 1;
+					H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+					rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+				}
+
+				q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_ds_str;
+				if (false == _open_h5_object(ds_amp_id, H5O_DATASET, close_map, q_loc.c_str(), file_id, false, false))
+				{
+					count_1d[0] = 3;
+					hid_t amp_space_id = H5Screate_simple(1, count_1d, nullptr);
+					ds_amp_id = H5Dcreate(file_id, q_loc.c_str(), H5T_INTEL_R, amp_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+					if (ds_amp_id > -1)
+					{
+						close_map.push({ ds_amp_id, H5O_DATASET });
+					}
+					H5Sclose(amp_space_id);
+				}
+
+				if (ds_amp_id > -1)
+				{
+					hid_t amp_space = H5Dget_space(ds_amp_id);
+					close_map.push({ amp_space, H5O_DATASPACE });
+					offset_1d[0] = 2;
+					count_1d[0] = 1;
+					H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+					rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+				}
+			}
+		}
+	}
+	else
+	{
+		// try v9 layout 
+		if (_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/us_amp", file_id, false, false))
+		{
+			hid_t amp_space = H5Dget_space(us_amp_id);
+			close_map.push({ amp_space, H5O_DATASPACE });
+			offset_1d[0] = 2;
+			count_1d[0] = 1;
+			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+			rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+		}
+		if (_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/ds_amp", file_id, false, false))
+		{
+			hid_t amp_space = H5Dget_space(ds_amp_id);
+			close_map.push({ amp_space, H5O_DATASPACE });
+			offset_1d[0] = 2;
+			count_1d[0] = 1;
+			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
+			rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+		}
+	}
+
+	_close_h5_objects(close_map);
+
+}
+
+//-----------------------------------------------------------------------------
+
 void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -8549,7 +8806,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC;
 	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX10_INT_SPEC;
 	std::string v9_max_name = "/MAPS/max_chan_spec";
-	hid_t fit_int_id, max_id, max_10_id, nnls_id, back_id, max_space, max_type, v9_max_id, v9_space;
+	hid_t fit_int_id = -1, max_id = -1, max_10_id = -1, nnls_id = -1, back_id = -1, max_space = -1, max_type, v9_max_id = -1, v9_space = -1;
 	
 	max_id = H5Dopen(file_id, max_name.c_str(), H5P_DEFAULT);
     fit_int_id = H5Dopen(file_id, fit_int_name.c_str(), H5P_DEFAULT);
@@ -8757,6 +9014,32 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
     }
 
+	// create links /MAPS/make_maps_conf/element_standard/us_amp and ds_amp
+	hid_t conf_id = H5Gcreate(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (conf_id < 0)
+	{
+		conf_id = H5Gopen(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT);
+	}
+	if (conf_id >-1)
+	{
+		hid_t e_id = H5Gcreate(conf_id, "element_standard", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		if (e_id > -1)
+		{
+			H5Gclose(e_id);
+		}
+	}
+	if (conf_id > -1)
+	{
+		H5Gclose(conf_id);
+	}
+	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/element_standard/us_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", 0, NULL) >= 0)
+	{
+		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/element_standard/us_amp", H5P_DEFAULT, H5P_DEFAULT);
+	}
+	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/element_standard/ds_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", 0, NULL) >= 0)
+	{
+		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/element_standard/ds_amp", H5P_DEFAULT, H5P_DEFAULT);
+	}
     _add_extra_pvs(file_id, "/MAPS");
 
     if (chan_names > -1)

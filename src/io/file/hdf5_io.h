@@ -231,6 +231,10 @@ public:
 	// update theta value based on new pv name
     void update_theta(std::string dataset_file, std::string theta_pv_str);
 
+	void update_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str);
+
+	void update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str);
+
     //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
     void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
     
