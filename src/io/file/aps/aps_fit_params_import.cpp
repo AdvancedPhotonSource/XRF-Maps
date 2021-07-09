@@ -734,7 +734,10 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                         scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
                         last_scaler = scaler_name;
                         // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
-                        s_scaler.scalers_to_sum.push_back(scaler_name);
+						if (scaler_name.length() > 0)
+						{
+							s_scaler.scalers_to_sum.push_back(scaler_name);
+						}
                         std::getline(strstream, scaler_name, ',');
                     }
                     params_override->summed_scalers.push_back(s_scaler);
