@@ -8192,7 +8192,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	else
 	{
 		// try v9 layout 
-		if (_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/us_amp", file_id, false, false))
+		if (_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/nbs1832/us_amp", file_id, false, false))
 		{
 			hid_t amp_space = H5Dget_space(us_amp_id);
 			close_map.push({ amp_space, H5O_DATASPACE });
@@ -8201,7 +8201,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
 			rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 		}
-		if (_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/element_standard/ds_amp", file_id, false, false))
+		if (_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/nbs1832/ds_amp", file_id, false, false))
 		{
 			hid_t amp_space = H5Dget_space(ds_amp_id);
 			close_map.push({ amp_space, H5O_DATASPACE });
@@ -9014,7 +9014,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         _add_v9_quant(file_id, quant_space, chan_names, chan_space, quant_dims[2], STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
     }
 
-	// create links /MAPS/make_maps_conf/element_standard/us_amp and ds_amp
+	// create links /MAPS/make_maps_conf/nbs1832/us_amp and ds_amp
 	hid_t conf_id = H5Gcreate(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	if (conf_id < 0)
 	{
@@ -9022,7 +9022,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	}
 	if (conf_id >-1)
 	{
-		hid_t e_id = H5Gcreate(conf_id, "element_standard", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		hid_t e_id = H5Gcreate(conf_id, "nbs1832", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		if (e_id > -1)
 		{
 			H5Gclose(e_id);
@@ -9032,13 +9032,13 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	{
 		H5Gclose(conf_id);
 	}
-	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/element_standard/us_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", 0, NULL) >= 0)
+	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/us_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", 0, NULL) >= 0)
 	{
-		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/element_standard/us_amp", H5P_DEFAULT, H5P_DEFAULT);
+		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/us_amp", H5P_DEFAULT, H5P_DEFAULT);
 	}
-	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/element_standard/ds_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", 0, NULL) >= 0)
+	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/ds_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", 0, NULL) >= 0)
 	{
-		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/element_standard/ds_amp", H5P_DEFAULT, H5P_DEFAULT);
+		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/ds_amp", H5P_DEFAULT, H5P_DEFAULT);
 	}
     _add_extra_pvs(file_id, "/MAPS");
 

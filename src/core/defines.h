@@ -185,8 +185,8 @@ const string STR_FIT_GAUSS_MATRIX = "Fitted";
 const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 
 const string STR_SR_CURRENT = "SR_Current";
-const string STR_US_IC = "US_IC";
-const string STR_DS_IC = "DS_IC";
+const string STR_US_IC = "us_ic";
+const string STR_DS_IC = "ds_ic";
 
 
 const string STR_K_A_LINES = "K Alpha";
