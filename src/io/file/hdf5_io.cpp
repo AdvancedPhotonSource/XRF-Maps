@@ -8132,6 +8132,8 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
 	close_map.push({ memoryspace_id, H5O_DATASPACE });
 
+	bool update_v9 = false;
+
 	if (_open_h5_object(num_stand_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id, false, false))
 	{
 		hid_t stand_space = H5Dget_space(num_stand_id);
@@ -8139,6 +8141,10 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 		rerror = H5Dread(num_stand_id, H5T_INTEL_I32, memoryspace_id, stand_space, H5P_DEFAULT, (void*)&num_stands);
 		if (rerror > -1)
 		{
+			if (num_stands == 0)
+			{
+				update_v9 = true;
+			}
 			for (int i = 0; i < num_stands; ++i)
 			{
 				string q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_us_str;
@@ -8190,6 +8196,11 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 		}
 	}
 	else
+	{
+		update_v9 = true;
+	}
+
+	if(update_v9)
 	{
 		// try v9 layout 
 		if (_open_h5_object(us_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/nbs1832/us_amp", file_id, false, false))
