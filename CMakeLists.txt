@@ -67,6 +67,7 @@ ENDIF()
 find_package(NetCDF REQUIRED)
 find_package(Threads)
 find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(yaml-cpp REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
 
@@ -219,6 +220,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/quantification_standard.h
     src/data_struct/element_quant.h
     src/data_struct/element_info.h
+    src/data_struct/scaler_lookup.h
     src/data_struct/fit_parameters.h
     src/data_struct/fit_element_map.h
     src/data_struct/params_override.h
@@ -247,6 +249,7 @@ set(libxrf_fit_HEADERS
 set(libxrf_fit_SOURCE
     src/data_struct/quantification_standard.cpp
     src/data_struct/element_info.cpp
+    src/data_struct/scaler_lookup.cpp
     src/data_struct/fit_parameters.cpp
     src/data_struct/fit_element_map.cpp
     src/data_struct/spectra.cpp
@@ -391,7 +394,6 @@ install(TARGETS libxrf_io libxrf_fit EXPORT XRF_MapsConfig
 export(EXPORT XRF_MapsConfig FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsConfig.cmake")
 export(PACKAGE XRF_MapsConfig)
 
-
 IF (WIN32)
   IF (MSVC)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
@@ -399,8 +401,8 @@ IF (WIN32)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
 	set_target_properties(xrf_maps libxrf_io PROPERTIES COMPILE_FLAGS "/D_WINSOCKAPI_")
   ENDIF()
-  target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
   IF (BUILD_WITH_ZMQ)
     #IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     #  string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
@@ -463,11 +465,11 @@ set(HDF5_LIB_LEN 0)
 list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
 # Building on theta doesn't need ${HDF5_LIBRARIES} and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
 ELSE()
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
 
 IF (BUILD_WITH_QT)

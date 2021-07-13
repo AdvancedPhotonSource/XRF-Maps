@@ -111,6 +111,8 @@ int main(int argc, char *argv[])
     //////// HENKE and ELEMENT INFO /////////////
     const std::string element_csv_filename = "../reference/xrf_library.csv";
     const std::string element_henke_filename = "../reference/henke.xdr";
+    const std::string scaler_lookup_yaml = "../reference/Scaler_to_PV_map.yaml";
+    
 
     //main structure for analysis job information
     data_struct::Analysis_Job analysis_job;
@@ -522,6 +524,8 @@ int main(int argc, char *argv[])
     logI<<"whole command line : "<<whole_command_line<<"\n";
     
     start = std::chrono::system_clock::now();
+
+    io::load_scalers_lookup(scaler_lookup_yaml);
 
     //load element information
     if(false == io::load_element_info(element_henke_filename, element_csv_filename))

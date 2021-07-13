@@ -52,6 +52,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <fstream>
 
+
+#include "yaml-cpp/yaml.h"
+
 namespace io
 {
 
@@ -219,6 +222,20 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 	}
 
     return true;
+}
+
+// ----------------------------------------------------------------------------
+
+bool load_scalers_lookup(std::string filename)
+{
+    YAML::Node config = YAML::LoadFile(filename);
+
+    if (config["Beamlines"]) 
+    {
+        std::cout << config["Beamlines"] << "\n";
+        return true;
+    }
+    return false;
 }
 
 // ----------------------------------------------------------------------------
