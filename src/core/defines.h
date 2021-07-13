@@ -209,6 +209,11 @@ const string STR_CALIB_CURVE_SR_CUR = "Calibration_Curve_SR_Current";
 const string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
 const string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
 const string STR_CALIB_LABELS = "Calibration_Curve_Labels";
+
+const string STR_BEAMLINES = "BeamLines";
+const string STR_TIME_SCALER_PV = "TIME_SCALER_PV";
+
+
 //}
 
 //}// namespace keys

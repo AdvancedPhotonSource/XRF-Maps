@@ -403,6 +403,7 @@ IF (WIN32)
   ENDIF()
   target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  
   IF (BUILD_WITH_ZMQ)
     #IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     #  string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")

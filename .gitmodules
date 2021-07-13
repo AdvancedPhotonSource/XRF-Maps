@@ -7,3 +7,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/Microsoft/vcpkg
+[submodule "src/support/yaml-cpp"]
+	path = src/support/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

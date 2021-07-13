@@ -1,221 +1,192 @@
+---
 BeamLines:  
   2IDD:
-    US_IC:
-      2idd:scaler1_cts1.C
-    DS_IC:
-      2idd:scaler1_cts1.B
-    ELT:
-      2iddXMAP:mca1.ELTM
-      2iddXMAP:mca2.ELTM
-      2iddXMAP:mca3.ELTM
-      2iddXMAP:mca4.ELTM
-    ERT:
-      2iddXMAP:mca1.ERTM
-      2iddXMAP:mca2.ERTM
-      2iddXMAP:mca3.ERTM
-      2iddXMAP:mca4.ERTM
-    ICR:
-      2iddXMAP:dxp1:InputCountRate
-      2iddXMAP:dxp2:InputCountRate
-      2iddXMAP:dxp3:InputCountRate
-      2iddXMAP:dxp4:InputCountRate
-    OCR:
-      2iddXMAP:dxp1:OutputCountRate
-      2iddXMAP:dxp2:OutputCountRate
-      2iddXMAP:dxp3:OutputCountRate
-      2iddXMAP:dxp4:OutputCountRate
-  2IDE: 
-    SRCURRENT:
-      S:SRcurrentAI
-    US_IC:
-      2xfm:scaler3_cts1.B
-      2xfm:scaler1_cts1.B
-    DS_IC:
-      2xfm:scaler3_cts1.C
-      2xfm:scaler1_cts1.C
-    DPC1_IC:
-      2xfm:scaler3_cts2.A
-      2xfm:scaler1_cts2.A
-    DPC2_IC:
-      2xfm:scaler3_cts2.B
-      2xfm:scaler1_cts2.B
-    CFG_1:
-      2xfm:scaler3_cts3.B
-      2xfm:scaler1_cts3.B
-    CFG_2:
-      2xfm:scaler3_cts3.C
-      2xfm:scaler1_cts3.C
-    CFG_3:
-      2xfm:scaler3_cts3.D
-      2xfm:scaler1_cts3.D
-    CFG_4:
-      2xfm:scaler3_cts4.A
-      2xfm:scaler1_cts4.A
-    CFG_5:
-      2xfm:scaler3_cts4.B
-      2xfm:scaler1_cts4.B
-    CFG_6:
-      2xfm:scaler3_cts4.C
-      2xfm:scaler1_cts4.C
-    CFG_7:
-      2xfm:scaler3_cts4.D
-      2xfm:scaler1_cts4.D
-    CFG_8:
-      2xfm:scaler3_cts5.A
-      2xfm:scaler1_cts5.A
-    CFG_9:
-      2xfm:scaler3_cts5.A
-      2xfm:scaler1_cts5.A
-    ELT:
-      2xfm:med:mca1.ELTM
-      2xfm:med:mca2.ELTM
-      2xfm:med:mca3.ELTM
-      2xfm:med:mca4.ELTM
-      2xfm:mca1.ELTM
-      2xfm:mca2.ELTM
-      2xfm:mca3.ELTM
-      2xfm:mca4.ELTM
-      dxpXMAP2xfm3:mca1.ELTM
-      dxpXMAP2xfm3:mca2.ELTM
-      dxpXMAP2xfm3:mca3.ELTM
-      dxpXMAP2xfm3:mca4.ELTM
-    ERT:
-      2xfm:med:mca1.ERTM
-      2xfm:med:mca2.ERTM
-      2xfm:med:mca3.ERTM
-      2xfm:med:mca4.ERTM
-      dxpXMAP2xfm3:mca1.ERTM
-      dxpXMAP2xfm3:mca2.ERTM
-      dxpXMAP2xfm3:mca3.ERTM
-      dxpXMAP2xfm3:mca4.ERTM
-    ICR:
-      dxpXMAP2xfm3:dxp1:InputCountRate
-      dxpXMAP2xfm3:dxp2:InputCountRate
-      dxpXMAP2xfm3:dxp3:InputCountRate
-      dxpXMAP2xfm3:dxp4:InputCountRate
-    OCR:
-      dxpXMAP2xfm3:dxp1:OutputCountRate
-      dxpXMAP2xfm3:dxp2:OutputCountRate
-      dxpXMAP2xfm3:dxp3:OutputCountRate
-      dxpXMAP2xfm3:dxp4:OutputCountRate
-    TIME_SCALER_PV:
-      2xfm:mcs:mca1.VAL
-    TIME_SCALER_CLOCK:
-      25000000.0
-    TIME_NORMALIZED_SCALER:
-      US_IC:
-        2xfm:mcs:mca2.VAL
-      DS_IC:
-        2xfm:mcs:mca3.VAL
-      DPC1_IC:
-        2xfm:mcs:mca5.VAL
-      DPC2_IC:
-        2xfm:mcs:mca6.VAL
-      CFG_1:
-        2xfm:mcs:mca10.VAL
-      CFG_2:
-        2xfm:mcs:mca11.VAL
-      CFG_3:
-        2xfm:mcs:mca12.VAL
-      CFG_4:
-        2xfm:mcs:mca13.VAL
-      CFG_5:
-        2xfm:mcs:mca14.VAL
-      CFG_6:
-        2xfm:mcs:mca15.VAL
-      CFG_7:
-        2xfm:mcs:mca16.VAL
-      CFG_8:
-        2xfm:mcs:mca17.VAL
-      CFG_9:
-        2xfm:mcs:mca18.VAL
-  8BMB: 
-    SRCURRENT:
-      S:SRcurrentAI
-    US_IC:
-      8bmb:3820:scaler1_cts1.B
-    DS_IC:
-      8bmb:3820:scaler1_cts1.C
-    ELT:
-      dxpXMAPDP3:mca1.ELTM
-      dxpXMAPDP3:mca2.ELTM
-      dxpXMAPDP3:mca3.ELTM
-      dxpXMAPDP3:mca4.ELTM
-    ERT:
-      dxpXMAPDP3:mca1.ERTM
-      dxpXMAPDP3:mca2.ERTM
-      dxpXMAPDP3:mca3.ERTM
-      dxpXMAPDP3:mca4.ERTM
-    ICR:
-      dxpXMAPDP3:dxp1:InputCountRate
-      dxpXMAPDP3:dxp2:InputCountRate
-      dxpXMAPDP3:dxp3:InputCountRate
-      dxpXMAPDP3:dxp4:InputCountRate
-    OCR:
-      dxpXMAPDP3:dxp1:OutputCountRate
-      dxpXMAPDP3:dxp2:OutputCountRate
-      dxpXMAPDP3:dxp3:OutputCountRate
-      dxpXMAPDP3:dxp4:OutputCountRate
-    TIME_SCALER_PV:
-      8bmb:3820:mca1.VAL
-    TIME_SCALER_CLOCK:
-      50000000.0
-    TIME_NORMALIZED_SCALER:
-      US_IC:
-        8bmb:3820:mca2.VAL
-      DS_IC:
-        8bmb:3820:mca3.VAL
-  9IDB: 
-    SRCURRENT:
-      S:SRcurrentAI
-    US_IC:
-      21:D3:scaler1_cts2.B
+    StepScanScalers:
+      SRCURRENT: "S:SRcurrentAI"
+      US_IC: "2idd:scaler1_cts1.C"
+      DS_IC: "2idd:scaler1_cts1.B"
+      ELT: 
+        - "2iddXMAP:mca1.ELTM"
+        - "2iddXMAP:mca2.ELTM"
+        - "2iddXMAP:mca3.ELTM"
+        - "2iddXMAP:mca4.ELTM"
+      ERT: 
+        - "2iddXMAP:mca1.ERTM"
+        - "2iddXMAP:mca2.ERTM"
+        - "2iddXMAP:mca3.ERTM"
+        - "2iddXMAP:mca4.ERTM"
+      ICR: 
+        - "2iddXMAP:dxp1:InputCountRate"
+        - "2iddXMAP:dxp2:InputCountRate"
+        - "2iddXMAP:dxp3:InputCountRate"
+        - "2iddXMAP:dxp4:InputCountRate"
+      OCR: 
+        - "2iddXMAP:dxp1:OutputCountRate"
+        - "2iddXMAP:dxp2:OutputCountRate"
+        - "2iddXMAP:dxp3:OutputCountRate"
+        - "2iddXMAP:dxp4:OutputCountRate"
+  2IDE:
+    StepScanScalers:
+      SRCURRENT: "S:SRcurrentAI"
+      US_IC: 
+        - "2xfm:scaler3_cts1.B"
+        - "2xfm:scaler1_cts1.B"
+      DS_IC: 
+        - "2xfm:scaler3_cts1.C"
+        - "2xfm:scaler1_cts1.C"
+      DPC1_IC: 
+        - "2xfm:scaler3_cts2.A"
+        - "2xfm:scaler1_cts2.A"
+      DPC2_IC: 
+        - "2xfm:scaler3_cts2.B"
+        - "2xfm:scaler1_cts2.B"
+      CFG_1: 
+        - "2xfm:scaler3_cts3.B"
+        - "2xfm:scaler1_cts3.B"
+      CFG_2: 
+        - "2xfm:scaler3_cts3.C"
+        - "2xfm:scaler1_cts3.C"
+      CFG_3: 
+        - "2xfm:scaler3_cts3.D"
+        - "2xfm:scaler1_cts3.D"
+      CFG_4: 
+        - "2xfm:scaler3_cts4.A"
+        - "2xfm:scaler1_cts4.A"
+      CFG_5: 
+        - "2xfm:scaler3_cts4.B"
+        - "2xfm:scaler1_cts4.B"
+      CFG_6: 
+        - "2xfm:scaler3_cts4.C"
+        - "2xfm:scaler1_cts4.C"
+      CFG_7: 
+        - "2xfm:scaler3_cts4.D"
+        - "2xfm:scaler1_cts4.D"
+      CFG_8: 
+        - "2xfm:scaler3_cts5.A"
+        - "2xfm:scaler1_cts5.A"
+      CFG_9: 
+        - "2xfm:scaler3_cts5.A"
+        - "2xfm:scaler1_cts5.A"
+      ELT: 
+        - "2xfm:med:mca1.ELTM"
+        - "2xfm:med:mca2.ELTM"
+        - "2xfm:med:mca3.ELTM"
+        - "2xfm:med:mca4.ELTM"
+        - "2xfm:mca1.ELTM"
+        - "2xfm:mca2.ELTM"
+        - "2xfm:mca3.ELTM"
+        - "2xfm:mca4.ELTM"
+        - "dxpXMAP2xfm3:mca1.ELTM"
+        - "dxpXMAP2xfm3:mca2.ELTM"
+        - "dxpXMAP2xfm3:mca3.ELTM"
+        - "dxpXMAP2xfm3:mca4.ELTM"
+      ERT: 
+        - "2xfm:med:mca1.ERTM"
+        - "2xfm:med:mca2.ERTM"
+        - "2xfm:med:mca3.ERTM"
+        - "2xfm:med:mca4.ERTM"
+        - "dxpXMAP2xfm3:mca1.ERTM"
+        - "dxpXMAP2xfm3:mca2.ERTM"
+        - "dxpXMAP2xfm3:mca3.ERTM"
+        - "dxpXMAP2xfm3:mca4.ERTM"
+      ICR: 
+        - "dxpXMAP2xfm3:dxp1:InputCountRate"
+        - "dxpXMAP2xfm3:dxp2:InputCountRate"
+        - "dxpXMAP2xfm3:dxp3:InputCountRate"
+        - "dxpXMAP2xfm3:dxp4:InputCountRate"
+      OCR: 
+        - "dxpXMAP2xfm3:dxp1:OutputCountRate"
+        - "dxpXMAP2xfm3:dxp2:OutputCountRate"
+        - "dxpXMAP2xfm3:dxp3:OutputCountRate"
+        - "dxpXMAP2xfm3:dxp4:OutputCountRate"
+    TimeNormalizedScalers:
+      Time_PV: "2xfm:mcs:mca1.VAL"
+      Time_Clock: 25000000.0
+      Scalers:
+        US_IC: "2xfm:mcs:mca2.VAL"
+        DS_IC: "2xfm:mcs:mca3.VAL"
+        DPC1_IC: "2xfm:mcs:mca5.VAL"
+        DPC2_IC: "2xfm:mcs:mca6.VAL"
+        CFG_1: "2xfm:mcs:mca10.VAL"
+        CFG_2: "2xfm:mcs:mca11.VAL"
+        CFG_3: "2xfm:mcs:mca12.VAL"
+        CFG_4: "2xfm:mcs:mca13.VAL"
+        CFG_5: "2xfm:mcs:mca14.VAL"
+        CFG_6: "2xfm:mcs:mca15.VAL"
+        CFG_7: "2xfm:mcs:mca16.VAL"
+        CFG_8: "2xfm:mcs:mca17.VAL"
+        CFG_9: "2xfm:mcs:mca18.VAL"
+  8BMB:
+    StepScanScalers:
+      SRCURRENT: "S:SRcurrentAI"
+      US_IC: "8bmb:3820:scaler1_cts1.B"
+      DS_IC: "8bmb:3820:scaler1_cts1.C"
+      ELT: 
+        - "dxpXMAPDP3:mca1.ELTM"
+        - "dxpXMAPDP3:mca2.ELTM"
+        - "dxpXMAPDP3:mca3.ELTM"
+        - "dxpXMAPDP3:mca4.ELTM"
+      ERT: 
+        - "dxpXMAPDP3:mca1.ERTM"
+        - "dxpXMAPDP3:mca2.ERTM"
+        - "dxpXMAPDP3:mca3.ERTM"
+        - "dxpXMAPDP3:mca4.ERTM"
+      ICR: 
+        - "dxpXMAPDP3:dxp1:InputCountRate"
+        - "dxpXMAPDP3:dxp2:InputCountRate"
+        - "dxpXMAPDP3:dxp3:InputCountRate"
+        - "dxpXMAPDP3:dxp4:InputCountRate"
+      OCR: 
+        - "dxpXMAPDP3:dxp1:OutputCountRate"
+        - "dxpXMAPDP3:dxp2:OutputCountRate"
+        - "dxpXMAPDP3:dxp3:OutputCountRate"
+        - "dxpXMAPDP3:dxp4:OutputCountRate" 
+    TimeNormalizedScalers:
+      Time_PV: "8bmb:3820:mca1.VAL"
+      Time_Clock: 50000000.0
+      Scalers:
+        US_IC: "8bmb:3820:mca2.VAL"
+        DS_IC: "8bmb:3820:mca3.VAL"
+  9IDB:
+    StepScanScalers:     
+      SRCURRENT: "S:SRcurrentAI"
+      US_IC: "21:D3:scaler1_cts2.B"
+      CFG_2: "21:D3:scaler1_cts1.B"
+      CFG_3: "21:D3:scaler1_cts1.C"
+      CFG_4: "21:D3:scaler1_cts1.D"
+      CFG_5: "21:D3:scaler1_cts2.A"
+      ELT: 
+        - "21:D3win:mca1.ELTM"
+        - "21:D3win:mca2.ELTM"
+        - "21:D3win:mca3.ELTM"
+        - "21:D3win:mca4.ELTM"
+      ERT: 
+        - "21:D3win:mca1.ERTM"
+        - "21:D3win:mca2.ERTM"
+        - "21:D3win:mca3.ERTM"
+        - "21:D3win:mca4.ERTM"
+      ICR: 
+        - "9idbXMAP:dxp1:InputCountRate"
+        - "9idbXMAP:dxp2:InputCountRate"
+        - "9idbXMAP:dxp3:InputCountRate"
+        - "9idbXMAP:dxp4:InputCountRate"
+      OCR: 
+        - "9idbXMAP:dxp1:OutputCountRate"
+        - "9idbXMAP:dxp2:OutputCountRate"
+        - "9idbXMAP:dxp3:OutputCountRate"
+        - "9idbXMAP:dxp4:OutputCountRate"
+    TimeNormalizedScalers:
+      Time_PV: "21:D3:scaler1:mca1.VAL"
+      Time_Clock: 50000000.0
+      Scalers:
+        US_IC: "21:D3:scaler1:mca6.VAL"
+        CFG_2: "21:D3:scaler1:mca2.VAL"
+        CFG_3: "21:D3:scaler1:mca3.VAL"
+        CFG_4: "21:D3:scaler1:mca4.VAL"
+        CFG_5: "21:D3:scaler1:mca5.VAL"
     Summed_Scalers:
-      DS_IC:
-        CFG_2
-        CFG_3
-        CFG_4
-        CFG_5
-    CFG_2:
-      21:D3:scaler1_cts1.B
-    CFG_3:
-      21:D3:scaler1_cts1.C
-    CFG_4:
-      21:D3:scaler1_cts1.D
-    CFG_5:
-      21:D3:scaler1_cts2.A
-    ELT:
-      21:D3win:mca1.ELTM
-      21:D3win:mca2.ELTM
-      21:D3win:mca3.ELTM
-      21:D3win:mca4.ELTM
-    ERT:
-      21:D3win:mca1.ERTM
-      21:D3win:mca2.ERTM
-      21:D3win:mca3.ERTM
-      21:D3win:mca4.ERTM
-    ICR:
-      9idbXMAP:dxp1:InputCountRate
-      9idbXMAP:dxp2:InputCountRate
-      9idbXMAP:dxp3:InputCountRate
-      9idbXMAP:dxp4:InputCountRate
-    OCR:
-      9idbXMAP:dxp1:OutputCountRate
-      9idbXMAP:dxp2:OutputCountRate
-      9idbXMAP:dxp3:OutputCountRate
-      9idbXMAP:dxp4:OutputCountRate
-    TIME_SCALER_PV:
-      21:D3:scaler1:mca1.VAL
-    TIME_SCALER_CLOCK:
-      50000000.0
-    TIME_NORMALIZED_SCALER:
-      US_IC:
-        21:D3:scaler1:mca6.VAL
-      CFG_2:
-        21:D3:scaler1:mca2.VAL
-      CFG_3:
-        21:D3:scaler1:mca3.VAL
-      CFG_4:
-        21:D3:scaler1:mca4.VAL
-      CFG_5:
-        21:D3:scaler1:mca5.VAL
+      DS_IC: 
+        - CFG_2
+        - CFG_3
+        - CFG_4
+        - CFG_5

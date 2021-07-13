@@ -226,15 +226,64 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 // ----------------------------------------------------------------------------
 
+void parse_summed_scalers(std::string beamline, YAML::Node& node)
+{
+
+}
+
+void parse_time_normalized_scalers(std::string beamline, YAML::Node& node)
+{
+
+}
+
+void parse_step_scan_scalers(std::string beamline, YAML::Node& node)
+{
+
+}
+
+void parse_beamline(std::string beamline, YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Scalar:
+			logI << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
+			break;
+		case YAML::NodeType::Sequence:
+			logI << it->first.as<string>();
+			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				logit_s << " - " << it2->as<string>();
+			}
+			logit_s << "\n";
+			break;
+		case YAML::NodeType::Map:
+			//logI << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
+			break;
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
 bool load_scalers_lookup(std::string filename)
 {
-    YAML::Node config = YAML::LoadFile(filename);
+    YAML::Node node = YAML::LoadFile(filename);
 
-    if (config["Beamlines"]) 
-    {
-        std::cout << config["Beamlines"] << "\n";
-        return true;
-    }
+	if (node[STR_BEAMLINES])
+	{
+		YAML::Node beamlines_node = node[STR_BEAMLINES];
+
+		for (YAML::const_iterator it = beamlines_node.begin(); it != beamlines_node.end(); ++it)
+		{
+			parse_beamline(it->first.as<std::string>(), it->second.as<YAML::Node>());
+		}
+	}  
     return false;
 }
 
