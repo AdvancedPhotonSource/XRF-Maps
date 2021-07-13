@@ -211,8 +211,11 @@ const string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
 const string STR_CALIB_LABELS = "Calibration_Curve_Labels";
 
 const string STR_BEAMLINES = "BeamLines";
-const string STR_TIME_SCALER_PV = "TIME_SCALER_PV";
-
+const string STR_SCALERS = "Scalers";
+const string STR_TIME_NORMALIZED_SCALERS = "TimeNormalizedScalers";
+const string STR_SUMMED_SCALERS = "Summed_Scalers";
+const string STR_TIME_PV = "Time_PV";
+const string STR_TIME_CLOCK = "Time_Clock";
 
 //}
 

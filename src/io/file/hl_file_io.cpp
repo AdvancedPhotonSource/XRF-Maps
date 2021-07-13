@@ -226,32 +226,17 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 // ----------------------------------------------------------------------------
 
-void parse_summed_scalers(std::string beamline, YAML::Node& node)
-{
-
-}
-
-void parse_time_normalized_scalers(std::string beamline, YAML::Node& node)
-{
-
-}
-
-void parse_step_scan_scalers(std::string beamline, YAML::Node& node)
-{
-
-}
-
-void parse_beamline(std::string beamline, YAML::Node& node)
+void parse_scalers(std::string& beamline, YAML::Node& node, bool time_normalized)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Scalar:
-			logI << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
+			logI << beamline << " = " << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
 			break;
 		case YAML::NodeType::Sequence:
-			logI << it->first.as<string>();
+			logI << beamline << " = " << it->first.as<string>();
 			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
 				logit_s << " - " << it2->as<string>();
@@ -259,8 +244,98 @@ void parse_beamline(std::string beamline, YAML::Node& node)
 			logit_s << "\n";
 			break;
 		case YAML::NodeType::Map:
-			//logI << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
 			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_summed_scalers(std::string& beamline, YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Sequence:
+			logI <<beamline<< " summed scaler "<< it->first.as<string>();
+			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+				logit_s << " - " << it2->as<string>();
+			}
+			logit_s << "\n";
+			break;
+		case YAML::NodeType::Map:
+		case YAML::NodeType::Scalar:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_time_normalized_scalers(std::string& beamline, YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		string val = it->first.as<string>();
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Scalar:
+			if (val == STR_TIME_PV)
+			{
+				//it->second.as<string>();
+			}
+			else if (val == STR_TIME_CLOCK)
+			{
+				//it->second.as<double>();
+			}
+			break;
+		case YAML::NodeType::Map:
+			if (val == STR_SCALERS)
+			{
+				parse_scalers(beamline, it->second.as<YAML::Node>(), true);
+			}
+		case YAML::NodeType::Sequence:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_beamline(std::string& beamline, YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		string val = it->first.as<string>();
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Map:
+			if (val == STR_SCALERS)
+			{
+				parse_scalers(beamline, it->second.as<YAML::Node>(), false);
+			}
+			else if (val == STR_TIME_NORMALIZED_SCALERS)
+			{
+				parse_time_normalized_scalers(beamline, it->second.as<YAML::Node>());
+			}
+			else if (val == STR_SUMMED_SCALERS)
+			{
+				parse_summed_scalers(beamline, it->second.as<YAML::Node>());
+			}
+			break;
+		case YAML::NodeType::Scalar:
+		case YAML::NodeType::Sequence:
 		case YAML::NodeType::Null:
 		case YAML::NodeType::Undefined:
 		default:
@@ -283,6 +358,7 @@ bool load_scalers_lookup(std::string filename)
 		{
 			parse_beamline(it->first.as<std::string>(), it->second.as<YAML::Node>());
 		}
+		return true;
 	}  
     return false;
 }
