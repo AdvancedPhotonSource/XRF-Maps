@@ -559,6 +559,7 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
     
     // find time scaler
     std::string time_pv = "";
+    ///std::string beamline = "";
     double time_clock = 0.0;
     real_t time_val = 1.0;
     if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_map, time_pv, time_clock))
@@ -584,19 +585,22 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
     }
 
     // add any summded scalers to pv_map
-    for (const auto& itr : *(data_struct::Scaler_Lookup::inst()->get_summed_scaler_list()))
+    const vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
+    if (summed_scalers != nullptr)
     {
-        real_t summed_val = 0.0;
-        for (const auto& sitr : itr.scalers_to_sum)
+        for (const auto& itr : *summed_scalers)
         {
-            if (pv_map.count(sitr) > 0)
+            real_t summed_val = 0.0;
+            for (const auto& sitr : itr.scalers_to_sum)
             {
-                summed_val += pv_map.at(sitr);
+                if (pv_map.count(sitr) > 0)
+                {
+                    summed_val += pv_map.at(sitr);
+                }
             }
+            pv_map[itr.scaler_name] = summed_val;
         }
-        pv_map[itr.scaler_name] = summed_val;
     }
-
     // search for sr_current, us_ic, and ds_ic
     for (auto& itr : pv_map)
     {

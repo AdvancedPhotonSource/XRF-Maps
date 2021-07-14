@@ -996,6 +996,8 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         }
     }
 
+    string beamline = "";
+
     //save scalers
     if (single_row_scan)
     {
@@ -1142,21 +1144,25 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         }
     }
 
-    for (const auto& itr : *(data_struct::Scaler_Lookup::inst()->get_summed_scaler_list()))
+    const vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
+    if (summed_scalers != nullptr)
     {
-        data_struct::Scaler_Map s_map;
-        s_map.name = itr.scaler_name;
-        s_map.values.resize(rows, cols);
-        s_map.values.setZero(rows, cols);
-        for (const auto& sitr : itr.scalers_to_sum)
+        for (const auto& itr : *summed_scalers)
         {
-            const data_struct::ArrayXXr* arr = _scan_info.scaler_values(sitr);
-            if (arr != nullptr)
+            data_struct::Scaler_Map s_map;
+            s_map.name = itr.scaler_name;
+            s_map.values.resize(rows, cols);
+            s_map.values.setZero(rows, cols);
+            for (const auto& sitr : itr.scalers_to_sum)
             {
-                s_map.values += (*arr);
+                const data_struct::ArrayXXr* arr = _scan_info.scaler_values(sitr);
+                if (arr != nullptr)
+                {
+                    s_map.values += (*arr);
+                }
             }
+            _scan_info.scaler_maps.push_back(s_map);
         }
-        _scan_info.scaler_maps.push_back(s_map);
     }
 }
 

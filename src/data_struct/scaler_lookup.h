@@ -87,7 +87,7 @@ public:
 
     bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized);
 
-    const vector<struct Summed_Scaler>* get_summed_scaler_list() const { return &_summed_scalers; }
+    const vector<struct Summed_Scaler>* get_summed_scaler_list(string beamline) const;
 
 private:
 
@@ -101,8 +101,8 @@ private:
     map< string, string > _time_normalized_scaler_pv_label_map;
     //    Time_PV  Clock
     map< string, double > _timing_info;
-
-    vector<struct Summed_Scaler> _summed_scalers;
+    //   beamline      summed scalers
+    map<string, vector<struct Summed_Scaler> > _summed_scalers;
 };
      
 } //namespace data_struct

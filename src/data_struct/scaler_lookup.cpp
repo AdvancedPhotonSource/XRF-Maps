@@ -122,7 +122,7 @@ void Scaler_Lookup::add_summed_scaler(const string& beamline, const string& scal
     {
         s_scal.scalers_to_sum.push_back(itr);
     }
-    _summed_scalers.push_back(s_scal);
+    _summed_scalers[beamline].push_back(s_scal);
 }
 
 // ----------------------------------------------------------------------------
@@ -174,6 +174,17 @@ bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_
         return true;
     }
     return false;
+}
+
+// ----------------------------------------------------------------------------
+
+const vector<struct Summed_Scaler>* Scaler_Lookup::get_summed_scaler_list(string beamline) const
+{
+    if (_summed_scalers.count(beamline) > 0)
+    {
+        return &_summed_scalers.at(beamline);
+    }
+    return nullptr;
 }
 
 // ----------------------------------------------------------------------------
