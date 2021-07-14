@@ -402,15 +402,11 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
     if(save_spec_vol)
     {
-        io::file::HDF5_IO::inst()->save_quantification(detector);
         io::save_volume(spectra_volume, energy_offset, energy_slope, energy_quad);
-        io::file::HDF5_IO::inst()->end_save_seq();
     }
-    else
-    {
-        io::file::HDF5_IO::inst()->save_quantification(detector);
-        io::file::HDF5_IO::inst()->end_save_seq();
-    }
+    io::file::HDF5_IO::inst()->save_quantification(detector);
+    io::file::HDF5_IO::inst()->end_save_seq();
+   
 
 }
 

@@ -2,7 +2,7 @@
 BeamLines:  
   2IDD:
     Scalers:
-      SR_Current: S:SR_CurrentAI
+      SR_Current: S:SRcurrentAI
       US_IC: 2idd:scaler1_cts1.C
       DS_IC: 2idd:scaler1_cts1.B
       ELT1: 2iddXMAP:mca1.ELTM
@@ -23,7 +23,7 @@ BeamLines:
       OCR4: 2iddXMAP:dxp4:OutputCountRate
   2IDE:
     Scalers:
-      SR_Current: S:SR_CurrentAI
+      SR_Current: S:SRcurrentAI
       US_IC: 
         - 2xfm:scaler3_cts1.B
         - 2xfm:scaler1_cts1.B
@@ -121,7 +121,7 @@ BeamLines:
         CFG_9: 2xfm:mcs:mca18.VAL
   8BMB:
     Scalers:
-      SR_Current: S:SR_CurrentAI
+      SR_Current: S:SRcurrentAI
       US_IC: 8bmb:3820:scaler1_cts1.B
       DS_IC: 8bmb:3820:scaler1_cts1.C
       ELT1: dxpXMAPDP3:mca1.ELTM
@@ -147,7 +147,7 @@ BeamLines:
         DS_IC: 8bmb:3820:mca3.VAL
   9IDB:
     Scalers:     
-      SR_Current: S:SR_CurrentAI
+      SR_Current: S:SRcurrentAI
       US_IC: 21:D3:scaler1_cts2.B
       CFG_2: 21:D3:scaler1_cts1.B
       CFG_3: 21:D3:scaler1_cts1.C
