@@ -554,58 +554,64 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 // ----------------------------------------------------------------------------
 
-void find_quantifier_scalers(data_struct::Params_Override * override_params, unordered_map<string, string> &pv_map, Quantification_Standard* quantification_standard)
+void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantification_Standard* quantification_standard)
 {
-    std::string quant_scalers_names[] = {STR_US_IC, STR_DS_IC, "SRCURRENT"};
-    real_t *pointer_arr[] = {&(quantification_standard->US_IC),&(quantification_standard->DS_IC), &(quantification_standard->sr_current)};
-	real_t scaler_clock = 1.0;
-	if (override_params->time_scaler_clock.length() > 0)
-	{
-		scaler_clock = std::stof(override_params->time_scaler_clock);
-	}
-    int i =0;
-    for(auto &itr : quant_scalers_names)
+    
+    // find time scaler
+    std::string time_pv = "";
+    double time_clock = 0.0;
+    real_t time_val = 1.0;
+    if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_map, time_pv, time_clock))
     {
+        time_val = pv_map.at(time_pv);
+        time_val /= time_clock;
+    }
 
-        Summed_Scaler* sscaler = nullptr;
-        for(auto & ssItr : override_params->summed_scalers)
+    // update pv names to labels
+    for (auto& itr : pv_map)
+    {
+        string label = "";
+        bool is_time_normalized = false;
+        if (data_struct::Scaler_Lookup::inst()->search_pv(itr.first, label, is_time_normalized))
         {
-            if (ssItr.scaler_name == itr)
+            if (is_time_normalized)
             {
-                sscaler = &(ssItr);
-                break;
+                itr.second /= time_val;
+
+            }
+            pv_map[label] = itr.second;
+        }
+    }
+
+    // add any summded scalers to pv_map
+    for (const auto& itr : *(data_struct::Scaler_Lookup::inst()->get_summed_scaler_list()))
+    {
+        real_t summed_val = 0.0;
+        for (const auto& sitr : itr.scalers_to_sum)
+        {
+            if (pv_map.count(sitr) > 0)
+            {
+                summed_val += pv_map.at(sitr);
             }
         }
-        if(sscaler != nullptr)
+        pv_map[itr.scaler_name] = summed_val;
+    }
+
+    // search for sr_current, us_ic, and ds_ic
+    for (auto& itr : pv_map)
+    {
+        if (itr.first == STR_SR_CURRENT)
         {
-            *(pointer_arr[i]) = 0.0;
-            for (auto &jitr : sscaler->scalers_to_sum)
-            {
-                if(override_params->time_normalized_scalers.count(jitr)
-               && pv_map.count(override_params->time_normalized_scalers[jitr])
-               && pv_map.count(override_params->time_scaler))
-                {
-                    real_t val = std::stof(pv_map[override_params->time_normalized_scalers[jitr]]);
-                    real_t det_time = std::stof(pv_map[override_params->time_scaler]);
-                    det_time /= scaler_clock;
-                    val /= det_time;
-                    *(pointer_arr[i]) += val;
-                }
-                else if(override_params->scaler_pvs.count(jitr) && pv_map.count(override_params->scaler_pvs[jitr]) > 0)
-                {
-                    *(pointer_arr[i]) += std::stof(pv_map[override_params->scaler_pvs[jitr]]);
-                }
-            }
+            quantification_standard->sr_current = itr.second;
         }
-        else if(override_params->time_normalized_scalers.count(itr) && pv_map.count(override_params->time_normalized_scalers.at(itr)))
+        else if (itr.first == STR_US_IC)
         {
-            *(pointer_arr[i]) = std::stof(pv_map[override_params->time_normalized_scalers[itr]]);
+            quantification_standard->US_IC = itr.second;
         }
-        else if(override_params->scaler_pvs.count(itr) && pv_map.count(override_params->scaler_pvs.at(itr)))
+        else if (itr.first == STR_DS_IC)
         {
-            *(pointer_arr[i]) = std::stof(pv_map[override_params->scaler_pvs[itr]]);
+            quantification_standard->DS_IC = itr.second;
         }
-        i++;
     }
 }
 
@@ -638,7 +644,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
         }
 
-        unordered_map<string, string> pv_map;
+        unordered_map<string, real_t> pv_map;
         //load the quantification standard dataset
         size_t fn_str_len = quantification_standard->standard_filename.length();
         if (fn_str_len > 5 &&
@@ -685,12 +691,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                 }
                 else
                 {
-                    find_quantifier_scalers(override_params, pv_map, quantification_standard);
+                    find_quantifier_scalers(pv_map, quantification_standard);
                 }
             }
             else
             {
-                find_quantifier_scalers(override_params, pv_map, quantification_standard);
+                find_quantifier_scalers(pv_map, quantification_standard);
             }
         }
         else
@@ -943,6 +949,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
 			}
 
             //update scalers table in hdf5
+            /*
             if (analysis_job.update_scalers)
             {
                 data_struct::Detector* det = nullptr;
@@ -974,7 +981,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
                     io::file::HDF5_IO::inst()->update_scalers(hdf5_dataset_name, &det->fit_params_override_dict);
                 }
             }
-
+            */
 
             //add v9 layout soft links
             if (analysis_job.add_v9_layout)

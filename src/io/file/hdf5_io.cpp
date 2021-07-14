@@ -59,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <cctype>
 
 #include "data_struct/element_info.h"
+#include "data_struct/scaler_lookup.h"
 
 #include "csv_io.h"
 
@@ -3159,24 +3160,11 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
     hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
     double* buffer = nullptr;
 
-    std::string ds_ic_search = "";
-
     if (override_values == nullptr)
     {
         return false;
     }
-
-    if (override_values->scaler_pvs.count(STR_DS_IC) == 0)
-    {
-        logW << "Need to set " << STR_DS_IC << ":scaler_name in maps_fit_parameter_override.txt\n";
-        return false;
-    }
-    else
-    {
-        ds_ic_search = override_values->scaler_pvs.at(STR_DS_IC);
-    }
-
-    
+       
     if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         return false;
 
@@ -3236,19 +3224,24 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
             std::string read_name = std::string(tmp_char, 255);
             read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
             read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
-            if (read_name == ds_ic_search)
+            string out_label = "";
+            bool tmpb;
+            if(data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb))
             {
-                status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
-                override_values->DS_IC = 0.0;
-                if (status > -1)
+                if (out_label == STR_DS_IC)
                 {
-                    for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
+                    status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
+                    override_values->DS_IC = 0.0;
+                    if (status > -1)
                     {
-                        override_values->DS_IC += (real_t)buffer[x];
+                        for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
+                        {
+                            override_values->DS_IC += (real_t)buffer[x];
+                        }
+
                     }
-                    
+                    break;
                 }
-                break;
             }
         }
     }
@@ -5897,7 +5890,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, data_struct::Params_Override* params_override, bool hasNetcdf)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, real_t us_amps_val, real_t us_amps_unti, real_t ds_amps_val, real_t ds_amps_unit)
 {
 
     hid_t dataspace_id = -1, memoryspace_id = -1, filespace_id = -1, filespace_name_id = -1, memoryspace_str_id = -1;
@@ -5943,100 +5936,17 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
             return false;
         }
 
-        _save_amps(scalers_grp_id, params_override);
+        _save_amps(scalers_grp_id, us_amps_val, us_amps_unti, ds_amps_val, ds_amps_unit);
 
-        if (scalers_map != nullptr)
+        if (scalers_map != nullptr && scalers_map->size() > 0)
         {
+            
             int cols = 0;
             int rows = 0;
-            // rename from pv's to scaler names
-            if (params_override != nullptr)
-            {
-
-                data_struct::ArrayXXr* time_map = nullptr;
-                // try to find time scaler in scalers_map
-                if (params_override->time_scaler_clock.length() > 0)
-                {
-                    time_scaler_clock = std::stod(params_override->time_scaler_clock);
-                }
-
-                for (auto& itr : *scalers_map)
-                {
-                    if (itr.name == params_override->time_scaler)
-                    {
-                        time_map = &(itr.values);
-                    }
-                }
-
-                //update time map
-                if (time_map != nullptr && time_scaler_clock > 0)
-                {
-                    (*time_map) /= time_scaler_clock;
-                }
-
-                // now iterate through scalers_map and update names and time normalized values
-                for (auto& itr : *scalers_map)
-                {
-                    bool found_pv = false;
-
-                    if (cols == 0 || rows == 0)
-                    {
-                        rows = itr.values.rows();
-                        cols = itr.values.cols();
-                    }
-
-                    for (const auto& ts_itr : params_override->time_normalized_scalers)
-                    {
-                        if (ts_itr.second == itr.name)
-                        {
-                            itr.name = ts_itr.first;
-                            if (time_map != nullptr)
-                            {
-                                itr.values /= (*time_map);
-                            }
-                            found_pv = true;
-                            break;
-                        }
-                    }
-
-                    if (found_pv == false)
-                    {
-                        for (const auto& s_itr : params_override->scaler_pvs)
-                        {
-                            if (s_itr.second == itr.name)
-                            {
-                                itr.name = s_itr.first;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // add summed_scalers
-                for (const auto& summed_scaler_itr : params_override->summed_scalers)
-                {
-                    data_struct::Scaler_Map s_map;
-                    s_map.values.resize(rows, cols);
-                    s_map.values.setZero(rows, cols);
-                    s_map.name = summed_scaler_itr.scaler_name;
-                    s_map.unit = " ";
-                    // look for scaler names and add them up
-                    for (const auto& scaler_names_itr : summed_scaler_itr.scalers_to_sum)
-                    {
-                        for (const auto& scaler : *scalers_map)
-                        {
-                            if(scaler.name == scaler_names_itr)
-                            {
-                                s_map.values += scaler.values;
-                                break;
-                            }
-                        }
-                    }
-                    scalers_map->push_back(s_map);
-                }
-            }
-
-
+            
+            data_struct::Scaler_Map map = scalers_map->front();
+            rows = map.values.rows();
+            cols = map.values.cols();
             if( rows > 0 && cols > 0)
             {
                 // create calculated scalers
@@ -6086,19 +5996,19 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                     {
                         ds_ic_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "CFG_2")
+                    if (upper_scaler_name == STR_CFG_2)
                     {
                         cfg_2_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "CFG_3")
+                    if (upper_scaler_name == STR_CFG_3)
                     {
                         cfg_3_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "CFG_4")
+                    if (upper_scaler_name == STR_CFG_4)
                     {
                         cfg_4_map = &(scaler.values);
                     }
-                    if (upper_scaler_name == "CFG_5")
+                    if (upper_scaler_name == STR_CFG_5)
                     {
                         cfg_5_map = &(scaler.values);
                     }
@@ -6286,7 +6196,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override)
+void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_t us_amp_sens_unit_val, real_t ds_amp_sens_num_val, real_t ds_amp_sens_unit_val)
 {
     
     hid_t dataspace_id = -1, memoryspace_id = -1;
@@ -6303,11 +6213,6 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, data_struct::Params_Override * pa
     memtype = H5Tcopy(H5T_C_S1);
     status = H5Tset_size(memtype, 255);
 	std::string units;
-    real_t us_amp_sens_num_val = params_override->us_amp_sens_num;
-    real_t us_amp_sens_unit_val = params_override->us_amp_sens_unit;
-
-    real_t ds_amp_sens_num_val = params_override->ds_amp_sens_num;
-    real_t ds_amp_sens_unit_val = params_override->ds_amp_sens_unit;
 
     real_t trans_us_amp_sens_num_val;
     std::string trans_us_amp_sens_unit;
@@ -6517,7 +6422,6 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, data_struct::Params_Override * pa
 bool HDF5_IO::save_scan_scalers(size_t detector_num,
                                 data_struct::Scan_Info *scan_info,
                                 data_struct::Params_Override * params_override,
-                                bool hasNetcdf,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
@@ -6577,7 +6481,7 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	
     _save_extras(scan_grp_id, &(scan_info->extra_pvs));
 	
-    _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override, hasNetcdf);
+    _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
 
 	H5Gclose(po_grp_id);
     H5Gclose(scan_grp_id);
@@ -7196,7 +7100,6 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 bool HDF5_IO::save_scan_scalers_bnl(std::string path,
     size_t detector_num,
-    data_struct::Params_Override* params_override,
     size_t row_idx_start,
     int row_idx_end,
     size_t col_idx_start,
@@ -7396,17 +7299,15 @@ bool HDF5_IO::save_scan_scalers_bnl(std::string path,
             std::string read_name = std::string(tmp_char, 255);
             read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
             read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
-            for (const auto& s_itr : params_override->scaler_pvs)
+            string out_label = "";
+            bool tmpb;
+            if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb))
             {
-                if (read_name == s_itr.second)
+                for (int j = 0; j < 255; j++)
                 {
-                    for (int j = 0; j < 255; j++)
-                    {
-                        tmp_char[j] = '\0';
-                    }
-                    s_itr.first.copy(tmp_char, 255);
-                    break;
+                    tmp_char[j] = '\0';
                 }
+                out_label.copy(tmp_char, 255);
             }
             H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
         }
@@ -8228,7 +8129,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 }
 
 //-----------------------------------------------------------------------------
-
+/*
 void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -8236,7 +8137,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
     {
         return;
     }
-
+    
     hid_t maps_grp_id;
     real_t time_scaler_clock = 1;
     try
@@ -8423,7 +8324,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
 
     }
 }
-
+*/
 //-----------------------------------------------------------------------------
 
 void HDF5_IO::_add_v9_quant(hid_t file_id, 

@@ -43,7 +43,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2021>: Arthur Glowacki
 
 
 
@@ -58,7 +58,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
-
+    struct Summed_Scaler
+    {
+        string scaler_name;
+        std::vector<string> scalers_to_sum;
+    };
 
 //singleton
 class DLL_EXPORT Scaler_Lookup
@@ -71,7 +75,19 @@ public:
 
 	void clear();
 
-	void add_beamline();
+	void add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized);
+
+    void add_timing_info(const string& time_pv, double clock);
+
+    void add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list);
+
+    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock);
+
+    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock);
+
+    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized);
+
+    const vector<struct Summed_Scaler>* get_summed_scaler_list() const { return &_summed_scalers; }
 
 private:
 
@@ -79,9 +95,14 @@ private:
 
     static Scaler_Lookup *_this_inst;
 
-   
+    //     PV     Label
+    map< string, string > _scaler_pv_label_map; // whole map of scaler PV's
+    //     PV    Label
+    map< string, string > _time_normalized_scaler_pv_label_map;
+    //    Time_PV  Clock
+    map< string, double > _timing_info;
 
-
+    vector<struct Summed_Scaler> _summed_scalers;
 };
      
 } //namespace data_struct

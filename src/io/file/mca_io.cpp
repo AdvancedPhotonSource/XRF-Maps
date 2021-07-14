@@ -64,7 +64,7 @@ namespace mca
 
 //-----------------------------------------------------------------------------
 
-bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, string>& pv_map)
+bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map)
 {
     std::ifstream paramFileStream(path);
 
@@ -190,7 +190,7 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                             if(f_idx > -1)
                             {
                                 string pv_value = value.substr(1, f_idx-1);
-                                pv_map[pv_name] = pv_value;
+                                pv_map[pv_name] = stof(pv_value);
                             }
                         }
                     }

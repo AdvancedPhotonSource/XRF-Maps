@@ -2,32 +2,28 @@
 BeamLines:  
   2IDD:
     Scalers:
-      SRCURRENT: S:SRcurrentAI
+      SR_Current: S:SR_CurrentAI
       US_IC: 2idd:scaler1_cts1.C
       DS_IC: 2idd:scaler1_cts1.B
-      ELT: 
-        - 2iddXMAP:mca1.ELTM
-        - 2iddXMAP:mca2.ELTM
-        - 2iddXMAP:mca3.ELTM
-        - 2iddXMAP:mca4.ELTM
-      ERT: 
-        - 2iddXMAP:mca1.ERTM
-        - 2iddXMAP:mca2.ERTM
-        - 2iddXMAP:mca3.ERTM
-        - 2iddXMAP:mca4.ERTM
-      ICR: 
-        - 2iddXMAP:dxp1:InputCountRate
-        - 2iddXMAP:dxp2:InputCountRate
-        - 2iddXMAP:dxp3:InputCountRate
-        - 2iddXMAP:dxp4:InputCountRate
-      OCR: 
-        - 2iddXMAP:dxp1:OutputCountRate
-        - 2iddXMAP:dxp2:OutputCountRate
-        - 2iddXMAP:dxp3:OutputCountRate
-        - 2iddXMAP:dxp4:OutputCountRate
+      ELT1: 2iddXMAP:mca1.ELTM
+      ELT2: 2iddXMAP:mca2.ELTM
+      ELT3: 2iddXMAP:mca3.ELTM
+      ELT4: 2iddXMAP:mca4.ELTM
+      ERT1: 2iddXMAP:mca1.ERTM
+      ERT2: 2iddXMAP:mca2.ERTM
+      ERT3: 2iddXMAP:mca3.ERTM
+      ERT4: 2iddXMAP:mca4.ERTM
+      ICR1: 2iddXMAP:dxp1:InputCountRate
+      ICR2: 2iddXMAP:dxp2:InputCountRate
+      ICR3: 2iddXMAP:dxp3:InputCountRate
+      ICR4: 2iddXMAP:dxp4:InputCountRate
+      OCR1: 2iddXMAP:dxp1:OutputCountRate
+      OCR2: 2iddXMAP:dxp2:OutputCountRate
+      OCR3: 2iddXMAP:dxp3:OutputCountRate
+      OCR4: 2iddXMAP:dxp4:OutputCountRate
   2IDE:
     Scalers:
-      SRCURRENT: S:SRcurrentAI
+      SR_Current: S:SR_CurrentAI
       US_IC: 
         - 2xfm:scaler3_cts1.B
         - 2xfm:scaler1_cts1.B
@@ -67,41 +63,48 @@ BeamLines:
       CFG_9: 
         - 2xfm:scaler3_cts5.A
         - 2xfm:scaler1_cts5.A
-      ELT: 
+      ELT1: 
         - 2xfm:med:mca1.ELTM
-        - 2xfm:med:mca2.ELTM
-        - 2xfm:med:mca3.ELTM
-        - 2xfm:med:mca4.ELTM
         - 2xfm:mca1.ELTM
-        - 2xfm:mca2.ELTM
-        - 2xfm:mca3.ELTM
-        - 2xfm:mca4.ELTM
         - dxpXMAP2xfm3:mca1.ELTM
-        - dxpXMAP2xfm3:mca2.ELTM
+      ELT2: 
+        - 2xfm:med:mca2.ELTM
+        - 2xfm:mca2.ELTM
+        - dxpXMAP2xfm3:mca2.ELTM  
+      ELT3:
+        - 2xfm:med:mca3.ELTM
+        - 2xfm:mca3.ELTM
         - dxpXMAP2xfm3:mca3.ELTM
+      ELT4:
+        - 2xfm:med:mca4.ELTM
+        - 2xfm:mca4.ELTM
         - dxpXMAP2xfm3:mca4.ELTM
-      ERT: 
+      ERT1: 
+        - 2xfm:mca1.ERTM
         - 2xfm:med:mca1.ERTM
-        - 2xfm:med:mca2.ERTM
-        - 2xfm:med:mca3.ERTM
-        - 2xfm:med:mca4.ERTM
         - dxpXMAP2xfm3:mca1.ERTM
+      ERT2: 
+        - 2xfm:mca2.ERTM
+        - 2xfm:med:mca2.ERTM
         - dxpXMAP2xfm3:mca2.ERTM
+      ERT3: 
+        - 2xfm:mca3.ERTM
+        - 2xfm:med:mca3.ERTM
         - dxpXMAP2xfm3:mca3.ERTM
+      ERT4: 
+        - 2xfm:mca4.ERTM
+        - 2xfm:med:mca4.ERTM
         - dxpXMAP2xfm3:mca4.ERTM
-      ICR: 
-        - dxpXMAP2xfm3:dxp1:InputCountRate
-        - dxpXMAP2xfm3:dxp2:InputCountRate
-        - dxpXMAP2xfm3:dxp3:InputCountRate
-        - dxpXMAP2xfm3:dxp4:InputCountRate
-      OCR: 
-        - dxpXMAP2xfm3:dxp1:OutputCountRate
-        - dxpXMAP2xfm3:dxp2:OutputCountRate
-        - dxpXMAP2xfm3:dxp3:OutputCountRate
-        - dxpXMAP2xfm3:dxp4:OutputCountRate
+      ICR1: dxpXMAP2xfm3:dxp1:InputCountRate
+      ICR2: dxpXMAP2xfm3:dxp2:InputCountRate
+      ICR3: dxpXMAP2xfm3:dxp3:InputCountRate
+      ICR4: dxpXMAP2xfm3:dxp4:InputCountRate
+      OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
+      OCR2: dxpXMAP2xfm3:dxp2:OutputCountRate
+      OCR3: dxpXMAP2xfm3:dxp3:OutputCountRate
+      OCR4: dxpXMAP2xfm3:dxp4:OutputCountRate
     TimeNormalizedScalers:
-      Time_PV: 2xfm:mcs:mca1.VAL
-      Time_Clock: 25000000.0
+      Timing: [2xfm:mcs:mca1.VAL, 25000000.0]
       Scalers:
         US_IC: 2xfm:mcs:mca2.VAL
         DS_IC: 2xfm:mcs:mca3.VAL
@@ -118,66 +121,56 @@ BeamLines:
         CFG_9: 2xfm:mcs:mca18.VAL
   8BMB:
     Scalers:
-      SRCURRENT: S:SRcurrentAI
+      SR_Current: S:SR_CurrentAI
       US_IC: 8bmb:3820:scaler1_cts1.B
       DS_IC: 8bmb:3820:scaler1_cts1.C
-      ELT: 
-        - dxpXMAPDP3:mca1.ELTM
-        - dxpXMAPDP3:mca2.ELTM
-        - dxpXMAPDP3:mca3.ELTM
-        - dxpXMAPDP3:mca4.ELTM
-      ERT: 
-        - dxpXMAPDP3:mca1.ERTM
-        - dxpXMAPDP3:mca2.ERTM
-        - dxpXMAPDP3:mca3.ERTM
-        - dxpXMAPDP3:mca4.ERTM
-      ICR: 
-        - dxpXMAPDP3:dxp1:InputCountRate
-        - dxpXMAPDP3:dxp2:InputCountRate
-        - dxpXMAPDP3:dxp3:InputCountRate
-        - dxpXMAPDP3:dxp4:InputCountRate
-      OCR: 
-        - dxpXMAPDP3:dxp1:OutputCountRate
-        - dxpXMAPDP3:dxp2:OutputCountRate
-        - dxpXMAPDP3:dxp3:OutputCountRate
-        - dxpXMAPDP3:dxp4:OutputCountRate 
+      ELT1: dxpXMAPDP3:mca1.ELTM
+      ELT2: dxpXMAPDP3:mca2.ELTM
+      ELT3: dxpXMAPDP3:mca3.ELTM
+      ELT4: dxpXMAPDP3:mca4.ELTM
+      ERT1: dxpXMAPDP3:mca1.ERTM
+      ERT2: dxpXMAPDP3:mca2.ERTM
+      ERT3: dxpXMAPDP3:mca3.ERTM
+      ERT4: dxpXMAPDP3:mca4.ERTM
+      ICR1: dxpXMAPDP3:dxp1:InputCountRate
+      ICR2: dxpXMAPDP3:dxp2:InputCountRate
+      ICR3: dxpXMAPDP3:dxp3:InputCountRate
+      ICR4: dxpXMAPDP3:dxp4:InputCountRate
+      OCR1: dxpXMAPDP3:dxp1:OutputCountRate
+      OCR2: dxpXMAPDP3:dxp2:OutputCountRate
+      OCR3: dxpXMAPDP3:dxp3:OutputCountRate
+      OCR4: dxpXMAPDP3:dxp4:OutputCountRate 
     TimeNormalizedScalers:
-      Time_PV: 8bmb:3820:mca1.VAL
-      Time_Clock: 50000000.0
+      Timing: [8bmb:3820:mca1.VAL, 50000000.0]
       Scalers:
         US_IC: 8bmb:3820:mca2.VAL
         DS_IC: 8bmb:3820:mca3.VAL
   9IDB:
     Scalers:     
-      SRCURRENT: S:SRcurrentAI
+      SR_Current: S:SR_CurrentAI
       US_IC: 21:D3:scaler1_cts2.B
       CFG_2: 21:D3:scaler1_cts1.B
       CFG_3: 21:D3:scaler1_cts1.C
       CFG_4: 21:D3:scaler1_cts1.D
       CFG_5: 21:D3:scaler1_cts2.A
-      ELT: 
-        - 21:D3win:mca1.ELTM
-        - 21:D3win:mca2.ELTM
-        - 21:D3win:mca3.ELTM
-        - 21:D3win:mca4.ELTM
-      ERT: 
-        - 21:D3win:mca1.ERTM
-        - 21:D3win:mca2.ERTM
-        - 21:D3win:mca3.ERTM
-        - 21:D3win:mca4.ERTM
-      ICR: 
-        - 9idbXMAP:dxp1:InputCountRate
-        - 9idbXMAP:dxp2:InputCountRate
-        - 9idbXMAP:dxp3:InputCountRate
-        - 9idbXMAP:dxp4:InputCountRate
-      OCR: 
-        - 9idbXMAP:dxp1:OutputCountRate
-        - 9idbXMAP:dxp2:OutputCountRate
-        - 9idbXMAP:dxp3:OutputCountRate
-        - 9idbXMAP:dxp4:OutputCountRate
+      ELT1: 21:D3win:mca1.ELTM
+      ELT2: 21:D3win:mca2.ELTM
+      ELT3: 21:D3win:mca3.ELTM
+      ELT4: 21:D3win:mca4.ELTM
+      ERT1: 21:D3win:mca1.ERTM
+      ERT2: 21:D3win:mca2.ERTM
+      ERT3: 21:D3win:mca3.ERTM
+      ERT4: 21:D3win:mca4.ERTM
+      ICR1: 9idbXMAP:dxp1:InputCountRate
+      ICR2: 9idbXMAP:dxp2:InputCountRate
+      ICR3: 9idbXMAP:dxp3:InputCountRate
+      ICR4: 9idbXMAP:dxp4:InputCountRate
+      OCR1: 9idbXMAP:dxp1:OutputCountRate
+      OCR2: 9idbXMAP:dxp2:OutputCountRate
+      OCR3: 9idbXMAP:dxp3:OutputCountRate
+      OCR4: 9idbXMAP:dxp4:OutputCountRate
     TimeNormalizedScalers:
-      Time_PV: 21:D3:scaler1:mca1.VAL
-      Time_Clock: 50000000.0
+      Timing: [21:D3:scaler1:mca1.VAL, 50000000.0]
       Scalers:
         US_IC: 21:D3:scaler1:mca6.VAL
         CFG_2: 21:D3:scaler1:mca2.VAL

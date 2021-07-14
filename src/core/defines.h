@@ -187,6 +187,11 @@ const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 const string STR_SR_CURRENT = "SR_Current";
 const string STR_US_IC = "US_IC";
 const string STR_DS_IC = "DS_IC";
+const string STR_CFG_2 = "CFG_2";
+const string STR_CFG_3 = "CFG_3";
+const string STR_CFG_4 = "CFG_4";
+const string STR_CFG_5 = "CFG_5";
+
 
 const string STR_K_A_LINES = "K Alpha";
 const string STR_K_B_LINES = "K Beta";
@@ -214,8 +219,11 @@ const string STR_BEAMLINES = "BeamLines";
 const string STR_SCALERS = "Scalers";
 const string STR_TIME_NORMALIZED_SCALERS = "TimeNormalizedScalers";
 const string STR_SUMMED_SCALERS = "Summed_Scalers";
-const string STR_TIME_PV = "Time_PV";
-const string STR_TIME_CLOCK = "Time_Clock";
+const string STR_TIMING = "Timing";
+const string STR_ELT = "ELT";
+const string STR_ERT = "ERT";
+const string STR_ICR = "ICR";
+const string STR_OCR = "OCR";
 
 //}
 

@@ -52,7 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <fstream>
 
-
+#include "data_struct/scaler_lookup.h"
 #include "yaml-cpp/yaml.h"
 
 namespace io
@@ -233,15 +233,14 @@ void parse_scalers(std::string& beamline, YAML::Node& node, bool time_normalized
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Scalar:
-			logI << beamline << " = " << it->first.as<string>() << " : " << it->second.as<string>() << "\n";
+            data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
 			break;
 		case YAML::NodeType::Sequence:
 			logI << beamline << " = " << it->first.as<string>();
-			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-			{
-				logit_s << " - " << it2->as<string>();
-			}
-			logit_s << "\n";
+            for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+            {
+                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
+            }
 			break;
 		case YAML::NodeType::Map:
 		case YAML::NodeType::Null:
@@ -258,15 +257,15 @@ void parse_summed_scalers(std::string& beamline, YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
+        vector<string> scaler_list;
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Sequence:
-			logI <<beamline<< " summed scaler "<< it->first.as<string>();
 			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
-				logit_s << " - " << it2->as<string>();
+                scaler_list.push_back(it2->as<string>());
 			}
-			logit_s << "\n";
+            data_struct::Scaler_Lookup::inst()->add_summed_scaler(beamline, it->first.as<string>(), scaler_list);
 			break;
 		case YAML::NodeType::Map:
 		case YAML::NodeType::Scalar:
@@ -285,24 +284,29 @@ void parse_time_normalized_scalers(std::string& beamline, YAML::Node& node)
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
 		string val = it->first.as<string>();
-		switch (it->second.Type())
-		{
-		case YAML::NodeType::Scalar:
-			if (val == STR_TIME_PV)
-			{
-				//it->second.as<string>();
-			}
-			else if (val == STR_TIME_CLOCK)
-			{
-				//it->second.as<double>();
-			}
-			break;
+        switch (it->second.Type())
+        {
+        case YAML::NodeType::Sequence:
+            if (val == STR_TIMING)
+            {
+                YAML::Node timing_node = it->second.as<YAML::Node>();
+                if (timing_node.size() == 2)
+                {
+                    data_struct::Scaler_Lookup::inst()->add_timing_info(timing_node[0].as<string>(), timing_node[1].as<double>());
+                }
+                else
+                {
+                    logW << " Couldnt parse yaml timing info \n";
+                }
+            }
+            break;
 		case YAML::NodeType::Map:
-			if (val == STR_SCALERS)
+            if (val == STR_SCALERS)
 			{
 				parse_scalers(beamline, it->second.as<YAML::Node>(), true);
 			}
-		case YAML::NodeType::Sequence:
+            break;
+        case YAML::NodeType::Scalar:
 		case YAML::NodeType::Null:
 		case YAML::NodeType::Undefined:
 		default:
@@ -976,13 +980,13 @@ bool load_spectra_volume(std::string dataset_directory,
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, params_override);
+            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
         }
         return true;
     }
 
     // try to load spectra from mda file
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress) )
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
@@ -1077,6 +1081,7 @@ bool load_spectra_volume(std::string dataset_directory,
         {
             spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
         }
+        
         for (const auto& line : bad_rows)
         {
             for (auto& map : scan_info->scaler_maps)
@@ -1088,7 +1093,7 @@ bool load_spectra_volume(std::string dataset_directory,
                 }
             }
         }
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override);
     }
 
     mda_io.unload();
@@ -1283,7 +1288,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
 	bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
     //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
-	if(false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files, params_override))
+	if(false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files))
 	
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
@@ -1291,6 +1296,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
     else
     {
+        mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override);
+
         if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
         {
             mda_io.unload();

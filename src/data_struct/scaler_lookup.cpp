@@ -43,9 +43,7 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
-
-
+/// Initial Author <2021>: Arthur Glowacki
 
 #include "scaler_lookup.h"
 
@@ -59,6 +57,8 @@ namespace data_struct
 
 Scaler_Lookup* Scaler_Lookup::_this_inst(0);
 
+// ----------------------------------------------------------------------------
+
 Scaler_Lookup* Scaler_Lookup::inst()
 {
     if (_this_inst == nullptr)
@@ -68,25 +68,114 @@ Scaler_Lookup* Scaler_Lookup::inst()
     return _this_inst;
 }
 
+// ----------------------------------------------------------------------------
+
 Scaler_Lookup::Scaler_Lookup()
 {
 
 }
+
+// ----------------------------------------------------------------------------
 
 Scaler_Lookup::~Scaler_Lookup()
 {
     clear();
 }
 
+// ----------------------------------------------------------------------------
+
 void Scaler_Lookup::clear()
 {
-
+    _time_normalized_scaler_pv_label_map.clear();
+    _scaler_pv_label_map.clear();
+    _summed_scalers.clear();
 }
 
-void Scaler_Lookup::add_beamline()
+// ----------------------------------------------------------------------------
+
+void Scaler_Lookup::add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized)
 {
-    // set global energies pointer
-    
+    if (is_time_normalized)
+    {
+        _time_normalized_scaler_pv_label_map[scaler_pv] = scaler_label;
+    }
+    else
+    {
+        _scaler_pv_label_map[scaler_pv] = scaler_label;
+    }
 }
+
+// ----------------------------------------------------------------------------
+
+void Scaler_Lookup::add_timing_info(const string& time_pv, double clock)
+{
+    _timing_info[time_pv] = clock;
+}
+
+// ----------------------------------------------------------------------------
+
+void Scaler_Lookup::add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list)
+{
+    data_struct::Summed_Scaler s_scal;
+    s_scal.scaler_name = scaler_label;
+    for (const auto& itr : scaler_list)
+    {
+        s_scal.scalers_to_sum.push_back(itr);
+    }
+    _summed_scalers.push_back(s_scal);
+}
+
+// ----------------------------------------------------------------------------
+
+bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock)
+{
+    for (const auto& itr : pv_list)
+    {
+        if (_timing_info.count(itr) > 0)
+        {
+            out_pv = itr;
+            out_clock = _timing_info.at(itr);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+
+bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock)
+{
+    for (const auto& itr : pv_map)
+    {
+        if (_timing_info.count(itr.first) > 0)
+        {
+            out_pv = itr.first;
+            out_clock = _timing_info.at(itr.first);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+
+bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_time_normalized)
+{
+    if (_time_normalized_scaler_pv_label_map.count(pv) > 0)
+    {
+        out_is_time_normalized = true;
+        out_label = _time_normalized_scaler_pv_label_map.at(pv);
+        return true;
+    }
+    if (_scaler_pv_label_map.count(pv) > 0)
+    {
+        out_is_time_normalized = false;
+        out_label = _scaler_pv_label_map.at(pv);
+        return true;
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
 
 } //namespace data_struct
