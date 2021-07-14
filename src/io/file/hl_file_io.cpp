@@ -236,10 +236,9 @@ void parse_scalers(std::string& beamline, YAML::Node& node, bool time_normalized
             data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
 			break;
 		case YAML::NodeType::Sequence:
-			logI << beamline << " = " << it->first.as<string>();
             for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
             {
-                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
+                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it2->as<string>(), time_normalized);
             }
 			break;
 		case YAML::NodeType::Map:
