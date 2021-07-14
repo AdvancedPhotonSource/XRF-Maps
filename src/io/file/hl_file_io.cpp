@@ -291,7 +291,7 @@ void parse_time_normalized_scalers(std::string& beamline, YAML::Node& node)
                 YAML::Node timing_node = it->second.as<YAML::Node>();
                 if (timing_node.size() == 2)
                 {
-                    data_struct::Scaler_Lookup::inst()->add_timing_info(timing_node[0].as<string>(), timing_node[1].as<double>());
+                    data_struct::Scaler_Lookup::inst()->add_timing_info(beamline, timing_node[0].as<string>(), timing_node[1].as<double>());
                 }
                 else
                 {

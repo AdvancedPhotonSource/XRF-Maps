@@ -559,10 +559,10 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
     
     // find time scaler
     std::string time_pv = "";
-    ///std::string beamline = "";
+    std::string beamline = "";
     double time_clock = 0.0;
     real_t time_val = 1.0;
-    if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_map, time_pv, time_clock))
+    if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_map, time_pv, time_clock, beamline))
     {
         time_val = pv_map.at(time_pv);
         time_val /= time_clock;
@@ -573,7 +573,7 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
     {
         string label = "";
         bool is_time_normalized = false;
-        if (data_struct::Scaler_Lookup::inst()->search_pv(itr.first, label, is_time_normalized))
+        if (data_struct::Scaler_Lookup::inst()->search_pv(itr.first, label, is_time_normalized, beamline))
         {
             if (is_time_normalized)
             {

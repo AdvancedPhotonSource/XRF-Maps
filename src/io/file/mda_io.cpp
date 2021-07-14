@@ -1020,7 +1020,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                     s_map.name = std::string(_mda_file->scan->detectors[k]->name);
                     std::string label = "";
                     bool is_time_normalized = false;
-                    if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized))
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized, beamline))
                     {
                         s_map.name = label;
                     }
@@ -1084,7 +1084,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                         s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
                         std::string label = "";
                         bool is_time_normalized = false;
-                        if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized))
+                        if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized, beamline))
                         {
                             s_map.name = label;
                         }
@@ -1126,10 +1126,9 @@ void MDA_IO::_load_scalers(bool load_int_spec)
     {
         pv_names.push_back(itr.name);
     }
-
     std::string time_pv = "";
     double time_clock = 0.0;
-    if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_names, time_pv, time_clock))
+    if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_names, time_pv, time_clock, beamline))
     {
         const data_struct::ArrayXXr* time_array = _scan_info.scaler_values(time_pv);
         if (time_array != nullptr)
@@ -1144,7 +1143,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
         }
     }
 
-    const vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
+    auto summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
     if (summed_scalers != nullptr)
     {
         for (const auto& itr : *summed_scalers)

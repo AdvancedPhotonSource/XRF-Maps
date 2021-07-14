@@ -3225,8 +3225,9 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
             read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
             read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
             string out_label = "";
+			string beamline = "";
             bool tmpb;
-            if(data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb))
+            if(data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
             {
                 if (out_label == STR_DS_IC)
                 {
@@ -7300,8 +7301,9 @@ bool HDF5_IO::save_scan_scalers_bnl(std::string path,
             read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
             read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
             string out_label = "";
+			string beamline = "";
             bool tmpb;
-            if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb))
+            if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
             {
                 for (int j = 0; j < 255; j++)
                 {

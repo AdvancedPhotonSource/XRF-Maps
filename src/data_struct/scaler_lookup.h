@@ -77,15 +77,15 @@ public:
 
 	void add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized);
 
-    void add_timing_info(const string& time_pv, double clock);
+    void add_timing_info(const string& beamline, const string& time_pv, double clock);
 
     void add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list);
 
-    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock);
+    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline);
 
-    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock);
+    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
 
-    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized);
+    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline);
 
     const vector<struct Summed_Scaler>* get_summed_scaler_list(string beamline) const;
 
@@ -95,14 +95,21 @@ private:
 
     static Scaler_Lookup *_this_inst;
 
-    //     PV     Label
-    map< string, string > _scaler_pv_label_map; // whole map of scaler PV's
-    //     PV    Label
-    map< string, string > _time_normalized_scaler_pv_label_map;
-    //    Time_PV  Clock
-    map< string, double > _timing_info;
-    //   beamline      summed scalers
-    map<string, vector<struct Summed_Scaler> > _summed_scalers;
+	struct BeamLine
+	{
+		//     PV    Label
+		map< string, string > scaler_pv_label_map;
+		//     PV    Label
+		map< string, string > time_normalized_scaler_pv_label_map;
+		//    Time_PV  Clock
+		map< string, double > timing_info;
+		//   beamline      summed scalers
+		vector<struct Summed_Scaler> summed_scalers;
+	};
+	
+    //   beamline     Label
+    map< string, struct BeamLine > _beamline_map;
+ 
 };
      
 } //namespace data_struct

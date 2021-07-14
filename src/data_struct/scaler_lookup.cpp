@@ -86,9 +86,13 @@ Scaler_Lookup::~Scaler_Lookup()
 
 void Scaler_Lookup::clear()
 {
-    _time_normalized_scaler_pv_label_map.clear();
-    _scaler_pv_label_map.clear();
-    _summed_scalers.clear();
+	for (auto &itr : _beamline_map)
+	{
+		itr.second.time_normalized_scaler_pv_label_map.clear();
+		itr.second.scaler_pv_label_map.clear();
+		itr.second.summed_scalers.clear();
+		itr.second.timing_info.clear();
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -97,19 +101,19 @@ void Scaler_Lookup::add_beamline_scaler(const string& beamline, const string& sc
 {
     if (is_time_normalized)
     {
-        _time_normalized_scaler_pv_label_map[scaler_pv] = scaler_label;
+		_beamline_map[beamline].time_normalized_scaler_pv_label_map[scaler_pv] = scaler_label;
     }
     else
     {
-        _scaler_pv_label_map[scaler_pv] = scaler_label;
+		_beamline_map[beamline].scaler_pv_label_map[scaler_pv] = scaler_label;
     }
 }
 
 // ----------------------------------------------------------------------------
 
-void Scaler_Lookup::add_timing_info(const string& time_pv, double clock)
+void Scaler_Lookup::add_timing_info(const string& beamline, const string& time_pv, double clock)
 {
-    _timing_info[time_pv] = clock;
+	_beamline_map[beamline].timing_info[time_pv] = clock;
 }
 
 // ----------------------------------------------------------------------------
@@ -122,57 +126,71 @@ void Scaler_Lookup::add_summed_scaler(const string& beamline, const string& scal
     {
         s_scal.scalers_to_sum.push_back(itr);
     }
-    _summed_scalers[beamline].push_back(s_scal);
+	_beamline_map[beamline].summed_scalers.push_back(s_scal);
 }
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock)
+bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline)
 {
-    for (const auto& itr : pv_list)
-    {
-        if (_timing_info.count(itr) > 0)
-        {
-            out_pv = itr;
-            out_clock = _timing_info.at(itr);
-            return true;
-        }
-    }
+	
+	for (const auto& itr : pv_list)
+	{
+		for (const auto& bItr : _beamline_map)
+		{
+			if (bItr.second.timing_info.count(itr) > 0)
+			{
+				out_pv = itr;
+				out_clock = bItr.second.timing_info.at(itr);
+				out_beamline = bItr.first;
+				return true;
+			}
+		}
+	}
     return false;
 }
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock)
+bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline)
 {
     for (const auto& itr : pv_map)
     {
-        if (_timing_info.count(itr.first) > 0)
-        {
-            out_pv = itr.first;
-            out_clock = _timing_info.at(itr.first);
-            return true;
-        }
+		for (const auto& bItr : _beamline_map)
+		{
+			if (bItr.second.timing_info.count(itr.first) > 0)
+			{
+				out_pv = itr.first;
+				out_clock = bItr.second.timing_info.at(itr.first);
+				out_beamline = bItr.first;
+				return true;
+			}
+		}
     }
     return false;
 }
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_time_normalized)
+bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline)
 {
-    if (_time_normalized_scaler_pv_label_map.count(pv) > 0)
-    {
-        out_is_time_normalized = true;
-        out_label = _time_normalized_scaler_pv_label_map.at(pv);
-        return true;
-    }
-    if (_scaler_pv_label_map.count(pv) > 0)
-    {
-        out_is_time_normalized = false;
-        out_label = _scaler_pv_label_map.at(pv);
-        return true;
-    }
+	for (const auto& bItr : _beamline_map)
+	{
+		if (bItr.second.time_normalized_scaler_pv_label_map.count(pv) > 0)
+		{
+			out_is_time_normalized = true;
+			out_label = bItr.second.time_normalized_scaler_pv_label_map.at(pv);
+			out_beamline = bItr.first;
+			return true;
+		}
+		if (bItr.second.scaler_pv_label_map.count(pv) > 0)
+		{
+			out_is_time_normalized = false;
+			out_label = bItr.second.scaler_pv_label_map.at(pv);
+			out_beamline = bItr.first;
+			return true;
+		}
+	}
     return false;
 }
 
@@ -180,9 +198,9 @@ bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_
 
 const vector<struct Summed_Scaler>* Scaler_Lookup::get_summed_scaler_list(string beamline) const
 {
-    if (_summed_scalers.count(beamline) > 0)
-    {
-        return &_summed_scalers.at(beamline);
+	if(_beamline_map.count(beamline) > 0)
+	{
+        return &(_beamline_map.at(beamline).summed_scalers);
     }
     return nullptr;
 }
