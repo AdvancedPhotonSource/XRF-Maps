@@ -1,6 +1,6 @@
 ---
 BeamLines: 
-  Generic: 
+  General: 
     Scalers:
       SR_Current: S:SRcurrentAI
       I0: US_IC
@@ -162,14 +162,30 @@ BeamLines:
       ERT2: 21:D3win:mca2.ERTM
       ERT3: 21:D3win:mca3.ERTM
       ERT4: 21:D3win:mca4.ERTM
-      ICR1: 9idbXMAP:dxp1:InputCountRate
-      ICR2: 9idbXMAP:dxp2:InputCountRate
-      ICR3: 9idbXMAP:dxp3:InputCountRate
-      ICR4: 9idbXMAP:dxp4:InputCountRate
-      OCR1: 9idbXMAP:dxp1:OutputCountRate
-      OCR2: 9idbXMAP:dxp2:OutputCountRate
-      OCR3: 9idbXMAP:dxp3:OutputCountRate
-      OCR4: 9idbXMAP:dxp4:OutputCountRate
+      ICR1: 
+        - 9idbXMAP:dxp1:InputCountRate
+        - 21:D3win:dxp1:InputCountRate
+      ICR2:
+        - 9idbXMAP:dxp2:InputCountRate
+        - 21:D3win:dxp2:InputCountRate
+      ICR3:
+        - 9idbXMAP:dxp3:InputCountRate
+        - 21:D3win:dxp3:InputCountRate
+      ICR4:
+        - 9idbXMAP:dxp4:InputCountRate
+        - 21:D3win:dxp4:InputCountRate
+      OCR1:
+        - 9idbXMAP:dxp1:OutputCountRate
+        - 21:D3win:dxp1:OutputCountRate
+      OCR2:
+        - 9idbXMAP:dxp2:OutputCountRate
+        - 21:D3win:dxp2:OutputCountRate
+      OCR3:
+        - 9idbXMAP:dxp3:OutputCountRate
+        - 21:D3win:dxp3:OutputCountRate
+      OCR4:
+        - 9idbXMAP:dxp4:OutputCountRate
+        - 21:D3win:dxp4:OutputCountRate
     TimeNormalizedScalers:
       Timing: [21:D3:scaler1:mca1.VAL, 50000000.0]
       Scalers:

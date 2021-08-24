@@ -180,14 +180,20 @@ bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_
 		{
 			out_is_time_normalized = true;
 			out_label = bItr.second.time_normalized_scaler_pv_label_map.at(pv);
-			out_beamline = bItr.first;
+			if (bItr.first != STR_GENERAL_BEAMLINE)
+			{
+				out_beamline = bItr.first;
+			}
 			return true;
 		}
 		if (bItr.second.scaler_pv_label_map.count(pv) > 0)
 		{
 			out_is_time_normalized = false;
 			out_label = bItr.second.scaler_pv_label_map.at(pv);
-			out_beamline = bItr.first;
+			if (bItr.first != STR_GENERAL_BEAMLINE)
+			{
+				out_beamline = bItr.first;
+			}
 			return true;
 		}
 	}

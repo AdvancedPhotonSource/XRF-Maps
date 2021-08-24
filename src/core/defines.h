@@ -225,6 +225,8 @@ const string STR_ERT = "ERT";
 const string STR_ICR = "ICR";
 const string STR_OCR = "OCR";
 
+const string STR_GENERAL_BEAMLINE = "General";
+
 //}
 
 //}// namespace keys
