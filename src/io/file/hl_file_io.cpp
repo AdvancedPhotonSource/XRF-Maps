@@ -226,7 +226,7 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 
 // ----------------------------------------------------------------------------
 
-void parse_scalers(std::string& beamline, YAML::Node& node, bool time_normalized)
+void parse_scalers(std::string& beamline, const YAML::Node& node, bool time_normalized)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
@@ -252,7 +252,7 @@ void parse_scalers(std::string& beamline, YAML::Node& node, bool time_normalized
 
 // ----------------------------------------------------------------------------
 
-void parse_summed_scalers(std::string& beamline, YAML::Node& node)
+void parse_summed_scalers(std::string& beamline, const YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
@@ -278,7 +278,7 @@ void parse_summed_scalers(std::string& beamline, YAML::Node& node)
 
 // ----------------------------------------------------------------------------
 
-void parse_time_normalized_scalers(std::string& beamline, YAML::Node& node)
+void parse_time_normalized_scalers(std::string& beamline, const YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
@@ -316,7 +316,7 @@ void parse_time_normalized_scalers(std::string& beamline, YAML::Node& node)
 
 // ----------------------------------------------------------------------------
 
-void parse_beamline(std::string& beamline, YAML::Node& node)
+void parse_beamline(std::string& beamline, const YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
