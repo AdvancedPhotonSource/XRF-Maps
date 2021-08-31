@@ -457,7 +457,7 @@ ENDIF()
 
 set(HDF5_LIB_LEN 0)
 list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
-# Building on theta doesn't need ${HDF5_LIBRARIES} and it is empty os need a check 
+# Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
