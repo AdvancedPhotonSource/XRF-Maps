@@ -64,9 +64,9 @@ IF(UNIX)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/linux)
 ENDIF()
 
-find_package(netCDF REQUIRED)
 find_package(Threads)
-find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(netCDF CONFIG REQUIRED)
+find_package(HDF5 CONFIG COMPONENTS C REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
@@ -187,6 +187,8 @@ IF(BUILD_WITH_ZMQ)
   #zeromq include
   include_directories(${ZeroMQ_INCLUDE_DIR})
 ENDIF()
+
+link_directories( ${HDF5_LIBRARY_DIRS} )
 
 #hdf5 include
 include_directories(${HDF5_INCLUDE_DIRS})
@@ -464,7 +466,7 @@ ENDIF()
 
 set(HDF5_LIB_LEN 0)
 list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
-# Building on theta doesn't need ${HDF5_LIBRARIES} and it is empty os need a check 
+# Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
   target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
   target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
