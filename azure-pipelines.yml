@@ -13,16 +13,14 @@ jobs:
     steps:
     - checkout: self
       submodules: true
-    - powershell: |
-        $Webclient = New-Object net.webclient
-        $Webclient.Downloadfile("https://anl.box.com/shared/static/f07vdq5c082hl9tpm3luagaletwrjpc0.zip", "vcpkg.zip") 
-        $progressPreference = 'SilentlyContinue'
-        Expand-Archive -Force -Path .\vcpkg.zip -DestinationPath .\
+    - script: .\vcpkg\bootstrap-vcpkg.bat
+    - script: echo set(VCPKG_BUILD_TYPE release)>>vcpkg\triplets\x64-windows.cmake
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq --triplet x64-windows
     - script: mkdir build
     - task: CMake@1
       inputs:
         workingDirectory: 'build'
-        cmakeArgs: '-G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_QT=ON -DBUILD_WITH_ZMQ=ON ..'
+        cmakeArgs: '-G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_QT=OFF -DBUILD_WITH_ZMQ=ON ..'
     - task: MSBuild@1
       inputs:
         solution: 'build/ALL_BUILD.vcxproj'
