@@ -183,22 +183,15 @@ ELSEIF(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
 
-IF(BUILD_WITH_ZMQ)
-  #zeromq include
-  include_directories(${ZeroMQ_INCLUDE_DIR})
-ENDIF()
-
-#hdf5 include
-include_directories(${HDF5_INCLUDE_DIRS})
-
 # Include Eigen 
 include_directories(${EIGEN3_INCLUDES})
 
-# Include NetCDF 
-include_directories(${NETCDF_INCLUDE_DIRS})
-
 # Include libxrf header files
 include_directories(src)
+
+# Include vcpkg installed dir (doesn't auto include it)
+find_path(H5_INCLUDE_DIR hdf5.h)
+include_directories(${H5_INCLUDE_DIR})
 
 # Visual Studio specific include and source
 IF(MSVC)
