@@ -43,35 +43,75 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2021>: Arthur Glowacki
 
 
 
-#ifndef MCA_IO_H
-#define MCA_IO_H
+#ifndef Scaler_Lookup_H
+#define Scaler_Lookup_H
 
-#include "data_struct/spectra.h"
-#include "data_struct/fit_parameters.h"
+#include <string>
+#include <unordered_map>
+#include <map>
+#include <vector>
+#include "core/defines.h"
 
-using namespace data_struct;
-
-namespace io
+namespace data_struct
 {
-namespace file
+    struct Summed_Scaler
+    {
+        string scaler_name;
+        std::vector<string> scalers_to_sum;
+    };
+
+//singleton
+class DLL_EXPORT Scaler_Lookup
 {
+public:
 
-namespace mca
-{
+    static Scaler_Lookup* inst();
 
-DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map);
-DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map);
+	~Scaler_Lookup();
 
-}// end namespace mca
+	void clear();
 
+	void add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized);
 
-DLL_EXPORT bool load_element_info_from_csv(std::string filename);
+    void add_timing_info(const string& beamline, const string& time_pv, double clock);
 
-}// end namespace file
-}// end namespace io
+    void add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list);
 
-#endif // MCA_IO_H
+    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline);
+
+    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
+
+    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline);
+
+    const vector<struct Summed_Scaler>* get_summed_scaler_list(string beamline) const;
+
+private:
+
+    Scaler_Lookup();
+
+    static Scaler_Lookup *_this_inst;
+
+	struct BeamLine
+	{
+		//     PV    Label
+		map< string, string > scaler_pv_label_map;
+		//     PV    Label
+		map< string, string > time_normalized_scaler_pv_label_map;
+		//    Time_PV  Clock
+		map< string, double > timing_info;
+		//   beamline      summed scalers
+		vector<struct Summed_Scaler> summed_scalers;
+	};
+	
+    //   beamline     Label
+    map< string, struct BeamLine > _beamline_map;
+ 
+};
+     
+} //namespace data_struct
+
+#endif // Scaler_Lookup_H

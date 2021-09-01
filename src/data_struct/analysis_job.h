@@ -121,7 +121,7 @@ public:
 
     size_t num_threads;
 
-    bool update_scalers;
+    //bool update_scalers;
 
     bool quick_and_dirty;
 

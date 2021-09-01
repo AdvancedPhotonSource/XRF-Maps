@@ -61,18 +61,6 @@ namespace data_struct
 using namespace std;
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-struct Summed_Scaler
-{
-    string scaler_name;
-    //  name    
-    std::vector<string> scalers_to_sum;
-    bool normalize_by_time;
-};
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 /**
  * @brief The Params_Override struct
  */
@@ -93,15 +81,12 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
-        time_scaler_clock = "1.0";
         sr_current = 0.0;
         US_IC = 0.0;
         DS_IC = 0.0;
         detector_element = "Si";
         dataset_directory = "";
         detector_num = -1;
-        time_scaler = "";
-        time_scaler_clock = "";
         be_window_thickness = "24.0";
         det_chip_thickness = "350.0";
         ge_dead_layer = "0.0";
@@ -122,7 +107,6 @@ public:
         ds_amp_sens_num = 0.0;
         ds_amp_sens_unit = 0.0;
         theta_pv = "";
-        time_scaler_clock = "1.0";
         sr_current = 0.0;
         US_IC = 0.0;
         DS_IC = 0.0;
@@ -134,8 +118,6 @@ public:
 
     ~Params_Override()
     {
-        time_normalized_scalers.clear();
-        scaler_pvs.clear();
         // TODO: fix this: this memeory is used when optimising and is copyed to another data struct
 //		for (auto& itr : elements_to_fit)
 //		{
@@ -236,8 +218,6 @@ public:
     int detector_num;
     Fit_Parameters fit_params;
     Fit_Element_Map_Dict elements_to_fit;
-    string time_scaler;
-    string time_scaler_clock;
     string detector_element;
     
     real_t si_escape_factor;
@@ -251,21 +231,12 @@ public:
     string ge_dead_layer;
     string airpath;
 
-    string elt_pv;
-    string ert_pv;
-    string in_cnt_pv;
-    string out_cnt_pv;
-
     string us_amp_sens_num_pv;
     string us_amp_sens_unit_pv;
     string ds_amp_sens_num_pv;
     string ds_amp_sens_unit_pv;
 
     string theta_pv;
-
-    map< string, string > scaler_pvs;
-    map< string, string > time_normalized_scalers;
-    list<struct Summed_Scaler> summed_scalers;
 
     vector<string> branching_family_L;
     vector<string> branching_ratio_L;

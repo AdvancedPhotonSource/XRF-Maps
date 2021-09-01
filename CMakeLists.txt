@@ -64,9 +64,10 @@ IF(UNIX)
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/linux)
 ENDIF()
 
-find_package(NetCDF REQUIRED)
 find_package(Threads)
-find_package(HDF5 REQUIRED COMPONENTS C)
+find_package(hdf5 CONFIG REQUIRED)
+find_package(netCDF CONFIG REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
 
@@ -96,7 +97,7 @@ ENDIF()
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
   IF( NOT ZeroMQ_INCLUDE_DIR AND NOT ZeroMQ_LIBRARY)
-      find_package(ZeroMQ REQUIRED libzmq-static)
+      find_package(ZeroMQ CONFIG REQUIRED libzmq-static)
   ENDIF()
 ENDIF()
 
@@ -182,25 +183,25 @@ ELSEIF(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
 
-IF(BUILD_WITH_ZMQ)
-  #zeromq include
-  include_directories(${ZeroMQ_INCLUDE_DIR})
-ENDIF()
-
-#hdf5 include
-include_directories(${HDF5_INCLUDE_DIRS})
-
 # Include Eigen 
 include_directories(${EIGEN3_INCLUDES})
-
-# Include NetCDF 
-include_directories(${NETCDF_INCLUDE_DIRS})
 
 # Include libxrf header files
 include_directories(src)
 
+IF (UNIX)
+  # Include vcpkg installed dir (doesn't auto include it)
+  find_path(H5_INCLUDE_DIR hdf5.h)
+  include_directories(${H5_INCLUDE_DIR})
+ENDIF()
+
 # Visual Studio specific include and source
 IF(MSVC)
+  # win doesn't add linker dir for vcpkg
+  #find_path(NETCDF_LIB_DIR ${hdf5::hdf5-shared})
+  #message(${NETCDF_LIB_DIR})
+  #link_directories(${NETCDF_LIB_DIR})
+
   set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
   include_directories(src/support/direct)
 ELSE()
@@ -219,6 +220,7 @@ set(libxrf_fit_HEADERS
     src/data_struct/quantification_standard.h
     src/data_struct/element_quant.h
     src/data_struct/element_info.h
+    src/data_struct/scaler_lookup.h
     src/data_struct/fit_parameters.h
     src/data_struct/fit_element_map.h
     src/data_struct/params_override.h
@@ -247,6 +249,7 @@ set(libxrf_fit_HEADERS
 set(libxrf_fit_SOURCE
     src/data_struct/quantification_standard.cpp
     src/data_struct/element_info.cpp
+    src/data_struct/scaler_lookup.cpp
     src/data_struct/fit_parameters.cpp
     src/data_struct/fit_element_map.cpp
     src/data_struct/spectra.cpp
@@ -346,9 +349,9 @@ IF (BUILD_WITH_PYBIND11)
 
     pybind11_add_module(pyxrfmaps src/pybindings/main.cpp)
     IF (BUILD_WITH_ZMQ)
-      target_link_libraries(pyxrfmaps LINK_PUBLIC libxrf_fit libxrf_io ${NETCDF_LIBRARIES} ${HDF5_LIBRARIES} libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+      target_link_libraries(pyxrfmaps PRIVATE libxrf_fit libxrf_io netCDF::netcdf hdf5::hdf5-shared libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
     ELSE()
-      target_link_libraries(pyxrfmaps PUBLIC libxrf_fit PUBLIC libxrf_io PUBLIC ${NETCDF_LIBRARIES} PUBLIC ${HDF5_LIBRARIES})
+      target_link_libraries(pyxrfmaps PRIVATE libxrf_fit libxrf_io netCDF::netcdf hdf5::hdf5-shared)
     ENDIF()
 ENDIF()
 
@@ -391,7 +394,6 @@ install(TARGETS libxrf_io libxrf_fit EXPORT XRF_MapsConfig
 export(EXPORT XRF_MapsConfig FILE "${CMAKE_CURRENT_BINARY_DIR}/XRF_MapsConfig.cmake")
 export(PACKAGE XRF_MapsConfig)
 
-
 IF (WIN32)
   IF (MSVC)
     # /bigobj is needed for bigger binding projects due to the limit to 64k addressable sections
@@ -399,22 +401,16 @@ IF (WIN32)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "/DDYNAMIC_LIB")
 	set_target_properties(xrf_maps libxrf_io PROPERTIES COMPILE_FLAGS "/D_WINSOCKAPI_")
   ENDIF()
-  target_link_libraries(libxrf_io LINK_PUBLIC optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries(libxrf_io LINK_PUBLIC debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+    
   IF (BUILD_WITH_ZMQ)
     #IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
     #  string(REGEX REPLACE "mt-s" "mt" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
     #ELSE()
     #  string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
     #ENDIF()
-	target_link_libraries(libxrf_io LINK_PUBLIC libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
-    target_link_libraries(xrf_maps LINK_PUBLIC libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
-  
-  #  target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-  #  target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
-  #  target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY_RELEASE} optimized ws2_32.lib )
-  #  target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY_DEBUG} debug ws2_32.lib )
-  ENDIF()
+	  target_link_libraries(libxrf_io PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+    target_link_libraries(xrf_maps PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+ ENDIF()
 ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
   # installed on one's system. E.g.: one copy from the OS and another copy
@@ -429,10 +425,8 @@ ELSEIF (UNIX)
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
   IF (BUILD_WITH_ZMQ)
-    target_link_libraries(libxrf_io LINK_PUBLIC optimized ${ZeroMQ_LIBRARY} )
-    target_link_libraries(libxrf_io LINK_PUBLIC debug ${ZeroMQ_LIBRARY} )
-    target_link_libraries(xrf_maps LINK_PUBLIC optimized ${ZeroMQ_LIBRARY} )
-    target_link_libraries(xrf_maps LINK_PUBLIC debug ${ZeroMQ_LIBRARY} )
+    target_link_libraries(libxrf_io PRIVATE libzmq-static )
+    target_link_libraries(xrf_maps PRIVATE libzmq-static )
   ENDIF()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
@@ -461,30 +455,23 @@ ENDIF()
 
 set(HDF5_LIB_LEN 0)
 list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
-# Building on theta doesn't need ${HDF5_LIBRARIES} and it is empty os need a check 
+# Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
 ELSE()
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libxrf_io optimized libxrf_fit optimized ${NETCDF_LIBRARIES} optimized ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libxrf_io debug libxrf_fit debug ${NETCDF_LIBRARIES} debug ${HDF5_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
 
 IF (BUILD_WITH_QT)
-  target_link_libraries (libxrf_io LINK_PUBLIC optimized ${Qt5Charts_LIBRARIES} )
-  target_link_libraries (libxrf_io LINK_PUBLIC debug ${Qt5Charts_LIBRARIES} )
-
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized ${Qt5Charts_LIBRARIES} )
-  target_link_libraries (xrf_maps LINK_PUBLIC debug ${Qt5Charts_LIBRARIES} )
-
+  target_link_libraries (libxrf_io LINK_PUBLIC ${Qt5Charts_LIBRARIES} )
+  target_link_libraries (xrf_maps LINK_PUBLIC ${Qt5Charts_LIBRARIES} )
 ENDIF()
 
 IF (BUILD_WITH_TIRPC)
   link_directories(AFTER "/lib64" "/usr/lib")
-  target_link_libraries (libxrf_io LINK_PUBLIC optimized libtirpc.so  )
-  target_link_libraries (libxrf_io LINK_PUBLIC debug libtirpc.so)
-
-  target_link_libraries (xrf_maps LINK_PUBLIC optimized libtirpc.so)
-  target_link_libraries (xrf_maps LINK_PUBLIC debug libtirpc.so)
+  target_link_libraries (libxrf_io LINK_PUBLIC libtirpc.so  )
+  target_link_libraries (xrf_maps LINK_PUBLIC libtirpc.so)
 ENDIF()
 

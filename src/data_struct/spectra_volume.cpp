@@ -117,7 +117,6 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {
-
         data_struct::Scaler_Map elt_map, ert_map, in_cnt_map, out_cnt_map;
 
         elt_map.name = "ELT";
@@ -144,7 +143,7 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
                 out_cnt_map.values(i, j) = _data_vol[i][j].output_counts();
             }
         }
-
+        
         scaler_maps->push_back(elt_map);
         scaler_maps->push_back(ert_map);
         scaler_maps->push_back(in_cnt_map);

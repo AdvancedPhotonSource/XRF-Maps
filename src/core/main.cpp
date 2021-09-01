@@ -65,7 +65,7 @@ void help()
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
     logit_s<< "--export-csv : Export Integrated spec, fitted, background to csv file.\n";
 	logit_s<< "--update-theta : <theta_pv_string> Update the theta dataset value using theta_pv_string as new pv string ref.\n";
-    logit_s<< "--update-scalers : If scalers pv's have been changed in maps_fit_parameters_override.txt file, you can run this to just update scaler values without refitting.\n";
+//    logit_s<< "--update-scalers : If scalers pv's have been changed in maps_fit_parameters_override.txt file, you can run this to just update scaler values without refitting.\n";
 	logit_s << "--update-amps <us_amp>,<ds_amp>: Updates upstream and downstream amps if they changed inbetween scans.\n";
 	logit_s << "--update-quant-amps <us_amp>,<ds_amp>: Updates upstream and downstream amps for quantification if they changed inbetween scans.\n";
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
@@ -111,6 +111,8 @@ int main(int argc, char *argv[])
     //////// HENKE and ELEMENT INFO /////////////
     const std::string element_csv_filename = "../reference/xrf_library.csv";
     const std::string element_henke_filename = "../reference/henke.xdr";
+    const std::string scaler_lookup_yaml = "../reference/Scaler_to_PV_map.yaml";
+    
 
     //main structure for analysis job information
     data_struct::Analysis_Job analysis_job;
@@ -270,11 +272,13 @@ int main(int argc, char *argv[])
 		analysis_job.update_theta_str = clp.get_option("--update-theta");
 	}
 
+    /*
     if (clp.option_exists("--update-scalers"))
     {
         analysis_job.update_scalers = true;
     }
-	
+	*/
+
 	if (clp.option_exists("--update-amps"))
 	{
 		string amps = clp.get_option("--update-amps");
@@ -403,7 +407,7 @@ int main(int argc, char *argv[])
 		analysis_job.add_v9_layout || 
 		analysis_job.add_exchange_layout || 
 		analysis_job.update_theta_str.length() > 0 || 
-		analysis_job.update_scalers || 
+		//analysis_job.update_scalers || 
 		analysis_job.export_int_fitted_to_csv || 
 		analysis_job.update_us_amps_str.length() > 0 ||
 		analysis_job.update_quant_us_amps_str.length() > 0;
@@ -522,6 +526,11 @@ int main(int argc, char *argv[])
     logI<<"whole command line : "<<whole_command_line<<"\n";
     
     start = std::chrono::system_clock::now();
+
+    if (false == io::load_scalers_lookup(scaler_lookup_yaml))
+    {
+        logE << " Could not load " << scaler_lookup_yaml << ". Won't be able to translate from PV to Label for scalers!\n";
+    }
 
     //load element information
     if(false == io::load_element_info(element_henke_filename, element_csv_filename))

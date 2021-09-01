@@ -52,6 +52,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <fstream>
 
+#include "data_struct/scaler_lookup.h"
+#include "yaml-cpp/yaml.h"
+
 namespace io
 {
 
@@ -203,7 +206,7 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-bool load_element_info(std::string element_henke_filename, std::string element_csv_filename)
+bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename)
 {
 
     if (io::file::load_henke_from_xdr(element_henke_filename) == false)
@@ -219,6 +222,148 @@ bool load_element_info(std::string element_henke_filename, std::string element_c
 	}
 
     return true;
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_scalers(const std::string& beamline, const YAML::Node& node, bool time_normalized)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Scalar:
+            data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
+			break;
+		case YAML::NodeType::Sequence:
+            for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+            {
+                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it2->as<string>(), time_normalized);
+            }
+			break;
+		case YAML::NodeType::Map:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_summed_scalers(const std::string& beamline, const YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+        vector<string> scaler_list;
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Sequence:
+			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+			{
+                scaler_list.push_back(it2->as<string>());
+			}
+            data_struct::Scaler_Lookup::inst()->add_summed_scaler(beamline, it->first.as<string>(), scaler_list);
+			break;
+		case YAML::NodeType::Map:
+		case YAML::NodeType::Scalar:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_time_normalized_scalers(const std::string& beamline, const YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		string val = it->first.as<string>();
+        switch (it->second.Type())
+        {
+        case YAML::NodeType::Sequence:
+            if (val == STR_TIMING)
+            {
+                YAML::Node timing_node = it->second.as<YAML::Node>();
+                if (timing_node.size() == 2)
+                {
+                    data_struct::Scaler_Lookup::inst()->add_timing_info(beamline, timing_node[0].as<string>(), timing_node[1].as<double>());
+                }
+                else
+                {
+                    logW << " Couldnt parse yaml timing info \n";
+                }
+            }
+            break;
+		case YAML::NodeType::Map:
+            if (val == STR_SCALERS)
+			{
+				parse_scalers(beamline, it->second.as<YAML::Node>(), true);
+			}
+            break;
+        case YAML::NodeType::Scalar:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+void parse_beamline(const std::string& beamline, const YAML::Node& node)
+{
+	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
+	{
+		string val = it->first.as<string>();
+		switch (it->second.Type())
+		{
+		case YAML::NodeType::Map:
+			if (val == STR_SCALERS)
+			{
+				parse_scalers(beamline, it->second.as<YAML::Node>(), false);
+			}
+			else if (val == STR_TIME_NORMALIZED_SCALERS)
+			{
+				parse_time_normalized_scalers(beamline, it->second.as<YAML::Node>());
+			}
+			else if (val == STR_SUMMED_SCALERS)
+			{
+				parse_summed_scalers(beamline, it->second.as<YAML::Node>());
+			}
+			break;
+		case YAML::NodeType::Scalar:
+		case YAML::NodeType::Sequence:
+		case YAML::NodeType::Null:
+		case YAML::NodeType::Undefined:
+		default:
+			break;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
+
+bool load_scalers_lookup(const std::string filename)
+{
+    YAML::Node node = YAML::LoadFile(filename);
+
+	if (node[STR_BEAMLINES])
+	{
+		YAML::Node beamlines_node = node[STR_BEAMLINES];
+
+		for (YAML::const_iterator it = beamlines_node.begin(); it != beamlines_node.end(); ++it)
+		{
+			parse_beamline(it->first.as<std::string>(), it->second.as<YAML::Node>());
+		}
+		return true;
+	}  
+    return false;
 }
 
 // ----------------------------------------------------------------------------
@@ -834,13 +979,13 @@ bool load_spectra_volume(std::string dataset_directory,
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, params_override);
+            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
         }
         return true;
     }
 
     // try to load spectra from mda file
-    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, params_override) )
+    if (false == mda_io.load_spectra_volume(dataset_directory+"mda"+DIR_END_CHAR+dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress) )
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
         return false;
@@ -935,6 +1080,7 @@ bool load_spectra_volume(std::string dataset_directory,
         {
             spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
         }
+        
         for (const auto& line : bad_rows)
         {
             for (auto& map : scan_info->scaler_maps)
@@ -946,7 +1092,7 @@ bool load_spectra_volume(std::string dataset_directory,
                 }
             }
         }
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress);
+        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override);
     }
 
     mda_io.unload();
@@ -1141,7 +1287,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
 	bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
     //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
-	if(false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files, params_override))
+	if(false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files))
 	
     {
         logE<<"Load spectra "<<dataset_directory+"mda"+DIR_END_CHAR +dataset_file<<"\n";
@@ -1149,6 +1295,8 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
     else
     {
+        mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override);
+
         if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
         {
             mda_io.unload();
