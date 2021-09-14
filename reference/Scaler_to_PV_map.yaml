@@ -25,6 +25,11 @@ BeamLines:
       OCR2: 2iddXMAP:dxp2:OutputCountRate
       OCR3: 2iddXMAP:dxp3:OutputCountRate
       OCR4: 2iddXMAP:dxp4:OutputCountRate
+    TimeNormalizedScalers:
+      Timing: [2idd:3820:mca1.VAL, 50000000.0]
+      Scalers:
+        US_IC: 2idd:3820:mca2.VAL
+        DS_IC: 2idd:3820:mca3.VAL
   2IDE:
     Scalers:
       US_IC: 
@@ -200,3 +205,23 @@ BeamLines:
         - CFG_3
         - CFG_4
         - CFG_5
+  26ID:
+    Scalers:
+      US_IC: 26idc:3820:scaler1_cts1.B
+      DS_IC: 26idc:3820:scaler1_cts1.C
+      ELT1: 26idcXMAP:mca1.ELTM
+      ELT2: 26idcXMAP:mca2.ELTM
+      ELT3: 26idcXMAP:mca3.ELTM
+      ELT4: 26idcXMAP:mca4.ELTM
+      ERT1: 26idcXMAP:mca1.ERTM
+      ERT2: 26idcXMAP:mca2.ERTM
+      ERT3: 26idcXMAP:mca3.ERTM
+      ERT4: 26idcXMAP:mca4.ERTM
+      ICR1: 26idcXMAP:dxp1:InputCountRate
+      ICR2: 26idcXMAP:dxp2:InputCountRate
+      ICR3: 26idcXMAP:dxp3:InputCountRate
+      ICR4: 26idcXMAP:dxp4:InputCountRate
+      OCR1: 26idcXMAP:dxp1:OutputCountRate
+      OCR2: 26idcXMAP:dxp2:OutputCountRate
+      OCR3: 26idcXMAP:dxp3:OutputCountRate
+      OCR4: 26idcXMAP:dxp4:OutputCountRate
