@@ -159,18 +159,22 @@ ELSEIF(MSVC)
   ENDIF()
 
   IF (AVX512)
+    set(AVX512 ON)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX512")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
   ELSE()
     IF (AVX2)
+      set(AVX2 ON)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX2")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
     ELSE()
       IF (AVX)
+        set(AVX ON)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
       ELSE()
         IF(SSE2)
+          set(SSE2 ON)
           set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
           set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
         ENDIF()
@@ -197,11 +201,6 @@ ENDIF()
 
 # Visual Studio specific include and source
 IF(MSVC)
-  # win doesn't add linker dir for vcpkg
-  #find_path(NETCDF_LIB_DIR ${hdf5::hdf5-shared})
-  #message(${NETCDF_LIB_DIR})
-  #link_directories(${NETCDF_LIB_DIR})
-
   set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
   include_directories(src/support/direct)
 ELSE()
@@ -475,3 +474,17 @@ IF (BUILD_WITH_TIRPC)
   target_link_libraries (xrf_maps LINK_PUBLIC libtirpc.so)
 ENDIF()
 
+install(TARGETS xrf_maps libxrf_io libxrf_fit 
+        EXPORT libxrf-export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(EXPORT libxrf-export
+        FILE xrf-mapsTargets.cmake
+        NAMESPACE XRF_Maps::
+        DESTINATION lib/cmake
+)

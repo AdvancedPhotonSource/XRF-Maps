@@ -186,17 +186,17 @@ bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_O
     arr = _scan_info.scaler_values(STR_SR_CURRENT);
     if (arr != nullptr)
     {
-        override_values->sr_current = arr->sum();
+        override_values->sr_current = arr->sum() / arr->size();
     }
     arr = _scan_info.scaler_values(STR_US_IC);
     if (arr != nullptr)
     {
-        override_values->US_IC = arr->sum();
+        override_values->US_IC = arr->sum() / arr->size();
     }
     arr = _scan_info.scaler_values(STR_DS_IC);
     if (arr != nullptr)
     {
-        override_values->DS_IC = arr->sum();
+        override_values->DS_IC = arr->sum() / arr->size();
     }
 
     return true;
