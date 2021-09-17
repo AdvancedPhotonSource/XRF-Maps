@@ -28,8 +28,8 @@ BeamLines:
     TimeNormalizedScalers:
       Timing: [2idd:3820:mca1.VAL, 50000000.0]
       Scalers:
-        US_IC: 2idd:3820:mca2.VAL
-        DS_IC: 2idd:3820:mca3.VAL
+        US_IC: 2idd:3820:mca3.VAL
+        DS_IC: 2idd:3820:mca2.VAL
   2IDE:
     Scalers:
       US_IC: 
