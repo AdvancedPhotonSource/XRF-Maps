@@ -474,17 +474,17 @@ IF (BUILD_WITH_TIRPC)
   target_link_libraries (xrf_maps LINK_PUBLIC libtirpc.so)
 ENDIF()
 
-install(TARGETS xrf_maps libxrf_io libxrf_fit 
-        EXPORT libxrf-export
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+#install(TARGETS xrf_maps libxrf_io libxrf_fit 
+#        EXPORT libxrf-export
+#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#)
 
-install(EXPORT libxrf-export
-        FILE xrf-mapsTargets.cmake
-        NAMESPACE XRF_Maps::
-        DESTINATION lib/cmake
-)
+#install(EXPORT libxrf-export
+#        FILE xrf-mapsTargets.cmake
+#        NAMESPACE XRF_Maps::
+#        DESTINATION lib/cmake
+#)
