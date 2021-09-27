@@ -80,6 +80,7 @@ Libraries and executable stored in bin directory
 
 ## General
 Run from bin directory. The software looks for references one directory up ( ../references ). 
+```bash
 Help:
 Usage: xrf_maps [Options] --dir [dataset directory]
 
@@ -123,3 +124,4 @@ xrf_maps --fit roi,matrix --dir /data/dataset1
 xrf_maps --fit roi,matrix --dir /data/dataset1 --files scan1.mda,scan2.mda
    Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification
 xrf_maps --fit roi,matrix,nnls --quantify-with maps_standard.txt --dir /data/dataset1
+'''
