@@ -224,6 +224,7 @@ const string STR_ELT = "ELT";
 const string STR_ERT = "ERT";
 const string STR_ICR = "ICR";
 const string STR_OCR = "OCR";
+const string STR_DEAD_TIME = "Dead_Time";
 
 const string STR_GENERAL_BEAMLINE = "General";
 
