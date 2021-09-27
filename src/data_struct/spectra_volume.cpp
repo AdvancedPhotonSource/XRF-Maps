@@ -117,21 +117,24 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {
-        data_struct::Scaler_Map elt_map, ert_map, in_cnt_map, out_cnt_map;
+        data_struct::Scaler_Map elt_map, ert_map, in_cnt_map, out_cnt_map, dead_time_map;
 
-        elt_map.name = "ELT";
-        ert_map.name = "ERT";
+        elt_map.name = STR_ELT;
+        ert_map.name = STR_ERT;
         in_cnt_map.name = "INCNT";
         out_cnt_map.name = "OUTCNT";
+        dead_time_map.name = STR_DEAD_TIME;
         elt_map.unit = "seconds";
         ert_map.unit = "seconds";
         in_cnt_map.unit = "cts/s";
         out_cnt_map.unit = "cts/s";
+        dead_time_map.unit = "%";
 
         elt_map.values.resize(_data_vol.size(), _data_vol[0].size());
         ert_map.values.resize(_data_vol.size(), _data_vol[0].size());
         in_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
         out_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
+        dead_time_map.values.resize(_data_vol.size(), _data_vol[0].size());
 
         for (size_t i = 0; i < _data_vol.size(); i++)
         {
@@ -141,6 +144,7 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
                 ert_map.values(i, j) = _data_vol[i][j].elapsed_realtime();
                 in_cnt_map.values(i, j) = _data_vol[i][j].input_counts();
                 out_cnt_map.values(i, j) = _data_vol[i][j].output_counts();
+                dead_time_map.values(i, j) = (1.0 - (out_cnt_map.values(i, j) / in_cnt_map.values(i, j))) * 100.0;
             }
         }
         
@@ -148,6 +152,7 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
         scaler_maps->push_back(ert_map);
         scaler_maps->push_back(in_cnt_map);
         scaler_maps->push_back(out_cnt_map);
+        scaler_maps->push_back(dead_time_map);
     }
 }
 
