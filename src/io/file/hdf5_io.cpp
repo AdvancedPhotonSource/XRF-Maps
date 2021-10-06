@@ -7511,6 +7511,8 @@ bool HDF5_IO::add_background(std::string directory, std::string filename, data_s
     data_struct::ArrayXr buffer(count[0]);
     fitting::models::Range energy_range = data_struct::get_energy_range(dims_in[0], &(params.fit_params));
 
+	logI << params.fit_params.value(STR_ENERGY_OFFSET) << " " << params.fit_params.value(STR_ENERGY_SLOPE) << " " << params.fit_params.value(STR_ENERGY_QUADRATIC) << " " << 0.0f << " " << params.fit_params.value(STR_SNIP_WIDTH) << " " << energy_range.min << " " << energy_range.max << "\n ";
+
     for (hsize_t x = 0; x < dims_in[1]; x++)
     {
         logI << fullname << " " <<x<< " " << dims_in[1] <<"\n";
@@ -7522,7 +7524,7 @@ bool HDF5_IO::add_background(std::string directory, std::string filename, data_s
             hid_t error = H5Dread(mca_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, buffer.data());
             if (error > -1 )
             {
-                ArrayXr background = data_struct::snip_background((data_struct::Spectra*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), 0.0f, params.fit_snip_width, energy_range.min, energy_range.max);
+                ArrayXr background = data_struct::snip_background((data_struct::Spectra*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), 0.0f, params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
                 error = H5Dwrite(back_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, background.data());
                 if (error < 0)
                 {
