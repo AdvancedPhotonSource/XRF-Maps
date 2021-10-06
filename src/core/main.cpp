@@ -346,6 +346,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (clp.option_exists("--add_background"))
+    {
+        analysis_job.add_background = true;
+    }
 
     //TODO: add --quantify-only option if you already did the fits and just want to add quantification
 
@@ -410,7 +414,8 @@ int main(int argc, char *argv[])
 		//analysis_job.update_scalers || 
 		analysis_job.export_int_fitted_to_csv || 
 		analysis_job.update_us_amps_str.length() > 0 ||
-		analysis_job.update_quant_us_amps_str.length() > 0;
+		analysis_job.update_quant_us_amps_str.length() > 0 ||
+        analysis_job.add_background;
 
     bool update_h5_fit = analysis_job.fitting_routines.size() > 0 ||
 		optimize_fit_override_params ||

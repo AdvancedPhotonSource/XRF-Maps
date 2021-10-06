@@ -70,6 +70,7 @@ Analysis_Job::Analysis_Job()
     stream_over_network = false;
     //update_scalers = false;
     export_int_fitted_to_csv = false;
+    add_background = false;
     command_line = "";
     theta_pv = "";
     network_source_ip = "";
