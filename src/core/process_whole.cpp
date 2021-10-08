@@ -890,6 +890,20 @@ void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
             io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
         }
 
+        if (analysis_job.add_background)
+        {
+            data_struct::Detector* detector = analysis_job.get_detector(0);
+            
+            if (detector != nullptr)
+            {
+                io::file::HDF5_IO::inst()->add_background(analysis_job.dataset_directory, dataset_file, detector->fit_params_override_dict);
+            }
+            else
+            {
+                logW << "Detector == nullptr for add_background\n";
+            }
+        }
+
         //generate a list of dataset to update
         std::vector<std::string> hdf5_dataset_list;
 

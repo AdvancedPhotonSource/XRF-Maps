@@ -137,6 +137,8 @@ public:
 
     bool export_int_fitted_to_csv;
 
+    bool add_background;
+
 	long long mem_limit;
 
 	std::string update_us_amps_str;

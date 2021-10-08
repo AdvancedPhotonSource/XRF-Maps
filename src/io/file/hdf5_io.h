@@ -241,6 +241,8 @@ public:
 
     bool end_save_seq(bool loginfo=true);
 
+    bool add_background(std::string directory, std::string filename, data_struct::Params_Override& params);
+
 private:
 
     HDF5_IO();
