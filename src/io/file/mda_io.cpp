@@ -1236,6 +1236,15 @@ void MDA_IO::_load_extra_pvs_vector()
 			_scan_info.extra_pvs.push_back(e_pv);
 		}
 	}
+	else
+	{
+		data_struct::Extra_PV e_pv;
+		e_pv.name = "NULL";
+		e_pv.description = "NULL";
+		e_pv.unit = "NULL";
+		e_pv.value = "NULL";
+		_scan_info.extra_pvs.push_back(e_pv);
+	}
 
 }
 
