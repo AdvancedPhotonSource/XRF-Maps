@@ -1004,7 +1004,11 @@ bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
+                    {
+                        return false;
+                    }
                 }
             }
             else
@@ -1033,6 +1037,11 @@ bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
                     size_t prev_size = 0;
                     size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    //
+                    if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
+                    {
+                        return false;
+                    }
                     //if we failed to load and it isn't the first row, copy the previous one
                     if (i > 0)
                     {
@@ -1330,7 +1339,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     {
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                         //logI<<"Loading file "<<full_filename<<"\n";
-                        io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
+                        {
+                            return false;
+                        }
                     }
                 }
                 else
@@ -1357,7 +1370,11 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         }
                         row_idx_str_full += row_idx_str;
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                        io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
+                        {
+                            return false;
+                        }
                     }
                 }
                 else
