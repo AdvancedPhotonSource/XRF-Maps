@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		for (size_t det = 0; det < 4; det++)
+		for (size_t det = 0; det < 8; det++)
 		{
 			analysis_job.detector_num_arr.push_back(det);
 		}
