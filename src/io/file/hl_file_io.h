@@ -181,11 +181,6 @@ DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir,
                                             data_struct::Spectra *spectra,
                                             data_struct::Fit_Element_Map_Dict *elements_to_fit);
 
-DLL_EXPORT bool save_volume(data_struct::Spectra_Volume *spectra_volume,
-                             real_t energy_offset,
-                             real_t energy_slope,
-                             real_t energy_quad);
-
 DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files);
 
 }// end namespace io

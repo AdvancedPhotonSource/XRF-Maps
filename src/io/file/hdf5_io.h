@@ -63,6 +63,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/scan_info.h"
 
 #include "core/mem_info.h"
+#include "core/defines.h"
 
 namespace io
 {
@@ -161,14 +162,13 @@ public:
     void set_filename(std::string fname) {_cur_filename = fname;}
 
     bool save_spectra_volume(const std::string path,
-                             data_struct::Spectra_Volume * spectra_volume,
-                             real_t energy_offset,
-                             real_t energy_slope,
-                             real_t energy_quad,
+                            data_struct::Spectra_Volume* spectra_volume,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
+
+    bool save_energy_calib(int spectra_size, real_t energy_offset, real_t energy_slope, real_t energy_quad);
 
     bool save_element_fits(const std::string path,
                            const data_struct::Fit_Count_Dict * const element_counts,

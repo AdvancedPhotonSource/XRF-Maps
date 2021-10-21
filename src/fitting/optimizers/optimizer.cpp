@@ -154,7 +154,7 @@ namespace optimizers
         if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type > E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
+            if(fit_snip_width.bound_type != E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
             {
                 real_t spectral_binning = 0.0;
                 //ud->spectra_background = snip_background(ud->orig_spectra,

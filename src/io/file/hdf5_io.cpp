@@ -4114,9 +4114,6 @@ bool HDF5_IO::end_save_seq(bool loginfo)
 
 bool HDF5_IO::save_spectra_volume(const std::string path,
                                   data_struct::Spectra_Volume * spectra_volume,
-                                  real_t energy_offset,
-                                  real_t energy_slope,
-                                  real_t energy_quad,
                                   size_t row_idx_start,
                                   int row_idx_end,
                                   size_t col_idx_start,
@@ -4369,39 +4366,6 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     H5Sclose(memoryspace_id);
     H5Sclose(dataspace_id);
 
-    //save energy vector
-    std::vector<real_t> out_vec;
-    data_struct::gen_energy_vector(spectra.size(), energy_offset, energy_slope, &out_vec);
-    count[0] = out_vec.size();
-    memoryspace_id = H5Screate_simple(1, count, nullptr);
-    dataspace_id = H5Screate_simple (1, count, nullptr);
-    dset_id = H5Dcreate (spec_grp_id, "Energy", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    offset[0] = 0;
-    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-    status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&out_vec[0]);
-    H5Dclose(dset_id);
-    H5Sclose(memoryspace_id);
-    H5Sclose(dataspace_id);
-
-    //save energy calibration
-    count[0] = 3;
-    dataspace_id = H5Screate_simple (1, count, nullptr);
-    dset_id = H5Dcreate (spec_grp_id, "Energy_Calibration", H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    count[0] = 1;
-    memoryspace_id = H5Screate_simple(1, count, nullptr);
-    offset[0] = 0;
-    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-    status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_offset);
-    offset[0] = 1;
-    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-    status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_slope);
-    offset[0] = 2;
-    H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-    status = H5Dwrite (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_quad);
-    H5Dclose(dset_id);
-    H5Sclose(memoryspace_id);
-    H5Sclose(dataspace_id);
-
     //save file version
     save_val = HDF5_SAVE_VERSION;
     dataspace_id = H5Screate_simple (1, count, nullptr);
@@ -4412,7 +4376,6 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     H5Gclose(int_spec_grp_id);
     H5Gclose(spec_grp_id);
-    //H5Gclose(scalers_grp_id);
     H5Gclose(maps_grp_id);
 
     end = std::chrono::system_clock::now();
@@ -4422,6 +4385,115 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     return true;
 
+}
+
+//-----------------------------------------------------------------------------
+
+bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t energy_slope, real_t energy_quad)
+{
+
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_cur_file_id < 0)
+    {
+        logE << "hdf5 file was never initialized. Call start_save_seq() before this function." << "\n";
+        return false;
+    }
+
+    hid_t    dset_id, spec_grp_id, dataspace_id, memoryspace_id, maps_grp_id, dcpl_id;
+    int status = 0;
+    hsize_t tmp_dims[1];
+    hsize_t maxdims[3] = { H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED };
+    hsize_t offset[3] = { 0,0,0 };
+    hsize_t count[3];
+
+    //save energy vector
+    std::vector<real_t> out_vec;
+    data_struct::gen_energy_vector(spectra_size, energy_offset, energy_slope, &out_vec);
+
+    maps_grp_id = H5Gopen(_cur_file_id, "MAPS", H5P_DEFAULT);
+    if (maps_grp_id < 0)
+        maps_grp_id = H5Gcreate(_cur_file_id, "MAPS", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (maps_grp_id < 0)
+    {
+        logE << "creating group MAPS" << "\n";
+        return false;
+    }
+
+    spec_grp_id = H5Gopen(maps_grp_id, "Spectra", H5P_DEFAULT);
+    if (spec_grp_id < 0)
+        spec_grp_id = H5Gcreate(maps_grp_id, "Spectra", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (spec_grp_id < 0)
+    {
+        logE << "creating group MAPS/Spectra" << "\n";
+        return false;
+    }
+
+
+    count[0] = out_vec.size();
+    memoryspace_id = H5Screate_simple(1, count, nullptr);
+
+    dset_id = H5Dopen(spec_grp_id, STR_ENERGY.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        dataspace_id = H5Screate_simple(1, count, nullptr);
+        dset_id = H5Dcreate(spec_grp_id, STR_ENERGY.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    else
+    {
+        dataspace_id = H5Dget_space(dset_id);
+        //int status_n = H5Sget_simple_extent_dims(dataspace_id, &tmp_dims[0], NULL);
+        //H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+    }
+    if (dset_id > -1)
+    {
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&out_vec[0]);
+
+        H5Dclose(dset_id);
+        H5Sclose(memoryspace_id);
+        H5Sclose(dataspace_id);
+    }
+
+    //save energy calibration
+    dset_id = H5Dopen(spec_grp_id, STR_ENERGY_CALIB.c_str(), H5P_DEFAULT);
+    if (dset_id < 0)
+    {
+        count[0] = 3;
+        dataspace_id = H5Screate_simple(1, count, nullptr);
+        dset_id = H5Dcreate(spec_grp_id, STR_ENERGY_CALIB.c_str(), H5T_INTEL_R, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    else
+    {
+        dataspace_id = H5Dget_space(dset_id);
+        //int status_n = H5Sget_simple_extent_dims(dataspace_id, &tmp_dims[0], NULL);
+        //H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+    }
+    if (dset_id > -1)
+    {
+        count[0] = 1;
+        memoryspace_id = H5Screate_simple(1, count, nullptr);
+        offset[0] = 0;
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_offset);
+        offset[0] = 1;
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_slope);
+        offset[0] = 2;
+        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+        status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&energy_quad);
+        H5Dclose(dset_id);
+        H5Sclose(memoryspace_id);
+        H5Sclose(dataspace_id);
+    }
+
+    if (spec_grp_id > -1)
+    {
+        H5Gclose(spec_grp_id);
+    }
+
+    if (maps_grp_id > -1)
+    {
+        H5Gclose(maps_grp_id);
+    }
 }
 
 //-----------------------------------------------------------------------------

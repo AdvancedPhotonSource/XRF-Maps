@@ -401,7 +401,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		for (size_t det = 0; det < 8; det++)
+		for (size_t det = 0; det < 7; det++)
 		{
 			analysis_job.detector_num_arr.push_back(det);
 		}
@@ -475,6 +475,12 @@ int main(int argc, char *argv[])
             {
                 analysis_job.dataset_files.push_back(itr);
             }
+            // don't want to open h5 avg files for optimize
+            for (auto& itr : analysis_job.dataset_files)
+            {
+                analysis_job.optimize_dataset_files.push_back(itr);
+            }
+
 			for (auto& itr : io::find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
 			{
 				analysis_job.dataset_files.push_back(itr);
@@ -484,11 +490,6 @@ int main(int argc, char *argv[])
             {
                 logE<<"No mda files found in dataset directory "<<dataset_dir<<"\n";
                 return -1;
-            }
-
-            for (auto& itr : analysis_job.dataset_files)
-            {
-                analysis_job.optimize_dataset_files.push_back(itr);
             }
 
             io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
