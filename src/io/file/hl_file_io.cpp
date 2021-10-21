@@ -368,17 +368,6 @@ bool load_scalers_lookup(const std::string filename)
 
 // ----------------------------------------------------------------------------
 
-bool save_volume(data_struct::Spectra_Volume *spectra_volume,
-                 real_t energy_offset,
-                 real_t energy_slope,
-                 real_t energy_quad)
-{
-    bool retval = io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, energy_offset, energy_slope, energy_quad);
-    return retval;
-}
-
-// ----------------------------------------------------------------------------
-
 void save_quantification_plots(string path, Detector* detector)
 {
     std::string str_path = path + "/output/";
@@ -507,12 +496,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
 void save_averaged_fit_params(std::string dataset_dir, std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs, const std::vector<size_t>& detector_num_arr)
 {
-    int i =0;
     std::string full_path = dataset_dir+ DIR_END_CHAR+"maps_fit_parameters_override.txt";
     for(size_t detector_num : detector_num_arr)
     {
-        io::file::aps::save_parameters_override(full_path, fit_params_avgs[i], detector_num );
-        i++;
+        io::file::aps::save_parameters_override(full_path, fit_params_avgs[detector_num], detector_num );
     }
 }
 

@@ -170,14 +170,13 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         //Initialize the fit routine
         fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
 
-        data_struct::Fit_Parameters out_fitp;
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
         switch (outcome)
         {
         case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
             // if we have a good fit, update our fit parameters so we are closer for the next fit
-            params_override->fit_params.append_and_update(&out_fitp);
+            params_override->fit_params.update_values(&out_fitp);
             ret_val = true;
             break;
         case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
@@ -253,18 +252,18 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
                 detector_file_cnt[detector_num] += 1.0;
                 if (fit_params_avgs.count(detector_num) > 0)
                 {
-                    fit_params_avgs[detector_num].sum_values(params_override->fit_params);
+                    fit_params_avgs[detector_num].sum_values(out_fitp);
                 }
                 else
                 {
-                    fit_params_avgs[detector_num] = params_override->fit_params;
+                    fit_params_avgs[detector_num] = out_fitp;
                 }
             }
         }
     }
     for(size_t detector_num : analysis_job->detector_num_arr)
     {
-        if (detector_file_cnt[detector_num] > 0.)
+        if (detector_file_cnt[detector_num] > 1.)
         {
             fit_params_avgs[detector_num].divide_fit_values_by(detector_file_cnt[detector_num]);
         }
@@ -400,9 +399,11 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         energy_quad = fit_params[STR_ENERGY_QUADRATIC].value;
     }
 
+    io::file::HDF5_IO::inst()->save_energy_calib(spectra_volume->samples_size(), energy_offset, energy_slope, energy_quad);
+
     if(save_spec_vol)
     {
-        io::save_volume(spectra_volume, energy_offset, energy_slope, energy_quad);
+        io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume);
     }
     io::file::HDF5_IO::inst()->save_quantification(detector);
     io::file::HDF5_IO::inst()->end_save_seq();

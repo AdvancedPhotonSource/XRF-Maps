@@ -228,6 +228,10 @@ const string STR_DEAD_TIME = "Dead_Time";
 
 const string STR_GENERAL_BEAMLINE = "General";
 
+const string STR_ENERGY = "Energy";
+const string STR_ENERGY_CALIB = "Energy_Calibration";
+
+
 //}
 
 //}// namespace keys
