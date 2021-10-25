@@ -159,14 +159,48 @@ BeamLines:
       CFG_3: 21:D3:scaler1_cts1.C
       CFG_4: 21:D3:scaler1_cts1.D
       CFG_5: 21:D3:scaler1_cts2.A
-      ELT1: 21:D3win:mca1.ELTM
-      ELT2: 21:D3win:mca2.ELTM
-      ELT3: 21:D3win:mca3.ELTM
-      ELT4: 21:D3win:mca4.ELTM
-      ERT1: 21:D3win:mca1.ERTM
-      ERT2: 21:D3win:mca2.ERTM
-      ERT3: 21:D3win:mca3.ERTM
-      ERT4: 21:D3win:mca4.ERTM
+      ELT1:
+        - 21:D3win:mca1.ELTM
+        - 9idbXMAP:mca1.ELTM
+      ELT2:
+        - 21:D3win:mca2.ELTM
+        - 9idbXMAP:mca2.ELTM
+      ELT3:
+        - 21:D3win:mca3.ELTM
+        - 9idbXMAP:mca3.ELTM
+      ELT4:
+        - 21:D3win:mca4.ELTM
+        - 9idbXMAP:mca4.ELTM
+      ELT5:
+        - 21:D3win:mca5.ELTM
+        - 9idbXMAP:mca5.ELTM
+      ELT6:
+        - 21:D3win:mca6.ELTM
+        - 9idbXMAP:mca6.ELTM
+      ELT7:
+        - 21:D3win:mca7.ELTM
+        - 9idbXMAP:mca7.ELTM
+      ERT1: 
+        - 21:D3win:mca1.ERTM
+        - 9idbXMAP:mca1.ERTM
+      ERT2:
+        - 21:D3win:mca2.ERTM
+        - 9idbXMAP:mca2.ERTM
+      ERT3:
+        - 21:D3win:mca3.ERTM
+        - 9idbXMAP:mca3.ERTM
+      ERT4:
+        - 21:D3win:mca4.ERTM
+        - 9idbXMAP:mca4.ERTM
+      ERT5:
+        - 21:D3win:mca5.ERTM
+        - 9idbXMAP:mca5.ERTM
+      ERT6:
+        - 21:D3win:mca6.ERTM
+        - 9idbXMAP:mca6.ERTM
+      ERT7:
+        - 21:D3win:mca7.ERTM
+        - 9idbXMAP:mca7.ERTM
       ICR1: 
         - 9idbXMAP:dxp1:InputCountRate
         - 21:D3win:dxp1:InputCountRate
@@ -179,6 +213,15 @@ BeamLines:
       ICR4:
         - 9idbXMAP:dxp4:InputCountRate
         - 21:D3win:dxp4:InputCountRate
+      ICR5:
+        - 9idbXMAP:dxp5:InputCountRate
+        - 21:D3win:dxp5:InputCountRate
+      ICR6:
+        - 9idbXMAP:dxp6:InputCountRate
+        - 21:D3win:dxp6:InputCountRate
+      ICR7:
+        - 9idbXMAP:dxp7:InputCountRate
+        - 21:D3win:dxp7:InputCountRate
       OCR1:
         - 9idbXMAP:dxp1:OutputCountRate
         - 21:D3win:dxp1:OutputCountRate
@@ -191,6 +234,15 @@ BeamLines:
       OCR4:
         - 9idbXMAP:dxp4:OutputCountRate
         - 21:D3win:dxp4:OutputCountRate
+      OCR5:
+        - 9idbXMAP:dxp5:OutputCountRate
+        - 21:D3win:dxp5:OutputCountRate
+      OCR6:
+        - 9idbXMAP:dxp6:OutputCountRate
+        - 21:D3win:dxp6:OutputCountRate
+      OCR7:
+        - 9idbXMAP:dxp7:OutputCountRate
+        - 21:D3win:dxp7:OutputCountRate
     TimeNormalizedScalers:
       Timing: [21:D3:scaler1:mca1.VAL, 50000000.0]
       Scalers:
