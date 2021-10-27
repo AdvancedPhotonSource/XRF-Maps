@@ -144,12 +144,6 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
                                     int detector_num,
                                     data_struct::Params_Override* params_override,
                                     bool append_file_name = true);
-/*
-DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
-                                  std::string quantification_info_file,
-                                  std::string *standard_file_name,
-                                  std::unordered_map<std::string, real_t> *element_standard_weights);
-                                  */
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                 std::string quantification_info_file,
@@ -167,10 +161,6 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info* scan_info);
 
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
-
-DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
-										std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
-										const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT void save_quantification_plots(string path, Detector *detector);
 
