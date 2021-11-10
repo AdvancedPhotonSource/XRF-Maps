@@ -662,32 +662,10 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     std::string incnt_str = "ICR Ch ";
     std::string outcnt_str = "OCR Ch ";
 
-    switch (detector_num)
-    {
-    case 0:
-        detector_path = "MCA 1";
-        incnt_str += "1";
-        outcnt_str += "1";
-        break;
-    case 1:
-        detector_path = "MCA 2";
-        incnt_str += "2";
-        outcnt_str += "2";
-        break;
-    case 2:
-        detector_path = "MCA 3";
-        incnt_str += "3";
-        outcnt_str += "3";
-        break;
-    case 3:
-        detector_path = "MCA 4";
-        incnt_str += "4";
-        outcnt_str += "4";
-        break;
-    default:
-        detector_path = "";
-        break;
-    }
+	std::string det_num_p1 = to_string(detector_num + 1);
+    detector_path = "MCA "+ det_num_p1;
+    incnt_str += det_num_p1;
+    outcnt_str += det_num_p1;
 
     if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1, log_error))
         return false;
@@ -4519,7 +4497,7 @@ bool HDF5_IO::save_element_fits(std::string path,
     start = std::chrono::system_clock::now();
     std::string xrf_grp_name = "XRF_Analyzed";
     hid_t   dset_id, dset_ch_id, dset_un_id;
-    hid_t   memoryspace, filespace, dataspace_id, dataspace_ch_id, dataspace_ch_off_id;
+    hid_t   memoryspace, filespace, dataspace_id, dataspace_ch_id, dataspace_un_id, dataspace_ch_off_id;
     hid_t   filetype, memtype, status;
     hid_t   dcpl_id;
     hid_t   xrf_grp_id, fit_grp_id, maps_grp_id;
@@ -4566,6 +4544,7 @@ bool HDF5_IO::save_element_fits(std::string path,
     filespace = H5Screate_simple(3, dims_out, nullptr);
 
     dataspace_ch_id = H5Screate_simple (1, dims_out, nullptr);
+	dataspace_un_id = H5Screate_simple(1, dims_out, nullptr);
     dataspace_ch_off_id = H5Screate_simple (1, dims_out, nullptr);
 
     H5Sselect_hyperslab (memoryspace, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
@@ -4638,8 +4617,32 @@ bool HDF5_IO::save_element_fits(std::string path,
     status = H5Tset_size (memtype, 255);
 
     dset_ch_id = H5Dopen (fit_grp_id, "Channel_Names", H5P_DEFAULT);
-    if(dset_ch_id < 0)
-        dset_ch_id = H5Dcreate (fit_grp_id, "Channel_Names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	if (dset_ch_id < 0)
+	{
+		dset_ch_id = H5Dcreate(fit_grp_id, "Channel_Names", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+	else
+	{
+		//if we are opening, check the dim size to see if we have to expand to fit new counts size
+		dataspace_ch_id = H5Dget_space(dset_ch_id);
+		int status_n = H5Sget_simple_extent_dims(dataspace_ch_id, &tmp_dims[0], NULL);
+		if (status_n > -1)
+		{
+			bool expand = false;
+			for (int i = 0; i < 3; i++)
+			{
+				if (tmp_dims[i] < dims_out[i])
+				{
+					expand = true;
+					break;
+				}
+			}
+			if (expand)
+			{
+				herr_t err = H5Dset_extent(dset_ch_id, dims_out);
+			}
+		}
+	}
     if(dset_ch_id < 0)
     {
         logE<<"creating dataset MAPS/"<<xrf_grp_name<<"/"<<path<<"/Channel_Names"<<"\n";
@@ -4648,7 +4651,31 @@ bool HDF5_IO::save_element_fits(std::string path,
 
 	dset_un_id = H5Dopen(fit_grp_id, "Channel_Units", H5P_DEFAULT);
 	if (dset_un_id < 0)
-		dset_un_id = H5Dcreate(fit_grp_id, "Channel_Units", filetype, dataspace_ch_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	{
+		dset_un_id = H5Dcreate(fit_grp_id, "Channel_Units", filetype, dataspace_un_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	}
+	else
+	{
+		//if we are opening, check the dim size to see if we have to expand to fit new counts size
+		dataspace_un_id = H5Dget_space(dset_un_id);
+		int status_n = H5Sget_simple_extent_dims(dataspace_un_id, &tmp_dims[0], NULL);
+		if (status_n > -1)
+		{
+			bool expand = false;
+			for (int i = 0; i < 3; i++)
+			{
+				if (tmp_dims[i] < dims_out[i])
+				{
+					expand = true;
+					break;
+				}
+			}
+			if (expand)
+			{
+				herr_t err = H5Dset_extent(dset_un_id, dims_out);
+			}
+		}
+	}
 	if (dset_un_id < 0)
 	{
 		logE << "creating dataset MAPS/" << xrf_grp_name << "/" << path << "/Channel_Units" << "\n";
@@ -4681,37 +4708,15 @@ bool HDF5_IO::save_element_fits(std::string path,
         element_lines.push_back(el_name+"_M");
     }
 
-    //add pileups
+    //add the rest 
     for (const auto& itr : *element_counts)
     {
         if( std::find(element_lines.begin(), element_lines.end(), itr.first) == element_lines.end() )
         {
             element_lines.push_back(itr.first);
         }
-
-        /*
-        int idx = itr.first.find("_");
-        int len = itr.first.length();
-        if(idx > -1)
-        {
-            std::string e1 = itr.first.substr(0, idx);
-            std::string e2 = itr.first.substr(idx+1, len);
-            auto it1 = std::find(element_lines.begin(), element_lines.end(), e1);
-            auto it2 = std::find(element_lines.begin(), element_lines.end(), e2);
-            if(it1 != element_lines.end() && it2 != element_lines.end())
-            {
-                element_lines.push_back(itr.first);
-            }
-        }
-        */
     }
-/*
-    element_lines.push_back(STR_COHERENT_SCT_AMPLITUDE);
-    element_lines.push_back(STR_COMPTON_AMPLITUDE);
-	element_lines.push_back(STR_SUM_ELASTIC_INELASTIC_AMP);
-    element_lines.push_back(STR_TOTAL_FLUORESCENCE_YIELD);
-    element_lines.push_back(STR_NUM_ITR);
-*/
+
     int i=0;
     //save by element Z order
     //for(const auto& iter : *element_counts)
@@ -4727,6 +4732,7 @@ bool HDF5_IO::save_element_fits(std::string path,
         offset_3d[0] = i;
 
         H5Sselect_hyperslab (dataspace_ch_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+		H5Sselect_hyperslab(dataspace_un_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab (dataspace_ch_off_id, H5S_SELECT_SET, offset2, nullptr, count, nullptr);
 
         el_name.copy(tmp_char, 254);
@@ -4741,7 +4747,7 @@ bool HDF5_IO::save_element_fits(std::string path,
 		{
 			units.copy(tmp_char, 256);
 		}
-		status = H5Dwrite(dset_un_id, memtype, dataspace_ch_off_id, dataspace_ch_id, H5P_DEFAULT, (void*)tmp_char);
+		status = H5Dwrite(dset_un_id, memtype, dataspace_ch_off_id, dataspace_un_id, H5P_DEFAULT, (void*)tmp_char);
 
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset_3d, nullptr, chunk_dims, nullptr);
 
@@ -4757,6 +4763,7 @@ bool HDF5_IO::save_element_fits(std::string path,
     H5Sclose(filespace);
     H5Sclose(dataspace_ch_off_id);
     H5Sclose(dataspace_ch_id);
+	H5Sclose(dataspace_un_id);
     H5Tclose(filetype);
     H5Tclose(memtype);
     H5Pclose(dcpl_id);    
@@ -6295,7 +6302,15 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                     idx++;
                     char tmp_char[255] = { 0 };
                     char tmp_char_units[255] = { 0 };
-                    itr.name.copy(tmp_char, 254);
+					string out_label, out_beamline;
+					if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, out_label, itr.time_normalized, out_beamline))
+					{
+						out_label.copy(tmp_char, 254);
+					}
+					else
+					{
+						itr.name.copy(tmp_char, 254);
+					}
                     itr.unit.copy(tmp_char_units, 254);
                     H5Sselect_hyperslab(filespace_name_id, H5S_SELECT_SET, offset, NULL, count, NULL);
                     status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, filespace_name_id, H5P_DEFAULT, (void*)tmp_char);

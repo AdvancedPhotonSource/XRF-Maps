@@ -246,6 +246,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
                 {
                     params[detector_num] = params_override;
                 }
+				
             }
 
             data_struct::Fit_Parameters out_fitp;
@@ -265,13 +266,14 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
     }
 
     for(size_t detector_num : analysis_job->detector_num_arr)
-    {
-        io::file::aps::save_parameters_override(full_path, fit_params_avgs[detector_num], detector_num);
-
+	{
         if (detector_file_cnt[detector_num] > 1.)
         {
             fit_params_avgs[detector_num].divide_fit_values_by(detector_file_cnt[detector_num]);
         }
+
+		io::file::aps::save_parameters_override(full_path, fit_params_avgs[detector_num], detector_num);
+
         if (params.count(detector_num) > 0)
         {
             params_override = params[detector_num];

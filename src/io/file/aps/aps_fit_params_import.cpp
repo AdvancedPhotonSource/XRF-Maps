@@ -950,6 +950,7 @@ bool save_parameters_override(std::string path, Fit_Parameters fit_params, int d
                         out_stream<<line<<"\n";
                     }
                 }
+				//depricated , use scaler ref yaml
                 else if( std::find(Updatable_detector_dependand_TAGS.begin(), Updatable_detector_dependand_TAGS.end(), tag) != Updatable_detector_dependand_TAGS.end() )
                 {
                     /*
