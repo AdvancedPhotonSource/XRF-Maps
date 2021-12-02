@@ -3,8 +3,8 @@ BeamLines:
   General: 
     Scalers:
       SR_Current: S:SRcurrentAI
-      I0: US_IC
-      I1: DS_IC
+      US_IC: I0
+      DS_IC: I1
   2IDD:
     Scalers:
       US_IC: 2idd:scaler1_cts1.C
