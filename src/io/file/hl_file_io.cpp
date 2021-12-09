@@ -770,12 +770,36 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
-    if (detector_num != -1)
+    bool ends_in_h5 = false;
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5' )
     {
-        fullpath += std::to_string(detector_num);
+        ends_in_h5 = true;
+    }
+    else
+    {
+        char buffer[33];
+        for (int i = 0; i < 8; i++)
+        {
+            char* ending = itoa(i, buffer, 10);
+            if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == *ending)
+            {
+                ends_in_h5 = true;
+                break;
+            }
+        }
     }
 
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+    if (false == ends_in_h5)
+    {
+        fullpath += ".h5";
+
+        if (detector_num != -1)
+        {
+            fullpath += std::to_string(detector_num);
+        }
+    }
     /*
     std::string fullpath;
     size_t dlen = dataset_file.length();
