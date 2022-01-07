@@ -404,14 +404,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     }
 	else
 	{
-		unordered_map<string, Fit_Param> * params = fit_params->Params();
-		if (params != nullptr)
+		if (fit_params->size() == 0)
 		{
-			if (params->size() == 0)
-			{
-				logE << "Fit Parameters size = 0. Can not save!\n";
-				return;
-			}
+			logE << "Fit Parameters size = 0. Can not save!\n";
+			return;
 		}
 	}
 

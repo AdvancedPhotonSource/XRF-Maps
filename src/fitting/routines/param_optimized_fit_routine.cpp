@@ -267,7 +267,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const mode
             ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
         }
     }
-    out_fit_params.append_and_update(&fit_params);
+    out_fit_params.append_and_update(fit_params);
     return ret_val;
 }
 

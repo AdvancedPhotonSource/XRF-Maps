@@ -36,6 +36,48 @@ namespace py = pybind11;
 
 //PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
+auto fit_counts(fitting::routines::Base_Fit_Routine* fit_route,
+	const fitting::models::Base_Model* const model,
+	const Spectra* const spectra,
+	const Fit_Element_Map_Dict* const elements_to_fit)
+{
+	std::unordered_map<std::string, real_t> out_counts;
+	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	return out_counts;
+}
+
+auto fit_spectra(fitting::routines::Base_Fit_Routine* fit_route, 
+	fitting::models::Base_Model* const model,
+	const Spectra* const spectra,
+	const Fit_Element_Map_Dict* const elements_to_fit)
+{
+	std::unordered_map<std::string, real_t> out_counts;
+	data_struct::Fit_Parameters fit_params;
+	fit_params.append_and_update(model->fit_parameters());
+	data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
+	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	for (auto& itr : out_counts)
+	{
+		real_t val = out_counts.at(itr.first);
+		if (val != 0.0)
+		{
+			fit_params[itr.first] = data_struct::Fit_Param(itr.first, log10(val));
+		}
+		else
+		{
+			fit_params[itr.first] = data_struct::Fit_Param(itr.first, val);
+		}
+	}
+	/*
+	for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+	{
+		logI << itr->first << " " << itr->second.value << "\n";
+	}
+	*/
+	//return model->model_spectrum_mp(&fit_params, elements_to_fit, energy_range);
+	return model->model_spectrum(&fit_params, elements_to_fit, nullptr, energy_range);
+}
+
 PYBIND11_MODULE(pyxrfmaps, m) {
     m.doc() = R"pbdoc(
         PyXrfMaps
@@ -68,7 +110,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .value("MATRIX", data_struct::Fitting_Routines::GAUSS_MATRIX)
     .value("SVD", data_struct::Fitting_Routines::SVD)
     .value("NNLS", data_struct::Fitting_Routines::NNLS);
-
 
     //data structures
     /*
@@ -169,6 +210,24 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("transmission_through_air", &data_struct::Element_Quant::transmission_through_air)
     .def_readwrite("e_cal_ratio", &data_struct::Element_Quant::e_cal_ratio);
 
+	py::class_<data_struct::Fit_Element_Map>(m, "Fit_Element_Map")
+	.def(py::init<std::string, Element_Info*>())
+	.def("center", &data_struct::Fit_Element_Map::center)
+	.def("width", &data_struct::Fit_Element_Map::width)
+	.def("set_custom_multiply_ratio", &data_struct::Fit_Element_Map::set_custom_multiply_ratio)
+	.def("multiply_custom_multiply_ratio", &data_struct::Fit_Element_Map::multiply_custom_multiply_ratio)
+	.def("init_energy_ratio_for_detector_element", &data_struct::Fit_Element_Map::init_energy_ratio_for_detector_element)
+	.def("full_name", &data_struct::Fit_Element_Map::full_name)
+	.def("symbol", &data_struct::Fit_Element_Map::symbol)
+	.def("Z", &data_struct::Fit_Element_Map::Z)
+	.def("energy_ratios", &data_struct::Fit_Element_Map::energy_ratios)
+	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map::energy_ratio_multipliers)
+	.def("width_multi", &data_struct::Fit_Element_Map::width_multi)
+	.def("set_as_pileup", &data_struct::Fit_Element_Map::set_as_pileup)
+	.def("pileup_element", &data_struct::Fit_Element_Map::pileup_element)
+	.def("shell_type_as_string", &data_struct::Fit_Element_Map::shell_type_as_string)
+	.def("check_binding_energy", &data_struct::Fit_Element_Map::check_binding_energy);
+
     py::class_<data_struct::Params_Override>(m, "ParamsOverride")
     .def(py::init<>())
     .def_readwrite("dataset_directory", &data_struct::Params_Override::dataset_directory)
@@ -258,6 +317,50 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("quant_standards", &data_struct::Detector::quantification_standards)
     .def_readwrite("fit_params_override_dict", &data_struct::Detector::fit_params_override_dict);
 
+	py::class_<data_struct::Range>(m, "Energy_Range")
+	.def(py::init<>())
+	.def("count", &data_struct::Range::count)
+	.def_readwrite("min", &data_struct::Range::min)
+	.def_readwrite("max", &data_struct::Range::max);
+	
+	py::class_<data_struct::Fit_Param>(m, "Fit_Param")
+	.def(py::init<>())
+	.def(py::init<std::string, real_t>())
+	.def("bound_type_str", &data_struct::Fit_Param::bound_type_str)
+	.def_readwrite("name", &data_struct::Fit_Param::name)
+	.def_readwrite("min_val", &data_struct::Fit_Param::min_val)
+	.def_readwrite("max_val", &data_struct::Fit_Param::max_val)
+	.def_readwrite("value", &data_struct::Fit_Param::value)
+	.def_readwrite("step_size", &data_struct::Fit_Param::step_size)
+	.def_readwrite("bound_type", &data_struct::Fit_Param::bound_type)
+	.def_readwrite("opt_array_index", &data_struct::Fit_Param::opt_array_index);
+
+	py::class_<data_struct::Fit_Parameters>(m, "Fit_Parameters")
+	.def(py::init<>())
+	.def("add_parameter", &data_struct::Fit_Parameters::add_parameter)
+	.def("append_and_update", &data_struct::Fit_Parameters::append_and_update)
+	.def("begin", &data_struct::Fit_Parameters::begin)
+	.def("end", &data_struct::Fit_Parameters::end)
+	.def("sum_values", &data_struct::Fit_Parameters::sum_values)
+	.def("divide_fit_values_by", &data_struct::Fit_Parameters::divide_fit_values_by)
+	.def("contains", &data_struct::Fit_Parameters::contains)
+	.def("to_array", &data_struct::Fit_Parameters::to_array)
+	.def("names_to_array", &data_struct::Fit_Parameters::names_to_array)
+	.def("from_array", (void (data_struct::Fit_Parameters::*)(std::vector<real_t>&))  &data_struct::Fit_Parameters::from_array)
+	.def("from_array", (void (data_struct::Fit_Parameters::*)(const real_t*, size_t))  &data_struct::Fit_Parameters::from_array)
+	.def("set_all_value", &data_struct::Fit_Parameters::set_all_value)
+	.def("set_all", &data_struct::Fit_Parameters::set_all)
+	.def("update_values", &data_struct::Fit_Parameters::update_values)
+	.def("update_and_add_values", &data_struct::Fit_Parameters::update_and_add_values)
+	.def("update_and_add_values_gt_zero", &data_struct::Fit_Parameters::update_and_add_values_gt_zero)
+	.def("remove", (void (data_struct::Fit_Parameters::*)(Fit_Parameters*)) &data_struct::Fit_Parameters::remove)
+	.def("remove", (void (data_struct::Fit_Parameters::*)(std::string)) &data_struct::Fit_Parameters::remove)
+	.def("value", &data_struct::Fit_Parameters::value)
+	.def("print", &data_struct::Fit_Parameters::print)
+	.def("at", &data_struct::Fit_Parameters::at)
+	.def("size", &data_struct::Fit_Parameters::size);
+
+
     py::class_<data_struct::Analysis_Job>(m, "AnalysisJob")
     .def(py::init<>())
     .def("get_first_detector", &data_struct::Analysis_Job::get_first_detector)
@@ -282,20 +385,29 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("stream_over_network", &data_struct::Analysis_Job::stream_over_network);
 
     //fitting models
-    py::class_<fitting::models::Gaussian_Model>(fm, "GaussModel")
-    .def(py::init<>())
-    .def("model_spectrum", &fitting::models::Gaussian_Model::model_spectrum)
-    .def("model_spectrum_element", &fitting::models::Gaussian_Model::model_spectrum_element);
+	py::class_<fitting::models::Base_Model>(fm, "BaseModel");
 
+	py::class_<fitting::models::Gaussian_Model, fitting::models::Base_Model>(fm, "GaussModel")
+	.def(py::init<>())
+	.def("fit_parameters", &fitting::models::Gaussian_Model::fit_parameters)
+	.def("model_spectrum", &fitting::models::Gaussian_Model::model_spectrum)	
+	.def("model_spectrum_mp", &fitting::models::Gaussian_Model::model_spectrum_mp)
+	.def("model_spectrum_element", &fitting::models::Gaussian_Model::model_spectrum_element)
+	.def("set_fit_params_preset", &fitting::models::Gaussian_Model::set_fit_params_preset)
+	.def("reset_to_default_fit_params", &fitting::models::Gaussian_Model::reset_to_default_fit_params)
+	.def("update_fit_params_values", &fitting::models::Gaussian_Model::update_fit_params_values)
+	.def("update_and_add_fit_params_values_gt_zero", &fitting::models::Gaussian_Model::update_and_add_fit_params_values_gt_zero);
 
     //fitting optimizers
-    py::class_<fitting::optimizers::LMFit_Optimizer>(fo, "lmfit")
+	py::class_<fitting::optimizers::Optimizer>(fo, "Optimizer");
+
+    py::class_<fitting::optimizers::LMFit_Optimizer, fitting::optimizers::Optimizer>(fo, "lmfit")
     .def(py::init<>())
     .def("minimize", &fitting::optimizers::LMFit_Optimizer::minimize)
     .def("minimize_func", &fitting::optimizers::LMFit_Optimizer::minimize_func)
     .def("minimize_quantification", &fitting::optimizers::LMFit_Optimizer::minimize_quantification);
 
-    py::class_<fitting::optimizers::MPFit_Optimizer>(fo, "mpfit")
+    py::class_<fitting::optimizers::MPFit_Optimizer, fitting::optimizers::Optimizer>(fo, "mpfit")
     .def(py::init<>())
     .def("minimize", &fitting::optimizers::MPFit_Optimizer::minimize)
     .def("minimize_func", &fitting::optimizers::MPFit_Optimizer::minimize_func)
@@ -303,39 +415,137 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
 
     //routines
-    py::class_<fitting::routines::ROI_Fit_Routine>(fr, "roi")
+	py::class_<fitting::routines::Base_Fit_Routine>(fr, "base_fit_route");
+
+    py::class_<fitting::routines::ROI_Fit_Routine, fitting::routines::Base_Fit_Routine>(fr, "roi")
     .def(py::init<>())
-    .def("fit_spectra", &fitting::routines::ROI_Fit_Routine::fit_spectra)
+	.def("fit_spectra", [](fitting::routines::ROI_Fit_Routine& self, 
+		fitting::models::Base_Model* const model,
+		const Spectra* const spectra,
+		const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_spectra(&self, model, spectra, elements_to_fit);
+	})
+	.def("fit_counts", [](fitting::routines::ROI_Fit_Routine& self,
+		fitting::models::Base_Model* const model,
+		const Spectra* const spectra,
+		const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_counts(&self, model, spectra, elements_to_fit);
+	})
     .def("get_name", &fitting::routines::ROI_Fit_Routine::get_name)
     .def("initialize", &fitting::routines::ROI_Fit_Routine::initialize);
 
-    py::class_<fitting::routines::SVD_Fit_Routine>(fr, "svd")
-    .def(py::init<>())
-    .def("fit_spectra", &fitting::routines::SVD_Fit_Routine::fit_spectra)
-    .def("get_name", &fitting::routines::SVD_Fit_Routine::get_name)
-    .def("initialize", &fitting::routines::SVD_Fit_Routine::initialize);
+	py::class_<fitting::routines::Param_Optimized_Fit_Routine, fitting::routines::Base_Fit_Routine>(fr, "param_optimized")
+		.def(py::init<>())
+		.def("fit_spectra", [](fitting::routines::Param_Optimized_Fit_Routine& self,
+			fitting::models::Base_Model* const model,
+			const Spectra* const spectra,
+			const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_spectra(&self, model, spectra, elements_to_fit);
+	})
+		.def("fit_counts", [](fitting::routines::Param_Optimized_Fit_Routine& self,
+			const fitting::models::Base_Model* const model,
+			const Spectra* const spectra,
+			const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_counts(&self, model, spectra, elements_to_fit);
+	})
+		.def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine::fit_spectra_parameters)
+		.def("get_name", &fitting::routines::Param_Optimized_Fit_Routine::get_name)
+		.def("initialize", &fitting::routines::Param_Optimized_Fit_Routine::initialize)
+		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine::set_optimizer)
+		.def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine::set_update_coherent_amplitude_on_fit);
 
-    py::class_<fitting::routines::Matrix_Optimized_Fit_Routine>(fr, "matrix")
+
+    py::class_<fitting::routines::Matrix_Optimized_Fit_Routine, fitting::routines::Param_Optimized_Fit_Routine, fitting::routines::Base_Fit_Routine>(fr, "matrix")
     .def(py::init<>())
-    .def("fit_spectra", &fitting::routines::Matrix_Optimized_Fit_Routine::fit_spectra)
+	.def("fit_spectra", [](fitting::routines::Matrix_Optimized_Fit_Routine& self, 
+		fitting::models::Base_Model* const model,
+		const Spectra* const spectra,
+		const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		/*
+		std::unordered_map<std::string, real_t> out_counts;
+		data_struct::Fit_Parameters fit_params = model->fit_parameters();
+		data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
+		self.fit_spectra(model, spectra, elements_to_fit, out_counts);
+		for (const auto& itr : out_counts)
+		{
+			fit_params.add_parameter(Fit_Param(itr.first, itr.second));
+		}
+		
+		Spectra spec_model;
+		spec_model.resize(energy_range.count());
+		spec_model.setZero(energy_range.count());
+		self.model_spectrum(&fit_params, &energy_range, &spec_model);
+		return spec_model;
+		*/
+		return fit_spectra(&self, model, spectra, elements_to_fit);
+	})
+	.def("fit_counts", [](fitting::routines::Matrix_Optimized_Fit_Routine& self,
+			const fitting::models::Base_Model* const model,
+			const Spectra* const spectra,
+			const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_counts(&self, model, spectra, elements_to_fit);
+	})
     .def("get_name", &fitting::routines::Matrix_Optimized_Fit_Routine::get_name)
     .def("initialize", &fitting::routines::Matrix_Optimized_Fit_Routine::initialize);
 
-    py::class_<fitting::routines::NNLS_Fit_Routine>(fr, "nnls")
+    py::class_<fitting::routines::NNLS_Fit_Routine, fitting::routines::Matrix_Optimized_Fit_Routine, fitting::routines::Param_Optimized_Fit_Routine, fitting::routines::Base_Fit_Routine>(fr, "nnls")
     .def(py::init<>())
-    .def("fit_spectra", &fitting::routines::NNLS_Fit_Routine::fit_spectra)
+	.def("fit_spectra", [](fitting::routines::NNLS_Fit_Routine& self, 
+		fitting::models::Base_Model* const model,
+		const Spectra* const spectra,
+		const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_spectra(&self, model, spectra, elements_to_fit);
+	})
+	.def("fit_counts", [](fitting::routines::NNLS_Fit_Routine& self, 
+		fitting::models::Base_Model* const model,
+		const Spectra* const spectra,
+		const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_counts(&self, model, spectra, elements_to_fit);
+	})
     .def("get_name", &fitting::routines::NNLS_Fit_Routine::get_name)
     .def("initialize", &fitting::routines::NNLS_Fit_Routine::initialize);
 
-    py::class_<fitting::routines::Param_Optimized_Fit_Routine>(fr, "param_optimized")
-    .def(py::init<>())
-    .def("fit_spectra", &fitting::routines::Param_Optimized_Fit_Routine::fit_spectra)
-    .def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine::fit_spectra_parameters)
-    .def("get_name", &fitting::routines::Param_Optimized_Fit_Routine::get_name)
-    .def("initialize", &fitting::routines::Param_Optimized_Fit_Routine::initialize)
-    .def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine::set_optimizer)
-    .def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine::set_update_coherent_amplitude_on_fit);
+	py::class_<fitting::routines::SVD_Fit_Routine, fitting::routines::Matrix_Optimized_Fit_Routine, fitting::routines::Param_Optimized_Fit_Routine, fitting::routines::Base_Fit_Routine>(fr, "svd")
+		.def(py::init<>())
+		.def("fit_spectra", [](fitting::routines::SVD_Fit_Routine& self,
+			fitting::models::Base_Model* const model,
+			const Spectra* const spectra,
+			const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_spectra(&self, model, spectra, elements_to_fit);
+	})
+		.def("fit_counts", [](fitting::routines::SVD_Fit_Routine& self,
+			fitting::models::Base_Model* const model,
+			const Spectra* const spectra,
+			const Fit_Element_Map_Dict* const elements_to_fit)
+	{
+		return fit_counts(&self, model, spectra, elements_to_fit);
+	})
+		.def("get_name", &fitting::routines::SVD_Fit_Routine::get_name)
+		.def("initialize", &fitting::routines::SVD_Fit_Routine::initialize);
 
+
+	py::enum_<fitting::optimizers::OPTIMIZER_OUTCOME>(fr, "OPTIMIZER_OUTCOME")
+	.value("FOUND_ZERO", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO)
+	.value("CONVERGED", fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
+	.value("TRAPPED", fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED)
+	.value("EXHAUSTED", fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
+	.value("FAILED", fitting::optimizers::OPTIMIZER_OUTCOME::FAILED)
+	.value("CRASHED", fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED)
+	.value("EXPLODED", fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED)
+	.value("STOPPED", fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED)
+	.value("FOUND_NAN", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN)
+	.value("F_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL)
+	.value("X_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL)
+	.value("G_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL);
 
     ////// IO //////
     //hl_file_io
@@ -347,7 +557,16 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("init_analysis_job_detectors", &io::init_analysis_job_detectors);
     m.def("load_element_info", &io::load_element_info);
     m.def("load_and_integrate_spectra_volume", &io::load_and_integrate_spectra_volume);
-    m.def("load_override_params", &io::load_override_params);
+   // m.def("load_override_params", &io::load_override_params);
+	m.def("load_override_params", [](std::string dataset_directory,
+									int detector_num,
+									bool append_file_name)
+	{
+		data_struct::Params_Override po;
+		io::load_override_params(dataset_directory, detector_num, &po, append_file_name);
+		return po;
+		
+	});
   ///  m.def("load_quantification_standard", &io::load_quantification_standard);
     m.def("load_spectra_volume", &io::load_spectra_volume);
     m.def("populate_netcdf_hdf5_files", &io::populate_netcdf_hdf5_files);
@@ -447,6 +666,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("process_dataset_files", &process_dataset_files);
     m.def("perform_quantification", &perform_quantification);
     //m.def("average_quantification", &average_quantification);
+
+	m.def("get_energy_range", (data_struct::Range (*)(size_t, Fit_Parameters*)) &data_struct::get_energy_range);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;

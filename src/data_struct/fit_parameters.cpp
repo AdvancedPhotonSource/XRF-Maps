@@ -95,11 +95,11 @@ void Fit_Parameters::add_parameter(Fit_Param param)
     _params[param.name] = param;
 }
 
-void Fit_Parameters::append_and_update(Fit_Parameters* fit_params)
+void Fit_Parameters::append_and_update(const Fit_Parameters& fit_params)
 {
-	for (auto& itr : *(fit_params->Params()))
+	for (std::unordered_map<std::string, Fit_Param>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
 	{
-		_params[itr.first] = itr.second;	
+		_params[itr->first] = itr->second;	
 	}
 }
 
