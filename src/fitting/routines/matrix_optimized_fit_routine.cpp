@@ -244,12 +244,10 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine:: fit_spectra(const models::Base_
         
         if(fit_params.contains(STR_SNIP_WIDTH))
         {
-            real_t spectral_binning = 0.0;
             ArrayXr bkg = snip_background(spectra,
                                          fit_params.value(STR_ENERGY_OFFSET),
                                          fit_params.value(STR_ENERGY_SLOPE),
                                          fit_params.value(STR_ENERGY_QUADRATIC),
-                                         spectral_binning,
                                          fit_params.value(STR_SNIP_WIDTH),
                                          _energy_range.min,
                                          _energy_range.max);

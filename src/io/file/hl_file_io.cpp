@@ -440,12 +440,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     
     if (fit_params->contains(STR_SNIP_WIDTH))
 	{
-        real_t spectral_binning = 0.0;
         data_struct::ArrayXr s_background = data_struct::snip_background(spectra,
                                                                         fit_params->value(STR_ENERGY_OFFSET),
                                                                         fit_params->value(STR_ENERGY_SLOPE),
                                                                         fit_params->value(STR_ENERGY_QUADRATIC),
-                                                                        spectral_binning,
                                                                         fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
