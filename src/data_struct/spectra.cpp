@@ -123,8 +123,7 @@ ArrayXr snip_background(const Spectra* const spectra,
 									  real_t energy_quadratic,
 									  real_t width,
 									  real_t xmin,
-									  real_t xmax,
-									  int filter_size)
+									  real_t xmax)
 {
 	ArrayXr energy = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
     
@@ -140,8 +139,8 @@ ArrayXr snip_background(const Spectra* const spectra,
 
 	ArrayXr boxcar;
 	// smooth the background
-	boxcar.resize(filter_size);
-    boxcar.setConstant(filter_size, 1.0);
+	boxcar.resize(5);
+    boxcar.setConstant(5, 1.0);
 	
 
 	if (spectra != nullptr)
