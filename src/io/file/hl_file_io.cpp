@@ -404,14 +404,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     }
 	else
 	{
-		unordered_map<string, Fit_Param> * params = fit_params->Params();
-		if (params != nullptr)
+		if (fit_params->size() == 0)
 		{
-			if (params->size() == 0)
-			{
-				logE << "Fit Parameters size = 0. Can not save!\n";
-				return;
-			}
+			logE << "Fit Parameters size = 0. Can not save!\n";
+			return;
 		}
 	}
 
@@ -444,12 +440,10 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     
     if (fit_params->contains(STR_SNIP_WIDTH))
 	{
-        real_t spectral_binning = 0.0;
         data_struct::ArrayXr s_background = data_struct::snip_background(spectra,
                                                                         fit_params->value(STR_ENERGY_OFFSET),
                                                                         fit_params->value(STR_ENERGY_SLOPE),
                                                                         fit_params->value(STR_ENERGY_QUADRATIC),
-                                                                        spectral_binning,
                                                                         fit_params->value(STR_SNIP_WIDTH),
                                                                         energy_range.min,
                                                                         energy_range.max);
@@ -770,12 +764,36 @@ bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
-    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
-    if (detector_num != -1)
+    bool ends_in_h5 = false;
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5' )
     {
-        fullpath += std::to_string(detector_num);
+        ends_in_h5 = true;
+    }
+    else
+    {
+        char buffer[33];
+        for (int i = 0; i < 8; i++)
+        {
+            char* ending = itoa(i, buffer, 10);
+            if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == *ending)
+            {
+                ends_in_h5 = true;
+                break;
+            }
+        }
     }
 
+    std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+    if (false == ends_in_h5)
+    {
+        fullpath += ".h5";
+
+        if (detector_num != -1)
+        {
+            fullpath += std::to_string(detector_num);
+        }
+    }
     /*
     std::string fullpath;
     size_t dlen = dataset_file.length();

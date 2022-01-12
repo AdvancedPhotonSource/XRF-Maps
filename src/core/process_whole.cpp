@@ -362,7 +362,9 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
         io::file::HDF5_IO::inst()->save_element_fits(fit_routine->get_name(), element_fit_count_dict);
 
-        if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX || itr.first == data_struct::Fitting_Routines::NNLS)
+        if(itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX 
+            || itr.first == data_struct::Fitting_Routines::NNLS 
+            || itr.first == data_struct::Fitting_Routines::SVD)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
             io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),

@@ -95,6 +95,15 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                     {
                         logW<<"MCA_IO supports version 3.1. MAy not load this version "<<value<<" properly.\n";
                     }
+                    try
+                    {
+                        pv_map[tag] = stof(value);
+
+                    }
+                    catch (std::exception& e)
+                    {
+                        pv_map[tag] = 0.;
+                    }
                 }
                 else if (tag == "CHANNELS")
                 {
@@ -104,6 +113,15 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     int ivalue = std::stoi(value);
+                    try
+                    {
+                        pv_map[tag] = stof(value);
+
+                    }
+                    catch (std::exception& e)
+                    {
+                        pv_map[tag] = 0.;
+                    }
                     spectra->resize(ivalue);
                     spectra->Zero(ivalue);
                 }
@@ -151,7 +169,15 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    ///float fvalue = std::stof(value);
+                    try
+                    {
+                        pv_map[tag] = stof(value);
+
+                    }
+                    catch (std::exception& e)
+                    {
+                        pv_map[tag] = 0.;
+                    }
                 }
                 else if (tag == "CAL_SLOPE")
                 {
@@ -160,7 +186,15 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    ///float fvalue = std::stof(value);
+                    try
+                    {
+                        pv_map[tag] = stof(value);
+
+                    }
+                    catch (std::exception& e)
+                    {
+                        pv_map[tag] = 0.;
+                    }
                 }
                 else if (tag == "CAL_QUAD")
                 {
@@ -169,7 +203,15 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    ///float fvalue = std::stof(value);
+                    try
+                    {
+                        pv_map[tag] = stof(value);
+
+                    }
+                    catch (std::exception& e)
+                    {
+                        pv_map[tag] = 0.;
+                    }
                 }
                 else if (tag == "ENVIRONMENT")
                 {
@@ -193,6 +235,7 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
 								try 
 								{
 									pv_map[pv_name] = stof(pv_value);
+
 								}
 								catch (std::exception & e)
 								{

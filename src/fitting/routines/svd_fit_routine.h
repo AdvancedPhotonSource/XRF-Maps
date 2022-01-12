@@ -83,8 +83,7 @@ public:
 
 protected:
 
-    void _generate_fitmatrix(const unordered_map<string, Spectra> * const element_models,
-                             const struct Range energy_range);
+    void _generate_fitmatrix();
 
 private:
 

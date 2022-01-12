@@ -121,7 +121,6 @@ ArrayXr snip_background(const Spectra* const spectra,
 									  real_t energy_offset,
 									  real_t energy_linear,
 									  real_t energy_quadratic,
-								      real_t spectral_binning,
 									  real_t width,
 									  real_t xmin,
 									  real_t xmax)
@@ -129,11 +128,6 @@ ArrayXr snip_background(const Spectra* const spectra,
 	ArrayXr energy = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
     
 	ArrayXr background;
-
-	if (spectral_binning > 0)
-	{
-		energy = energy * spectral_binning;
-	}
 
     energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (real_t)2.0) * energy_quadratic);
 
@@ -145,16 +139,9 @@ ArrayXr snip_background(const Spectra* const spectra,
 
 	ArrayXr boxcar;
 	// smooth the background
-	if (spectral_binning > 0)
-	{
-		boxcar.resize(3);
-        boxcar.setConstant(3, 1.0);
-	}
-	else
-	{
-		boxcar.resize(5);
-        boxcar.setConstant(5, 1.0);
-	}
+	boxcar.resize(5);
+    boxcar.setConstant(5, 1.0);
+	
 
 	if (spectra != nullptr)
 	{
@@ -174,19 +161,11 @@ ArrayXr snip_background(const Spectra* const spectra,
 	}
 	//fwhm
 	current_width = width * current_width / energy_linear;  // in channels
-	if (spectral_binning > 0)
-	{
-		current_width = current_width / (real_t)2.0;
-	}
-
+	
 	background = Eigen::log(Eigen::log(background + (real_t)1.0) + (real_t)1.0);
 
 	// FIRST SNIPPING
 	int no_iterations = 2;
-	if (spectral_binning > 0)
-	{
-		no_iterations = 3;
-	}
 
     int max_of_xmin = (std::max)(xmin, (real_t)0.0);
     int min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));

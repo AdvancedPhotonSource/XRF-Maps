@@ -231,6 +231,53 @@ const string STR_GENERAL_BEAMLINE = "General";
 const string STR_ENERGY = "Energy";
 const string STR_ENERGY_CALIB = "Energy_Calibration";
 
+const string STR_ELAPSED_REAL_TIME = "Elapsed_Realtime";
+const string STR_ELAPSED_LIVE_TIME = "Elapsed_Livetime";
+const string STR_INPUT_COUNTS = "Input_Counts";
+const string STR_OUTPUT_COUNTS = "Output_Counts";
+
+const string STR_MAPS = "MAPS";
+const string STR_SCAN = "Scan";
+const string STR_SPECTRA = "Spectra";
+const string STR_VERSION = "version";
+const string STR_XRF_ANALYZED = "XRF_Analyzed";
+const string STR_COUNTS_PER_SEC = "Counts_Per_Sec";
+const string STR_CHANNEL_NAMES = "Channel_Names";
+const string STR_CHANNEL_UNITS = "Channel_Units";
+const string STR_FIT_PARAMETERS_OVERRIDE = "Fit_Parameters_Override";
+const string STR_FIT_PARAMETERS = "Fit_Parameters";
+
+const string STR_QUANTIFICATION = "Quantification";
+const string STR_CALIBRATION = "Calibration";
+const string STR_NUMBER_OF_STANDARDS = "Number_Of_Standards";
+const string STR_ELEMENT_WEIGHTS = "Element_Weights";
+const string STR_ELEMENT_WEIGHTS_NAMES = "Element_Weights_Names";
+const string STR_STANDARD_NAME = "Standard_Name";
+
+const string STR_Y_AXIS = "y_axis";
+const string STR_X_AXIS = "x_axis";
+const string STR_REQUESTED_ROWS = "requested_rows";
+const string STR_REQUESTED_COLS = "requested_cols";
+const string STR_THETA = "theta";
+const string STR_SCAN_TIME_STAMP = "scan_time_stamp";
+const string STR_NAME = "name";
+
+
+const string STR_EXTRA_PVS = "Extra_PVs";
+const string STR_NAMES = "Names";
+const string STR_VALUES = "Values";
+const string STR_DESCRIPTION = "Description";
+const string STR_UNIT = "Unit";
+const string STR_UNITS = "Units";
+
+const string STR_US_AMP = "us_amp";
+const string STR_DS_AMP = "ds_amp";
+const string STR_US_AMP_NUM = "us_amp_num";
+const string STR_DS_AMP_NUM = "ds_amp_num";
+const string STR_US_AMP_UNIT = "us_amp_unit";
+const string STR_DS_AMP_UNIT = "ds_amp_unit";
+
+const string STR_NBS_1832 = "nbs1832";
 
 //}
 

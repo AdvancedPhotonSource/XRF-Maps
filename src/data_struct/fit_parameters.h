@@ -195,11 +195,11 @@ public:
 
     void add_parameter(Fit_Param param);
 
-	void append_and_update(Fit_Parameters* fit_params);
+	void append_and_update(const Fit_Parameters& fit_params);
 
-    inline auto begin() { return _params.begin(); }
+    inline auto begin() const { return _params.begin(); }
 
-    inline auto end() { return _params.end(); }
+    inline auto end() const { return _params.end(); }
 
     void sum_values(Fit_Parameters fit_params);
 
@@ -238,8 +238,6 @@ public:
     const Fit_Param& at(std::string name) const {return _params.at(name); }
 
     size_t size() const { return _params.size(); }
-	
-	std::unordered_map<std::string, Fit_Param>* Params() { return &_params; }
 
 private:
 
