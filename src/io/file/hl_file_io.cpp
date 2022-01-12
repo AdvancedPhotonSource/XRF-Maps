@@ -775,7 +775,7 @@ bool load_spectra_volume(std::string dataset_directory,
         char buffer[33];
         for (int i = 0; i < 8; i++)
         {
-            char* ending = itoa(i, buffer, 10);
+            const char* ending = std::to_string(i).c_str();
             if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == *ending)
             {
                 ends_in_h5 = true;

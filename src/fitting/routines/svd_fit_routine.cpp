@@ -130,7 +130,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Mo
     rhs -= background;
     rhs = rhs.unaryExpr([](real_t v) { return v > 0.0 ? v : (real_t)0.0; });
 
-    Spectra spectra_model = background;
+    ArrayXr spectra_model = background;
 
     Eigen::VectorXf result = svd.solve(rhs);
 
