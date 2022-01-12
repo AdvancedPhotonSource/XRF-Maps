@@ -6172,11 +6172,11 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     {
         return false;
     }
-
-    if (false == _open_h5_object(file_id, H5O_FILE, _global_close_map, path, -1))
-    {
+    
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (file_id < 0)
         return false;
-    }
+    _global_close_map.push({ file_id, H5O_FILE });
 
     if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, _global_close_map, "2D Scan", file_id))
     {
@@ -6472,8 +6472,10 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
         return false;
     }
 
-	if (false == _open_h5_object(file_id, H5O_FILE, _global_close_map, path, -1))
-		return false;
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (file_id < 0)
+        return false;
+    _global_close_map.push({ file_id, H5O_FILE });
 
 	if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, _global_close_map, "xrmmap", file_id, true, false))
 	{
@@ -6756,9 +6758,10 @@ bool HDF5_IO::save_scan_scalers_bnl(std::string path,
         return false;
     }
 
-    if (false == _open_h5_object(file_id, H5O_FILE, _global_close_map, path, -1))
+    file_id = H5Fopen(path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    if (file_id < 0)
         return false;
-
+    _global_close_map.push({ file_id, H5O_FILE });
     
     if (false == _open_h5_object(src_maps_grp_id, H5O_GROUP, _global_close_map, "xrfmap", file_id))
     {
@@ -7504,9 +7507,7 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 	if (file_id < 0)
 		return;
 	close_map.push({ file_id, H5O_FILE });
-	//if (false == _open_h5_object(file_id, H5O_FILE, close_map, dataset_file, -1))
-	//	return;
-
+	
 	if (false == _open_h5_object(theta_id, H5O_DATASET, close_map, "/MAPS/Scan/theta", file_id))
 		return;
 
