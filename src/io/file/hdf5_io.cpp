@@ -4238,21 +4238,21 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    hid_t    dset_id, spec_grp_id, int_spec_grp_id, dataspace_id, memoryspace_id, memoryspace_time_id, maps_grp_id, dcpl_id;
+    hid_t    dset_id, spec_grp_id, int_spec_grp_id, dataspace_id, memoryspace_id, memoryspace_time_id, maps_grp_id;
     hid_t dataspace_rt_id, dataspace_lt_id, dataspace_incr_id, dataspace_ocr_id;
     hid_t   dset_rt_id, dset_lt_id, incnt_dset_id, outcnt_dset_id;
     herr_t status = 0;
 
-    hsize_t chunk_dims[3];
-    hsize_t chunk_dims_times[2];
-    hsize_t dims_out[3];
+    hsize_t chunk_dims[3] = {1,1,1};
+    hsize_t chunk_dims_times[2] = {1,1};
+    hsize_t dims_out[3] = {1,1,1};
 	hsize_t maxdims[3] = { H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED };
-    hsize_t offset[3];
-    hsize_t count[3];
-    hsize_t dims_time_out[2];
-    hsize_t offset_time[2];
-    hsize_t count_time[2];
-	hsize_t tmp_dims[3];
+    hsize_t offset[3]  ={0,0,0};
+    hsize_t count[3] = {1,1,1};
+    hsize_t dims_time_out[2] = {0,0};
+    hsize_t offset_time[2]= {0,0};
+    hsize_t count_time[2] = {0,0};
+	hsize_t tmp_dims[3] = {0,0,0};
 
     if (row_idx_end < (int)row_idx_start || (size_t)row_idx_end > spectra_volume->rows() -1)
     {
@@ -4496,10 +4496,10 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
         return false;
     }
 
-    hid_t    dset_id, spec_grp_id, dataspace_id, memoryspace_id, maps_grp_id, dcpl_id;
+    hid_t    dset_id, spec_grp_id, dataspace_id, memoryspace_id, maps_grp_id;
     herr_t status = 0;
-    hsize_t offset[3] = { 0,0,0 };
-    hsize_t count[3];
+    hsize_t offset[1] = { 0 };
+    hsize_t count[1] = { 1 };
 
     //save energy vector
     std::vector<real_t> out_vec;
@@ -4525,7 +4525,7 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
     status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&out_vec[0]);
     if (status < 0)
     {
-        logE << " H5Dwrite failed to write " << STR_INT_SPEC << "/" << STR_OUTPUT_COUNTS << "\n";
+        logE << " H5Dwrite failed to write " << STR_ENERGY << "\n";
     }
 
     // save energy calibration
@@ -4560,6 +4560,8 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
     
 
     _close_h5_objects(_global_close_map);
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -7020,6 +7022,7 @@ bool HDF5_IO::add_background(std::string directory, std::string filename, data_s
     H5Dclose(back_arr_id);
     H5Fclose(file_id);
 
+    return true;
 }
 
 //-----------------------------------------------------------------------------
