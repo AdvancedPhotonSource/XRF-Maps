@@ -84,6 +84,8 @@ typedef std::function<void(const Fit_Parameters * const, const Range * const, Sp
 
 enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL};
 
+DLL_EXPORT std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome);
+
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
  */

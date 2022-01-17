@@ -909,7 +909,37 @@ bool save_parameters_override(std::string path, Params_Override *params_override
 
 //-----------------------------------------------------------------------------
 
-bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num)
+bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, string result)
+{
+
+    std::ofstream out_stream(path);
+
+    logI << path << "\n";
+
+    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    std::time_t tt;
+    tt = std::chrono::system_clock::to_time_t(today);
+
+    if (out_stream.is_open())
+    {
+        out_stream <<"Fitting_Result," << result << "\n";
+        for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        {
+            out_stream << itr->second.name << "," << itr->second.value << "\n";
+        }
+        
+        out_stream.close();
+        return true;
+
+    }
+
+    logE << "Couldn't opening file " << path << "\n";
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters fit_params, int detector_num)
 {
 
     std::ifstream in_stream(path);

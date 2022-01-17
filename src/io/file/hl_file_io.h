@@ -167,6 +167,7 @@ DLL_EXPORT void save_quantification_plots(string path, Detector *detector);
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir,
                                             std::string dataset_filename,
                                             int detector_num,
+                                            string result,
                                             data_struct::Fit_Parameters* fit_params,
                                             data_struct::Spectra *spectra,
                                             data_struct::Fit_Element_Map_Dict *elements_to_fit);

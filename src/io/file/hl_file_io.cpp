@@ -380,20 +380,23 @@ void save_quantification_plots(string path, Detector* detector)
 
 // ----------------------------------------------------------------------------
 
-void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
+void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
 {
     std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
     std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
+    std::string fp_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "fit_param_" + dataset_filename;
     
     if (detector_num != -1)
     {
         full_path += std::to_string(detector_num) + ".csv";
         mca_full_path += std::to_string(detector_num) + ".txt";
+        fp_full_path += std::to_string(detector_num) + ".csv";
     }
     else
     {
         full_path += ".csv";
         mca_full_path += ".txt";
+        fp_full_path += ".txt";
     }
     logI<<full_path<<"\n";
 
@@ -478,6 +481,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 #endif
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
+    io::file::aps::save_fit_parameters_override(fp_full_path, *fit_params, result);
     std::unordered_map<std::string, real_t> scaler_map;
     scaler_map[STR_ENERGY_OFFSET] = energy_offset;
     scaler_map[STR_ENERGY_SLOPE] = energy_slope;
