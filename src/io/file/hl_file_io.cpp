@@ -389,7 +389,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     if (detector_num != -1)
     {
         full_path += std::to_string(detector_num) + ".csv";
-        mca_full_path += std::to_string(detector_num) + ".txt";
+        mca_full_path += std::to_string(detector_num) + ".mca";
         fp_full_path += std::to_string(detector_num) + ".csv";
     }
     else
