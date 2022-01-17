@@ -55,6 +55,38 @@ namespace fitting
 namespace optimizers
 {
 
+    std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome)
+    {
+        switch (outcome)
+        {
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
+            return "Converged";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL:
+            return "Ftol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL:
+            return "XTol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
+            return "GTol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
+            return "EXHAUSTED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
+            return "CRASHED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED:
+            return "Exploded";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FAILED:
+            return "FAILED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN:
+            return "Found NAN";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO:
+            return "Found Zero";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED:
+            return "Stopped";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED:
+            return "Trapped";
+        }
+        return "";
+    }
+
     void fill_user_data(User_Data& ud,
                         Fit_Parameters* fit_params,
                         const Spectra* const spectra,

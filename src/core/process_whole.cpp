@@ -172,17 +172,16 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
 
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+        std::string result = optimizer_outcome_to_str(outcome);
         switch (outcome)
         {
         case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
-            // if we have a good fit, update our fit parameters so we are closer for the next fit
-            params_override->fit_params.update_values(&out_fitp);
-            ret_val = true;
-            break;
-        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
         case fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL:
         case fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL:
         case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
+            // if we have a good fit, update our fit parameters so we are closer for the next fit
+            params_override->fit_params.update_values(&out_fitp);
             ret_val = true;
             break;
         case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
@@ -195,7 +194,7 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
             ret_val = false;
             break;
         }
-        io::save_optimized_fit_params(dataset_directory, dataset_filename, detector_num, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+        io::save_optimized_fit_params(dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
     }
     
     return ret_val;
@@ -272,7 +271,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             fit_params_avgs[detector_num].divide_fit_values_by(detector_file_cnt[detector_num]);
         }
 
-		io::file::aps::save_parameters_override(full_path, fit_params_avgs[detector_num], detector_num);
+		io::file::aps::create_detector_fit_params_from_avg(full_path, fit_params_avgs[detector_num], detector_num);
 
         if (params.count(detector_num) > 0)
         {
