@@ -8719,9 +8719,9 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     {
         logW << "Error creating /MAPS/scaler_units\n";
     }
-    if (false == _open_h5_dataset("/MAPS/scaler", H5T_INTEL_R, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
+    if (false == _open_h5_dataset("/MAPS/scalers", H5T_INTEL_R, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
     {
-        logW << "Error creating /MAPS/scaler\n";
+        logW << "Error creating /MAPS/scalers\n";
     }
 
 
