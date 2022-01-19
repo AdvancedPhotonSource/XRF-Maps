@@ -8642,15 +8642,15 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     hid_t memtype = H5Tcopy(H5T_C_S1);
 
     hid_t names_id, values_id, units_id;
-    if (_open_h5_object(names_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Names", file_id, true, false))
+    if (false == _open_h5_object(names_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Names", file_id, true, false))
     {
         return;
     }
-    if (_open_h5_object(values_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Values", file_id, true, false))
+    if (false == _open_h5_object(values_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Values", file_id, true, false))
     {
         return;
     }
-    if (_open_h5_object(units_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Units", file_id, true, false))
+    if (false == _open_h5_object(units_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Units", file_id, true, false))
     {
         return;
     }
