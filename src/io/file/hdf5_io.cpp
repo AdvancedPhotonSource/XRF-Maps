@@ -8642,15 +8642,15 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     hid_t memtype = H5Tcopy(H5T_C_S1);
 
     hid_t names_id, values_id, units_id;
-    if (_open_h5_object(names_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Names", file_id, true, false))
+    if (false == _open_h5_object(names_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Names", file_id, true, false))
     {
         return;
     }
-    if (_open_h5_object(values_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Values", file_id, true, false))
+    if (false == _open_h5_object(values_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Values", file_id, true, false))
     {
         return;
     }
-    if (_open_h5_object(units_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Units", file_id, true, false))
+    if (false == _open_h5_object(units_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Units", file_id, true, false))
     {
         return;
     }
@@ -8719,9 +8719,9 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     {
         logW << "Error creating /MAPS/scaler_units\n";
     }
-    if (false == _open_h5_dataset("/MAPS/scaler", H5T_INTEL_R, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
+    if (false == _open_h5_dataset("/MAPS/scalers", H5T_INTEL_R, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
     {
-        logW << "Error creating /MAPS/scaler\n";
+        logW << "Error creating /MAPS/scalers\n";
     }
 
 
