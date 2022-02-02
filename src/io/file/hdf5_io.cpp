@@ -299,7 +299,7 @@ bool HDF5_IO::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t p
             bool expand = false;
             for (size_t i = 0; i < dims_size; i++)
             {
-                if (tmp_dims[i] < dims[i])
+                if (tmp_dims[i] != dims[i])
                 {
                     expand = true;
                     break;
