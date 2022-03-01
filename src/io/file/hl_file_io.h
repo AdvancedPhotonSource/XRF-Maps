@@ -72,6 +72,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_struct/fit_element_map.h"
 #include "data_struct/params_override.h"
+#include "data_struct/scaler_lookup.h"
 
 #include "data_struct/quantification_standard.h"
 
@@ -128,8 +129,10 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine* generate_fit_routine(data_struct
  */
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job);
 
-DLL_EXPORT bool load_element_info(std::string element_henke_filename,
-                                std::string element_csv_filename);
+DLL_EXPORT bool load_element_info(const std::string element_henke_filename,
+                                  const std::string element_csv_filename);
+
+DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 													std::string dataset_file,
@@ -141,12 +144,6 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
                                     int detector_num,
                                     data_struct::Params_Override* params_override,
                                     bool append_file_name = true);
-/*
-DLL_EXPORT bool load_quantification_standard(std::string dataset_directory,
-                                  std::string quantification_info_file,
-                                  std::string *standard_file_name,
-                                  std::unordered_map<std::string, real_t> *element_standard_weights);
-                                  */
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                 std::string quantification_info_file,
@@ -165,23 +162,15 @@ DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::
 
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-DLL_EXPORT void save_averaged_fit_params(std::string dataset_dir,
-										std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs,
-										const std::vector<size_t>& detector_num_arr);
-
 DLL_EXPORT void save_quantification_plots(string path, Detector *detector);
 
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir,
                                             std::string dataset_filename,
                                             int detector_num,
+                                            string result,
                                             data_struct::Fit_Parameters* fit_params,
                                             data_struct::Spectra *spectra,
                                             data_struct::Fit_Element_Map_Dict *elements_to_fit);
-
-DLL_EXPORT bool save_volume(data_struct::Spectra_Volume *spectra_volume,
-                             real_t energy_offset,
-                             real_t energy_slope,
-                             real_t energy_quad);
 
 DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files);
 

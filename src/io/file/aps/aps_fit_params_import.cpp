@@ -415,37 +415,6 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     else
                         params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
                 }
-                else if (tag == "TIME_SCALER_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->time_scaler = value;
-                }
-                else if (tag == "TIME_SCALER_CLOCK")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->time_scaler_clock = value;
-                }
-                else if (tag == "TIME_NORMALIZED_SCALER")
-                {
-                    std::string name, value;
-                    std::getline(strstream, name, ';');
-                    std::getline(strstream, value);
-                    name.erase(std::remove(name.begin(), name.end(), '\n'), name.end());
-                    name.erase(std::remove(name.begin(), name.end(), '\r'), name.end());
-                    name.erase(std::remove(name.begin(), name.end(), ' '), name.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->time_normalized_scalers.insert(std::pair<std::string, std::string>(name, value));
-                }
                 else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
                 {
                     std::string value;
@@ -467,42 +436,6 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     {
                         logE<<"Unknown detector element enumeration : "<<value<<"\n";
                     }
-                }
-                else if (tag == "ELT" || tag == "ELT1" || tag == "ELT2" || tag == "ELT3" || tag == "ELT4")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->elt_pv = value;
-                }
-                else if (tag == "ERT" || tag == "ERT1" || tag == "ERT2" || tag == "ERT3" || tag == "ERT4")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ert_pv = value;
-                }
-                else if (tag == "ICR" || tag == "ICR1" || tag == "ICR2" || tag == "ICR3" || tag == "ICR4")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->in_cnt_pv = value;
-                }
-                else if (tag == "OCR" || tag == "OCR1" || tag == "OCR2" || tag == "OCR3" || tag == "OCR4")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->out_cnt_pv = value;
                 }
                 else if (tag == "US_AMP_SENS_NUM_PV")
                 {
@@ -713,73 +646,6 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     params_override->theta_pv = value;
                 }
-                else if (tag == "SUMMED_SCALER")
-                {
-                    data_struct::Summed_Scaler s_scaler;
-                    s_scaler.normalize_by_time = false;
-                    std::string value;
-                    std::string scaler_name;
-                    std::getline(strstream, value, ':');
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    // split scalers names by ','
-                    s_scaler.scaler_name = value;
-                    std::string last_scaler;
-                    std::getline(strstream, scaler_name, ',');
-                    while(last_scaler != scaler_name)
-                    {
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\n'), scaler_name.end());
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
-                        last_scaler = scaler_name;
-                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
-                        s_scaler.scalers_to_sum.push_back(scaler_name);
-                        std::getline(strstream, scaler_name, ',');
-                    }
-                    params_override->summed_scalers.push_back(s_scaler);
-                }
-                /* // we don't need this anymore since the time normalization will happen before summing.
-                else if (tag == "TIME_NORMALIZED_SUMMED_SCALER")
-                {
-                    data_struct::Summed_Scaler s_scaler;
-                    s_scaler.normalize_by_time = true;
-                    std::string value;
-                    std::string scaler_name;
-                    std::getline(strstream, value, ':');
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    // split scalers names by ','
-                    s_scaler.scaler_name = value;
-                    std::string last_scaler;
-                    std::getline(strstream, scaler_name, ',');
-                    while(last_scaler != scaler_name)
-                    {
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\n'), scaler_name.end());
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), '\r'), scaler_name.end());
-                        scaler_name.erase(std::remove(scaler_name.begin(), scaler_name.end(), ' '), scaler_name.end());
-                        last_scaler = scaler_name;
-                        // add scaler name and set mda_idx to -1, we will search for the index later and unpdate
-                        s_scaler.scalers_to_sum.push_back(scaler_name);
-                        std::getline(strstream, scaler_name, ',');
-                    }
-                    params_override->summed_scalers.push_back(s_scaler);
-                }
-                */
-                else
-                {
-                    if (tag.length() > 0 && tag[0] != ' ' && tag[0] != '\t' && (line.find(":") != std::string::npos))
-                    {
-                        std::string value;
-                        std::getline(strstream, value);
-                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->scaler_pvs[tag] = value;
-                    }
-                }
-
             }
         }
         catch(std::exception& e)
@@ -1017,8 +883,6 @@ bool save_parameters_override(std::string path, Params_Override *params_override
 				out_stream << itr << "\n";
 			}
         }
-		
-
         out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
         out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
         out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
@@ -1036,39 +900,6 @@ bool save_parameters_override(std::string path, Params_Override *params_override
         out_stream << "DS_AMP_SENS_UNIT: "<< params_override->ds_amp_sens_unit <<"\n";
         out_stream << "THETA_PV: " << params_override->theta_pv << "\n";
         out_stream << "    the lines (if any) below will override the detector names built in to maps. please modify only if you are sure you understand the effect\n";
-        for (const auto& itr : params_override->scaler_pvs)
-        {
-            out_stream << itr.first << ":" << itr.second << "\n";
-        }
-        out_stream << "TIME_SCALER_PV: " << params_override->time_scaler << "\n";
-        out_stream << "TIME_SCALER_CLOCK: " << params_override->time_scaler_clock << "\n";
-        for (const auto& itr : params_override->time_normalized_scalers)
-        {
-            out_stream <<"TIME_NORMALIZED_SCALER: "<< itr.first << ";" << itr.second << "\n";
-        }
-
-        for (const auto& itr : params_override->summed_scalers)
-        {
-            if (itr.normalize_by_time)
-            {
-                out_stream << "TIME_NORMALIZED_SUMMED_SCALER: " << itr.scaler_name << ":";
-                for (const auto& inner_itr : itr.scalers_to_sum)
-                {
-                    out_stream << inner_itr << ",";
-                }
-                out_stream << "\n";
-            }
-            else
-            {
-                out_stream << "SUMMED_SCALER: "<< itr.scaler_name<<":";
-                for (const auto& inner_itr : itr.scalers_to_sum)
-                {
-                    out_stream << inner_itr << ",";
-                }
-                out_stream << "\n";
-            }
-        }
-
         out_stream.close();
         return true;
     }
@@ -1078,7 +909,37 @@ bool save_parameters_override(std::string path, Params_Override *params_override
 
 //-----------------------------------------------------------------------------
 
-bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num)
+bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, string result)
+{
+
+    std::ofstream out_stream(path);
+
+    logI << path << "\n";
+
+    std::chrono::system_clock::time_point today = std::chrono::system_clock::now();
+    std::time_t tt;
+    tt = std::chrono::system_clock::to_time_t(today);
+
+    if (out_stream.is_open())
+    {
+        out_stream <<"Fitting_Result," << result << "\n";
+        for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        {
+            out_stream << itr->second.name << "," << itr->second.value << "\n";
+        }
+        
+        out_stream.close();
+        return true;
+
+    }
+
+    logE << "Couldn't opening file " << path << "\n";
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters fit_params, int detector_num)
 {
 
     std::ifstream in_stream(path);
@@ -1119,6 +980,7 @@ bool save_parameters_override(std::string path, Fit_Parameters fit_params, int d
                         out_stream<<line<<"\n";
                     }
                 }
+				//depricated , use scaler ref yaml
                 else if( std::find(Updatable_detector_dependand_TAGS.begin(), Updatable_detector_dependand_TAGS.end(), tag) != Updatable_detector_dependand_TAGS.end() )
                 {
                     /*

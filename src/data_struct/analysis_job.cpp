@@ -68,8 +68,9 @@ Analysis_Job::Analysis_Job()
     add_exchange_layout = false;
     is_network_source = false;
     stream_over_network = false;
-    update_scalers = false;
+    //update_scalers = false;
     export_int_fitted_to_csv = false;
+    add_background = false;
     command_line = "";
     theta_pv = "";
     network_source_ip = "";
@@ -78,6 +79,10 @@ Analysis_Job::Analysis_Job()
     network_stream_port = "43434";
 	mem_limit = -1;
 	update_theta_str = "";
+	update_us_amps_str = "";
+	update_ds_amps_str = "";
+	update_quant_us_amps_str = "";
+	update_quant_ds_amps_str = "";
 }
 
 //-----------------------------------------------------------------------------

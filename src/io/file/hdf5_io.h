@@ -63,14 +63,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/scan_info.h"
 
 #include "core/mem_info.h"
+#include "core/defines.h"
 
 namespace io
 {
 namespace file
 {
-
-
-enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE};
+enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE, H5O_PROPERTY};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
@@ -161,14 +160,13 @@ public:
     void set_filename(std::string fname) {_cur_filename = fname;}
 
     bool save_spectra_volume(const std::string path,
-                             data_struct::Spectra_Volume * spectra_volume,
-                             real_t energy_offset,
-                             real_t energy_slope,
-                             real_t energy_quad,
+                            data_struct::Spectra_Volume* spectra_volume,
                              size_t row_idx_start=0,
                              int row_idx_end=-1,
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
+
+    bool save_energy_calib(int spectra_size, real_t energy_offset, real_t energy_slope, real_t energy_quad);
 
     bool save_element_fits(const std::string path,
                            const data_struct::Fit_Count_Dict * const element_counts,
@@ -194,7 +192,6 @@ public:
     bool save_scan_scalers(size_t detector_num,
                            data_struct::Scan_Info* scan_info,
                            data_struct::Params_Override * params_override,
-                           bool hasNetcdf,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,
@@ -216,7 +213,6 @@ public:
 
     bool save_scan_scalers_bnl(std::string path,
         size_t detector_num,
-        data_struct::Params_Override* params_override,
         size_t row_idx_start = 0,
         int row_idx_end = -1,
         size_t col_idx_start = 0,
@@ -231,13 +227,19 @@ public:
 	// update theta value based on new pv name
     void update_theta(std::string dataset_file, std::string theta_pv_str);
 
+	void update_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str);
+
+	void update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str);
+
     //update scalers if maps_fit_parameters_override.txt has changes pv's and you don't want to refit
-    void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
+    //void update_scalers(std::string dataset_file, data_struct::Params_Override* params_override);
     
     //export integrated spec, fitted, background into csv
     void export_int_fitted_to_csv(std::string dataset_file);
 
     bool end_save_seq(bool loginfo=true);
+
+    bool add_background(std::string directory, std::string filename, data_struct::Params_Override& params);
 
 private:
 
@@ -251,42 +253,29 @@ private:
 
     bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
 	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
-    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, data_struct::Params_Override * params_override, bool hasNetcdf);
-    void _save_amps(hid_t scalers_grp_id, data_struct::Params_Override * params_override);
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, real_t us_amps_val, real_t us_amps_unti, real_t ds_amps_val, real_t ds_amps_unit);
+    void _save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_t us_amp_sens_unit_val, real_t ds_amp_sens_num_val, real_t ds_amp_sens_unit_val);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
-    void _add_v9_quant(hid_t file_id, hid_t quant_space, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
+    void _add_v9_quant(hid_t file_id, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
     void _add_v9_scalers(hid_t file_id);
     void _add_extra_pvs(hid_t file_id, std::string group_name);
 
     bool _add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler);
 	
     bool _open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error=true, bool close_on_fail=true);
+    bool _open_or_create_group(const std::string name, hid_t parent_id, hid_t& out_id, bool log_error = true, bool close_on_fail = true);
+    bool _create_memory_space(int rank, const hsize_t* count, hid_t& out_id);
+    bool _open_h5_dataset(const std::string& name, hid_t data_type, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
-
-    struct scaler_struct
-    {
-        scaler_struct(std::string name, std::string units, int mda_idx_, int hdf_idx_, bool normalize_by_time_)
-        {
-             hdf_name = name;
-			 hdf_units = units;
-             mda_idx = mda_idx_;
-             hdf_idx = hdf_idx_;
-             normalize_by_time = normalize_by_time_;
-        }
-        int mda_idx;
-        int hdf_idx;
-        std::string hdf_name;
-		std::string hdf_units;
-        bool normalize_by_time;
-    };
 
     hid_t _cur_file_id;
     std::string _cur_filename;
+    std::stack<std::pair<hid_t, H5_OBJECTS> > _global_close_map;
 
 };
 

@@ -121,7 +121,7 @@ public:
 
     size_t num_threads;
 
-    bool update_scalers;
+    //bool update_scalers;
 
     bool quick_and_dirty;
 
@@ -137,7 +137,17 @@ public:
 
     bool export_int_fitted_to_csv;
 
+    bool add_background;
+
 	long long mem_limit;
+
+	std::string update_us_amps_str;
+
+	std::string update_ds_amps_str;
+
+	std::string update_quant_us_amps_str;
+
+	std::string update_quant_ds_amps_str;
 
     //list of quantification standards to use
     vector<Quantification_Standard> standard_element_weights;

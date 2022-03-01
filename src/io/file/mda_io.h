@@ -80,13 +80,10 @@ public:
 
     bool load_scalers(std::string path);
 
-   // bool load_header_only(std::string filePath);
-
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
                             data_struct::Spectra_Volume* vol,
-                            bool hasNetCDF,
-                            data_struct::Params_Override *override_values);
+                            bool hasNetCDF);
 
     bool load_spectra_volume_with_callback(std::string path,
 										const std::vector<size_t>& detector_num_arr,
@@ -100,8 +97,7 @@ public:
 	bool load_integrated_spectra(std::string path,
 								size_t detector_num,
 								data_struct::Spectra *out_integrated_spectra,
-								bool hasNetCDF,
-								data_struct::Params_Override *override_values);
+								bool hasNetCDF);
 
     bool load_quantification_scalers(std::string path,
                                      data_struct::Params_Override *override_values);
@@ -126,14 +122,7 @@ private:
 
     void _load_meta_info();
 
-    // find index in mda file, if found, fill in value and units 
-    int find_scaler_index(struct mda_file* mda_file, std::string det_name, real_t& val, std::string& units);
-
-    bool _get_scaler_value( struct mda_file* _mda_file, data_struct::Params_Override *override_values, string scaler_name, real_t *store_loc, bool isFlyScan);
-
     bool _find_theta(std::string pv_name, float* theta_out);
-
-    //bool _is_single_row;
 
     /**
      * @brief _mda_file: mda helper structure

@@ -77,6 +77,8 @@ struct Scaler_Map
 {
     string name;
     string unit;
+    bool time_normalized;
+    //bool is_timer;
     ArrayXXr values;
 };
 
@@ -114,6 +116,18 @@ public:
     ~Scan_Info()
     {
         
+    }
+
+    const ArrayXXr* scaler_values(const string& scaler_name) const
+    {
+        for (const auto& itr : scaler_maps)
+        {
+            if (itr.name == scaler_name)
+            {
+                return &(itr.values);
+            }
+        }
+        return nullptr;
     }
 
     Scan_Meta_Info meta_info;

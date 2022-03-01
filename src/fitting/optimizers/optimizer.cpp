@@ -55,6 +55,38 @@ namespace fitting
 namespace optimizers
 {
 
+    std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome)
+    {
+        switch (outcome)
+        {
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
+            return "Converged";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL:
+            return "Ftol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL:
+            return "XTol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
+            return "GTol less than TOL";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
+            return "EXHAUSTED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
+            return "CRASHED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED:
+            return "Exploded";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FAILED:
+            return "FAILED";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN:
+            return "Found NAN";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO:
+            return "Found Zero";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED:
+            return "Stopped";
+        case fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED:
+            return "Trapped";
+        }
+        return "";
+    }
+
     void fill_user_data(User_Data& ud,
                         Fit_Parameters* fit_params,
                         const Spectra* const spectra,
@@ -98,12 +130,10 @@ namespace optimizers
         background.setZero(spectra->size());
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            real_t spectral_binning = 0.0;
             background = snip_background(spectra,
                                          fit_params->value(STR_ENERGY_OFFSET),
                                          fit_params->value(STR_ENERGY_SLOPE),
                                          fit_params->value(STR_ENERGY_QUADRATIC),
-                                         spectral_binning,
                                          fit_params->value(STR_SNIP_WIDTH),
                                          energy_range.min,
                                          energy_range.max);
@@ -154,15 +184,13 @@ namespace optimizers
         if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
         {
             Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type > E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
+            if(fit_snip_width.bound_type != E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
             {
-                real_t spectral_binning = 0.0;
                 //ud->spectra_background = snip_background(ud->orig_spectra,
 				ArrayXr background = snip_background(ud->orig_spectra,
                                              ud->fit_parameters->value(STR_ENERGY_OFFSET),
                                              ud->fit_parameters->value(STR_ENERGY_SLOPE),
                                              ud->fit_parameters->value(STR_ENERGY_QUADRATIC),
-                                             spectral_binning,
                                              fit_snip_width.value,
                                              ud->energy_range.min,
                                              ud->energy_range.max);

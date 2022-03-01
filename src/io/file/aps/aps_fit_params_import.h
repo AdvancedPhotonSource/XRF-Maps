@@ -72,7 +72,9 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override *para
 
 DLL_EXPORT bool save_parameters_override(std::string path, Params_Override *params_override);
 
-DLL_EXPORT bool save_parameters_override(std::string path, Fit_Parameters fit_params, int detector_num);
+DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, string result);
+
+DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters fit_params, int detector_num);
 
 }// end namespace aps
 }// end namespace file

@@ -43,58 +43,75 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2021>: Arthur Glowacki
 
 
 
-#ifndef SVD_Fit_Routine_H
-#define SVD_Fit_Routine_H
+#ifndef Scaler_Lookup_H
+#define Scaler_Lookup_H
 
-#include "fitting/routines/matrix_optimized_fit_routine.h"
+#include <string>
+#include <unordered_map>
+#include <map>
+#include <vector>
+#include "core/defines.h"
 
-#include <Eigen/Core>
-
-namespace fitting
+namespace data_struct
 {
-namespace routines
-{
+    struct Summed_Scaler
+    {
+        string scaler_name;
+        std::vector<string> scalers_to_sum;
+    };
 
-using namespace data_struct;
-
-class DLL_EXPORT SVD_Fit_Routine: public Matrix_Optimized_Fit_Routine
+//singleton
+class DLL_EXPORT Scaler_Lookup
 {
 public:
 
-    SVD_Fit_Routine();
+    static Scaler_Lookup* inst();
 
-    virtual ~SVD_Fit_Routine();
+	~Scaler_Lookup();
 
-    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
-                                                      const Spectra * const spectra,
-                                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                                      std::unordered_map<std::string, real_t>& out_counts);
+	void clear();
 
+	void add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized);
 
-    virtual std::string get_name() { return STR_FIT_SVD; }
+    void add_timing_info(const string& beamline, const string& time_pv, double clock);
 
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range);
+    void add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list);
 
-protected:
+    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline);
 
-    void _generate_fitmatrix();
+    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
+
+    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline);
+
+    const vector<struct Summed_Scaler>* get_summed_scaler_list(string beamline) const;
 
 private:
 
-    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
+    Scaler_Lookup();
 
-    std::unordered_map<std::string, int> _element_row_index;
+    static Scaler_Lookup *_this_inst;
 
+	struct BeamLine
+	{
+		//     PV    Label
+		map< string, string > scaler_pv_label_map;
+		//     PV    Label
+		map< string, string > time_normalized_scaler_pv_label_map;
+		//    Time_PV  Clock
+		map< string, double > timing_info;
+		//   beamline      summed scalers
+		vector<struct Summed_Scaler> summed_scalers;
+	};
+	
+    //   beamline     Label
+    map< string, struct BeamLine > _beamline_map;
+ 
 };
+     
+} //namespace data_struct
 
-} //namespace routines
-
-} //namespace fitting
-
-#endif // SVD_Fit_Routine_H
+#endif // Scaler_Lookup_H

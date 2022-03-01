@@ -95,11 +95,11 @@ void Fit_Parameters::add_parameter(Fit_Param param)
     _params[param.name] = param;
 }
 
-void Fit_Parameters::append_and_update(Fit_Parameters* fit_params)
+void Fit_Parameters::append_and_update(const Fit_Parameters& fit_params)
 {
-	for (auto& itr : *(fit_params->Params()))
+	for (std::unordered_map<std::string, Fit_Param>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
 	{
-		_params[itr.first] = itr.second;	
+		_params[itr->first] = itr->second;	
 	}
 }
 
@@ -108,7 +108,7 @@ std::vector<real_t> Fit_Parameters::to_array()
     std::vector<real_t> arr;
     for(const auto& itr : _params)
     {
-        if (itr.second.bound_type > E_Bound_Type::FIXED)
+        if (itr.second.bound_type != E_Bound_Type::FIXED)
         {
             _params[itr.first].opt_array_index = arr.size();
             arr.push_back(itr.second.value);
@@ -132,7 +132,7 @@ void Fit_Parameters::sum_values(Fit_Parameters fit_params)
 {
     for(const auto &itr : _params)
     {
-        if(fit_params.contains(itr.first) && itr.second.bound_type > E_Bound_Type::FIXED)
+        if(fit_params.contains(itr.first) && itr.second.bound_type != E_Bound_Type::FIXED)
         {
             _params[itr.first].value += fit_params[itr.first].value;
         }
@@ -143,7 +143,7 @@ void Fit_Parameters::divide_fit_values_by(real_t divisor)
 {
     for(const auto &itr : _params)
     {
-        if (itr.second.bound_type > E_Bound_Type::FIXED)
+        if (itr.second.bound_type != E_Bound_Type::FIXED)
         {
             _params[itr.first].value /= divisor;
         }
