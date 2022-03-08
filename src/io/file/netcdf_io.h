@@ -65,6 +65,8 @@ namespace file
 	#define nc_get_vars_real nc_get_vars_float
 #endif
 
+enum class E_load_type { LINE = 0, CALLBACKF = 1, INTEGRATED = 2 };
+
 class DLL_EXPORT NetCDF_IO
 {
 public:
@@ -93,8 +95,14 @@ public:
     size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra* spectra);
 
 private:
-
     NetCDF_IO();
+
+    size_t _load_spectra(E_load_type ltype,
+                        std::string path,
+                        size_t detector,
+                        data_struct::Spectra_Line* spec_line,
+                        size_t line_size, 
+                        data_struct::Spectra* spectra);
 
     static NetCDF_IO *_this_inst;
 
