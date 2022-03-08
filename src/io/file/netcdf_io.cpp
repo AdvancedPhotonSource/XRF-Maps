@@ -177,6 +177,26 @@ size_t NetCDF_IO::_load_spectra(E_load_type ltype,
         return 0;
     }
 
+    
+    int d_idx = 12;
+    if (detector > 3)
+    {
+        d_idx += 2 * (detector-4);
+    }
+    else
+    {
+        d_idx += 2 * detector;
+    }
+    
+    size_t dset_det = size_t(data_in[0][0][d_idx]);
+    if (dset_det != detector)
+    {
+        logE << "detector not found! "<< dset_det <<" != "<<detector<<" Stopping load : " << path << "\n";
+        nc_close(ncid);
+        return -1;
+    }
+    
+
     header_size = data_in[0][0][2];
     //num_cols = data_in[][0][8];  //sum all across the first dim looking at value 8
     spectra_size = data_in[0][0][20];

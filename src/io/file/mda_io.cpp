@@ -285,6 +285,7 @@ bool MDA_IO::load_spectra_volume(std::string path,
             else
             {
                 //if not then we don't know what is dataset is.
+                logE << "Don't understand this dataset layout. Can not load it.\n";
                 unload();
                 return false;
             }
