@@ -893,7 +893,7 @@ bool load_spectra_volume(std::string dataset_directory,
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
                     size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
-                    if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
+                    if (detector_num > 0 && spec_size == -1) // this netcdf file only has 1 element detectors
                     {
                         return false;
                     }
