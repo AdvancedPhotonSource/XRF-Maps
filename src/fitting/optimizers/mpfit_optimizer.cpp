@@ -161,9 +161,9 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
 MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.ftol = 1e-15;       // Relative chi-square convergence criterium  Default: 1e-10
+    _options.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     _options.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    _options.gtol = 1e-15;       // Orthogonality convergence criterium        Default: 1e-10
+    _options.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     _options.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14

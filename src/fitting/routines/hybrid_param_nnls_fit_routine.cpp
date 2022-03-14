@@ -55,8 +55,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 
-#define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
-
 using namespace data_struct;
 
 namespace fitting
@@ -84,7 +82,7 @@ Hybrid_Param_NNLS_Fit_Routine::~Hybrid_Param_NNLS_Fit_Routine()
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 void Hybrid_Param_NNLS_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                                                   const Spectra * const spectra,
                                                                   const Fit_Element_Map_Dict * const elements_to_fit)
@@ -166,7 +164,7 @@ void Hybrid_Param_NNLS_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Para
     (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
 
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
@@ -233,6 +231,24 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra(const models::Base_
 
 // ----------------------------------------------------------------------------
 
+void Hybrid_Param_NNLS_Fit_Routine::model_spectrum(const Fit_Parameters* const fit_params,
+                                                    const struct Range* const energy_range,
+                                                    Spectra* spectra_model)
+{
+    spectra_model->setZero();
+
+    for (const auto& itr : _element_models)
+    {
+        if (fit_params->contains(itr.first))
+        {
+            Fit_Param param = fit_params->at(itr.first);
+            (*spectra_model) += (pow((real_t)10.0, param.value) * itr.second);
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
                                                                     const Spectra * const spectra,
                                                                     const Fit_Element_Map_Dict * const elements_to_fit,
@@ -248,12 +264,13 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const mo
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
-    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    /*_add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    
     if(_update_coherent_amplitude_on_fit)
     {
         _calc_and_update_coherent_amplitude(&fit_params, spectra);
     }
-
+    */
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
     if(spectra->sum() == 0)
     {
@@ -267,7 +284,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const mo
             ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
         }
     }
-    out_fit_params.append_and_update(&fit_params);
+    out_fit_params.append_and_update(fit_params);
     return ret_val;
 }
 
@@ -282,14 +299,14 @@ void Hybrid_Param_NNLS_Fit_Routine::initialize(models::Base_Model * const model,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 void Hybrid_Param_NNLS_Fit_Routine::set_optimizer(Optimizer *optimizer)
 {
 
     _optimizer = optimizer;
 
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 } //namespace routines

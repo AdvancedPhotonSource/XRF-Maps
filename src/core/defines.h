@@ -183,6 +183,7 @@ const string STR_FIT_SVD = "SVD";
 const string STR_FIT_NNLS = "NNLS";
 const string STR_FIT_GAUSS_MATRIX = "Fitted";
 const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
+const string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
 
 const string STR_SR_CURRENT = "SR_Current";
 const string STR_US_IC = "US_IC";

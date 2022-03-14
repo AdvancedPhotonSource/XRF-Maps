@@ -51,8 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Hybrid_Param_NNLS_Fit_Routine_H
 
 #include "fitting/routines/matrix_optimized_fit_routine.h"
-#include "fitting/optimizers/optimizer.h"
-#include "data_struct/fit_parameters.h"
 
 namespace fitting
 {
@@ -75,26 +73,30 @@ public:
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           std::unordered_map<std::string, real_t>& out_counts);
 
-    OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
+    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
                                           const Spectra * const spectra,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           Fit_Parameters& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual std::string get_name() { return STR_FIT_GAUSS_TAILS; }
+    void model_spectrum(const Fit_Parameters* const fit_params,
+                        const struct Range* const energy_range,
+                        Spectra* spectra_model);
+
+    virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
 
     virtual void initialize(models::Base_Model * const model,
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
-
+    /*
      void set_optimizer(Optimizer *optimizer);
 
      void set_update_coherent_amplitude_on_fit(bool val) {_update_coherent_amplitude_on_fit = val;}
 
      const Range& energy_range() { return _energy_range; }
-
+     */
 protected:
-
+    /*
     void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
                                          const Spectra * const spectra,
                                          const Fit_Element_Map_Dict * const elements_to_fit);
@@ -107,7 +109,7 @@ protected:
     Range _energy_range;
 
     bool _update_coherent_amplitude_on_fit;
-
+    */
 private:
 
 
