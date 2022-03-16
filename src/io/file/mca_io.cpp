@@ -335,13 +335,12 @@ bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
         paramFileStream << "CHANNELS: " << spectra->size() << "\n";
         paramFileStream << "REAL_TIME: "<< spectra->elapsed_realtime() << "\n";
         paramFileStream << "LIVE_TIME: " << spectra->elapsed_livetime() << "\n";
-        paramFileStream << "SRCURRENT: "<< sr_current<<"\n";
-        paramFileStream << "UPSTREAM_IONCHAMBER: " << us_ic << "\n";
-        paramFileStream << "DOWNSTREAM_IONCHAMBER: " << ds_ic << "\n";
         paramFileStream << "CAL_OFFSET: " << offset << "\n";
         paramFileStream << "CAL_SLOPE: " << slope << "\n";
         paramFileStream << "CAL_QUAD: " << quad << "\n";
-        //paramFileStream << "ENVIRONMENT: \n";
+		paramFileStream << "ENVIRONMENT: SRCURRENT=\"" << sr_current << "\"\n";
+		paramFileStream << "ENVIRONMENT: UPSTREAM_IONCHAMBER=\"" << us_ic << "\"\n";
+		paramFileStream << "ENVIRONMENT: DOWNSTREAM_IONCHAMBER=\"" << ds_ic << "\"\n";
         paramFileStream << "DATA: \n";
         for (int i = 0; i < spectra->size(); i++)
         {
