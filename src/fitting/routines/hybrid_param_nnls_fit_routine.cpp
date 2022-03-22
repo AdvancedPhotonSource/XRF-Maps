@@ -64,14 +64,12 @@ namespace routines
 
 // ----------------------------------------------------------------------------
 
-Hybrid_Param_NNLS_Fit_Routine::Hybrid_Param_NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
+Hybrid_Param_NNLS_Fit_Routine::Hybrid_Param_NNLS_Fit_Routine() : NNLS_Fit_Routine()
 {
-
-    _optimizer = nullptr;
-    _energy_range.min = 0;
-    _energy_range.max = 1999;
-    _update_coherent_amplitude_on_fit = true;
-
+    _model = nullptr;
+    _elements_to_fit = nullptr;
+    _spectra = nullptr;
+    _max_iter = 4000;
 }
 
 // ----------------------------------------------------------------------------
@@ -82,168 +80,16 @@ Hybrid_Param_NNLS_Fit_Routine::~Hybrid_Param_NNLS_Fit_Routine()
 }
 
 // ----------------------------------------------------------------------------
-/*
-void Hybrid_Param_NNLS_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                                                  const Spectra * const spectra,
-                                                                  const Fit_Element_Map_Dict * const elements_to_fit)
-{
-
-    real_t this_factor = (real_t)8.0;
-
-    for (auto el_itr : *elements_to_fit)
-    {
-        if( false == fit_params->contains(el_itr.first) )
-        {
-            real_t e_guess = (real_t)1.0e-10;
-
-            Fit_Element_Map *element = el_itr.second;
-            std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
-            //if element counts is not in fit params structure, add it
-            if( false == fit_params->contains(el_itr.first) )
-            {
-                Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.1, E_Bound_Type::FIT);
-                (*fit_params)[el_itr.first] = fp;
-            }
-            if(spectra != nullptr  && energies.size() > 0)
-            {
-                real_t e_energy = element->energy_ratios()[0].energy;
-                real_t min_e =  e_energy - (real_t)0.1;
-                real_t max_e =  e_energy + (real_t)0.1;
-
-                struct Range energy_range = get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
-
-                real_t sum = spectra->segment(energy_range.min, energy_range.count()).sum();
-                sum /= energy_range.count();
-                e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
-                //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
-                e_guess = std::log10(e_guess);
-
-                (*fit_params)[el_itr.first].value = e_guess;
-            }
-            else
-            {
-                e_guess = std::log10(e_guess);
-                (*fit_params)[el_itr.first].value = e_guess;
-            }
-        }
-    }
-
-    if( false == fit_params->contains(STR_NUM_ITR) )
-    {
-        //add number of iteration it took
-        Fit_Param fp(STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
-        (*fit_params)[STR_NUM_ITR] = fp;
-    }
-    if (false == fit_params->contains(STR_RESIDUAL))
-    {
-        //add number of iteration it took
-        Fit_Param fp(STR_RESIDUAL, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
-        (*fit_params)[STR_RESIDUAL] = fp;
-    }
-    (*fit_params)[STR_NUM_ITR].value = 0.0;
-    (*fit_params)[STR_RESIDUAL].value = 0.0;
-}
-
-// ----------------------------------------------------------------------------
-
-void Hybrid_Param_NNLS_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-                                                                      const Spectra * const spectra)
-{
-    //STR_COHERENT_SCT_ENERGY
-    //STR_COHERENT_SCT_AMPLITUDE
-    real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
-    real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)8.0;
-    fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->value(STR_ENERGY_OFFSET), fitp->value(STR_ENERGY_SLOPE));
-    size_t e_size = (energy_range.max + 1) - energy_range.min;
-    real_t sum = spectra->segment(energy_range.min, e_size).sum();
-    sum /= energy_range.count();
-    real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
-    real_t logval = std::log10(e_guess);
-    (*fitp)[STR_COMPTON_AMPLITUDE].value = logval;
-    (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
-
-}
-*/
-// ----------------------------------------------------------------------------
-
-OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                           const Spectra * const spectra,
-                                                           const Fit_Element_Map_Dict * const elements_to_fit,
-                                                           std::unordered_map<std::string, real_t>& out_counts)
-{
-    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    // fitp.g.xmin = MIN_ENERGY_TO_FIT
-    // fitp.g.xmax = MAX_ENERGY_TO_FIT
-
-    OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
-    Fit_Parameters fit_params = model->fit_parameters();
-    //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
-    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
-    if(_update_coherent_amplitude_on_fit)
-    {
-        _calc_and_update_coherent_amplitude(&fit_params, spectra);
-    }
-
-    //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
-    if(spectra->sum() == 0)
-    {
-
-        fit_params.set_all_value(-10.0, E_Bound_Type::FIT);
-
-        for (auto el_itr : *elements_to_fit)
-        {
-            out_counts[el_itr.first] = -10.0;
-        }
-        return OPTIMIZER_OUTCOME::FOUND_ZERO;
-    }
-
-    if(_optimizer != nullptr)
-    {
-        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
-
-        //Save the counts from fit parameters into fit count dict for each element
-        for (auto el_itr : *elements_to_fit)
-        {
-            real_t value =  fit_params.at(el_itr.first).value;
-            //convert from log10
-            value = std::pow((real_t)10.0, value);
-            out_counts[el_itr.first] = value;
-        }
-
-        //model->update_fit_params_values(fit_params);
-
-        //check if we are saving the number of iterations and save if so
-        if(fit_params.contains(STR_NUM_ITR))
-        {
-            out_counts[STR_NUM_ITR] = fit_params.at(STR_NUM_ITR).value;
-        }
-        if (fit_params.contains(STR_RESIDUAL))
-        {
-            out_counts[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
-        }
-    }
-
-    return ret_val;
-}
-
-// ----------------------------------------------------------------------------
 
 void Hybrid_Param_NNLS_Fit_Routine::model_spectrum(const Fit_Parameters* const fit_params,
                                                     const struct Range* const energy_range,
                                                     Spectra* spectra_model)
 {
-    spectra_model->setZero();
-
-    for (const auto& itr : _element_models)
+    if (_model != nullptr && _elements_to_fit != nullptr)
     {
-        if (fit_params->contains(itr.first))
-        {
-            Fit_Param param = fit_params->at(itr.first);
-            (*spectra_model) += (pow((real_t)10.0, param.value) * itr.second);
-        }
+        _model->update_fit_params_values(fit_params);
+        initialize(_model, _elements_to_fit, *energy_range);
+        fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
     }
 }
 
@@ -255,22 +101,21 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const mo
                                                                     Fit_Parameters& out_fit_params,
                                                                     Callback_Func_Status_Def* status_callback)
 {
-    //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-    //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
-
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
     Fit_Parameters fit_params = model->fit_parameters();
-    //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
-    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
-    /*_add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     
-    if(_update_coherent_amplitude_on_fit)
+    if (fit_params.contains(STR_COMPTON_AMPLITUDE))
     {
-        _calc_and_update_coherent_amplitude(&fit_params, spectra);
+        fit_params[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIXED;
     }
-    */
+    if (fit_params.contains(STR_COHERENT_SCT_AMPLITUDE))
+    {
+        fit_params[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIXED;
+    }
+
+    out_fit_params.append_and_update(fit_params);
+
     //If the sum of the spectra we are trying to fit to is zero then set out counts to -10.0 == log(0.0000000001)
     if(spectra->sum() == 0)
     {
@@ -281,32 +126,46 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const mo
     {
         if(_optimizer != nullptr)
         {
-            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
+            //ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
+            std::function<void(const Fit_Parameters* const, const  Range* const, Spectra*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
+            if (fit_params.contains(STR_SNIP_WIDTH))
+            {
+                ArrayXr bkg = snip_background(spectra,
+                    fit_params.value(STR_ENERGY_OFFSET),
+                    fit_params.value(STR_ENERGY_SLOPE),
+                    fit_params.value(STR_ENERGY_QUADRATIC),
+                    fit_params.value(STR_SNIP_WIDTH),
+                    _energy_range.min,
+                    _energy_range.max);
+
+                _background = bkg.segment(_energy_range.min, _energy_range.count());
+            }
+            else
+            {
+                _background.setZero(_energy_range.count());
+            }
+            _model = (models::Base_Model*)model;
+            _elements_to_fit = elements_to_fit;
+            _spectra = spectra;
+
+            ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &_background, gen_func);
+
+            _model->update_fit_params_values(&fit_params);
+            initialize(_model, elements_to_fit, _energy_range);
+            std::unordered_map<std::string, real_t> out_counts;
+            fit_spectra(_model, spectra, elements_to_fit, out_counts);
+
+            out_fit_params.append_and_update(fit_params);
+            for (const auto& itr : *elements_to_fit)
+            {
+                out_fit_params.add_parameter(Fit_Param(itr.first, log10(out_counts[itr.first])));
+            }
         }
     }
-    out_fit_params.append_and_update(fit_params);
     return ret_val;
 }
 
-
-// ----------------------------------------------------------------------------
-
-void Hybrid_Param_NNLS_Fit_Routine::initialize(models::Base_Model * const model,
-                                             const Fit_Element_Map_Dict * const elements_to_fit,
-                                             const struct Range energy_range)
-{
-    _energy_range = energy_range;
-}
-
-// ----------------------------------------------------------------------------
-/*
-void Hybrid_Param_NNLS_Fit_Routine::set_optimizer(Optimizer *optimizer)
-{
-
-    _optimizer = optimizer;
-
-}
-*/
 // ----------------------------------------------------------------------------
 
 } //namespace routines

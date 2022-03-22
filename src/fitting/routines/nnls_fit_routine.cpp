@@ -50,6 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //debug
 #include <iostream>
+//#include "visual/grapher.h"
 
 namespace fitting
 {
@@ -105,6 +106,63 @@ void NNLS_Fit_Routine::_generate_fitmatrix()
 
 // ----------------------------------------------------------------------------
 
+void NNLS_Fit_Routine::fit_spectrum_model(const Spectra* const spectra,
+                                          const ArrayXr* const background,
+                                          const Fit_Element_Map_Dict* const elements_to_fit,
+                                          Spectra* spectra_model)
+{
+    //spectra_model->setZero(_energy_range.count());
+    spectra_model->setZero();
+
+    data_struct::ArrayXr* result;
+    int num_iter;
+    real_t npg;
+
+    ArrayXr spectra_sub_background = spectra->segment(_energy_range.min, _energy_range.count());
+    spectra_sub_background -= *background;
+    spectra_sub_background = spectra_sub_background.unaryExpr([](real_t v) { return v > 0.0 ? v : (real_t)0.0; });
+    nsNNLS::nnls<real_t> solver(&_fitmatrix, &spectra_sub_background, _max_iter);
+
+    solver.optimize(num_iter, npg);
+    //logI << "NNLS num iter: " << num_iter << " : npg : " << npg << "\n";
+    if (num_iter < 0)
+    {
+        logE << "Num iter < 0" << "\n";
+    }
+
+    result = solver.getSolution();
+
+    for (const auto& itr : *elements_to_fit)
+    {
+        if (std::isfinite((*result)[_element_row_index[itr.first]]))
+        {
+            for (int j = 0; j < _energy_range.count(); j++)
+            {
+                real_t val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
+                if (std::isfinite(val))
+                {
+                    (*spectra_model)[j] += val;
+                }
+            }
+        }
+    }
+
+    /*
+    static int i = 0;
+    string path = "c:\\temp\\debug\\img" + ::to_string(i) + ".png";
+    ArrayXr sub_background = *background;
+    real_t energy_offset = 0;
+    real_t energy_slope = 0.01;
+    real_t energy_quad = 0;
+
+    ArrayXr energy = ArrayXr::LinSpaced(_energy_range.count(), _energy_range.min, _energy_range.max);
+    ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (real_t)2.0) * energy_quad);
+    visual::SavePlotSpectrasFromConsole(path, &ev, &spectra_sub_background, spectra_model, &sub_background, true);
+    */
+}
+
+// ----------------------------------------------------------------------------
+
 OPTIMIZER_OUTCOME NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const model,
                                                 const Spectra * const spectra,
                                                 const Fit_Element_Map_Dict * const elements_to_fit,
@@ -147,23 +205,30 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine::fit_spectra(const models::Base_Model * const
     solver.optimize(num_iter, npg);
     if (num_iter < 0)
     {
-        logE<<"NNLS_Fit_Routine::_fit_spectra: in optimization routine"<<"\n";
+        logE<<"num_iter < 0"<<"\n";
     }
 
     result = solver.getSolution();
 
     for(const auto& itr : *elements_to_fit)
     {
-        out_counts[itr.first] = (*result)[_element_row_index[itr.first]];
+        if (std::isfinite((*result)[_element_row_index[itr.first]]))
+        {
+            out_counts[itr.first] = (*result)[_element_row_index[itr.first]];
 
-		for (int j = 0; j < _energy_range.count(); j++)
-		{
-			real_t val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
-			if (std::isfinite(val))
-			{
-				spectra_model[j] += val;
-			}
-		}
+            for (int j = 0; j < _energy_range.count(); j++)
+            {
+                real_t val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
+                if (std::isfinite(val))
+                {
+                    spectra_model[j] += val;
+                }
+            }
+        }
+        else
+        {
+            out_counts[itr.first] = 0.;
+        }
     }
 
     out_counts[STR_NUM_ITR] = static_cast<real_t>(num_iter);

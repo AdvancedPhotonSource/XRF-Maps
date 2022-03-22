@@ -50,7 +50,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Hybrid_Param_NNLS_Fit_Routine_H
 #define Hybrid_Param_NNLS_Fit_Routine_H
 
-#include "fitting/routines/matrix_optimized_fit_routine.h"
+#include "fitting/routines/nnls_fit_routine.h"
 
 namespace fitting
 {
@@ -61,17 +61,12 @@ using namespace std;
 using namespace data_struct;
 using namespace fitting::optimizers;
 
-class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public Matrix_Optimized_Fit_Routine
+class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public NNLS_Fit_Routine
 {
 public:
     Hybrid_Param_NNLS_Fit_Routine();
 
 	virtual ~Hybrid_Param_NNLS_Fit_Routine();
-
-    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
-                                          const Spectra * const spectra,
-                                          const Fit_Element_Map_Dict * const elements_to_fit,
-                                          std::unordered_map<std::string, real_t>& out_counts);
 
     virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
                                           const Spectra * const spectra,
@@ -79,40 +74,20 @@ public:
                                           Fit_Parameters& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 
-    void model_spectrum(const Fit_Parameters* const fit_params,
-                        const struct Range* const energy_range,
-                        Spectra* spectra_model);
-
     virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
 
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range);
-    /*
-     void set_optimizer(Optimizer *optimizer);
+    virtual void model_spectrum(const Fit_Parameters* const fit_params,
+                                const struct Range* const energy_range,
+                                Spectra* spectra_model);
 
-     void set_update_coherent_amplitude_on_fit(bool val) {_update_coherent_amplitude_on_fit = val;}
-
-     const Range& energy_range() { return _energy_range; }
-     */
 protected:
-    /*
-    void _add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                         const Spectra * const spectra,
-                                         const Fit_Element_Map_Dict * const elements_to_fit);
 
-    void _calc_and_update_coherent_amplitude(Fit_Parameters *fitp,
-                                             const Spectra * const spectra);
-
-    Optimizer *_optimizer;
-
-    Range _energy_range;
-
-    bool _update_coherent_amplitude_on_fit;
-    */
 private:
-
-
+    models::Base_Model* _model;
+    ArrayXr _background;
+    const Fit_Element_Map_Dict* _elements_to_fit;
+    const data_struct::Spectra* _spectra;
+    
 };
 
 } //namespace routines

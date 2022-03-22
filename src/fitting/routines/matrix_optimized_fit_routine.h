@@ -84,7 +84,7 @@ public:
                             const Fit_Element_Map_Dict * const elements_to_fit,
                             const struct Range energy_range);
 
-    void model_spectrum(const Fit_Parameters * const fit_params,
+    virtual void model_spectrum(const Fit_Parameters * const fit_params,
                         const struct Range * const energy_range,
 					    Spectra* spectra_model);
 

@@ -182,6 +182,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
         std::string result = optimizer_outcome_to_str(outcome);
+        logI << "Outcome = " << result << "\n";
         switch (outcome)
         {
         case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
@@ -228,10 +229,9 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
         detector_file_cnt[detector_num] = 0.0;
     }
 
-
-    for(auto &itr : analysis_job->optimize_dataset_files)
+    for (auto& itr : analysis_job->optimize_dataset_files)
     {
-        for(size_t detector_num : analysis_job->detector_num_arr)
+        for (size_t detector_num : analysis_job->detector_num_arr)
         {
             //reuse previous param override if it exists
             if (params.count(detector_num) > 0)

@@ -149,9 +149,9 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
 	_options.ftol = LM_USERTOL; //LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
     _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
     _options.gtol = LM_USERTOL;  //LM_USERTOL; // Orthogonality desired between fvec and its derivs. Termination occurs when the cosine of the angle between fvec and any column of the Jacobian is at most gtol in absolute value.
-    _options.epsilon = LM_EPSILON; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
+    _options.epsilon = LM_USERTOL;// LM_EPSILON; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
     _options.stepbound = (real_t)100.; // Used in determining the initial step bound. This bound is set to the product of stepbound and the Euclidean norm of diag*x if nonzero, or else to stepbound itself. In most cases stepbound should lie in the interval (0.1,100.0). Generally, the value 100.0 is recommended.
-    _options.patience = 2000; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
+    _options.patience = 200; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
     _options.scale_diag = 1; // If 1, the variables will be rescaled internally. Recommended value is 1.
     _options.msgfile = NULL; //  Progress messages will be written to this file.
     _options.verbosity = 0; //  OR'ed: 1: print some messages; 2: print Jacobian. 

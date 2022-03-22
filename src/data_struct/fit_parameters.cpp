@@ -188,7 +188,7 @@ void Fit_Parameters::set_all(E_Bound_Type btype)
     }
 }
 
-void Fit_Parameters::update_values(Fit_Parameters *override_fit_params)
+void Fit_Parameters::update_values(const Fit_Parameters *override_fit_params)
 {
     for(auto& itr : _params)
     {
