@@ -145,6 +145,14 @@ void NNLS_Fit_Routine::fit_spectrum_model(const Spectra* const spectra,
                 }
             }
         }
+        else
+        {
+            for (int j = 0; j < _energy_range.count(); j++)
+            {
+                (*spectra_model)[j] = numeric_limits<real_t>::quiet_NaN();
+            }
+            break;
+        }
     }
 
     /*
