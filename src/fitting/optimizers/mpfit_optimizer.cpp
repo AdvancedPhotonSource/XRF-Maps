@@ -514,17 +514,16 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
-	struct mp_par<real_t> *mp_par = nullptr;
-	//vector<struct mp_par<real_t> > par;
-	//par.resize(fitp_arr.size());
-	//_fill_limits(fit_params, par);
+	vector<struct mp_par<real_t> > par;
+	par.resize(fitp_arr.size());
+	_fill_limits(fit_params, par);
 
     mp_result<real_t> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], mp_par, &_options, (void *) &ud, &result);
+    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
 /*
     
 */
