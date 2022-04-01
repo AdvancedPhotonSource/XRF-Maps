@@ -219,7 +219,7 @@ public:
 
     void set_all(E_Bound_Type btype);
 
-    void update_values(Fit_Parameters *override_fit_params);
+    void update_values(const Fit_Parameters *override_fit_params);
 
     void update_and_add_values(Fit_Parameters *override_fit_params);
 

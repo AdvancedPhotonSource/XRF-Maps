@@ -283,7 +283,7 @@ void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::set_optimizer(Optimizer *optimizer)
+void Param_Optimized_Fit_Routine::set_optimizer(Optimizer* optimizer)
 {
 
     _optimizer = optimizer;

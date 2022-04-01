@@ -89,6 +89,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/roi_fit_routine.h"
 #include "fitting/routines/svd_fit_routine.h"
 #include "fitting/routines/nnls_fit_routine.h"
+#include "fitting/routines/hybrid_param_nnls_fit_routine.h"
 
 #include "fitting/optimizers/lmfit_optimizer.h"
 #include "fitting/optimizers/mpfit_optimizer.h"
@@ -121,12 +122,10 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_rou
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool optimize_integrated_fit_params(std::string dataset_directory,
+DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
                                             std::string  dataset_filename,
                                             size_t detector_num,
                                             data_struct::Params_Override* params_override,
-                                            fitting::models::Fit_Params_Preset,
-                                            fitting::optimizers::Optimizer* optimizer,
                                             data_struct::Fit_Parameters& out_fitp);
 
 // ----------------------------------------------------------------------------

@@ -68,6 +68,8 @@ namespace data_struct
 
 // ----------------------------------------------------------------------------
 
+    enum class OPTIMIZE_FIT_ROUTINE { ALL_PARAMS, HYBRID };
+
 ///
 /// \brief The Analysis_Job class
 ///
@@ -149,6 +151,8 @@ public:
 
 	std::string update_quant_ds_amps_str;
 
+    OPTIMIZE_FIT_ROUTINE optimize_fit_routine;
+
     //list of quantification standards to use
     vector<Quantification_Standard> standard_element_weights;
 
@@ -160,6 +164,8 @@ protected:
     fitting::optimizers::Optimizer *_optimizer;
 
     size_t _last_init_sample_size;
+
+    
 
 private:
 	bool _first_init;

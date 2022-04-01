@@ -72,6 +72,7 @@ void help()
 //	logit_s<< "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
+    logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
@@ -244,6 +245,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (clp.option_exists("--optimize-fit-routine"))
+    {
+        std::string opt = clp.get_option("--optimize-fit-routine");
+        if (opt == "hybrid")
+        {
+            analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
+        }
+    }
+    
     //Which optimizer do we want to pick. Default is lmfit
     if( clp.option_exists("--optimizer"))
     {

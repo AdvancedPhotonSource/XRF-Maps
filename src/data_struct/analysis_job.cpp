@@ -57,6 +57,7 @@ namespace data_struct
 Analysis_Job::Analysis_Job()
 {
     _optimizer = &_lmfit_optimizer;
+    optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::ALL_PARAMS;
     _last_init_sample_size = 0;
 	_first_init = true;
     num_threads = std::thread::hardware_concurrency();

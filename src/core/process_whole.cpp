@@ -132,12 +132,10 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
-bool optimize_integrated_fit_params(std::string dataset_directory,
+bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
                                     std::string  dataset_filename,
                                     size_t detector_num,
                                     data_struct::Params_Override* params_override,
-                                    fitting::models::Fit_Params_Preset optimize_fit_params_preset,
-                                    fitting::optimizers::Optimizer* optimizer,
                                     data_struct::Fit_Parameters& out_fitp)
 {
     fitting::models::Gaussian_Model model;
@@ -147,7 +145,7 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
     if (params_override != nullptr)
     {
         //load the quantification standard dataset
-        if (false == io::load_and_integrate_spectra_volume(dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
+        if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
         {
             logE << "In optimize_integrated_dataset loading dataset" << dataset_filename << " for detector" << detector_num << "\n";
             return false;
@@ -156,23 +154,35 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
         fitting::models::Range energy_range = data_struct::get_energy_range(int_spectra.size(), &(params_override->fit_params));
 
         //Fitting routines
-        fitting::routines::Param_Optimized_Fit_Routine fit_routine;
-        fit_routine.set_optimizer(optimizer);
-		fit_routine.set_update_coherent_amplitude_on_fit(false);
+        fitting::routines::Param_Optimized_Fit_Routine *fit_routine;
+        
+
+        if (analysis_job->optimize_fit_routine == OPTIMIZE_FIT_ROUTINE::HYBRID)
+        {
+            fit_routine = new fitting::routines::Hybrid_Param_NNLS_Fit_Routine();
+        }
+        else
+        {
+            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
+        }
+
+        fit_routine->set_optimizer(analysis_job->optimizer());
+		fit_routine->set_update_coherent_amplitude_on_fit(false);
 
         //reset model fit parameters to defaults
         model.reset_to_default_fit_params();
         //Update fit parameters by override values
         model.update_fit_params_values(&(params_override->fit_params));
         //set fixed/fit preset
-        model.set_fit_params_preset(optimize_fit_params_preset);
+        model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
 
         //Initialize the fit routine
-        fit_routine.initialize(&model, &params_override->elements_to_fit, energy_range);
+        fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
         //Fit the spectra saving the element counts in element_fit_count_dict
-        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine.fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
         std::string result = optimizer_outcome_to_str(outcome);
+        logI << "Outcome = " << result << "\n";
         switch (outcome)
         {
         case fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED:
@@ -194,7 +204,9 @@ bool optimize_integrated_fit_params(std::string dataset_directory,
             ret_val = false;
             break;
         }
-        io::save_optimized_fit_params(dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+        io::save_optimized_fit_params(analysis_job->dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+
+        delete fit_routine;
     }
     
     return ret_val;
@@ -217,10 +229,9 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
         detector_file_cnt[detector_num] = 0.0;
     }
 
-
-    for(auto &itr : analysis_job->optimize_dataset_files)
+    for (auto& itr : analysis_job->optimize_dataset_files)
     {
-        for(size_t detector_num : analysis_job->detector_num_arr)
+        for (size_t detector_num : analysis_job->detector_num_arr)
         {
             //reuse previous param override if it exists
             if (params.count(detector_num) > 0)
@@ -249,7 +260,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             }
 
             data_struct::Fit_Parameters out_fitp;
-            if (optimize_integrated_fit_params(analysis_job->dataset_directory, itr, detector_num, params_override, analysis_job->optimize_fit_params_preset, analysis_job->optimizer(), out_fitp))
+            if (optimize_integrated_fit_params(analysis_job, itr, detector_num, params_override, out_fitp))
             {
                 detector_file_cnt[detector_num] += 1.0;
                 if (fit_params_avgs.count(detector_num) > 0)

@@ -120,7 +120,7 @@ public:
 
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 
-    virtual void update_fit_params_values(Fit_Parameters *fit_params) { _fit_parameters.update_values(fit_params); }
+    virtual void update_fit_params_values(const Fit_Parameters *fit_params) { _fit_parameters.update_values(fit_params); }
 
     void update_and_add_fit_params_values_gt_zero(Fit_Parameters *fit_params) { _fit_parameters.update_and_add_values_gt_zero(fit_params); }
 

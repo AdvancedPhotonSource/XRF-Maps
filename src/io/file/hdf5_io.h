@@ -253,8 +253,8 @@ private:
 
     bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
 	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
-    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, real_t us_amps_val, real_t us_amps_unti, real_t ds_amps_val, real_t ds_amps_unit);
-    void _save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_t us_amp_sens_unit_val, real_t ds_amp_sens_num_val, real_t ds_amp_sens_unit_val);
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, real_t us_amps_val, std::string us_amps_unit, real_t ds_amps_val, string ds_amps_unit);
+    void _save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, string us_amp_sens_unit_val, real_t ds_amp_sens_num_val, string ds_amp_sens_unit_val);
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);

@@ -62,12 +62,6 @@ namespace file
 namespace aps
 {
 
-#ifdef _REAL_DOUBLE
-	#define str_to_real std::stod
-#else
-	#define str_to_real std::stof
-#endif
-
 DLL_EXPORT bool load_parameters_override(std::string path, Params_Override *params_override);
 
 DLL_EXPORT bool save_parameters_override(std::string path, Params_Override *params_override);
