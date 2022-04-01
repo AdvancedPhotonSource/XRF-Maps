@@ -75,7 +75,7 @@ public:
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           std::unordered_map<std::string, real_t>& out_counts);
 
-    OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
+    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
                                           const Spectra * const spectra,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
                                           Fit_Parameters& out_fit_params,

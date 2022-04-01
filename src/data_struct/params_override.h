@@ -76,10 +76,10 @@ public:
         si_escape_enabled = false;
         ge_escape_enabled = false;
         fit_snip_width = 0.5;
-        us_amp_sens_num = 0.0;
-        us_amp_sens_unit = 0.0;
-        ds_amp_sens_num = 0.0;
-        ds_amp_sens_unit = 0.0;
+        us_amp_sens_num = -1;
+        us_amp_sens_unit = "";
+        ds_amp_sens_num = -1;
+        ds_amp_sens_unit = "";
         theta_pv = "";
         sr_current = 0.0;
         US_IC = 0.0;
@@ -102,10 +102,10 @@ public:
         si_escape_enabled = false;
         ge_escape_enabled = false;
         fit_snip_width = 0.0;
-        us_amp_sens_num = 0.0;
-        us_amp_sens_unit = 0.0;
-        ds_amp_sens_num = 0.0;
-        ds_amp_sens_unit = 0.0;
+        us_amp_sens_num = -1;
+        us_amp_sens_unit = "";
+        ds_amp_sens_num = -1;
+        ds_amp_sens_unit = "";
         theta_pv = "";
         sr_current = 0.0;
         US_IC = 0.0;
@@ -231,11 +231,6 @@ public:
     string ge_dead_layer;
     string airpath;
 
-    string us_amp_sens_num_pv;
-    string us_amp_sens_unit_pv;
-    string ds_amp_sens_num_pv;
-    string ds_amp_sens_unit_pv;
-
     string theta_pv;
 
     vector<string> branching_family_L;
@@ -249,9 +244,9 @@ public:
     real_t DS_IC;
 
     real_t us_amp_sens_num;
-    real_t us_amp_sens_unit;
+    string us_amp_sens_unit;
     real_t ds_amp_sens_num;
-    real_t ds_amp_sens_unit;
+    string ds_amp_sens_unit;
 
 };
 

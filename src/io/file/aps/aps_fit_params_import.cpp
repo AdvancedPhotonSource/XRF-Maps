@@ -149,6 +149,69 @@ const std::vector<std::string> Updatable_detector_dependand_TAGS = {
                                                                 "OCR1"
 };
 
+real_t translate_sens_num(string value)
+{
+    if (value == "0")
+    {
+        return 1.;
+    }
+    else if (value == "1")
+    {
+        return 2.;
+    }
+    else if (value == "2")
+    {
+        return 5.;
+    }
+    else if (value == "3")
+    {
+        return 10.;
+    }
+    else if (value == "4")
+    {
+        return 20.;
+    }
+    else if (value == "5")
+    {
+        return 50.;
+    }
+    else if (value == "6")
+    {
+        return 100.;
+    }
+    else if (value == "7")
+    {
+        return 200.;
+    }
+    else if (value == "8")
+    {
+        return 500.;
+    }
+    return -1;
+}
+ 
+
+string translate_sens_unit(string value)
+{
+    if (value == "0")
+    {
+        return "pA/V";
+    }
+    else if (value == "1")
+    {
+        return "nA/V";
+    }
+    else if (value == "2")
+    {
+        return "uA/V";
+    }
+    else if (value == "3")
+    {
+        return "mA/V";
+    }
+    return "";
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -437,42 +500,6 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                         logE<<"Unknown detector element enumeration : "<<value<<"\n";
                     }
                 }
-                else if (tag == "US_AMP_SENS_NUM_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_num_pv = value;
-                }
-                else if (tag == "US_AMP_SENS_UNIT_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_unit_pv = value;
-                }
-                else if (tag == "DS_AMP_SENS_NUM_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_num_pv = value;
-                }
-                else if (tag == "DS_AMP_SENS_UNIT_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_unit_pv = value;
-                }
                 else if (tag == "US_AMP_SENS_NUM")
                 {
                     std::string value;
@@ -480,7 +507,8 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_num = str_to_real(value);
+                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                    params_override->us_amp_sens_num = translate_sens_num(value);
                 }
                 else if (tag == "US_AMP_SENS_UNIT")
                 {
@@ -489,7 +517,8 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_unit = str_to_real(value);
+                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                    params_override->us_amp_sens_unit = translate_sens_unit(value);
                 }
                 else if (tag == "DS_AMP_SENS_NUM")
                 {
@@ -498,7 +527,8 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_num = str_to_real(value);
+                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                    params_override->ds_amp_sens_num = translate_sens_num(value);
                 }
                 else if (tag == "DS_AMP_SENS_UNIT")
                 {
@@ -507,7 +537,44 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_unit = str_to_real(value);
+                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                    params_override->ds_amp_sens_unit = translate_sens_unit(value);
+                }
+                else if (tag == "US_AMP_NUM")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_num = str_to_real(value);
+                }
+                else if (tag == "US_AMP_UNIT")
+                {
+                    std::string value;
+                    std::getline(strstream, value);
+                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                    params_override->us_amp_sens_unit = value;
+                }
+                else if (tag == "DS_AMP_NUM")
+                {
+                std::string value;
+                std::getline(strstream, value);
+                value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                params_override->ds_amp_sens_num = str_to_real(value);
+                }
+                else if (tag == "DS_AMP_UNIT")
+                {
+                std::string value;
+                std::getline(strstream, value);
+                value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                params_override->ds_amp_sens_unit = value;
                 }
                 else if (tag == "BE_WINDOW_THICKNESS")
                 {

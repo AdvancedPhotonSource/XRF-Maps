@@ -43,78 +43,55 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ***/
 
-/// Initial Author <2016>: Arthur Glowacki
+/// Initial Author <2022>: Arthur Glowacki
 
 
 
-#ifndef Matrix_Optimized_Fit_Routine_H
-#define Matrix_Optimized_Fit_Routine_H
+#ifndef Hybrid_Param_NNLS_Fit_Routine_H
+#define Hybrid_Param_NNLS_Fit_Routine_H
 
-#include <mutex>
-
-#include "fitting/routines/param_optimized_fit_routine.h"
-#include "data_struct/fit_parameters.h"
+#include "fitting/routines/nnls_fit_routine.h"
 
 namespace fitting
 {
 namespace routines
 {
 
-using namespace data_struct;
 using namespace std;
+using namespace data_struct;
+using namespace fitting::optimizers;
 
-/**
- * @brief The Matrix_Optimized_Fit_Routine class : Matrix fit model
- */
-class DLL_EXPORT Matrix_Optimized_Fit_Routine: public Param_Optimized_Fit_Routine
+class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public NNLS_Fit_Routine
 {
 public:
-    Matrix_Optimized_Fit_Routine();
+    Hybrid_Param_NNLS_Fit_Routine();
 
-    virtual ~Matrix_Optimized_Fit_Routine();
+	virtual ~Hybrid_Param_NNLS_Fit_Routine();
 
-    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
+    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
                                           const Spectra * const spectra,
                                           const Fit_Element_Map_Dict * const elements_to_fit,
-                                          std::unordered_map<std::string, real_t>& out_counts);
+                                          Fit_Parameters& out_fit_params,
+                                          Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual std::string get_name() { return STR_FIT_GAUSS_MATRIX; }
+    virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
 
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
-                            const struct Range energy_range);
-
-    virtual void model_spectrum(const Fit_Parameters * const fit_params,
-                        const struct Range * const energy_range,
-					    Spectra* spectra_model);
-
-    const Spectra& fitted_integrated_spectra() {return _integrated_fitted_spectra;}
-
-    const Spectra& fitted_integrated_background() { return _integrated_background; }
-
-	const Spectra& max_integrated_spectra() { return _max_channels_spectra; }
-
-	const Spectra& max_10_integrated_spectra() { return _max_10_channels_spectra; }
+    virtual void model_spectrum(const Fit_Parameters* const fit_params,
+                                const struct Range* const energy_range,
+                                Spectra* spectra_model);
 
 protected:
 
-    unordered_map<string, Spectra> _generate_element_models(models::Base_Model * const model,
-                                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                                            struct Range energy_range);
-
-	data_struct::Spectra _integrated_fitted_spectra;
-    data_struct::Spectra _integrated_background;
-	data_struct::Spectra _max_channels_spectra;
-	data_struct::Spectra _max_10_channels_spectra;
-
-    unordered_map<string, Spectra> _element_models;
-
-    static std::mutex _int_spec_mutex;
-
+private:
+    models::Base_Model* _model;
+    ArrayXr _background;
+    const Fit_Element_Map_Dict* _elements_to_fit;
+    const data_struct::Spectra* _spectra;
+    
 };
 
 } //namespace routines
 
 } //namespace fitting
 
-#endif // Matrix_Optimized_Fit_Routine_H
+#endif // Hybrid_Param_NNLS_Fit_Routine_H

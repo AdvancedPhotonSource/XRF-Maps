@@ -76,6 +76,12 @@ public:
                                         const Fit_Element_Map_Dict* const elements_to_fit,
                                         std::unordered_map<std::string, real_t>& out_counts);
 
+    // similar to fit_spectra but want to return model instead of counts
+    void fit_spectrum_model(const Spectra* const spectra,
+                            const ArrayXr* const background,
+                            const Fit_Element_Map_Dict* const elements_to_fit,
+                            Spectra* spectra_model);
+
     virtual std::string get_name() { return STR_FIT_NNLS; }
 
     virtual void initialize(models::Base_Model * const model,
@@ -86,9 +92,9 @@ protected:
 
     void _generate_fitmatrix();
 
-private:
-
     size_t _max_iter;
+
+private:
 
     Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
 
