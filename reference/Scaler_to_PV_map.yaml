@@ -153,7 +153,11 @@ BeamLines:
         US_IC: 8bmb:3820:mca2.VAL
         DS_IC: 8bmb:3820:mca3.VAL
   9IDB:
-    Scalers:     
+    Scalers:
+      US_AMP_NUM: 9idbBNP:A5sens_num.VAL
+      US_AMP_UNIT: 9idbBNP:A5sens_unit.VAL
+      DS_AMP_NUM: 9idbBNP:A1sens_num.VAL
+      DS_AMP_UNIT: 9idbBNP:A1sens_unit.VAL
       US_IC: 21:D3:scaler1_cts2.B
       CFG_2: 21:D3:scaler1_cts1.B
       CFG_3: 21:D3:scaler1_cts1.C

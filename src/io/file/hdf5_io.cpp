@@ -5619,7 +5619,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, real_t us_amps_val, real_t us_amps_unti, real_t ds_amps_val, real_t ds_amps_unit)
+bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, real_t us_amps_val, string us_amps_unit, real_t ds_amps_val, string ds_amps_unit)
 {
 
     hid_t dataspace_values_id = -1, memoryspace_id = -1, dataspace_names_id = -1, memoryspace_str_id = -1;
@@ -5662,7 +5662,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
         return false;
     }
 
-    _save_amps(scalers_grp_id, us_amps_val, us_amps_unti, ds_amps_val, ds_amps_unit);
+    _save_amps(scalers_grp_id, us_amps_val, us_amps_unit, ds_amps_val, ds_amps_unit);
 
     if (scalers_map != nullptr && scalers_map->size() > 0)
     {
@@ -5866,7 +5866,70 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_t us_amp_sens_unit_val, real_t ds_amp_sens_num_val, real_t ds_amp_sens_unit_val)
+real_t translate_back_sens_num(int value)
+{
+    if (value == 1)
+    {
+        return 0.;
+    }
+    else if (value == 2)
+    {
+        return 1.;
+    }
+    else if (value == 5)
+    {
+        return 2.;
+    }
+    else if (value == 10)
+    {
+        return 3.;
+    }
+    else if (value == 20)
+    {
+        return 4.;
+    }
+    else if (value == 50)
+    {
+        return 5.;
+    }
+    else if (value == 100)
+    {
+        return 6.;
+    }
+    else if (value == 200)
+    {
+        return 7.;
+    }
+    else if (value == 500)
+    {
+        return 8.;
+    }
+    return -1.;
+}
+
+
+real_t translate_back_sens_unit(string value)
+{
+    if (value == "pA/V")
+    {
+        return 0;
+    }
+    else if (value == "nA/V")
+    {
+        return 1;
+    }
+    else if (value == "uA/V")
+    {
+        return 2;
+    }
+    else if (value == "mA/V")
+    {
+        return 3;
+    }
+    return -1;
+}
+
+void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, string us_amp_sens_unit_val, real_t ds_amp_sens_num_val, string ds_amp_sens_unit_val)
 {
     
     hid_t dataspace_us_id, dataspace_ds_id, memoryspace_id;
@@ -5885,104 +5948,11 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_
     status = H5Tset_size(memtype, 255);
 	std::string units;
 
-    real_t trans_us_amp_sens_num_val;
-    std::string trans_us_amp_sens_unit;
-    real_t trans_ds_amp_sens_num_val;
-    std::string trans_ds_amp_sens_unit;
-
-    switch((int)us_amp_sens_num_val)
-    {
-        case 0:
-            trans_us_amp_sens_num_val = 1;
-            break;
-        case 1:
-            trans_us_amp_sens_num_val = 2;
-            break;
-        case 2:
-            trans_us_amp_sens_num_val = 5;
-            break;
-        case 3:
-            trans_us_amp_sens_num_val = 10;
-            break;
-        case 4:
-            trans_us_amp_sens_num_val = 20;
-            break;
-        case 5:
-            trans_us_amp_sens_num_val = 50;
-            break;
-        case 6:
-            trans_us_amp_sens_num_val = 100;
-            break;
-        case 7:
-            trans_us_amp_sens_num_val = 200;
-            break;
-        case 8:
-            trans_us_amp_sens_num_val = 500;
-            break;
-    }
-    switch((int)ds_amp_sens_num_val)
-    {
-        case 0:
-            trans_ds_amp_sens_num_val = 1;
-            break;
-        case 1:
-            trans_ds_amp_sens_num_val = 2;
-            break;
-        case 2:
-            trans_ds_amp_sens_num_val = 5;
-            break;
-        case 3:
-            trans_ds_amp_sens_num_val = 10;
-            break;
-        case 4:
-            trans_ds_amp_sens_num_val = 20;
-            break;
-        case 5:
-            trans_ds_amp_sens_num_val = 50;
-            break;
-        case 6:
-            trans_ds_amp_sens_num_val = 100;
-            break;
-        case 7:
-            trans_ds_amp_sens_num_val = 200;
-            break;
-        case 8:
-            trans_ds_amp_sens_num_val = 500;
-            break;
-    }
-
-    switch((int)us_amp_sens_unit_val)
-    {
-        case 0:
-            trans_us_amp_sens_unit= "pA/V";
-            break;
-        case 1:
-            trans_us_amp_sens_unit= "nA/V";
-            break;
-        case 2:
-            trans_us_amp_sens_unit= "uA/V";
-            break;
-        case 3:
-            trans_us_amp_sens_unit= "mA/V";
-            break;
-    }
-
-    switch((int)ds_amp_sens_unit_val)
-    {
-        case 0:
-            trans_ds_amp_sens_unit= "pA/V";
-            break;
-        case 1:
-            trans_ds_amp_sens_unit= "nA/V";
-            break;
-        case 2:
-            trans_ds_amp_sens_unit= "uA/V";
-            break;
-        case 3:
-            trans_ds_amp_sens_unit= "mA/V";
-            break;
-    }
-
+    real_t trans_us_amp_sens_num_val = translate_back_sens_num((int)us_amp_sens_num_val);
+    real_t trans_us_amp_sens_unit_val = translate_back_sens_unit(us_amp_sens_unit_val);;
+    real_t trans_ds_amp_sens_num_val = translate_back_sens_num((int)ds_amp_sens_num_val);;
+    real_t trans_ds_amp_sens_unit_val = translate_back_sens_unit(ds_amp_sens_unit_val);;
+    
     if (false == _open_h5_dataset(STR_US_AMP, H5T_INTEL_R, scalers_grp_id, 1, count, count, dset_us_id, dataspace_us_id))
     {
         return;
@@ -5995,28 +5965,28 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_
     count[0] = 1;
     _create_memory_space(1, count, memoryspace_id);
     H5Sselect_hyperslab(dataspace_us_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&us_amp_sens_num_val);
+    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&trans_us_amp_sens_num_val);
 
     offset[0] = 1;
     H5Sselect_hyperslab(dataspace_us_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&us_amp_sens_unit_val);
+    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&trans_us_amp_sens_unit_val);
 
     offset[0] = 2;
     H5Sselect_hyperslab(dataspace_us_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&trans_us_amp_sens_num_val);
+    status = H5Dwrite(dset_us_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_us_id, H5P_DEFAULT, (void*)&us_amp_sens_num_val);
 
 
     offset[0] = 0;
     H5Sselect_hyperslab(dataspace_ds_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&ds_amp_sens_num_val);
+    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&trans_ds_amp_sens_num_val);
 
     offset[0] = 1;
     H5Sselect_hyperslab(dataspace_ds_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&ds_amp_sens_unit_val);
+    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&trans_ds_amp_sens_unit_val);
 
     offset[0] = 2;
     H5Sselect_hyperslab(dataspace_ds_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&trans_ds_amp_sens_num_val);
+    status = H5Dwrite(dset_ds_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_ds_id, H5P_DEFAULT, (void*)&ds_amp_sens_num_val);
 
     offset[0] = 0;
     count[0] = 1;
@@ -6026,23 +5996,23 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, real_
         return;
     }
     H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&trans_us_amp_sens_num_val);
+    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&us_amp_sens_num_val);
 
     if (false == _open_h5_dataset(STR_DS_AMP_NUM, H5T_INTEL_R, scalers_grp_id, 1, count, count, dset_id, dataspace_id))
     {
         return;
     }
-    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&trans_ds_amp_sens_num_val);
+    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&ds_amp_sens_num_val);
 
 
-    trans_us_amp_sens_unit.copy(tmp_char, 254);
+    us_amp_sens_unit_val.copy(tmp_char, 254);
     if (false == _open_h5_dataset(STR_US_AMP_UNIT, filetype, scalers_grp_id, 1, count, count, dset_id, dataspace_id))
     {
         return;
     }
     status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
 
-    trans_ds_amp_sens_unit.copy(tmp_char, 254);
+    ds_amp_sens_unit_val.copy(tmp_char, 254);
     if (false == _open_h5_dataset(STR_DS_AMP_UNIT, filetype, scalers_grp_id, 1, count, count, dset_id, dataspace_id))
     {
         return;
@@ -6105,6 +6075,36 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 	
     _save_extras(scan_grp_id, &(scan_info->extra_pvs));
 	
+    // if us_amps is not set in override file, search for it in extra_pvs
+    if (params_override->us_amp_sens_num == -1 || params_override->ds_amp_sens_num == -1)
+    {
+        string label = "";
+        string beamline = "";
+        bool is_time_normalized = false;
+        for (auto& itr : scan_info->extra_pvs)
+        {
+            if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, label, is_time_normalized, beamline))
+            {
+                if (label == STR_US_AMP_NUM_UPPR)
+                {
+                    params_override->us_amp_sens_num = str_to_real(itr.value);
+                }
+                else if (label == STR_US_AMP_UNIT_UPPR)
+                {
+                    params_override->us_amp_sens_unit = itr.value;
+                }
+                if (label == STR_DS_AMP_NUM_UPPR)
+                {
+                    params_override->ds_amp_sens_num = str_to_real(itr.value);
+                }
+                else if (label == STR_DS_AMP_UNIT_UPPR)
+                {
+                    params_override->ds_amp_sens_unit = itr.value;
+                }
+            }
+        }
+    }
+
     _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
 
     _close_h5_objects(_global_close_map);
