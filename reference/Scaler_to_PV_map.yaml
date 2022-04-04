@@ -129,8 +129,8 @@ BeamLines:
         CFG_9: 2xfm:mcs:mca18.VAL
   8BMB:
     Scalers:
-      US_AMP_NUM: 8bmb:A5sens_num.VAL
-      US_AMP_UNIT: 8bmb:A5sens_unit.VAL
+      US_AMP_NUM: 8bmb:A2sens_num.VAL
+      US_AMP_UNIT: 8bmb:A2sens_unit.VAL
       DS_AMP_NUM: 8bmb:A1sens_num.VAL
       DS_AMP_UNIT: 8bmb:A1sens_unit.VAL
       US_IC: 8bmb:3820:scaler1_cts1.B

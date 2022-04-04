@@ -344,6 +344,13 @@ bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ra
 				break;
 			}
 		}
+        else if (_shell_type == "M")
+        {
+            if (_element_info->bindingE["M1"] < incident_energy)
+            {
+                return true;
+            }
+        }
 		else
 		{
 
