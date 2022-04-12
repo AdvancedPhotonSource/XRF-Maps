@@ -36,6 +36,10 @@ BeamLines:
         DS_IC: 2idd:3820:mca2.VAL
   2IDE:
     Scalers:
+      US_AMP_NUM: 2xfm:A1sens_num.VAL
+      US_AMP_UNIT: 2xfm:A1sens_unit.VAL
+      DS_AMP_NUM: 2xfm:A2sens_num.VAL
+      DS_AMP_UNIT: 2xfm:A2sens_unit.VAL
       US_IC: 
         - 2xfm:scaler3_cts1.B
         - 2xfm:scaler1_cts1.B
