@@ -7,6 +7,10 @@ BeamLines:
       DS_IC: I1
   2IDD:
     Scalers:
+      US_AMP_NUM: 2idd:A2sens_num.VAL
+      US_AMP_UNIT: 2idd:A2sens_unit.VAL
+      DS_AMP_NUM: 2idd:A4sens_num.VAL
+      DS_AMP_UNIT: 2idd:A4sens_unit.VAL
       US_IC: 2idd:scaler1_cts1.C
       DS_IC: 2idd:scaler1_cts1.B
       ELT1: 2iddXMAP:mca1.ELTM

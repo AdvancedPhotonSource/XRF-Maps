@@ -406,6 +406,8 @@ const Spectra Gaussian_Model::model_spectrum_mp(const Fit_Parameters * const fit
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
+    //   agr_spectra += escape_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+
     return agr_spectra;
 }
 
