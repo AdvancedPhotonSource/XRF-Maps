@@ -228,7 +228,10 @@ size_t NetCDF_IO::_load_spectra(E_load_type ltype,
 
     for(; j<spec_cntr; j++)
     {
-        (*spec_line)[j].resize(spectra_size); // should be renames to resize
+		if (ltype == E_load_type::LINE)
+		{
+			(*spec_line)[j].resize(spectra_size); // should be renames to resize
+		}
 
         //read header
         if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
