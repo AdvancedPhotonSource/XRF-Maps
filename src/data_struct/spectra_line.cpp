@@ -52,12 +52,18 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-Spectra_Line::Spectra_Line()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+Spectra_Line<T_real>::Spectra_Line()
 {
 
 }
 
-Spectra_Line::~Spectra_Line()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+Spectra_Line<T_real>::~Spectra_Line()
 {
     /*
     for(auto spec : _data_line)
@@ -67,25 +73,37 @@ Spectra_Line::~Spectra_Line()
     _data_line.clear();
     */
 }
+
+// ----------------------------------------------------------------------------
+
 /*
-void Spectra_Line::append_spectra(Spectra* spectra)
+void Spectra_Line<T_real>::append_spectra(Spectra* spectra)
 {
    _data_line.push_back(spectra);
 }
 */
 
-void Spectra_Line::resize_and_zero(size_t cols, size_t samples)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Line<T_real>::resize_and_zero(size_t cols, size_t samples)
 {
     alloc_row_size(cols);
     _alloc_spectra_size(samples);
 }
 
-void Spectra_Line::alloc_row_size(size_t n)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Line<T_real>::alloc_row_size(size_t n)
 {
     _data_line.resize(n);
 }
 
-void Spectra_Line::_alloc_spectra_size(size_t n)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Line<T_real>::_alloc_spectra_size(size_t n)
 {
     for(size_t i=0; i<_data_line.size(); i++)
     {
@@ -100,7 +118,10 @@ void Spectra_Line::_alloc_spectra_size(size_t n)
     //_data_line.resize(n);
 }
 
-void Spectra_Line::recalc_elapsed_livetime()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Line<T_real>::recalc_elapsed_livetime()
 {
     for(size_t i=0; i<_data_line.size(); i++)
     {

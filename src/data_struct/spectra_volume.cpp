@@ -52,17 +52,26 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-Spectra_Volume::Spectra_Volume()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+Spectra_Volume<T_real>::Spectra_Volume()
 {
 
 }
 
-Spectra_Volume::~Spectra_Volume()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+Spectra_Volume<T_real>::~Spectra_Volume()
 {
 
 }
 
-void Spectra_Volume::resize_and_zero(size_t rows, size_t cols, size_t samples)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Volume<T_real>::resize_and_zero(size_t rows, size_t cols, size_t samples)
 {
 
     _data_vol.resize(rows);
@@ -73,14 +82,17 @@ void Spectra_Volume::resize_and_zero(size_t rows, size_t cols, size_t samples)
 
 }
 
-Spectra Spectra_Volume::integrate()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+Spectra<T_real> Spectra_Volume<T_real>::integrate()
 {
 
-    Spectra i_spectra(_data_vol[0][0].size());
-    real_t elt = 0.0;
-    real_t ert = 0.0;
-    real_t in_cnt = 0.0;
-    real_t out_cnt = 0.0;
+    Spectra<T_real> i_spectra(_data_vol[0][0].size());
+    T_real elt = 0.0;
+    T_real ert = 0.0;
+    T_real in_cnt = 0.0;
+    T_real out_cnt = 0.0;
     for(size_t i = 0; i < _data_vol.size(); i++)
     {
         for(size_t j = 0; j < _data_vol[0].size(); j++)
@@ -103,7 +115,10 @@ Spectra Spectra_Volume::integrate()
     return i_spectra;
 }
 
-void Spectra_Volume::recalc_elapsed_livetime()
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 {
 
     for(size_t i=0; i<_data_vol.size(); i++)
@@ -113,7 +128,10 @@ void Spectra_Volume::recalc_elapsed_livetime()
 
 }
 
-void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Volume<T_real>::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {
@@ -155,5 +173,7 @@ void Spectra_Volume::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
         scaler_maps->push_back(dead_time_map);
     }
 }
+
+// ----------------------------------------------------------------------------
 
 } //namespace data_struct

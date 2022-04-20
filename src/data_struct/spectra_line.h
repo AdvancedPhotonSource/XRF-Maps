@@ -59,6 +59,7 @@ namespace data_struct
 /**
  * @brief The Spectra_Line class : A row of spectras
  */
+template<typename T_real>
 class DLL_EXPORT Spectra_Line
 {
 public:
@@ -83,7 +84,7 @@ private:
 
     void _alloc_spectra_size(size_t n);
 
-    std::vector<Spectra> _data_line;
+    std::vector<Spectra<T_real> > _data_line;
 
 };
 

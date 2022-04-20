@@ -59,23 +59,24 @@ namespace routines
 
 using namespace data_struct;
 
-class DLL_EXPORT ROI_Fit_Routine: public Base_Fit_Routine
+template<typename T_real>
+class DLL_EXPORT ROI_Fit_Routine: public Base_Fit_Routine<T_real>
 {
 public:
     ROI_Fit_Routine();
 
 	virtual ~ROI_Fit_Routine();
 
-    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
-                                                      const Spectra * const spectra,
-                                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                                      std::unordered_map<std::string, real_t>& out_counts);
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
+                                                      const Spectra<T_real>* const spectra,
+                                                      const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                      std::unordered_map<std::string, T_real>& out_counts);
 
 
     virtual std::string get_name() { return STR_FIT_ROI; }
 
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
+    virtual void initialize(models::Base_Model<T_real>* const model,
+                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range);
 
 protected:

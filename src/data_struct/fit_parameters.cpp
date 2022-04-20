@@ -55,7 +55,10 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-const std::string Fit_Param::bound_type_str() const
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+const std::string Fit_Param<T_real>::bound_type_str() const
 {
     switch (bound_type)
     {
@@ -81,7 +84,10 @@ const std::string Fit_Param::bound_type_str() const
     return "N/A";
 }
 
-Fit_Parameters::Fit_Parameters(const Fit_Parameters& fit_pars)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Fit_Parameters<T_real>::Fit_Parameters(const Fit_Parameters& fit_pars)
 {
     _params.clear();
     for(const auto& itr : fit_pars._params)
@@ -90,12 +96,18 @@ Fit_Parameters::Fit_Parameters(const Fit_Parameters& fit_pars)
     }
 }
 
-void Fit_Parameters::add_parameter(Fit_Param param)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::add_parameter(Fit_Param<T_real> param)
 {
     _params[param.name] = param;
 }
 
-void Fit_Parameters::append_and_update(const Fit_Parameters& fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::append_and_update(const Fit_Parameters& fit_params)
 {
 	for (std::unordered_map<std::string, Fit_Param>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
 	{
@@ -103,9 +115,12 @@ void Fit_Parameters::append_and_update(const Fit_Parameters& fit_params)
 	}
 }
 
-std::vector<real_t> Fit_Parameters::to_array()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+std::vector<T_real> Fit_Parameters<T_real>::to_array()
 {
-    std::vector<real_t> arr;
+    std::vector<T_real> arr;
     for(const auto& itr : _params)
     {
         if (itr.second.bound_type != E_Bound_Type::FIXED)
@@ -117,7 +132,10 @@ std::vector<real_t> Fit_Parameters::to_array()
     return arr;
 }
 
-std::vector<std::string> Fit_Parameters::names_to_array()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+std::vector<std::string> Fit_Parameters<T_real>::names_to_array()
 {
     std::vector<std::string> arr;
     for(const auto& itr : _params)
@@ -128,7 +146,10 @@ std::vector<std::string> Fit_Parameters::names_to_array()
     return arr;
 }
 
-void Fit_Parameters::sum_values(Fit_Parameters fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::sum_values(Fit_Parameters fit_params)
 {
     for(const auto &itr : _params)
     {
@@ -139,7 +160,10 @@ void Fit_Parameters::sum_values(Fit_Parameters fit_params)
     }
 }
 
-void Fit_Parameters::divide_fit_values_by(real_t divisor)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::divide_fit_values_by(real_t divisor)
 {
     for(const auto &itr : _params)
     {
@@ -151,12 +175,18 @@ void Fit_Parameters::divide_fit_values_by(real_t divisor)
 
 }
 
-void Fit_Parameters::from_array(std::vector<real_t> &arr)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::from_array(std::vector<T_real> &arr)
 {
     from_array(&arr[0], arr.size());
 }
 
-void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::from_array(const T_real* arr, size_t arr_size)
 {
     //logit_s<<"\n";
     for(auto& itr : _params)
@@ -169,7 +199,10 @@ void Fit_Parameters::from_array(const real_t* arr, size_t arr_size)
     //logit_s<<"\n";
 }
 
-void Fit_Parameters::set_all_value(real_t value, E_Bound_Type btype)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::set_all_value(T_real value, E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
@@ -179,7 +212,10 @@ void Fit_Parameters::set_all_value(real_t value, E_Bound_Type btype)
     }
 }
 
-void Fit_Parameters::set_all(E_Bound_Type btype)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::set_all(E_Bound_Type btype)
 {
     for(auto& itr : _params)
     {
@@ -188,7 +224,10 @@ void Fit_Parameters::set_all(E_Bound_Type btype)
     }
 }
 
-void Fit_Parameters::update_values(const Fit_Parameters *override_fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::update_values(const Fit_Parameters *override_fit_params)
 {
     for(auto& itr : _params)
     {
@@ -214,7 +253,10 @@ void Fit_Parameters::update_values(const Fit_Parameters *override_fit_params)
     }
 }
 
-void Fit_Parameters::update_and_add_values(Fit_Parameters *override_fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::update_and_add_values(Fit_Parameters *override_fit_params)
 {
     for(auto& itr : *override_fit_params)
     {
@@ -222,7 +264,10 @@ void Fit_Parameters::update_and_add_values(Fit_Parameters *override_fit_params)
     }
 }
 
-void Fit_Parameters::update_and_add_values_gt_zero(Fit_Parameters *override_fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::update_and_add_values_gt_zero(Fit_Parameters *override_fit_params)
 {
     for(auto& itr : *override_fit_params)
     {
@@ -233,7 +278,10 @@ void Fit_Parameters::update_and_add_values_gt_zero(Fit_Parameters *override_fit_
     }
 }
 
-void Fit_Parameters::print()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::print()
 {
     for(const auto& itr : _params)
     {
@@ -243,7 +291,10 @@ void Fit_Parameters::print()
 
 }
 
-void Fit_Parameters::print_non_fixed()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::print_non_fixed()
 {
     for(const auto& itr : _params)
     {
@@ -256,7 +307,10 @@ void Fit_Parameters::print_non_fixed()
 
 }
 
-void Fit_Parameters::remove(Fit_Parameters* override_fit_params)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::remove(Fit_Parameters* override_fit_params)
 {
     for (auto& itr : *override_fit_params)
     {
@@ -267,7 +321,10 @@ void Fit_Parameters::remove(Fit_Parameters* override_fit_params)
     }
 }
 
-void Fit_Parameters::remove(std::string key)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::remove(std::string key)
 {
     if (_params.count(key) > 0)
     {
@@ -276,7 +333,10 @@ void Fit_Parameters::remove(std::string key)
 
 }
 
-Range get_energy_range(size_t spectra_size, Fit_Parameters* params)
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+template<typename T_real>
+Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params)
 {
 	return get_energy_range(params->value(STR_MIN_ENERGY_TO_FIT),
 							params->value(STR_MAX_ENERGY_TO_FIT),
@@ -286,7 +346,9 @@ Range get_energy_range(size_t spectra_size, Fit_Parameters* params)
 }
 
 
-Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope)
+//-----------------------------------------------------------------------------
+template<typename T_real>
+Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope)
 {
 
 	struct Range energy_range;
@@ -304,5 +366,7 @@ Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size
 	return energy_range;
 
 }
+
+//-----------------------------------------------------------------------------
 
 } //namespace data_struct

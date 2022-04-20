@@ -113,8 +113,8 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
-                        const fitting::models::Base_Model * const model,
-                        const data_struct::Spectra * const spectra,
+                        const fitting::models::Base_Model<real_t> * const model,
+                        const data_struct::Spectra<real_t> * const spectra,
                         const data_struct::Fit_Element_Map_Dict * const elements_to_fit,
                         data_struct::Fit_Count_Dict * out_fit_counts,
                         size_t i,
@@ -126,7 +126,7 @@ DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job* analys
                                             std::string  dataset_filename,
                                             size_t detector_num,
                                             data_struct::Params_Override* params_override,
-                                            data_struct::Fit_Parameters& out_fitp);
+                                            data_struct::Fit_Parameters<double>& out_fitp);
 
 // ----------------------------------------------------------------------------
 

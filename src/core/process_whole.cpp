@@ -86,8 +86,8 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
 // ----------------------------------------------------------------------------
 
 bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
-                        const fitting::models::Base_Model * const model,
-                        const data_struct::Spectra * const spectra,
+                        const fitting::models::Base_Model<real_t> * const model,
+                        const data_struct::Spectra<real_t> * const spectra,
                         const data_struct::Fit_Element_Map_Dict * const elements_to_fit,
                         data_struct::Fit_Count_Dict * out_fit_counts,
                         size_t i,
@@ -136,11 +136,11 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
                                     std::string  dataset_filename,
                                     size_t detector_num,
                                     data_struct::Params_Override* params_override,
-                                    data_struct::Fit_Parameters& out_fitp)
+                                    data_struct::Fit_Parameters<double>& out_fitp)
 {
-    fitting::models::Gaussian_Model model;
+    fitting::models::Gaussian_Model<double> model;
     bool ret_val = false;
-    data_struct::Spectra int_spectra;
+    data_struct::Spectra<double> int_spectra;
 
     if (params_override != nullptr)
     {
@@ -151,7 +151,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
             return false;
         }
         //Range of energy in spectra to fit
-        fitting::models::Range energy_range = data_struct::get_energy_range(int_spectra.size(), &(params_override->fit_params));
+        fitting::models::Range energy_range = data_struct::get_energy_range<double>(int_spectra.size(), &(params_override->fit_params));
 
         //Fitting routines
         fitting::routines::Param_Optimized_Fit_Routine *fit_routine;
@@ -217,7 +217,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
 
 void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 {
-    std::unordered_map<int, data_struct::Fit_Parameters> fit_params_avgs;
+    std::unordered_map<int, data_struct::Fit_Parameters<double>> fit_params_avgs;
     std::unordered_map<int, data_struct::Params_Override*> params;
     std::unordered_map<int, float> detector_file_cnt;
     data_struct::Params_Override* params_override = nullptr;
@@ -259,7 +259,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 				
             }
 
-            data_struct::Fit_Parameters out_fitp;
+            data_struct::Fit_Parameters<double> out_fitp;
             if (optimize_integrated_fit_params(analysis_job, itr, detector_num, params_override, out_fitp))
             {
                 detector_file_cnt[detector_num] += 1.0;

@@ -67,10 +67,10 @@ using namespace quantification::models;
 
 const static vector<Electron_Shell> Shells_Quant_List({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
 
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct DLL_EXPORT Quantification_Scaler_Struct
 {
     Quantification_Scaler_Struct(unsigned int max_z= CALIBRATION_CURVE_SIZE)
@@ -91,6 +91,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct DLL_EXPORT Fitting_Quantification_Struct
 {
     Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 92 (U)
@@ -112,7 +113,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
         }
     }
 
-    void update_weight(Electron_Shell shell, unsigned int Z, real_t weight)
+    void update_weight(Electron_Shell shell, unsigned int Z, T_real weight)
     {
         for (auto& itr : quant_scaler_map)
         {
@@ -121,7 +122,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
     }
 
     //            Quantifier {SR_Current, US_IC, DS_IC}
-    unordered_map<string, Quantification_Scaler_Struct> quant_scaler_map;
+    unordered_map<string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
 };
 
 //-----------------------------------------------------------------------------
@@ -130,40 +131,41 @@ struct DLL_EXPORT Fitting_Quantification_Struct
 ///
 /// \brief The Quantification_Standard class:
 ///
+template<typename T_real>
 class DLL_EXPORT Quantification_Standard
 {
 
 public:
     Quantification_Standard();
 
-    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights);
+    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights);
 
-    Quantification_Standard(std::string standard_file, std::unordered_map<std::string, real_t> e_standard_weights);
+    Quantification_Standard(std::string standard_file, std::unordered_map<std::string, T_real> e_standard_weights);
 
-    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights, bool disable_Ka, bool disable_La);
+    Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights, bool disable_Ka, bool disable_La);
 
     ~Quantification_Standard();
 
     void init_defaults();
 
-    void init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights);
+    void init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights);
 
     void normalize_counts_by_time(Fitting_Routines routine);
 
     //per standard
     std::string standard_filename;
-    std::unordered_map<std::string, real_t> element_standard_weights;
+    std::unordered_map<std::string, T_real> element_standard_weights;
 
     // element name       cts
-    unordered_map<Fitting_Routines, unordered_map<string, real_t> > element_counts;
+    unordered_map<Fitting_Routines, unordered_map<string, T_real> > element_counts;
 
-    Spectra integrated_spectra;
+    Spectra<T_real> integrated_spectra;
 
-    real_t sr_current;
+    T_real sr_current;
 
-    real_t US_IC;
+    T_real US_IC;
 
-    real_t DS_IC;
+    T_real DS_IC;
 
     bool disable_Ka_for_quantification;
 

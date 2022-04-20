@@ -54,7 +54,8 @@ namespace data_struct
 
 //-----------------------------------------------------------------------------
 
-Analysis_Job::Analysis_Job()
+template<typename T_real>
+Analysis_Job<T_real>::Analysis_Job()
 {
     _optimizer = &_lmfit_optimizer;
     optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::ALL_PARAMS;
@@ -88,7 +89,8 @@ Analysis_Job::Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-Analysis_Job::~Analysis_Job()
+template<typename T_real>
+Analysis_Job<T_real>::~Analysis_Job()
 {
 	dataset_files.clear();
 	optimize_dataset_files.clear();
@@ -98,7 +100,8 @@ Analysis_Job::~Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-Detector* Analysis_Job::get_first_detector()
+template<typename T_real>
+Detector<T_real>* Analysis_Job<T_real>::get_first_detector()
 {
        Detector* detector = nullptr;
        for(auto &itr : detectors_meta_data)
@@ -111,7 +114,8 @@ Detector* Analysis_Job::get_first_detector()
 
 //-----------------------------------------------------------------------------
 
-Detector* Analysis_Job::get_detector(int detector_num)
+template<typename T_real>
+Detector<T_real>* Analysis_Job<T_real>::get_detector(int detector_num)
 {
        Detector* detector = nullptr;
        if(detectors_meta_data.count(detector_num) > 0)
@@ -123,7 +127,8 @@ Detector* Analysis_Job::get_detector(int detector_num)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
+template<typename T_real>
+void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force)
 {
     if(_first_init || force)// && _last_init_sample_size != spectra_samples)
     {
@@ -154,7 +159,8 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::set_optimizer(std::string optimizer)
+template<typename T_real>
+void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
 {
     if(optimizer == "mpfit")
     {

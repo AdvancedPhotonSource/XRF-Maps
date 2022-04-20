@@ -56,30 +56,33 @@ namespace routines
 
 // --------------------------------------------------------------------------------------------------------------------
 
-ROI_Fit_Routine::ROI_Fit_Routine() : Base_Fit_Routine()
+template<typename T_real>
+ROI_Fit_Routine<T_real>::ROI_Fit_Routine() : Base_Fit_Routine()
 {
 
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-ROI_Fit_Routine::~ROI_Fit_Routine()
+template<typename T_real>
+ROI_Fit_Routine<T_real>::~ROI_Fit_Routine()
 {
 
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 
-optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                            const Spectra * const spectra,
-                                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                                            std::unordered_map<std::string, real_t>& out_counts)
+template<typename T_real>
+optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+                                                            const Spectra<T_real>* const spectra,
+                                                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                            std::unordered_map<std::string, T_real>& out_counts)
  {    
     Fit_Parameters fitp = model->fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
-    real_t energy_offset = fitp.value(STR_ENERGY_OFFSET);
-    real_t energy_slope = fitp.value(STR_ENERGY_SLOPE);
+    T_real energy_offset = fitp.value(STR_ENERGY_OFFSET);
+    T_real energy_slope = fitp.value(STR_ENERGY_SLOPE);
     for(const auto& e_itr : *elements_to_fit)
     {
         unsigned int left_roi = 0;
@@ -105,8 +108,9 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine::fit_spectra(const models::Base_Mo
 
 // --------------------------------------------------------------------------------------------------------------------
 
-void ROI_Fit_Routine::initialize(models::Base_Model * const model,
-                                 const Fit_Element_Map_Dict * const elements_to_fit,
+template<typename T_real>
+void ROI_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
+                                 const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                  const struct Range energy_range)
 {
     //N/A

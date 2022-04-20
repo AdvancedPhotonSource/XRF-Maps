@@ -109,10 +109,10 @@ const static std::map<Element_Param_Type, float> Element_Param_Percent_Map{   {K
 
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct Element_Energy_Ratio
 {
-
-    Element_Energy_Ratio(real_t e, real_t r, real_t m, Element_Param_Type et)
+    Element_Energy_Ratio(T_real e, T_real r, T_real m, Element_Param_Type et)
     {
         energy = e;
         ratio = r;
@@ -120,9 +120,9 @@ struct Element_Energy_Ratio
         ptype = et;
     }
 
-    real_t energy;
-    real_t ratio;
-    real_t mu_fraction;
+    T_real energy;
+    T_real ratio;
+    T_real mu_fraction;
     Element_Param_Type ptype;
 };
 
@@ -132,6 +132,7 @@ struct Element_Energy_Ratio
 /// \brief The Fit_Element class: Class that hold element information and the results of the fitting to a spectra.
 ///                                Able to store 2d image of the fit an element
 ///
+template<typename T_real>
 class DLL_EXPORT Fit_Element_Map
 {
 
@@ -140,13 +141,13 @@ public:
 
     ~Fit_Element_Map();
 
-    const real_t& center() const { return _center; }
+    const T_real& center() const { return _center; }
 
-    const real_t& width() const { return _width; }
+    const T_real& width() const { return _width; }
 
-    void set_custom_multiply_ratio(unsigned int idx, real_t multi);
+    void set_custom_multiply_ratio(unsigned int idx, T_real multi);
     
-    void multiply_custom_multiply_ratio(unsigned int idx, real_t multi);
+    void multiply_custom_multiply_ratio(unsigned int idx, T_real multi);
 
     void init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka=false, bool disable_La = false);
 
@@ -156,11 +157,11 @@ public:
 
     int Z() const {return _element_info==nullptr? -1:_element_info->number;}
 
-    const std::vector<Element_Energy_Ratio>& energy_ratios() const { return _energy_ratios; }
+    const std::vector<Element_Energy_Ratio<T_real>>& energy_ratios() const { return _energy_ratios; }
 
-    const  std::vector<real_t>& energy_ratio_multipliers() const {return _energy_ratio_custom_multipliers;}
+    const  std::vector<T_real>& energy_ratio_multipliers() const {return _energy_ratio_custom_multipliers;}
 
-    const real_t& width_multi() const { return _width_multi; }
+    const T_real& width_multi() const { return _width_multi; }
 
     void set_as_pileup(std::string name, Element_Info* element_info);
 
@@ -168,23 +169,23 @@ public:
 
 	const string& shell_type_as_string() const { return _shell_type; }
 
-	bool check_binding_energy(real_t incident_energy, int energy_ratio_idx) const;
+	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
 protected:
 
-    void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
+    void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info * const detector_element);
 
     // reference to element information from Database
     Element_Info* _element_info;
 
     std::string _full_name;
-    std::vector<Element_Energy_Ratio> _energy_ratios;
-    std::vector<real_t> _energy_ratio_custom_multipliers;
+    std::vector<Element_Energy_Ratio<T_real>> _energy_ratios;
+    std::vector<T_real> _energy_ratio_custom_multipliers;
 
     std::string _shell_type;
 
-    real_t _center;
-    real_t _width;
-    real_t _width_multi;
+    T_real _center;
+    T_real _width;
+    T_real _width_multi;
 
     Element_Info* _pileup_element_info;
     std::string _pileup_shell_type;
@@ -192,10 +193,11 @@ protected:
 
 //-----------------------------------------------------------------------------
 
-DLL_EXPORT Fit_Element_Map* gen_element_map(std::string element_symb);
+template<typename T_real>
+DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb);
 
-typedef std::unordered_map<std::string, Fit_Element_Map*> Fit_Element_Map_Dict;
-
+template<typename T_real>
+using Fit_Element_Map_Dict = std::unordered_map<std::string, Fit_Element_Map<T_real>*>;
 
 } //namespace data_struct
 

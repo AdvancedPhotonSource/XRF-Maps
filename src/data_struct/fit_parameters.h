@@ -95,15 +95,16 @@ struct Range
  * @brief The Fit_Param struct : Structure that holds a parameter which consists of a value, min, max, and if it should be used in the fit routine.
  *                                Many fit routines use arrays so there are convert to and from array functions.
  */
+template<typename T_real>
 struct DLL_EXPORT Fit_Param
 {
     Fit_Param()
     {
         name = "N/A";
-        min_val = std::numeric_limits<real_t>::quiet_NaN();
-        max_val = std::numeric_limits<real_t>::quiet_NaN();
-        value = std::numeric_limits<real_t>::quiet_NaN();
-        step_size = std::numeric_limits<real_t>::quiet_NaN();
+        min_val = std::numeric_limits<T_real>::quiet_NaN();
+        max_val = std::numeric_limits<T_real>::quiet_NaN();
+        value = std::numeric_limits<T_real>::quiet_NaN();
+        step_size = std::numeric_limits<T_real>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
         opt_array_index = -1;
     }
@@ -122,37 +123,37 @@ struct DLL_EXPORT Fit_Param
     Fit_Param(std::string name_)
     {
         name = name_;
-        min_val = std::numeric_limits<real_t>::quiet_NaN();
-        max_val = std::numeric_limits<real_t>::quiet_NaN();
-        value = std::numeric_limits<real_t>::quiet_NaN();
-        step_size = std::numeric_limits<real_t>::quiet_NaN();
+        min_val = std::numeric_limits<T_real>::quiet_NaN();
+        max_val = std::numeric_limits<T_real>::quiet_NaN();
+        value = std::numeric_limits<T_real>::quiet_NaN();
+        step_size = std::numeric_limits<T_real>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
         opt_array_index = -1;
     }
 
-    Fit_Param(std::string name_, real_t val_)
+    Fit_Param(std::string name_, T_real val_)
     {
         name = name_;
-        min_val = std::numeric_limits<real_t>::min();
-        max_val = std::numeric_limits<real_t>::max();
-        step_size = (real_t)0.000001;
+        min_val = std::numeric_limits<T_real>::min();
+        max_val = std::numeric_limits<T_real>::max();
+        step_size = (T_real)0.000001;
         value = val_;
         bound_type = E_Bound_Type::FIXED;
         opt_array_index = -1;
     }
 
-	Fit_Param(std::string name_, real_t val_, E_Bound_Type b_type)
+	Fit_Param(std::string name_, T_real val_, E_Bound_Type b_type)
 	{
 		name = name_;
-		min_val = std::numeric_limits<real_t>::min();
-		max_val = std::numeric_limits<real_t>::max();
-		step_size = (real_t)0.000001;
+		min_val = std::numeric_limits<T_real>::min();
+		max_val = std::numeric_limits<T_real>::max();
+		step_size = (T_real)0.000001;
 		value = val_;
 		bound_type = b_type;
 		opt_array_index = -1;
 	}
 
-    Fit_Param(std::string name_, real_t min_, real_t max_, real_t val_, real_t step_size_, E_Bound_Type b_type)
+    Fit_Param(std::string name_, T_real min_, T_real max_, T_real val_, T_real step_size_, E_Bound_Type b_type)
     {
         name = name_;
         min_val = min_;
@@ -166,10 +167,10 @@ struct DLL_EXPORT Fit_Param
     const std::string bound_type_str() const; 
 
     std::string name;
-    real_t min_val;
-    real_t max_val;
-    real_t value;
-    real_t step_size;
+    T_real min_val;
+    T_real max_val;
+    T_real value;
+    T_real step_size;
     E_Bound_Type bound_type;
     int opt_array_index;
 };
@@ -179,6 +180,7 @@ struct DLL_EXPORT Fit_Param
 /**
  * @brief The Fit_Parameters class: Dictionary of fit parameters. Many fit routines use arrays so there are convert to and from array functions.
  */
+template<typename T_real>
 class DLL_EXPORT Fit_Parameters
 {
 public:
@@ -189,11 +191,11 @@ public:
 
     ~Fit_Parameters(){_params.clear();}
 
-    Fit_Param& operator [](std::string name) { return _params[name]; }
+    Fit_Param<T_real>& operator [](std::string name) { return _params[name]; }
 
     //const Fit_Param& operator [](std::string name) const { return _params[name]; }
 
-    void add_parameter(Fit_Param param);
+    void add_parameter(Fit_Param<T_real> param);
 
 	void append_and_update(const Fit_Parameters& fit_params);
 
@@ -207,15 +209,15 @@ public:
 
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 
-    std::vector<real_t> to_array();
+    std::vector<T_real> to_array();
 
     std::vector<std::string> names_to_array();
 
-    void from_array(std::vector<real_t> &arr);
+    void from_array(std::vector<T_real> &arr);
 
-    void from_array(const real_t* arr, size_t arr_size);
+    void from_array(const T_real* arr, size_t arr_size);
 
-    void set_all_value(real_t value, E_Bound_Type btype);
+    void set_all_value(T_real value, E_Bound_Type btype);
 
     void set_all(E_Bound_Type btype);
 
@@ -229,25 +231,25 @@ public:
 
     void remove(std::string key);
 
-    inline const real_t& value(std::string key) const { return _params.at(key).value; }
+    inline const T_real& value(std::string key) const { return _params.at(key).value; }
 
     void print();
 
     void print_non_fixed();
 
-    const Fit_Param& at(std::string name) const {return _params.at(name); }
+    const Fit_Param<T_real>& at(std::string name) const {return _params.at(name); }
 
     size_t size() const { return _params.size(); }
 
 private:
 
-    std::unordered_map<std::string, Fit_Param> _params;
+    std::unordered_map<std::string, Fit_Param<T_real> > _params;
 
 };
 
 //-----------------------------------------------------------------------------
-
-DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters* params);
+template<typename T_real>
+DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params);
 
 /**
 * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
@@ -257,7 +259,8 @@ DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters* params);
 * @param calibration: energy calibration
 * @return Range structure with the min energy and max enegry of the spectra to fit.
 */
-DLL_EXPORT Range get_energy_range(real_t min_energy, real_t max_energy, size_t spectra_size, real_t energy_offset, real_t energy_slope);
+template<typename T_real>
+DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope);
 
 } //namespace data_struct
 

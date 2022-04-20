@@ -154,7 +154,7 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job* analysis_job)
 
         if (detector->model == nullptr)
         {
-            detector->model = new fitting::models::Gaussian_Model();
+            detector->model = new fitting::models::Gaussian_Model<real_t>();
         }
         data_struct::Params_Override * override_params = &(detector->fit_params_override_dict);
 
@@ -380,7 +380,7 @@ void save_quantification_plots(string path, Detector* detector)
 
 // ----------------------------------------------------------------------------
 
-void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
+void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double> *fit_params, data_struct::Spectra* spectra, data_struct::Fit_Element_Map_Dict* elements_to_fit)
 {
     std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
     std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
@@ -426,7 +426,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 		return;
     }
 
-    fitting::models::Gaussian_Model model;
+    fitting::models::Gaussian_Model<double> model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
     data_struct::Spectra snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());

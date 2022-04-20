@@ -78,25 +78,31 @@ std::valarray<T> conv_valid(std::valarray<T> const &f, std::valarray<T> const &g
 }
 */
 
-ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_size)
 {
-    ArrayXr boxcar(boxcar_size);
+    ArrayTr<T_real> boxcar(boxcar_size);
     boxcar.setConstant(boxcar_size, 1.0);
     return convolve1d(arr, boxcar);
 }
 
-ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr &boxcar)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<T_real> &boxcar)
 {
-    ArrayXr new_background(arr.size());
+    ArrayTr<T_real> new_background(arr.size());
     new_background.setZero(arr.size());
     //convolve 1d
 
     size_t const nf = arr.size();
 	size_t const ng = boxcar.size();
-    ArrayXr const &min_v = (nf < ng)? arr : boxcar;
-    ArrayXr const &max_v = (nf < ng)? boxcar : arr;
+    ArrayTr<T_real> const &min_v = (nf < ng)? arr : boxcar;
+    ArrayTr<T_real> const &max_v = (nf < ng)? boxcar : arr;
 	size_t const n  = std::max(nf, ng) - std::min(nf, ng) + 1;
-    ArrayXr out(n);
+    ArrayTr<T_real> out(n);
     out.setZero(n);
     for(size_t i = 0; i < n; ++i)
     {
@@ -106,7 +112,7 @@ ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr &boxcar)
             ++k;
         }
     }
-	real_t norm = 1 / real_t(boxcar.size());
+	T_real norm = 1 / T_real(boxcar.size());
 	int j = min_v.size() / 2;
     for(size_t i=0; i< n; i++)
     {
@@ -117,27 +123,30 @@ ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr &boxcar)
     return new_background;
 }
 
-ArrayXr snip_background(const Spectra* const spectra,
-									  real_t energy_offset,
-									  real_t energy_linear,
-									  real_t energy_quadratic,
-									  real_t width,
-									  real_t xmin,
-									  real_t xmax)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+ArrayTr<T_real> snip_background(const Spectra<T_real>* const spectra,
+									  T_real energy_offset,
+									  T_real energy_linear,
+									  T_real energy_quadratic,
+									  T_real width,
+									  T_real xmin,
+									  T_real xmax)
 {
-	ArrayXr energy = ArrayXr::LinSpaced(spectra->size(), 0, spectra->size() - 1);
+	ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(spectra->size(), 0, spectra->size() - 1);
     
-	ArrayXr background;
+	ArrayTr<T_real> background;
 
-    energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (real_t)2.0) * energy_quadratic);
+    energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (T_real)2.0) * energy_quadratic);
 
-        ArrayXr tmp = std::pow((energy_offset / (real_t)2.3548), (real_t)2.0) + energy * (real_t)2.96 * energy_linear;
-	tmp = tmp.unaryExpr([](real_t r) { return r < 0.0 ? (real_t)0.0 : r;  });
+        ArrayTr<T_real> tmp = std::pow((energy_offset / (T_real)2.3548), (T_real)2.0) + energy * (T_real)2.96 * energy_linear;
+	tmp = tmp.unaryExpr([](T_real r) { return r < 0.0 ? (T_real)0.0 : r;  });
 	
-	//ArrayXr fwhm = 2.35 * std::sqrt(tmp);
-	ArrayXr current_width = (real_t)2.35 * Eigen::sqrt(tmp);
+	//ArrayTr<T_real> fwhm = 2.35 * std::sqrt(tmp);
+	ArrayTr<T_real> current_width = (T_real)2.35 * Eigen::sqrt(tmp);
 
-	ArrayXr boxcar;
+	ArrayTr<T_real> boxcar;
 	// smooth the background
 	boxcar.resize(5);
     boxcar.setConstant(5, 1.0);
@@ -162,13 +171,13 @@ ArrayXr snip_background(const Spectra* const spectra,
 	//fwhm
 	current_width = width * current_width / energy_linear;  // in channels
 	
-	background = Eigen::log(Eigen::log(background + (real_t)1.0) + (real_t)1.0);
+	background = Eigen::log(Eigen::log(background + (T_real)1.0) + (T_real)1.0);
 
 	// FIRST SNIPPING
 	int no_iterations = 2;
 
-    int max_of_xmin = (std::max)(xmin, (real_t)0.0);
-    int min_of_xmax = (std::min)(xmax, real_t(spectra->size() - 1));
+    int max_of_xmin = (std::max)(xmin, (T_real)0.0);
+    int min_of_xmax = (std::min)(xmax, T_real(spectra->size() - 1));
 	for (int j = 0; j<no_iterations; j++)
 	{
         for (long int k = 0; k<background.size(); k++)
@@ -191,7 +200,7 @@ ArrayXr snip_background(const Spectra* const spectra,
             {
                 hi_index = max_of_xmin;
             }
-			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
+			T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
 			if (background[k] > temp)
 			{
 				background[k] = temp;
@@ -221,24 +230,27 @@ ArrayXr snip_background(const Spectra* const spectra,
             {
                 hi_index = max_of_xmin;
             }
-			real_t temp = (background[lo_index] + background[hi_index]) / (real_t)2.0;
+			T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
 			if (background[k] > temp)
 			{
 				background[k] = temp;
 			}
 		}
 
-		current_width = current_width / real_t(M_SQRT2); // window_rf
+		current_width = current_width / T_real(M_SQRT2); // window_rf
 	}
 
-	background = Eigen::exp(Eigen::exp(background) - (real_t)1.0) - (real_t)1.0;
-	background = background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+	background = Eigen::exp(Eigen::exp(background) - (T_real)1.0) - (T_real)1.0;
+	background = background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 	
 	return background;
 
 }
 
-void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void gen_energy_vector(T_real number_channels, T_real energy_offset, T_real energy_slope, std::vector<T_real> *out_vec)
 {
 
     out_vec->resize(number_channels);

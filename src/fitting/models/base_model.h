@@ -69,10 +69,10 @@ using namespace std;
  */
 enum class Fit_Params_Preset { MATRIX_BATCH_FIT, BATCH_FIT_NO_TAILS, BATCH_FIT_WITH_TAILS, BATCH_FIT_WITH_FREE_ENERGY };
 
-
 /**
  * @brief The Base_Model class: base class for modeling spectra and fitting elements
  */
+template<typename T_real>
 class DLL_EXPORT Base_Model
 {
 public:
@@ -90,7 +90,7 @@ public:
      * @brief fit_parameters : returns Fit_Parameters class of the required fit parameters to run a fitting
      * @return
      */
-    virtual const Fit_Parameters& fit_parameters() const = 0;
+    virtual const Fit_Parameters<T_real>& fit_parameters() const = 0;
 
     /**
      * @brief model_spectrum : Model a spectra based on the fit parameters passed in.
@@ -101,37 +101,37 @@ public:
      * @param energy_range : Spectra model energy range. Basically the size of the spectra model returned;
      * @return
      */
-    virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                         const Fit_Element_Map_Dict * const elements_to_fit,
-                                         unordered_map<string, ArrayXr>* labeled_spectras,
+    virtual const Spectra<T_real> model_spectrum(const Fit_Parameters<T_real> * const fit_params,
+                                         const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
+                                         unordered_map<string, ArrayTr<T_real> >* labeled_spectras,
                                          const struct Range energy_range) = 0;
 
 
     // multi threaded
-    virtual const Spectra model_spectrum_mp(const Fit_Parameters * const fit_params,
-                                         const Fit_Element_Map_Dict * const elements_to_fit,
+    virtual const Spectra<T_real> model_spectrum_mp(const Fit_Parameters<T_real> * const fit_params,
+                                         const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                                          const struct Range energy_range) = 0;
 
-    virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
-                                                 const Fit_Element_Map * const element_to_fit,
-                                                 const ArrayXr &ev,
-                                                 unordered_map<string, ArrayXr>* labeled_spectras) = 0;
+    virtual const Spectra<T_real> model_spectrum_element(const Fit_Parameters<T_real> * const fitp,
+                                                 const Fit_Element_Map<T_real> * const element_to_fit,
+                                                 const ArrayTr<T_real>  &ev,
+                                                 unordered_map<string, ArrayTr<T_real> >* labeled_spectras) = 0;
 
-    virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const = 0;
+    virtual const ArrayTr<T_real>  peak(T_real gain, T_real sigma, const ArrayTr<T_real> & delta_energy) const = 0;
 
-    virtual const ArrayXr step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const = 0;
+    virtual const ArrayTr<T_real>  step(T_real gain, T_real sigma, const ArrayTr<T_real> & delta_energy, T_real peak_E) const = 0;
 
-    virtual const ArrayXr tail(real_t gain, real_t sigma, ArrayXr delta_energy, real_t gamma) const = 0;
+    virtual const ArrayTr<T_real>  tail(T_real gain, T_real sigma, ArrayTr<T_real>  delta_energy, T_real gamma) const = 0;
 
-    virtual const ArrayXr elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const = 0;
+    virtual const ArrayTr<T_real>  elastic_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
 
-    virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const = 0;
+    virtual const ArrayTr<T_real>  compton_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
 
-    virtual const ArrayXr escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t gain) const = 0;
+    virtual const ArrayTr<T_real>  escape_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
 
     virtual void reset_to_default_fit_params() = 0;
 
-    virtual void update_fit_params_values(const Fit_Parameters *fit_params) = 0;
+    virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) = 0;
 
 protected:
 

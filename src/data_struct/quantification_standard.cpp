@@ -59,14 +59,16 @@ namespace data_struct
 
 //-----------------------------------------------------------------------------
 
-Quantification_Standard::Quantification_Standard()
+template<typename T_real>
+Quantification_Standard<T_real>::Quantification_Standard()
 {
     init_defaults();
 }
 
 //-----------------------------------------------------------------------------
 
-Quantification_Standard::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+template<typename T_real>
+Quantification_Standard<T_real>::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights)
 {
     init_defaults();
     init_weights_struct(standard_file, element_names, element_weights);
@@ -74,7 +76,8 @@ Quantification_Standard::Quantification_Standard(std::string standard_file, std:
 
 //-----------------------------------------------------------------------------
 
-Quantification_Standard::Quantification_Standard(std::string standard_file, std::unordered_map<std::string, real_t> e_standard_weights)
+template<typename T_real>
+Quantification_Standard<T_real>::Quantification_Standard(std::string standard_file, std::unordered_map<std::string, T_real> e_standard_weights)
 {
     init_defaults();
     this->standard_filename = standard_file;
@@ -86,7 +89,8 @@ Quantification_Standard::Quantification_Standard(std::string standard_file, std:
 
 //-----------------------------------------------------------------------------
 
-Quantification_Standard::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights, bool disable_Ka, bool disable_La)
+template<typename T_real>
+Quantification_Standard<T_real>::Quantification_Standard(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights, bool disable_Ka, bool disable_La)
 {
     init_defaults();
     disable_Ka_for_quantification = disable_Ka;
@@ -96,14 +100,16 @@ Quantification_Standard::Quantification_Standard(std::string standard_file, std:
 
 //-----------------------------------------------------------------------------
 
-Quantification_Standard::~Quantification_Standard()
+template<typename T_real>
+Quantification_Standard<T_real>::~Quantification_Standard()
 {
 
 }
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::init_defaults()
+template<typename T_real>
+void Quantification_Standard<T_real>::init_defaults()
 {
     sr_current = 0.0;
     US_IC = 0.0;
@@ -114,7 +120,8 @@ void Quantification_Standard::init_defaults()
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<real_t> element_weights)
+template<typename T_real>
+void Quantification_Standard<T_real>::init_weights_struct(std::string standard_file, std::vector<std::string> element_names, std::vector<T_real> element_weights)
 {
     standard_filename = standard_file;
     for (size_t i = 0; i < element_names.size(); i++)
@@ -125,7 +132,8 @@ void Quantification_Standard::init_weights_struct(std::string standard_file, std
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Standard::normalize_counts_by_time(Fitting_Routines routine)
+template<typename T_real>
+void Quantification_Standard<T_real>::normalize_counts_by_time(Fitting_Routines routine)
 {
    
     if (element_counts.count(routine) > 0)

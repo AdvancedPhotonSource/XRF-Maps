@@ -64,6 +64,7 @@ using namespace std;
 /**
  * @brief The Params_Override struct
  */
+template<typename T_real>
 class DLL_EXPORT Params_Override
 {
 
@@ -216,15 +217,15 @@ public:
 
     string dataset_directory;
     int detector_num;
-    Fit_Parameters fit_params;
-    Fit_Element_Map_Dict elements_to_fit;
+	Fit_Parameters<T_real> fit_params;
+    Fit_Element_Map_Dict<T_real> elements_to_fit;
     string detector_element;
     
-    real_t si_escape_factor;
-    real_t ge_escape_factor;
+    T_real si_escape_factor;
+    T_real ge_escape_factor;
     bool si_escape_enabled;
     bool ge_escape_enabled;
-    real_t fit_snip_width;
+    T_real fit_snip_width;
 
     string be_window_thickness;
     string det_chip_thickness;
@@ -239,13 +240,13 @@ public:
 
 	unordered_map< string, map<int, float> > branching_ratios;
 
-    real_t sr_current;
-    real_t US_IC;
-    real_t DS_IC;
+    T_real sr_current;
+    T_real US_IC;
+    T_real DS_IC;
 
-    real_t us_amp_sens_num;
+    T_real us_amp_sens_num;
     string us_amp_sens_unit;
-    real_t ds_amp_sens_num;
+    T_real ds_amp_sens_num;
     string ds_amp_sens_unit;
 
 };

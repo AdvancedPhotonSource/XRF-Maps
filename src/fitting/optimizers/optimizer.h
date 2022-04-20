@@ -80,7 +80,9 @@ using namespace fitting::models;
 #define STR_OPT_COVTOL "covtol"
 
 
-typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
+//typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
+template<typename T_real>
+using Gen_Func_Def = std::function<void(const Fit_Parameters<T_real>* const, const Range* const, Spectra<T_real>*)>;
 
 enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL};
 
@@ -89,65 +91,73 @@ DLL_EXPORT std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome);
 /**
  * @brief The User_Data struct : Structure used by minimize function for optimizers
  */
+template<typename T_real>
 struct User_Data
 {
-    Base_Model* fit_model;
-    //Eigen::Map<ArrayXr> spectra;
-    Spectra spectra;
-	ArrayXr weights;
-    Fit_Parameters *fit_parameters;
-	ArrayXr spectra_background;
-    Fit_Element_Map_Dict *elements;
+    Base_Model<T_real>* fit_model;
+    Spectra<T_real> spectra;
+	ArrayTr<T_real> weights;
+    Fit_Parameters<T_real>*fit_parameters;
+	ArrayTr<T_real> spectra_background;
+    Fit_Element_Map_Dict<T_real> *elements;
     Range energy_range;
-    Spectra  spectra_model;
-    const Spectra *orig_spectra;
+    Spectra<T_real>  spectra_model;
+    const Spectra<T_real> *orig_spectra;
     Callback_Func_Status_Def* status_callback;
     size_t cur_itr;
     size_t total_itr;
 };
 
+template<typename T_real>
 struct Gen_User_Data
 {
-    //Eigen::Map<ArrayXr> spectra;
-    Spectra spectra;
-	ArrayXr weights;
-    Fit_Parameters *fit_parameters;
-	ArrayXr spectra_background;
+    Spectra<T_real> spectra;
+	ArrayTr<T_real> weights;
+    Fit_Parameters<T_real>*fit_parameters;
+	ArrayTr<T_real> spectra_background;
     Range energy_range;
-	Gen_Func_Def func;
-	Spectra  spectra_model;
+	Gen_Func_Def<T_real> func;
+	Spectra<T_real>  spectra_model;
 };
 
+template<typename T_real>
 struct Quant_User_Data
 {
     quantification::models::Quantification_Model * quantification_model;
-    Fit_Parameters * fit_parameters;
+    Fit_Parameters<T_real>* fit_parameters;
     std::unordered_map<std::string, Element_Quant> quant_map;
 };
 
-void fill_user_data(User_Data &ud,
-                    Fit_Parameters *fit_params,
-                    const Spectra * const spectra,
-                    const Fit_Element_Map_Dict * const elements_to_fit,
-                    const Base_Model * const model,
+
+template<typename T_real>
+void fill_user_data(User_Data<T_real> &ud,
+                    Fit_Parameters<T_real>*fit_params,
+                    const Spectra<T_real>* const spectra,
+                    const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
+                    const Base_Model<T_real>* const model,
                     const Range energy_range,
                     Callback_Func_Status_Def* status_callback,
                     size_t total_itr,
                     bool use_weights = false);
 
-void fill_gen_user_data(Gen_User_Data &ud,
-                        Fit_Parameters *fit_params,
-                        const Spectra * const spectra,
+
+template<typename T_real>
+void fill_gen_user_data(Gen_User_Data<T_real>& ud,
+                        Fit_Parameters<T_real>* fit_params,
+                        const Spectra<T_real>* const spectra,
                         const Range energy_range,
-                        const ArrayXr* background,
-                        Gen_Func_Def gen_func,
+                        const ArrayTr<T_real>* background,
+                        Gen_Func_Def<T_real> gen_func,
                         bool use_weights = false);
 
-void update_background_user_data(User_Data *ud);
+
+template<typename T_real>
+void update_background_user_data(User_Data<T_real> *ud);
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
  */
+template<typename T_real>
 class DLL_EXPORT Optimizer
 {
 public:
@@ -155,27 +165,27 @@ public:
 
     ~Optimizer(){}
 
-    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters *fit_params,
-                          const Spectra * const spectra,
-                          const Fit_Element_Map_Dict * const elements_to_fit,
-                          const Base_Model * const model,
+    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real> *fit_params,
+                          const Spectra<T_real>* const spectra,
+                          const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
+                          const Base_Model<T_real>* const model,
                           const Range energy_range,
                           Callback_Func_Status_Def* status_callback = nullptr) = 0;
 
-    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters *fit_params,
-                               const Spectra * const spectra,
+    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters<T_real>*fit_params,
+                               const Spectra<T_real>* const spectra,
                                const Range energy_range,
-                               const ArrayXr* background,
-                               Gen_Func_Def gen_func) = 0;
+                               const ArrayTr<T_real>* background,
+                               Gen_Func_Def<T_real> gen_func) = 0;
 
 
-    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters *fit_params,
+    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                         quantification::models::Quantification_Model * quantification_model) = 0;
+                                         quantification::models::Quantification_Model<T_real>* quantification_model) = 0;
 
-    virtual unordered_map<string, real_t> get_options() = 0;
+    virtual unordered_map<string, T_real> get_options() = 0;
 
-    virtual void set_options(unordered_map<string, real_t> opt) = 0;
+    virtual void set_options(unordered_map<string, T_real> opt) = 0;
 
 protected:
     map<int, OPTIMIZER_OUTCOME> _outcome_map;

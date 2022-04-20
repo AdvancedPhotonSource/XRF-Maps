@@ -52,7 +52,10 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-Detector::Detector(unsigned int number)
+//-----------------------------------------------------------------------------
+    
+template<typename T_real>
+Detector<T_real>::Detector(unsigned int number)
 {
     model = nullptr;
     detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
@@ -64,7 +67,10 @@ Detector::Detector(unsigned int number)
     _number = number;
 }
 
-Detector::~Detector()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Detector<T_real>::~Detector()
 {
     if (model != nullptr)
     {
@@ -94,7 +100,8 @@ Detector::~Detector()
 
 //-----------------------------------------------------------------------------
 
-void Detector::append_element(Fitting_Routines routine, string quant_scaler, string name, real_t weight)
+template<typename T_real>
+void Detector<T_real>::append_element(Fitting_Routines routine, string quant_scaler, string name, T_real weight)
 {
     if (fitting_quant_map.count(routine) == 0)
     {
@@ -120,11 +127,12 @@ void Detector::append_element(Fitting_Routines routine, string quant_scaler, str
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_element_quants(Fitting_Routines routine,
+template<typename T_real>
+void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                                     string quantifier_scaler,
-                                    Quantification_Standard* standard,
-                                    Quantification_Model* quantification_model,
-                                    real_t ic_quantifier)
+                                    Quantification_Standard<T_real>* standard,
+                                    Quantification_Model<T_real>* quantification_model,
+                                    T_real ic_quantifier)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -169,10 +177,10 @@ void Detector::update_element_quants(Fitting_Routines routine,
                                 ic_quantifier = 1.0;
                             }
 
-                            real_t counts = standard->element_counts.at(routine).at(name);
-                            real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
-                            real_t e_cal = e_cal_factor / counts;
-                            eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                            T_real counts = standard->element_counts.at(routine).at(name);
+                            T_real e_cal_factor = (eq_itr.weight * (ic_quantifier));
+                            T_real e_cal = e_cal_factor / counts;
+                            eq_itr.e_cal_ratio = (T_real)1.0 / e_cal;
                         }
                     }
                 }
@@ -191,15 +199,16 @@ void Detector::update_element_quants(Fitting_Routines routine,
 
 //-----------------------------------------------------------------------------
 
-void Detector::generage_avg_quantification_scalers()
+template<typename T_real>
+void Detector<T_real>::generage_avg_quantification_scalers()
 {
-    real_t avg_sr_current = 0.0;
-    real_t avg_US_IC = 0.0;
-    real_t avg_DS_IC = 0.0;
+    T_real avg_sr_current = 0.0;
+    T_real avg_US_IC = 0.0;
+    T_real avg_DS_IC = 0.0;
 
-    real_t crnt_cnt = 0.0;
-    real_t us_cnt = 0.0;
-    real_t ds_cnt = 0.0;
+    T_real crnt_cnt = 0.0;
+    T_real us_cnt = 0.0;
+    T_real ds_cnt = 0.0;
 
     //average quantification scalers
     for (const auto& itr : quantification_standards)
@@ -267,10 +276,11 @@ void Detector::generage_avg_quantification_scalers()
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_calibration_curve(Fitting_Routines routine,
+template<typename T_real>
+void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
                                         string quantifier_scaler,
-                                        Quantification_Model* quantification_model,
-                                        real_t val)
+                                        Quantification_Model<T_real>* quantification_model,
+                                        T_real val)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -287,7 +297,8 @@ void Detector::update_calibration_curve(Fitting_Routines routine,
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_from_fit_paramseters()
+template<typename T_real>
+void Detector<T_real>::update_from_fit_paramseters()
 {
     //Parameters for calibration curve
     if (fit_params_override_dict.detector_element.length() > 0)

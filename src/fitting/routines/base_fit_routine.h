@@ -68,6 +68,7 @@ using namespace std;
 /**
  * @brief The Base_Fit_Routine class: base class for modeling spectra and fitting elements
  */
+template<typename T_real>
 class DLL_EXPORT Base_Fit_Routine
 {
 public:
@@ -90,10 +91,10 @@ public:
      * @param row_idx : row index used to save the fitted value back into elements_to_fit class
      * @param col_idx : column index used to save the fitted value back into elements_to_fit class
      */
-    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model * const model,
-                                                      const Spectra * const spectra,
-                                                      const Fit_Element_Map_Dict * const elements_to_fit,
-                                                      std::unordered_map<std::string, real_t>& out_counts) = 0;
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real> * const model,
+                                                      const Spectra<T_real>* const spectra,
+                                                      const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
+                                                      std::unordered_map<std::string, T_real>& out_counts) = 0;
 
     /**
      * @brief get_name : Returns fit routine name
@@ -108,8 +109,8 @@ public:
      * @param elements_to_fit
      * @param energy_range
      */
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
+    virtual void initialize(models::Base_Model<T_real>* const model,
+                            const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                             const struct Range energy_range) = 0;
 
 

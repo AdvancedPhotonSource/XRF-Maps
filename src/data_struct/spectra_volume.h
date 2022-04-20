@@ -59,6 +59,7 @@ namespace data_struct
 /**
  * @brief The Spectra_Volume class : A volume of spectras
  */
+template<typename T_real>
 class DLL_EXPORT Spectra_Volume
 {
 public:
@@ -88,8 +89,7 @@ public:
 
 private:
 
-    std::vector<Spectra_Line> _data_vol;
-//    std::vector<std::vector< Spectra* > > array3D;
+    std::vector<Spectra_Line<T_real> > _data_vol;
 
 };
 

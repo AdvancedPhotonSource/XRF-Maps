@@ -62,42 +62,42 @@ using namespace std;
 
 using namespace data_struct;
 
-
-class DLL_EXPORT MPFit_Optimizer: public Optimizer
+template<typename T_real>
+class DLL_EXPORT MPFit_Optimizer: public Optimizer<T_real>
 {
 public:
     MPFit_Optimizer();
 
     ~MPFit_Optimizer() {}
 
-    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters *fit_params,
-                                        const Spectra * const spectra,
-                                        const Fit_Element_Map_Dict * const elements_to_fit,
-                                        const Base_Model * const model,
+    virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real>*fit_params,
+                                        const Spectra<T_real>* const spectra,
+                                        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                        const Base_Model<T_real>* const model,
                                         const Range energy_range,
                                         Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters *fit_params,
-                                            const Spectra * const spectra,
+    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters<T_real>*fit_params,
+                                            const Spectra<T_real>* const spectra,
                                             const Range energy_range,
-                                            const ArrayXr* background,
-                                            Gen_Func_Def gen_func);
+                                            const ArrayTr<T_real>* background,
+                                            Gen_Func_Def<T_real> gen_func);
 
-    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters *fit_params,
+    virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
                                                      std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                                     quantification::models::Quantification_Model * quantification_model);
+                                                     quantification::models::Quantification_Model<T_real>* quantification_model);
 
-    virtual unordered_map<string, real_t> get_options();
+    virtual unordered_map<string, T_real> get_options();
 
-    virtual void set_options(unordered_map<string, real_t> opt);
+    virtual void set_options(unordered_map<string, T_real> opt);
 
 private:
 
-	void _fill_limits(Fit_Parameters *fit_params, vector<struct mp_par<real_t> > &par);
+	void _fill_limits(Fit_Parameters<T_real> *fit_params, vector<struct mp_par<T_real> > &par);
 	
     inline void _print_info(int info);
 
-    struct mp_config<real_t> _options;
+    struct mp_config<T_real> _options;
 
 };
 

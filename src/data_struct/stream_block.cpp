@@ -52,7 +52,8 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-Stream_Block::Stream_Block()
+template<typename T_real>
+Stream_Block<T_real>::Stream_Block()
 {
 	_row = 0;
 	_col = 0;
@@ -68,7 +69,8 @@ Stream_Block::Stream_Block()
 
 //-----------------------------------------------------------------------------
 
-Stream_Block::Stream_Block(int detector,
+template<typename T_real>
+Stream_Block<T_real>::Stream_Block(int detector,
                            size_t row,
                            size_t col,
                            size_t height,
@@ -88,7 +90,8 @@ Stream_Block::Stream_Block(int detector,
 
 //-----------------------------------------------------------------------------
 
-Stream_Block::~Stream_Block()
+template<typename T_real>
+Stream_Block<T_real>::~Stream_Block()
 {
     if(del_str_ptr)
     {
@@ -115,7 +118,10 @@ Stream_Block::~Stream_Block()
     model = nullptr;
 }
 
-Stream_Block::Stream_Block(const Stream_Block& stream_block)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 {
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
@@ -130,8 +136,10 @@ Stream_Block::Stream_Block(const Stream_Block& stream_block)
 	this->model = stream_block.model;
 }
 
+//-----------------------------------------------------------------------------
 
-Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
+template<typename T_real>
+Stream_Block<T_real> &Stream_Block<T_real>::operator=(const Stream_Block<T_real>& stream_block)
 {
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
@@ -149,8 +157,9 @@ Stream_Block& Stream_Block::operator=(const Stream_Block& stream_block)
 
 //-----------------------------------------------------------------------------
 
-void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines,
-                                       Fit_Element_Map_Dict * elements_to_fit_)
+template<typename T_real>
+void Stream_Block<T_real>::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> *fit_routines,
+                                       Fit_Element_Map_Dict<T_real> * elements_to_fit_)
 {
     elements_to_fit = elements_to_fit_;
 
@@ -165,15 +174,16 @@ void Stream_Block::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitt
         fitting_blocks[itr.first].fit_routine = itr.second;
         for(auto& e_itr : *elements_to_fit)
         {
-            fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, real_t> (e_itr.first, (real_t)0.0));
+            fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (e_itr.first, (T_real)0.0));
         }
-        fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, real_t> (STR_NUM_ITR, (real_t)0.0));
+        fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (STR_NUM_ITR, (T_real)0.0));
     }
 }
 
 //-----------------------------------------------------------------------------
 
-size_t Stream_Block::dataset_hash()
+template<typename T_real>
+size_t Stream_Block<T_real>::dataset_hash()
 {
     if (dataset_directory != nullptr && dataset_name != nullptr)
     {

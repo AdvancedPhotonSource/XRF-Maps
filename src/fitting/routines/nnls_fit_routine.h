@@ -61,7 +61,8 @@ namespace routines
 
 using namespace data_struct;
 
-class DLL_EXPORT NNLS_Fit_Routine: public Matrix_Optimized_Fit_Routine
+template<typename T_real>
+class DLL_EXPORT NNLS_Fit_Routine : public Matrix_Optimized_Fit_Routine <T_real>
 {
 public:
 
@@ -71,21 +72,21 @@ public:
 
 	virtual ~NNLS_Fit_Routine();
 
-    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model* const model,
-                                        const Spectra* const spectra,
-                                        const Fit_Element_Map_Dict* const elements_to_fit,
-                                        std::unordered_map<std::string, real_t>& out_counts);
+    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
+                                        const Spectra<T_real>* const spectra,
+                                        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                        std::unordered_map<std::string, T_real>& out_counts);
 
     // similar to fit_spectra but want to return model instead of counts
-    void fit_spectrum_model(const Spectra* const spectra,
-                            const ArrayXr* const background,
-                            const Fit_Element_Map_Dict* const elements_to_fit,
-                            Spectra* spectra_model);
+    void fit_spectrum_model(const Spectra<T_real>* const spectra,
+                            const ArrayTr<T_real>* const background,
+                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                            Spectra<T_real>* spectra_model);
 
     virtual std::string get_name() { return STR_FIT_NNLS; }
 
-    virtual void initialize(models::Base_Model * const model,
-                            const Fit_Element_Map_Dict * const elements_to_fit,
+    virtual void initialize(models::Base_Model<T_real>* const model,
+                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range);
 
 protected:
@@ -96,7 +97,7 @@ protected:
 
 private:
 
-    Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
+    Eigen::Matrix<T_real, Eigen::Dynamic, Eigen::Dynamic> _fitmatrix;
 
     std::unordered_map<std::string, int> _element_row_index;
 

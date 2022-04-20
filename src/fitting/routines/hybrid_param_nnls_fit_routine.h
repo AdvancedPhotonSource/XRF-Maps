@@ -61,32 +61,33 @@ using namespace std;
 using namespace data_struct;
 using namespace fitting::optimizers;
 
-class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public NNLS_Fit_Routine
+template<typename T_real>
+class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public NNLS_Fit_Routine<T_real>
 {
 public:
     Hybrid_Param_NNLS_Fit_Routine();
 
 	virtual ~Hybrid_Param_NNLS_Fit_Routine();
 
-    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model * const model,
-                                          const Spectra * const spectra,
-                                          const Fit_Element_Map_Dict * const elements_to_fit,
-                                          Fit_Parameters& out_fit_params,
+    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model<T_real>* const model,
+                                          const Spectra<T_real>* const spectra,
+                                          const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                          Fit_Parameters<T_real>& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 
     virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
 
-    virtual void model_spectrum(const Fit_Parameters* const fit_params,
+    virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
                                 const struct Range* const energy_range,
-                                Spectra* spectra_model);
+                                Spectra<T_real>* spectra_model);
 
 protected:
 
 private:
-    models::Base_Model* _model;
-    ArrayXr _background;
-    const Fit_Element_Map_Dict* _elements_to_fit;
-    const data_struct::Spectra* _spectra;
+    models::Base_Model<T_real>* _model;
+    ArrayTr<T_real> _background;
+    const Fit_Element_Map_Dict<T_real>* _elements_to_fit;
+    const data_struct::Spectra<T_real>* _spectra;
     
 };
 
