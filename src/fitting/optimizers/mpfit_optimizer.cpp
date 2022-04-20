@@ -87,9 +87,9 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 		if (std::isfinite(dy[i]) == false)
 		{
 			logE << "\n\n\n";
-			logE << ud->spectra[i] << "   :    " << ud->spectra_model[i] << "       ::      " << ud->weights[i];
+			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			logE << "\n\n\n";
-			//dy[i] = ud->spectra[i];
+			dy[i] = ud->spectra[i];
 		}
     }
 	
