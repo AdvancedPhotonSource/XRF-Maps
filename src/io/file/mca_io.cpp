@@ -64,7 +64,8 @@ namespace mca
 
 //-----------------------------------------------------------------------------
 
-bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map)
+template<typename T_real>
+bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map)
 {
     std::ifstream paramFileStream(path);
 
@@ -142,7 +143,7 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
                         logW<<"MCA_IO only supports loading 1 channel. This file has "<<value<<" channels.\n";
                     }
                 }
-                else if (tag == "REAL_TIME")
+                else if (tag == "T_realIME")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -282,16 +283,17 @@ bool load_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
 
 //-----------------------------------------------------------------------------
 
-bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, unordered_map<string, real_t>& pv_map)
+template<typename T_real>
+bool save_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map)
 {
     std::ofstream paramFileStream(path);
 
-    real_t sr_current = 0.0;
-    real_t us_ic = 0.0;
-    real_t ds_ic = 0.0;
-    real_t offset = 0.0;
-    real_t slope = 0.0;
-    real_t quad = 0.0;
+    T_real sr_current = 0.0;
+    T_real us_ic = 0.0;
+    T_real ds_ic = 0.0;
+    T_real offset = 0.0;
+    T_real slope = 0.0;
+    T_real quad = 0.0;
 
     if (pv_map.count(STR_SR_CURRENT) > 0)
     {
@@ -333,7 +335,7 @@ bool save_integrated_spectra(std::string path, data_struct::Spectra* spectra, un
         paramFileStream << "ELEMENTS: 1\n";
         paramFileStream << "DATE: \n";
         paramFileStream << "CHANNELS: " << spectra->size() << "\n";
-        paramFileStream << "REAL_TIME: "<< spectra->elapsed_realtime() << "\n";
+        paramFileStream << "T_realIME: "<< spectra->elapsed_realtime() << "\n";
         paramFileStream << "LIVE_TIME: " << spectra->elapsed_livetime() << "\n";
         paramFileStream << "CAL_OFFSET: " << offset << "\n";
         paramFileStream << "CAL_SLOPE: " << slope << "\n";

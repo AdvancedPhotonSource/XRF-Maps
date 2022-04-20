@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "spectra_file_source.h"
-#include "io/file/hl_file_io.h"
+//#include "io/file/hl_file_io.h"
 #include "core/mem_info.h"
 
 namespace workflow
@@ -57,38 +57,42 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-Spectra_File_Source::Spectra_File_Source() : Source<data_struct::Stream_Block*>()
+    
+template<typename T_real>
+Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_Block*>()
 {
     _analysis_job = nullptr;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
 	_max_num_stream_blocks = -1;
-    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Spectra_File_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_File_Source::Spectra_File_Source(data_struct::Analysis_Job* analysis_job) : Source<data_struct::Stream_Block*>()
+template<typename T_real>
+Spectra_File_Source<T_real>::Spectra_File_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Source<data_struct::Stream_Block*>()
 {
     _analysis_job = analysis_job;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
     _init_fitting_routines = true;
 	_max_num_stream_blocks = -1;
-    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Spectra_File_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_File_Source::~Spectra_File_Source()
+template<typename T_real>
+Spectra_File_Source<T_real>::~Spectra_File_Source()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
+template<typename T_real>
+bool Spectra_File_Source<T_real>::load_netcdf_line(std::string dirpath,
 										   std::string filename,
                                            const std::vector<size_t>& detector_num_arr,
                                            size_t row,
@@ -106,18 +110,20 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 
 // ----------------------------------------------------------------------------
 
-data_struct::Stream_Block* Spectra_File_Source::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
+template<typename T_real>
+data_struct::Stream_Block<T_real>* Spectra_File_Source<T_real>::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
 {
 	if (_max_num_stream_blocks == -1)
 	{
-		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(real_t));
+		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(T_real));
 	}
 	return new data_struct::Stream_Block(detector, row, col, height, width);
 }
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
+template<typename T_real>
+void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
     if(_output_callback_func != nullptr)
@@ -161,7 +167,8 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::run()
+template<typename T_real>
+void Spectra_File_Source<T_real>::run()
 {
     if(_analysis_job == nullptr)
     {
@@ -207,10 +214,11 @@ void Spectra_File_Source::run()
 
 //-----------------------------------------------------------------------------
 
-bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset_directory,
+template<typename T_real>
+bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string dataset_directory,
                                                                  std::string dataset_file,
                                                                  const std::vector<size_t>& detector_num_arr,
-																 data_struct::IO_Callback_Func_Def callback_fun)
+																 data_struct::IO_Callback_Func_Def<T_real> callback_fun)
 {
     //Dataset importer
     io::file::MDA_IO mda_io;

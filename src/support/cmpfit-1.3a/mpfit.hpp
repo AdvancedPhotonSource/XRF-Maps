@@ -248,7 +248,7 @@ _T mp_enorm(int n, _T *x)
   s3 = zero;
   x1max = zero;
   x3max = zero;
-  floatn = static_cast<real_t>(n);
+  floatn = static_cast<_T>(n);
   agiant = rgiant/floatn;
 
   for (i=0; i<n; i++) {
@@ -1729,10 +1729,10 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   int ldfjac;
 
   /* Default configuration */
-  conf.ftol = (real_t)1e-10;
-  conf.xtol = (real_t)1e-10;
-  conf.gtol = (real_t)1e-10;
-  conf.stepfactor = (real_t)100.0;
+  conf.ftol = 1e-10;
+  conf.xtol = 1e-10;
+  conf.gtol = 1e-10;
+  conf.stepfactor = 100.0;
   conf.nprint = 1;
   conf.epsfcn = MP_MACHEP0;
   conf.maxiter = 200;

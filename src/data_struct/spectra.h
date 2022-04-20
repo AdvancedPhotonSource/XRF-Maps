@@ -59,9 +59,6 @@ namespace data_struct
 
 using namespace std;
 
-//typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
-//typedef Eigen::Vector<real_t, Eigen::Dynamic> VectorXr;
-
 template<typename _T>
 using ArrayTr = Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>;
 
@@ -167,7 +164,7 @@ public:
     void add(const Spectra& spectra)
     {
         *this += (ArrayTr<_T>)spectra;
-        real_t val = spectra.elapsed_livetime();
+        _T val = spectra.elapsed_livetime();
         if(std::isfinite(val))
         {
             _elapsed_livetime += val;
@@ -220,9 +217,11 @@ private:
 };
 
 #if defined _WIN32 || defined __CYGWIN__
-	template DLL_EXPORT class Spectra<real_t>;
+	template DLL_EXPORT class Spectra<float>;
+    template DLL_EXPORT class Spectra<double>;
 #else
-	template class DLL_EXPORT Spectra<real_t>;
+	template class DLL_EXPORT Spectra<float>;
+    template class DLL_EXPORT Spectra<double>;
 #endif
 
 template<typename T_real>

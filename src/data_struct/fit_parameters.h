@@ -73,9 +73,13 @@ enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIM
 
 //-----------------------------------------------------------------------------
 
-typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> ArrayXXr;
+ template<typename T_real>
+ using ArrayXXr = Eigen::Array<T_real, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-typedef std::unordered_map<std::string, ArrayXXr > Fit_Count_Dict;
+ template<typename T_real>
+ using Fit_Count_Dict = std::unordered_map<std::string, ArrayXXr<T_real> >;
+
+ //-----------------------------------------------------------------------------
 
 /**
 * @brief The Range struct to determine size of spectra we want to fit or model
@@ -205,7 +209,7 @@ public:
 
     void sum_values(Fit_Parameters fit_params);
 
-    void divide_fit_values_by(real_t divisor);
+    void divide_fit_values_by(T_real divisor);
 
     bool contains(std::string name) const { return ( _params.find(name) != _params.end()); }
 

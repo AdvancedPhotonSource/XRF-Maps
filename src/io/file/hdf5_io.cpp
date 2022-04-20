@@ -100,21 +100,25 @@ hsize_t max_dims_1d[1] = { H5S_UNLIMITED };
 hsize_t max_dims_2d[2] = { H5S_UNLIMITED, H5S_UNLIMITED };
 hsize_t max_dims_3d[3] = { H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED };
 
-std::mutex HDF5_IO::_mutex;
+template<typename T_real>
+std::mutex HDF5_IO<T_real>::_mutex;
 
-HDF5_IO* HDF5_IO::_this_inst(nullptr);
+template<typename T_real>
+HDF5_IO<T_real>* HDF5_IO<T_real>::_this_inst(nullptr);
 
 
+template<typename T_real>
 struct Detector_HDF5_Struct
 {
     hid_t    dset_id;
     hid_t    dataspace_id;
-    real_t * buffer;
+    T_real * buffer;
 };
 
 //-----------------------------------------------------------------------------
 
-HDF5_IO::HDF5_IO()
+template<typename T_real>
+HDF5_IO<T_real>::HDF5_IO()
 {
 	//disable hdf print to std err
 	hid_t status;
@@ -124,7 +128,8 @@ HDF5_IO::HDF5_IO()
 
 //-----------------------------------------------------------------------------
 
-HDF5_IO* HDF5_IO::inst()
+template<typename T_real>
+HDF5_IO<T_real>* HDF5_IO<T_real>::inst()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -137,7 +142,8 @@ HDF5_IO* HDF5_IO::inst()
 
 //-----------------------------------------------------------------------------
 
-HDF5_IO::~HDF5_IO()
+template<typename T_real>
+HDF5_IO<T_real>::~HDF5_IO()
 {
 	_cur_file_id = -1;
 	_cur_filename = "";
@@ -145,7 +151,8 @@ HDF5_IO::~HDF5_IO()
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error, bool close_on_fail)
+template<typename T_real>
+bool HDF5_IO<T_real>::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map, std::string s1, hid_t id2, bool log_error, bool close_on_fail)
 {
     if (obj == H5O_FILE)
     {
@@ -214,7 +221,8 @@ bool HDF5_IO::_open_h5_object(hid_t &id, H5_OBJECTS obj, std::stack<std::pair<hi
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_open_or_create_group(const std::string name, hid_t parent_id, hid_t& out_id, bool log_error, bool close_on_fail)
+template<typename T_real>
+bool HDF5_IO<T_real>::_open_or_create_group(const std::string name, hid_t parent_id, hid_t& out_id, bool log_error, bool close_on_fail)
 {
     out_id = H5Gopen(parent_id, name.c_str(), H5P_DEFAULT);
     if (out_id < 0)
@@ -237,7 +245,8 @@ bool HDF5_IO::_open_or_create_group(const std::string name, hid_t parent_id, hid
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_create_memory_space(int rank, const hsize_t* count, hid_t& out_id)
+template<typename T_real>
+bool HDF5_IO<T_real>::_create_memory_space(int rank, const hsize_t* count, hid_t& out_id)
 {
     out_id = H5Screate_simple(rank, count, nullptr);
     if (out_id > -1)
@@ -250,7 +259,8 @@ bool HDF5_IO::_create_memory_space(int rank, const hsize_t* count, hid_t& out_id
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece)
+template<typename T_real>
+bool HDF5_IO<T_real>::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece)
 {
     out_id = H5Dopen(parent_id, name.c_str(), H5P_DEFAULT);
     if (out_id < 0)
@@ -328,7 +338,8 @@ bool HDF5_IO::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t p
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &close_map)
+template<typename T_real>
+void HDF5_IO<T_real>::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &close_map)
 {
 
     herr_t err;
@@ -390,7 +401,8 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -406,7 +418,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
    hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
    herr_t   error;
    std::string detector_path;
-   real_t * buffer;
+   T_real * buffer;
    hsize_t offset_row[2] = {0,0};
    hsize_t count_row[2] = {0,0};
    hsize_t offset_meta[3] = {0,0,0};
@@ -489,7 +501,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
        count[i] = dims_in[i];
     }
 
-    buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+    buffer = new T_real [dims_in[0] * dims_in[2]]; // spectra_size x cols
     count_row[0] = dims_in[0];
     count_row[1] = dims_in[2];
 
@@ -513,10 +525,10 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
     offset_meta[0] = detector_num;
     for (size_t row=0; row < spec_vol->rows(); row++)
@@ -532,7 +544,7 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
              for(size_t col=0; col<spec_vol->cols(); col++)
              {
                  offset_meta[2] = col;
-                 data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
+                 data_struct::Spectra<T_real> *spectra = &((*spec_vol)[row][col]);
 
                  H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
                  error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -585,7 +597,8 @@ bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_st
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line* spec_row)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -602,7 +615,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
   //hid_t dataspace_inct_id, dataspace_outct_id;
    herr_t   error;
    std::string detector_path;
-   real_t * buffer;
+   T_real * buffer;
    hsize_t offset_row[3] = {0,0,0};
    hsize_t count_row[3] = {0,0,0};
    hsize_t offset_meta[1] = {0};
@@ -656,7 +669,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
        count[i] = dims_in[i];
     }
 
-    buffer = new real_t [dims_in[0] * dims_in[2]]; // cols x spectra_size
+    buffer = new T_real [dims_in[0] * dims_in[2]]; // cols x spectra_size
     count_row[0] = dims_in[0];
     count_row[1] = 1;
     count_row[2] = dims_in[2];
@@ -676,10 +689,10 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     //H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    //real_t real_time = 1.0;
-    //real_t in_cnt = 1.0;
-    //real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    //T_real real_time = 1.0;
+    //T_real in_cnt = 1.0;
+    //T_real out_cnt = 1.0;
 
     //offset[1] = row;
 
@@ -695,7 +708,7 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
         for(size_t col=0; col < dims_in[0]; col++)
         {
             offset_meta[0] = col;
-            data_struct::Spectra *spectra = &((*spec_row)[col]);
+            data_struct::Spectra<T_real> *spectra = &((*spec_row)[col]);
 
             H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
             error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -743,7 +756,8 @@ bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, 
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -776,9 +790,9 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     herr_t   error;
     std::string detector_path;
     char* detector_names[256];
-    real_t time_base = 1.0f;
-    real_t el_time = 1.0f;
-    real_t* buffer;
+    T_real time_base = 1.0f;
+    T_real el_time = 1.0f;
+    T_real* buffer;
     hsize_t offset_row[2] = { 0,0 };
     hsize_t count_row[2] = { 0,0 };
     hsize_t offset2[2] = { 0,0 };
@@ -917,7 +931,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 
 
     //chunking is 1 x col x samples
-    buffer = new real_t [dims_in[1] * dims_in[2]]; //  cols x spectra_size
+    buffer = new T_real [dims_in[1] * dims_in[2]]; //  cols x spectra_size
     count_row[0] = dims_in[1];
     count_row[1] = dims_in[2];
 
@@ -976,10 +990,10 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    //real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    //T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
 
     for (size_t row=0; row < dims_in[0]; row++)
@@ -996,7 +1010,7 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
              {
                  offset_meta[1] = col;
                  
-                 data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
+                 data_struct::Spectra<T_real> *spectra = &((*spec_vol)[row][col]);
 
                  
 
@@ -1072,7 +1086,8 @@ bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1092,9 +1107,9 @@ bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num,
     herr_t   error;
     std::string detector_path;
     char* detector_names[256];
-    real_t time_base = 1.0f;
-    real_t el_time = 1.0f;
-    real_t* buffer;
+    T_real time_base = 1.0f;
+    T_real el_time = 1.0f;
+    T_real* buffer;
     hsize_t offset_row[2] = { 0,0 };
     hsize_t count_row[2] = { 0,0 };
     hsize_t offset_meta[2] = { 0,0 };
@@ -1246,7 +1261,7 @@ bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num,
 
 
 	//chunking is 1 x col x samples
-	buffer = new real_t[dims_in[1] * dims_in[2]]; //  cols x spectra_size
+	buffer = new T_real[dims_in[1] * dims_in[2]]; //  cols x spectra_size
 	count_row[0] = dims_in[1];
 	count_row[1] = dims_in[2];
 
@@ -1274,10 +1289,10 @@ bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num,
 	H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
 	H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-	real_t live_time = 1.0;
-	real_t real_time = 1.0;
-	real_t in_cnt = 1.0;
-	real_t out_cnt = 1.0;
+	T_real live_time = 1.0;
+	T_real real_time = 1.0;
+	T_real in_cnt = 1.0;
+	T_real out_cnt = 1.0;
 
 
 	for (size_t row = 0; row < dims_in[0]; row++)
@@ -1294,7 +1309,7 @@ bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num,
 			{
 				offset_meta[1] = col;
 
-				data_struct::Spectra* spectra = &((*spec_vol)[row][col]);
+				data_struct::Spectra<T_real>* spectra = &((*spec_vol)[row][col]);
 				
 				H5Sselect_hyperslab(livetime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 				H5Sselect_hyperslab(realtime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
@@ -1353,7 +1368,8 @@ bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume* spec_vol, bool log_error)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1372,9 +1388,9 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
     herr_t   error;
     std::string detector_path;
     char* detector_names[256];
-    real_t time_base = 1.0f;
-    real_t el_time = 1.0f;
-    real_t* buffer;
+    T_real time_base = 1.0f;
+    T_real el_time = 1.0f;
+    T_real* buffer;
     hsize_t offset_row[2] = { 0,0 };
     hsize_t count_row[2] = { 0,0 };
     hsize_t offset_meta[2] = { 0,0 };
@@ -1483,7 +1499,7 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
 
 
     //chunking is 1 x col x samples
-    buffer = new real_t[dims_in[1] * dims_in[2]]; //  cols x spectra_size
+    buffer = new T_real[dims_in[1] * dims_in[2]]; //  cols x spectra_size
     count_row[0] = dims_in[1];
     count_row[1] = dims_in[2];
 
@@ -1511,10 +1527,10 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
     H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
 
     for (size_t row = 0; row < dims_in[0]; row++)
@@ -1531,7 +1547,7 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
             {
                 offset_meta[1] = col;
 
-                data_struct::Spectra* spectra = &((*spec_vol)[row][col]);
+                data_struct::Spectra<T_real>* spectra = &((*spec_vol)[row][col]);
                 /*
                 H5Sselect_hyperslab(livetime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
                 H5Sselect_hyperslab(realtime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
@@ -1590,7 +1606,8 @@ bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, dat
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra* spec, bool log_error)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spec, bool log_error)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1609,9 +1626,9 @@ bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num,
     herr_t   error;
     std::string detector_path;
     char* detector_names[256];
-    real_t time_base = 1.0f;
-    real_t el_time = 1.0f;
-    real_t* buffer;
+    T_real time_base = 1.0f;
+    T_real el_time = 1.0f;
+    T_real* buffer;
     hsize_t offset_row[2] = { 0,0 };
     hsize_t count_row[2] = { 0,0 };
     hsize_t offset_meta[2] = { 0,0 };
@@ -1720,7 +1737,7 @@ bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num,
 
 
     //chunking is 1 x col x samples
-    buffer = new real_t[dims_in[1] * dims_in[2]]; //  cols x spectra_size
+    buffer = new T_real[dims_in[1] * dims_in[2]]; //  cols x spectra_size
     count_row[0] = dims_in[1];
     count_row[1] = dims_in[2];
 
@@ -1749,10 +1766,10 @@ bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num,
     H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
 
     for (size_t row = 0; row < dims_in[0]; row++)
@@ -1848,9 +1865,10 @@ int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::st
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_emd(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_emd(std::string path,
                                         size_t frame_num,
-                                        data_struct::Spectra_Volume *spec_vol,
+                                        data_struct::Spectra_Volume<T_real> *spec_vol,
                                         bool logerr)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -2021,10 +2039,10 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
     int col = 0;
 
     offset[0] = start_offset; // start of frame offset
-    real_t incnt = 0.0;
-    real_t outcnt = 0.0;
-    real_t elt = 1.0; // TODO: read from metadata
-    data_struct::Spectra *spectra = &((*spec_vol)[row][col]);
+    T_real incnt = 0.0;
+    T_real outcnt = 0.0;
+    T_real elt = 1.0; // TODO: read from metadata
+    data_struct::Spectra<T_real> *spectra = &((*spec_vol)[row][col]);
     for (size_t i = 0; i < read_amt; i++)
     {
 
@@ -2142,9 +2160,10 @@ bool HDF5_IO::load_spectra_volume_emd(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_emd_with_callback(std::string path,
 	const std::vector<size_t>& detector_num_arr,
-	data_struct::IO_Callback_Func_Def callback_func,
+	data_struct::IO_Callback_Func_Def<T_real> callback_func,
 	void* user_data)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
@@ -2317,11 +2336,11 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 	int row = 0;
 	int col = 0;
 
-    real_t incnt = 0.0;
-    real_t outcnt = 0.0;
-    real_t elt = 1.0;
+    T_real incnt = 0.0;
+    T_real outcnt = 0.0;
+    T_real elt = 1.0;
     offset[0] = start_offset; // start of frame offset
-	data_struct::Spectra *spectra = new data_struct::Spectra(samples);
+	data_struct::Spectra<T_real>* spectra = new data_struct::Spectra<T_real>(samples);
 	for (size_t i = 0; i < read_amt; i++)
 	{
 		
@@ -2375,7 +2394,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
                             return true;
                         }
                     }
-                    spectra = new data_struct::Spectra(samples);
+                    spectra = new data_struct::Spectra<T_real>(samples);
 				}
 				else
 				{
@@ -2418,7 +2437,7 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
                     row = 0;
                     frame++;
                 }
-                spectra = new data_struct::Spectra(samples);
+                spectra = new data_struct::Spectra<T_real>(samples);
             }
             else
             {
@@ -2450,9 +2469,10 @@ bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
-												data_struct::IO_Callback_Func_Def callback_func,
+												data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                                 void* user_data)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -2558,7 +2578,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
     for(size_t detector_num : detector_num_arr)
     {
-        detector_hid_map[detector_num].buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+        detector_hid_map[detector_num].buffer = new T_real [dims_in[0] * dims_in[2]]; // spectra_size x cols
     }
     count_row[0] = dims_in[0];
     count_row[1] = dims_in[2];
@@ -2575,10 +2595,10 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
     for (size_t row=0; row < dims_in[1]; row++)
     {
@@ -2600,7 +2620,7 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
                  for(size_t detector_num : detector_num_arr)
                  {
                      offset_meta[0] = detector_num;
-                     data_struct::Spectra * spectra = new data_struct::Spectra(dims_in[0]);
+                     data_struct::Spectra<T_real> * spectra = new data_struct::Spectra<T_real>(dims_in[0]);
 
                      H5Sselect_hyperslab (dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
                      error = H5Dread(dset_lt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
@@ -2657,7 +2677,8 @@ bool HDF5_IO::load_spectra_volume_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra* spectra)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -2673,7 +2694,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
     hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
     herr_t   error;
     std::string detector_path;
-    real_t * buffer;
+    T_real * buffer;
     hsize_t offset_row[2] = {0,0};
     hsize_t count_row[2] = {0,0};
     hsize_t offset_meta[3] = {0,0,0};
@@ -2758,7 +2779,7 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
         count[i] = dims_in[i];
      }
 
-     buffer = new real_t [dims_in[0] * dims_in[2]]; // spectra_size x cols
+     buffer = new T_real [dims_in[0] * dims_in[2]]; // spectra_size x cols
      count_row[0] = dims_in[0];
      count_row[1] = dims_in[2];
 
@@ -2775,15 +2796,15 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
      H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
      H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-     real_t live_time = 1.0;
-     real_t real_time = 1.0;
-     real_t in_cnt = 1.0;
-     real_t out_cnt = 1.0;
+     T_real live_time = 1.0;
+     T_real real_time = 1.0;
+     T_real in_cnt = 1.0;
+     T_real out_cnt = 1.0;
 
-     real_t live_time_total = 0.0;
-     real_t real_time_total = 0.0;
-     real_t in_cnt_total = 0.0;
-     real_t out_cnt_total = 0.0;
+     T_real live_time_total = 0.0;
+     T_real real_time_total = 0.0;
+     T_real in_cnt_total = 0.0;
+     T_real out_cnt_total = 0.0;
 
      offset_meta[0] = detector_num;
      for (size_t row=0; row < dims_in[1]; row++)
@@ -2853,9 +2874,9 @@ bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detecto
 
 //-----------------------------------------------------------------------------
 
-
-bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
-                                           data_struct::Spectra_Volume* spectra_volume,
+template<typename T_real>
+bool HDF5_IO<T_real>::load_spectra_vol_analyzed_h5(std::string path,
+                                           data_struct::Spectra_Volume<T_real>* spectra_volume,
                                            int row_idx_start,
                                            int row_idx_end,
                                            int col_idx_start,
@@ -2948,7 +2969,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
     spectra_volume->resize_and_zero(dims_in[1], dims_in[2], dims_in[0]);
 
-    //buffer = new real_t [dims_in[0] * dims_in[2]]; // cols x spectra_size
+    //buffer = new T_real [dims_in[0] * dims_in[2]]; // cols x spectra_size
     count[0] = dims_in[0];
     count[1] = 1;
     count[2] = 1;
@@ -2958,10 +2979,10 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
     //offset[1] = row;
 
@@ -2971,7 +2992,7 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
         offset_time[0] = row;
         for(size_t col=(size_t)col_idx_start; col < (size_t)col_idx_end; col++)
         {
-            data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
+            data_struct::Spectra<T_real> *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
             offset_time[1] = col;
             H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
@@ -3013,8 +3034,9 @@ bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
-                                                      data_struct::Params_Override *override_values)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_quantification_scalers_analyzed_h5(std::string path,
+                                                      data_struct::Params_Override<T_real> * override_values)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3026,7 +3048,7 @@ bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
 
    logI<< path <<"\n";
 
-   real_t srcurrent, us_ic, ds_ic;
+   T_real srcurrent, us_ic, ds_ic;
    hid_t    file_id, ds_ic_id, us_ic_id, srcurrent_id;
    //herr_t   error;
    //hsize_t offset[1] = {0};
@@ -3082,7 +3104,8 @@ bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override *override_values)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<T_real> *override_values)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3093,7 +3116,7 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct:
 
     logI<< path <<"\n";
 
-    real_t us_ic, ds_ic;
+    T_real us_ic, ds_ic;
     hid_t file_id, ds_ic_id, us_ic_id;
     hsize_t offset3[3] = { 0,0,0 };
     hsize_t count3[3] = { 1,1,1 };
@@ -3238,7 +3261,8 @@ bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct:
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override* override_values)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<T_real>* override_values)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3343,7 +3367,7 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
                     {
                         for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
                         {
-                            override_values->DS_IC += (real_t)buffer[x];
+                            override_values->DS_IC += (T_real)buffer[x];
                         }
 
                     }
@@ -3372,8 +3396,9 @@ bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Par
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
-                                           data_struct::Spectra* spectra, bool log_error)
+template<typename T_real>
+bool HDF5_IO<T_real>::load_integrated_spectra_analyzed_h5(std::string path,
+                                           data_struct::Spectra<T_real>* spectra, bool log_error)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -3404,7 +3429,8 @@ bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra* spectra)
+template<typename T_real>
+bool HDF5_IO<T_real>::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<T_real>* spectra)
 {
 
     hid_t    dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
@@ -3483,10 +3509,10 @@ bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::S
     H5Sselect_hyperslab (memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
     H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
-    real_t live_time = 1.0;
-    real_t real_time = 1.0;
-    real_t in_cnt = 1.0;
-    real_t out_cnt = 1.0;
+    T_real live_time = 1.0;
+    T_real real_time = 1.0;
+    T_real in_cnt = 1.0;
+    T_real out_cnt = 1.0;
 
     H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
@@ -3520,7 +3546,8 @@ bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::S
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info* scan_info)
+template<typename T_real>
+bool HDF5_IO<T_real>::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info* scan_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     hid_t    file_id, src_maps_grp_id, detectors_grp_id, hash_grp_id, data_id, spectrumstream_grp_id, hash2_grp_id, data2_id;
@@ -3634,7 +3661,8 @@ bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_I
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info)
+template<typename T_real>
+bool HDF5_IO<T_real>::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -3679,7 +3707,7 @@ bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::S
     if (_open_h5_object(detectors_grp_id, H5O_GROUP, close_map, "Detectors", src_maps_grp_id, false, false))
     {
         bool first_save = true;
-        real_t* buffer = nullptr;
+        T_real* buffer = nullptr;
         hsize_t nobj = 0;
         H5Gget_num_objs(detectors_grp_id, &nobj);
         hid_t values_id;
@@ -3802,7 +3830,8 @@ bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::S
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info)
+template<typename T_real>
+bool HDF5_IO<T_real>::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -3931,7 +3960,8 @@ bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Sc
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info)
+template<typename T_real>
+bool HDF5_IO<T_real>::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -4101,7 +4131,8 @@ bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_I
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
+template<typename T_real>
+bool HDF5_IO<T_real>::start_save_seq(const std::string filename, bool force_new_file)
 {
 
     if (_cur_file_id > -1)
@@ -4129,7 +4160,8 @@ bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::end_save_seq(bool loginfo)
+template<typename T_real>
+bool HDF5_IO<T_real>::end_save_seq(bool loginfo)
 {
 
     if(_cur_file_id > 0)
@@ -4218,8 +4250,9 @@ bool HDF5_IO::end_save_seq(bool loginfo)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_spectra_volume(const std::string path,
-                                  data_struct::Spectra_Volume * spectra_volume,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_spectra_volume(const std::string path,
+                                  data_struct::Spectra_Volume<T_real> * spectra_volume,
                                   size_t row_idx_start,
                                   int row_idx_end,
                                   size_t col_idx_start,
@@ -4338,17 +4371,17 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     H5Sselect_hyperslab (memoryspace_time_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
-    real_t real_time;
-    real_t life_time;
-    real_t in_cnt;
-    real_t out_cnt;
+    T_real real_time;
+    T_real life_time;
+    T_real in_cnt;
+    T_real out_cnt;
     for(size_t row=row_idx_start; row < (size_t)row_idx_end; row++)
     {
         offset[1] = row;
         offset_time[0] = row;
         for(size_t col=col_idx_start; col < (size_t)col_idx_end; col++)
         {
-            const data_struct::Spectra *spectra = &((*spectra_volume)[row][col]);
+            const data_struct::Spectra<T_real> *spectra = &((*spectra_volume)[row][col]);
             offset[2] = col;
             offset_time[1] = col;
             H5Sselect_hyperslab (dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
@@ -4397,7 +4430,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
     }
 
     //save quantification_standard integrated spectra
-    data_struct::Spectra spectra = spectra_volume->integrate();
+    data_struct::Spectra<T_real> spectra = spectra_volume->integrate();
     count[0] = spectra.size();
     _create_memory_space(1, count, memoryspace_id);
     if (false == _open_h5_dataset(STR_SPECTRA, H5T_INTEL_R, int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
@@ -4414,7 +4447,7 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
     //save real_time
     count[0] = 1;
-    real_t save_val = spectra.elapsed_realtime();
+    T_real save_val = spectra.elapsed_realtime();
     _create_memory_space(1, count, memoryspace_id);
     if (false == _open_h5_dataset(STR_ELAPSED_REAL_TIME, H5T_INTEL_R, int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
     {
@@ -4486,7 +4519,8 @@ bool HDF5_IO::save_spectra_volume(const std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t energy_slope, real_t energy_quad)
+template<typename T_real>
+bool HDF5_IO<T_real>::save_energy_calib(int spectra_size, T_real energy_offset, T_real energy_slope, T_real energy_quad)
 {
 
     std::lock_guard<std::mutex> lock(_mutex);
@@ -4502,7 +4536,7 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
     hsize_t count[1] = { 1 };
 
     //save energy vector
-    std::vector<real_t> out_vec;
+    std::vector<T_real> out_vec;
     data_struct::gen_energy_vector(spectra_size, energy_offset, energy_slope, &out_vec);
 
     if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
@@ -4566,8 +4600,9 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_element_fits(std::string path,
-                                const data_struct::Fit_Count_Dict * const element_counts,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_element_fits(std::string path,
+                                const data_struct::Fit_Count_Dict<T_real>* const element_counts,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
@@ -4765,10 +4800,11 @@ bool HDF5_IO::save_element_fits(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_fitted_int_spectra(const std::string path,
-                                     const data_struct::Spectra& spectra,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_fitted_int_spectra(const std::string path,
+                                     const data_struct::Spectra<T_real>& spectra,
                                      const data_struct::Range& spectra_range,
-                                     const data_struct::Spectra& background,
+                                     const data_struct::Spectra<T_real>& background,
 									 const size_t save_spectra_size)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -4848,11 +4884,12 @@ bool HDF5_IO::save_fitted_int_spectra(const std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_max_10_spectra(const std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_max_10_spectra(const std::string path,
 	const data_struct::Range& spectra_range,
-	const data_struct::Spectra& max_spectra,
-	const data_struct::Spectra& max_10_spectra,
-    const data_struct::Spectra& fit_int_background)
+	const data_struct::Spectra<T_real>& max_spectra,
+	const data_struct::Spectra<T_real>& max_10_spectra,
+    const data_struct::Spectra<T_real>& fit_int_background)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 
@@ -4920,7 +4957,8 @@ bool HDF5_IO::save_max_10_spectra(const std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_quantification(data_struct::Detector* detector)
+template<typename T_real>
+bool HDF5_IO<T_real>::save_quantification(data_struct::Detector<T_real>* detector)
 {
 
     std::lock_guard<std::mutex> lock(_mutex);
@@ -5063,7 +5101,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
                 return false;
             }
 			//save quantification_standard integrated spectra
-			data_struct::Spectra spectra = quant_itr.second.integrated_spectra;
+			data_struct::Spectra<T_real> spectra = quant_itr.second.integrated_spectra;
 			if (spectra.size() > 0)
 			{
 				count[0] = spectra.size();
@@ -5126,7 +5164,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
             }
 
 			//save real_time
-			real_t save_val = spectra.elapsed_realtime();
+			T_real save_val = spectra.elapsed_realtime();
             if (false == _open_h5_dataset(STR_ELAPSED_REAL_TIME, H5T_INTEL_R, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
             {
                 return false;
@@ -5182,7 +5220,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
                 }
 
                 //save quantification_standard counts
-                std::unordered_map<std::string, real_t> element_counts = quant_itr.second.element_counts.at(fit_itr.first);
+                std::unordered_map<std::string, T_real> element_counts = quant_itr.second.element_counts.at(fit_itr.first);
                 count[0] = element_counts.size();
                 
                 _create_memory_space(1, count, memoryspace_id);
@@ -5230,7 +5268,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
                         continue;
                     }
                     offset[0] = offset_idx;
-                    real_t val = element_counts.at(el_name);
+                    T_real val = element_counts.at(el_name);
 
                     H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                     H5Sselect_hyperslab(dataspace_ch_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
@@ -5312,7 +5350,7 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 					char label[10] = { 0 };
 					//int element_offset = 0;
 					//create dataset for different shell curves
-                    std::vector<real_t> calibration_curve;
+                    std::vector<T_real> calibration_curve;
                     std::vector<std::string> calibration_curve_labels;
 
                     for (const auto& citr : calib_itr.second)
@@ -5375,7 +5413,8 @@ bool HDF5_IO::save_quantification(data_struct::Detector* detector)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override * params_override)
+template<typename T_real>
+bool HDF5_IO<T_real>::_save_params_override(hid_t group_id, data_struct::Params_Override<T_real> * params_override)
 {
 	//TODO : save param override to hdf5 
 
@@ -5393,7 +5432,8 @@ bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info)
+template<typename T_real>
+bool HDF5_IO<T_real>::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info)
 {
     
     hid_t dataspace_id = -1, memoryspace_id = -1;
@@ -5507,7 +5547,8 @@ bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Inf
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs)
+template<typename T_real>
+bool HDF5_IO<T_real>::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs)
 {
     hid_t memoryspace_id;
     herr_t status;
@@ -5619,7 +5660,8 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, real_t us_amps_val, string us_amps_unit, real_t ds_amps_val, string ds_amps_unit)
+template<typename T_real>
+bool HDF5_IO<T_real>::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>* scalers_map, T_real us_amps_val, string us_amps_unit, T_real ds_amps_val, string ds_amps_unit)
 {
 
     hid_t dataspace_values_id = -1, memoryspace_id = -1, dataspace_names_id = -1, memoryspace_str_id = -1;
@@ -5640,7 +5682,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
     hsize_t offset_3d[3] = { 0, 0, 0 };
     hsize_t count_3d[3] = { 1, 1, 1 };
 
-    real_t time_scaler_clock = 1.0;
+    T_real time_scaler_clock = 1.0;
 
     bool single_row_scan = false;
 
@@ -5654,7 +5696,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
 
     count[0] = 1;
 
-    real_t val;
+    T_real val;
     std::string units;
 
     if (false == _open_or_create_group(STR_SCALERS, maps_grp_id, scalers_grp_id))
@@ -5846,7 +5888,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
                     logE << "failed to write " << STR_UNITS << "\n";
                 }
                 H5Sselect_hyperslab(dataspace_values_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
-                itr.values = itr.values.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+                itr.values = itr.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
                 status = H5Dwrite(dset_values_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_values_id, H5P_DEFAULT, (void*)itr.values.data());
                 if (status < 0)
                 {
@@ -5866,7 +5908,7 @@ bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_M
 
 //-----------------------------------------------------------------------------
 
-real_t translate_back_sens_num(int value)
+float translate_back_sens_num(int value)
 {
     if (value == 1)
     {
@@ -5908,7 +5950,7 @@ real_t translate_back_sens_num(int value)
 }
 
 
-real_t translate_back_sens_unit(string value)
+float translate_back_sens_unit(string value)
 {
     if (value == "pA/V")
     {
@@ -5929,7 +5971,8 @@ real_t translate_back_sens_unit(string value)
     return -1;
 }
 
-void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, string us_amp_sens_unit_val, real_t ds_amp_sens_num_val, string ds_amp_sens_unit_val)
+template<typename T_real>
+void HDF5_IO<T_real>::_save_amps(hid_t scalers_grp_id, T_real us_amp_sens_num_val, string us_amp_sens_unit_val, T_real ds_amp_sens_num_val, string ds_amp_sens_unit_val)
 {
     
     hid_t dataspace_us_id, dataspace_ds_id, memoryspace_id;
@@ -5948,10 +5991,10 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, strin
     status = H5Tset_size(memtype, 255);
 	std::string units;
 
-    real_t trans_us_amp_sens_num_val = translate_back_sens_num((int)us_amp_sens_num_val);
-    real_t trans_us_amp_sens_unit_val = translate_back_sens_unit(us_amp_sens_unit_val);;
-    real_t trans_ds_amp_sens_num_val = translate_back_sens_num((int)ds_amp_sens_num_val);;
-    real_t trans_ds_amp_sens_unit_val = translate_back_sens_unit(ds_amp_sens_unit_val);;
+    T_real trans_us_amp_sens_num_val = translate_back_sens_num((int)us_amp_sens_num_val);
+    T_real trans_us_amp_sens_unit_val = translate_back_sens_unit(us_amp_sens_unit_val);;
+    T_real trans_ds_amp_sens_num_val = translate_back_sens_num((int)ds_amp_sens_num_val);;
+    T_real trans_ds_amp_sens_unit_val = translate_back_sens_unit(ds_amp_sens_unit_val);;
     
     if (false == _open_h5_dataset(STR_US_AMP, H5T_INTEL_R, scalers_grp_id, 1, count, count, dset_us_id, dataspace_us_id))
     {
@@ -6027,9 +6070,10 @@ void HDF5_IO::_save_amps(hid_t scalers_grp_id, real_t us_amp_sens_num_val, strin
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_scan_scalers(size_t detector_num,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_scan_scalers(size_t detector_num,
                                 data_struct::Scan_Info *scan_info,
-                                data_struct::Params_Override * params_override,
+                                data_struct::Params_Override<T_real> * params_override,
                                 size_t row_idx_start,
                                 int row_idx_end,
                                 size_t col_idx_start,
@@ -6119,7 +6163,8 @@ bool HDF5_IO::save_scan_scalers(size_t detector_num,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_scan_scalers_confocal(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_scan_scalers_confocal(std::string path,
                                 size_t detector_num,
                                 size_t row_idx_start,
                                 int row_idx_end,
@@ -6245,7 +6290,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
     if (confocal_ver_2020)
     {
         bool first_save = true;
-        real_t* buffer = nullptr;
+        T_real* buffer = nullptr;
         hsize_t nobj = 0;
         H5Gget_num_objs(dset_detectors_id, &nobj);
         hid_t values_id;
@@ -6301,7 +6346,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
                     }
                     // reset name_cnt to 1 for writing 
                     names_cnt[0] = 1;
-                    buffer = new real_t[scalers_count[0] * scalers_count[1]];
+                    buffer = new T_real[scalers_count[0] * scalers_count[1]];
                     mem_count[0] = scalers_count[0];
                     mem_count[1] = scalers_count[1];
                     _create_memory_space(2, mem_count, mem_space);
@@ -6348,7 +6393,7 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
             logE << "Error creating " << STR_NAMES << "\n";
             return false;
         }
-        real_t* buffer = new real_t[scalers_count[0] * scalers_count[1]];
+        T_real* buffer = new T_real[scalers_count[0] * scalers_count[1]];
         hsize_t scaler_amt = scalers_count[2];
         scalers_count[2] = 1;
         value_count[0] = 1;
@@ -6417,7 +6462,8 @@ bool HDF5_IO::save_scan_scalers_confocal(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_scan_scalers_gsecars(std::string path,
 									size_t detector_num,
 									size_t row_idx_start,
 									int row_idx_end,
@@ -6581,7 +6627,7 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
         logE << "Error creating " << STR_VALUES << "\n";
         return false;
     }
-	real_t *buffer = new real_t[det_dims_in[0] * det_dims_in[1]];
+	T_real *buffer = new T_real[det_dims_in[0] * det_dims_in[1]];
 	value_count[0] = 1;
 
 
@@ -6703,7 +6749,8 @@ bool HDF5_IO::save_scan_scalers_gsecars(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_scan_scalers_bnl(std::string path,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_scan_scalers_bnl(std::string path,
     size_t detector_num,
     size_t row_idx_start,
     int row_idx_end,
@@ -6935,7 +6982,8 @@ bool HDF5_IO::save_scan_scalers_bnl(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::add_background(std::string directory, std::string filename, data_struct::Params_Override& params)
+template<typename T_real>
+bool HDF5_IO<T_real>::add_background(std::string directory, std::string filename, data_struct::Params_Override<T_real>& params)
 {
 
     std::lock_guard<std::mutex> lock(_mutex);
@@ -7009,7 +7057,7 @@ bool HDF5_IO::add_background(std::string directory, std::string filename, data_s
             hid_t error = H5Dread(mca_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, buffer.data());
             if (error > -1 )
             {
-                ArrayXr background = data_struct::snip_background((data_struct::Spectra*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
+                ArrayXr background = data_struct::snip_background((data_struct::Spectra<T_real>*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
                 error = H5Dwrite(back_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, background.data());
                 if (error < 0)
                 {
@@ -7027,7 +7075,8 @@ bool HDF5_IO::add_background(std::string directory, std::string filename, data_s
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg)
+template<typename T_real>
+bool HDF5_IO<T_real>::generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     logI  << avg_filename << "\n";
@@ -7191,7 +7240,8 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
+template<typename T_real>
+void HDF5_IO<T_real>::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
 {
     std::vector<hid_t> analysis_ids;
 	hid_t error;
@@ -7259,7 +7309,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
 		//long long avail_mem = get_total_mem() * .95;
 		long long avail_mem = get_available_mem();
-		if ((total * sizeof(real_t) * 2) > (avail_mem) && rank == 3) //mca_arr
+		if ((total * sizeof(T_real) * 2) > (avail_mem) && rank == 3) //mca_arr
 		{
 			//read in partial dataset at a time by chunks.
 			hsize_t* offset = new hsize_t[rank];
@@ -7300,7 +7350,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 					if (error > -1)
 					{
-                        buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+                        buffer1 = buffer1.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 					}
 					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 					{
@@ -7310,7 +7360,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
 						if (error > -1)
 						{
-							buffer2 = buffer2.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+							buffer2 = buffer2.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 							buffer1 += buffer2;
 							divisor += 1.0;
 						}
@@ -7341,14 +7391,14 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
             error = H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 			if (error > -1)
 			{
-				buffer1 = buffer1.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+				buffer1 = buffer1.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 			}
 			for (long unsigned int k = 0; k < analysis_ids.size(); k++)
 			{
                 error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
 				if (error > -1)
 				{
-					buffer2 = buffer2.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+					buffer2 = buffer2.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 					buffer1 += buffer2;
 					divisor += 1.0;
 				}
@@ -7381,7 +7431,8 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
+template<typename T_real>
+void HDF5_IO<T_real>::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
 {
     hid_t src_analyzed_grp_id = H5Gopen(src_maps_grp_id, "XRF_Analyzed", H5P_DEFAULT);
     if (src_analyzed_grp_id > -1)
@@ -7428,7 +7479,8 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
+template<typename T_real>
+void HDF5_IO<T_real>::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids)
 {
     hid_t src_inner_grp_id = H5Gopen(src_analyzed_grp_id, STR_INT_SPEC.c_str(), H5P_DEFAULT);
     if(src_inner_grp_id > -1)
@@ -7452,7 +7504,8 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
+template<typename T_real>
+bool HDF5_IO<T_real>::generate_stream_dataset(std::string dataset_directory,
                                       std::string dataset_name,
                                       int detector_num,
                                       size_t height,
@@ -7461,7 +7514,7 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
 
     std::string str_detector_num = std::to_string(detector_num);
     std::string full_save_path = dataset_directory+ DIR_END_CHAR+"img.dat"+ DIR_END_CHAR +dataset_name+".h5"+str_detector_num;
-    //io::file::HDF5_IO::inst()->set_filename(full_save_path);
+    //io::file::HDF5_IO<T_real>::inst()->set_filename(full_save_path);
 
 
     return false;
@@ -7469,32 +7522,35 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_stream_row(size_t d_hash,
+template<typename T_real>
+bool HDF5_IO<T_real>::save_stream_row(size_t d_hash,
                              size_t detector_num,
                              size_t row,
-                             std::vector< data_struct::Spectra* >  *spectra_row)
+                             std::vector< data_struct::Spectra<T_real>* >  *spectra_row)
 {
     return false;
 }
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra * spectra)
+template<typename T_real>
+bool HDF5_IO<T_real>::save_itegrade_spectra(data_struct::Spectra<T_real> * spectra)
 {
     return false;
 }
 
 //-----------------------------------------------------------------------------
 
-
-bool HDF5_IO::close_dataset(size_t d_hash)
+template<typename T_real>
+bool HDF5_IO<T_real>::close_dataset(size_t d_hash)
 {
     return false;
 }
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
+template<typename T_real>
+void HDF5_IO<T_real>::update_theta(std::string dataset_file, std::string theta_pv_str)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 	hid_t file_id, theta_id, extra_names, extra_values;
@@ -7504,7 +7560,7 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 	hsize_t offset_1d[1] = { 0 };
 	hsize_t count_1d[1] = { 1 };
 	hid_t rerror = 0;
-	real_t theta_value = 0;
+	T_real theta_value = 0;
 
 	file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	if (file_id < 0)
@@ -7558,7 +7614,8 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
+template<typename T_real>
+void HDF5_IO<T_real>::update_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	hid_t file_id, us_amp_id, us_amp_num_id, ds_amp_id, ds_amp_num_id;
@@ -7567,8 +7624,8 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 	hsize_t offset_1d[1] = { 2 };
 	hsize_t count_1d[1] = { 1 };
 	hid_t rerror = 0;
-	real_t us_amp_value = stof(us_amp_str);
-	real_t ds_amp_value = stof(ds_amp_str);
+	T_real us_amp_value = stof(us_amp_str);
+	T_real ds_amp_value = stof(ds_amp_str);
 
 	file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	if (file_id < 0)
@@ -7660,7 +7717,8 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
+template<typename T_real>
+void HDF5_IO<T_real>::update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	hid_t file_id, us_amp_id, ds_amp_id, num_stand_id;
@@ -7669,8 +7727,8 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	hsize_t offset_1d[1] = { 2 };
 	hsize_t count_1d[1] = { 1 };
 	hid_t rerror = 0;
-	real_t us_amp_value = stof(us_amp_str);
-	real_t ds_amp_value = stof(ds_amp_str);
+	T_real us_amp_value = stof(us_amp_str);
+	T_real ds_amp_value = stof(ds_amp_str);
 	int num_stands;
 	string q_loc_pre_str = "/MAPS/Quantification/Standard";
 	string q_loc_post_str = "/Scalers/";
@@ -7781,7 +7839,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 
 //-----------------------------------------------------------------------------
 /*
-void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Override* params_override)
+void HDF5_IO<T_real>::update_scalers(std::string dataset_file, data_struct::Params_Override<T_real>* params_override)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     if (params_override == nullptr)
@@ -7790,7 +7848,7 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
     }
     
     hid_t maps_grp_id;
-    real_t time_scaler_clock = 1;
+    T_real time_scaler_clock = 1;
     try
     {
         hid_t scaler_dset_id = -1;
@@ -7978,7 +8036,8 @@ void HDF5_IO::update_scalers(std::string dataset_file, data_struct::Params_Overr
 */
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_v9_quant(hid_t file_id, 
+template<typename T_real>
+void HDF5_IO<T_real>::_add_v9_quant(hid_t file_id, 
 							hid_t chan_names,
 							hid_t chan_space,
 							int chan_amt,
@@ -8027,7 +8086,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         char sr_current_carr[255] = "SRCURRENT";
         char us_ic_carr[255];
         char ds_ic_carr[255];
-        real_t real_val = 0.0;
+        T_real real_val = 0.0;
         hid_t err;
 
         STR_US_IC.copy(us_ic_carr, 254);
@@ -8160,7 +8219,8 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
+template<typename T_real>
+void HDF5_IO<T_real>::_add_extra_pvs(hid_t file_id, std::string group_name)
 {
 	char tmp_char[256] = { 0 };
     //open scan extras and create 4xN array
@@ -8251,7 +8311,8 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::add_v9_layout(std::string dataset_file)
+template<typename T_real>
+void HDF5_IO<T_real>::add_v9_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -8413,7 +8474,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 		}
 		if (v9_max_id > -1)
 		{
-			real_t *buf = new real_t[count2d[1]];
+			T_real *buf = new T_real[count2d[1]];
 			count2d[0] = 1;
 			
             if (max_id > -1)
@@ -8612,7 +8673,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
 
     //change version to 9
-    real_t version = 9;
+    T_real version = 9;
     hid_t version_id = H5Dopen(file_id, "/MAPS/version", H5P_DEFAULT);
     hid_t ver_space = H5Dget_space(version_id);
     hid_t ver_type = H5Dget_type(version_id);
@@ -8633,7 +8694,8 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_add_v9_scalers(hid_t file_id)
+template<typename T_real>
+void HDF5_IO<T_real>::_add_v9_scalers(hid_t file_id)
 {
 
     std::map<std::string, int> scaler_map;
@@ -8777,7 +8839,8 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler)
+template<typename T_real>
+bool HDF5_IO<T_real>::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::string fits_link, std::string normalize_scaler)
 {
     char desc[256] = {0};
     std::string exhange_str = "/exchange_" + exchange_idx;
@@ -8913,14 +8976,14 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             }
             
 
-            real_t *data = new real_t[chan_dims[1] * chan_dims[2]];
-            real_t *ds_ic_data = new real_t[chan_dims[1] * chan_dims[2]];
+            T_real *data = new T_real[chan_dims[1] * chan_dims[2]];
+            T_real *ds_ic_data = new T_real[chan_dims[1] * chan_dims[2]];
             std::string scaler_name_str;
             char char_data[256]={0};
             char char_ug_data[256]="ug/cm2";
             int k =0;
 
-            real_t quant_value = 1.0;
+            T_real quant_value = 1.0;
 
             for (std::string::size_type x=0; x<normalize_scaler.length(); ++x)
             {
@@ -9117,7 +9180,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
 
     //Add version dataset
-    real_t save_val = HDF5_EXCHANGE_VERSION;
+    T_real save_val = HDF5_EXCHANGE_VERSION;
     
     if (false == _open_h5_dataset(str_version, H5T_INTEL_R, file_id, 1, count, count, dset_id, dataspace_id))
     {
@@ -9138,7 +9201,8 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::add_exchange_layout(std::string dataset_file)
+template<typename T_real>
+void HDF5_IO<T_real>::add_exchange_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -9173,7 +9237,8 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
+template<typename T_real>
+void HDF5_IO<T_real>::export_int_fitted_to_csv(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 

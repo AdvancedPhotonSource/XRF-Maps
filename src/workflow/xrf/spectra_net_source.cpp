@@ -56,7 +56,8 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Source::Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, std::string ip_addr, std::string port) : Source<data_struct::Stream_Block*>()
+template<typename T_real>
+Spectra_Net_Source<T_real>::Spectra_Net_Source(data_struct::Analysis_Job<T_real>* analysis_job, std::string ip_addr, std::string port) : Source<data_struct::Stream_Block*>()
 {
     _analysis_job = analysis_job;
 #ifdef _BUILD_WITH_ZMQ
@@ -75,7 +76,8 @@ Spectra_Net_Source::Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, 
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Source::~Spectra_Net_Source()
+template<typename T_real>
+Spectra_Net_Source<T_real>::~Spectra_Net_Source()
 {
 #ifdef _BUILD_WITH_ZMQ
 	if (_zmq_socket != nullptr)
@@ -95,12 +97,13 @@ Spectra_Net_Source::~Spectra_Net_Source()
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Net_Source::run()
+template<typename T_real>
+void Spectra_Net_Source<T_real>::run()
 {
 #ifdef _BUILD_WITH_ZMQ
     _running = true;
     zmq::message_t token, message;
-    data_struct::Stream_Block *stream_block;
+    data_struct::Stream_Block<T_real> *stream_block;
     while (_running)
     {
         _zmq_socket->recv(&token);

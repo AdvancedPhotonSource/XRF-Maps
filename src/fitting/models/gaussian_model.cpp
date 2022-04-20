@@ -712,9 +712,9 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const Fit_Parameters<T
 template<typename T_real>
 ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params)
 {
-    real_t energy_offset = 0.0;
-    real_t energy_slope = 0.0;
-    real_t energy_quad = 0.0;
+    T_real energy_offset = 0.0;
+    T_real energy_slope = 0.0;
+    T_real energy_quad = 0.0;
     if (fit_params.contains(STR_ENERGY_OFFSET))
     {
         energy_offset = fit_params.at(STR_ENERGY_OFFSET).value;

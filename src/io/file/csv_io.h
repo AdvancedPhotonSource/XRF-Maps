@@ -66,20 +66,25 @@ namespace csv
 
     DLL_EXPORT bool load_element_info(std::string filename);
 
-    DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data);
+    template<typename T_real>
+    DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data);
 
-    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background);
+    template<typename T_real>
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background);
 
-    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background, unordered_map<string, data_struct::ArrayXr>* labeled_spectras);
+    template<typename T_real>
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, data_struct::ArrayTr<T_real>>* labeled_spectras);
 
-    DLL_EXPORT void save_quantification(std::string path, Detector* detector);
+    template<typename T_real>
+    DLL_EXPORT void save_quantification(std::string path, Detector<T_real>* detector);
 
+    template<typename T_real>
     DLL_EXPORT bool save_calibration_curve(std::string path,
-                                            Detector* detector,
-                                            std::map<string, Quantification_Standard>* standards,
+                                            Detector<T_real>* detector,
+                                            std::map<string, Quantification_Standard<T_real>>* standards,
                                             Fitting_Routines routine,
                                             string quantifier_scaler_name, 
-                                            Quantification_Scaler_Struct* quants_map);
+                                            Quantification_Scaler_Struct<T_real>* quants_map);
 
 }// end namespace CSV
 }// end namespace file

@@ -65,13 +65,13 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block*>
+template<typename T_real>
+class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block<T_real>*>
 {
 
 public:
 
-    Spectra_Net_Source(data_struct::Analysis_Job* analysis_job, std::string ip_addr="127.0.0.1", std::string port = "43434");
+    Spectra_Net_Source(data_struct::Analysis_Job<T_real>* analysis_job, std::string ip_addr="127.0.0.1", std::string port = "43434");
 
     virtual ~Spectra_Net_Source();
 
@@ -83,9 +83,9 @@ protected:
 
     std::string _conn_str;
 
-    io::net::Basic_Serializer _serializer;
+    io::net::Basic_Serializer<T_real> _serializer;
 
-    data_struct::Analysis_Job* _analysis_job;
+    data_struct::Analysis_Job<T_real>* _analysis_job;
 
 #ifdef _BUILD_WITH_ZMQ
 	zmq::context_t *_context;

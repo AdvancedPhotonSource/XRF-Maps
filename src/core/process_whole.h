@@ -104,61 +104,69 @@ using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
 
-template<typename T>
-data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit,
+template<typename T_real>
+data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(std::unordered_map<std::string, T_real> *elements_to_fit,
                                                           size_t height,
                                                           size_t width,
                                                           bool alloc_iter_count);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
-                        const fitting::models::Base_Model<real_t> * const model,
-                        const data_struct::Spectra<real_t> * const spectra,
-                        const data_struct::Fit_Element_Map_Dict * const elements_to_fit,
-                        data_struct::Fit_Count_Dict * out_fit_counts,
+template<typename T_real>
+DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* fit_routine,
+                        const fitting::models::Base_Model<T_real>* const model,
+                        const data_struct::Spectra<T_real>* const spectra,
+                        const data_struct::Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                        data_struct::Fit_Count_Dict<T_real>* out_fit_counts,
                         size_t i,
                         size_t j);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
+DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>* analysis_job,
                                             std::string  dataset_filename,
                                             size_t detector_num,
-                                            data_struct::Params_Override* params_override,
+                                            data_struct::Params_Override<double>* params_override,
                                             data_struct::Fit_Parameters<double>& out_fitp);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job* analysis_job);
+template<typename T_real>
+DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<T_real>* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
-                             data_struct::Detector* detector_struct,
+template<typename T_real>
+DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
+                             data_struct::Detector<T_real>* detector_struct,
                              ThreadPool* tp,
                              bool save_spec_vol,
                              Callback_Func_Status_Def* status_callback = nullptr);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Func_Status_Def* status_callback = nullptr);
+template<typename T_real>
+DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysis_job, Callback_Func_Status_Def* status_callback = nullptr);
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
+template<typename T_real>
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
 
 // ----------------------------------------------------------------------------
 
-void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num, vector<Quantification_Standard> &standard_element_weights, unordered_map<size_t, real_t> &quant_map);
+template<typename T_real>
+void load_and_fit_quatification_datasets(data_struct::Analysis_Job<T_real>* analysis_job, size_t detector_num, vector<Quantification_Standard<T_real>> &standard_element_weights, unordered_map<size_t, T_real> &quant_map);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job* analysis_job);
+template<typename T_real>
+DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<T_real>* analysis_job);
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job);
+template<typename T_real>
+DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_job);
 
 // ----------------------------------------------------------------------------
 

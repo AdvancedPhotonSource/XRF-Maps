@@ -64,7 +64,10 @@ namespace file
 namespace csv
 {
 
-bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data)
 {
     std::ifstream file_stream(filename);
     try
@@ -93,7 +96,7 @@ bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data
                 for (std::string value; std::getline(strstream, value, ','); )
                 {
                     names.push_back(value);
-                    data[value] = ArrayXr();
+                    data[value] = ArrayTr<T_real>();
                     data[value].resize(num_lines);
                     data[value].setZero(num_lines);
                 }
@@ -127,33 +130,37 @@ bool load_raw_spectra(std::string filename, unordered_map<string, ArrayXr> &data
     return true;
 }
 
-bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background)
 {
     return save_fit_and_int_spectra(fullpath, energy, spectra, spectra_model, background, nullptr);
 }
 
 // ----------------------------------------------------------------------------
 
-bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayXr* energy, const data_struct::ArrayXr* spectra, const data_struct::ArrayXr* spectra_model, const data_struct::ArrayXr* background, unordered_map<string, data_struct::ArrayXr>* labeled_spectras)
+template<typename T_real>
+bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, data_struct::ArrayTr<T_real>>* labeled_spectras)
 {
     if (energy == nullptr || spectra == nullptr || spectra_model == nullptr || background == nullptr)
     {
         return false;
     }
 
-    data_struct::ArrayXr temp_zero(energy->size());
+    data_struct::ArrayTr<T_real> temp_zero(energy->size());
     temp_zero.setZero(energy->size());
     // set detailed lines to zero
-    data_struct::ArrayXr* k_alpha = &temp_zero;
-    data_struct::ArrayXr* k_beta = &temp_zero;
-    data_struct::ArrayXr* l_line = &temp_zero;
-    data_struct::ArrayXr* m_line = &temp_zero;
-    data_struct::ArrayXr* step = &temp_zero;
-    data_struct::ArrayXr* tail = &temp_zero;
-    data_struct::ArrayXr* elastic = &temp_zero;
-    data_struct::ArrayXr* compton = &temp_zero;
-    data_struct::ArrayXr* pileup = &temp_zero;
-    data_struct::ArrayXr* escape = &temp_zero;
+    data_struct::ArrayTr<T_real>* k_alpha = &temp_zero;
+    data_struct::ArrayTr<T_real>* k_beta = &temp_zero;
+    data_struct::ArrayTr<T_real>* l_line = &temp_zero;
+    data_struct::ArrayTr<T_real>* m_line = &temp_zero;
+    data_struct::ArrayTr<T_real>* step = &temp_zero;
+    data_struct::ArrayTr<T_real>* tail = &temp_zero;
+    data_struct::ArrayTr<T_real>* elastic = &temp_zero;
+    data_struct::ArrayTr<T_real>* compton = &temp_zero;
+    data_struct::ArrayTr<T_real>* pileup = &temp_zero;
+    data_struct::ArrayTr<T_real>* escape = &temp_zero;
 
 
     if (labeled_spectras != nullptr)
@@ -221,7 +228,8 @@ bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::Arr
 
 // ----------------------------------------------------------------------------
 
-void save_quantification(std::string path, Detector* detector)
+template<typename T_real>
+void save_quantification(std::string path, Detector<T_real>* detector)
 {
     if (detector == nullptr)
     {
@@ -250,7 +258,8 @@ void save_quantification(std::string path, Detector* detector)
 
 // ----------------------------------------------------------------------------
 
-bool save_calibration_curve(std::string path, Detector* detector, std::map<string, Quantification_Standard>* standards, Fitting_Routines routine, string quantifier_scaler_name, Quantification_Scaler_Struct* quants_map)
+template<typename T_real>
+bool save_calibration_curve(std::string path, Detector<T_real>* detector, std::map<string, Quantification_Standard<T_real>>* standards, Fitting_Routines routine, string quantifier_scaler_name, Quantification_Scaler_Struct<T_real>* quants_map)
 {
     if (standards == nullptr || quants_map == nullptr || detector == nullptr)
     {
@@ -292,7 +301,7 @@ bool save_calibration_curve(std::string path, Detector* detector, std::map<strin
             for (const auto& itr : quants_map->curve_quant_map[shell_itr])
             {
                 string name = itr.name;
-                real_t counts = 0.0;
+                T_real counts = 0.0;
                 if (shell_itr == Electron_Shell::L_SHELL)
                 {
                     name += "_L";

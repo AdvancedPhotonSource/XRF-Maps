@@ -61,6 +61,7 @@ namespace io
 namespace file
 {
 
+template<typename T_real>
 class DLL_EXPORT MDA_IO
 {
 public:
@@ -82,35 +83,35 @@ public:
 
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
-                            data_struct::Spectra_Volume* vol,
+                            data_struct::Spectra_Volume<T_real>* vol,
                             bool hasNetCDF);
 
     bool load_spectra_volume_with_callback(std::string path,
 										const std::vector<size_t>& detector_num_arr,
                                         bool hasNetCDF,
-                                        data_struct::Analysis_Job *analysis_job,
+                                        data_struct::Analysis_Job<T_real>* analysis_job,
                                         size_t& out_rows,
                                         size_t& out_cols,
-										data_struct::IO_Callback_Func_Def callback_func,
+										data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                         void *user_data);
 
 	bool load_integrated_spectra(std::string path,
 								size_t detector_num,
-								data_struct::Spectra *out_integrated_spectra,
+								data_struct::Spectra<T_real>*out_integrated_spectra,
 								bool hasNetCDF);
 
     bool load_quantification_scalers(std::string path,
-                                     data_struct::Params_Override *override_values);
+                                     data_struct::Params_Override<T_real>*override_values);
 
     void unload();
 	
-    void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, real_t& out_us_amp, real_t& out_ds_amp);
+    void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, T_real& out_us_amp, T_real& out_ds_amp);
 
     data_struct::Scan_Info* get_scan_info() { return &_scan_info; }
 
     unsigned int get_num_integreated_spectra() { return _integrated_spectra_map.size(); }
 
-    data_struct::ArrayXr* get_integrated_spectra(unsigned int detector);
+    data_struct::ArrayTr<T_real>* get_integrated_spectra(unsigned int detector);
 
     void unload_int_spectra() { _integrated_spectra_map.clear(); }
 
@@ -140,7 +141,7 @@ private:
 
     std::string _theta_pv_str;
 
-    std::unordered_map<unsigned int, data_struct::ArrayXr> _integrated_spectra_map;
+    std::unordered_map<unsigned int, data_struct::ArrayTr<T_real>> _integrated_spectra_map;
 };
 
 DLL_EXPORT bool load_henke_from_xdr(std::string filename);

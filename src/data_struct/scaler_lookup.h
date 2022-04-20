@@ -83,7 +83,7 @@ public:
 
     bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline);
 
-    bool search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
+    bool search_for_timing_info(const unordered_map<string, float>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
 
     bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline);
 

@@ -39,8 +39,11 @@ freely, subject to the following restrictions:
 
 namespace visual
 {
+    
+// ----------------------------------------------------------------------------
 
-void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* model, data_struct::ArrayXr* background, bool log_them)
+template<typename T_real>
+void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayTr<T_real>* energy, data_struct::ArrayTr<T_real>* spectra, data_struct::ArrayTr<T_real>* model, data_struct::ArrayTr<T_real>* background, bool log_them)
 {
     if (QCoreApplication::startingUp())
     {
@@ -55,7 +58,10 @@ void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayXr* energy,
     }
 }
 
-void SavePlotSpectras(std::string path, data_struct::ArrayXr* energy, data_struct::ArrayXr* spectra, data_struct::ArrayXr* model, data_struct::ArrayXr* background, bool log_them)
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void SavePlotSpectras(std::string path, data_struct::ArrayTr<T_real>* energy, data_struct::ArrayTr<T_real>* spectra, data_struct::ArrayTr<T_real>* model, data_struct::ArrayTr<T_real>* background, bool log_them)
 {
     QtCharts::QLogValueAxis *axisYLog10 = new QtCharts::QLogValueAxis();
     axisYLog10->setTitleText("Counts Log10");
@@ -219,7 +225,8 @@ bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_
 
 // ----------------------------------------------------------------------------
 
-void SavePlotQuantificationFromConsole(std::string path, Detector* detector)
+template<typename T_real>
+void SavePlotQuantificationFromConsole(std::string path, Detector<T_real>* detector)
 {
     if (QCoreApplication::startingUp())
     {
@@ -237,7 +244,8 @@ void SavePlotQuantificationFromConsole(std::string path, Detector* detector)
 
 // ----------------------------------------------------------------------------
 
-void SavePlotQuantification(std::string path, Detector* detector)
+template<typename T_real>
+void SavePlotQuantification(std::string path, Detector<T_real>* detector)
 {
     if (detector == nullptr)
     {
@@ -276,8 +284,9 @@ void SavePlotQuantification(std::string path, Detector* detector)
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
 void SavePlotCalibrationCurve(std::string path,
-                              Detector* detector,
+                              Detector<T_real>* detector,
                               string quantifier_scaler_name,
                               unordered_map<string, Element_Quant*>* all_elements_with_weights,
                               vector<Element_Quant>* calibration_curve,
@@ -332,11 +341,11 @@ void SavePlotCalibrationCurve(std::string path,
     QtCharts::QBarSeries *series = new QtCharts::QBarSeries();
     series->setName(QString::fromStdString(quantifier_scaler_name));
 
-    real_t min_y = 9999999.0;
-    real_t max_y = -9999999.0;
+    T_real min_y = 9999999.0;
+    T_real max_y = -9999999.0;
     for(int i=zstart; i <= zstop; i++)
     {
-        real_t val = (*calibration_curve)[i].calib_curve_val;
+        T_real val = (*calibration_curve)[i].calib_curve_val;
         if (val <= 0)
         {
             val = 0.00000001;
@@ -366,7 +375,7 @@ void SavePlotCalibrationCurve(std::string path,
             {
                 data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
                 quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
-                real_t plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
+                T_real plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
                 if (element_info != nullptr)
                 {
                     if (false == std::isfinite(plot_val) || plot_val <= 0.0)

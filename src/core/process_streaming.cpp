@@ -49,12 +49,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 // ----------------------------------------------------------------------------
 
-data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream_block )
+template<typename T_real>
+data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block<T_real>* stream_block )
 {
 
     for(auto &itr : stream_block->fitting_blocks)
     {
-        std::unordered_map<std::string, real_t> counts_dict;
+        std::unordered_map<std::string, T_real> counts_dict;
         stream_block->fitting_blocks[itr.first].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit, counts_dict);
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
@@ -68,7 +69,8 @@ data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream
 
 // ----------------------------------------------------------------------------
 
-void run_stream_pipeline(data_struct::Analysis_Job* job)
+template<typename T_real>
+void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
 {
     workflow::Source<data_struct::Stream_Block*> *source;
     workflow::Distributor<data_struct::Stream_Block*, data_struct::Stream_Block*> distributor(job->num_threads);
@@ -120,7 +122,8 @@ void run_stream_pipeline(data_struct::Analysis_Job* job)
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job)
+template<typename T_real>
+DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job)
 {
 	workflow::Source<data_struct::Stream_Block*> *source;
 	workflow::xrf::Spectra_Net_Streamer sink(job->network_stream_port);

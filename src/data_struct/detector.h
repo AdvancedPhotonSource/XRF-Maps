@@ -100,7 +100,7 @@ public:
     std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> fit_routines;
 
     // Fitting model
-    fitting::models::Base_Model * model;
+    fitting::models::Base_Model<T_real>* model;
 
     // Quantification
     std::map<string, Quantification_Standard<T_real>> quantification_standards;
@@ -111,7 +111,7 @@ public:
     map<Fitting_Routines, map<string, unordered_map<string, Element_Quant*>>> all_element_quants;
 
     // Fit Parameters Override for model
-    Params_Override fit_params_override_dict;
+    Params_Override<T_real> fit_params_override_dict;
 
     T_real beryllium_window_thickness;
     T_real germanium_dead_layer;

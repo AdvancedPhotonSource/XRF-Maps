@@ -48,42 +48,17 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef PROCESS_STREAMING_H
 #define PROCESS_STREAMING_H
 
-#include <iostream>
-#include <queue>
-#include <string>
-#include <array>
-#include <vector>
-#include <unordered_map>
-#include <chrono>
-#include <ctime>
-#include <limits>
-#include <sstream>
-#include <fstream>
-
-#include <stdlib.h>
-
 #include "core/defines.h"
-
-#include "io/file/hl_file_io.h"
-#include "data_struct/element_info.h"
-#include "data_struct/fit_element_map.h"
 #include "data_struct/analysis_job.h"
-#include "core/command_line_parser.h"
 #include "data_struct/stream_block.h"
-#include "workflow/pipeline.h"
-#include "workflow/xrf/spectra_file_source.h"
-#include "workflow/xrf/integrated_spectra_source.h"
-#include "workflow/xrf/detector_sum_spectra_source.h"
-#include "workflow/xrf/spectra_stream_saver.h"
-#include "workflow/xrf/spectra_net_source.h"
-#include "workflow/xrf/spectra_net_streamer.h"
-#include "fitting/routines/param_optimized_fit_routine.h"
-#include "fitting/models/gaussian_model.h"
 
-DLL_EXPORT data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream_block );
+template<typename T_real>
+DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block<T_real>* stream_block );
 
-DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job* job);
+template<typename T_real>
+DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job);
 
-DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job);
+template<typename T_real>
+DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job);
 
 #endif

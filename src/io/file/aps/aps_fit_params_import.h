@@ -62,13 +62,17 @@ namespace file
 namespace aps
 {
 
-DLL_EXPORT bool load_parameters_override(std::string path, Params_Override *params_override);
+template<typename T_real>
+DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> *params_override);
 
-DLL_EXPORT bool save_parameters_override(std::string path, Params_Override *params_override);
+template<typename T_real>
+DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_real>*params_override);
 
-DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, string result);
+template<typename T_real>
+DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, string result);
 
-DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters fit_params, int detector_num);
+template<typename T_real>
+DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<T_real> fit_params, int detector_num);
 
 }// end namespace aps
 }// end namespace file

@@ -56,21 +56,24 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Integrated_Spectra_Source::Integrated_Spectra_Source(data_struct::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
+template<typename T_real>
+Integrated_Spectra_Source<T_real>::Integrated_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source(analysis_job)
 {
-    _cb_function = std::bind(&Integrated_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Integrated_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Integrated_Spectra_Source::~Integrated_Spectra_Source()
+template<typename T_real>
+Integrated_Spectra_Source<T_real>::~Integrated_Spectra_Source()
 {
     _stream_block_list.clear();
 }
 
 // ----------------------------------------------------------------------------
 
-void Integrated_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
+template<typename T_real>
+void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
     if(_output_callback_func == nullptr)

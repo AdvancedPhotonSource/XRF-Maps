@@ -62,13 +62,13 @@ static std::time_t now_c;
 #if defined _REAL_FLOAT
   #define real_t float
   #define str_to_real std::stof
-  #define H5T_NATIVE_REAL H5T_NATIVE_FLOAT
-  #define H5T_INTEL_R H5T_INTEL_F32
+//  #define H5T_NATIVE_REAL H5T_NATIVE_FLOAT
+//  #define H5T_INTEL_R H5T_INTEL_F32
 #elif defined _REAL_DOUBLE
   #define real_t double
   #define str_to_real std::stod
-  #define H5T_NATIVE_REAL H5T_NATIVE_DOUBLE
-  #define H5T_INTEL_R H5T_INTEL_F64
+//  #define H5T_NATIVE_REAL H5T_NATIVE_DOUBLE
+//  #define H5T_INTEL_R H5T_INTEL_F64
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__

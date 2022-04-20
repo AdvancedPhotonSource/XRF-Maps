@@ -56,9 +56,10 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source() : Spectra_File_Source(nullptr)
+template<typename T_real>
+Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source() : Spectra_File_Source(nullptr)
 {
-    _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
     _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
 	for (size_t det = 0; det < 4; det++)
 	{
@@ -69,9 +70,10 @@ Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source() : Spectra_File_Source
 
 //-----------------------------------------------------------------------------
 
-Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::Analysis_Job* analysis_job) : Spectra_File_Source(analysis_job)
+template<typename T_real>
+Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source(analysis_job)
 {
-    _cb_function = std::bind(&Detector_Sum_Spectra_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
     _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
     if(analysis_job != nullptr)
     {
@@ -91,14 +93,16 @@ Detector_Sum_Spectra_Source::Detector_Sum_Spectra_Source(data_struct::Analysis_J
 
 //-----------------------------------------------------------------------------
 
-Detector_Sum_Spectra_Source::~Detector_Sum_Spectra_Source()
+template<typename T_real>
+Detector_Sum_Spectra_Source<T_real>::~Detector_Sum_Spectra_Source()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Detector_Sum_Spectra_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
+template<typename T_real>
+void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
     if(_spectra->size() < spectra->size())

@@ -33,36 +33,40 @@ using namespace data_struct;
 
 namespace visual
 {
+
+template<typename T_real>
 void SavePlotSpectrasFromConsole(std::string path,
-                                data_struct::ArrayXr* energy,
-                                data_struct::ArrayXr* spectra,
-                                data_struct::ArrayXr* model,
-                                data_struct::ArrayXr* background,
+                                data_struct::ArrayTr<T_real>* energy,
+                                data_struct::ArrayTr<T_real>* spectra,
+                                data_struct::ArrayTr<T_real>* model,
+                                data_struct::ArrayTr<T_real>* background,
                                 bool log_them);
 
+template<typename T_real>
 void SavePlotSpectras(std::string path,
-                      data_struct::ArrayXr *energy,
-                      data_struct::ArrayXr *spectra,
-                      data_struct::ArrayXr *model,
-                      data_struct::ArrayXr *background,
+                      data_struct::ArrayTr<T_real> *energy,
+                      data_struct::ArrayTr<T_real> *spectra,
+                      data_struct::ArrayTr<T_real> *model,
+                      data_struct::ArrayTr<T_real> *background,
                       bool log_them);
 
 void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*>* all_elements_with_weights, int& zstart, int& zstop);
 
 bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant*>* element_quants);
 
-void SavePlotQuantificationFromConsole(std::string path, Detector* detector);
+template<typename T_real>
+void SavePlotQuantificationFromConsole(std::string path, Detector<T_real>* detector);
 
-void SavePlotQuantification(std::string path, Detector* detector);
+template<typename T_real>
+void SavePlotQuantification(std::string path, Detector<T_real>* detector);
 
+template<typename T_real>
 void SavePlotCalibrationCurve(std::string path,
-                              Detector* detector,
+                              Detector<T_real>* detector,
                               string quantifier_scaler_name,
                               unordered_map<string, Element_Quant*>* all_elements_with_weights,
                               vector<Element_Quant>* calibration_curve,
                               int zstart,
                               int zstop);
-
-//void SavePlotCalibrationCurve(std::string path, std::string standard_name, data_struct::Calibration_Curve *calib_curve, map<string, real_t> fitted_e_cal_raitos,  int shell_idx, int zstart, int zstop);
 
 }

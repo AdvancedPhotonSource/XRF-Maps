@@ -109,7 +109,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
     {
         for (const auto& itr : quantifier_scalers)
         {
-            quant_scaler_map[itr] = Quantification_Scaler_Struct(max_z);
+            quant_scaler_map[itr] = Quantification_Scaler_Struct<T_real>(max_z);
         }
     }
 

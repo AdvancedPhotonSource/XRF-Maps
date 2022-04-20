@@ -75,7 +75,8 @@ namespace file
 
 //-----------------------------------------------------------------------------
 
-MDA_IO::MDA_IO()
+template<typename T_real>
+MDA_IO<T_real>::MDA_IO()
 {
     _mda_file = nullptr;
     _mda_file_info = nullptr;
@@ -84,14 +85,18 @@ MDA_IO::MDA_IO()
 
 //-----------------------------------------------------------------------------
 
-MDA_IO::~MDA_IO()
+template<typename T_real>
+MDA_IO<T_real>::~MDA_IO()
 {
 
     unload();
 
 }
 
-bool MDA_IO::load_scalers(std::string path)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+bool MDA_IO<T_real>::load_scalers(std::string path)
 {
     if (_mda_file != nullptr)
     {
@@ -128,7 +133,8 @@ bool MDA_IO::load_scalers(std::string path)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::unload()
+template<typename T_real>
+void MDA_IO<T_real>::unload()
 {
     if(_mda_file != nullptr)
     {
@@ -144,7 +150,8 @@ void MDA_IO::unload()
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_Override *override_values)
+template<typename T_real>
+bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::Params_Override<T_real>* override_values)
 {
     if (override_values == nullptr)
     {
@@ -204,9 +211,10 @@ bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_O
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_spectra_volume(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                                  size_t detector_num,
-                                 data_struct::Spectra_Volume* vol,
+                                 data_struct::Spectra_Volume<T_real>* vol,
                                  bool hasNetCDF)
 {
     bool is_single_row = false;
@@ -453,13 +461,14 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_spectra_volume_with_callback(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
                                                  bool hasNetCDF,
-                                                 data_struct::Analysis_Job *analysis_job,
+                                                 data_struct::Analysis_Job<T_real>* analysis_job,
                                                  size_t &out_rows,
                                                  size_t &out_cols,
-												 data_struct::IO_Callback_Func_Def callback_func,
+												 data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                                  void *user_data)
 {
 	// detector , index
@@ -716,9 +725,10 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_integrated_spectra(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		size_t detector_num,
-		data_struct::Spectra *out_integrated_spectra,
+		data_struct::Spectra<T_real>* out_integrated_spectra,
 		bool hasNetCDF)
 {
 	//index per row and col
@@ -942,7 +952,8 @@ bool MDA_IO::load_integrated_spectra(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
+template<typename T_real>
+bool MDA_IO<T_real>::_find_theta(std::string pv_name, float* theta_out)
 {
     float *tmpf;
     double *tmpd;
@@ -979,7 +990,8 @@ bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_scalers(bool load_int_spec)
+template<typename T_real>
+void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
 {
     if (_mda_file == nullptr)
     {
@@ -1037,7 +1049,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
             {
                 for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
                 {
-                    data_struct::ArrayXr* int_spec;
+                    data_struct::ArrayTr<T_real>* int_spec;
                     if (_integrated_spectra_map.count(d) == 0)
                     {
                         // if this is the first one then zero it out
@@ -1100,7 +1112,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                 {
                     for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
                     {
-                        data_struct::ArrayXr* int_spec;
+                        data_struct::ArrayTr<T_real>* int_spec;
                         if (_integrated_spectra_map.count(d) == 0)
                         {
                             // if this is the first one then zero it out
@@ -1168,7 +1180,8 @@ void MDA_IO::_load_scalers(bool load_int_spec)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_extra_pvs_vector()
+template<typename T_real>
+void MDA_IO<T_real>::_load_extra_pvs_vector()
 {
 
     if (_mda_file == nullptr)
@@ -1251,7 +1264,8 @@ void MDA_IO::_load_extra_pvs_vector()
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_meta_info()
+template<typename T_real>
+void MDA_IO<T_real>::_load_meta_info()
 {
     bool single_row_scan = false;
 
@@ -1357,7 +1371,8 @@ void MDA_IO::_load_meta_info()
 
 //-----------------------------------------------------------------------------
 
-data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
+template<typename T_real>
+data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned int detector)
 {
     if (_integrated_spectra_map.count(detector) > 0)
     {

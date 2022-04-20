@@ -149,7 +149,7 @@ const std::vector<std::string> Updatable_detector_dependand_TAGS = {
                                                                 "OCR1"
 };
 
-real_t translate_sens_num(string value)
+float translate_sens_num(string value)
 {
     if (value == "0")
     {
@@ -216,7 +216,8 @@ string translate_sens_unit(string value)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-bool load_parameters_override(std::string path, Params_Override *params_override)
+template<typename T_real>
+bool load_parameters_override(std::string path, Params_Override<T_real>*params_override)
 {
 
     data_struct::Element_Info_Map *element_info_map = data_struct::Element_Info_Map::inst();
@@ -265,10 +266,10 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                         }
                         else
                         {
-                            Fit_Element_Map* fit_map;
+                            Fit_Element_Map<T_real>* fit_map;
                             if(params_override->elements_to_fit.count(element_symb) < 1)
                             {
-                                fit_map = new Fit_Element_Map(element_symb, e_info);
+                                fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
                                 params_override->elements_to_fit[element_symb] = fit_map;
                             }
                         }
@@ -343,10 +344,10 @@ bool load_parameters_override(std::string path, Params_Override *params_override
 
                         if(e_info1 != nullptr && e_info2 != nullptr)
                         {
-                            Fit_Element_Map* fit_map;
+                            Fit_Element_Map<T_real>* fit_map;
                             if(params_override->elements_to_fit.count(orig_el_symb) < 1)
                             {
-                                fit_map = new Fit_Element_Map(efull_name1, e_info1);
+                                fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
                                 fit_map->set_as_pileup(efull_name2, e_info2);
                                 params_override->elements_to_fit[orig_el_symb] = fit_map;
                             }
@@ -368,7 +369,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
                     if( false == params_override->fit_params.contains(tag_name))
                     {
-                        params_override->fit_params.add_parameter(Fit_Param(tag_name));
+                        params_override->fit_params.add_parameter(Fit_Param<T_real>(tag_name));
                     }
 
                     std::string str_value;
@@ -414,7 +415,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
                     std::getline(strstream, element_symb, ',');
                     element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
-                    Fit_Element_Map* fit_map;
+                    Fit_Element_Map<T_real>* fit_map;
 					if (params_override->elements_to_fit.count(element_symb) > 0)
 					{
 						fit_map = params_override->elements_to_fit[element_symb];
@@ -470,7 +471,7 @@ bool load_parameters_override(std::string path, Params_Override *params_override
 
                     if( false == params_override->fit_params.contains(STR_SNIP_WIDTH))
                     {
-                        params_override->fit_params.add_parameter(Fit_Param(STR_SNIP_WIDTH));
+                        params_override->fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH));
                     }
 
                     if(fvalue > 0.0)
@@ -738,7 +739,8 @@ bool load_parameters_override(std::string path, Params_Override *params_override
 
 //-----------------------------------------------------------------------------
 
-bool save_parameters_override(std::string path, Params_Override *params_override)
+template<typename T_real>
+bool save_parameters_override(std::string path, Params_Override<T_real>* params_override)
 {
 
     /*
@@ -976,7 +978,8 @@ bool save_parameters_override(std::string path, Params_Override *params_override
 
 //-----------------------------------------------------------------------------
 
-bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, string result)
+template<typename T_real>
+bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, string result)
 {
 
     std::ofstream out_stream(path);
@@ -1006,7 +1009,8 @@ bool save_fit_parameters_override(std::string path, Fit_Parameters fit_params, s
 
 //-----------------------------------------------------------------------------
 
-bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters fit_params, int detector_num)
+template<typename T_real>
+bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<T_real> fit_params, int detector_num)
 {
 
     std::ifstream in_stream(path);

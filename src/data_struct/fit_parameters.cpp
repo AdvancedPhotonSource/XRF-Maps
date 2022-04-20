@@ -163,7 +163,7 @@ void Fit_Parameters<T_real>::sum_values(Fit_Parameters fit_params)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::divide_fit_values_by(real_t divisor)
+void Fit_Parameters<T_real>::divide_fit_values_by(T_real divisor)
 {
     for(const auto &itr : _params)
     {

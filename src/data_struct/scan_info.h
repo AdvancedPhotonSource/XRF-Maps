@@ -79,7 +79,7 @@ struct Scaler_Map
     string unit;
     bool time_normalized;
     //bool is_timer;
-    ArrayXXr values;
+    ArrayXXr<float> values;
 };
 
 //-----------------------------------------------------------------------------
@@ -89,12 +89,12 @@ struct Scan_Meta_Info
 {
     string name;
     string scan_time_stamp;
-    vector<real_t> x_axis;
-    vector<real_t> y_axis;
+    vector<float> x_axis;
+    vector<float> y_axis;
     int requested_cols;
     int requested_rows;
     vector<int> detectors;
-    real_t theta;
+    float theta;
     
 };
 
@@ -118,7 +118,7 @@ public:
         
     }
 
-    const ArrayXXr* scaler_values(const string& scaler_name) const
+    const ArrayXXr<float>* scaler_values(const string& scaler_name) const
     {
         for (const auto& itr : scaler_maps)
         {

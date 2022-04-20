@@ -50,7 +50,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 //debug
 #include <iostream>
-//#include "visual/grapher.h"
 
 namespace fitting
 {

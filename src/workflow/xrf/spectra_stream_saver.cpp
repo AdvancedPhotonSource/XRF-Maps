@@ -56,21 +56,24 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Saver::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block*>()
+template<typename T_real>
+Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block*>()
 {
-    _callback_func = std::bind(&Spectra_Stream_Saver::save_stream, this, std::placeholders::_1);
+    _callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_Stream_Saver::~Spectra_Stream_Saver()
+template<typename T_real>
+Spectra_Stream_Saver<T_real>::~Spectra_Stream_Saver()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
+template<typename T_real>
+void Spectra_Stream_Saver<T_real>::save_stream(data_struct::Stream_Block<T_real>* stream_block)
 {
 
     size_t d_hash = stream_block->dataset_hash();
@@ -141,7 +144,8 @@ void Spectra_Stream_Saver::save_stream(data_struct::Stream_Block* stream_block)
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::Stream_Block* stream_block)
+template<typename T_real>
+void Spectra_Stream_Saver<T_real>::_new_dataset(size_t d_hash, data_struct::Stream_Block<T_real>* stream_block)
 {
     Dataset_Save *dataset = new Dataset_Save();
     dataset->dataset_directory = stream_block->dataset_directory;
@@ -152,7 +156,8 @@ void Spectra_Stream_Saver::_new_dataset(size_t d_hash, data_struct::Stream_Block
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::Stream_Block* stream_block)
+template<typename T_real>
+void Spectra_Stream_Saver<T_real>::_new_detector(Dataset_Save *dataset, data_struct::Stream_Block<T_real>* stream_block)
 {
     Detector_Save *detector = new Detector_Save(stream_block->width());
     dataset->detector_map.insert( { stream_block->detector_number(), detector } );
@@ -168,7 +173,8 @@ void Spectra_Stream_Saver::_new_detector(Dataset_Save *dataset, data_struct::Str
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Stream_Saver::_finalize_dataset(Dataset_Save *dataset)
+template<typename T_real>
+void Spectra_Stream_Saver<T_real>::_finalize_dataset(Dataset_Save *dataset)
 {
     if (dataset != nullptr)
     {

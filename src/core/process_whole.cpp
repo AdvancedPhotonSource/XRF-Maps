@@ -52,10 +52,10 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-template<typename T>
-data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::string, T> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
+template<typename T_real>
+data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(std::unordered_map<std::string, T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
 {
-    data_struct::Fit_Count_Dict* element_fit_counts_dict = new data_struct::Fit_Count_Dict();
+    data_struct::Fit_Count_Dict<T_real>* element_fit_counts_dict = new data_struct::Fit_Count_Dict();
     for(auto& e_itr : *elements_to_fit)
     {
         element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr >(e_itr.first, data_struct::ArrayXXr()) );
@@ -85,15 +85,16 @@ data_struct::Fit_Count_Dict* generate_fit_count_dict(std::unordered_map<std::str
 
 // ----------------------------------------------------------------------------
 
-bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
-                        const fitting::models::Base_Model<real_t> * const model,
-                        const data_struct::Spectra<real_t> * const spectra,
-                        const data_struct::Fit_Element_Map_Dict * const elements_to_fit,
-                        data_struct::Fit_Count_Dict * out_fit_counts,
+template<typename T_real>
+bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* fit_routine,
+                        const fitting::models::Base_Model<T_real>* const model,
+                        const data_struct::Spectra<T_real>* const spectra,
+                        const data_struct::Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                        data_struct::Fit_Count_Dict<T_real>* out_fit_counts,
                         size_t i,
                         size_t j)
 {
-    std::unordered_map<std::string, real_t> counts_dict;
+    std::unordered_map<std::string, T_real> counts_dict;
     fit_routine->fit_spectra(model, spectra, elements_to_fit, counts_dict);
     //save count / sec
     for (auto& el_itr : *elements_to_fit)
@@ -132,10 +133,10 @@ bool fit_single_spectra(fitting::routines::Base_Fit_Routine * fit_routine,
 
 // ----------------------------------------------------------------------------
 
-bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
+bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis_job,
                                     std::string  dataset_filename,
                                     size_t detector_num,
-                                    data_struct::Params_Override* params_override,
+                                    data_struct::Params_Override<double>* params_override,
                                     data_struct::Fit_Parameters<double>& out_fitp)
 {
     fitting::models::Gaussian_Model<double> model;
@@ -154,16 +155,16 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
         fitting::models::Range energy_range = data_struct::get_energy_range<double>(int_spectra.size(), &(params_override->fit_params));
 
         //Fitting routines
-        fitting::routines::Param_Optimized_Fit_Routine *fit_routine;
+        fitting::routines::Param_Optimized_Fit_Routine<double> *fit_routine;
         
 
         if (analysis_job->optimize_fit_routine == OPTIMIZE_FIT_ROUTINE::HYBRID)
         {
-            fit_routine = new fitting::routines::Hybrid_Param_NNLS_Fit_Routine();
+            fit_routine = new fitting::routines::Hybrid_Param_NNLS_Fit_Routine<double>();
         }
         else
         {
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
+            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine<double>();
         }
 
         fit_routine->set_optimizer(analysis_job->optimizer());
@@ -215,12 +216,12 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
 
 // ----------------------------------------------------------------------------
 
-void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
+void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 {
     std::unordered_map<int, data_struct::Fit_Parameters<double>> fit_params_avgs;
-    std::unordered_map<int, data_struct::Params_Override*> params;
+    std::unordered_map<int, data_struct::Params_Override<double>*> params;
     std::unordered_map<int, float> detector_file_cnt;
-    data_struct::Params_Override* params_override = nullptr;
+    data_struct::Params_Override<double>* params_override = nullptr;
 
     std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "maps_fit_parameters_override.txt";
 
@@ -240,7 +241,7 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
             }
             else
             {
-                params_override = new data_struct::Params_Override();
+                params_override = new data_struct::Params_Override<double>();
                 //load override parameters
                 if (false == io::load_override_params(analysis_job->dataset_directory, detector_num, params_override))
                 {
@@ -298,8 +299,9 @@ void generate_optimal_params(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
-                  data_struct::Detector * detector,
+template<typename T_real>
+void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
+                  data_struct::Detector<T_real>* detector,
                   ThreadPool* tp,
                   bool save_spec_vol,
                   Callback_Func_Status_Def* status_callback)
@@ -398,9 +400,9 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         delete element_fit_count_dict;
     }
 
-    real_t energy_offset = 0.0;
-    real_t energy_slope = 0.0;
-    real_t energy_quad = 0.0;
+    T_real energy_offset = 0.0;
+    T_real energy_slope = 0.0;
+    T_real energy_quad = 0.0;
     data_struct::Fit_Parameters fit_params = detector->model->fit_parameters();
     if(fit_params.contains(STR_ENERGY_OFFSET))
     {
@@ -429,7 +431,8 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Func_Status_Def* status_callback)
+template<typename T_real>
+void process_dataset_files(data_struct::Analysis_Job<T_real>* analysis_job, Callback_Func_Status_Def* status_callback)
 {
     ThreadPool tp(analysis_job->num_threads);
 
@@ -492,7 +495,8 @@ void process_dataset_files(data_struct::Analysis_Job* analysis_job, Callback_Fun
 
 // ----------------------------------------------------------------------------
 
-void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job* analysis_job, ThreadPool &tp, Callback_Func_Status_Def* status_callback)
+template<typename T_real>
+void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool &tp, Callback_Func_Status_Def* status_callback)
 {
     std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
 
@@ -537,10 +541,10 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
         {
             for (size_t k = 0; k < spectra_volume->cols(); k++)
             {
-                real_t elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
-                real_t elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
-                real_t input_counts = (*spectra_volume)[j][k].input_counts();
-                real_t output_counts = (*spectra_volume)[j][k].output_counts();
+                T_real elapsed_livetime = (*spectra_volume)[j][k].elapsed_livetime();
+                T_real elapsed_realtime = (*spectra_volume)[j][k].elapsed_realtime();
+                T_real input_counts = (*spectra_volume)[j][k].input_counts();
+                T_real output_counts = (*spectra_volume)[j][k].output_counts();
 
 
                 (*spectra_volume)[j][k] += (*tmp_spectra_volume)[j][k];
@@ -567,14 +571,15 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 
 // ----------------------------------------------------------------------------
 
-void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantification_Standard* quantification_standard)
+template<typename T_real>
+void find_quantifier_scalers(unordered_map<string, T_real> &pv_map, Quantification_Standard<T_real>* quantification_standard)
 {
     
     // find time scaler
     std::string time_pv = "";
     std::string beamline = "";
     double time_clock = 0.0;
-    real_t time_val = 1.0;
+    T_real time_val = 1.0;
     if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_map, time_pv, time_clock, beamline))
     {
         time_val = pv_map.at(time_pv);
@@ -603,7 +608,7 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
     {
         for (const auto& itr : *summed_scalers)
         {
-            real_t summed_val = 0.0;
+            T_real summed_val = 0.0;
             for (const auto& sitr : itr.scalers_to_sum)
             {
                 if (pv_map.count(sitr) > 0)
@@ -634,7 +639,8 @@ void find_quantifier_scalers(unordered_map<string, real_t> &pv_map, Quantificati
 
 // ----------------------------------------------------------------------------
 
-void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job, size_t detector_num)
+template<typename T_real>
+void load_and_fit_quatification_datasets(data_struct::Analysis_Job<T_real>* analysis_job, size_t detector_num)
 {
     fitting::models::Gaussian_Model model;
     quantification::models::Quantification_Model quantification_model;
@@ -661,7 +667,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
             elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
         }
 
-        unordered_map<string, real_t> pv_map;
+        unordered_map<string, T_real> pv_map;
         //load the quantification standard dataset
         size_t fn_str_len = quantification_standard->standard_filename.length();
         if (fn_str_len > 5 &&
@@ -783,12 +789,12 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
                     }
                 }
                 fitting::routines::Matrix_Optimized_Fit_Routine* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
-                real_t energy_offset = fit_params.value(STR_ENERGY_OFFSET);
-                real_t energy_slope = fit_params.value(STR_ENERGY_SLOPE);
-                real_t energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
+                T_real energy_offset = fit_params.value(STR_ENERGY_OFFSET);
+                T_real energy_slope = fit_params.value(STR_ENERGY_SLOPE);
+                T_real energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
 
                 data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-                data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
+                data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
                 data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
                 std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;
@@ -820,7 +826,8 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job* analysis_job
 
 // ----------------------------------------------------------------------------
 
-bool perform_quantification(data_struct::Analysis_Job* analysis_job)
+template<typename T_real>
+bool perform_quantification(data_struct::Analysis_Job<T_real>* analysis_job)
 {
     quantification::models::Quantification_Model quantification_model;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -857,11 +864,11 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
                     logI << Fitting_Routine_To_Str.at(fit_itr.first) << " "<< quant_itr.first  << "\n";
                     Fit_Parameters fit_params;
-                    fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<real_t>::max(), 1.0, 0.1, E_Bound_Type::FIT));
+                    fit_params.add_parameter(Fit_Param("quantifier", 0.0, std::numeric_limits<T_real>::max(), 1.0, 0.1, E_Bound_Type::FIT));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
-                    fit_params["quantifier"].value = (real_t)100000.0 / quant_itr.second;
+                    fit_params["quantifier"].value = (T_real)100000.0 / quant_itr.second;
                     optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
-                    real_t val = fit_params["quantifier"].value;
+                    T_real val = fit_params["quantifier"].value;
 
                     if(false == std::isfinite(val))
                     {
@@ -897,7 +904,8 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void interate_datasets_and_update(data_struct::Analysis_Job& analysis_job)
+template<typename T_real>
+void interate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_job)
 {
     for (const auto& dataset_file : analysis_job.dataset_files)
     {

@@ -60,9 +60,11 @@ namespace io
 namespace file
 {
 
-std::mutex NetCDF_IO::_mutex;
+template<typename T_real>
+std::mutex NetCDF_IO<T_real>::_mutex;
 
-NetCDF_IO* NetCDF_IO::_this_inst(nullptr);
+template<typename T_real>
+NetCDF_IO<T_real>* NetCDF_IO<T_real>::_this_inst(nullptr);
 
 
 #define ELAPSED_REALTIME_OFFSET 32
@@ -74,14 +76,16 @@ NetCDF_IO* NetCDF_IO::_this_inst(nullptr);
 
 //-----------------------------------------------------------------------------
 
-NetCDF_IO::NetCDF_IO()
+template<typename T_real>
+NetCDF_IO<T_real>::NetCDF_IO()
 {
 
 }
 
 //-----------------------------------------------------------------------------
 
-NetCDF_IO* NetCDF_IO::inst()
+template<typename T_real>
+NetCDF_IO<T_real>* NetCDF_IO<T_real>::inst()
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -94,12 +98,13 @@ NetCDF_IO* NetCDF_IO::inst()
 
 //-----------------------------------------------------------------------------
 
-size_t NetCDF_IO::_load_spectra(E_load_type ltype,
+template<typename T_real>
+size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                                 std::string path,
                                 size_t detector,
-                                data_struct::Spectra_Line* spec_line,
+                                data_struct::Spectra_Line<T_real>* spec_line,
                                 size_t line_size,
-                                data_struct::Spectra* spectra)
+                                data_struct::Spectra<T_real>* spectra)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -108,16 +113,16 @@ size_t NetCDF_IO::_load_spectra(E_load_type ltype,
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
-    real_t data_in[1][1][10000];
+    T_real data_in[1][1][10000];
     size_t spectra_size;
     nc_type rh_type;
     int rh_ndims;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
     int rh_natts;
-    real_t elapsed_livetime = 0.;
-    real_t elapsed_realtime = 0.;
-    real_t input_counts = 0.;
-    real_t output_counts = 0.;
+    T_real elapsed_livetime = 0.;
+    T_real elapsed_realtime = 0.;
+    T_real input_counts = 0.;
+    T_real output_counts = 0.;
 
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
 
@@ -382,26 +387,29 @@ size_t NetCDF_IO::_load_spectra(E_load_type ltype,
 
 //-----------------------------------------------------------------------------
 
-size_t NetCDF_IO::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line)
+template<typename T_real>
+size_t NetCDF_IO<T_real>::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line<T_real>* spec_line)
 {
     return _load_spectra(E_load_type::LINE, path, detector, spec_line, -1, nullptr);
 }
 
 //-----------------------------------------------------------------------------
 
-size_t NetCDF_IO::load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra* spectra)
+template<typename T_real>
+size_t NetCDF_IO<T_real>::load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra)
 {
     return _load_spectra(E_load_type::INTEGRATED, path, detector, nullptr, line_size, spectra);
 }
 
 //-----------------------------------------------------------------------------
 
-bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
+template<typename T_real>
+bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
                                                 int row,
                                                 size_t max_rows,
                                                 size_t max_cols,
-                                                data_struct::IO_Callback_Func_Def callback_fun,
+                                                data_struct::IO_Callback_Func_Def<T_real> callback_fun,
                                                 void* user_data)
 {
 
@@ -412,14 +420,14 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 2, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
-    real_t *data_in;
+    T_real *data_in;
     size_t spectra_size;
 	size_t num_detectors = detector_num_arr.size();
     int dataidx = 0;
-    real_t elapsed_livetime = 0.;
-    real_t elapsed_realtime = 0.;
-    real_t input_counts = 0.;
-    real_t output_counts = 0.;
+    T_real elapsed_livetime = 0.;
+    T_real elapsed_realtime = 0.;
+    T_real input_counts = 0.;
+    T_real output_counts = 0.;
 
     nc_type rh_type;
     int rh_ndims;
@@ -458,7 +466,7 @@ bool NetCDF_IO::load_spectra_line_with_callback(std::string path,
         }
     }
 
-    data_in = new real_t[dim2size[0] * dim2size[1] * dim2size[2]];
+    data_in = new T_real[dim2size[0] * dim2size[1] * dim2size[2]];
     count[2] = dim2size[2];
     //read in last col sector to get total number of cols
     //start[0] = dim2size[0] - 1;
