@@ -106,10 +106,10 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Mo
                                                            std::unordered_map<std::string, real_t>& out_counts)
 {
     Eigen::JacobiSVD<Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
-    Eigen::VectorXf rhs = spectra->segment(_energy_range.min, _energy_range.count());
+	VectorXr rhs = spectra->segment(_energy_range.min, _energy_range.count());
 
     Fit_Parameters fit_params = model->fit_parameters();
-    Eigen::VectorXf background;
+    VectorXr background;
     if (fit_params.contains(STR_SNIP_WIDTH))
     {
         ArrayXr bkg = snip_background(spectra,
@@ -132,7 +132,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Mo
 
     ArrayXr spectra_model = background;
 
-    Eigen::VectorXf result = svd.solve(rhs);
+	VectorXr result = svd.solve(rhs);
 
     for(const auto& itr : *elements_to_fit)
     {

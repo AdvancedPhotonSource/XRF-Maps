@@ -73,10 +73,18 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
     ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
 		fvec[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+		if (std::isfinite(fvec[i]) == false)
+		{
+			logE << "\n\n\n";
+			logE << ud->spectra[i] << "   :    "<< ud->spectra_model[i]<<"       ::      "<< ud->weights[i];
+			logE << "\n\n\n";
+			//fvec[i] = ud->spectra[i];
+		}
     }
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
@@ -98,11 +106,16 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+	// Used to check for nan's here but there were some cases where the optimizer would return nan found. So moved to after subract of model
+    ////ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
         fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
+		if (std::isfinite(fvec[i]) == false)
+		{
+			fvec[i] = ud->spectra[i];
+		}
     }
 
 }
@@ -131,11 +144,14 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
     int idx = 0;
     for(auto& itr : ud->quant_map)
     {
-        fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
-        if (std::isfinite(fvec[idx]) == false)
-        {
-            fvec[idx] = std::numeric_limits<real_t>::max();
-        }
+		if (std::isfinite(result_map[itr.first]) == false)
+		{
+			fvec[idx] = itr.second.e_cal_ratio;
+		}
+		else
+		{
+			fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+		}
         idx++;
     }
 }
