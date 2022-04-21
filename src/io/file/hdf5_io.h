@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <future>
 #include <stack>
+#include <type_traits>
 #include "hdf5.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/fit_element_map.h"
@@ -275,11 +276,52 @@ private:
     bool _open_h5_dataset(const std::string& name, hid_t data_type, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
     void _close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> > &close_map);
 
+
+
+    
+    herr_t _read_h5d()
+    {
+        if (std::is_same<T_real, float>::value)
+        {
+            //return H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+        }
+        else if (std::is_same<T_real, double>::value)
+        {
+            //return H5Dread(dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+        }
+        
+        return -1;
+        
+        /*
+        if constexpr (std::is_same_v<T_real, double>)
+        {
+            return H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+        }
+        else if constexpr (std::is_same_v<T_real, float>)
+        {
+            return H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+        }
+        else
+        {
+            return -1;
+        }
+        */
+    }
+    
+
     hid_t _cur_file_id;
     std::string _cur_filename;
     std::stack<std::pair<hid_t, H5_OBJECTS> > _global_close_map;
 
 };
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class HDF5_IO<float>;
+template DLL_EXPORT class HDF5_IO<double>;
+#else
+template class DLL_EXPORT HDF5_IO<float>;
+template class DLL_EXPORT HDF5_IO<double>;
+#endif
 
 }// end namespace file
 }// end namespace io

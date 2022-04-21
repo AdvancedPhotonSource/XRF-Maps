@@ -67,13 +67,13 @@ public:
 
 	~Spectra_Volume();
 
-    Spectra_Line& operator [](std::size_t row) { return _data_vol[row]; }
+    Spectra_Line<T_real>& operator [](std::size_t row) { return _data_vol[row]; }
 
-    const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
+    const Spectra_Line<T_real>& operator [](std::size_t row) const { return _data_vol[row]; }
 
     void resize_and_zero(size_t rows, size_t cols, size_t samples);
 
-    Spectra integrate();
+    Spectra<T_real> integrate();
 
     void generate_scaler_maps(vector<Scaler_Map>* scaler_maps);
 

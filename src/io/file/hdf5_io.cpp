@@ -2480,7 +2480,7 @@ bool HDF5_IO<T_real>::load_spectra_volume_with_callback(std::string path,
    //_is_loaded = ERROR_LOADING;
    std::chrono::time_point<std::chrono::system_clock> start, end;
    start = std::chrono::system_clock::now();
-   std::map<size_t, struct Detector_HDF5_Struct> detector_hid_map;
+   std::map<size_t, struct Detector_HDF5_Struct<T_real>> detector_hid_map;
 
    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
@@ -2500,7 +2500,7 @@ bool HDF5_IO<T_real>::load_spectra_volume_with_callback(std::string path,
       return false;
     for(size_t detector_num : detector_num_arr)
     {
-        detector_hid_map.insert( {detector_num, Detector_HDF5_Struct()} );
+        detector_hid_map.insert( {detector_num, Detector_HDF5_Struct<T_real>()} );
 
         switch(detector_num)
         {
@@ -4537,7 +4537,7 @@ bool HDF5_IO<T_real>::save_energy_calib(int spectra_size, T_real energy_offset, 
 
     //save energy vector
     std::vector<T_real> out_vec;
-    data_struct::gen_energy_vector(spectra_size, energy_offset, energy_slope, &out_vec);
+    data_struct::gen_energy_vector<T_real>(spectra_size, energy_offset, energy_slope, &out_vec);
 
     if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
     {
@@ -4828,9 +4828,9 @@ bool HDF5_IO<T_real>::save_fitted_int_spectra(const std::string path,
     count[0] = save_spectra_size;
 
     // resize to the size of collected spectra
-    data_struct::ArrayXr save_spectra;
+    data_struct::ArrayTr<T_real>   save_spectra;
     save_spectra.setZero(save_spectra_size);
-    data_struct::ArrayXr save_background;
+    data_struct::ArrayTr<T_real>   save_background;
     save_background.setZero(save_spectra_size);
 
     int j = 0;
@@ -7041,7 +7041,7 @@ bool HDF5_IO<T_real>::add_background(std::string directory, std::string filename
     count[0] = dims_in[0];
     hid_t memoryspace_id = H5Screate_simple(1, dims_in, nullptr);
 
-    data_struct::ArrayXr buffer(count[0]);
+    data_struct::ArrayTr<T_real>   buffer(count[0]);
     fitting::models::Range energy_range = data_struct::get_energy_range(dims_in[0], &(params.fit_params));
 
 	logI << params.fit_params.value(STR_ENERGY_OFFSET) << " " << params.fit_params.value(STR_ENERGY_SLOPE) << " " << params.fit_params.value(STR_ENERGY_QUADRATIC) << " " << 0.0f << " " << params.fit_params.value(STR_SNIP_WIDTH) << " " << energy_range.min << " " << energy_range.max << "\n ";
@@ -7057,7 +7057,7 @@ bool HDF5_IO<T_real>::add_background(std::string directory, std::string filename
             hid_t error = H5Dread(mca_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, buffer.data());
             if (error > -1 )
             {
-                ArrayXr background = data_struct::snip_background((data_struct::Spectra<T_real>*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
+                ArrayTr<T_real> background = data_struct::snip_background((data_struct::Spectra<T_real>*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
                 error = H5Dwrite(back_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, background.data());
                 if (error < 0)
                 {
@@ -7335,8 +7335,8 @@ void HDF5_IO<T_real>::_gen_average(std::string full_hdf5_path, std::string datas
 					chunk_total *= chunk_dims[i];
 				}
 			}
-            data_struct::ArrayXr buffer1(chunk_total); //don't need to zero because we are reading in full buffer
-            data_struct::ArrayXr buffer2(chunk_total); //don't need to zero because we are reading in full buffer
+            data_struct::ArrayTr<T_real> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
+            data_struct::ArrayTr<T_real> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
 			
 			hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
 			for (int w = 0; w < dims_in[1]; w++)
@@ -7385,8 +7385,8 @@ void HDF5_IO<T_real>::_gen_average(std::string full_hdf5_path, std::string datas
 		else
 		{
 			//read in the whole dataset
-			data_struct::ArrayXr buffer1(total);
-			data_struct::ArrayXr buffer2(total);
+			data_struct::ArrayTr<T_real> buffer1(total);
+			data_struct::ArrayTr<T_real> buffer2(total);
 			float divisor = 1.0;
             error = H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
 			if (error > -1)
@@ -9250,10 +9250,10 @@ void HDF5_IO<T_real>::export_int_fitted_to_csv(std::string dataset_file)
 
     if (file_id > 0)
     {
-        ArrayXr energy_array;
-        ArrayXr int_spectra;
-        ArrayXr model_spectra;
-        ArrayXr background_array;
+        ArrayTr<T_real> energy_array;
+        ArrayTr<T_real> int_spectra;
+        ArrayTr<T_real> model_spectra;
+        ArrayTr<T_real> background_array;
         std::string csv_path;
 
 

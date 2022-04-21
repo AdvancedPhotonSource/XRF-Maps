@@ -149,7 +149,7 @@ std::vector<std::string> Fit_Parameters<T_real>::names_to_array()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::sum_values(Fit_Parameters fit_params)
+void Fit_Parameters<T_real>::sum_values(Fit_Parameters<T_real>  fit_params)
 {
     for(const auto &itr : _params)
     {
@@ -227,7 +227,7 @@ void Fit_Parameters<T_real>::set_all(E_Bound_Type btype)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::update_values(const Fit_Parameters *override_fit_params)
+void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *override_fit_params)
 {
     for(auto& itr : _params)
     {
@@ -256,7 +256,7 @@ void Fit_Parameters<T_real>::update_values(const Fit_Parameters *override_fit_pa
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::update_and_add_values(Fit_Parameters *override_fit_params)
+void Fit_Parameters<T_real>::update_and_add_values(Fit_Parameters<T_real>  *override_fit_params)
 {
     for(auto& itr : *override_fit_params)
     {
@@ -267,7 +267,7 @@ void Fit_Parameters<T_real>::update_and_add_values(Fit_Parameters *override_fit_
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::update_and_add_values_gt_zero(Fit_Parameters *override_fit_params)
+void Fit_Parameters<T_real>::update_and_add_values_gt_zero(Fit_Parameters<T_real>  *override_fit_params)
 {
     for(auto& itr : *override_fit_params)
     {

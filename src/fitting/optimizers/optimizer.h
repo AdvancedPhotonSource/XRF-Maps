@@ -123,7 +123,7 @@ struct Gen_User_Data
 template<typename T_real>
 struct Quant_User_Data
 {
-    quantification::models::Quantification_Model * quantification_model;
+    quantification::models::Quantification_Model<T_real>* quantification_model;
     Fit_Parameters<T_real>* fit_parameters;
     std::unordered_map<std::string, Element_Quant> quant_map;
 };

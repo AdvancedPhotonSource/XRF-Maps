@@ -207,7 +207,7 @@ public:
 
     inline auto end() const { return _params.end(); }
 
-    void sum_values(Fit_Parameters fit_params);
+    void sum_values(Fit_Parameters<T_real>  fit_params);
 
     void divide_fit_values_by(T_real divisor);
 
@@ -225,11 +225,11 @@ public:
 
     void set_all(E_Bound_Type btype);
 
-    void update_values(const Fit_Parameters *override_fit_params);
+    void update_values(const Fit_Parameters<T_real>  *override_fit_params);
 
-    void update_and_add_values(Fit_Parameters *override_fit_params);
+    void update_and_add_values(Fit_Parameters<T_real>  *override_fit_params);
 
-    void update_and_add_values_gt_zero(Fit_Parameters *override_fit_params);
+    void update_and_add_values_gt_zero(Fit_Parameters<T_real>  *override_fit_params);
 
     void remove(Fit_Parameters* override_fit_params);
 
