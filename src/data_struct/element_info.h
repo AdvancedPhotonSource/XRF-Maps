@@ -59,10 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-const real_t AVOGADRO = (real_t)6.02204531e23;
-const real_t HC_ANGSTROMS = (real_t)12398.52;
-const real_t RE = (real_t)2.817938070e-13;		// in cm
-
+template<typename T_real>
 struct DLL_EXPORT Element_Info
 {
 	Element_Info();
@@ -71,21 +68,21 @@ struct DLL_EXPORT Element_Info
 
 	void init_f_energies(int len);
 	void init_extra_energies(int len);
-    void get_energies_between(real_t energy, real_t* out_low, real_t* out_high, size_t* out_low_idx, size_t* out_high_idx);
+    void get_energies_between(T_real energy, T_real* out_low, T_real* out_high, size_t* out_low_idx, size_t* out_high_idx);
 
-    real_t calc_beta(real_t density_val, real_t energy);
+    T_real calc_beta(T_real density_val, T_real energy);
 
-    real_t get_f2(real_t energy);
+    T_real get_f2(T_real energy);
 
     int number;
     std::string name;
-    real_t density;
-    real_t mass;
-    std::unordered_map<std::string, real_t> xrf;
-    std::unordered_map<std::string, real_t> xrf_abs_yield;
-    std::unordered_map<std::string, real_t> yieldD;
-    std::unordered_map<std::string, real_t> bindingE;
-    std::unordered_map<std::string, real_t> jump;
+    T_real density;
+    T_real mass;
+    std::unordered_map<std::string, T_real> xrf;
+    std::unordered_map<std::string, T_real> xrf_abs_yield;
+    std::unordered_map<std::string, T_real> yieldD;
+    std::unordered_map<std::string, T_real> bindingE;
+    std::unordered_map<std::string, T_real> jump;
 
     //int atomic_scattering_len;
     //atomic scattering factors real
@@ -100,7 +97,18 @@ struct DLL_EXPORT Element_Info
     std::vector<float> extra_f2;
 };
 
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Element_Info<float>;
+template DLL_EXPORT class Element_Info<double>;
+#else
+template class DLL_EXPORT Element_Info<float>;
+template class DLL_EXPORT Element_Info<double>;
+#endif
+
+
 //singleton
+template<typename T_real>
 class DLL_EXPORT Element_Info_Map
 {
 public:
@@ -113,15 +121,15 @@ public:
 
 	void generate_default_elements(int start_element, int end_element);
 
-	void add_element(Element_Info* element);
+	void add_element(Element_Info<T_real>* element);
 
-    real_t calc_beta(std::string element_name, real_t density, real_t energy);
+    T_real calc_beta(std::string element_name, T_real density, T_real energy);
 
-    real_t calc_compound_beta(std::string compound_name, real_t density, real_t energy);
+    T_real calc_compound_beta(std::string compound_name, T_real density, T_real energy);
 
-    Element_Info* get_element(int element_number);
+    Element_Info<T_real>* get_element(int element_number);
 
-    Element_Info* get_element(std::string element_name);
+    Element_Info<T_real>* get_element(std::string element_name);
 
     //void set_energies(float* energy_arr, int num_energies);
 
@@ -135,12 +143,23 @@ private:
 
     static Element_Info_Map *_this_inst;
 
-    std::unordered_map<std::string, Element_Info*> _name_element_info_map;
-    std::map<int, Element_Info*>  _number_element_info_map;
+    std::unordered_map<std::string, Element_Info<T_real>*> _name_element_info_map;
+    std::map<int, Element_Info<T_real>*>  _number_element_info_map;
 
 
 };
-                              // placeholder so H starts at 1
+   
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Element_Info_Map<float>;
+template DLL_EXPORT class Element_Info_Map<double>;
+#else
+template class DLL_EXPORT Element_Info_Map<float>;
+template class DLL_EXPORT Element_Info_Map<double>;
+#endif
+
+
+// placeholder so H starts at 1
 const std::string Element_Symbols[] = {" ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
 						                        "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As",
 				                                "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
@@ -149,164 +168,165 @@ const std::string Element_Symbols[] = {" ", "H", "He", "Li", "Be", "B", "C", "N"
 												"Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk",
 												"Cf", "Es", "Fm", "Md", "No", "Lr", "Unq", "Unp", "Unh", "Uns", "Uno", "Une"};
 
-const std::unordered_map<std::string, real_t> Henke_Compound_Density_Map = {
+template<typename T_real>
+const std::unordered_map<std::string, T_real> Henke_Compound_Density_Map = {
 //Compounds
-    std::pair<std::string, real_t>{"water",       (real_t)1.0},
-    std::pair<std::string, real_t>{"protein",     (real_t)1.35},
-    std::pair<std::string, real_t>{"lipid",       (real_t)1.0},
-    std::pair<std::string, real_t>{"nucleosome",  (real_t)1.5},
-    std::pair<std::string, real_t>{"dna",         (real_t)1.7},
-    std::pair<std::string, real_t>{"helium",      (real_t)1.66E-04},
-    std::pair<std::string, real_t>{"chromatin",   (real_t)1.527},
-    std::pair<std::string, real_t>{"air",         (real_t)1.20E-03},
-    std::pair<std::string, real_t>{"pmma",        (real_t)1.18},
-    std::pair<std::string, real_t>{"nitride",     (real_t)3.44},
-    std::pair<std::string, real_t>{"graphite",    (real_t)2.26},
-    std::pair<std::string, real_t>{"nickel",      (real_t)8.876},
-    std::pair<std::string, real_t>{"beryl",       (real_t)1.845},
-    std::pair<std::string, real_t>{"copper",      (real_t)8.96},
-    std::pair<std::string, real_t>{"quartz",      (real_t)2.2},
-    std::pair<std::string, real_t>{"aluminum",    (real_t)2.7},
-    std::pair<std::string, real_t>{"gold",        (real_t)19.3},
-    std::pair<std::string, real_t>{"ice",         (real_t)0.92},
-    std::pair<std::string, real_t>{"carbon",      (real_t)1.0},
-    std::pair<std::string, real_t>{"polystyrene", (real_t)1.06},
-    std::pair<std::string, real_t>{"silicon",     (real_t)2.33},
-    std::pair<std::string, real_t>{"germanium",   (real_t)5.323},
+    std::pair<std::string, T_real>{"water",       (T_real)1.0},
+    std::pair<std::string, T_real>{"protein",     (T_real)1.35},
+    std::pair<std::string, T_real>{"lipid",       (T_real)1.0},
+    std::pair<std::string, T_real>{"nucleosome",  (T_real)1.5},
+    std::pair<std::string, T_real>{"dna",         (T_real)1.7},
+    std::pair<std::string, T_real>{"helium",      (T_real)1.66E-04},
+    std::pair<std::string, T_real>{"chromatin",   (T_real)1.527},
+    std::pair<std::string, T_real>{"air",         (T_real)1.20E-03},
+    std::pair<std::string, T_real>{"pmma",        (T_real)1.18},
+    std::pair<std::string, T_real>{"nitride",     (T_real)3.44},
+    std::pair<std::string, T_real>{"graphite",    (T_real)2.26},
+    std::pair<std::string, T_real>{"nickel",      (T_real)8.876},
+    std::pair<std::string, T_real>{"beryl",       (T_real)1.845},
+    std::pair<std::string, T_real>{"copper",      (T_real)8.96},
+    std::pair<std::string, T_real>{"quartz",      (T_real)2.2},
+    std::pair<std::string, T_real>{"aluminum",    (T_real)2.7},
+    std::pair<std::string, T_real>{"gold",        (T_real)19.3},
+    std::pair<std::string, T_real>{"ice",         (T_real)0.92},
+    std::pair<std::string, T_real>{"carbon",      (T_real)1.0},
+    std::pair<std::string, T_real>{"polystyrene", (T_real)1.06},
+    std::pair<std::string, T_real>{"silicon",     (T_real)2.33},
+    std::pair<std::string, T_real>{"germanium",   (T_real)5.323},
 //Formulas
-    std::pair<std::string, real_t>{"H:2,O",                            (real_t)1.0},
-    std::pair<std::string, real_t>{"H:48.6,C:32.9,N:8.9,O:8.9,S:0.6",         (real_t)1.35},
-    std::pair<std::string, real_t>{"H:62.5C31.5O6.3",                 (real_t)1.0},
-    std::pair<std::string, real_t>{"H:42.1C31.9N10.3O13.9P1.6S0.3",   (real_t)1.5},
-    std::pair<std::string, real_t>{"H:35.5C30.8N11.7O18.9P3.1", (real_t)1.7},
-    std::pair<std::string, real_t>{"He", (real_t)1.66E-04},
-    std::pair<std::string, real_t>{"H:49.95,C:24.64,N:8.66,O:15.57,P:1.07,S:0.03", (real_t)1.527},
-    std::pair<std::string, real_t>{"N:78.08,O:20.95,Ar:0.93", (real_t)1.20E-03},
-    std::pair<std::string, real_t>{"C:5,H:8,O:2", (real_t)1.18},
-    std::pair<std::string, real_t>{"Si:3,N:4", (real_t)3.44},
-    std::pair<std::string, real_t>{"Ni", (real_t)8.876},
-    std::pair<std::string, real_t>{"Be", (real_t)1.845},
-    std::pair<std::string, real_t>{"Cu", (real_t)8.96},
-    std::pair<std::string, real_t>{"SiO2", (real_t)2.2},
-    std::pair<std::string, real_t>{"Al", (real_t)2.7},
-    std::pair<std::string, real_t>{"Au", (real_t)19.3},
-    std::pair<std::string, real_t>{"C", (real_t)1.0},
-    std::pair<std::string, real_t>{"C:8,H:8", (real_t)1.06},
-    std::pair<std::string, real_t>{"Si", (real_t)2.33},
-    std::pair<std::string, real_t>{"Ge", (real_t)5.323}
+    std::pair<std::string, T_real>{"H:2,O",                            (T_real)1.0},
+    std::pair<std::string, T_real>{"H:48.6,C:32.9,N:8.9,O:8.9,S:0.6",         (T_real)1.35},
+    std::pair<std::string, T_real>{"H:62.5C31.5O6.3",                 (T_real)1.0},
+    std::pair<std::string, T_real>{"H:42.1C31.9N10.3O13.9P1.6S0.3",   (T_real)1.5},
+    std::pair<std::string, T_real>{"H:35.5C30.8N11.7O18.9P3.1", (T_real)1.7},
+    std::pair<std::string, T_real>{"He", (T_real)1.66E-04},
+    std::pair<std::string, T_real>{"H:49.95,C:24.64,N:8.66,O:15.57,P:1.07,S:0.03", (T_real)1.527},
+    std::pair<std::string, T_real>{"N:78.08,O:20.95,Ar:0.93", (T_real)1.20E-03},
+    std::pair<std::string, T_real>{"C:5,H:8,O:2", (T_real)1.18},
+    std::pair<std::string, T_real>{"Si:3,N:4", (T_real)3.44},
+    std::pair<std::string, T_real>{"Ni", (T_real)8.876},
+    std::pair<std::string, T_real>{"Be", (T_real)1.845},
+    std::pair<std::string, T_real>{"Cu", (T_real)8.96},
+    std::pair<std::string, T_real>{"SiO2", (T_real)2.2},
+    std::pair<std::string, T_real>{"Al", (T_real)2.7},
+    std::pair<std::string, T_real>{"Au", (T_real)19.3},
+    std::pair<std::string, T_real>{"C", (T_real)1.0},
+    std::pair<std::string, T_real>{"C:8,H:8", (T_real)1.06},
+    std::pair<std::string, T_real>{"Si", (T_real)2.33},
+    std::pair<std::string, T_real>{"Ge", (T_real)5.323}
 };
 
-
-const std::unordered_map<int, real_t> Element_Weight = {
-    std::pair<int, real_t>(1,  (real_t)1.00794),
-    std::pair<int, real_t>(2,  (real_t)4.0026),
-    std::pair<int, real_t>(3,  (real_t)6.941),
-    std::pair<int, real_t>(4,  (real_t)9.01218),
-    std::pair<int, real_t>(5,  (real_t)10.81),
-    std::pair<int, real_t>(6,  (real_t)12.011),
-    std::pair<int, real_t>(7,  (real_t)14.0067),
-    std::pair<int, real_t>(8,  (real_t)15.9994),
-    std::pair<int, real_t>(9,  (real_t)18.9984),
-    std::pair<int, real_t>(10, (real_t)21.179),
-    std::pair<int, real_t>(11, (real_t)22.98977),
-    std::pair<int, real_t>(12, (real_t)24.305),
-    std::pair<int, real_t>(13, (real_t)26.98154),
-    std::pair<int, real_t>(14, (real_t)28.0855),
-    std::pair<int, real_t>(15, (real_t)30.97376),
-    std::pair<int, real_t>(16, (real_t)32.06),
-    std::pair<int, real_t>(17, (real_t)35.453),
-    std::pair<int, real_t>(18, (real_t)39.948),
-    std::pair<int, real_t>(19, (real_t)39.0983),
-    std::pair<int, real_t>(20, (real_t)40.08),
-    std::pair<int, real_t>(21, (real_t)44.9559),
-    std::pair<int, real_t>(22, (real_t)47.88),
-    std::pair<int, real_t>(23, (real_t)50.9415),
-    std::pair<int, real_t>(24, (real_t)51.996),
-    std::pair<int, real_t>(25, (real_t)54.9380),
-    std::pair<int, real_t>(26, (real_t)55.847),
-    std::pair<int, real_t>(27, (real_t)58.9332),
-    std::pair<int, real_t>(28, (real_t)58.69),
-    std::pair<int, real_t>(29, (real_t)63.546),
-    std::pair<int, real_t>(30, (real_t)65.38),
-    std::pair<int, real_t>(31, (real_t)69.72),
-    std::pair<int, real_t>(32, (real_t)72.59),
-    std::pair<int, real_t>(33, (real_t)74.9216),
-    std::pair<int, real_t>(34, (real_t)78.96),
-    std::pair<int, real_t>(35, (real_t)79.904),
-    std::pair<int, real_t>(36, (real_t)83.80),
-    std::pair<int, real_t>(37, (real_t)85.4678),
-    std::pair<int, real_t>(38, (real_t)87.62),
-    std::pair<int, real_t>(39, (real_t)88.9059),
-    std::pair<int, real_t>(40, (real_t)91.22),
-    std::pair<int, real_t>(41, (real_t)92.9064),
-    std::pair<int, real_t>(42, (real_t)95.94),
-    std::pair<int, real_t>(43, (real_t)98.0),
-    std::pair<int, real_t>(44, (real_t)101.07),
-    std::pair<int, real_t>(45, (real_t)102.9055),
-    std::pair<int, real_t>(46, (real_t)106.42),
-    std::pair<int, real_t>(47, (real_t)107.8682),
-    std::pair<int, real_t>(48, (real_t)112.41),
-    std::pair<int, real_t>(49, (real_t)114.82),
-    std::pair<int, real_t>(50, (real_t)118.69),
-    std::pair<int, real_t>(51, (real_t)121.75),
-    std::pair<int, real_t>(52, (real_t)127.60),
-    std::pair<int, real_t>(53, (real_t)126.9054),
-    std::pair<int, real_t>(54, (real_t)131.29),
-    std::pair<int, real_t>(55, (real_t)132.9054),
-    std::pair<int, real_t>(56, (real_t)137.33),
-    std::pair<int, real_t>(57, (real_t)138.9055),
-    std::pair<int, real_t>(58, (real_t)140.12),
-    std::pair<int, real_t>(59, (real_t)140.9077),
-    std::pair<int, real_t>(60, (real_t)144.24),
-    std::pair<int, real_t>(61, (real_t)145.0),
-    std::pair<int, real_t>(62, (real_t)150.36),
-    std::pair<int, real_t>(63, (real_t)151.96),
-    std::pair<int, real_t>(64, (real_t)157.25),
-    std::pair<int, real_t>(65, (real_t)158.9254),
-    std::pair<int, real_t>(66, (real_t)162.5),
-    std::pair<int, real_t>(67, (real_t)164.9304),
-    std::pair<int, real_t>(68, (real_t)167.26),
-    std::pair<int, real_t>(69, (real_t)168.9342),
-    std::pair<int, real_t>(70, (real_t)173.04),
-    std::pair<int, real_t>(71, (real_t)174.967),
-    std::pair<int, real_t>(72, (real_t)178.49),
-    std::pair<int, real_t>(73, (real_t)180.9479),
-    std::pair<int, real_t>(74, (real_t)183.85),
-    std::pair<int, real_t>(75, (real_t)186.207),
-    std::pair<int, real_t>(76, (real_t)190.2),
-    std::pair<int, real_t>(77, (real_t)192.22),
-    std::pair<int, real_t>(78, (real_t)195.08),
-    std::pair<int, real_t>(79, (real_t)196.9665),
-    std::pair<int, real_t>(80, (real_t)200.59),
-    std::pair<int, real_t>(81, (real_t)204.383),
-    std::pair<int, real_t>(82, (real_t)207.2),
-    std::pair<int, real_t>(83, (real_t)208.9804),
-    std::pair<int, real_t>(84, (real_t)209.0),
-    std::pair<int, real_t>(85, (real_t)210.0),
-    std::pair<int, real_t>(86, (real_t)222.0),
-    std::pair<int, real_t>(87, (real_t)223.0),
-    std::pair<int, real_t>(88, (real_t)226.0254),
-    std::pair<int, real_t>(89, (real_t)227.0278),
-    std::pair<int, real_t>(90, (real_t)232.0381),
-    std::pair<int, real_t>(91, (real_t)231.0359),
-    std::pair<int, real_t>(92, (real_t)238.0289),
-    std::pair<int, real_t>(93, (real_t)237.0),
-    std::pair<int, real_t>(94, (real_t)244.0),
-    std::pair<int, real_t>(95, (real_t)243.0),
-    std::pair<int, real_t>(96, (real_t)247.0),
-    std::pair<int, real_t>(97, (real_t)247.0),
-    std::pair<int, real_t>(98, (real_t)251.0),
-    std::pair<int, real_t>(99, (real_t)252.0),
-    std::pair<int, real_t>(100, (real_t)257.0),
-    std::pair<int, real_t>(101, (real_t)258.0),
-    std::pair<int, real_t>(102, (real_t)259.0),
-    std::pair<int, real_t>(103, (real_t)262.0),
-    std::pair<int, real_t>(104, (real_t)261.0),
-    std::pair<int, real_t>(105, (real_t)262.0),
-    std::pair<int, real_t>(106, (real_t)266.0),
-    std::pair<int, real_t>(107, (real_t)264.0),
-    std::pair<int, real_t>(108, (real_t)277.0),
-    std::pair<int, real_t>(109, (real_t)268.0)
+template<typename T_real>
+const std::unordered_map<int, T_real> Element_Weight = {
+    std::pair<int, T_real>(1,  (T_real)1.00794),
+    std::pair<int, T_real>(2,  (T_real)4.0026),
+    std::pair<int, T_real>(3,  (T_real)6.941),
+    std::pair<int, T_real>(4,  (T_real)9.01218),
+    std::pair<int, T_real>(5,  (T_real)10.81),
+    std::pair<int, T_real>(6,  (T_real)12.011),
+    std::pair<int, T_real>(7,  (T_real)14.0067),
+    std::pair<int, T_real>(8,  (T_real)15.9994),
+    std::pair<int, T_real>(9,  (T_real)18.9984),
+    std::pair<int, T_real>(10, (T_real)21.179),
+    std::pair<int, T_real>(11, (T_real)22.98977),
+    std::pair<int, T_real>(12, (T_real)24.305),
+    std::pair<int, T_real>(13, (T_real)26.98154),
+    std::pair<int, T_real>(14, (T_real)28.0855),
+    std::pair<int, T_real>(15, (T_real)30.97376),
+    std::pair<int, T_real>(16, (T_real)32.06),
+    std::pair<int, T_real>(17, (T_real)35.453),
+    std::pair<int, T_real>(18, (T_real)39.948),
+    std::pair<int, T_real>(19, (T_real)39.0983),
+    std::pair<int, T_real>(20, (T_real)40.08),
+    std::pair<int, T_real>(21, (T_real)44.9559),
+    std::pair<int, T_real>(22, (T_real)47.88),
+    std::pair<int, T_real>(23, (T_real)50.9415),
+    std::pair<int, T_real>(24, (T_real)51.996),
+    std::pair<int, T_real>(25, (T_real)54.9380),
+    std::pair<int, T_real>(26, (T_real)55.847),
+    std::pair<int, T_real>(27, (T_real)58.9332),
+    std::pair<int, T_real>(28, (T_real)58.69),
+    std::pair<int, T_real>(29, (T_real)63.546),
+    std::pair<int, T_real>(30, (T_real)65.38),
+    std::pair<int, T_real>(31, (T_real)69.72),
+    std::pair<int, T_real>(32, (T_real)72.59),
+    std::pair<int, T_real>(33, (T_real)74.9216),
+    std::pair<int, T_real>(34, (T_real)78.96),
+    std::pair<int, T_real>(35, (T_real)79.904),
+    std::pair<int, T_real>(36, (T_real)83.80),
+    std::pair<int, T_real>(37, (T_real)85.4678),
+    std::pair<int, T_real>(38, (T_real)87.62),
+    std::pair<int, T_real>(39, (T_real)88.9059),
+    std::pair<int, T_real>(40, (T_real)91.22),
+    std::pair<int, T_real>(41, (T_real)92.9064),
+    std::pair<int, T_real>(42, (T_real)95.94),
+    std::pair<int, T_real>(43, (T_real)98.0),
+    std::pair<int, T_real>(44, (T_real)101.07),
+    std::pair<int, T_real>(45, (T_real)102.9055),
+    std::pair<int, T_real>(46, (T_real)106.42),
+    std::pair<int, T_real>(47, (T_real)107.8682),
+    std::pair<int, T_real>(48, (T_real)112.41),
+    std::pair<int, T_real>(49, (T_real)114.82),
+    std::pair<int, T_real>(50, (T_real)118.69),
+    std::pair<int, T_real>(51, (T_real)121.75),
+    std::pair<int, T_real>(52, (T_real)127.60),
+    std::pair<int, T_real>(53, (T_real)126.9054),
+    std::pair<int, T_real>(54, (T_real)131.29),
+    std::pair<int, T_real>(55, (T_real)132.9054),
+    std::pair<int, T_real>(56, (T_real)137.33),
+    std::pair<int, T_real>(57, (T_real)138.9055),
+    std::pair<int, T_real>(58, (T_real)140.12),
+    std::pair<int, T_real>(59, (T_real)140.9077),
+    std::pair<int, T_real>(60, (T_real)144.24),
+    std::pair<int, T_real>(61, (T_real)145.0),
+    std::pair<int, T_real>(62, (T_real)150.36),
+    std::pair<int, T_real>(63, (T_real)151.96),
+    std::pair<int, T_real>(64, (T_real)157.25),
+    std::pair<int, T_real>(65, (T_real)158.9254),
+    std::pair<int, T_real>(66, (T_real)162.5),
+    std::pair<int, T_real>(67, (T_real)164.9304),
+    std::pair<int, T_real>(68, (T_real)167.26),
+    std::pair<int, T_real>(69, (T_real)168.9342),
+    std::pair<int, T_real>(70, (T_real)173.04),
+    std::pair<int, T_real>(71, (T_real)174.967),
+    std::pair<int, T_real>(72, (T_real)178.49),
+    std::pair<int, T_real>(73, (T_real)180.9479),
+    std::pair<int, T_real>(74, (T_real)183.85),
+    std::pair<int, T_real>(75, (T_real)186.207),
+    std::pair<int, T_real>(76, (T_real)190.2),
+    std::pair<int, T_real>(77, (T_real)192.22),
+    std::pair<int, T_real>(78, (T_real)195.08),
+    std::pair<int, T_real>(79, (T_real)196.9665),
+    std::pair<int, T_real>(80, (T_real)200.59),
+    std::pair<int, T_real>(81, (T_real)204.383),
+    std::pair<int, T_real>(82, (T_real)207.2),
+    std::pair<int, T_real>(83, (T_real)208.9804),
+    std::pair<int, T_real>(84, (T_real)209.0),
+    std::pair<int, T_real>(85, (T_real)210.0),
+    std::pair<int, T_real>(86, (T_real)222.0),
+    std::pair<int, T_real>(87, (T_real)223.0),
+    std::pair<int, T_real>(88, (T_real)226.0254),
+    std::pair<int, T_real>(89, (T_real)227.0278),
+    std::pair<int, T_real>(90, (T_real)232.0381),
+    std::pair<int, T_real>(91, (T_real)231.0359),
+    std::pair<int, T_real>(92, (T_real)238.0289),
+    std::pair<int, T_real>(93, (T_real)237.0),
+    std::pair<int, T_real>(94, (T_real)244.0),
+    std::pair<int, T_real>(95, (T_real)243.0),
+    std::pair<int, T_real>(96, (T_real)247.0),
+    std::pair<int, T_real>(97, (T_real)247.0),
+    std::pair<int, T_real>(98, (T_real)251.0),
+    std::pair<int, T_real>(99, (T_real)252.0),
+    std::pair<int, T_real>(100, (T_real)257.0),
+    std::pair<int, T_real>(101, (T_real)258.0),
+    std::pair<int, T_real>(102, (T_real)259.0),
+    std::pair<int, T_real>(103, (T_real)262.0),
+    std::pair<int, T_real>(104, (T_real)261.0),
+    std::pair<int, T_real>(105, (T_real)262.0),
+    std::pair<int, T_real>(106, (T_real)266.0),
+    std::pair<int, T_real>(107, (T_real)264.0),
+    std::pair<int, T_real>(108, (T_real)277.0),
+    std::pair<int, T_real>(109, (T_real)268.0)
 };
 
 } //namespace data_struct

@@ -56,9 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-const real_t ENERGY_RES_OFFSET = 150.0;
-const real_t ENERGY_RES_SQRT = 12.0;
-
 //-----------------------------------------------------------------------------
 
 //enum Element_Param_Basic_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
@@ -137,7 +134,7 @@ class DLL_EXPORT Fit_Element_Map
 {
 
 public:
-    Fit_Element_Map(std::string name, Element_Info* element_info);
+    Fit_Element_Map(std::string name, Element_Info<T_real>* element_info);
 
     ~Fit_Element_Map();
 
@@ -149,7 +146,7 @@ public:
     
     void multiply_custom_multiply_ratio(unsigned int idx, T_real multi);
 
-    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka=false, bool disable_La = false);
+    void init_energy_ratio_for_detector_element(const Element_Info<T_real> * const detector_element, bool disable_Ka=false, bool disable_La = false);
 
     const std::string& full_name() const { return _full_name; }
 
@@ -163,19 +160,19 @@ public:
 
     const T_real& width_multi() const { return _width_multi; }
 
-    void set_as_pileup(std::string name, Element_Info* element_info);
+    void set_as_pileup(std::string name, Element_Info<T_real>* element_info);
 
-    const Element_Info* pileup_element() const { return _pileup_element_info; }
+    const Element_Info<T_real>* pileup_element() const { return _pileup_element_info; }
 
 	const string& shell_type_as_string() const { return _shell_type; }
 
 	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
 protected:
 
-    void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info * const detector_element);
+    void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element);
 
     // reference to element information from Database
-    Element_Info* _element_info;
+    Element_Info<T_real>* _element_info;
 
     std::string _full_name;
     std::vector<Element_Energy_Ratio<T_real>> _energy_ratios;
@@ -187,7 +184,7 @@ protected:
     T_real _width;
     T_real _width_multi;
 
-    Element_Info* _pileup_element_info;
+    Element_Info<T_real>* _pileup_element_info;
     std::string _pileup_shell_type;
 };
 

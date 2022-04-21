@@ -55,7 +55,7 @@ namespace data_struct
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info* element_info)
+Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>* element_info)
 {
 
     _full_name = name;
@@ -108,7 +108,7 @@ Fit_Element_Map<T_real>::~Fit_Element_Map()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka, bool disable_La)
+void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Element_Info<T_real> * const detector_element, bool disable_Ka, bool disable_La)
 {
 
     if(_element_info == nullptr)
@@ -190,7 +190,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info * const detector_element)
+void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element)
 {
     if(_element_info == nullptr)
     {
@@ -202,7 +202,7 @@ void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio,
     T_real e_tmp = energy * (T_real)1000.0;
     T_real molecules_per_cc;
     T_real mu_fraction;
-    T_real density = Henke_Compound_Density_Map.at(detector_element->name);
+    T_real density = Henke_Compound_Density_Map<T_real>.at(detector_element->name);
 
     if (energy == (T_real)0.0)
     {
@@ -280,7 +280,7 @@ void Fit_Element_Map<T_real>::multiply_custom_multiply_ratio(unsigned int idx, T
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info* element_info)
+void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_real>* element_info)
 {
     if(_pileup_element_info == nullptr)
     {
@@ -383,7 +383,7 @@ data_struct::Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
 
 	//logI<<element_symb<<" : "<<base_element_symb<<"\n";
 
-	data_struct::Element_Info* e_info = element_info_map->get_element(base_element_symb);
+	data_struct::Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
 	if (e_info == nullptr)
 	{
 		logW << "Can not find element " << base_element_symb << "\n";

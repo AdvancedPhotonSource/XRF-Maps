@@ -118,7 +118,7 @@ public:
     T_real detector_chip_thickness;
     T_real incident_energy;
     T_real airpath;
-    data_struct::Element_Info* detector_element;
+    data_struct::Element_Info<T_real>* detector_element;
 
     // SR_CURRENT, US_IC, DS_IC  : average if we have multiple standards
     unordered_map<string, T_real> avg_quantification_scaler_map;
@@ -127,6 +127,14 @@ private:
     unsigned int _number;
 
 };
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Detector<float>;
+template DLL_EXPORT class Detector<double>;
+#else
+template class DLL_EXPORT Detector<float>;
+template class DLL_EXPORT Detector<double>;
+#endif
 
 } //namespace data_struct
 

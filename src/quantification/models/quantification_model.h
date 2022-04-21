@@ -92,7 +92,7 @@ public:
 
     void init_element_quant(Element_Quant<T_real>& out_quant,
                             T_real incident_energy,
-                            Element_Info* detector_element,
+                            Element_Info<T_real>* detector_element,
                             Electron_Shell shell,
                             T_real airpath,
                             T_real detector_chip_thickness,

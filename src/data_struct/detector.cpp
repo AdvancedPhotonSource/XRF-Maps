@@ -58,7 +58,7 @@ template<typename T_real>
 Detector<T_real>::Detector(unsigned int number)
 {
     model = nullptr;
-    detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
+    detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
     beryllium_window_thickness = 0.0; //24.000000
     germanium_dead_layer = 0.0; //350.0
     detector_chip_thickness = 0.0;
@@ -79,7 +79,7 @@ Detector<T_real>::~Detector()
     }
     for (auto& itr : fit_routines)
     {
-        fitting::routines::Base_Fit_Routine* fit_routine = itr.second;
+        fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
         if (fit_routine != nullptr)
         {
             delete fit_routine;
@@ -105,10 +105,10 @@ void Detector<T_real>::append_element(Fitting_Routines routine, string quant_sca
 {
     if (fitting_quant_map.count(routine) == 0)
     {
-        fitting_quant_map[routine] = Fitting_Quantification_Struct();
+        fitting_quant_map[routine] = Fitting_Quantification_Struct<T_real>();
     }
 
-    Element_Info* element = Element_Info_Map::inst()->get_element(name);
+    Element_Info<T_real>* element = Element_Info_Map<T_real>::inst()->get_element(name);
     if (element != nullptr)
     {
         Electron_Shell shell = get_shell_by_name(name);
@@ -142,7 +142,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
             {
                 for (auto& eq_itr : fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr))
                 {
-                    Element_Info* element = Element_Info_Map::inst()->get_element(eq_itr.Z);
+                    Element_Info<T_real>* element = Element_Info_Map<T_real>::inst()->get_element(eq_itr.Z);
                     if (element == nullptr)
                     {
                         continue;
@@ -288,7 +288,7 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
-                vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
+                vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
                 quantification_model->model_calibrationcurve(quant_vec, val);
             }
         }
@@ -304,7 +304,7 @@ void Detector<T_real>::update_from_fit_paramseters()
     if (fit_params_override_dict.detector_element.length() > 0)
     {
         // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-        detector_element = (data_struct::Element_Info_Map::inst()->get_element(fit_params_override_dict.detector_element));
+        detector_element = (data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element));
     }
     if (fit_params_override_dict.be_window_thickness.length() > 0)
     {

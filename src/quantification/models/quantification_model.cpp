@@ -82,7 +82,7 @@ Quantification_Model<T_real>::~Quantification_Model()
 template<typename T_real>
 void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& element_quant,
                                             T_real incident_energy,
-                                            Element_Info* detector_element,
+                                            Element_Info<T_real>* detector_element,
                                             Electron_Shell shell,
                                             T_real airpath,
                                             T_real detector_chip_thickness,
@@ -103,7 +103,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
 
     
 
-    Element_Info* element_info = Element_Info_Map::inst()->get_element(z_number);
+    Element_Info<T_real>* element_info = Element_Info_Map<T_real>::inst()->get_element(z_number);
     if(element_info == nullptr)
     {
         return;
