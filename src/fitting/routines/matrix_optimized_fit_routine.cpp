@@ -142,8 +142,8 @@ unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_ge
     T_real energy_slope = fit_parameters.value(STR_ENERGY_SLOPE);
     T_real energy_quad = fit_parameters.value(STR_ENERGY_QUADRATIC);
 
-	ArrayXr energy = ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayXr ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
 
     for(const auto& itr : (*elements_to_fit))
     {
@@ -246,12 +246,12 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
     {
         //todo : snip background here and pass to optimizer, then add to integrated background to save in h5
         
-        ArrayXr background;
+        ArrayTr<T_real> background;
         
         
         if(fit_params.contains(STR_SNIP_WIDTH))
         {
-            ArrayXr bkg = snip_background(spectra,
+            ArrayTr<T_real> bkg = snip_background(spectra,
                                          fit_params.value(STR_ENERGY_OFFSET),
                                          fit_params.value(STR_ENERGY_SLOPE),
                                          fit_params.value(STR_ENERGY_QUADRATIC),
@@ -302,7 +302,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         this->model_spectrum(&fit_params, &_energy_range, &model_spectra);
         
         model_spectra += background;
-        model_spectra = (ArrayXr)model_spectra.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+        model_spectra = (ArrayTr<T_real>)model_spectra.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
 		//lock and integrate results
 		{

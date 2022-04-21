@@ -111,7 +111,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
     VectorXr background;
     if (fit_params.contains(STR_SNIP_WIDTH))
     {
-        ArrayXr bkg = snip_background(spectra,
+        ArrayTr<T_real> bkg = snip_background(spectra,
             fit_params.value(STR_ENERGY_OFFSET),
             fit_params.value(STR_ENERGY_SLOPE),
             fit_params.value(STR_ENERGY_QUADRATIC),
@@ -129,7 +129,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
     rhs -= background;
     rhs = rhs.unaryExpr([](T_real v) { return v > 0.0 ? v : (T_real)0.0; });
 
-    ArrayXr spectra_model = background;
+    ArrayTr<T_real> spectra_model = background;
 
 	VectorXr result = svd.solve(rhs);
 

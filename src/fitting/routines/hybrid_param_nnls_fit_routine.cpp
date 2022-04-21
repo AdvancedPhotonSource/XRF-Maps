@@ -135,7 +135,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
 
             if (fit_params.contains(STR_SNIP_WIDTH))
             {
-                ArrayXr bkg = snip_background(spectra,
+                ArrayTr<T_real> bkg = snip_background(spectra,
                     fit_params.value(STR_ENERGY_OFFSET),
                     fit_params.value(STR_ENERGY_SLOPE),
                     fit_params.value(STR_ENERGY_QUADRATIC),

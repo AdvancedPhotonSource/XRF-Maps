@@ -67,9 +67,9 @@ public:
 
     ~Spectra_Line();
 
-    Spectra& operator [](std::size_t row) { return _data_line[row]; }
+    Spectra<T_real>& operator [](std::size_t row) { return _data_line[row]; }
 
-    const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
+    const Spectra<T_real>& operator [](std::size_t row) const { return _data_line[row]; }
 
     void resize_and_zero(size_t cols, size_t samples);
 

@@ -5744,12 +5744,12 @@ bool HDF5_IO<T_real>::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::
             dia2_dpc_cfg_map.values.resize(rows, cols);
 
             // CFG_2 - 5
-            data_struct::ArrayXXr* us_ic_map = nullptr;
-            data_struct::ArrayXXr* ds_ic_map = nullptr;
-            data_struct::ArrayXXr* cfg_2_map = nullptr;
-            data_struct::ArrayXXr* cfg_3_map = nullptr;
-            data_struct::ArrayXXr* cfg_4_map = nullptr;
-            data_struct::ArrayXXr* cfg_5_map = nullptr;
+            data_struct::ArrayXXr<float>* us_ic_map = nullptr;
+            data_struct::ArrayXXr<float>* ds_ic_map = nullptr;
+            data_struct::ArrayXXr<float>* cfg_2_map = nullptr;
+            data_struct::ArrayXXr<float>* cfg_3_map = nullptr;
+            data_struct::ArrayXXr<float>* cfg_4_map = nullptr;
+            data_struct::ArrayXXr<float>* cfg_5_map = nullptr;
 
             // search for scalers
             for (auto& scaler : *scalers_map)
@@ -5794,7 +5794,7 @@ bool HDF5_IO<T_real>::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::
 
             if (us_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
             {
-                data_struct::ArrayXXr t_abs_map;
+                data_struct::ArrayXXr<float> t_abs_map;
                 t_abs_map.resize(rows, cols);
                 t_abs_map = (*cfg_2_map) + (*cfg_3_map) + (*cfg_4_map) + (*cfg_5_map);
                 abs_cfg_map.values = t_abs_map / (*us_ic_map);
@@ -7057,7 +7057,7 @@ bool HDF5_IO<T_real>::add_background(std::string directory, std::string filename
             hid_t error = H5Dread(mca_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, buffer.data());
             if (error > -1 )
             {
-                ArrayTr<T_real> background = data_struct::snip_background((data_struct::Spectra<T_real>*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
+                ArrayTr<T_real> background = data_struct::snip_background<T_real>((data_struct::Spectra<T_real>*)&buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
                 error = H5Dwrite(back_arr_id, H5T_NATIVE_REAL, memoryspace_id, mca_arr_space, H5P_DEFAULT, background.data());
                 if (error < 0)
                 {
@@ -8799,7 +8799,7 @@ void HDF5_IO<T_real>::_add_v9_scalers(hid_t file_id)
     hid_t value_mem_space;
     _create_memory_space(3, &count_3d[0], value_mem_space);
     
-    data_struct::ArrayXXr tmp_values;
+    data_struct::ArrayXXr<float> tmp_values;
     tmp_values.resize(count_3d[1], count_3d[2]);
 
     hsize_t i = 0;

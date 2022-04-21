@@ -793,9 +793,9 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<T_real>* anal
                 T_real energy_slope = fit_params.value(STR_ENERGY_SLOPE);
                 T_real energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
 
-                data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-                data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
-                data_struct::ArrayXr sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
+                data_struct::ArrayTr<T_real> energy = data_struct::ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+                data_struct::ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+                data_struct::ArrayTr<T_real> sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
                 std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;
                 if (detector_num != -1)
@@ -804,10 +804,10 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<T_real>* anal
                 }
                 logI << full_path << "\n";
                 #ifdef _BUILD_WITH_QT
-                visual::SavePlotSpectrasFromConsole(full_path + ".png", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
+                visual::SavePlotSpectrasFromConsole(full_path + ".png", &ev, &sub_spectra, (ArrayTr<T_real>*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()), true);
                 #endif
 
-                io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayXr*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
+                io::file::csv::save_fit_and_int_spectra(full_path + ".csv", &ev, &sub_spectra, (ArrayTr<T_real>*)(&f_routine->fitted_integrated_spectra()), (ArrayXr*)(&f_routine->fitted_integrated_background()));
             }
 
             detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, quantification_standard, &quantification_model, quantification_standard->sr_current);

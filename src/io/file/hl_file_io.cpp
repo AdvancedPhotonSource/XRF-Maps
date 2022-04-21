@@ -436,18 +436,18 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     data_struct::Spectra snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
     data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
-    data_struct::ArrayXr background;
+    data_struct::ArrayTr<T_real> background;
 
     T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
     T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
 
-    data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+    data_struct::ArrayTr<T_real> energy = data_struct::ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    data_struct::ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
     
     if (fit_params->contains(STR_SNIP_WIDTH))
 	{
-        data_struct::ArrayXr s_background = data_struct::snip_background(spectra,
+        data_struct::ArrayTr<T_real> s_background = data_struct::snip_background(spectra,
                                                                         fit_params->value(STR_ENERGY_OFFSET),
                                                                         fit_params->value(STR_ENERGY_SLOPE),
                                                                         fit_params->value(STR_ENERGY_QUADRATIC),
