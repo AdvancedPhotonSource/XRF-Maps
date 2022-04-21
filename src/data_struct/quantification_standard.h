@@ -75,17 +75,17 @@ struct DLL_EXPORT Quantification_Scaler_Struct
 {
     Quantification_Scaler_Struct(unsigned int max_z= CALIBRATION_CURVE_SIZE)
     {
-        vector<Element_Quant> e_quants;
+        vector<Element_Quant<T_real>> e_quants;
         for (int i = 0; i < max_z; i++)
         {
-            e_quants.emplace_back(Element_Quant(i + 1));
+            e_quants.emplace_back(Element_Quant<T_real>(i + 1));
         }
         for (const auto& itr : Shells_Quant_List)
         {
             curve_quant_map[itr] = e_quants;
         }
     }
-    unordered_map<Electron_Shell, vector<Element_Quant> > curve_quant_map;
+    unordered_map<Electron_Shell, vector<Element_Quant<T_real>> > curve_quant_map;
 };
 
 //-----------------------------------------------------------------------------

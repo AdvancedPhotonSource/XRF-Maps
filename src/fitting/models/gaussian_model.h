@@ -131,6 +131,15 @@ protected:
 
 };
 
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Gaussian_Model<float>;
+template DLL_EXPORT class Gaussian_Model<double>;
+#else
+template class DLL_EXPORT Gaussian_Model<float>;
+template class DLL_EXPORT Gaussian_Model<double>;
+#endif
+
+
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params);
 

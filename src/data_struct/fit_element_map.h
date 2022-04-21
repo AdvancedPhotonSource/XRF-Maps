@@ -191,6 +191,14 @@ protected:
     std::string _pileup_shell_type;
 };
 
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Fit_Element_Map<float>;
+template DLL_EXPORT class Fit_Element_Map<double>;
+#else
+template class DLL_EXPORT Fit_Element_Map<float>;
+template class DLL_EXPORT Fit_Element_Map<double>;
+#endif
+
 //-----------------------------------------------------------------------------
 
 template<typename T_real>

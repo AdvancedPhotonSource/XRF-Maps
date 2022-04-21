@@ -252,7 +252,7 @@ void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio,
         mu_fraction = 0.0f;
     }
 
-    _energy_ratios.push_back(Element_Energy_Ratio(energy, ratio, mu_fraction, et));
+    _energy_ratios.push_back(Element_Energy_Ratio<T_real>(energy, ratio, mu_fraction, et));
 }
 
 //-----------------------------------------------------------------------------

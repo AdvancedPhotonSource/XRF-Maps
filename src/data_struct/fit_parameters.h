@@ -180,6 +180,14 @@ struct DLL_EXPORT Fit_Param
 };
 
 
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Fit_Param<float>;
+template DLL_EXPORT class Fit_Param<double>;
+#else
+template class DLL_EXPORT Fit_Param<float>;
+template class DLL_EXPORT Fit_Param<double>;
+#endif
+
 //-----------------------------------------------------------------------------
 /**
  * @brief The Fit_Parameters class: Dictionary of fit parameters. Many fit routines use arrays so there are convert to and from array functions.
@@ -250,6 +258,14 @@ private:
     std::unordered_map<std::string, Fit_Param<T_real> > _params;
 
 };
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Fit_Parameters<float>;
+template DLL_EXPORT class Fit_Parameters<double>;
+#else
+template class DLL_EXPORT Fit_Parameters<float>;
+template class DLL_EXPORT Fit_Parameters<double>;
+#endif
 
 //-----------------------------------------------------------------------------
 template<typename T_real>

@@ -424,7 +424,7 @@ void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
         io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume);
     }
     io::file::HDF5_IO::inst()->save_quantification(detector);
-    io::file::HDF5_IO::inst()->end_save_seq();
+    io::file::HDF5_IO<T_real>::inst()->end_save_seq();
    
 
 }

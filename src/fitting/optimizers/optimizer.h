@@ -125,7 +125,7 @@ struct Quant_User_Data
 {
     quantification::models::Quantification_Model<T_real>* quantification_model;
     Fit_Parameters<T_real>* fit_parameters;
-    std::unordered_map<std::string, Element_Quant> quant_map;
+    std::unordered_map<std::string, Element_Quant<T_real>> quant_map;
 };
 
 
@@ -180,7 +180,7 @@ public:
 
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
-                                         std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                         std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                          quantification::models::Quantification_Model<T_real>* quantification_model) = 0;
 
     virtual unordered_map<string, T_real> get_options() = 0;
@@ -191,6 +191,14 @@ protected:
     map<int, OPTIMIZER_OUTCOME> _outcome_map;
 
 };
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Optimizer<float>;
+template DLL_EXPORT class Optimizer<double>;
+#else
+template class DLL_EXPORT Optimizer<float>;
+template class DLL_EXPORT Optimizer<double>;
+#endif
 
 } //namespace optimizers
 

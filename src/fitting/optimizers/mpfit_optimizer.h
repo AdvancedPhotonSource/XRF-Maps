@@ -84,7 +84,7 @@ public:
                                             Gen_Func_Def<T_real> gen_func);
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
-                                                     std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                     std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                                      quantification::models::Quantification_Model<T_real>* quantification_model);
 
     virtual unordered_map<string, T_real> get_options();
@@ -100,6 +100,14 @@ private:
     struct mp_config<T_real> _options;
 
 };
+
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class MPFit_Optimizer<float>;
+template DLL_EXPORT class MPFit_Optimizer<double>;
+#else
+template class DLL_EXPORT MPFit_Optimizer<float>;
+template class DLL_EXPORT MPFit_Optimizer<double>;
+#endif
 
 } //namespace optimizers
 

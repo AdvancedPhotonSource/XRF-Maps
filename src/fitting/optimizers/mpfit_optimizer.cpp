@@ -67,7 +67,7 @@ template<typename T_real>
 int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
     // Get user passed data
-    User_Data* ud = static_cast<User_Data*>(usr_data);
+    User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -108,7 +108,7 @@ template<typename T_real>
 int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
     // Get user passed data
-    Gen_User_Data* ud = static_cast<Gen_User_Data*>(usr_data);
+    Gen_User_Data<T_real>* ud = static_cast<Gen_User_Data<T_real>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -145,7 +145,7 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
     //p is array size 2 but seems only first index is used
     ///return (y - this->fit_calibrationcurve(x, p));
 
-    Quant_User_Data* ud = (Quant_User_Data*)(usr_data);
+    Quant_User_Data<T_real>* ud = (Quant_User_Data<T_real>*)(usr_data);
 
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -275,7 +275,7 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 {
 	for (auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
 	{
-		Fit_Param fit = (*fit_params)[itr->first];
+		Fit_Param<T_real> fit = (*fit_params)[itr->first];
 		if (fit.opt_array_index > -1)
 		{
 
@@ -408,8 +408,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
                                             const Base_Model<T_real>* const model,
                                             const Range energy_range,
                                             Callback_Func_Status_Def* status_callback)
-            {
-    User_Data ud;
+{
+    User_Data<T_real> ud;
     size_t num_itr = _options.maxiter;
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
@@ -462,7 +462,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 
@@ -496,7 +496,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
                                                 const ArrayTr<T_real>* background,
 									            Gen_Func_Def<T_real> gen_func)
 {
-    Gen_User_Data ud;
+    Gen_User_Data<T_real> ud;
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
@@ -544,7 +544,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
+    info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
 /*
     
 */
@@ -574,10 +574,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
 template<typename T_real>
 OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameters<T_real> *fit_params,
-                                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                          std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                                           quantification::models::Quantification_Model<T_real>* quantification_model)
 {
-    Quant_User_Data ud;
+    Quant_User_Data<T_real> ud;
 
     if (quant_map != nullptr)
     {
@@ -638,7 +638,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    info = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 

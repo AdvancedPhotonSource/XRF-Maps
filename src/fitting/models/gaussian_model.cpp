@@ -91,45 +91,45 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
 
     Fit_Parameters<T_real> fit_params;
     //                                      name                     min         max             val       step              use
-    fit_params.add_parameter(Fit_Param(STR_MIN_ENERGY_TO_FIT, (T_real)0.1, (T_real)100.00, (T_real)1.0, (T_real)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_MAX_ENERGY_TO_FIT, (T_real)0.1, (T_real)100.00, (T_real)11.0, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_MIN_ENERGY_TO_FIT, (T_real)0.1, (T_real)100.00, (T_real)1.0, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_MAX_ENERGY_TO_FIT, (T_real)0.1, (T_real)100.00, (T_real)11.0, (T_real)0.1, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param(STR_ENERGY_OFFSET,       (T_real)-0.2,    (T_real)0.2,    (T_real)0.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_ENERGY_SLOPE,        (T_real)0.001,   (T_real)10.0,    (T_real)1.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_ENERGY_QUADRATIC,    (T_real)-0.000000001, (T_real)0.00001, (T_real)0.0,    (T_real)0.000000001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_OFFSET,       (T_real)-0.2,    (T_real)0.2,    (T_real)0.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_SLOPE,        (T_real)0.001,   (T_real)10.0,    (T_real)1.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_QUADRATIC,    (T_real)-0.000000001, (T_real)0.00001, (T_real)0.0,    (T_real)0.000000001,   E_Bound_Type::LIMITED_LO_HI));
 
-    fit_params.add_parameter(Fit_Param(STR_FWHM_OFFSET,         (T_real)0.005,    (T_real)0.5,  (T_real)0.12,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_FWHM_FANOPRIME,      (T_real)0.000001, (T_real)0.05, (T_real)0.00012, (T_real)0.000001,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_OFFSET,         (T_real)0.005,    (T_real)0.5,  (T_real)0.12,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_FANOPRIME,      (T_real)0.000001, (T_real)0.05, (T_real)0.00012, (T_real)0.000001,  E_Bound_Type::LIMITED_LO_HI));
 
-    fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_ENERGY,	   (T_real)9.4, (T_real)10.4, (T_real)9.99, (T_real)0.001,  E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.00001, E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_ENERGY,	   (T_real)9.4, (T_real)10.4, (T_real)9.99, (T_real)0.001,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.00001, E_Bound_Type::FIT));
 
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_ANGLE,		 (T_real)-0.0001, (T_real)0.0001, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_FWHM_CORR,    (T_real)-0.0001, (T_real)0.0001, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_AMPLITUDE,    (T_real)-0.0001, (T_real)0.0001, (T_real)5.0, (T_real)0.00001,  E_Bound_Type::FIT));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_F_STEP,		 (T_real)-0.0001, (T_real)0.0001, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_F_TAIL,		 (T_real)-0.0001, (T_real)0.4, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_GAMMA,		 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_HI_F_TAIL, (T_real)-0.0001, (T_real)0.1, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param(STR_COMPTON_HI_GAMMA,	 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_ANGLE,		 (T_real)-0.0001, (T_real)0.0001, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)-0.0001, (T_real)0.0001, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)-0.0001, (T_real)0.0001, (T_real)5.0, (T_real)0.00001,  E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)-0.0001, (T_real)0.0001, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)-0.0001, (T_real)0.4, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL, (T_real)-0.0001, (T_real)0.1, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param(STR_SNIP_WIDTH,			     (T_real)0.1,   (T_real)2.828427, (T_real)0.25, (T_real)0.01,  E_Bound_Type::FIXED)); //max = 2* sqrt(2)
+    fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH,			     (T_real)0.1,   (T_real)2.828427, (T_real)0.25, (T_real)0.01,  E_Bound_Type::FIXED)); //max = 2* sqrt(2)
 
-    fit_params.add_parameter(Fit_Param(STR_F_STEP_OFFSET,		(T_real)0.0, (T_real)1.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_F_STEP_LINEAR,        (T_real)0.0, (T_real)1.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_F_STEP_QUADRATIC,  (T_real)0.0, (T_real)0.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_STEP_OFFSET,		(T_real)0.0, (T_real)1.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_STEP_LINEAR,        (T_real)0.0, (T_real)1.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_STEP_QUADRATIC,  (T_real)0.0, (T_real)0.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param(STR_F_TAIL_OFFSET,		(T_real)0.0, (T_real)0.1, (T_real)0.003, (T_real)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_F_TAIL_LINEAR,		(T_real)0.0, (T_real)1.0, (T_real)0.001, (T_real)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_F_TAIL_QUADRATIC,  (T_real)0.0, (T_real)0.01, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_TAIL_OFFSET,		(T_real)0.0, (T_real)0.1, (T_real)0.003, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_TAIL_LINEAR,		(T_real)0.0, (T_real)1.0, (T_real)0.001, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_F_TAIL_QUADRATIC,  (T_real)0.0, (T_real)0.01, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param(STR_GAMMA_OFFSET,			(T_real)0.1, (T_real)10.0, (T_real)2.2, (T_real)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_GAMMA_LINEAR,			(T_real)0.0, (T_real)3.0,  (T_real)0.0, (T_real)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_GAMMA_QUADRATIC,	(T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_GAMMA_OFFSET,			(T_real)0.1, (T_real)10.0, (T_real)2.2, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_GAMMA_LINEAR,			(T_real)0.0, (T_real)3.0,  (T_real)0.0, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_GAMMA_QUADRATIC,	(T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.1, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_OFFSET,		 (T_real)0.0, (T_real)0.2,  (T_real)0.05, (T_real)0.1, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_LINEAR,		 (T_real)0.0, (T_real)0.02, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_OFFSET,		 (T_real)0.0, (T_real)0.2,  (T_real)0.05, (T_real)0.1, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_LINEAR,		 (T_real)0.0, (T_real)0.02, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
     return fit_params;
 
@@ -317,12 +317,12 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
             {
                 labeled_spectras->erase(itr);
             }
-            labeled_spectras->insert({ itr, Spectra(energy_range.count()) });
+            labeled_spectras->insert({ itr, Spectra<T_real>(energy_range.count()) });
         }
     }
 
-    Spectra agr_spectra(energy_range.count());
-    Spectra tmp_spec(energy_range.count());
+    Spectra<T_real> agr_spectra(energy_range.count());
+    Spectra<T_real> tmp_spec(energy_range.count());
 
     T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
@@ -378,7 +378,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
                                                 const struct Range energy_range)
 {
 
-    Spectra agr_spectra(energy_range.count());
+    Spectra<T_real> agr_spectra(energy_range.count());
 
     T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
@@ -402,7 +402,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
 #pragma omp parallel for
     for (int i=0; i < (int)keys.size(); i++)
     {
-        Spectra tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev, nullptr);
+        Spectra<T_real> tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev, nullptr);
 #pragma omp critical
         {
             agr_spectra += tmp;
@@ -425,7 +425,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
                                                      const ArrayTr<T_real> &ev,
                                                      unordered_map<string, ArrayTr<T_real> > * labeled_spectras)
 {
-    Spectra spectra_model(ev.size());
+    Spectra<T_real> spectra_model(ev.size());
 
     if(false == fitp->contains(element_to_fit->full_name()))
     {
@@ -438,16 +438,16 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         return spectra_model;
 
     //T_real fwhm_offset = fitp->value(STR_FWHM_OFFSET);
-    const vector<Element_Energy_Ratio> energy_ratios = element_to_fit->energy_ratios();
+    const vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
 
     //for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
     for (int idx = 0; idx < energy_ratios.size(); idx++)
     {
-        const Element_Energy_Ratio& er_struct = energy_ratios.at(idx);
-        T_real sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
-        T_real f_step =  std::abs( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
-        T_real f_tail = std::abs( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-        T_real kb_f_tail = std::abs(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+        const Element_Energy_Ratio<T_real>& er_struct = energy_ratios.at(idx);
+        T_real sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
+        T_real f_step =  std::abs<T_real>( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
+        T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+        T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real value = 1.0;
 
         //don't process if energy is 0
@@ -506,7 +506,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
         if (labeled_spectras != nullptr && label.length() > 0)
         {
-            Spectra tmp_spec(ev.size());
+            Spectra<T_real> tmp_spec(ev.size());
             // peak, gauss
             tmp_spec += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
             ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
@@ -605,7 +605,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, Ar
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real>& ev, T_real gain) const
 {
-    Spectra counts(ev.size());
+    Spectra<T_real> counts(ev.size());
 	counts.setZero();
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(false == std::isfinite(sigma))

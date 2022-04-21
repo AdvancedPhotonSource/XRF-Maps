@@ -90,7 +90,7 @@ public:
 
     ~Quantification_Model();
 
-    void init_element_quant(Element_Quant& out_quant,
+    void init_element_quant(Element_Quant<T_real>& out_quant,
                             T_real incident_energy,
                             Element_Info* detector_element,
                             Electron_Shell shell,
@@ -104,9 +104,9 @@ public:
 
     T_real absorption(T_real thickness, T_real beta, T_real llambda, T_real shell_factor=1) const;
 
-    std::unordered_map<std::string, T_real> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, T_real p);
+    std::unordered_map<std::string, T_real> model_calibrationcurve(std::unordered_map<std::string, Element_Quant<T_real>> quant_map, T_real p);
 
-    void model_calibrationcurve(std::vector<Element_Quant>* quant_vec, T_real p);
+    void model_calibrationcurve(std::vector<Element_Quant<T_real>>* quant_vec, T_real p);
 
 protected:
 

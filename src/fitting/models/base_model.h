@@ -142,6 +142,14 @@ private:
 
 };
 
+#if defined _WIN32 || defined __CYGWIN__
+template DLL_EXPORT class Base_Model<float>;
+template DLL_EXPORT class Base_Model<double>;
+#else
+template class DLL_EXPORT Base_Model<float>;
+template class DLL_EXPORT Base_Model<double>;
+#endif
+
 } //namespace models
 
 } //namespace fitting

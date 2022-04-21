@@ -64,7 +64,7 @@ namespace optimizers
 template<typename T_real>
 void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fvec, int *userbreak )
 {
-    User_Data* ud = (User_Data*)(data);
+    User_Data<T_real>* ud = (User_Data<T_real>*)(data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
@@ -101,7 +101,7 @@ template<typename T_real>
 void general_residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fvec, int *userbreak )
 {
 
-    Gen_User_Data* ud = (Gen_User_Data*)(data);
+    Gen_User_Data<T_real>* ud = (Gen_User_Data<T_real>*)(data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
@@ -136,7 +136,7 @@ void quantification_residuals_lmfit( const T_real *par, int m_dat, const void *d
     //p is array size 2 but seems only first index is used
     ///return (y - this->fit_calibrationcurve(x, p));
 
-    Quant_User_Data* ud = (Quant_User_Data*)(data);
+    Quant_User_Data<T_real>* ud = (Quant_User_Data<T_real>*)(data);
 
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
@@ -257,7 +257,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
                                            Callback_Func_Status_Def* status_callback)
 {
 
-    User_Data ud;
+    User_Data<T_real> ud;
     std::vector<T_real> fitp_arr = fit_params->to_array();
     std::vector<T_real> perror(fitp_arr.size());
 
@@ -343,7 +343,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
                                                 Gen_Func_Def<T_real> gen_func)
 {
 
-    Gen_User_Data ud;
+    Gen_User_Data<T_real> ud;
 
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
@@ -379,10 +379,10 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
 
 template<typename T_real>
 OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameters<T_real>*fit_params,
-                                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
+                                                          std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                                           quantification::models::Quantification_Model<T_real>* quantification_model)
 {
-    Quant_User_Data ud;
+    Quant_User_Data<T_real> ud;
 
     if (quant_map != nullptr)
     {

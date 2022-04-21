@@ -419,7 +419,7 @@ int mp_fdjac2(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *pri
   int has_analytical_deriv = 0, has_numerical_deriv = 0;
   int has_debug_deriv = 0;
 
-  temp = std::max(epsfcn,MP_MACHEP0);
+  temp = std::max<_T>(epsfcn,MP_MACHEP0);
   eps = sqrt(temp);
   ij = 0;
   ldfjac = 0;   /* Prevent compiler warning */
@@ -1233,7 +1233,7 @@ void mp_lmpar(int n, _T *r, int ldr, int *ipvt, int *ifree, _T *diag,
    *	 evaluate the function at the current value of par.
    */
   if (*par == zero)
-    *par = std::max(MP_DWARF,p001*paru);
+    *par = std::max<_T>(MP_DWARF,p001*paru);
   temp = sqrt( *par );
   for (j=0; j<n; j++)
     wa1[j] = temp*diag[ifree[j]];

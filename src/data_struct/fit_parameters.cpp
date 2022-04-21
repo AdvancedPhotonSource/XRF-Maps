@@ -109,7 +109,7 @@ void Fit_Parameters<T_real>::add_parameter(Fit_Param<T_real> param)
 template<typename T_real>
 void Fit_Parameters<T_real>::append_and_update(const Fit_Parameters& fit_params)
 {
-	for (std::unordered_map<std::string, Fit_Param>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
+	for (std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
 	{
 		_params[itr->first] = itr->second;	
 	}

@@ -58,6 +58,7 @@ namespace data_struct
 
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct DLL_EXPORT Element_Quant
 {
     Element_Quant()
@@ -71,7 +72,7 @@ struct DLL_EXPORT Element_Quant
         this->Z = Z;
     }
 
-    Element_Quant(const Element_Quant& e) :
+    Element_Quant(const Element_Quant<T_real>& e) :
         name(e.name),
         weight(e.weight),
         absorption(e.absorption),
@@ -87,7 +88,7 @@ struct DLL_EXPORT Element_Quant
         
     }
 
-    Element_Quant(Element_Quant&& e) noexcept:
+    Element_Quant(Element_Quant<T_real>&& e) noexcept:
         name(std::move(e.name)),
         weight(std::exchange(e.weight, 0.0)),
         absorption(std::exchange(e.absorption, 0.0)),
@@ -102,7 +103,7 @@ struct DLL_EXPORT Element_Quant
     {
     }
 
-    Element_Quant& operator=(const Element_Quant&) = default;
+    Element_Quant<T_real>& operator=(const Element_Quant<T_real>&) = default;
 
     void zero()
     {
@@ -119,16 +120,16 @@ struct DLL_EXPORT Element_Quant
         calib_curve_val = 0;
     }
 
-    real_t weight;  // in ug/cm2
-    real_t absorption;
-    real_t transmission_Be;
-    real_t transmission_Ge; // or Si dead layer
-    real_t yield;
-    real_t transmission_through_Si_detector;
-    real_t transmission_through_air;// (N2)
+    T_real weight;  // in ug/cm2
+    T_real absorption;
+    T_real transmission_Be;
+    T_real transmission_Ge; // or Si dead layer
+    T_real yield;
+    T_real transmission_through_Si_detector;
+    T_real transmission_through_air;// (N2)
     int Z;
-    real_t e_cal_ratio;
-    real_t calib_curve_val;
+    T_real e_cal_ratio;
+    T_real calib_curve_val;
     std::string name;
 
 };

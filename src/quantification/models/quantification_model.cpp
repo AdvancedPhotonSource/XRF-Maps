@@ -80,7 +80,7 @@ Quantification_Model<T_real>::~Quantification_Model()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Quantification_Model<T_real>::init_element_quant(Element_Quant& element_quant,
+void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& element_quant,
                                             T_real incident_energy,
                                             Element_Info* detector_element,
                                             Electron_Shell shell,
@@ -240,7 +240,7 @@ T_real Quantification_Model<T_real>::absorption(T_real thickness, T_real beta, T
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, T_real p)
+std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_calibrationcurve(std::unordered_map<std::string, Element_Quant<T_real>> quant_map, T_real p)
 {
     // aux_arr[mm, 0] = absorption
     // aux_arr[mm, 1] = transmission, Be
@@ -271,7 +271,7 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Quant> *quant_vec, T_real p)
+void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Quant<T_real>> *quant_vec, T_real p)
 {
     for(auto &itr : *quant_vec)
     {

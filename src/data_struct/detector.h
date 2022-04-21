@@ -108,7 +108,7 @@ public:
     unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
 
     //  proc_type          quantifier            element    quant_prop
-    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant*>>> all_element_quants;
+    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant<T_real>*>>> all_element_quants;
 
     // Fit Parameters Override for model
     Params_Override<T_real> fit_params_override_dict;

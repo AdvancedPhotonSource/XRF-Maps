@@ -3273,7 +3273,7 @@ bool HDF5_IO<T_real>::load_quantification_scalers_BNL(std::string path, data_str
 
     logI << path << "\n";
 
-    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
+    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
     hid_t    file_id, src_maps_grp_id;
     hid_t    dataspace_detectors_id, dset_detectors_id;
     hid_t   xypos_dataspace_id, xypos_id;
@@ -6475,7 +6475,7 @@ bool HDF5_IO<T_real>::save_scan_scalers_gsecars(std::string path,
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
 
-	hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
+	hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
 	hid_t    file_id, src_maps_grp_id;
 	hid_t    dataspace_detectors_id, dset_detectors_id;
 	hid_t   xypos_dataspace_id, xypos_id;
@@ -6762,7 +6762,7 @@ bool HDF5_IO<T_real>::save_scan_scalers_bnl(std::string path,
     std::chrono::time_point<std::chrono::system_clock> start, end;
     start = std::chrono::system_clock::now();
 
-    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status, error;
+    hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
     hid_t    file_id, src_maps_grp_id;
     hid_t    dataspace_detectors_id, dset_detectors_id;
     hid_t   xypos_dataspace_id, xypos_id;

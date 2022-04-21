@@ -316,7 +316,7 @@ private:
 };
 
 #if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class HDF5_IO<float>;
+//template DLL_EXPORT class HDF5_IO<float>;
 template DLL_EXPORT class HDF5_IO<double>;
 #else
 template class DLL_EXPORT HDF5_IO<float>;
