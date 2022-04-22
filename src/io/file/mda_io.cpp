@@ -189,7 +189,7 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
         _load_scalers(false);
     }
 
-    const data_struct::ArrayXXr* arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* arr = nullptr;
     arr = _scan_info.scaler_values(STR_SR_CURRENT);
     if (arr != nullptr)
     {
@@ -218,10 +218,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                                  bool hasNetCDF)
 {
     bool is_single_row = false;
-    const data_struct::ArrayXXr* elt_arr = nullptr;
-    const data_struct::ArrayXXr* ert_arr = nullptr;
-    const data_struct::ArrayXXr* icr_arr = nullptr;
-    const data_struct::ArrayXXr* ocr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* elt_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ert_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* icr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ocr_arr = nullptr;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
     size_t cols = 1;
@@ -472,10 +472,10 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                                                  void *user_data)
 {
 	// detector , index
-	map<size_t, const data_struct::ArrayXXr*> elt_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> ert_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> incnt_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> outcnt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> elt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> ert_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> incnt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> outcnt_arr_map;
     size_t max_detecotr_num = 0;
     bool is_single_row = false;
 
@@ -653,7 +653,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
                 for(size_t detector_num : detector_num_arr)
                 {
-                    data_struct::Spectra* spectra = new data_struct::Spectra(samples);
+                    data_struct::Spectra<T_real>* spectra = new data_struct::Spectra<T_real>(samples);
 
                     if (is_single_row)
                     {
@@ -732,10 +732,10 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		bool hasNetCDF)
 {
 	//index per row and col
-    const data_struct::ArrayXXr* elt_arr = nullptr;
-    const data_struct::ArrayXXr* ert_arr = nullptr;
-    const data_struct::ArrayXXr* icr_arr = nullptr;
-    const data_struct::ArrayXXr* ocr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* elt_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ert_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* icr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ocr_arr = nullptr;
 	bool is_single_row = false;
 
 	std::FILE *fptr = std::fopen(path.c_str(), "rb");
@@ -1027,7 +1027,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
             {
                 if (i == 0)
                 {
-                    data_struct::Scaler_Map s_map;
+                    data_struct::Scaler_Map<T_real> s_map;
                     s_map.values.resize(rows, cols);
                     s_map.values.setZero(rows, cols);
                     s_map.name = std::string(_mda_file->scan->detectors[k]->name);
@@ -1091,7 +1091,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                 {
                     if (i == 0 && j == 0)
                     {
-                        data_struct::Scaler_Map s_map;
+                        data_struct::Scaler_Map<T_real> s_map;
                         s_map.values.resize(rows, cols);
                         s_map.values.setZero(rows, cols);
                         s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
@@ -1143,7 +1143,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
     double time_clock = 0.0;
     if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_names, time_pv, time_clock, beamline))
     {
-        const data_struct::ArrayXXr* time_array = _scan_info.scaler_values(time_pv);
+        const data_struct::ArrayXXr<T_real>* time_array = _scan_info.scaler_values(time_pv);
         if (time_array != nullptr)
         {
             for (auto& itr : _scan_info.scaler_maps)
@@ -1161,13 +1161,13 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
     {
         for (const auto& itr : *summed_scalers)
         {
-            data_struct::Scaler_Map s_map;
+            data_struct::Scaler_Map<T_real> s_map;
             s_map.name = itr.scaler_name;
             s_map.values.resize(rows, cols);
             s_map.values.setZero(rows, cols);
             for (const auto& sitr : itr.scalers_to_sum)
             {
-                const data_struct::ArrayXXr* arr = _scan_info.scaler_values(sitr);
+                const data_struct::ArrayXXr<T_real>* arr = _scan_info.scaler_values(sitr);
                 if (arr != nullptr)
                 {
                     s_map.values += (*arr);

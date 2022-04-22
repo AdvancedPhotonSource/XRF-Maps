@@ -80,6 +80,9 @@ protected:
     data_struct::Spectra<T_real>* _spectra;
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<double>;
+
 } //namespace xrf
 } //namespace workflow
 

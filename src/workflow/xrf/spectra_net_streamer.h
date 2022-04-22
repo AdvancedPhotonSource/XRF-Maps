@@ -94,6 +94,9 @@ protected:
 
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<double>;
+
 //-----------------------------------------------------------------------------
 
 } //namespace xrf

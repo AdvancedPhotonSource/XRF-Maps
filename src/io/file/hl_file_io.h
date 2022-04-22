@@ -152,10 +152,10 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
                                     data_struct::Params_Override<T_real>* params_override,
                                     bool append_file_name = true);
 
-template<typename T_real>
+
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                 std::string quantification_info_file,
-                                                vector<Quantification_Standard<T_real>>& standard_element_weights);
+                                                vector<Quantification_Standard<double>>& standard_element_weights);
 
 template<typename T_real>
 DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
@@ -167,7 +167,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          bool save_scalers);
 
 // This is for HDF5 files only
-DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info* scan_info);
+template<typename T_real>
+DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<T_real>* scan_info);
 
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 

@@ -497,10 +497,9 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
 // ----------------------------------------------------------------------------
 
-template<typename T_real>
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                  std::string quantification_info_file,
-                                                 vector<Quantification_Standard<T_real>> &standards)
+                                                 vector<Quantification_Standard<double>> &standards)
 {
     std::string path = dataset_directory + quantification_info_file;
     std::ifstream paramFileStream(path);
@@ -515,7 +514,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
         std::string tag;
 
         std::vector<std::string> element_names;
-        std::vector<T_real> element_weights;
+        std::vector<double> element_weights;
 
         try
         {
@@ -576,7 +575,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     {
                         element_weight_str.erase(std::remove_if(element_weight_str.begin(), element_weight_str.end(), ::isspace), element_weight_str.end());
                         logI<<"Element weight: "<<element_weight_str<<"\n";
-                        T_real weight = std::stof(element_weight_str);
+                        double weight = std::stof(element_weight_str);
                         element_weights.push_back(weight);
                     }
                     //has_weights = true;
@@ -584,7 +583,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                     {
                         if(element_names.size() == element_weights.size())
                         {
-                            standards.emplace_back(Quantification_Standard(standard_filename, element_names, element_weights, disable_Ka_quant, disable_La_quant));
+                            standards.emplace_back(Quantification_Standard<double>(standard_filename, element_names, element_weights, disable_Ka_quant, disable_La_quant));
                         }
                         else
                         {
@@ -1311,26 +1310,27 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
 bool get_scalers_and_metadata_h5(std::string dataset_directory,
     std::string dataset_file,
-    data_struct::Scan_Info* scan_info)
+    data_struct::Scan_Info<T_real>* scan_info)
 {
-    if (true == io::file::HDF5_IO<float>::inst()->get_scalers_and_metadata_emd(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_emd(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {
         return true;
     }
 
-    if (true == io::file::HDF5_IO<float>::inst()->get_scalers_and_metadata_confocal(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_confocal(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {
         return true;
     }
 
-    if (true == io::file::HDF5_IO<float>::inst()->get_scalers_and_metadata_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {
         return true;
     }
 
-    if (true == io::file::HDF5_IO<float>::inst()->get_scalers_and_metadata_bnl(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
+    if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_bnl(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {
         return true;
     }
@@ -1362,7 +1362,7 @@ void generate_h5_averages(std::string dataset_directory,
         hdf5_filenames.push_back(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
     }
 
-    io::file::HDF5_IO<T_real>::inst()->generate_avg(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5", hdf5_filenames);
+    io::file::HDF5_IO::inst()->generate_avg(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5", hdf5_filenames);
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;

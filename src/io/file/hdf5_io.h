@@ -76,8 +76,6 @@ enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
 enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
-
-template<typename T_real>
 class DLL_EXPORT HDF5_IO
 {
 public:
@@ -86,35 +84,46 @@ public:
 
     ~HDF5_IO();
 
+    template<typename T_real>
     bool load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol);
 
+    template<typename T_real>
     bool load_spectra_volume_with_callback(std::string path,
 											const std::vector<size_t>& detector_num_arr,
 										   data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                            void* user_data);
 
+    template<typename T_real>
 	bool load_spectra_volume_emd_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
 												data_struct::IO_Callback_Func_Def<T_real> callback_func,
 												void* user_data);
 
+    template<typename T_real>
     bool load_spectra_volume_emd(std::string path,
                                  size_t frame_num,
                                  data_struct::Spectra_Volume<T_real> *spec_vol,
                                  bool logerr = true);
 
+    template<typename T_real>
     bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row);
 
+    template<typename T_real>
     bool load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error=true);
 
+    template<typename T_real>
 	bool load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error = true);
 
+    template<typename T_real>
     bool load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error = true);
 
+    template<typename T_real>
     bool load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spec, bool log_error);
 
+    template<typename T_real>
     bool load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spectra);
 
+    template<typename T_real>
     bool load_spectra_vol_analyzed_h5(std::string path,
                                       data_struct::Spectra_Volume<T_real>* spectra_volume,
                                       int row_idx_start = 0,
@@ -122,12 +131,16 @@ public:
                                       int col_idx_start = 0,
                                       int col_idx_end = -1);
 
+    template<typename T_real>
     bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<T_real>* spectra, bool log_error=true);
 
+    template<typename T_real>
     bool load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<T_real> *override_values);
 
+    template<typename T_real>
     bool load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<T_real> *override_values);
 
+    template<typename T_real>
     bool load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<T_real>* override_values);
 
     bool generate_avg(std::string avg_filename, std::vector<std::string> files_to_avg);
@@ -138,20 +151,25 @@ public:
                                  size_t height,
                                  size_t width);
 
-    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info* scan_info);
+    template<typename T_real>
+    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<T_real>* scan_info);
 
-    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info* scan_info);
+    template<typename T_real>
+    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<T_real>* scan_info);
 
-    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info* scan_info);
+    template<typename T_real>
+    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<T_real>* scan_info);
 
-    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info* scan_info);
+    template<typename T_real>
+    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<T_real>* scan_info);
 
+    template<typename T_real>
     bool save_stream_row(size_t d_hash,
                          size_t detector_num,
                          size_t row,
                          std::vector< data_struct::Spectra<T_real>* >  *spectra_row);
 
-
+    template<typename T_real>
     bool save_itegrade_spectra(data_struct::Spectra<T_real> * spectra);
 
     bool close_dataset(size_t d_hash);
@@ -162,6 +180,7 @@ public:
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 
+    template<typename T_real>
     bool save_spectra_volume(const std::string path,
                             data_struct::Spectra_Volume<T_real>* spectra_volume,
                              size_t row_idx_start=0,
@@ -169,8 +188,10 @@ public:
                              size_t col_idx_start=0,
                              int col_idx_end=-1);
 
+    template<typename T_real>
     bool save_energy_calib(int spectra_size, T_real energy_offset, T_real energy_slope, T_real energy_quad);
 
+    template<typename T_real>
     bool save_element_fits(const std::string path,
                            const data_struct::Fit_Count_Dict<T_real>* const element_counts,
                            size_t row_idx_start=0,
@@ -178,28 +199,33 @@ public:
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
+    template<typename T_real>
     bool save_fitted_int_spectra(const std::string path,
                                  const data_struct::Spectra<T_real>& spectra,
                                  const data_struct::Range& range,
                                  const data_struct::Spectra<T_real>& background,
 								 const size_t save_spectra_size);
 	
+    template<typename T_real>
 	bool save_max_10_spectra(const std::string path,
 							const data_struct::Range& range,
 							const data_struct::Spectra<T_real>& max_spectra,
 							const data_struct::Spectra<T_real>& max_10_spectra,
                             const data_struct::Spectra<T_real>& fit_int_background);
 
+    template<typename T_real>
     bool save_quantification(data_struct::Detector<T_real>* detector);
 
+    template<typename T_real>
     bool save_scan_scalers(size_t detector_num,
-                           data_struct::Scan_Info* scan_info,
+                           data_struct::Scan_Info<T_real>* scan_info,
                            data_struct::Params_Override<T_real> * params_override,
                            size_t row_idx_start=0,
                            int row_idx_end=-1,
                            size_t col_idx_start=0,
                            int col_idx_end=-1);
 
+    template<typename T_real>
     bool save_scan_scalers_confocal(std::string path,
                                     size_t detector_num,
                                     size_t row_idx_start=0,
@@ -207,6 +233,7 @@ public:
                                     size_t col_idx_start=0,
                                     int col_idx_end=-1);
 
+    template<typename T_real>
 	bool save_scan_scalers_gsecars(std::string path,
 								size_t detector_num,
 								size_t row_idx_start = 0,
@@ -214,6 +241,7 @@ public:
 								size_t col_idx_start = 0,
 								int col_idx_end = -1);
 
+    template<typename T_real>
     bool save_scan_scalers_bnl(std::string path,
         size_t detector_num,
         size_t row_idx_start = 0,
@@ -242,6 +270,7 @@ public:
 
     bool end_save_seq(bool loginfo=true);
 
+    template<typename T_real>
     bool add_background(std::string directory, std::string filename, data_struct::Params_Override<T_real>& params);
 
 private:
@@ -252,16 +281,27 @@ private:
 
     static std::mutex _mutex;
 
+    template<typename T_real>
 	bool _load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<T_real>* spectra);
 
-    bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info* meta_info);
+    template<typename T_real>
+    bool _save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info<T_real>* meta_info);
+
 	bool _save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs);
-    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map>*scalers_map, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, string ds_amps_unit);
+
+    template<typename T_real>
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<T_real>>*scalers_map, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, string ds_amps_unit);
+    
+    template<typename T_real>
     void _save_amps(hid_t scalers_grp_id, T_real us_amp_sens_num_val, string us_amp_sens_unit_val, T_real ds_amp_sens_num_val, string ds_amp_sens_unit_val);
+    
+    template<typename T_real>
 	bool _save_params_override(hid_t group_id, data_struct::Params_Override<T_real> * params_override);
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
+    
     void _generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
+    
     void _generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, std::string group_name, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids);
 
     void _add_v9_quant(hid_t file_id, hid_t chan_names, hid_t chan_space, int chan_amt, std::string quant_str, std::string new_loc);
@@ -278,7 +318,7 @@ private:
 
 
 
-    
+    template<typename T_real>
     herr_t _read_h5d()
     {
         if (std::is_same<T_real, float>::value)
@@ -315,13 +355,6 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class HDF5_IO<float>;
-template DLL_EXPORT class HDF5_IO<double>;
-#else
-template class DLL_EXPORT HDF5_IO<float>;
-template class DLL_EXPORT HDF5_IO<double>;
-#endif
 
 }// end namespace file
 }// end namespace io

@@ -60,7 +60,7 @@ template<typename T_real>
 Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source() : Spectra_File_Source(nullptr)
 {
     _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-    _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
+    _spectra = new data_struct::Spectra<T_real>(2048, 0.0, 0.0, 0.0, 0.0);
 	for (size_t det = 0; det < 4; det++)
 	{
 		_detector_num_arr.push_back(det);
@@ -74,7 +74,7 @@ template<typename T_real>
 Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source(analysis_job)
 {
     _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
-    _spectra = new data_struct::Spectra(2000, 0.0, 0.0, 0.0, 0.0);
+    _spectra = new data_struct::Spectra<T_real>(2048, 0.0, 0.0, 0.0, 0.0);
     if(analysis_job != nullptr)
     {
 		for (size_t det : analysis_job->detector_num_arr)
@@ -114,7 +114,7 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
 
     if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && _output_callback_func != nullptr)
     {
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(-1, row, col, height, width);
+        data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(-1, row, col, height, width);
 
         if(_analysis_job != nullptr)
         {
@@ -122,7 +122,7 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
             {
                 _analysis_job->init_fit_routines(spectra->size());
             }
-            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+            data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
 
             if(cp == nullptr)
             {
@@ -144,7 +144,7 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
         
         _output_callback_func(stream_block);
 
-        _spectra = new data_struct::Spectra(spectra->size(), 0.0, 0.0, 0.0, 0.0);
+        _spectra = new data_struct::Spectra<T_real>(spectra->size(), 0.0, 0.0, 0.0, 0.0);
     }
 
     delete spectra;

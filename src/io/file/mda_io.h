@@ -107,7 +107,7 @@ public:
 	
     void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, T_real& out_us_amp, T_real& out_ds_amp);
 
-    data_struct::Scan_Info* get_scan_info() { return &_scan_info; }
+    data_struct::Scan_Info<T_real>* get_scan_info() { return &_scan_info; }
 
     unsigned int get_num_integreated_spectra() { return _integrated_spectra_map.size(); }
 
@@ -137,12 +137,17 @@ private:
 
     bool _hasNetcdf;
 
-    data_struct::Scan_Info _scan_info;
+    data_struct::Scan_Info<T_real> _scan_info;
 
     std::string _theta_pv_str;
 
     std::unordered_map<unsigned int, data_struct::ArrayTr<T_real>> _integrated_spectra_map;
 };
+
+
+TEMPLATE_CLASS_DLL_EXPORT MDA_IO<float>;
+TEMPLATE_CLASS_DLL_EXPORT MDA_IO<double>;
+
 
 template<typename T_real>
 DLL_EXPORT bool load_henke_from_xdr(std::string filename);

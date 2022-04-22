@@ -59,12 +59,6 @@ namespace io
 namespace file
 {
 
-#ifdef _REAL_DOUBLE
-	#define nc_get_vars_real nc_get_vars_double 
-#else
-	#define nc_get_vars_real nc_get_vars_float
-#endif
-
 enum class E_load_type { LINE = 0, CALLBACKF = 1, INTEGRATED = 2 };
 
 template<typename T_real>
@@ -98,6 +92,21 @@ public:
 private:
     NetCDF_IO();
 
+    int _nc_get_vars_real(int ncid, int varid, const size_t* startp, const size_t* countp, const ptrdiff_t* stridep, T_real* ip)
+    {
+        if (std::is_same<T_real, float>::value)
+        {
+            return nc_get_vars_float(ncid, varid, startp, countp, stridep, (float*)ip);
+        }
+        else if (std::is_same<T_real, double>::value)
+        {
+            return nc_get_vars_double(ncid, varid, startp, countp, stridep, (double*)ip);
+        }
+
+        return -1;
+
+    }
+
     size_t _load_spectra(E_load_type ltype,
                         std::string path,
                         size_t detector,
@@ -110,6 +119,9 @@ private:
     static std::mutex _mutex;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<float>;
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<double>;
 
 }// end namespace file
 }// end namespace io

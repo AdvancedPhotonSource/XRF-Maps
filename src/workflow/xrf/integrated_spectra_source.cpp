@@ -84,7 +84,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
     //init
     if(_stream_block_list.count(detector_num) == 0)
     {
-        data_struct::Stream_Block * stream_block = new data_struct::Stream_Block(detector_num, row, col, height, width);
+        data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(detector_num, row, col, height, width);
 
         if(_analysis_job != nullptr)
         {
@@ -93,7 +93,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
                 _analysis_job->init_fit_routines(spectra->size());
             }
 
-            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+            data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
             if(_init_fitting_routines && cp == nullptr)
             {
                 cp = _analysis_job->get_first_detector();
@@ -108,7 +108,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
             stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
         }
 
-        stream_block->spectra = new data_struct::Spectra(spectra->size());
+        stream_block->spectra = new data_struct::Spectra<T_real>(spectra->size());
         stream_block->spectra->add(*spectra);
         delete spectra;
         stream_block->dataset_directory = _current_dataset_directory;
@@ -117,7 +117,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
     }
     else
     {
-        data_struct::Stream_Block * stream_block = _stream_block_list.at(detector_num);
+        data_struct::Stream_Block<T_real>* stream_block = _stream_block_list.at(detector_num);
 
         stream_block->spectra->add(*spectra);
         delete spectra;

@@ -94,7 +94,7 @@ protected:
 
     void _encode_spectra(data_struct::Stream_Block<T_real>* stream_block, std::string& raw_msg);
 
-    data_struct::Stream_Block* _decode_meta(char* message, size_t message_len, size_t& idx);
+    data_struct::Stream_Block<T_real>* _decode_meta(char* message, size_t message_len, size_t& idx);
 
     void _decode_counts(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block<T_real>* out_stream_block);
 
@@ -106,6 +106,9 @@ protected:
     char *_tmp_ushort;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<double>;
 
 }// end namespace net
 }// end namespace io

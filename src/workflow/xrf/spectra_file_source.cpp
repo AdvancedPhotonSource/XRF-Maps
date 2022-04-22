@@ -59,7 +59,7 @@ namespace xrf
 //-----------------------------------------------------------------------------
     
 template<typename T_real>
-Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_Block*>()
+Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_Block<T_real>*>()
 {
     _analysis_job = nullptr;
     _current_dataset_directory = nullptr;
@@ -71,7 +71,7 @@ Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Spectra_File_Source<T_real>::Spectra_File_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Source<data_struct::Stream_Block*>()
+Spectra_File_Source<T_real>::Spectra_File_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Source<data_struct::Stream_Block<T_real>*>()
 {
     _analysis_job = analysis_job;
     _current_dataset_directory = nullptr;
@@ -102,7 +102,7 @@ bool Spectra_File_Source<T_real>::load_netcdf_line(std::string dirpath,
 	bool retVal;
 	_current_dataset_directory = new std::string(dirpath);
 	_current_dataset_name = new std::string(filename);
-	retVal = io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
+	retVal = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
 	delete _current_dataset_directory;
 	delete _current_dataset_name;
 	return retVal;
@@ -117,7 +117,7 @@ data_struct::Stream_Block<T_real>* Spectra_File_Source<T_real>::_alloc_stream_bl
 	{
 		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(T_real));
 	}
-	return new data_struct::Stream_Block(detector, row, col, height, width);
+	return new data_struct::Stream_Block<T_real>(detector, row, col, height, width);
 }
 
 // ----------------------------------------------------------------------------
@@ -128,13 +128,13 @@ void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, s
 
     if(_output_callback_func != nullptr)
     {
-		data_struct::Stream_Block * stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
+		data_struct::Stream_Block<T_real>* stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
 
         if(_init_fitting_routines && _analysis_job != nullptr)
         {
             _analysis_job->init_fit_routines(spectra->size());
 
-            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+            struct data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
 
             if(cp == nullptr)
             {
@@ -186,7 +186,7 @@ void Spectra_File_Source<T_real>::run()
 	{
 		_analysis_job->mem_limit = std::min(_analysis_job->mem_limit, total_mem);
 	}
-
+    
     _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
     _bnp_netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
     _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
@@ -201,7 +201,7 @@ void Spectra_File_Source<T_real>::run()
         }
 
 		//send end of file stream block
-		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1, -1);
+		data_struct::Stream_Block<T_real>* end_block = new data_struct::Stream_Block<T_real>(-1, -1, -1, -1, -1);
 		end_block->dataset_directory = _current_dataset_directory;
 		end_block->dataset_name = _current_dataset_name;
 		end_block->del_str_ptr = true;
@@ -221,7 +221,7 @@ bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string
 																 data_struct::IO_Callback_Func_Def<T_real> callback_fun)
 {
     //Dataset importer
-    io::file::MDA_IO mda_io;
+    io::file::MDA_IO<T_real> mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
@@ -318,7 +318,7 @@ bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else
@@ -345,7 +345,7 @@ bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string
                     }
                     row_idx_str_full += row_idx_str;
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else

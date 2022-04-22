@@ -57,7 +57,7 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block*>()
+Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block<T_real>*>()
 {
     _callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
 }
@@ -174,7 +174,7 @@ void Spectra_Stream_Saver<T_real>::_new_detector(Dataset_Save *dataset, data_str
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Stream_Saver<T_real>::_finalize_dataset(Dataset_Save *dataset)
+void Spectra_Stream_Saver<T_real>::_finalize_dataset(Dataset_Save* dataset)
 {
     if (dataset != nullptr)
     {

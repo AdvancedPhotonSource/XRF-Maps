@@ -94,6 +94,9 @@ protected:
 #endif
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Source<double>;
+
 } //namespace xrf
 } //namespace workflow
 

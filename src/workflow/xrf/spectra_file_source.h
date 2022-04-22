@@ -55,9 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "workflow/source.h"
 #include "data_struct/stream_block.h"
 #include "data_struct/analysis_job.h"
-#include "io/file/netcdf_io.h"
-#include "io/file/mda_io.h"
-#include "io/file/hdf5_io.h"
+#include "io/file/hl_file_io.h"
 #include <functional>
 #include <iostream>
 #include <fstream>
@@ -111,7 +109,7 @@ protected:
     std::string *_current_dataset_directory;
     std::string *_current_dataset_name;
 
-    data_struct::Analysis_Job* _analysis_job;
+    data_struct::Analysis_Job<T_real>* _analysis_job;
 
     std::vector<std::string> _netcdf_files;
 
@@ -124,6 +122,9 @@ protected:
     bool _init_fitting_routines;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<double>;
 
 } //namespace xrf
 } //namespace workflow

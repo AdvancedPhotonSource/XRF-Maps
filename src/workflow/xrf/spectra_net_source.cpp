@@ -57,7 +57,7 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Spectra_Net_Source<T_real>::Spectra_Net_Source(data_struct::Analysis_Job<T_real>* analysis_job, std::string ip_addr, std::string port) : Source<data_struct::Stream_Block*>()
+Spectra_Net_Source<T_real>::Spectra_Net_Source(data_struct::Analysis_Job<T_real>* analysis_job, std::string ip_addr, std::string port) : Source<data_struct::Stream_Block<T_real>*>()
 {
     _analysis_job = analysis_job;
 #ifdef _BUILD_WITH_ZMQ
@@ -116,7 +116,7 @@ void Spectra_Net_Source<T_real>::run()
                 {
                     stream_block = _serializer.decode_spectra((char*)message.data(), message.size());
                     _analysis_job->init_fit_routines(stream_block->spectra->size());
-                    struct data_struct::Detector* cp = _analysis_job->get_detector(stream_block->detector_number());
+                    struct data_struct::Detector<T_real>* cp = _analysis_job->get_detector(stream_block->detector_number());
 
                     if(cp == nullptr)
                     {

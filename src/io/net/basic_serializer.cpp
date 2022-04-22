@@ -132,7 +132,7 @@ data_struct::Stream_Block<T_real>* Basic_Serializer<T_real>::_decode_meta(char* 
     memcpy(&theta, message + idx, sizeof(T_real));
     idx += sizeof(T_real);
 
-    data_struct::Stream_Block<T_real>* out_stream_block = new data_struct::Stream_Block(detector_number, row, col, height, width);
+    data_struct::Stream_Block<T_real>* out_stream_block = new data_struct::Stream_Block<T_real>(detector_number, row, col, height, width);
 
     //find dataset name
     for(size_t i=idx; i < message_len; i++)
@@ -238,7 +238,7 @@ void Basic_Serializer<T_real>::_decode_counts(char* message, size_t message_len,
 	{
 		memcpy(&proc_type, message + idx, 4);
 		idx += 4;
-		out_stream_block->fitting_blocks[proc_type] = data_struct::Stream_Fitting_Block();
+		out_stream_block->fitting_blocks[proc_type] = data_struct::Stream_Fitting_Block<T_real>();
 
 		//get fit_block[proc_type] size
 		memcpy(&fit_block_size, message + idx, 4);
@@ -376,7 +376,7 @@ void Basic_Serializer<T_real>::_decode_spectra(char* message, size_t message_len
         logE<<"spectra_size < 1!\n";
         return;
     }
-    out_stream_block->spectra = new data_struct::Spectra(spectra_size);
+    out_stream_block->spectra = new data_struct::Spectra<T_real>(spectra_size);
     out_stream_block->spectra->elapsed_livetime(elt);
     out_stream_block->spectra->elapsed_realtime(ert);
     out_stream_block->spectra->input_counts(incnt);

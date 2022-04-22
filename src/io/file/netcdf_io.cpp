@@ -168,7 +168,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         start[1] = 1;
     }
 
-    if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+    if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
         nc_close(ncid);
@@ -239,7 +239,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
 		}
 
         //read header
-        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logE<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
@@ -335,7 +335,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         start[2] += header_size + (spectra_size * detector);
         count[2] = spectra_size;
 
-        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
@@ -470,7 +470,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
     count[2] = dim2size[2];
     //read in last col sector to get total number of cols
     //start[0] = dim2size[0] - 1;
-    if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0]) ) != 0)
+    if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0]) ) != 0)
     {
         delete[] data_in;
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
@@ -500,7 +500,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
     {
         /*
         //read header
-        if( (retval = nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
             logE<< path << " :: " << nc_strerror(retval)<<"\n";
             nc_close(ncid);
@@ -575,7 +575,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
             ii = i1 | i2<<16;
             output_counts = ((float)ii) / elapsed_realtime;
 
-            data_struct::Spectra * spectra = new data_struct::Spectra(spectra_size);
+            data_struct::Spectra<T_real>* spectra = new data_struct::Spectra<T_real>(spectra_size);
 
             spectra->elapsed_livetime(elapsed_livetime);
             spectra->elapsed_realtime(elapsed_realtime);
