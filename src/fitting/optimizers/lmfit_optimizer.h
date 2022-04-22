@@ -99,13 +99,9 @@ private:
     struct lm_control_struct<T_real> _options;
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class LMFit_Optimizer<float>;
-template DLL_EXPORT class LMFit_Optimizer<double>;
-#else
-template class DLL_EXPORT LMFit_Optimizer<float>;
-template class DLL_EXPORT LMFit_Optimizer<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<float>;
+TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<double>;
+
 
 } //namespace optimizers
 

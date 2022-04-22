@@ -65,7 +65,7 @@ namespace data_struct
 template<typename T_real>
 struct Stream_Fitting_Block
 {
-    fitting::routines::Base_Fit_Routine * fit_routine;
+    fitting::routines::Base_Fit_Routine<T_real>* fit_routine;
     std::unordered_map<std::string, T_real> fit_counts;
 };
 
@@ -116,7 +116,7 @@ public:
 
     std::string *dataset_name;
 
-    Spectra * spectra;
+    Spectra<T_real>* spectra;
 
     Fit_Element_Map_Dict<T_real> * elements_to_fit;
     //data_struct::Params_Override *fit_params_override_dict;
@@ -142,6 +142,9 @@ protected:
     int _detector;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<float>;
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<double>;
 
 } //namespace data_struct
 

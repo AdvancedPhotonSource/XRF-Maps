@@ -108,6 +108,9 @@ struct User_Data
     size_t total_itr;
 };
 
+TEMPLATE_STRUCT_DLL_EXPORT User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT User_Data<double>;
+
 template<typename T_real>
 struct Gen_User_Data
 {
@@ -120,6 +123,9 @@ struct Gen_User_Data
 	Spectra<T_real>  spectra_model;
 };
 
+TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<double>;
+
 template<typename T_real>
 struct Quant_User_Data
 {
@@ -127,6 +133,9 @@ struct Quant_User_Data
     Fit_Parameters<T_real>* fit_parameters;
     std::unordered_map<std::string, Element_Quant<T_real>> quant_map;
 };
+
+TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<double>;
 
 
 template<typename T_real>
@@ -141,6 +150,10 @@ void fill_user_data(User_Data<T_real> &ud,
                     bool use_weights = false);
 
 
+template DLL_EXPORT void fill_user_data<float>(User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Fit_Element_Map_Dict<float>* const elements_to_fit, const Base_Model<float>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
+template DLL_EXPORT void fill_user_data<double>(User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Fit_Element_Map_Dict<double>* const elements_to_fit, const Base_Model<double>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
+
+
 template<typename T_real>
 void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         Fit_Parameters<T_real>* fit_params,
@@ -150,9 +163,16 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         Gen_Func_Def<T_real> gen_func,
                         bool use_weights = false);
 
+template DLL_EXPORT void fill_gen_user_data<float>(Gen_User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Range energy_range, const ArrayTr<float>* background, Gen_Func_Def<float> gen_func, bool use_weights);
+template DLL_EXPORT void fill_gen_user_data<double>(Gen_User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Range energy_range, const ArrayTr<double>* background, Gen_Func_Def<double> gen_func, bool use_weights);
+
 
 template<typename T_real>
 void update_background_user_data(User_Data<T_real> *ud);
+
+template DLL_EXPORT void update_background_user_data<float>(User_Data<float>* ud);
+template DLL_EXPORT void update_background_user_data<double>(User_Data<double>* ud);
+
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model
@@ -192,13 +212,10 @@ protected:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Optimizer<float>;
-template DLL_EXPORT class Optimizer<double>;
-#else
-template class DLL_EXPORT Optimizer<float>;
-template class DLL_EXPORT Optimizer<double>;
-#endif
+
+TEMPLATE_CLASS_DLL_EXPORT Optimizer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Optimizer<double>;
+
 
 } //namespace optimizers
 

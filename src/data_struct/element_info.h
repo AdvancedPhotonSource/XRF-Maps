@@ -97,14 +97,8 @@ struct DLL_EXPORT Element_Info
     std::vector<float> extra_f2;
 };
 
-
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Element_Info<float>;
-template DLL_EXPORT class Element_Info<double>;
-#else
-template class DLL_EXPORT Element_Info<float>;
-template class DLL_EXPORT Element_Info<double>;
-#endif
+TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
 
 
 //singleton
@@ -149,14 +143,8 @@ private:
 
 };
    
-
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Element_Info_Map<float>;
-template DLL_EXPORT class Element_Info_Map<double>;
-#else
-template class DLL_EXPORT Element_Info_Map<float>;
-template class DLL_EXPORT Element_Info_Map<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<float>;
+TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<double>;
 
 
 // placeholder so H starts at 1

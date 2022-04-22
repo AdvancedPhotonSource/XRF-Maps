@@ -8143,7 +8143,7 @@ void HDF5_IO<T_real>::_add_v9_quant(hid_t file_id,
                 {
                     offset_2d[0] = 0;
                 }
-                auto element = data_struct::Element_Info_Map::inst()->get_element(el_name_str);
+                auto element = data_struct::Element_Info_Map<T_real>::inst()->get_element(el_name_str);
                 if (element != nullptr)
                 {
                     offset_2d[1] = element->number - 1;
@@ -9057,7 +9057,7 @@ bool HDF5_IO<T_real>::_add_exchange_meta(hid_t file_id, std::string exchange_idx
                 {
                     std::string chan_name_str = std::string(char_data, 256);
                     chan_name_str.erase(std::remove(chan_name_str.begin(), chan_name_str.end(), ' '), chan_name_str.end());
-                    data_struct::Element_Info* element = data_struct::Element_Info_Map::inst()->get_element(chan_name_str);
+                    data_struct::Element_Info<T_real>* element = data_struct::Element_Info_Map<T_real>::inst()->get_element(chan_name_str);
                     if(element != nullptr)
                     {
                         offset_quant[1] = element->number - 1;

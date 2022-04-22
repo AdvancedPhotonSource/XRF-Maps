@@ -101,13 +101,9 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class MPFit_Optimizer<float>;
-template DLL_EXPORT class MPFit_Optimizer<double>;
-#else
-template class DLL_EXPORT MPFit_Optimizer<float>;
-template class DLL_EXPORT MPFit_Optimizer<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT MPFit_Optimizer<float>;
+TEMPLATE_CLASS_DLL_EXPORT MPFit_Optimizer<double>;
+
 
 } //namespace optimizers
 

@@ -88,6 +88,10 @@ struct DLL_EXPORT Quantification_Scaler_Struct
     unordered_map<Electron_Shell, vector<Element_Quant<T_real>> > curve_quant_map;
 };
 
+TEMPLATE_STRUCT_DLL_EXPORT Quantification_Scaler_Struct<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Quantification_Scaler_Struct<double>;
+
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
@@ -124,6 +128,11 @@ struct DLL_EXPORT Fitting_Quantification_Struct
     //            Quantifier {SR_Current, US_IC, DS_IC}
     unordered_map<string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
 };
+
+
+TEMPLATE_STRUCT_DLL_EXPORT Fitting_Quantification_Struct<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Fitting_Quantification_Struct<double>;
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -172,6 +181,10 @@ public:
     bool disable_La_for_quantification;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<float>;
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<double>;
+
 
 //-----------------------------------------------------------------------------
 

@@ -88,7 +88,7 @@ void Matrix_Optimized_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<T
     {
         if(fit_params->contains(itr.first))
         {
-            Fit_Param param = fit_params->at(itr.first);
+            Fit_Param<T_real> param = fit_params->at(itr.first);
             (*spectra_model) += (pow((T_real)10.0, param.value) * itr.second);
         }
     }
@@ -127,14 +127,14 @@ unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_ge
                                                                                       struct Range energy_range)
 {
     // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
-    unordered_map<string, Spectra> element_spectra;
+    unordered_map<string, Spectra<T_real>> element_spectra;
 
     //n_pileup = 9
     //valarray<T_real> value(0.0, energy_range.count());
     //T_real start_val = (T_real)0.0;
     //Spectra counts(energy_range.count());
 
-    Fit_Parameters fit_parameters = model->fit_parameters();
+    Fit_Parameters<T_real> fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
@@ -147,11 +147,11 @@ unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_ge
 
     for(const auto& itr : (*elements_to_fit))
     {
-        Fit_Element_Map* element = itr.second;
+        Fit_Element_Map<T_real>* element = itr.second;
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if( false == fit_parameters.contains(itr.first) )
         {
-            Fit_Param fp(itr.first, (T_real)-100.0, std::numeric_limits<T_real>::max(), 0.0, (T_real)0.00001, E_Bound_Type::FIT);
+            Fit_Param<T_real> fp(itr.first, (T_real)-100.0, std::numeric_limits<T_real>::max(), 0.0, (T_real)0.00001, E_Bound_Type::FIT);
             fit_parameters[itr.first] = fp;
         }
         else
@@ -165,7 +165,7 @@ unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_ge
     // scattering:
     // elastic peak
 
-    Spectra elastic_model(energy_range.count());
+    Spectra<T_real> elastic_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COHERENT_SCT_AMPLITUDE].value = 0.0;
     elastic_model += model->elastic_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
@@ -175,7 +175,7 @@ unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_ge
 
 
     // compton peak
-    Spectra compton_model(energy_range.count());
+    Spectra<T_real> compton_model(energy_range.count());
     // Set value to 0 because log10(0) = 1.0
     fit_parameters[STR_COMPTON_AMPLITUDE].value = 0.0;
     compton_model += model->compton_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
@@ -234,10 +234,10 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
                                                             std::unordered_map<std::string, T_real>& out_counts)
 {
 
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
-    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     _calc_and_update_coherent_amplitude(&fit_params, spectra);
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
@@ -251,7 +251,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         
         if(fit_params.contains(STR_SNIP_WIDTH))
         {
-            ArrayTr<T_real> bkg = snip_background(spectra,
+            ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
                                          fit_params.value(STR_ENERGY_OFFSET),
                                          fit_params.value(STR_ENERGY_SLOPE),
                                          fit_params.value(STR_ENERGY_QUADRATIC),
@@ -265,7 +265,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
             background.setZero(_energy_range.count());
         }
 
-        std::function<void(const Fit_Parameters* const, const  Range* const, Spectra*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+        std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
         //set num iter to 300;
         unordered_map<string, T_real> opt_options{ {STR_OPT_MAXITER, 300.}, {STR_OPT_FTOL, 1.0e-11 }, {STR_OPT_GTOL, 1.0e-11 } };
@@ -288,8 +288,8 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 
 		//get max and top 10 max channels
 		vector<pair<int, T_real> > max_map;
-		data_struct::Spectra max_vals = *spectra;
-		data_struct::Spectra::Index idx;
+		data_struct::Spectra<T_real> max_vals = *spectra;
+		data_struct::Spectra<T_real>::Index idx;
 		for (int i = 0; i < 10; i++)
 		{
 			T_real max_val = max_vals.maxCoeff(&idx);
@@ -298,7 +298,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 		}
 
 		//model fit spectra
-        Spectra model_spectra(_energy_range.count());
+        Spectra<T_real> model_spectra(_energy_range.count());
         this->model_spectrum(&fit_params, &_energy_range, &model_spectra);
         
         model_spectra += background;

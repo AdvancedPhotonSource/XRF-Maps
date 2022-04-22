@@ -114,6 +114,9 @@ protected:
 
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Matrix_Optimized_Fit_Routine<float>;
+TEMPLATE_CLASS_DLL_EXPORT Matrix_Optimized_Fit_Routine<double>;
+
 } //namespace routines
 
 } //namespace fitting

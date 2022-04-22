@@ -101,12 +101,12 @@ void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Pa
         {
             T_real e_guess = (T_real)1.0e-10;
 
-            Fit_Element_Map *element = el_itr.second;
-            std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
+            Fit_Element_Map<T_real>* element = el_itr.second;
+            std::vector<Element_Energy_Ratio<T_real>> energies = element->energy_ratios();
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
             {
-                Fit_Param fp(element->full_name(), (T_real)-11.0, 300, e_guess, (T_real)0.1, E_Bound_Type::FIT);
+                Fit_Param<T_real> fp(element->full_name(), (T_real)-11.0, 300, e_guess, (T_real)0.1, E_Bound_Type::FIT);
                 (*fit_params)[el_itr.first] = fp;
             }
             if(spectra != nullptr  && energies.size() > 0)
@@ -136,13 +136,13 @@ void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Pa
     if( false == fit_params->contains(STR_NUM_ITR) )
     {
         //add number of iteration it took
-        Fit_Param fp(STR_NUM_ITR, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
+        Fit_Param<T_real> fp(STR_NUM_ITR, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
         (*fit_params)[STR_NUM_ITR] = fp;
     }
     if (false == fit_params->contains(STR_RESIDUAL))
     {
         //add number of iteration it took
-        Fit_Param fp(STR_RESIDUAL, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
+        Fit_Param<T_real> fp(STR_RESIDUAL, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
         (*fit_params)[STR_RESIDUAL] = fp;
     }
     (*fit_params)[STR_NUM_ITR].value = 0.0;
@@ -185,9 +185,9 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {
@@ -250,10 +250,10 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
-    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {

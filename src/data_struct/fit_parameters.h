@@ -179,14 +179,9 @@ struct DLL_EXPORT Fit_Param
     int opt_array_index;
 };
 
+TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<double>;
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Fit_Param<float>;
-template DLL_EXPORT class Fit_Param<double>;
-#else
-template class DLL_EXPORT Fit_Param<float>;
-template class DLL_EXPORT Fit_Param<double>;
-#endif
 
 //-----------------------------------------------------------------------------
 /**
@@ -259,17 +254,16 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Fit_Parameters<float>;
-template DLL_EXPORT class Fit_Parameters<double>;
-#else
-template class DLL_EXPORT Fit_Parameters<float>;
-template class DLL_EXPORT Fit_Parameters<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<float>;
+TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<double>;
+
 
 //-----------------------------------------------------------------------------
 template<typename T_real>
 DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params);
+
+template DLL_EXPORT Range get_energy_range<float>(size_t spectra_size, Fit_Parameters<float>* params);
+template DLL_EXPORT Range get_energy_range<double>(size_t spectra_size, Fit_Parameters<double>* params);
 
 /**
 * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
@@ -281,6 +275,9 @@ DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* p
 */
 template<typename T_real>
 DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope);
+
+template DLL_EXPORT Range get_energy_range<float>(float min_energy, float max_energy, size_t spectra_size, float energy_offset, float energy_slope);
+template DLL_EXPORT Range get_energy_range<double>(double min_energy, double max_energy, size_t spectra_size, double energy_offset, double energy_slope);
 
 } //namespace data_struct
 

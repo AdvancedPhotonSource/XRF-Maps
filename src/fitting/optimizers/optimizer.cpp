@@ -102,14 +102,14 @@ namespace optimizers
                         size_t total_itr,
                         bool use_weights)
 	{
-		ud.fit_model = (Base_Model*)model;
+		ud.fit_model = (Base_Model<T_real>*)model;
 		// set spectra to fit
         ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
         //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
         //new (&(ud.spectra)) Eigen::Map<const ArrayTr<T_real>>(spectra->data() + energy_range.min, energy_range.count());
         ud.orig_spectra = spectra;
 		ud.fit_parameters = fit_params;
-		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
+		ud.elements = (Fit_Element_Map_Dict<T_real> *)elements_to_fit;
         ud.energy_range.min = energy_range.min;
         ud.energy_range.max = energy_range.max;
 
@@ -135,7 +135,7 @@ namespace optimizers
         background.setZero(spectra->size());
         if(fit_params->contains(STR_SNIP_WIDTH))
         {
-            background = snip_background(spectra,
+            background = snip_background<T_real>(spectra,
                                          fit_params->value(STR_ENERGY_OFFSET),
                                          fit_params->value(STR_ENERGY_SLOPE),
                                          fit_params->value(STR_ENERGY_QUADRATIC),
@@ -194,11 +194,11 @@ namespace optimizers
     {
         if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
         {
-            Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
+            Fit_Param<T_real> fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
             if(fit_snip_width.bound_type != E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
             {
                 //ud->spectra_background = snip_background(ud->orig_spectra,
-				ArrayTr<T_real> background = snip_background(ud->orig_spectra,
+				ArrayTr<T_real> background = snip_background<T_real>(ud->orig_spectra,
                                              ud->fit_parameters->value(STR_ENERGY_OFFSET),
                                              ud->fit_parameters->value(STR_ENERGY_SLOPE),
                                              ud->fit_parameters->value(STR_ENERGY_QUADRATIC),

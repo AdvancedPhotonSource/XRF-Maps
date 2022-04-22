@@ -122,13 +122,8 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Base_Fit_Routine<float>;
-template DLL_EXPORT class Base_Fit_Routine<double>;
-#else
-template class DLL_EXPORT Base_Fit_Routine<float>;
-template class DLL_EXPORT Base_Fit_Routine<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Base_Fit_Routine<float>;
+TEMPLATE_CLASS_DLL_EXPORT Base_Fit_Routine<double>;
 
 } //namespace routines
 

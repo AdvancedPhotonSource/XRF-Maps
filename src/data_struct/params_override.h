@@ -251,6 +251,9 @@ public:
 
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Params_Override<float>;
+TEMPLATE_CLASS_DLL_EXPORT Params_Override<double>;
+
 //-----------------------------------------------------------------------------
 
 } //namespace data_struct

@@ -134,13 +134,9 @@ struct DLL_EXPORT Element_Quant
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Element_Quant<float>;
-template DLL_EXPORT class Element_Quant<double>;
-#else
-template class DLL_EXPORT Element_Quant<float>;
-template class DLL_EXPORT Element_Quant<double>;
-#endif
+TEMPLATE_STRUCT_DLL_EXPORT Element_Quant<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Element_Quant<double>;
+
 //-----------------------------------------------------------------------------
 
 } //namespace data_struct

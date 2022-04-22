@@ -128,13 +128,8 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Detector<float>;
-template DLL_EXPORT class Detector<double>;
-#else
-template class DLL_EXPORT Detector<float>;
-template class DLL_EXPORT Detector<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Detector<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector<double>;
 
 } //namespace data_struct
 

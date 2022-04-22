@@ -170,7 +170,7 @@ void Stream_Block<T_real>::init_fitting_blocks(std::unordered_map<Fitting_Routin
 
     for(const auto &itr : *fit_routines)
     {
-        fitting_blocks[itr.first] = Stream_Fitting_Block();
+        fitting_blocks[itr.first] = Stream_Fitting_Block<T_real>();
         fitting_blocks[itr.first].fit_routine = itr.second;
         for(auto& e_itr : *elements_to_fit)
         {

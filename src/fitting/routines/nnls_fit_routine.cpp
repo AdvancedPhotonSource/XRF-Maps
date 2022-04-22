@@ -183,12 +183,12 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 	data_struct::ArrayTr<T_real>* result;
     int num_iter;
     T_real npg;
-    Fit_Parameters fit_params = model->fit_parameters();
-    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     ArrayTr<T_real> background;
     if (fit_params.contains(STR_SNIP_WIDTH))
     {        
-        ArrayTr<T_real> bkg = snip_background(spectra,
+        ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
             fit_params.value(STR_ENERGY_OFFSET),
             fit_params.value(STR_ENERGY_SLOPE),
             fit_params.value(STR_ENERGY_QUADRATIC),
@@ -208,7 +208,7 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
     spectra_sub_background = spectra_sub_background.unaryExpr([](T_real v) { return v>0.0 ? v : (T_real)0.0; });
     nsNNLS::nnls<T_real> solver(&_fitmatrix, &spectra_sub_background, _max_iter);
 
-    Spectra spectra_model = background;
+    Spectra<T_real> spectra_model = background;
 
 	//Spectra spectra_model(_energy_range.count());
 	//ArrayTr<T_real> rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
@@ -268,7 +268,7 @@ void NNLS_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const mode
                                   const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                   const struct Range energy_range)
 {
-    Matrix_Optimized_Fit_Routine::initialize(model, elements_to_fit, energy_range);
+    Matrix_Optimized_Fit_Routine<T_real>::initialize(model, elements_to_fit, energy_range);
     _generate_fitmatrix();
 }
 

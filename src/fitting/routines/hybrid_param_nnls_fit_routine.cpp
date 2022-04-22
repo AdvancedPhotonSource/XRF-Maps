@@ -107,7 +107,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
 {
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     
     if (fit_params.contains(STR_COMPTON_AMPLITUDE))
     {
@@ -131,11 +131,11 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
         if(_optimizer != nullptr)
         {
             //ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
-            std::function<void(const Fit_Parameters* const, const  Range* const, Spectra*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
             if (fit_params.contains(STR_SNIP_WIDTH))
             {
-                ArrayTr<T_real> bkg = snip_background(spectra,
+                ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
                     fit_params.value(STR_ENERGY_OFFSET),
                     fit_params.value(STR_ENERGY_SLOPE),
                     fit_params.value(STR_ENERGY_QUADRATIC),
@@ -149,7 +149,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
             {
                 _background.setZero(_energy_range.count());
             }
-            _model = (models::Base_Model*)model;
+            _model = (models::Base_Model<T_real>*)model;
             _elements_to_fit = elements_to_fit;
             _spectra = spectra;
 
@@ -163,7 +163,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
             out_fit_params.append_and_update(fit_params);
             for (const auto& itr : *elements_to_fit)
             {
-                out_fit_params.add_parameter(Fit_Param(itr.first, log10(out_counts[itr.first])));
+                out_fit_params.add_parameter(Fit_Param<T_real>(itr.first, log10(out_counts[itr.first])));
             }
         }
     }

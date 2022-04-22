@@ -133,6 +133,7 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(dat
 template<typename T_real>
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* analysis_job);
 
+template<typename T_real>
 DLL_EXPORT bool load_element_info(const std::string element_henke_filename,
                                   const std::string element_csv_filename);
 

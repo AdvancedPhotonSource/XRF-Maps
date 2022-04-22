@@ -208,6 +208,7 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* analysis_job
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
 bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename)
 {
 
@@ -217,7 +218,7 @@ bool load_element_info(const std::string element_henke_filename, const std::stri
 		return false;
 	}
 
-    if (io::file::csv::load_element_info(element_csv_filename) == false)
+    if (io::file::csv::load_element_info<T_real>(element_csv_filename) == false)
 	{
 		logE << "Could not load " << element_csv_filename << "\n";
 		return false;

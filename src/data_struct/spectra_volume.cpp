@@ -131,11 +131,11 @@ void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Volume<T_real>::generate_scaler_maps(vector<Scaler_Map> *scaler_maps)
+void Spectra_Volume<T_real>::generate_scaler_maps(vector<Scaler_Map<T_real>> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {
-        data_struct::Scaler_Map elt_map, ert_map, in_cnt_map, out_cnt_map, dead_time_map;
+        data_struct::Scaler_Map<T_real> elt_map, ert_map, in_cnt_map, out_cnt_map, dead_time_map;
 
         elt_map.name = STR_ELT;
         ert_map.name = STR_ERT;

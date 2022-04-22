@@ -62,6 +62,8 @@ using namespace std;
 template<typename _T>
 using ArrayTr = Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>;
 
+template<typename _T>
+using VectorTr = Eigen::Vector<_T, Eigen::Dynamic>;
 
 template<typename _T>
 class Spectra : public ArrayTr<_T>
@@ -216,24 +218,32 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-	template DLL_EXPORT class Spectra<float>;
-    template DLL_EXPORT class Spectra<double>;
-#else
-	template class DLL_EXPORT Spectra<float>;
-    template class DLL_EXPORT Spectra<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Spectra<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra<double>;
 
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_size);
+
+template DLL_EXPORT ArrayTr<float> convolve1d<float>(const ArrayTr<float>& arr, size_t boxcar_size);
+template DLL_EXPORT ArrayTr<double> convolve1d<double>(const ArrayTr<double>& arr, size_t boxcar_size);
+
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<T_real>& boxcar);
+
+template DLL_EXPORT ArrayTr<float> convolve1d<float>(const ArrayTr<float>& arr, const ArrayTr<float>& boxcar);
+template DLL_EXPORT ArrayTr<double> convolve1d<double>(const ArrayTr<double>& arr, const ArrayTr<double>& boxcar);
 
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra, T_real energy_offset, T_real energy_linear, T_real energy_quadratic, T_real width, T_real xmin, T_real xmax);
 
+template DLL_EXPORT ArrayTr<float> snip_background<float>(const Spectra<float>* const spectra, float energy_offset, float energy_linear, float energy_quadratic, float width, float xmin, float xmax);
+template DLL_EXPORT ArrayTr<double> snip_background<double>(const Spectra<double>* const spectra, double energy_offset, double energy_linear, double energy_quadratic, double width, double xmin, double xmax);
+
 template<typename T_real>
 DLL_EXPORT void gen_energy_vector(T_real number_channels, T_real energy_offset, T_real energy_slope, std::vector<T_real> *out_vec);
+
+template DLL_EXPORT void gen_energy_vector<float>(float number_channels, float energy_offset, float energy_slope, std::vector<float>* out_vec);
+template DLL_EXPORT void gen_energy_vector<double>(double number_channels, double energy_offset, double energy_slope, std::vector<double>* out_vec);
 
 template<typename T_real>
 using IO_Callback_Func_Def = std::function<void(size_t, size_t, size_t, size_t, size_t, Spectra<T_real>*, void*)>;

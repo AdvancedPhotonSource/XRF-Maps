@@ -78,7 +78,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                             std::unordered_map<std::string, T_real>& out_counts)
  {    
-    Fit_Parameters fitp = model->fit_parameters();
+    Fit_Parameters<T_real> fitp = model->fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
     T_real energy_offset = fitp.value(STR_ENERGY_OFFSET);
@@ -87,7 +87,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
     {
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
-        Fit_Element_Map* element = e_itr.second;
+        Fit_Element_Map<T_real>* element = e_itr.second;
         left_roi = static_cast<unsigned int>(std::round( ( (element->center() - element->width()) - energy_offset) / energy_slope));
         right_roi = static_cast<unsigned int>(std::round( ( (element->center() + element->width()) - energy_offset) / energy_slope));
 

@@ -101,6 +101,15 @@ static std::time_t now_c;
   #endif
 #endif
 
+
+#if defined _WIN32 || defined __CYGWIN__
+#define TEMPLATE_CLASS_DLL_EXPORT template DLL_EXPORT class
+#define TEMPLATE_STRUCT_DLL_EXPORT template DLL_EXPORT struct
+#else
+#define TEMPLATE_CLASS_DLL_EXPORT template class DLL_EXPORT
+#define TEMPLATE_STRUCT_DLL_EXPORT template struct DLL_EXPORT
+#endif
+
 // STRING KEYS
 using namespace std;
 

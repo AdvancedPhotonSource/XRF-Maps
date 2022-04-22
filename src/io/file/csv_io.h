@@ -64,6 +64,7 @@ namespace file
 namespace csv
 {
 
+    template<typename T_real>
     DLL_EXPORT bool load_element_info(std::string filename);
 
     template<typename T_real>

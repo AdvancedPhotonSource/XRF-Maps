@@ -175,11 +175,11 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
 
     if(ev > 0)
     {
-        beta  = Element_Info_Map::inst()->calc_beta("Be", (T_real)1.848, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Be", (T_real)1.848, ev);
         ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
         element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (T_real)1239.852 / ev);
 
-        beta  = Element_Info_Map::inst()->calc_beta("Ge", (T_real)5.323, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Ge", (T_real)5.323, ev);
         ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
         element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (T_real)1239.852 / ev);
     }
@@ -187,7 +187,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
 
     if (detector_element->name == "Si" && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
-        beta  = Element_Info_Map::inst()->calc_beta("Si", (T_real)2.3, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Si", (T_real)2.3, ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (T_real)1239.852 / ev);
     }
     ////aux_arr[mm, 4] = self.transmission(self.maps_conf.add_float['a'], beta, 1239.852/ev)
@@ -205,7 +205,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
         //air_ele = 'N78.08O20.95Ar0.93'
         //density = 1.2047e-3
         //f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt = Chenke.get_henke_single('air', density, ev)
-        beta = Element_Info_Map::inst()->calc_beta("N:78.08,O:20.95,Ar:0.93", density, ev); // air
+        beta = Element_Info_Map<T_real>::inst()->calc_beta("N:78.08,O:20.95,Ar:0.93", density, ev); // air
         ////aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  // airpath is read in microns, transmission function expects nm
         // airpath is read in microns, transmission function expects nm
         element_quant.transmission_through_air = transmission( airpath , beta, (T_real)1239.852 / ev);

@@ -359,9 +359,10 @@ bool save_calibration_curve(std::string path, Detector<T_real>* detector, std::m
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
 bool load_element_info(std::string filename)
 {
-    data_struct::Element_Info_Map* element_map = data_struct::Element_Info_Map::inst();
+    data_struct::Element_Info_Map<T_real>* element_map = data_struct::Element_Info_Map<T_real>::inst();
 
     std::ifstream file_stream(filename);
     try
@@ -383,14 +384,14 @@ bool load_element_info(std::string filename)
             {
 
                 //logD<< "value = "<< value<<"\n";
-                Element_Info* element = nullptr;
+                Element_Info<T_real>* element = nullptr;
                 int element_number = std::stoi(value);
                 element = element_map->get_element(element_number);
                 std::string el_name;
                 std::getline(strstream, el_name, ',');
                 if (element == nullptr)
                 {
-                    element = new Element_Info();
+                    element = new Element_Info<T_real>();
                     element->number = element_number;
                     element->name = el_name;
                     element_map->add_element(element);

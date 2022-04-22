@@ -172,13 +172,8 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-template DLL_EXPORT class Analysis_Job<float>;
-template DLL_EXPORT class Analysis_Job<double>;
-#else
-template class DLL_EXPORT Analysis_Job<float>;
-template class DLL_EXPORT Analysis_Job<double>;
-#endif
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<float>;
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<double>;
 
 } //namespace data_struct
 

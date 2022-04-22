@@ -1384,9 +1384,10 @@ data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned in
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 bool load_henke_from_xdr(std::string filename)
 {
-    data_struct::Element_Info_Map *element_map = data_struct::Element_Info_Map::inst();
+    data_struct::Element_Info_Map<T_real>* element_map = data_struct::Element_Info_Map<T_real>::inst();
 
     std::ifstream fileStream(filename);
 
@@ -1435,10 +1436,10 @@ bool load_henke_from_xdr(std::string filename)
 
     for (int i=0; i<num_elements; i++)
     {
-        data_struct::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i+1);
         if (element == nullptr)
         {
-            element = new data_struct::Element_Info();
+            element = new data_struct::Element_Info<T_real>();
             element->number = i+1;
             element->name = data_struct::Element_Symbols[i+1];
             element_map->add_element(element);
@@ -1468,7 +1469,7 @@ bool load_henke_from_xdr(std::string filename)
 
     for (int i=0; i<num_elements; i++)
     {
-        data_struct::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i+1);
         element->init_extra_energies(num_extra_energies);
 
         int element_n;
