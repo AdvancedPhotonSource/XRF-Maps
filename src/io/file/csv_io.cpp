@@ -135,7 +135,7 @@ bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real
 template<typename T_real>
 bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background)
 {
-    return save_fit_and_int_spectra(fullpath, energy, spectra, spectra_model, background, nullptr);
+    return save_fit_and_int_spectra<T_real>(fullpath, energy, spectra, spectra_model, background, nullptr);
 }
 
 // ----------------------------------------------------------------------------

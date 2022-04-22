@@ -53,7 +53,7 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(std::unordered_map<std::string, T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
+data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fit_Element_Map_Dict<T_real>*elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
 {
     data_struct::Fit_Count_Dict<T_real>* element_fit_counts_dict = new data_struct::Fit_Count_Dict<T_real>();
     for(auto& e_itr : *elements_to_fit)
@@ -349,7 +349,7 @@ void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
             for(size_t j=0; j<spectra_volume->cols(); j++)
             {
                 //logD<< i<<" "<<j<<"\n";
-                fit_job_queue->emplace( tp->enqueue(fit_single_spectra, fit_routine, detector->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
+                fit_job_queue->emplace( tp->enqueue(fit_single_spectra<T_real>, fit_routine, detector->model, &(*spectra_volume)[i][j], &override_params->elements_to_fit, element_fit_count_dict, i, j) );
             }
         }
 
@@ -378,7 +378,7 @@ void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
             || itr.first == data_struct::Fitting_Routines::NNLS 
             || itr.first == data_struct::Fitting_Routines::SVD)
         {
-            fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+            fitting::routines::Matrix_Optimized_Fit_Routine<T_real>* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine;
             io::file::HDF5_IO::inst()->save_fitted_int_spectra( fit_routine->get_name(),
 																matrix_fit->fitted_integrated_spectra(),
 																matrix_fit->energy_range(),
@@ -387,7 +387,7 @@ void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume,
         }
 		if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
 		{
-			fitting::routines::Matrix_Optimized_Fit_Routine* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine;
+			fitting::routines::Matrix_Optimized_Fit_Routine<T_real>* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine;
 			io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
 																matrix_fit->energy_range(),
 																matrix_fit->max_integrated_spectra(),
@@ -572,7 +572,7 @@ void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void find_quantifier_scalers(unordered_map<string, T_real> &pv_map, Quantification_Standard<T_real>* quantification_standard)
+void find_quantifier_scalers(unordered_map<string, double> &pv_map, Quantification_Standard<T_real>* quantification_standard)
 {
     
     // find time scaler
@@ -915,7 +915,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_jo
 
         if (analysis_job.add_background)
         {
-            data_struct::Detector* detector = analysis_job.get_detector(0);
+            data_struct::Detector<T_real>* detector = analysis_job.get_detector(0);
             
             if (detector != nullptr)
             {
@@ -964,7 +964,7 @@ void interate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_jo
             //export csv
             if (analysis_job.export_int_fitted_to_csv)
             {
-                io::file::HDF5_IO::inst()->export_int_fitted_to_csv(hdf5_dataset_name);
+                io::file::HDF5_IO::inst()->export_int_fitted_to_csv<T_real>(hdf5_dataset_name);
             }
 
             //update theta based on new PV

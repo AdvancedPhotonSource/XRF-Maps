@@ -220,7 +220,7 @@ template<typename T_real>
 bool load_parameters_override(std::string path, Params_Override<T_real>*params_override)
 {
 
-    data_struct::Element_Info_Map *element_info_map = data_struct::Element_Info_Map::inst();
+    data_struct::Element_Info_Map<T_real> *element_info_map = data_struct::Element_Info_Map<T_real>::inst();
     std::ifstream paramFileStream(path);
 
 
@@ -259,7 +259,7 @@ bool load_parameters_override(std::string path, Params_Override<T_real>*params_o
 
                         //logD<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
-                        Element_Info* e_info = element_info_map->get_element(base_element_symb);
+                        Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
                         if(e_info == nullptr)
                         {
                             logW<<"Can not find element "<<base_element_symb<<"\n";
@@ -281,8 +281,8 @@ bool load_parameters_override(std::string path, Params_Override<T_real>*params_o
                     std::string element_symb;
                     while(std::getline(strstream, element_symb, ','))
                     {
-                        Element_Info* e_info1 = nullptr;
-                        Element_Info* e_info2 = nullptr;
+                        Element_Info<T_real>* e_info1 = nullptr;
+                        Element_Info<T_real>* e_info2 = nullptr;
                         std::string efull_name1;
                         std::string efull_name2;
 
@@ -548,7 +548,14 @@ bool load_parameters_override(std::string path, Params_Override<T_real>*params_o
                     value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_num = str_to_real(value);
+                    if (std::is_same<T_real, float>::value)
+                    {
+                        params_override->us_amp_sens_num = std::stof(value);
+                    }
+                    else if (std::is_same<T_real, double>::value)
+                    {
+                        params_override->us_amp_sens_num = std::stod(value);
+                    }
                 }
                 else if (tag == "US_AMP_UNIT")
                 {
@@ -566,7 +573,15 @@ bool load_parameters_override(std::string path, Params_Override<T_real>*params_o
                 value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                 value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                 value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                params_override->ds_amp_sens_num = str_to_real(value);
+                if (std::is_same<T_real, float>::value)
+                {
+                    params_override->ds_amp_sens_num = std::stof(value);
+                }
+                else if (std::is_same<T_real, double>::value)
+                {
+                    params_override->ds_amp_sens_num = std::stod(value);
+                }
+                
                 }
                 else if (tag == "DS_AMP_UNIT")
                 {

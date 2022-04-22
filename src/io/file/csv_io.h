@@ -70,14 +70,26 @@ namespace csv
     template<typename T_real>
     DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data);
 
+    template DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<float>>& data);
+    template DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<double>>& data);
+
     template<typename T_real>
     DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background);
+
+    template DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<float>* energy, const data_struct::ArrayTr<float>* spectra, const data_struct::ArrayTr<float>* spectra_model, const data_struct::ArrayTr<float>* background);
+    template DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<double>* energy, const data_struct::ArrayTr<double>* spectra, const data_struct::ArrayTr<double>* spectra_model, const data_struct::ArrayTr<double>* background);
 
     template<typename T_real>
     DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, data_struct::ArrayTr<T_real>>* labeled_spectras);
 
+    template DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<float>* energy, const data_struct::ArrayTr<float>* spectra, const data_struct::ArrayTr<float>* spectra_model, const data_struct::ArrayTr<float>* background, unordered_map<string, data_struct::ArrayTr<float>>* labeled_spectras);
+    template DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<double>* energy, const data_struct::ArrayTr<double>* spectra, const data_struct::ArrayTr<double>* spectra_model, const data_struct::ArrayTr<double>* background, unordered_map<string, data_struct::ArrayTr<double>>* labeled_spectras);
+
     template<typename T_real>
     DLL_EXPORT void save_quantification(std::string path, Detector<T_real>* detector);
+
+    template DLL_EXPORT void save_quantification(std::string path, Detector<float>* detector);
+    template DLL_EXPORT void save_quantification(std::string path, Detector<double>* detector);
 
     template<typename T_real>
     DLL_EXPORT bool save_calibration_curve(std::string path,
@@ -86,6 +98,9 @@ namespace csv
                                             Fitting_Routines routine,
                                             string quantifier_scaler_name, 
                                             Quantification_Scaler_Struct<T_real>* quants_map);
+
+    template DLL_EXPORT bool save_calibration_curve(std::string path, Detector<float>* detector, std::map<string, Quantification_Standard<float>>* standards, Fitting_Routines routine, string quantifier_scaler_name, Quantification_Scaler_Struct<float>* quants_map);
+    template DLL_EXPORT bool save_calibration_curve(std::string path, Detector<double>* detector, std::map<string, Quantification_Standard<double>>* standards, Fitting_Routines routine, string quantifier_scaler_name, Quantification_Scaler_Struct<double>* quants_map);
 
 }// end namespace CSV
 }// end namespace file

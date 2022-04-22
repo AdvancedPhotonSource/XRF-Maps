@@ -7241,7 +7241,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         hid_t file_type = H5Dget_type(dset_id);
         hid_t props = H5Dget_create_plist(dset_id);
         hid_t dst_dset_id = H5Dcreate(dst_fit_grp_id, dataset_name.c_str(), file_type, dataspace_id, H5P_DEFAULT, props, H5P_DEFAULT);
-        if(dst_dset_id < 1)
+        if (dst_dset_id < 1)
         {
             //logI<<""<<full_hdf5_path<< " " <<dataset_name<<"\n";
             return;
@@ -7251,26 +7251,26 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         hsize_t* tmp_dims = new hsize_t[rank];
         hsize_t* dims_in = new hsize_t[rank];
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], NULL);
-        if(status_n < 0)
+        if (status_n < 0)
         {
-            logW<<"could not get dataset dimensions for "<<full_hdf5_path<< " " <<dataset_name<<"\n";
+            logW << "could not get dataset dimensions for " << full_hdf5_path << " " << dataset_name << "\n";
             return;
         }
 
         //get all the other files dataset ids
-        for(long unsigned int k=1; k<hdf5_file_ids.size(); k++)
+        for (long unsigned int k = 1; k < hdf5_file_ids.size(); k++)
         {
             hid_t det_analysis_dset_id = H5Dopen2(hdf5_file_ids[k], full_hdf5_path.c_str(), H5P_DEFAULT);
-            if( det_analysis_dset_id > -1 )
+            if (det_analysis_dset_id > -1)
             {
                 // ran into a bug where detectors had different dims for counts per sec. need to check the min and use that to generate avg
                 hid_t tdataspace_id = H5Dget_space(det_analysis_dset_id);
                 int status_n = H5Sget_simple_extent_dims(tdataspace_id, &tmp_dims[0], NULL);
-                if(status_n > -1)
+                if (status_n > -1)
                 {
-                    for(int i=0; i< rank; i++)
+                    for (int i = 0; i < rank; i++)
                     {
-                        if(tmp_dims[i] < dims_in[i] )
+                        if (tmp_dims[i] < dims_in[i])
                         {
                             dims_in[i] = tmp_dims[i];
                         }
@@ -7282,7 +7282,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
         long long total = 1;
         hsize_t* offset_rank = new hsize_t[rank];
-        for(int i=0; i< rank; i++)
+        for (int i = 0; i < rank; i++)
         {
             offset_rank[i] = 0;
             total *= dims_in[i];
@@ -7290,117 +7290,238 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset_rank, nullptr, dims_in, nullptr);
 
-        delete []offset_rank;
+        delete[]offset_rank;
 
-		//long long avail_mem = get_total_mem() * .95;
-		long long avail_mem = get_available_mem();
-		if ((total * sizeof(T_real) * 2) > (avail_mem) && rank == 3) //mca_arr
-		{
-			//read in partial dataset at a time by chunks.
-			hsize_t* offset = new hsize_t[rank];
-			hsize_t* chunk_dims = new hsize_t[rank];
-			unsigned long chunk_total = 1;
-			error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
-			if (error < 0)
-			{
-				for (int i = 0; i < rank; i++)
-				{
-					offset[i] = 0;
-				}
-				chunk_total *= dims_in[0];
-				chunk_dims[0] = dims_in[0];
-				chunk_dims[1] = 1;
-				chunk_dims[2] = 1;
-			}
-			else
-			{
-				for (int i = 0; i < rank; i++)
-				{
-					offset[i] = 0;
-					chunk_total *= chunk_dims[i];
-				}
-			}
-            data_struct::ArrayTr<T_real> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
-            data_struct::ArrayTr<T_real> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
-			
-			hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
-			for (int w = 0; w < dims_in[1]; w++)
-			{
-				for (int h = 0; h < dims_in[2]; h++)
-				{
-					offset[1] = w;
-					offset[2] = h;
-					float divisor = 1.0;
-					H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-					error = H5Dread(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-					if (error > -1)
-					{
-                        buffer1 = buffer1.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-					}
-					for (long unsigned int k = 0; k < analysis_ids.size(); k++)
-					{
-						//hid_t dspace_id = H5Dget_space(analysis_ids[k]);
-						//H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-						//error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
-						error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
-						if (error > -1)
-						{
-							buffer2 = buffer2.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-							buffer1 += buffer2;
-							divisor += 1.0;
-						}
-						else
-						{
-							logE << "reading " << full_hdf5_path << " dataset " << "\n";
-						}
-					}
+        //long long avail_mem = get_total_mem() * .95;
+        long long avail_mem = get_available_mem();
 
-					if (avg)
-					{
-						buffer1 /= divisor;
-					}
+        
+        
+        if (file_type == H5T_NATIVE_FLOAT || file_type == H5T_INTEL_F32)
+        {
+            if ((total * sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
+            {
+                //read in partial dataset at a time by chunks.
+                hsize_t* offset = new hsize_t[rank];
+                hsize_t* chunk_dims = new hsize_t[rank];
+                unsigned long chunk_total = 1;
+                error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
+                if (error < 0)
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                    }
+                    chunk_total *= dims_in[0];
+                    chunk_dims[0] = dims_in[0];
+                    chunk_dims[1] = 1;
+                    chunk_dims[2] = 1;
+                }
+                else
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                        chunk_total *= chunk_dims[i];
+                    }
+                }
+                data_struct::ArrayTr<float> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
+                data_struct::ArrayTr<float> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
 
-					error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-				}
-			}
-			delete[] offset;
-			delete[] chunk_dims;
-			H5Sclose(memoryspace_id);
-		}
-		else
-		{
-			//read in the whole dataset
-			data_struct::ArrayTr<T_real> buffer1(total);
-			data_struct::ArrayTr<T_real> buffer2(total);
-			float divisor = 1.0;
-            error = H5Dread(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-			if (error > -1)
-			{
-				buffer1 = buffer1.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-			}
-			for (long unsigned int k = 0; k < analysis_ids.size(); k++)
-			{
-                error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
-				if (error > -1)
-				{
-					buffer2 = buffer2.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-					buffer1 += buffer2;
-					divisor += 1.0;
-				}
-				else
-				{
-					logE << "reading " << full_hdf5_path << " dataset " << "\n";
-				}
-			}
+                hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
+                for (int w = 0; w < dims_in[1]; w++)
+                {
+                    for (int h = 0; h < dims_in[2]; h++)
+                    {
+                        offset[1] = w;
+                        offset[2] = h;
+                        float divisor = 1.0;
+                        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                        error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                        if (error > -1)
+                        {
+                            buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                        }
+                        for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                        {
+                            //hid_t dspace_id = H5Dget_space(analysis_ids[k]);
+                            //H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+                            error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                            if (error > -1)
+                            {
+                                buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                                buffer1 += buffer2;
+                                divisor += 1.0;
+                            }
+                            else
+                            {
+                                logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                            }
+                        }
 
-			if (avg)
-			{
-				buffer1 /= divisor;
-			}
+                        if (avg)
+                        {
+                            buffer1 /= divisor;
+                        }
 
-			//hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-            error = H5Dwrite(dst_dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-		}
+                        error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                    }
+                }
+                delete[] offset;
+                delete[] chunk_dims;
+                H5Sclose(memoryspace_id);
+            }
+            else
+            {
+                //read in the whole dataset
+                data_struct::ArrayTr<float> buffer1(total);
+                data_struct::ArrayTr<float> buffer2(total);
+                float divisor = 1.0;
+                error = H5Dread(dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                if (error > -1)
+                {
+                    buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                }
+                for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                {
+                    error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                    if (error > -1)
+                    {
+                        buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                        buffer1 += buffer2;
+                        divisor += 1.0;
+                    }
+                    else
+                    {
+                        logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                    }
+                }
+
+                if (avg)
+                {
+                    buffer1 /= divisor;
+                }
+
+                //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+                error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+            }
+        }
+        else if (file_type == H5T_NATIVE_DOUBLE || file_type == H5T_INTEL_F64)
+        {
+            if ((total * sizeof(double) * 2) > (avail_mem) && rank == 3) //mca_arr
+            {
+                //read in partial dataset at a time by chunks.
+                hsize_t* offset = new hsize_t[rank];
+                hsize_t* chunk_dims = new hsize_t[rank];
+                unsigned long chunk_total = 1;
+                error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
+                if (error < 0)
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                    }
+                    chunk_total *= dims_in[0];
+                    chunk_dims[0] = dims_in[0];
+                    chunk_dims[1] = 1;
+                    chunk_dims[2] = 1;
+                }
+                else
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                        chunk_total *= chunk_dims[i];
+                    }
+                }
+                data_struct::ArrayTr<double> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
+                data_struct::ArrayTr<double> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
+
+                hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
+                for (int w = 0; w < dims_in[1]; w++)
+                {
+                    for (int h = 0; h < dims_in[2]; h++)
+                    {
+                        offset[1] = w;
+                        offset[2] = h;
+                        float divisor = 1.0;
+                        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                        error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                        if (error > -1)
+                        {
+                            buffer1 = buffer1.unaryExpr([](double v) { return std::isfinite(v) ? v : (double)0.0; });
+                        }
+                        for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                        {
+                            //hid_t dspace_id = H5Dget_space(analysis_ids[k]);
+                            //H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+                            error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                            if (error > -1)
+                            {
+                                buffer2 = buffer2.unaryExpr([](double v) { return std::isfinite(v) ? v : (double)0.0; });
+                                buffer1 += buffer2;
+                                divisor += 1.0;
+                            }
+                            else
+                            {
+                                logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                            }
+                        }
+
+                        if (avg)
+                        {
+                            buffer1 /= divisor;
+                        }
+
+                        error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                    }
+                }
+                delete[] offset;
+                delete[] chunk_dims;
+                H5Sclose(memoryspace_id);
+            }
+            else
+            {
+                //read in the whole dataset
+                data_struct::ArrayTr<double> buffer1(total);
+                data_struct::ArrayTr<double> buffer2(total);
+                float divisor = 1.0;
+                error = H5Dread(dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                if (error > -1)
+                {
+                    buffer1 = buffer1.unaryExpr([](double v) { return std::isfinite(v) ? v : (double)0.0; });
+                }
+                for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                {
+                    error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                    if (error > -1)
+                    {
+                        buffer2 = buffer2.unaryExpr([](double v) { return std::isfinite(v) ? v : (double)0.0; });
+                        buffer1 += buffer2;
+                        divisor += 1.0;
+                    }
+                    else
+                    {
+                        logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                    }
+                }
+
+                if (avg)
+                {
+                    buffer1 /= divisor;
+                }
+
+                //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+                error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+            }
+        }
+        else
+        {
+            logE << "Unknown file type: " << file_type << "\n";
+        }
+		
         for(long unsigned int k=0; k<analysis_ids.size(); k++)
         {
             H5Dclose(analysis_ids[k]);
@@ -7583,7 +7704,7 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 				tmp_char[z] = 0;
 			rerror = H5Dread(extra_values, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
 			theta_value = atof(tmp_char);
-			rerror = H5Dwrite(theta_id, H5T_NATIVE_REAL, memoryspace_id, theta_space, H5P_DEFAULT, (void*)&theta_value);
+			rerror = H5Dwrite(theta_id, H5T_NATIVE_FLOAT, memoryspace_id, theta_space, H5P_DEFAULT, (void*)&theta_value);
 			break;
 		}
 
@@ -7618,7 +7739,7 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
     _create_memory_space(1, count_1d, memoryspace_id);
 
     count_1d[0] = 3;
-    if (false == _open_h5_dataset("/MAPS/Scalers/us_amp", H5T_INTEL_R, file_id, 1, count_1d, count_1d, us_amp_id, amp_space_id))
+    if (false == _open_h5_dataset("/MAPS/Scalers/us_amp", H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, us_amp_id, amp_space_id))
     {
         logE << "Error creating " << "/MAPS/Scalers/us_amp" << "\n";
     }
@@ -7636,10 +7757,10 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 		offset_1d[0] = 2;
 		count_1d[0] = 1;
 		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-		rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+		rerror = H5Dwrite(us_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 	}
 
-    if (false == _open_h5_dataset("/MAPS/Scalers/ds_amp", H5T_INTEL_R, file_id, 1, count_1d, count_1d, ds_amp_id, amp_space_id))
+    if (false == _open_h5_dataset("/MAPS/Scalers/ds_amp", H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, ds_amp_id, amp_space_id))
     {
         logE << "Error creating " << "/MAPS/Scalers/ds_amp" << "\n";
     }
@@ -7657,11 +7778,11 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 		offset_1d[0] = 2;
 		count_1d[0] = 1;
 		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-		rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+		rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
 	}
 
 
-    if (false == _open_h5_dataset("/MAPS/Scalers/us_amp_num", H5T_INTEL_R, file_id, 1, count_1d, count_1d, us_amp_num_id, amp_space_id))
+    if (false == _open_h5_dataset("/MAPS/Scalers/us_amp_num", H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, us_amp_num_id, amp_space_id))
     {
         logE << "Error creating " << "/MAPS/Scalers/ds_amp" << "\n";
     }
@@ -7673,10 +7794,10 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 		offset_1d[0] = 0;
 		count_1d[0] = 1;
 		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-		rerror = H5Dwrite(us_amp_num_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+		rerror = H5Dwrite(us_amp_num_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 	}
 
-    if (false == _open_h5_dataset("/MAPS/Scalers/ds_amp_num", H5T_INTEL_R, file_id, 1, count_1d, count_1d, ds_amp_num_id, amp_space_id))
+    if (false == _open_h5_dataset("/MAPS/Scalers/ds_amp_num", H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, ds_amp_num_id, amp_space_id))
     {
         logE << "Error creating " << "/MAPS/Scalers/ds_amp_num" << "\n";
     }
@@ -7688,7 +7809,7 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 		offset_1d[0] = 0;
 		count_1d[0] = 1;
 		H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-		rerror = H5Dwrite(ds_amp_num_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+		rerror = H5Dwrite(ds_amp_num_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
 	}
 
 	_close_h5_objects(_global_close_map);
@@ -7745,7 +7866,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 				{
 					count_1d[0] = 3;
                     hid_t amp_space_id;
-                    if (false == _open_h5_dataset(q_loc, H5T_INTEL_R, file_id, 1, count_1d, count_1d, us_amp_id, amp_space_id))
+                    if (false == _open_h5_dataset(q_loc, H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, us_amp_id, amp_space_id))
                     {
                         logE << "Error creating " << q_loc << "\n";
                     }
@@ -7758,7 +7879,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 					offset_1d[0] = 2;
 					count_1d[0] = 1;
 					H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-					rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+					rerror = H5Dwrite(us_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 				}
 
 				q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_ds_str;
@@ -7766,7 +7887,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 				{
 					count_1d[0] = 3;
                     hid_t amp_space_id;
-                    if (false == _open_h5_dataset(q_loc, H5T_INTEL_R, file_id, 1, count_1d, count_1d, ds_amp_id, amp_space_id))
+                    if (false == _open_h5_dataset(q_loc, H5T_NATIVE_FLOAT, file_id, 1, count_1d, count_1d, ds_amp_id, amp_space_id))
                     {
                         logE << "Error creating " << q_loc << "\n";
                     }
@@ -7779,7 +7900,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 					offset_1d[0] = 2;
 					count_1d[0] = 1;
 					H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-					rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+					rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
 				}
 			}
 		}
@@ -7799,7 +7920,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 			offset_1d[0] = 2;
 			count_1d[0] = 1;
 			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-			rerror = H5Dwrite(us_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
+			rerror = H5Dwrite(us_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 		}
 		if (_open_h5_object(ds_amp_id, H5O_DATASET, close_map, "/MAPS/make_maps_conf/nbs1832/ds_amp", file_id, false, false))
 		{
@@ -7808,7 +7929,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 			offset_1d[0] = 2;
 			count_1d[0] = 1;
 			H5Sselect_hyperslab(amp_space, H5S_SELECT_SET, offset_1d, nullptr, count_1d, nullptr);
-			rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_REAL, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
+			rerror = H5Dwrite(ds_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&ds_amp_value);
 		}
 	}
 
@@ -8038,7 +8159,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
     hid_t quant_dset, quant_space;
     hsize_t quant_dims[3] = { 3,1,1 };
     quant_dims[2] = chan_amt;
-    if (false == _open_h5_dataset(new_loc, H5T_INTEL_R, file_id, 3, quant_dims, quant_dims, quant_dset, quant_space))
+    if (false == _open_h5_dataset(new_loc, H5T_NATIVE_FLOAT, file_id, 3, quant_dims, quant_dims, quant_dset, quant_space))
     {
         logE << "Error creating " << new_loc << "\n";
     }
@@ -8064,7 +8185,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
         char sr_current_carr[255] = "SRCURRENT";
         char us_ic_carr[255];
         char ds_ic_carr[255];
-        T_real real_val = 0.0;
+        float real_val = 0.0;
         hid_t err;
 
         STR_US_IC.copy(us_ic_carr, 254);
@@ -8121,7 +8242,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
                 {
                     offset_2d[0] = 0;
                 }
-                auto element = data_struct::Element_Info_Map<T_real>::inst()->get_element(el_name_str);
+                auto element = data_struct::Element_Info_Map<float>::inst()->get_element(el_name_str);
                 if (element != nullptr)
                 {
                     offset_2d[1] = element->number - 1;
@@ -8133,23 +8254,23 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
                     offset_3d[0] = 0;
                     real_val = 0.0;
                     H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                    if (H5Dread(cc_current, H5T_NATIVE_REAL, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val) > -1)
+                    if (H5Dread(cc_current, H5T_NATIVE_FLOAT, memoryspace_id, cc_space, H5P_DEFAULT, (void*)&real_val) > -1)
                     {
-                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_FLOAT, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
                     }
                     offset_3d[0] = 1;
                     real_val = 0.0;
                     H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                    if (H5Dread(cc_us_ic, H5T_NATIVE_REAL, memoryspace_id, us_space, H5P_DEFAULT, (void*)&real_val) > -1)
+                    if (H5Dread(cc_us_ic, H5T_NATIVE_FLOAT, memoryspace_id, us_space, H5P_DEFAULT, (void*)&real_val) > -1)
                     {
-                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_FLOAT, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
                     }
                     offset_3d[0] = 2;
                     real_val = 0.0;
                     H5Sselect_hyperslab(quant_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-                    if (H5Dread(cc_ds_ic, H5T_NATIVE_REAL, memoryspace_id, ds_space, H5P_DEFAULT, (void*)&real_val) > -1)
+                    if (H5Dread(cc_ds_ic, H5T_NATIVE_FLOAT, memoryspace_id, ds_space, H5P_DEFAULT, (void*)&real_val) > -1)
                     {
-                        err = H5Dwrite(quant_dset, H5T_NATIVE_REAL, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
+                        err = H5Dwrite(quant_dset, H5T_NATIVE_FLOAT, memoryspace_id, quant_space, H5P_DEFAULT, (void*)&real_val);
                     }
                     //change /MAPS/channel_units from cts/s to ug/cm2 for the first 3 of 4 in dim[0]
                     if (chan_units > -1)
@@ -8756,7 +8877,7 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     {
         logW << "Error creating /MAPS/scaler_units\n";
     }
-    if (false == _open_h5_dataset("/MAPS/scalers", H5T_INTEL_R, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
+    if (false == _open_h5_dataset("/MAPS/scalers", H5T_NATIVE_FLOAT, file_id, 3, &count_3d[0], &count_3d[0], new_values_id, new_value_space))
     {
         logW << "Error creating /MAPS/scalers\n";
     }
@@ -8774,7 +8895,7 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     hid_t value_mem_space;
     _create_memory_space(3, &count_3d[0], value_mem_space);
     
-    data_struct::ArrayXXr<T_real> tmp_values;
+    data_struct::ArrayXXr<float> tmp_values;
     tmp_values.resize(count_3d[1], count_3d[2]);
 
     hsize_t i = 0;
@@ -8802,10 +8923,10 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
         }
 
         H5Sselect_hyperslab(value_space, H5S_SELECT_SET, offset_3d, nullptr, count_3d, nullptr);
-        if (H5Dread(values_id, H5T_NATIVE_REAL, value_mem_space, value_space, H5P_DEFAULT, (void*)tmp_values.data()) > -1)
+        if (H5Dread(values_id, H5T_NATIVE_FLOAT, value_mem_space, value_space, H5P_DEFAULT, (void*)tmp_values.data()) > -1)
         {
             H5Sselect_hyperslab(new_value_space, H5S_SELECT_SET, new_offset_3d, nullptr, count_3d, nullptr);
-            H5Dwrite(new_values_id, H5T_NATIVE_REAL, value_mem_space, new_value_space, H5P_DEFAULT, (void*)tmp_values.data());
+            H5Dwrite(new_values_id, H5T_NATIVE_FLOAT, value_mem_space, new_value_space, H5P_DEFAULT, (void*)tmp_values.data());
         }
 
         i++;
@@ -8950,14 +9071,14 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             }
             
 
-            T_real *data = new T_real[chan_dims[1] * chan_dims[2]];
-            T_real *ds_ic_data = new T_real[chan_dims[1] * chan_dims[2]];
+            double *data = new double[chan_dims[1] * chan_dims[2]];
+            double*ds_ic_data = new double[chan_dims[1] * chan_dims[2]];
             std::string scaler_name_str;
             char char_data[256]={0};
             char char_ug_data[256]="ug/cm2";
             int k =0;
 
-            T_real quant_value = 1.0;
+            double quant_value = 1.0;
 
             for (std::string::size_type x=0; x<normalize_scaler.length(); ++x)
             {
@@ -9031,7 +9152,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 {
                     std::string chan_name_str = std::string(char_data, 256);
                     chan_name_str.erase(std::remove(chan_name_str.begin(), chan_name_str.end(), ' '), chan_name_str.end());
-                    data_struct::Element_Info<T_real>* element = data_struct::Element_Info_Map<T_real>::inst()->get_element(chan_name_str);
+                    data_struct::Element_Info<double>* element = data_struct::Element_Info_Map<double>::inst()->get_element(chan_name_str);
                     if(element != nullptr)
                     {
                         offset_quant[1] = element->number - 1;
@@ -9156,12 +9277,12 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     //Add version dataset
     float save_val = HDF5_EXCHANGE_VERSION;
     
-    if (false == _open_h5_dataset(str_version, H5T_INTEL_R, file_id, 1, count, count, dset_id, dataspace_id))
+    if (false == _open_h5_dataset(str_version, H5T_NATIVE_DOUBLE, file_id, 1, count, count, dset_id, dataspace_id))
     {
         logE << "Error creating " << str_version << "\n";
         return false;
     }
-    H5Dwrite(dset_id, H5T_NATIVE_REAL, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
     
 
     //Add theta
@@ -9175,7 +9296,6 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
 //-----------------------------------------------------------------------------
 
-template<typename T_real>
 void HDF5_IO::add_exchange_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -9211,6 +9331,7 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
 
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 void HDF5_IO::export_int_fitted_to_csv(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);

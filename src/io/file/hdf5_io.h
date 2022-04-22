@@ -266,6 +266,7 @@ public:
     //void update_scalers(std::string dataset_file, data_struct::Params_Override<T_real>* params_override);
     
     //export integrated spec, fitted, background into csv
+    template<typename T_real>
     void export_int_fitted_to_csv(std::string dataset_file);
 
     bool end_save_seq(bool loginfo=true);
@@ -355,6 +356,8 @@ private:
 
 };
 
+template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<float>* spectra, bool log_error);
+template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<double>* spectra, bool log_error);
 
 }// end namespace file
 }// end namespace io

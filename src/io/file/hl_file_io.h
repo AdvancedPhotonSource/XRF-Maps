@@ -106,6 +106,9 @@ struct DLL_EXPORT file_name_size
 template<typename T_real>
 void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data);
 
+template DLL_EXPORT void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<float>* spectra, void* user_data);
+template DLL_EXPORT void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<double>* spectra, void* user_data);
+
 // ----------------------------------------------------------------------------
 
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
@@ -114,7 +117,6 @@ DLL_EXPORT bool compare_file_size (const file_name_size& first, const file_name_
 
 DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-template<typename T_real>
 DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
 									std::string dataset_file,
 									const std::vector<size_t>& detector_num_arr);
@@ -122,6 +124,9 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory,
 template<typename T_real>
 DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(data_struct::Fitting_Routines proc_type,
                                                                      fitting::optimizers::Optimizer<T_real>* optimizer);
+
+template DLL_EXPORT fitting::routines::Base_Fit_Routine<float>* generate_fit_routine(data_struct::Fitting_Routines proc_type,fitting::optimizers::Optimizer<float>* optimizer);
+template DLL_EXPORT fitting::routines::Base_Fit_Routine<double>* generate_fit_routine(data_struct::Fitting_Routines proc_type, fitting::optimizers::Optimizer<double>* optimizer);
 
 /**
  * @brief init_analysis_job_detectors : Read in maps_fit_parameters_override.txt[0-3] and initialize data structres
@@ -133,9 +138,11 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(dat
 template<typename T_real>
 DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* analysis_job);
 
+template DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<float>* analysis_job);
+template DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<double>* analysis_job);
+
 template<typename T_real>
-DLL_EXPORT bool load_element_info(const std::string element_henke_filename,
-                                  const std::string element_csv_filename);
+DLL_EXPORT bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename);
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
@@ -146,11 +153,19 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 													data_struct::Spectra<T_real>* integrated_spectra,
 													data_struct::Params_Override<T_real>* params_override);
 
+
+template DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory, std::string dataset_file, size_t detector_num, data_struct::Spectra<float>* integrated_spectra, data_struct::Params_Override<float>* params_override);
+template DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory, std::string dataset_file, size_t detector_num, data_struct::Spectra<double>* integrated_spectra, data_struct::Params_Override<double>* params_override);
+
 template<typename T_real>
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
                                     int detector_num,
                                     data_struct::Params_Override<T_real>* params_override,
                                     bool append_file_name = true);
+
+
+template DLL_EXPORT bool load_override_params(std::string dataset_directory, int detector_num, data_struct::Params_Override<float>* params_override, bool append_file_name);
+template DLL_EXPORT bool load_override_params(std::string dataset_directory, int detector_num, data_struct::Params_Override<double>* params_override, bool append_file_name);
 
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
@@ -166,23 +181,32 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          bool *is_loaded_from_analyazed_h5,
                          bool save_scalers);
 
+template DLL_EXPORT bool load_spectra_volume(std::string dataset_directory, std::string dataset_file, size_t detector_num, data_struct::Spectra_Volume<float>* spectra_volume, data_struct::Params_Override<float>* params_override, bool* is_loaded_from_analyazed_h5, bool save_scalers);
+template DLL_EXPORT bool load_spectra_volume(std::string dataset_directory, std::string dataset_file, size_t detector_num, data_struct::Spectra_Volume<double>* spectra_volume, data_struct::Params_Override<double>* params_override, bool* is_loaded_from_analyazed_h5, bool save_scalers);
+
+
 // This is for HDF5 files only
 template<typename T_real>
 DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<T_real>* scan_info);
+
+template DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<float>* scan_info);
+template DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<double>* scan_info);
 
 DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 template<typename T_real>
 DLL_EXPORT void save_quantification_plots(string path, Detector<T_real>* detector);
 
-template<typename T_real>
+template DLL_EXPORT void save_quantification_plots(string path, Detector<float>* detector);
+template DLL_EXPORT void save_quantification_plots(string path, Detector<double>* detector);
+
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir,
                                             std::string dataset_filename,
                                             int detector_num,
                                             string result,
                                             data_struct::Fit_Parameters<double>* fit_params,
-                                            data_struct::Spectra<T_real>* spectra,
-                                            data_struct::Fit_Element_Map_Dict<T_real>* elements_to_fit);
+                                            data_struct::Spectra<double>* spectra,
+                                            data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
 DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files);
 

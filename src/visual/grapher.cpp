@@ -375,7 +375,7 @@ void SavePlotCalibrationCurve(std::string path,
         {
             if (all_elements_with_weights->count(itr.first) > 0)
             {
-                data_struct::Element_Info* element_info = data_struct::Element_Info_Map::inst()->get_element(itr.first);
+                data_struct::Element_Info<T_real>* element_info = data_struct::Element_Info_Map<T_real>::inst()->get_element(itr.first);
                 quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
                 T_real plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
                 if (element_info != nullptr)

@@ -42,6 +42,9 @@ void SavePlotSpectrasFromConsole(std::string path,
                                 data_struct::ArrayTr<T_real>* background,
                                 bool log_them);
 
+template void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayTr<float>* energy, data_struct::ArrayTr<float>* spectra, data_struct::ArrayTr<float>* model, data_struct::ArrayTr<float>* background, bool log_them);
+template void SavePlotSpectrasFromConsole(std::string path, data_struct::ArrayTr<double>* energy, data_struct::ArrayTr<double>* spectra, data_struct::ArrayTr<double>* model, data_struct::ArrayTr<double>* background, bool log_them);
+
 template<typename T_real>
 void SavePlotSpectras(std::string path,
                       data_struct::ArrayTr<T_real> *energy,
@@ -50,17 +53,32 @@ void SavePlotSpectras(std::string path,
                       data_struct::ArrayTr<T_real> *background,
                       bool log_them);
 
+template void SavePlotSpectras(std::string path, data_struct::ArrayTr<float>* energy, data_struct::ArrayTr<float>* spectra, data_struct::ArrayTr<float>* model, data_struct::ArrayTr<float>* background, bool log_them);
+template void SavePlotSpectras(std::string path, data_struct::ArrayTr<double>* energy, data_struct::ArrayTr<double>* spectra, data_struct::ArrayTr<double>* model, data_struct::ArrayTr<double>* background, bool log_them);
+
 template<typename T_real>
 void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<T_real>*>* all_elements_with_weights, int& zstart, int& zstop);
+
+template void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<float>*>* all_elements_with_weights, int& zstart, int& zstop);
+template void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<double>*>* all_elements_with_weights, int& zstart, int& zstop);
 
 template<typename T_real>
 bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<T_real>*>* element_quants);
 
+template bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<float>*>* element_quants);
+template bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<double>*>* element_quants);
+
 template<typename T_real>
 void SavePlotQuantificationFromConsole(std::string path, Detector<T_real>* detector);
 
+template void SavePlotQuantificationFromConsole(std::string path, Detector<float>* detector);
+template void SavePlotQuantificationFromConsole(std::string path, Detector<double>* detector);
+
 template<typename T_real>
 void SavePlotQuantification(std::string path, Detector<T_real>* detector);
+
+template void SavePlotQuantification(std::string path, Detector<float>* detector);
+template void SavePlotQuantification(std::string path, Detector<double>* detector);
 
 template<typename T_real>
 void SavePlotCalibrationCurve(std::string path,
@@ -71,4 +89,7 @@ void SavePlotCalibrationCurve(std::string path,
                               int zstart,
                               int zstop);
 
-}
+template void SavePlotCalibrationCurve(std::string path, Detector<float>* detector, string quantifier_scaler_name, unordered_map<string, Element_Quant<float>*>* all_elements_with_weights,  vector<Element_Quant<float>>* calibration_curve, int zstart, int zstop);
+template void SavePlotCalibrationCurve(std::string path, Detector<double>* detector, string quantifier_scaler_name, unordered_map<string, Element_Quant<double>*>* all_elements_with_weights, vector<Element_Quant<double>>* calibration_curve, int zstart, int zstop);
+
+} // visual

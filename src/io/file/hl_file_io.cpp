@@ -103,25 +103,25 @@ template<typename T_real>
 fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(data_struct::Fitting_Routines proc_type, fitting::optimizers::Optimizer<T_real>* optimizer)
 {
     //Fitting routines
-    fitting::routines::Base_Fit_Routine *fit_routine = nullptr;
+    fitting::routines::Base_Fit_Routine<T_real> *fit_routine = nullptr;
     switch(proc_type)
     {
 		case data_struct::Fitting_Routines::GAUSS_TAILS:
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine();
-            ((fitting::routines::Param_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
+            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine<T_real>();
+            ((fitting::routines::Param_Optimized_Fit_Routine<T_real>*)fit_routine)->set_optimizer(optimizer);
             break;
         case data_struct::Fitting_Routines::GAUSS_MATRIX:
-            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine();
-            ((fitting::routines::Matrix_Optimized_Fit_Routine*)fit_routine)->set_optimizer(optimizer);
+            fit_routine = new fitting::routines::Matrix_Optimized_Fit_Routine<T_real>();
+            ((fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine)->set_optimizer(optimizer);
             break;
         case data_struct::Fitting_Routines::ROI:
-            fit_routine = new fitting::routines::ROI_Fit_Routine();
+            fit_routine = new fitting::routines::ROI_Fit_Routine<T_real>();
             break;
         case data_struct::Fitting_Routines::SVD:
-            fit_routine = new fitting::routines::SVD_Fit_Routine();
+            fit_routine = new fitting::routines::SVD_Fit_Routine<T_real>();
             break;
         case data_struct::Fitting_Routines::NNLS:
-            fit_routine = new fitting::routines::NNLS_Fit_Routine();
+            fit_routine = new fitting::routines::NNLS_Fit_Routine<T_real>();
             break;
         default:
             break;
@@ -150,15 +150,15 @@ bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* analysis_job
     {
         if (analysis_job->detectors_meta_data.count(detector_num) < 1)
         {
-            analysis_job->detectors_meta_data[detector_num] = data_struct::Detector(detector_num);
+            analysis_job->detectors_meta_data[detector_num] = data_struct::Detector<T_real>(detector_num);
         }
-        data_struct::Detector *detector = &analysis_job->detectors_meta_data[detector_num];
+        data_struct::Detector<T_real>* detector = &analysis_job->detectors_meta_data[detector_num];
 
         if (detector->model == nullptr)
         {
             detector->model = new fitting::models::Gaussian_Model<T_real>();
         }
-        data_struct::Params_Override * override_params = &(detector->fit_params_override_dict);
+        data_struct::Params_Override<T_real> * override_params = &(detector->fit_params_override_dict);
 
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
@@ -384,8 +384,7 @@ void save_quantification_plots(string path, Detector<T_real>* detector)
 
 // ----------------------------------------------------------------------------
 
-template<typename T_real>
-void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double> *fit_params, data_struct::Spectra<T_real>* spectra, data_struct::Fit_Element_Map_Dict<T_real>* elements_to_fit)
+void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double> *fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit)
 {
     std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
     std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
@@ -434,21 +433,21 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Gaussian_Model<double> model;
     //Range of energy in spectra to fit
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
-    data_struct::Spectra snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    data_struct::Spectra<double> snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
-    data_struct::Spectra model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
-    data_struct::ArrayTr<T_real> background;
+    data_struct::Spectra<double> model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
+    data_struct::ArrayTr<double> background;
 
-    T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+    double energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+    double energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+    double energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
 
-    data_struct::ArrayTr<T_real> energy = data_struct::ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    data_struct::ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+    data_struct::ArrayTr<double> energy = data_struct::ArrayTr<double>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    data_struct::ArrayTr<double> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (double)2.0) * energy_quad);
     
     if (fit_params->contains(STR_SNIP_WIDTH))
 	{
-        data_struct::ArrayTr<T_real> s_background = data_struct::snip_background(spectra,
+        data_struct::ArrayTr<double> s_background = data_struct::snip_background<double>(spectra,
                                                                         fit_params->value(STR_ENERGY_OFFSET),
                                                                         fit_params->value(STR_ENERGY_SLOPE),
                                                                         fit_params->value(STR_ENERGY_QUADRATIC),
@@ -487,7 +486,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
     io::file::aps::save_fit_parameters_override(fp_full_path, *fit_params, result);
-    std::unordered_map<std::string, T_real> scaler_map;
+    std::unordered_map<std::string, double> scaler_map;
     scaler_map[STR_ENERGY_OFFSET] = energy_offset;
     scaler_map[STR_ENERGY_SLOPE] = energy_slope;
     scaler_map[STR_ENERGY_QUADRATIC] = energy_quad;
@@ -650,27 +649,27 @@ bool load_override_params(std::string dataset_directory,
     }
     else
     {
-        data_struct::Element_Info* detector_element;
+        data_struct::Element_Info<T_real>* detector_element;
         if(params_override->detector_element.length() > 0)
         {
             // Get the element info class                                   // detector element as string "Si" or "Ge" usually
 
-            detector_element = data_struct::Element_Info_Map::inst()->get_element(params_override->detector_element);
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override->detector_element);
         }
         else
         {
          //log error or warning
             logE<<"No detector material defined in maps_fit_parameters_override.txt . Defaulting to Si"<<"\n";
-            detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
         }
         
         if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COMPTON_AMPLITUDE, nullptr)));
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
         }
         if (params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
         
         logI<<"Elements to fit:  ";
@@ -699,7 +698,7 @@ bool load_spectra_volume(std::string dataset_directory,
 {
 
     //Dataset importer
-    io::file::MDA_IO mda_io;
+    io::file::MDA_IO<T_real> mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
     if (detector_num == -1)
@@ -853,28 +852,28 @@ bool load_spectra_volume(std::string dataset_directory,
         if(save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_confocal(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_confocal<T_real>(dataset_directory+ DIR_END_CHAR +dataset_file, detector_num);
         }
         return true;
     }
 
 	//try loading gse cars dataset
-	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
+	if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
 	{
 		if (save_scalers)
 		{
 			io::file::HDF5_IO::inst()->start_save_seq(true);
-			io::file::HDF5_IO::inst()->save_scan_scalers_gsecars(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+			io::file::HDF5_IO::inst()->save_scan_scalers_gsecars<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
 		}
 		return true;
 	}
 
-    if (true == io::file::HDF5_IO::inst()->load_spectra_volume_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
+    if (true == io::file::HDF5_IO::inst()->load_spectra_volume_bnl<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
     {
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_bnl<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
         }
         return true;
     }
@@ -899,7 +898,7 @@ bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                     if (detector_num > 0 && spec_size == -1) // this netcdf file only has 1 element detectors
                     {
                         return false;
@@ -931,7 +930,7 @@ bool load_spectra_volume(std::string dataset_directory,
                     row_idx_str_full += row_idx_str;
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
                     size_t prev_size = 0;
-                    size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line(full_filename, detector_num, &(*spectra_volume)[i]);
                     //
                     if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
                     {
@@ -978,7 +977,7 @@ bool load_spectra_volume(std::string dataset_directory,
     if(save_scalers)
     {
         io::file::HDF5_IO::inst()->start_save_seq(true);
-        data_struct::Scan_Info* scan_info = mda_io.get_scan_info();
+        data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
         // add ELT, ERT, INCNT, OUTCNT to scaler map
         if (spectra_volume != nullptr && scan_info != nullptr)
         {
@@ -1009,11 +1008,11 @@ bool load_spectra_volume(std::string dataset_directory,
 template<typename T_real>
 void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
-    data_struct::Spectra* integrated_spectra = nullptr;
+    data_struct::Spectra<T_real>* integrated_spectra = nullptr;
 
     if (user_data != nullptr)
     {
-        integrated_spectra = static_cast<data_struct::Spectra*>(user_data);
+        integrated_spectra = static_cast<data_struct::Spectra<T_real>*>(user_data);
     }
 
     if (integrated_spectra != nullptr && spectra != nullptr)
@@ -1044,14 +1043,14 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
 									   data_struct::Params_Override<T_real>* params_override)
 {
     //Dataset importer
-    io::file::MDA_IO mda_io;
+    io::file::MDA_IO<T_real> mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
     std::vector<size_t> detector_num_arr{ detector_num };
     size_t out_rows;
     size_t out_cols;
-    data_struct::IO_Callback_Func_Def  cb_function = std::bind(&cb_load_spectra_data_helper, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    data_struct::IO_Callback_Func_Def<T_real>  cb_function = std::bind(&cb_load_spectra_data_helper<T_real>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 
 
     if (dataset_directory.back() != DIR_END_CHAR)
@@ -1061,7 +1060,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //replace / with \ for windows, won't do anything for linux
     std::replace(dataset_directory.begin(), dataset_directory.end(), '/', DIR_END_CHAR);
 
-    data_struct::Spectra_Volume spectra_volume;
+    data_struct::Spectra_Volume<T_real> spectra_volume;
 
     logI<<"Loading dataset "<<dataset_directory+"mda"+ DIR_END_CHAR +dataset_file<<"\n";
 
@@ -1236,7 +1235,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     {
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                         //logI<<"Loading file "<<full_filename<<"\n";
-                        size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
                         if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
                         {
                             return false;
@@ -1267,7 +1266,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         }
                         row_idx_str_full += row_idx_str;
                         full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                        size_t spec_size = io::file::NetCDF_IO::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
                         if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
                         {
                             return false;
@@ -1287,7 +1286,7 @@ bool load_and_integrate_spectra_volume(std::string dataset_directory,
             else if (hasXspress)
             {
                 std::string full_filename;
-                data_struct::Spectra_Line spectra_line;
+                data_struct::Spectra_Line<T_real> spectra_line;
                 spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                 for(size_t i=0; i<dims[0]; i++)
                 {
@@ -1341,7 +1340,6 @@ bool get_scalers_and_metadata_h5(std::string dataset_directory,
 
 // ----------------------------------------------------------------------------
 
-template<typename T_real>
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
 							const std::vector<size_t>& detector_num_arr)

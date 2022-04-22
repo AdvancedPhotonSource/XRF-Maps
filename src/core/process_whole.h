@@ -105,10 +105,10 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(std::unordered_map<std::string, T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fit_Element_Map_Dict<T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
 
-template DLL_EXPORT data_struct::Fit_Count_Dict<float>* generate_fit_count_dict<float>(std::unordered_map<std::string, float>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
-template DLL_EXPORT data_struct::Fit_Count_Dict<double>* generate_fit_count_dict<double>(std::unordered_map<std::string, double>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+template data_struct::Fit_Count_Dict<float>* generate_fit_count_dict(const Fit_Element_Map_Dict<float>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+template data_struct::Fit_Count_Dict<double>* generate_fit_count_dict(const Fit_Element_Map_Dict<double>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
 
 // ----------------------------------------------------------------------------
 
