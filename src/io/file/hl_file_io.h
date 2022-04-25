@@ -144,6 +144,9 @@ template DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<d
 template<typename T_real>
 DLL_EXPORT bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename);
 
+template DLL_EXPORT bool load_element_info<float>(const std::string element_henke_filename, const std::string element_csv_filename);
+template DLL_EXPORT bool load_element_info<double>(const std::string element_henke_filename, const std::string element_csv_filename);
+
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
 template<typename T_real>

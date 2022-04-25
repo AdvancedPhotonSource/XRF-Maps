@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     
 
     //main structure for analysis job information
-    data_struct::Analysis_Job analysis_job;
+    data_struct::Analysis_Job<double> analysis_job;
 
     Command_Line_Parser clp(argc, argv);
 
@@ -549,7 +549,7 @@ int main(int argc, char *argv[])
     }
 
     //load element information
-    if(false == io::load_element_info(element_henke_filename, element_csv_filename))
+    if(false == io::load_element_info<double>(element_henke_filename, element_csv_filename))
     {
         logE<<"loading element information: "<<"\n";
         return -1;
@@ -612,7 +612,7 @@ int main(int argc, char *argv[])
         logE << "could not initialize analysis job. Check if maps_fit_parameters_override.txt exits.\n";
     }
 
-    data_struct::Element_Info_Map::inst()->clear();
+    data_struct::Element_Info_Map<double>::inst()->clear();
 
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;

@@ -212,7 +212,7 @@ template<typename T_real>
 bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename)
 {
 
-    if (io::file::load_henke_from_xdr(element_henke_filename) == false)
+    if (io::file::load_henke_from_xdr<T_real>(element_henke_filename) == false)
 	{
 		logE << "Could not load " << element_henke_filename << "\n";
 		return false;

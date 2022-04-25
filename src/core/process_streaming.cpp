@@ -46,6 +46,13 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 #include "core/process_streaming.h"
+#include "workflow/xrf/detector_sum_spectra_source.h"
+#include "workflow/xrf/integrated_spectra_source.h"
+#include "workflow/xrf/spectra_file_source.h"
+#include "workflow/xrf/spectra_net_source.h"
+#include "workflow/xrf/spectra_net_streamer.h"
+#include "workflow/xrf/spectra_stream_saver.h"
+
 
 // ----------------------------------------------------------------------------
 
@@ -72,42 +79,42 @@ data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block
 template<typename T_real>
 void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
 {
-    workflow::Source<data_struct::Stream_Block*> *source;
-    workflow::Distributor<data_struct::Stream_Block*, data_struct::Stream_Block*> distributor(job->num_threads);
-    workflow::Sink<data_struct::Stream_Block*> *sink;
+    workflow::Source<data_struct::Stream_Block<T_real>*> *source;
+    workflow::Distributor<data_struct::Stream_Block<T_real>*, data_struct::Stream_Block<T_real>*> distributor(job->num_threads);
+    workflow::Sink<data_struct::Stream_Block<T_real>*> *sink;
 
     //setup input
     if(job->quick_and_dirty)
     {
-        source = new workflow::xrf::Detector_Sum_Spectra_Source(job);
+        source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
     }
     else if(job->is_network_source)
     {
         if(job->network_source_ip.length() > 0)
         {
-            source = new workflow::xrf::Spectra_Net_Source(job, job->network_source_ip, job->network_source_port);
+            source = new workflow::xrf::Spectra_Net_Source<T_real>(job, job->network_source_ip, job->network_source_port);
         }
         else
         {
-            source = new workflow::xrf::Spectra_Net_Source(job);
+            source = new workflow::xrf::Spectra_Net_Source<T_real>(job);
         }
     }
     else
     {
-        source = new workflow::xrf::Spectra_File_Source(job);
+        source = new workflow::xrf::Spectra_File_Source<T_real>(job);
     }
 
     //setup output
     if(job->stream_over_network)
     {
-        sink = new workflow::xrf::Spectra_Net_Streamer(job->network_stream_port);
+        sink = new workflow::xrf::Spectra_Net_Streamer<T_real>(job->network_stream_port);
     }
     else
     {
-        sink = new workflow::xrf::Spectra_Stream_Saver();
+        sink = new workflow::xrf::Spectra_Stream_Saver<T_real>();
     }
 
-    distributor.set_function(proc_spectra_block);
+    distributor.set_function(proc_spectra_block<T_real>);
     source->connect(&distributor);
     sink->connect(&distributor);
 
@@ -125,19 +132,19 @@ void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
 template<typename T_real>
 DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job)
 {
-	workflow::Source<data_struct::Stream_Block*> *source;
-	workflow::xrf::Spectra_Net_Streamer sink(job->network_stream_port);
+	workflow::Source<data_struct::Stream_Block<T_real>*> *source;
+	workflow::xrf::Spectra_Net_Streamer<T_real> sink(job->network_stream_port);
     sink.set_send_counts(false);
     sink.set_send_spectra(true);
 
 	//setup input
 	if (job->quick_and_dirty)
 	{
-		source = new workflow::xrf::Detector_Sum_Spectra_Source(job);
+		source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
 	}
 	else
 	{
-		source = new workflow::xrf::Spectra_File_Source(job);
+		source = new workflow::xrf::Spectra_File_Source<T_real>(job);
 	}
 	
 	source->connect(&sink);

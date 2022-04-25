@@ -152,6 +152,10 @@ TEMPLATE_CLASS_DLL_EXPORT MDA_IO<double>;
 template<typename T_real>
 DLL_EXPORT bool load_henke_from_xdr(std::string filename);
 
+template DLL_EXPORT bool load_henke_from_xdr<float>(std::string filename);
+template DLL_EXPORT bool load_henke_from_xdr<double>(std::string filename);
+
+
 DLL_EXPORT int mda_get_multiplied_dims(std::string path);
 
 DLL_EXPORT int mda_get_rank_and_dims(std::string path, size_t* dims);

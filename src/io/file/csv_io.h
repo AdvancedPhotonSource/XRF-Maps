@@ -66,6 +66,9 @@ namespace csv
 
     template<typename T_real>
     DLL_EXPORT bool load_element_info(std::string filename);
+    
+    template DLL_EXPORT bool load_element_info<float>(std::string filename);
+    template DLL_EXPORT bool load_element_info<double>(std::string filename);
 
     template<typename T_real>
     DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data);

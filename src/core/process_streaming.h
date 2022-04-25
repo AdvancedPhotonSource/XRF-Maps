@@ -55,10 +55,19 @@ POSSIBILITY OF SUCH DAMAGE.
 template<typename T_real>
 DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block<T_real>* stream_block );
 
+template DLL_EXPORT data_struct::Stream_Block<float>* proc_spectra_block(data_struct::Stream_Block<float>* stream_block);
+template DLL_EXPORT data_struct::Stream_Block<double>* proc_spectra_block(data_struct::Stream_Block<double>* stream_block);
+
 template<typename T_real>
 DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job);
 
+template DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<float>* job);
+template DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<double>* job);
+
 template<typename T_real>
 DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job);
+
+template DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<float>* job);
+template DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<double>* job);
 
 #endif
