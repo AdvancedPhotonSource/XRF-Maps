@@ -88,20 +88,23 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
         Fit_Element_Map<T_real>* element = e_itr.second;
-        left_roi = static_cast<unsigned int>(std::round( ( (element->center() - element->width()) - energy_offset) / energy_slope));
-        right_roi = static_cast<unsigned int>(std::round( ( (element->center() + element->width()) - energy_offset) / energy_slope));
-
-        if (right_roi >= n_mca_channels)
+        if (element != nullptr)
         {
-            right_roi = n_mca_channels - 2;
-        }
-        if (left_roi > right_roi)
-        {
-            left_roi = right_roi - 1;
-        }
+            left_roi = static_cast<unsigned int>(std::round(((element->center() - element->width()) - energy_offset) / energy_slope));
+            right_roi = static_cast<unsigned int>(std::round(((element->center() + element->width()) - energy_offset) / energy_slope));
 
-        size_t spec_size = (right_roi - left_roi) + 1;
-        out_counts[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
+            if (right_roi >= n_mca_channels)
+            {
+                right_roi = n_mca_channels - 2;
+            }
+            if (left_roi > right_roi)
+            {
+                left_roi = right_roi - 1;
+            }
+
+            size_t spec_size = (right_roi - left_roi) + 1;
+            out_counts[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
+        }
     }
     return optimizers::OPTIMIZER_OUTCOME::CONVERGED;
 }

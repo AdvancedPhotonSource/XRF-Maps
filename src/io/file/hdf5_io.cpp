@@ -7338,118 +7338,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         long long avail_mem = get_available_mem();
 
         
-        
-        if (file_type == H5T_NATIVE_FLOAT || file_type == H5T_INTEL_F32)
-        {
-            if ((total * sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
-            {
-                //read in partial dataset at a time by chunks.
-                hsize_t* offset = new hsize_t[rank];
-                hsize_t* chunk_dims = new hsize_t[rank];
-                unsigned long chunk_total = 1;
-                error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
-                if (error < 0)
-                {
-                    for (int i = 0; i < rank; i++)
-                    {
-                        offset[i] = 0;
-                    }
-                    chunk_total *= dims_in[0];
-                    chunk_dims[0] = dims_in[0];
-                    chunk_dims[1] = 1;
-                    chunk_dims[2] = 1;
-                }
-                else
-                {
-                    for (int i = 0; i < rank; i++)
-                    {
-                        offset[i] = 0;
-                        chunk_total *= chunk_dims[i];
-                    }
-                }
-                data_struct::ArrayTr<float> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
-                data_struct::ArrayTr<float> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
-
-                hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
-                for (int w = 0; w < dims_in[1]; w++)
-                {
-                    for (int h = 0; h < dims_in[2]; h++)
-                    {
-                        offset[1] = w;
-                        offset[2] = h;
-                        float divisor = 1.0;
-                        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-                        error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-                        if (error > -1)
-                        {
-                            buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
-                        }
-                        for (long unsigned int k = 0; k < analysis_ids.size(); k++)
-                        {
-                            //hid_t dspace_id = H5Dget_space(analysis_ids[k]);
-                            //H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
-                            error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
-                            if (error > -1)
-                            {
-                                buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
-                                buffer1 += buffer2;
-                                divisor += 1.0;
-                            }
-                            else
-                            {
-                                logE << "reading " << full_hdf5_path << " dataset " << "\n";
-                            }
-                        }
-
-                        if (avg)
-                        {
-                            buffer1 /= divisor;
-                        }
-
-                        error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-                    }
-                }
-                delete[] offset;
-                delete[] chunk_dims;
-                H5Sclose(memoryspace_id);
-            }
-            else
-            {
-                //read in the whole dataset
-                data_struct::ArrayTr<float> buffer1(total);
-                data_struct::ArrayTr<float> buffer2(total);
-                float divisor = 1.0;
-                error = H5Dread(dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-                if (error > -1)
-                {
-                    buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
-                }
-                for (long unsigned int k = 0; k < analysis_ids.size(); k++)
-                {
-                    error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
-                    if (error > -1)
-                    {
-                        buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
-                        buffer1 += buffer2;
-                        divisor += 1.0;
-                    }
-                    else
-                    {
-                        logE << "reading " << full_hdf5_path << " dataset " << "\n";
-                    }
-                }
-
-                if (avg)
-                {
-                    buffer1 /= divisor;
-                }
-
-                //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
-                error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
-            }
-        }
-        else if (file_type == H5T_NATIVE_DOUBLE || file_type == H5T_INTEL_F64)
+        if (file_type == H5T_NATIVE_DOUBLE || file_type == H5T_INTEL_F64)
         {
             if ((total * sizeof(double) * 2) > (avail_mem) && rank == 3) //mca_arr
             {
@@ -7561,7 +7450,113 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         }
         else
         {
-            logE << "Unknown file type: " << file_type << "\n";
+            if ((total * sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
+            {
+                //read in partial dataset at a time by chunks.
+                hsize_t* offset = new hsize_t[rank];
+                hsize_t* chunk_dims = new hsize_t[rank];
+                unsigned long chunk_total = 1;
+                error = H5Pget_chunk(dataspace_id, rank, chunk_dims);
+                if (error < 0)
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                    }
+                    chunk_total *= dims_in[0];
+                    chunk_dims[0] = dims_in[0];
+                    chunk_dims[1] = 1;
+                    chunk_dims[2] = 1;
+                }
+                else
+                {
+                    for (int i = 0; i < rank; i++)
+                    {
+                        offset[i] = 0;
+                        chunk_total *= chunk_dims[i];
+                    }
+                }
+                data_struct::ArrayTr<float> buffer1(chunk_total); //don't need to zero because we are reading in full buffer
+                data_struct::ArrayTr<float> buffer2(chunk_total); //don't need to zero because we are reading in full buffer
+
+                hid_t memoryspace_id = H5Screate_simple(rank, chunk_dims, nullptr);
+                for (int w = 0; w < dims_in[1]; w++)
+                {
+                    for (int h = 0; h < dims_in[2]; h++)
+                    {
+                        offset[1] = w;
+                        offset[2] = h;
+                        float divisor = 1.0;
+                        H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                        error = H5Dread(dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                        if (error > -1)
+                        {
+                            buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                        }
+                        for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                        {
+                            //hid_t dspace_id = H5Dget_space(analysis_ids[k]);
+                            //H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
+                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+                            error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                            if (error > -1)
+                            {
+                                buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                                buffer1 += buffer2;
+                                divisor += 1.0;
+                            }
+                            else
+                            {
+                                logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                            }
+                        }
+
+                        if (avg)
+                        {
+                            buffer1 /= divisor;
+                        }
+
+                        error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                    }
+                }
+                delete[] offset;
+                delete[] chunk_dims;
+                H5Sclose(memoryspace_id);
+            }
+            else
+            {
+                //read in the whole dataset
+                data_struct::ArrayTr<float> buffer1(total);
+                data_struct::ArrayTr<float> buffer2(total);
+                float divisor = 1.0;
+                error = H5Dread(dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+                if (error > -1)
+                {
+                    buffer1 = buffer1.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                }
+                for (long unsigned int k = 0; k < analysis_ids.size(); k++)
+                {
+                    error = H5Dread(analysis_ids[k], H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
+                    if (error > -1)
+                    {
+                        buffer2 = buffer2.unaryExpr([](float v) { return std::isfinite(v) ? v : (float)0.0; });
+                        buffer1 += buffer2;
+                        divisor += 1.0;
+                    }
+                    else
+                    {
+                        logE << "reading " << full_hdf5_path << " dataset " << "\n";
+                    }
+                }
+
+                if (avg)
+                {
+                    buffer1 /= divisor;
+                }
+
+                //hid_t dst_dset_id = H5Dopen2(dst_fit_grp_id, dataset_name.c_str(), H5P_DEFAULT);
+                error = H5Dwrite(dst_dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
+            }
         }
 		
         for(long unsigned int k=0; k<analysis_ids.size(); k++)
@@ -8613,7 +8608,18 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 		}
 		if (v9_max_id > -1)
 		{
-			float *buf = new float[count2d[1]];
+            void* buf = nullptr;
+            logI << "---------------------------\n" << H5Tget_tag(max_type) << "\n";
+            if (max_type == H5T_NATIVE_DOUBLE || max_type == H5T_INTEL_F64)
+            {
+                double* dbuf = new double[count2d[1]];
+                buf = dbuf;
+            }
+            else
+            {
+                float* fbuf = new float[count2d[1]];
+                buf = fbuf;
+            }
 			count2d[0] = 1;
 			
             if (max_id > -1)

@@ -262,8 +262,8 @@ TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<double>;
 template<typename T_real>
 DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params);
 
-template DLL_EXPORT Range get_energy_range<float>(size_t spectra_size, Fit_Parameters<float>* params);
-template DLL_EXPORT Range get_energy_range<double>(size_t spectra_size, Fit_Parameters<double>* params);
+template DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<float>* params);
+template DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<double>* params);
 
 /**
 * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
@@ -276,8 +276,8 @@ template DLL_EXPORT Range get_energy_range<double>(size_t spectra_size, Fit_Para
 template<typename T_real>
 DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope);
 
-template DLL_EXPORT Range get_energy_range<float>(float min_energy, float max_energy, size_t spectra_size, float energy_offset, float energy_slope);
-template DLL_EXPORT Range get_energy_range<double>(double min_energy, double max_energy, size_t spectra_size, double energy_offset, double energy_slope);
+template DLL_EXPORT Range get_energy_range(float min_energy, float max_energy, size_t spectra_size, float energy_offset, float energy_slope);
+template DLL_EXPORT Range get_energy_range(double min_energy, double max_energy, size_t spectra_size, double energy_offset, double energy_slope);
 
 } //namespace data_struct
 

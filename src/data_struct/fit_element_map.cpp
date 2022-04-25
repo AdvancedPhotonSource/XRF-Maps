@@ -66,6 +66,10 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
 
     _width_multi = 1.0;
 
+    _center = 0;
+
+    _width = 0;
+
     size_t num_ratios = 1;
 
     int idx = _full_name.find_last_of("_") + 1;
