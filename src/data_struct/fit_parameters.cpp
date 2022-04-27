@@ -87,7 +87,7 @@ const std::string Fit_Param<T_real>::bound_type_str() const
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Fit_Parameters<T_real>::Fit_Parameters(const Fit_Parameters& fit_pars)
+Fit_Parameters<T_real>::Fit_Parameters(const Fit_Parameters<T_real>& fit_pars)
 {
     _params.clear();
     for(const auto& itr : fit_pars._params)
@@ -109,7 +109,7 @@ void Fit_Parameters<T_real>::add_parameter(Fit_Param<T_real> param)
 template<typename T_real>
 void Fit_Parameters<T_real>::append_and_update(const Fit_Parameters& fit_params)
 {
-	for (std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
+	for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params.begin(); itr != fit_params.end(); itr++ )
 	{
 		_params[itr->first] = itr->second;	
 	}
