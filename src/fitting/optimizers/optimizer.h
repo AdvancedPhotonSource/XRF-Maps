@@ -150,8 +150,8 @@ void fill_user_data(User_Data<T_real> &ud,
                     bool use_weights = false);
 
 
-template DLL_EXPORT void fill_user_data<float>(User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Fit_Element_Map_Dict<float>* const elements_to_fit, const Base_Model<float>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
-template DLL_EXPORT void fill_user_data<double>(User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Fit_Element_Map_Dict<double>* const elements_to_fit, const Base_Model<double>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
+TEMPLATE_DLL_EXPORT void fill_user_data<float>(User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Fit_Element_Map_Dict<float>* const elements_to_fit, const Base_Model<float>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
+TEMPLATE_DLL_EXPORT void fill_user_data<double>(User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Fit_Element_Map_Dict<double>* const elements_to_fit, const Base_Model<double>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
 
 
 template<typename T_real>
@@ -163,15 +163,15 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         Gen_Func_Def<T_real> gen_func,
                         bool use_weights = false);
 
-template DLL_EXPORT void fill_gen_user_data<float>(Gen_User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Range energy_range, const ArrayTr<float>* background, Gen_Func_Def<float> gen_func, bool use_weights);
-template DLL_EXPORT void fill_gen_user_data<double>(Gen_User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Range energy_range, const ArrayTr<double>* background, Gen_Func_Def<double> gen_func, bool use_weights);
+TEMPLATE_DLL_EXPORT void fill_gen_user_data<float>(Gen_User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Range energy_range, const ArrayTr<float>* background, Gen_Func_Def<float> gen_func, bool use_weights);
+TEMPLATE_DLL_EXPORT void fill_gen_user_data<double>(Gen_User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Range energy_range, const ArrayTr<double>* background, Gen_Func_Def<double> gen_func, bool use_weights);
 
 
 template<typename T_real>
 void update_background_user_data(User_Data<T_real> *ud);
 
-template DLL_EXPORT void update_background_user_data<float>(User_Data<float>* ud);
-template DLL_EXPORT void update_background_user_data<double>(User_Data<double>* ud);
+TEMPLATE_DLL_EXPORT void update_background_user_data<float>(User_Data<float>* ud);
+TEMPLATE_DLL_EXPORT void update_background_user_data<double>(User_Data<double>* ud);
 
 
 /**

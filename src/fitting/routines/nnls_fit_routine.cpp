@@ -89,10 +89,10 @@ void NNLS_Fit_Routine<T_real>::_generate_fitmatrix()
 {
 
     _element_row_index.clear();
-    _fitmatrix.resize(_energy_range.count(), _element_models.size());
+    _fitmatrix.resize(this->_energy_range.count(), this->_element_models.size());
 
     int i = 0;
-    for(const auto& itr : _element_models)
+    for(const auto& itr : this->_element_models)
     {
         //Spectra element_model = itr.second;
         for (int j=0; j<itr.second.size(); j++)
@@ -114,14 +114,14 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                           Spectra<T_real>* spectra_model)
 {
-    //spectra_model->setZero(_energy_range.count());
+    //spectra_model->setZero(this->_energy_range.count());
     spectra_model->setZero();
 
     data_struct::ArrayTr<T_real>* result;
     int num_iter;
     T_real npg;
 
-    ArrayTr<T_real> spectra_sub_background = spectra->segment(_energy_range.min, _energy_range.count());
+    ArrayTr<T_real> spectra_sub_background = spectra->segment(this->_energy_range.min, this->_energy_range.count());
     spectra_sub_background -= *background;
     spectra_sub_background = spectra_sub_background.unaryExpr([](T_real v) { return v > 0.0 ? v : (T_real)0.0; });
     nsNNLS::nnls<T_real> solver(&_fitmatrix, &spectra_sub_background, _max_iter);
@@ -139,7 +139,7 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
     {
         if (std::isfinite((*result)[_element_row_index[itr.first]]))
         {
-            for (int j = 0; j < _energy_range.count(); j++)
+            for (int j = 0; j < this->_energy_range.count(); j++)
             {
                 T_real val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
                 if (std::isfinite(val))
@@ -150,7 +150,7 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
         }
         else
         {
-            for (int j = 0; j < _energy_range.count(); j++)
+            for (int j = 0; j < this->_energy_range.count(); j++)
             {
                 (*spectra_model)[j] = numeric_limits<T_real>::quiet_NaN();
             }
@@ -166,7 +166,7 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
     T_real energy_slope = 0.01;
     T_real energy_quad = 0;
 
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(_energy_range.count(), _energy_range.min, _energy_range.max);
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(this->_energy_range.count(), this->_energy_range.min, this->_energy_range.max);
     ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
     visual::SavePlotSpectrasFromConsole(path, &ev, &spectra_sub_background, spectra_model, &sub_background, true);
     */
@@ -193,25 +193,25 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
             fit_params.value(STR_ENERGY_SLOPE),
             fit_params.value(STR_ENERGY_QUADRATIC),
             fit_params.value(STR_SNIP_WIDTH),
-            _energy_range.min,
-            _energy_range.max);
+            this->_energy_range.min,
+            this->_energy_range.max);
 
-        background = bkg.segment(_energy_range.min, _energy_range.count());
+        background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
     }
     else
     {
-        background.setZero(_energy_range.count());
+        background.setZero(this->_energy_range.count());
     }
 
-    ArrayTr<T_real> spectra_sub_background = spectra->segment(_energy_range.min, _energy_range.count());
+    ArrayTr<T_real> spectra_sub_background = spectra->segment(this->_energy_range.min, this->_energy_range.count());
     spectra_sub_background -= background;
     spectra_sub_background = spectra_sub_background.unaryExpr([](T_real v) { return v>0.0 ? v : (T_real)0.0; });
     nsNNLS::nnls<T_real> solver(&_fitmatrix, &spectra_sub_background, _max_iter);
 
     Spectra<T_real> spectra_model = background;
 
-	//Spectra spectra_model(_energy_range.count());
-	//ArrayTr<T_real> rhs = spectra->sub_spectra(_energy_range.min, _energy_range.count());
+	//Spectra spectra_model(this->_energy_range.count());
+	//ArrayTr<T_real> rhs = spectra->sub_spectra(this->_energy_range.min, this->_energy_range.count());
 	//nsNNLS::nnls<T_real> solver(&_fitmatrix, &rhs, _max_iter);
 
     solver.optimize(num_iter, npg);
@@ -228,7 +228,7 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
         {
             out_counts[itr.first] = (*result)[_element_row_index[itr.first]];
 
-            for (int j = 0; j < _energy_range.count(); j++)
+            for (int j = 0; j < this->_energy_range.count(); j++)
             {
                 T_real val = _fitmatrix(j, _element_row_index[itr.first]) * (*result)[_element_row_index[itr.first]];
                 if (std::isfinite(val))
@@ -248,9 +248,9 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 
 	//lock and integrate results
 	{
-		std::lock_guard<std::mutex> lock(_int_spec_mutex);
-		_integrated_fitted_spectra.add(spectra_model);
-        _integrated_background.add(background);
+		std::lock_guard<std::mutex> lock(this->_int_spec_mutex);
+		this->_integrated_fitted_spectra.add(spectra_model);
+        this->_integrated_background.add(background);
 	}
 
     if (num_iter == solver.getMaxit())

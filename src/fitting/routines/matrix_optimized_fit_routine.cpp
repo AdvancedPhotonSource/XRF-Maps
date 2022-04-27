@@ -212,7 +212,7 @@ void Matrix_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>
                                               const struct Range energy_range)
 {
 
-    _energy_range = energy_range;
+    this->_energy_range = energy_range;
     _element_models.clear();
     //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
@@ -238,11 +238,11 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
-    _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
-    _calc_and_update_coherent_amplitude(&fit_params, spectra);
+    this->_add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
+    this->_calc_and_update_coherent_amplitude(&fit_params, spectra);
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    if(_optimizer != nullptr)
+    if(this->_optimizer != nullptr)
     {
         //todo : snip background here and pass to optimizer, then add to integrated background to save in h5
         
@@ -256,24 +256,24 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
                                          fit_params.value(STR_ENERGY_SLOPE),
                                          fit_params.value(STR_ENERGY_QUADRATIC),
                                          fit_params.value(STR_SNIP_WIDTH),
-                                         _energy_range.min,
-                                         _energy_range.max);
-            background = bkg.segment(_energy_range.min, _energy_range.count());
+                                         this->_energy_range.min,
+                                         this->_energy_range.max);
+            background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
         }
         else
         {
-            background.setZero(_energy_range.count());
+            background.setZero(this->_energy_range.count());
         }
 
         std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
         //set num iter to 300;
         unordered_map<string, T_real> opt_options{ {STR_OPT_MAXITER, 300.}, {STR_OPT_FTOL, 1.0e-11 }, {STR_OPT_GTOL, 1.0e-11 } };
-        unordered_map<string, T_real> saved_options = _optimizer->get_options();        
-        _optimizer->set_options(opt_options);
+        unordered_map<string, T_real> saved_options = this->_optimizer->get_options();        
+        this->_optimizer->set_options(opt_options);
 
 
-        ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &background, gen_func);
+        ret_val = this->_optimizer->minimize_func(&fit_params, spectra, this->_energy_range, &background, gen_func);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
@@ -289,7 +289,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 		//get max and top 10 max channels
 		vector<pair<int, T_real> > max_map;
 		data_struct::Spectra<T_real> max_vals = *spectra;
-		data_struct::Spectra<T_real>::Index idx;
+		typename data_struct::Spectra<T_real>::Index idx;
 		for (int i = 0; i < 10; i++)
 		{
 			T_real max_val = max_vals.maxCoeff(&idx);
@@ -298,8 +298,8 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 		}
 
 		//model fit spectra
-        Spectra<T_real> model_spectra(_energy_range.count());
-        this->model_spectrum(&fit_params, &_energy_range, &model_spectra);
+        Spectra<T_real> model_spectra(this->_energy_range.count());
+        this->model_spectrum(&fit_params, &this->_energy_range, &model_spectra);
         
         model_spectra += background;
         model_spectra = (ArrayTr<T_real>)model_spectra.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
@@ -328,7 +328,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 			}
         }
 
-        _optimizer->set_options(saved_options);
+        this->_optimizer->set_options(saved_options);
     }
 
     return ret_val;

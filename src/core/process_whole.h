@@ -121,7 +121,7 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
                         size_t i,
                         size_t j);
 
-template DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<float>* fit_routine,
+TEMPLATE_DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<float>* fit_routine,
     const fitting::models::Base_Model<float>* const model,
     const data_struct::Spectra<float>* const spectra,
     const data_struct::Fit_Element_Map_Dict<float>* const elements_to_fit,
@@ -129,7 +129,7 @@ template DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<
     size_t i,
     size_t j);
 
-template DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<double>* fit_routine,
+TEMPLATE_DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<double>* fit_routine,
     const fitting::models::Base_Model<double>* const model,
     const data_struct::Spectra<double>* const spectra,
     const data_struct::Fit_Element_Map_Dict<double>* const elements_to_fit,
@@ -158,13 +158,13 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                              bool save_spec_vol,
                              Callback_Func_Status_Def* status_callback = nullptr);
 
-template DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<float>* spectra_volume,
+TEMPLATE_DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<float>* spectra_volume,
     data_struct::Detector<float>* detector_struct,
     ThreadPool* tp,
     bool save_spec_vol,
     Callback_Func_Status_Def* status_callback);
 
-template DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<double>* spectra_volume,
+TEMPLATE_DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<double>* spectra_volume,
     data_struct::Detector<double>* detector_struct,
     ThreadPool* tp,
     bool save_spec_vol,
@@ -175,8 +175,8 @@ template DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<double>* spect
 template<typename T_real>
 DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysis_job, Callback_Func_Status_Def* status_callback = nullptr);
 
-template DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<float>* analysis_job, Callback_Func_Status_Def* status_callback);
-template DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<double>* analysis_job, Callback_Func_Status_Def* status_callback);
+TEMPLATE_DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<float>* analysis_job, Callback_Func_Status_Def* status_callback);
+TEMPLATE_DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<double>* analysis_job, Callback_Func_Status_Def* status_callback);
 
 // ----------------------------------------------------------------------------
 
@@ -200,8 +200,8 @@ DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analys
 template<typename T_real>
 DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_job);
 
-template DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<float>& analysis_job);
-template DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<double>& analysis_job);
+TEMPLATE_DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<float>& analysis_job);
+TEMPLATE_DLL_EXPORT void interate_datasets_and_update(data_struct::Analysis_Job<double>& analysis_job);
 
 // ----------------------------------------------------------------------------
 

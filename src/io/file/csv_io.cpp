@@ -372,13 +372,6 @@ bool load_element_info(std::string filename)
         {
             std::stringstream strstream(line);
             std::getline(strstream, value, ',');
-            /*
-            if (value == "version:")
-            {
-                std::getline(strstream, value, ',');
-                if (value != "1.2")
-                    logW<<"Non expected version. Loader if for 1.2"<<"\n";
-            }*/
             //if( std::stoi(value) > 0)
             if (value[0] >= 48 && value[0] <= 57) // 0 - 9
             {

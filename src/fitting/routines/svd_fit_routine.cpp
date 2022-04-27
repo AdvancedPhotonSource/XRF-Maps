@@ -79,10 +79,10 @@ void SVD_Fit_Routine<T_real>::_generate_fitmatrix()
 {
 
     _element_row_index.clear();
-    _fitmatrix.resize(_energy_range.count(), _element_models.size());
+    _fitmatrix.resize(this->_energy_range.count(), this->_element_models.size());
 
     int i = 0;
-    for (const auto& itr : _element_models)
+    for (const auto& itr : this->_element_models)
     {
         //Spectra element_model = itr.second;
         for (int j = 0; j < itr.second.size(); j++)
@@ -105,7 +105,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
                                                            std::unordered_map<std::string, T_real>& out_counts)
 {
     Eigen::JacobiSVD<Eigen::Matrix<T_real, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
-    VectorTr<T_real> rhs = spectra->segment(_energy_range.min, _energy_range.count());
+    VectorTr<T_real> rhs = spectra->segment(this->_energy_range.min, this->_energy_range.count());
 
     Fit_Parameters<T_real> fit_params = model->fit_parameters();
     VectorTr<T_real> background;
@@ -116,14 +116,14 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
             fit_params.value(STR_ENERGY_SLOPE),
             fit_params.value(STR_ENERGY_QUADRATIC),
             fit_params.value(STR_SNIP_WIDTH),
-            _energy_range.min,
-            _energy_range.max);
+            this->_energy_range.min,
+            this->_energy_range.max);
 
-        background = bkg.segment(_energy_range.min, _energy_range.count());
+        background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
     }
     else
     {
-        background.setZero(_energy_range.count());
+        background.setZero(this->_energy_range.count());
     }
     
     rhs -= background;
@@ -137,7 +137,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
     {
         
         out_counts[itr.first] = result[_element_row_index[itr.first]];
-        for (int j = 0; j < _energy_range.count(); j++)
+        for (int j = 0; j < this->_energy_range.count(); j++)
         {
             T_real val = _fitmatrix(j, _element_row_index[itr.first]) * result[_element_row_index[itr.first]];
             if (std::isfinite(val))
@@ -149,8 +149,8 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
 
     //lock and integrate results
     {
-        std::lock_guard<std::mutex> lock(_int_spec_mutex);
-        _integrated_fitted_spectra.add(spectra_model);
+        std::lock_guard<std::mutex> lock(this->_int_spec_mutex);
+        this->_integrated_fitted_spectra.add(spectra_model);
         //_integrated_background.add(background);
     }
 

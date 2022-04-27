@@ -65,26 +65,26 @@ namespace aps
 template<typename T_real>
 DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> *params_override);
 
-template DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<float>* params_override);
-template DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<double>* params_override);
+TEMPLATE_DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<float>* params_override);
+TEMPLATE_DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<double>* params_override);
 
 template<typename T_real>
 DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_real>*params_override);
 
-template DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<float>* params_override);
-template DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<double>* params_override);
+TEMPLATE_DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<float>* params_override);
+TEMPLATE_DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<double>* params_override);
 
 template<typename T_real>
 DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, string result);
 
-template DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<float> fit_params, string result);
-template DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<double> fit_params, string result);
+TEMPLATE_DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<float> fit_params, string result);
+TEMPLATE_DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<double> fit_params, string result);
 
 template<typename T_real>
 DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<T_real> fit_params, int detector_num);
 
-template DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<float> fit_params, int detector_num);
-template DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<double> fit_params, int detector_num);
+TEMPLATE_DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<float> fit_params, int detector_num);
+TEMPLATE_DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parameters<double> fit_params, int detector_num);
 
 }// end namespace aps
 }// end namespace file

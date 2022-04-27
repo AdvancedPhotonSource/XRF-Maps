@@ -174,7 +174,7 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
 // =====================================================================================================================
 
 template<typename T_real>
-MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer()
+MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
     _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
@@ -203,15 +203,15 @@ MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer()
     _options.iterproc = 0;         // Placeholder pointer - must set to 0
 
 
-    _outcome_map[0] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
-    _outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
+    this->_outcome_map[0] = OPTIMIZER_OUTCOME::FAILED;
+    this->_outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
+    this->_outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
+    this->_outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    this->_outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    this->_outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
 
 }
 // ----------------------------------------------------------------------------
@@ -481,8 +481,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
@@ -564,8 +564,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
@@ -657,8 +657,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 

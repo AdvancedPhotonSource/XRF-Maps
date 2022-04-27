@@ -66,19 +66,19 @@ namespace mca
 template<typename T_real>
 DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map);
 
-template DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<float>* spectra, unordered_map<string, float>& pv_map);
-template DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<double>* spectra, unordered_map<string, double>& pv_map);
+TEMPLATE_DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<float>* spectra, unordered_map<string, float>& pv_map);
+TEMPLATE_DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<double>* spectra, unordered_map<string, double>& pv_map);
 
 template<typename T_real>
 DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map);
 
-template DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<float>* spectra, unordered_map<string, float>& pv_map);
-template DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<double>* spectra, unordered_map<string, double>& pv_map);
+TEMPLATE_DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<float>* spectra, unordered_map<string, float>& pv_map);
+TEMPLATE_DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<double>* spectra, unordered_map<string, double>& pv_map);
 
 }// end namespace mca
 
 
-DLL_EXPORT bool load_element_info_from_csv(std::string filename);
+//DLL_EXPORT bool load_element_info_from_csv(std::string filename);
 
 }// end namespace file
 }// end namespace io

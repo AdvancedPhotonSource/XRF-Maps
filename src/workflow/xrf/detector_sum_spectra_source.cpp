@@ -57,9 +57,9 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source() : Spectra_File_Source(nullptr)
+Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source() : Spectra_File_Source<T_real>(nullptr)
 {
-    _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    this->_cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
     _spectra = new data_struct::Spectra<T_real>(2048, 0.0, 0.0, 0.0, 0.0);
 	for (size_t det = 0; det < 4; det++)
 	{
@@ -71,9 +71,9 @@ Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source() : Spectra_Fil
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source(analysis_job)
+Detector_Sum_Spectra_Source<T_real>::Detector_Sum_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source<T_real>(analysis_job)
 {
-    _cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    this->_cb_function = std::bind(&Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
     _spectra = new data_struct::Spectra<T_real>(2048, 0.0, 0.0, 0.0, 0.0);
     if(analysis_job != nullptr)
     {
@@ -112,21 +112,21 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
 
     _spectra->add(*spectra);
 
-    if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && _output_callback_func != nullptr)
+    if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && this->_output_callback_func != nullptr)
     {
         data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(-1, row, col, height, width);
 
-        if(_analysis_job != nullptr)
+        if(this->_analysis_job != nullptr)
         {
-            if(_init_fitting_routines)
+            if(this->_init_fitting_routines)
             {
-                _analysis_job->init_fit_routines(spectra->size());
+                this->_analysis_job->init_fit_routines(spectra->size());
             }
-            data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
+            data_struct::Detector<T_real>* cp = this->_analysis_job->get_detector(detector_num);
 
             if(cp == nullptr)
             {
-                cp = _analysis_job->get_first_detector();
+                cp = this->_analysis_job->get_first_detector();
             }
             if(cp!=nullptr)
             {
@@ -134,15 +134,15 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
                 stream_block->model = cp->model;
             }
 
-            stream_block->theta = _analysis_job->theta;
-            stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
+            stream_block->theta = this->_analysis_job->theta;
+            stream_block->optimize_fit_params_preset = this->_analysis_job->optimize_fit_params_preset;
         }
 
         stream_block->spectra = _spectra;
-        stream_block->dataset_directory = _current_dataset_directory;
-        stream_block->dataset_name = _current_dataset_name;
+        stream_block->dataset_directory = this->_current_dataset_directory;
+        stream_block->dataset_name = this->_current_dataset_name;
         
-        _output_callback_func(stream_block);
+        this->_output_callback_func(stream_block);
 
         _spectra = new data_struct::Spectra<T_real>(spectra->size(), 0.0, 0.0, 0.0, 0.0);
     }

@@ -126,7 +126,7 @@ template<typename T_real>
 void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
-    if(_output_callback_func != nullptr)
+    if(this->_output_callback_func != nullptr)
     {
 		data_struct::Stream_Block<T_real>* stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
 
@@ -156,7 +156,7 @@ void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, s
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
 
-        _output_callback_func(stream_block);
+        this->_output_callback_func(stream_block);
     }
     else
     {
@@ -205,7 +205,7 @@ void Spectra_File_Source<T_real>::run()
 		end_block->dataset_directory = _current_dataset_directory;
 		end_block->dataset_name = _current_dataset_name;
 		end_block->del_str_ptr = true;
-		_output_callback_func(end_block);
+		this->_output_callback_func(end_block);
 
 		_current_dataset_directory = nullptr;
 		_current_dataset_name = nullptr;

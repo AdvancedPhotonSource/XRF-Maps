@@ -358,133 +358,133 @@ private:
 
 
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<float> callback_func, void* user_data);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<double> callback_func, void* user_data);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<float> callback_func, void* user_data);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<double> callback_func, void* user_data);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<float> callback_func, void* user_data);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<double> callback_func, void* user_data);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<float> callback_func, void* user_data);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd_with_callback(std::string path, const std::vector<size_t>& detector_num_arr, data_struct::IO_Callback_Func_Def<double> callback_func, void* user_data);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd(std::string path, size_t frame_num, data_struct::Spectra_Volume<float>* spec_vol, bool logerr);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd(std::string path, size_t frame_num, data_struct::Spectra_Volume<double>* spec_vol, bool logerr);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd(std::string path, size_t frame_num, data_struct::Spectra_Volume<float>* spec_vol, bool logerr);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_emd(std::string path, size_t frame_num, data_struct::Spectra_Volume<double>* spec_vol, bool logerr);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<float>* spec_row);
-template DLL_EXPORT bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<double>* spec_row);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<float>* spec_row);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<double>* spec_row);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_confocal(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_gsecars(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<float>* spec_vol, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<double>* spec_vol, bool log_error);
 
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<float>* spec, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<double>* spec, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<float>* spec, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<double>* spec, bool log_error);
 
-template DLL_EXPORT bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<float>* spectra);
-template DLL_EXPORT bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<double>* spectra);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<float>* spectra);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_and_integrate_spectra_volume(std::string path, size_t detector_num, data_struct::Spectra<double>* spectra);
 
-template DLL_EXPORT bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path, data_struct::Spectra_Volume<float>* spectra_volume, int row_idx_start, int row_idx_end, int col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path, data_struct::Spectra_Volume<double>* spectra_volume, int row_idx_start, int row_idx_end, int col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path, data_struct::Spectra_Volume<float>* spectra_volume, int row_idx_start, int row_idx_end, int col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_spectra_vol_analyzed_h5(std::string path, data_struct::Spectra_Volume<double>* spectra_volume, int row_idx_start, int row_idx_end, int col_idx_start, int col_idx_end);
 
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<float>* spectra, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<double>* spectra, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<float>* spectra, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<double>* spectra, bool log_error);
 
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<float>* override_values);
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<double>* override_values);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<float>* override_values);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<double>* override_values);
 
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<float>* override_values);
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<double>* override_values);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<float>* override_values);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_gsecars(std::string path, data_struct::Params_Override<double>* override_values);
 
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<float>* override_values);
-template DLL_EXPORT bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<double>* override_values);
-
-
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<float>* scan_info);
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<double>* scan_info);
-
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<float>* scan_info);
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<double>* scan_info);
-
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<float>* scan_info);
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<double>* scan_info);
-
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<float>* scan_info);
-template DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<double>* scan_info);
-
-template DLL_EXPORT bool HDF5_IO::save_stream_row(size_t d_hash, size_t detector_num, size_t row, std::vector< data_struct::Spectra<float>* >* spectra_row);
-template DLL_EXPORT bool HDF5_IO::save_stream_row(size_t d_hash, size_t detector_num, size_t row, std::vector< data_struct::Spectra<double>* >* spectra_row);
-
-template DLL_EXPORT bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra<float>* spectra);
-template DLL_EXPORT bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra<double>* spectra);
-
-template DLL_EXPORT bool HDF5_IO::save_spectra_volume(const std::string path, data_struct::Spectra_Volume<float>* spectra_volume, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_spectra_volume(const std::string path, data_struct::Spectra_Volume<double>* spectra_volume, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-
-template DLL_EXPORT bool HDF5_IO::save_energy_calib(int spectra_size, float energy_offset, float energy_slope, float energy_quad);
-template DLL_EXPORT bool HDF5_IO::save_energy_calib(int spectra_size, double energy_offset, double energy_slope, double energy_quad);
-
-template DLL_EXPORT bool HDF5_IO::save_element_fits(const std::string path, const data_struct::Fit_Count_Dict<float>* const element_counts, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_element_fits(const std::string path, const data_struct::Fit_Count_Dict<double>* const element_counts, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-
-template DLL_EXPORT bool HDF5_IO::save_fitted_int_spectra(const std::string path, const data_struct::Spectra<float>& spectra, const data_struct::Range& range, const data_struct::Spectra<float>& background, const size_t save_spectra_size);
-template DLL_EXPORT bool HDF5_IO::save_fitted_int_spectra(const std::string path, const data_struct::Spectra<double>& spectra, const data_struct::Range& range, const data_struct::Spectra<double>& background, const size_t save_spectra_size);
-
-template DLL_EXPORT bool HDF5_IO::save_max_10_spectra(const std::string path, const data_struct::Range& range, const data_struct::Spectra<float>& max_spectra, const data_struct::Spectra<float>& max_10_spectra, const data_struct::Spectra<float>& fit_int_background);
-template DLL_EXPORT bool HDF5_IO::save_max_10_spectra(const std::string path, const data_struct::Range& range, const data_struct::Spectra<double>& max_spectra, const data_struct::Spectra<double>& max_10_spectra, const data_struct::Spectra<double>& fit_int_background);
-
-template DLL_EXPORT bool HDF5_IO::save_quantification(data_struct::Detector<float>* detector);
-template DLL_EXPORT bool HDF5_IO::save_quantification(data_struct::Detector<double>* detector);
-
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers(size_t detector_num, data_struct::Scan_Info<float>* scan_info, data_struct::Params_Override<float>* params_override, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers(size_t detector_num, data_struct::Scan_Info<double>* scan_info, data_struct::Params_Override<double>* params_override, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_confocal<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_confocal<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_gsecars<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_gsecars<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_bnl<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
-template DLL_EXPORT bool HDF5_IO::save_scan_scalers_bnl<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<float>* override_values);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_quantification_scalers_BNL(std::string path, data_struct::Params_Override<double>* override_values);
 
 
-template DLL_EXPORT void HDF5_IO::export_int_fitted_to_csv<float>(std::string dataset_file);
-template DLL_EXPORT void HDF5_IO::export_int_fitted_to_csv<double>(std::string dataset_file);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<float>* scan_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<double>* scan_info);
 
-template DLL_EXPORT bool HDF5_IO::add_background(std::string directory, std::string filename, data_struct::Params_Override<float>& params);
-template DLL_EXPORT bool HDF5_IO::add_background(std::string directory, std::string filename, data_struct::Params_Override<double>& params);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<float>* scan_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<double>* scan_info);
 
-template DLL_EXPORT bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<float>* spectra);
-template DLL_EXPORT bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<double>* spectra);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<float>* scan_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<double>* scan_info);
 
-template DLL_EXPORT bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info<float>* meta_info);
-template DLL_EXPORT bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info<double>* meta_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<float>* scan_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<double>* scan_info);
 
-template DLL_EXPORT bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<float>>* scalers_map, float us_amps_val, std::string us_amps_unit, float ds_amps_val, string ds_amps_unit);
-template DLL_EXPORT bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<double>>* scalers_map, double us_amps_val, std::string us_amps_unit, double ds_amps_val, string ds_amps_unit);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_stream_row(size_t d_hash, size_t detector_num, size_t row, std::vector< data_struct::Spectra<float>* >* spectra_row);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_stream_row(size_t d_hash, size_t detector_num, size_t row, std::vector< data_struct::Spectra<double>* >* spectra_row);
 
-template DLL_EXPORT void HDF5_IO::_save_amps(hid_t scalers_grp_id, float us_amp_sens_num_val, string us_amp_sens_unit_val, float ds_amp_sens_num_val, string ds_amp_sens_unit_val);
-template DLL_EXPORT void HDF5_IO::_save_amps(hid_t scalers_grp_id, double us_amp_sens_num_val, string us_amp_sens_unit_val, double ds_amp_sens_num_val, string ds_amp_sens_unit_val);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra<float>* spectra);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_itegrade_spectra(data_struct::Spectra<double>* spectra);
 
-template DLL_EXPORT bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override<float>* params_override);
-template DLL_EXPORT bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override<double>* params_override);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_spectra_volume(const std::string path, data_struct::Spectra_Volume<float>* spectra_volume, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_spectra_volume(const std::string path, data_struct::Spectra_Volume<double>* spectra_volume, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
 
-template DLL_EXPORT bool HDF5_IO::_open_h5_dataset<float>(const std::string& name, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
-template DLL_EXPORT bool HDF5_IO::_open_h5_dataset<double>(const std::string& name, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_energy_calib(int spectra_size, float energy_offset, float energy_slope, float energy_quad);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_energy_calib(int spectra_size, double energy_offset, double energy_slope, double energy_quad);
 
-template DLL_EXPORT herr_t HDF5_IO::_read_h5d<float>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void* buf);
-template DLL_EXPORT herr_t HDF5_IO::_read_h5d<double>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void* buf);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_element_fits(const std::string path, const data_struct::Fit_Count_Dict<float>* const element_counts, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_element_fits(const std::string path, const data_struct::Fit_Count_Dict<double>* const element_counts, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
 
-template DLL_EXPORT herr_t HDF5_IO::_write_h5d<float>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, const void* buf);
-template DLL_EXPORT herr_t HDF5_IO::_write_h5d<double>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, const void* buf);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_fitted_int_spectra(const std::string path, const data_struct::Spectra<float>& spectra, const data_struct::Range& range, const data_struct::Spectra<float>& background, const size_t save_spectra_size);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_fitted_int_spectra(const std::string path, const data_struct::Spectra<double>& spectra, const data_struct::Range& range, const data_struct::Spectra<double>& background, const size_t save_spectra_size);
 
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<float>* spectra, bool log_error);
-template DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<double>* spectra, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_max_10_spectra(const std::string path, const data_struct::Range& range, const data_struct::Spectra<float>& max_spectra, const data_struct::Spectra<float>& max_10_spectra, const data_struct::Spectra<float>& fit_int_background);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_max_10_spectra(const std::string path, const data_struct::Range& range, const data_struct::Spectra<double>& max_spectra, const data_struct::Spectra<double>& max_10_spectra, const data_struct::Spectra<double>& fit_int_background);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_quantification(data_struct::Detector<float>* detector);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_quantification(data_struct::Detector<double>* detector);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers(size_t detector_num, data_struct::Scan_Info<float>* scan_info, data_struct::Params_Override<float>* params_override, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers(size_t detector_num, data_struct::Scan_Info<double>* scan_info, data_struct::Params_Override<double>* params_override, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_confocal<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_confocal<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_gsecars<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_gsecars<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_bnl<float>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::save_scan_scalers_bnl<double>(std::string path, size_t detector_num, size_t row_idx_start, int row_idx_end, size_t col_idx_start, int col_idx_end);
+
+
+TEMPLATE_DLL_EXPORT void HDF5_IO::export_int_fitted_to_csv<float>(std::string dataset_file);
+TEMPLATE_DLL_EXPORT void HDF5_IO::export_int_fitted_to_csv<double>(std::string dataset_file);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::add_background(std::string directory, std::string filename, data_struct::Params_Override<float>& params);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::add_background(std::string directory, std::string filename, data_struct::Params_Override<double>& params);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<float>* spectra);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_load_integrated_spectra_analyzed_h5(hid_t file_id, data_struct::Spectra<double>* spectra);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info<float>* meta_info);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_scan_meta_data(hid_t scan_grp_id, data_struct::Scan_Meta_Info<double>* meta_info);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<float>>* scalers_map, float us_amps_val, std::string us_amps_unit, float ds_amps_val, string ds_amps_unit);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<double>>* scalers_map, double us_amps_val, std::string us_amps_unit, double ds_amps_val, string ds_amps_unit);
+
+TEMPLATE_DLL_EXPORT void HDF5_IO::_save_amps(hid_t scalers_grp_id, float us_amp_sens_num_val, string us_amp_sens_unit_val, float ds_amp_sens_num_val, string ds_amp_sens_unit_val);
+TEMPLATE_DLL_EXPORT void HDF5_IO::_save_amps(hid_t scalers_grp_id, double us_amp_sens_num_val, string us_amp_sens_unit_val, double ds_amp_sens_num_val, string ds_amp_sens_unit_val);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override<float>* params_override);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_save_params_override(hid_t group_id, data_struct::Params_Override<double>* params_override);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_open_h5_dataset<float>(const std::string& name, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::_open_h5_dataset<double>(const std::string& name, hid_t parent_id, int dims_size, const hsize_t* dims, const hsize_t* chunk_dims, hid_t& out_id, hid_t& out_dataspece);
+
+TEMPLATE_DLL_EXPORT herr_t HDF5_IO::_read_h5d<float>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void* buf);
+TEMPLATE_DLL_EXPORT herr_t HDF5_IO::_read_h5d<double>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void* buf);
+
+TEMPLATE_DLL_EXPORT herr_t HDF5_IO::_write_h5d<float>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, const void* buf);
+TEMPLATE_DLL_EXPORT herr_t HDF5_IO::_write_h5d<double>(hid_t dset_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, const void* buf);
+
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<float>* spectra, bool log_error);
+TEMPLATE_DLL_EXPORT bool HDF5_IO::load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<double>* spectra, bool log_error);
 
 }// end namespace file
 }// end namespace io

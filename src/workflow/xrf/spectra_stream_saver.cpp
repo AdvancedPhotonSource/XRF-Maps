@@ -59,7 +59,7 @@ namespace xrf
 template<typename T_real>
 Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block<T_real>*>()
 {
-    _callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
+    this->_callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
 }
 
 //-----------------------------------------------------------------------------

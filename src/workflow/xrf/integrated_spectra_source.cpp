@@ -57,9 +57,9 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Integrated_Spectra_Source<T_real>::Integrated_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source(analysis_job)
+Integrated_Spectra_Source<T_real>::Integrated_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Spectra_File_Source<T_real>(analysis_job)
 {
-    _cb_function = std::bind(&Integrated_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    this->_cb_function = std::bind(&Integrated_Spectra_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ template<typename T_real>
 void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
-    if(_output_callback_func == nullptr)
+    if(this->_output_callback_func == nullptr)
     {
         delete spectra;
         return;
@@ -86,17 +86,17 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
     {
         data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(detector_num, row, col, height, width);
 
-        if(_analysis_job != nullptr)
+        if(this->_analysis_job != nullptr)
         {
-            if(_init_fitting_routines)
+            if(this->_init_fitting_routines)
             {
-                _analysis_job->init_fit_routines(spectra->size());
+                this->_analysis_job->init_fit_routines(spectra->size());
             }
 
-            data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
-            if(_init_fitting_routines && cp == nullptr)
+            data_struct::Detector<T_real>* cp = this->_analysis_job->get_detector(detector_num);
+            if(this->_init_fitting_routines && cp == nullptr)
             {
-                cp = _analysis_job->get_first_detector();
+                cp = this->_analysis_job->get_first_detector();
             }
 
             if(cp != nullptr)
@@ -104,15 +104,15 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
                 stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
                 stream_block->model = cp->model;
             }
-            stream_block->theta = _analysis_job->theta;
-            stream_block->optimize_fit_params_preset = _analysis_job->optimize_fit_params_preset;
+            stream_block->theta = this->_analysis_job->theta;
+            stream_block->optimize_fit_params_preset = this->_analysis_job->optimize_fit_params_preset;
         }
 
         stream_block->spectra = new data_struct::Spectra<T_real>(spectra->size());
         stream_block->spectra->add(*spectra);
         delete spectra;
-        stream_block->dataset_directory = _current_dataset_directory;
-        stream_block->dataset_name = _current_dataset_name;
+        stream_block->dataset_directory = this->_current_dataset_directory;
+        stream_block->dataset_name = this->_current_dataset_name;
         _stream_block_list.insert({detector_num, stream_block});
     }
     else
@@ -124,7 +124,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
 
         if(col == width && row == height)
         {
-            _output_callback_func(stream_block);
+            this->_output_callback_func(stream_block);
             _stream_block_list.erase(detector_num);
         }
     }

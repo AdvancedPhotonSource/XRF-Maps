@@ -377,8 +377,8 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
 template<typename T_real>
 data_struct::Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
 {
-	data_struct::Element_Info_Map * element_info_map = data_struct::Element_Info_Map::inst();
-	data_struct::Fit_Element_Map* fit_map = nullptr;
+	data_struct::Element_Info_Map<T_real> * element_info_map = data_struct::Element_Info_Map<T_real>::inst();
+	data_struct::Fit_Element_Map<T_real>* fit_map = nullptr;
 
 	element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
@@ -394,7 +394,7 @@ data_struct::Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
 	}
 	else
 	{
-		fit_map = new data_struct::Fit_Element_Map(element_symb, e_info);
+		fit_map = new data_struct::Fit_Element_Map<T_real>(element_symb, e_info);
 	}
 
 	return fit_map;

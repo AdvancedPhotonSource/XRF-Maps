@@ -111,7 +111,7 @@ void general_residuals_lmfit( const T_real *par, int m_dat, const void *data, T_
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
 	// Used to check for nan's here but there were some cases where the optimizer would return nan found. So moved to after subract of model
-    ////ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
@@ -164,7 +164,7 @@ void quantification_residuals_lmfit( const T_real *par, int m_dat, const void *d
 // =====================================================================================================================
 
 template<typename T_real>
-LMFit_Optimizer<T_real>::LMFit_Optimizer() : Optimizer()
+LMFit_Optimizer<T_real>::LMFit_Optimizer() : Optimizer<T_real>()
 {
 	_options.ftol = LM_USERTOL; //LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
     _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
@@ -179,18 +179,18 @@ LMFit_Optimizer<T_real>::LMFit_Optimizer() : Optimizer()
     _options.m_maxpri = -1; // -1, or max number of residuals to print. 
 
 
-    _outcome_map[0] = OPTIMIZER_OUTCOME::FOUND_ZERO;
-    _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[5] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
-    _outcome_map[8] = OPTIMIZER_OUTCOME::CRASHED;
-    _outcome_map[9] = OPTIMIZER_OUTCOME::EXPLODED;
-    _outcome_map[10] = OPTIMIZER_OUTCOME::STOPPED;
-    _outcome_map[11] = OPTIMIZER_OUTCOME::FOUND_NAN;
+    this->_outcome_map[0] = OPTIMIZER_OUTCOME::FOUND_ZERO;
+    this->_outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
+    this->_outcome_map[5] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    this->_outcome_map[6] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    this->_outcome_map[7] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
+    this->_outcome_map[8] = OPTIMIZER_OUTCOME::CRASHED;
+    this->_outcome_map[9] = OPTIMIZER_OUTCOME::EXPLODED;
+    this->_outcome_map[10] = OPTIMIZER_OUTCOME::STOPPED;
+    this->_outcome_map[11] = OPTIMIZER_OUTCOME::FOUND_NAN;
 
 }
 
@@ -322,12 +322,12 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     }
     if (fit_params->contains(STR_OUTCOME))
     {
-        if (_outcome_map.count(status.outcome) > 0)
-            (*fit_params)[STR_OUTCOME].value = (T_real)(_outcome_map[status.outcome]);
+        if (this->_outcome_map.count(status.outcome) > 0)
+            (*fit_params)[STR_OUTCOME].value = (T_real)(this->_outcome_map[status.outcome]);
     }
 
-    if(_outcome_map.count(status.outcome)>0)
-        return _outcome_map[status.outcome];
+    if(this->_outcome_map.count(status.outcome)>0)
+        return this->_outcome_map[status.outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 
@@ -368,8 +368,8 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
         (*fit_params)[STR_RESIDUAL].value = diff_arr.sum();
     }
 
-    if (_outcome_map.count(status.outcome) > 0)
-        return _outcome_map[status.outcome];
+    if (this->_outcome_map.count(status.outcome) > 0)
+        return this->_outcome_map[status.outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 
@@ -412,8 +412,8 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
 
-    if (_outcome_map.count(status.outcome) > 0)
-        return _outcome_map[status.outcome];
+    if (this->_outcome_map.count(status.outcome) > 0)
+        return this->_outcome_map[status.outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }

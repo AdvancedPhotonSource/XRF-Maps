@@ -70,7 +70,7 @@ Hybrid_Param_NNLS_Fit_Routine<T_real>::Hybrid_Param_NNLS_Fit_Routine() : NNLS_Fi
     _model = nullptr;
     _elements_to_fit = nullptr;
     _spectra = nullptr;
-    _max_iter = 4000;
+    this->_max_iter = 4000;
 }
 
 // ----------------------------------------------------------------------------
@@ -91,8 +91,8 @@ void Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<
     if (_model != nullptr && _elements_to_fit != nullptr)
     {
         _model->update_fit_params_values(fit_params);
-        initialize(_model, _elements_to_fit, *energy_range);
-        fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
+        this->initialize(_model, _elements_to_fit, *energy_range);
+        this->fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
     }
 }
 
@@ -128,7 +128,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
     }
     else
     {
-        if(_optimizer != nullptr)
+        if(this->_optimizer != nullptr)
         {
             //ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
             std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -140,8 +140,8 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
                     fit_params.value(STR_ENERGY_SLOPE),
                     fit_params.value(STR_ENERGY_QUADRATIC),
                     fit_params.value(STR_SNIP_WIDTH),
-                    _energy_range.min,
-                    _energy_range.max);
+                    this->_energy_range.min,
+                    this->_energy_range.max);
 
                 _background = bkg.segment(_energy_range.min, _energy_range.count());
             }
@@ -153,12 +153,12 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
             _elements_to_fit = elements_to_fit;
             _spectra = spectra;
 
-            ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &_background, gen_func);
+            ret_val = this->_optimizer->minimize_func(&fit_params, spectra, _energy_range, &_background, gen_func);
 
             _model->update_fit_params_values(&fit_params);
-            initialize(_model, elements_to_fit, _energy_range);
+            this->initialize(_model, elements_to_fit, _energy_range);
             std::unordered_map<std::string, T_real> out_counts;
-            fit_spectra(_model, spectra, elements_to_fit, out_counts);
+            this->fit_spectra(_model, spectra, elements_to_fit, out_counts);
 
             out_fit_params.append_and_update(fit_params);
             for (const auto& itr : *elements_to_fit)

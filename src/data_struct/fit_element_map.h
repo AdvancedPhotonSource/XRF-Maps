@@ -196,6 +196,9 @@ TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<double>;
 template<typename T_real>
 DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb);
 
+template<> DLL_EXPORT Fit_Element_Map<float>* gen_element_map(std::string element_symb);
+template<> DLL_EXPORT Fit_Element_Map<double>* gen_element_map(std::string element_symb);
+
 template<typename T_real>
 using Fit_Element_Map_Dict = std::unordered_map<std::string, Fit_Element_Map<T_real>*>;
 
