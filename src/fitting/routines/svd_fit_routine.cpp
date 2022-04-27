@@ -57,7 +57,7 @@ namespace routines
 {
 
 template<typename T_real>
-SVD_Fit_Routine<T_real>::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine()
+SVD_Fit_Routine<T_real>::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine<T_real>()
 {
 
 }

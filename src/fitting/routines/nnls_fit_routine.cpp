@@ -57,7 +57,7 @@ namespace routines
 {
 
 template<typename T_real>
-NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
+NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine<T_real>()
 {
 
     _max_iter = 200;
@@ -67,7 +67,7 @@ NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routine()
+NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine(size_t max_iter) : Matrix_Optimized_Fit_Routine<T_real>()
 {
 
     _max_iter = max_iter;

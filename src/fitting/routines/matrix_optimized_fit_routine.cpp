@@ -59,7 +59,7 @@ std::mutex Matrix_Optimized_Fit_Routine<T_real>::_int_spec_mutex;
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-Matrix_Optimized_Fit_Routine<T_real>::Matrix_Optimized_Fit_Routine() : Param_Optimized_Fit_Routine()
+Matrix_Optimized_Fit_Routine<T_real>::Matrix_Optimized_Fit_Routine() : Param_Optimized_Fit_Routine<T_real>()
 {
 
 }

@@ -57,7 +57,7 @@ namespace routines
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T_real>
-ROI_Fit_Routine<T_real>::ROI_Fit_Routine() : Base_Fit_Routine()
+ROI_Fit_Routine<T_real>::ROI_Fit_Routine() : Base_Fit_Routine<T_real>()
 {
 
 }

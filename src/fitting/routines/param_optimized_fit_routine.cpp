@@ -67,7 +67,7 @@ namespace routines
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-Param_Optimized_Fit_Routine<T_real>::Param_Optimized_Fit_Routine() : Base_Fit_Routine()
+Param_Optimized_Fit_Routine<T_real>::Param_Optimized_Fit_Routine() : Base_Fit_Routine<T_real>()
 {
 
     _optimizer = nullptr;
