@@ -143,20 +143,20 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
                     this->_energy_range.min,
                     this->_energy_range.max);
 
-                _background = bkg.segment(_energy_range.min, _energy_range.count());
+                _background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
             }
             else
             {
-                _background.setZero(_energy_range.count());
+                _background.setZero(this->_energy_range.count());
             }
             _model = (models::Base_Model<T_real>*)model;
             _elements_to_fit = elements_to_fit;
             _spectra = spectra;
 
-            ret_val = this->_optimizer->minimize_func(&fit_params, spectra, _energy_range, &_background, gen_func);
+            ret_val = this->_optimizer->minimize_func(&fit_params, spectra, this->_energy_range, &_background, gen_func);
 
             _model->update_fit_params_values(&fit_params);
-            this->initialize(_model, elements_to_fit, _energy_range);
+            this->initialize(_model, elements_to_fit, this->_energy_range);
             std::unordered_map<std::string, T_real> out_counts;
             this->fit_spectra(_model, spectra, elements_to_fit, out_counts);
 
