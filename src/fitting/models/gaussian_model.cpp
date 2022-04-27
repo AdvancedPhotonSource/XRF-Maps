@@ -70,7 +70,7 @@ namespace models
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-Gaussian_Model<T_real>::Gaussian_Model<T_real>() : Base_Model<T_real>()
+Gaussian_Model<T_real>::Gaussian_Model() : Base_Model<T_real>()
 {
     _fit_parameters = _generate_default_fit_parameters();
 }
@@ -78,7 +78,7 @@ Gaussian_Model<T_real>::Gaussian_Model<T_real>() : Base_Model<T_real>()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-Gaussian_Model<T_real>::~Gaussian_Model<T_real>()
+Gaussian_Model<T_real>::~Gaussian_Model()
 {
 
 }
