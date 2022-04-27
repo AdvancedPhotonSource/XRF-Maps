@@ -105,10 +105,10 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fit_Element_Map_Dict<T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+DLL_EXPORT data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fit_Element_Map_Dict<T_real> *elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
 
-template data_struct::Fit_Count_Dict<float>* generate_fit_count_dict(const Fit_Element_Map_Dict<float>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
-template data_struct::Fit_Count_Dict<double>* generate_fit_count_dict(const Fit_Element_Map_Dict<double>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+TEMPLATE_DLL_EXPORT data_struct::Fit_Count_Dict<float>* generate_fit_count_dict(const Fit_Element_Map_Dict<float>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
+TEMPLATE_DLL_EXPORT data_struct::Fit_Count_Dict<double>* generate_fit_count_dict(const Fit_Element_Map_Dict<double>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count);
 
 // ----------------------------------------------------------------------------
 
@@ -181,11 +181,11 @@ TEMPLATE_DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<double>
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
+DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr);
 
-template void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<float>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback);
+TEMPLATE_DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<float>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback);
 
-template void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<double>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback);
+TEMPLATE_DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<double>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback);
 
 // ----------------------------------------------------------------------------
 
