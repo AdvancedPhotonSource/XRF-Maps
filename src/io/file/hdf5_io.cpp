@@ -7338,7 +7338,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         long long avail_mem = get_available_mem();
 
         
-        if (file_type == H5T_NATIVE_DOUBLE || file_type == H5T_INTEL_F64)
+        if (H5Tequal(file_type, H5T_NATIVE_DOUBLE) || H5Tequal(file_type, H5T_INTEL_F64))
         {
             if ((total * sizeof(double) * 2) > (avail_mem) && rank == 3) //mca_arr
             {
@@ -7448,7 +7448,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                 error = H5Dwrite(dst_dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, buffer1.data());
             }
         }
-        else
+        else  //else float
         {
             if ((total * sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
             {
@@ -8609,8 +8609,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 		if (v9_max_id > -1)
 		{
             void* buf = nullptr;
-            logI << "---------------------------\n" << H5Tget_tag(max_type) << "\n";
-            if (max_type == H5T_NATIVE_DOUBLE || max_type == H5T_INTEL_F64)
+            if (H5Tequal(max_type, H5T_NATIVE_DOUBLE) || H5Tequal(max_type, H5T_INTEL_F64))
             {
                 double* dbuf = new double[count2d[1]];
                 buf = dbuf;
