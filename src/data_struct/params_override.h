@@ -76,9 +76,9 @@ public:
         si_escape_enabled = false;
         ge_escape_enabled = false;
         fit_snip_width = 0.5;
-        us_amp_sens_num = -1;
+        us_amp_sens_num = 1;
         us_amp_sens_unit = "";
-        ds_amp_sens_num = -1;
+        ds_amp_sens_num = 1;
         ds_amp_sens_unit = "";
         theta_pv = "";
         sr_current = 0.0;
@@ -102,9 +102,9 @@ public:
         si_escape_enabled = false;
         ge_escape_enabled = false;
         fit_snip_width = 0.0;
-        us_amp_sens_num = -1;
+        us_amp_sens_num = 1;
         us_amp_sens_unit = "";
-        ds_amp_sens_num = -1;
+        ds_amp_sens_num = 1;
         ds_amp_sens_unit = "";
         theta_pv = "";
         sr_current = 0.0;

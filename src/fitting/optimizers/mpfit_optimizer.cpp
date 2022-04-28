@@ -84,6 +84,13 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     for (int i=0; i<m; i++)
     {
 		dy[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+		if (std::isfinite(dy[i]) == false)
+		{
+			logE << "\n\n\n";
+			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
+			logE << "\n\n\n";
+			dy[i] = ud->spectra[i];
+		}
     }
 	
     ud->cur_itr++;
@@ -115,6 +122,10 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
     for (int i=0; i<m; i++)
     {
         dy[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
+		if (std::isfinite(dy[i]) == false)
+		{
+			dy[i] = ud->spectra[i];
+		}
     }
 
     return 0;
@@ -144,11 +155,14 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
     int idx = 0;
     for(auto& itr : ud->quant_map)
     {
-        dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
-        if (std::isfinite(dy[idx]) == false)
-        {
-            dy[idx] = std::numeric_limits<real_t>::max();
-        }
+		if (std::isfinite(result_map[itr.first]) == false)
+		{
+			dy[idx] = itr.second.e_cal_ratio;
+		}
+		else
+		{
+			dy[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+		}
         idx++;
     }
 

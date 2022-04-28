@@ -561,7 +561,6 @@ int main(int argc, char *argv[])
         io::populate_netcdf_hdf5_files(dataset_dir);
         if(optimize_fit_override_params)
         {
-            io::populate_netcdf_hdf5_files(dataset_dir);
             generate_optimal_params(&analysis_job);
             // reload override files
             io::init_analysis_job_detectors(&analysis_job);

@@ -60,6 +60,7 @@ namespace data_struct
 using namespace std;
 
 typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
+typedef Eigen::Vector<real_t, Eigen::Dynamic> VectorXr;
 
 template<typename _T>
 class Spectra_T : public Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>
@@ -217,11 +218,11 @@ private:
 };
 
 #if defined _WIN32 || defined __CYGWIN__
-	template DLL_EXPORT class Spectra_T<float>;
+	template DLL_EXPORT class Spectra_T<real_t>;
 #else
-	template class DLL_EXPORT Spectra_T<float>;
+	template class DLL_EXPORT Spectra_T<real_t>;
 #endif
-typedef Spectra_T<float> Spectra;
+typedef Spectra_T<real_t> Spectra;
 
 DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size);
 DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr& boxcar);

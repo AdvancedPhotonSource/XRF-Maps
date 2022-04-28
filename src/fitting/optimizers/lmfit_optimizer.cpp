@@ -73,10 +73,18 @@ void residuals_lmfit( const real_t *par, int m_dat, const void *data, real_t *fv
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
     ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
 		fvec[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+		if (std::isfinite(fvec[i]) == false)
+		{
+			logE << "\n\n\n";
+			logE << "Spectra[i] = " << ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
+			logE << "\n\n\n";
+			fvec[i] = ud->spectra[i];
+		}
     }
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
@@ -98,11 +106,16 @@ void general_residuals_lmfit( const real_t *par, int m_dat, const void *data, re
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
+	// Used to check for nan's here but there were some cases where the optimizer would return nan found. So moved to after subract of model
     ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
         fvec[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
+		if (std::isfinite(fvec[i]) == false)
+		{
+			fvec[i] = ud->spectra[i];
+		}
     }
 
 }
@@ -131,11 +144,14 @@ void quantification_residuals_lmfit( const real_t *par, int m_dat, const void *d
     int idx = 0;
     for(auto& itr : ud->quant_map)
     {
-        fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
-        if (std::isfinite(fvec[idx]) == false)
-        {
-            fvec[idx] = std::numeric_limits<real_t>::max();
-        }
+		if (std::isfinite(result_map[itr.first]) == false)
+		{
+			fvec[idx] = itr.second.e_cal_ratio;
+		}
+		else
+		{
+			fvec[idx] = itr.second.e_cal_ratio - result_map[itr.first];
+		}
         idx++;
     }
 }
@@ -149,9 +165,9 @@ LMFit_Optimizer::LMFit_Optimizer() : Optimizer()
 	_options.ftol = LM_USERTOL; //LM_USERTOL; // Relative error desired in the sum of squares. Termination occurs when both the actualand predicted relative reductions in the sum of squares are at most ftol.
     _options.xtol = LM_USERTOL; // Relative error between last two approximations. Termination occurs when the relative error between two consecutive iterates is at most xtol.
     _options.gtol = LM_USERTOL;  //LM_USERTOL; // Orthogonality desired between fvec and its derivs. Termination occurs when the cosine of the angle between fvec and any column of the Jacobian is at most gtol in absolute value.
-    _options.epsilon = LM_USERTOL;// LM_EPSILON; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
+    _options.epsilon = LM_EPSILON;// LM_EPSILON; // Step used to calculate the Jacobian, should be slightly larger than the relative error in the user-supplied functions.
     _options.stepbound = (real_t)100.; // Used in determining the initial step bound. This bound is set to the product of stepbound and the Euclidean norm of diag*x if nonzero, or else to stepbound itself. In most cases stepbound should lie in the interval (0.1,100.0). Generally, the value 100.0 is recommended.
-    _options.patience = 200; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
+    _options.patience = 1000; // Used to set the maximum number of function evaluations to patience*(number_of_parameters+1).
     _options.scale_diag = 1; // If 1, the variables will be rescaled internally. Recommended value is 1.
     _options.msgfile = NULL; //  Progress messages will be written to this file.
     _options.verbosity = 0; //  OR'ed: 1: print some messages; 2: print Jacobian. 
