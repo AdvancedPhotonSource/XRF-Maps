@@ -179,8 +179,15 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
 
                             T_real counts = standard->element_counts.at(routine).at(name);
                             T_real e_cal_factor = (eq_itr.weight * (ic_quantifier));
-                            T_real e_cal = e_cal_factor / counts;
-                            eq_itr.e_cal_ratio = (T_real)1.0 / e_cal;
+                            if(counts > 0.)
+                            {
+                                T_real e_cal = e_cal_factor / counts;
+                                eq_itr.e_cal_ratio = (T_real)1.0 / e_cal;
+                            }
+                            else
+                            {
+                                eq_itr.e_cal_ratio = 1.0e-10;
+                            }
                         }
                     }
                 }
