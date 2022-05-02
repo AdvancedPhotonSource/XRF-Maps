@@ -112,7 +112,7 @@ void Spectra_Net_Source<T_real>::run()
         {
             if(_zmq_socket->recv(&message))
             {
-                if(_output_callback_func != nullptr && _analysis_job != nullptr)
+                if(this->_output_callback_func != nullptr && _analysis_job != nullptr)
                 {
                     stream_block = _serializer.decode_spectra((char*)message.data(), message.size());
                     _analysis_job->init_fit_routines(stream_block->spectra->size());
@@ -128,7 +128,7 @@ void Spectra_Net_Source<T_real>::run()
                         stream_block->model = cp->model;
                     }
 
-                    _output_callback_func(stream_block);
+                    this->_output_callback_func(stream_block);
                 }
             }
         }

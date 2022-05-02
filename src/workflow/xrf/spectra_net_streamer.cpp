@@ -63,7 +63,7 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
     _send_counts = true;
     _send_spectra = true;
 
-    _callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
+    this->_callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
 
     std::string conn_str = "tcp://*:" + port;
 	_context = new zmq::context_t(1);
