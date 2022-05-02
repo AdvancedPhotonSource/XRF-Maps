@@ -4502,8 +4502,8 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
     hsize_t count[1] = { 1 };
 
     //save energy vector
-    std::vector<real_t> out_vec;
-    data_struct::gen_energy_vector(spectra_size, energy_offset, energy_slope, &out_vec);
+    data_struct::ArrayXr energy = data_struct::ArrayXr::LinSpaced(spectra_size, 0, spectra_size-1);
+    data_struct::ArrayXr ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (real_t)2.0) * energy_quad);
 
     if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
     {
@@ -4515,14 +4515,14 @@ bool HDF5_IO::save_energy_calib(int spectra_size, real_t energy_offset, real_t e
         return false;
     }
 
-    count[0] = out_vec.size();
+    count[0] = ev.size();
     _create_memory_space(1, count, memoryspace_id);
 
     if (false == _open_h5_dataset(STR_ENERGY, H5T_INTEL_R, spec_grp_id, 1, count, count, dset_id, dataspace_id))
     {
         return false;
     }
-    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&out_vec[0]);
+    status = H5Dwrite(dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, ev.data());
     if (status < 0)
     {
         logE << " H5Dwrite failed to write " << STR_ENERGY << "\n";

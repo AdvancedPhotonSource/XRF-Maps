@@ -144,7 +144,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job* analysis_job,
 
     if (params_override != nullptr)
     {
-        //load the quantification standard dataset
+        //load the standard dataset
         if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
         {
             logE << "In optimize_integrated_dataset loading dataset" << dataset_filename << " for detector" << detector_num << "\n";
@@ -332,7 +332,7 @@ void proc_spectra(data_struct::Spectra_Volume* spectra_volume,
         start = std::chrono::system_clock::now();
         if (override_params->elements_to_fit.size() < 1)
         {
-            logE<<"No elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist"<<"\n";
+            logE<<"No elements to fit. Check  maps_fit_parameters_override.txt0 - 7 exist"<<"\n";
             continue;
         }
 
@@ -847,13 +847,6 @@ bool perform_quantification(data_struct::Analysis_Job* analysis_job)
                for (auto& quant_itr : detector->avg_quantification_scaler_map)
                {
                     fitting::routines::Base_Fit_Routine *fit_routine = fit_itr.second;
-
-                    // update e_cal_ratio for elements in standards by average value
-                    for (auto& s_itr : detector->quantification_standards)
-                    {
-                        Quantification_Standard* quantification_standard = &(s_itr.second);
-                        detector->update_element_quants(fit_itr.first, quant_itr.first, quantification_standard, &quantification_model, quant_itr.second);
-                    }
 
                     logI << Fitting_Routine_To_Str.at(fit_itr.first) << " "<< quant_itr.first  << "\n";
                     Fit_Parameters fit_params;
