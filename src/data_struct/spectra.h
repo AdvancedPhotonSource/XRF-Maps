@@ -240,12 +240,6 @@ TEMPLATE_DLL_EXPORT ArrayTr<float> snip_background<float>(const Spectra<float>* 
 TEMPLATE_DLL_EXPORT ArrayTr<double> snip_background<double>(const Spectra<double>* const spectra, double energy_offset, double energy_linear, double energy_quadratic, double width, double xmin, double xmax);
 
 template<typename T_real>
-DLL_EXPORT void gen_energy_vector(T_real number_channels, T_real energy_offset, T_real energy_slope, std::vector<T_real> *out_vec);
-
-TEMPLATE_DLL_EXPORT void gen_energy_vector<float>(float number_channels, float energy_offset, float energy_slope, std::vector<float>* out_vec);
-TEMPLATE_DLL_EXPORT void gen_energy_vector<double>(double number_channels, double energy_offset, double energy_slope, std::vector<double>* out_vec);
-
-template<typename T_real>
 using IO_Callback_Func_Def = std::function<void(size_t, size_t, size_t, size_t, size_t, Spectra<T_real>*, void*)>;
 
 } //namespace data_struct

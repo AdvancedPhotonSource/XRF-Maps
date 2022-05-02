@@ -249,17 +249,6 @@ ArrayTr<T_real> snip_background(const Spectra<T_real>* const spectra,
 
 // ----------------------------------------------------------------------------
 
-template<typename T_real>
-void gen_energy_vector(T_real number_channels, T_real energy_offset, T_real energy_slope, std::vector<T_real> *out_vec)
-{
-
-    out_vec->resize(number_channels);
-    for(int i=0; i<number_channels; i++)
-    {
-        (*out_vec)[i] = (i * energy_slope) + energy_offset;
-    }
-
-}
 
 } //namespace data_struct
 
