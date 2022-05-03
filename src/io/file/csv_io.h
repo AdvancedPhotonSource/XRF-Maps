@@ -50,6 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef CSV_IO_H
 #define CSV_IO_H
 
+#include <fstream>
+
 #include "data_struct/spectra.h"
 #include "data_struct/element_info.h"
 #include "data_struct/fit_parameters.h"

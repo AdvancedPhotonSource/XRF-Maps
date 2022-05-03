@@ -66,6 +66,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/mem_info.h"
 #include "core/defines.h"
 
+#include "data_struct/element_info.h"
+#include "data_struct/scaler_lookup.h"
+
 namespace io
 {
 namespace file
@@ -3393,7 +3396,7 @@ public:
                         scan_info->meta_info.requested_rows = scalers_count[1];
                         first_save = false;
                     }
-                    Scaler_Map<T_real> sm;
+                    data_struct::Scaler_Map<T_real> sm;
                     sm.name = string(str_dset_name, len);
                     sm.values.resize(scalers_count[0], scalers_count[1]);
                     status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, sm.values.data());
@@ -3419,7 +3422,7 @@ public:
 
             for (hsize_t s = 0; s < scaler_amt; s++)
             {
-                Scaler_Map<T_real> sm;
+                data_struct::Scaler_Map<T_real> sm;
                 sm.values.resize(scalers_count[0], scalers_count[1]);
                 scalers_offset[2] = s;
                 H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, scalers_offset, nullptr, scalers_count, nullptr);
@@ -3593,7 +3596,7 @@ public:
             hsize_t amt = val_dims_in[0];
             for (hsize_t i = 0; i < amt; i++)
             {
-                Scaler_Map sm;
+                data_struct::Scaler_Map sm;
                 scan_info->scaler_maps.push_back(sm);
             }
             */

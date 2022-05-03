@@ -58,9 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <cctype>
 
-#include "data_struct/element_info.h"
-#include "data_struct/scaler_lookup.h"
-
 #include "csv_io.h"
 
 const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",

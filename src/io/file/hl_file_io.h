@@ -191,6 +191,69 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(dat
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
+DLL_EXPORT bool load_override_params(std::string dataset_directory,
+    int detector_num,
+    data_struct::Params_Override<T_real>* params_override,
+    bool append_file_name = true)
+{
+    std::string det_num = "";
+    std::string filename = dataset_directory;
+    if (detector_num > -1)
+        det_num = std::to_string(detector_num);
+
+
+    if (append_file_name)
+    {
+        filename += "maps_fit_parameters_override.txt" + det_num;
+    }
+
+    if (false == io::file::aps::load_parameters_override(filename, params_override))
+    {
+        logE << "Loading fit param override file: " << filename << "\n";
+        return false;
+    }
+    else
+    {
+        data_struct::Element_Info<T_real>* detector_element;
+        if (params_override->detector_element.length() > 0)
+        {
+            // Get the element info class                                   // detector element as string "Si" or "Ge" usually
+
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override->detector_element);
+        }
+        else
+        {
+            //log error or warning
+            logE << "No detector material defined in maps_fit_parameters_override.txt . Defaulting to Si" << "\n";
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
+        }
+
+        if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
+        {
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
+        }
+        if (params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
+        {
+            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
+        }
+
+        logI << "Elements to fit:  ";
+        //Update element ratios by detector element
+        for (auto& itr : params_override->elements_to_fit)
+        {
+            itr.second->init_energy_ratio_for_detector_element(detector_element);
+            logit_s << itr.first << " ";
+        }
+        logit_s << "\n";
+    }
+
+    return true;
+}
+
+
+// ----------------------------------------------------------------------------
+
 /**
  * @brief init_analysis_job_detectors : Read in maps_fit_parameters_override.txt[0-3] and initialize data structres
  *                                      Override file contains information about which element to fit, updated branching
@@ -566,68 +629,6 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     logI << "Finished Loading dataset " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << " detector " << detector_num << "\n";
     return ret_val;
-}
-
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
-DLL_EXPORT bool load_override_params(std::string dataset_directory,
-                                    int detector_num,
-                                    data_struct::Params_Override<T_real>* params_override,
-                                    bool append_file_name = true)
-{
-    std::string det_num = "";
-    std::string filename = dataset_directory;
-    if (detector_num > -1)
-        det_num = std::to_string(detector_num);
-
-
-    if (append_file_name)
-    {
-        filename += "maps_fit_parameters_override.txt" + det_num;
-    }
-
-    if (false == io::file::aps::load_parameters_override(filename, params_override))
-    {
-        logE << "Loading fit param override file: " << filename << "\n";
-        return false;
-    }
-    else
-    {
-        data_struct::Element_Info<T_real>* detector_element;
-        if (params_override->detector_element.length() > 0)
-        {
-            // Get the element info class                                   // detector element as string "Si" or "Ge" usually
-
-            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override->detector_element);
-        }
-        else
-        {
-            //log error or warning
-            logE << "No detector material defined in maps_fit_parameters_override.txt . Defaulting to Si" << "\n";
-            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
-        }
-
-        if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
-        {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
-        }
-        if (params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
-        {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
-        }
-
-        logI << "Elements to fit:  ";
-        //Update element ratios by detector element
-        for (auto& itr : params_override->elements_to_fit)
-        {
-            itr.second->init_energy_ratio_for_detector_element(detector_element);
-            logit_s << itr.first << " ";
-        }
-        logit_s << "\n";
-    }
-
-    return true;
 }
 
 // ----------------------------------------------------------------------------
