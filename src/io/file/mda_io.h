@@ -56,6 +56,26 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/scan_info.h"
 #include "data_struct/analysis_job.h"
 
+#include <string>
+#include <iostream>
+#include <fstream>
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "data_struct/scaler_lookup.h"
+
+
+#ifdef XDR_HACK
+#include "support/mdautils-1.4.1/xdr_hack.h"
+#else
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+#endif
+
+
 namespace io
 {
 namespace file
@@ -115,6 +135,8 @@ public:
 
     void unload_int_spectra() { _integrated_spectra_map.clear(); }
 
+    bool load_henke_from_xdr(std::string filename);
+
 private:
 
     void _load_scalers(bool load_int_spec);
@@ -147,14 +169,6 @@ private:
 
 TEMPLATE_CLASS_DLL_EXPORT MDA_IO<float>;
 TEMPLATE_CLASS_DLL_EXPORT MDA_IO<double>;
-
-
-template<typename T_real>
-DLL_EXPORT bool load_henke_from_xdr(std::string filename);
-
-TEMPLATE_DLL_EXPORT bool load_henke_from_xdr<float>(std::string filename);
-TEMPLATE_DLL_EXPORT bool load_henke_from_xdr<double>(std::string filename);
-
 
 DLL_EXPORT int mda_get_multiplied_dims(std::string path);
 

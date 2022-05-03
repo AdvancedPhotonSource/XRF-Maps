@@ -119,7 +119,7 @@ IF (BUILD_WITH_QT)
   add_definitions(-D_BUILD_WITH_QT)
   set(CMAKE_CXX_STANDARD 14)
   find_package(Qt5 COMPONENTS Core Charts REQUIRED)
-  set(VISUAL_INC src/visual/grapher.h src/visual/grapher.cpp )
+  set(VISUAL_INC src/visual/grapher.h )
   include_directories(src/visual/)
   include_directories(${Qt5Charts_INCLUDES})
   set(CMAKE_CXX_FLAGS "${Qt5Charts_EXECUTABLE_COMPILE_FLAGS}")
@@ -252,7 +252,6 @@ set(libxrf_fit_SOURCE
     src/data_struct/scaler_lookup.cpp
     src/data_struct/fit_parameters.cpp
     src/data_struct/fit_element_map.cpp
-    src/data_struct/spectra.cpp
     src/data_struct/spectra_line.cpp
     src/data_struct/spectra_volume.cpp
     src/data_struct/stream_block.cpp
@@ -276,7 +275,7 @@ set(XRF_IO_HEADERS
 	src/core/mem_info.h
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
-        src/io/file/mca_io.h
+    src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
@@ -302,11 +301,8 @@ set(XRF_IO_SOURCE
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp
-    src/io/file/mca_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
-    src/io/file/csv_io.cpp
-    src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/hl_file_io.cpp
     src/io/net/basic_serializer.cpp
     src/workflow/xrf/spectra_file_source.cpp
@@ -315,7 +311,6 @@ set(XRF_IO_SOURCE
     src/workflow/xrf/detector_sum_spectra_source.cpp
     src/workflow/xrf/spectra_stream_saver.cpp
     src/workflow/xrf/spectra_net_streamer.cpp
-    src/core/process_streaming.cpp
     src/core/process_whole.cpp
     )
 

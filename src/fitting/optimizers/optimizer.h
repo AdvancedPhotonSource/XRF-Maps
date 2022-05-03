@@ -138,6 +138,9 @@ TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<float>;
 TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<double>;
 
 
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+
 template<typename T_real>
 void fill_user_data(User_Data<T_real> &ud,
                     Fit_Parameters<T_real>*fit_params,
@@ -147,12 +150,55 @@ void fill_user_data(User_Data<T_real> &ud,
                     const Range energy_range,
                     Callback_Func_Status_Def* status_callback,
                     size_t total_itr,
-                    bool use_weights = false);
+                    bool use_weights = false)
+{
+    ud.fit_model = (Base_Model<T_real>*)model;
+    // set spectra to fit
+    ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+    //new (&(ud.spectra)) Eigen::Map<const ArrayTr<T_real>>(spectra->data() + energy_range.min, energy_range.count());
+    ud.orig_spectra = spectra;
+    ud.fit_parameters = fit_params;
+    ud.elements = (Fit_Element_Map_Dict<T_real> *)elements_to_fit;
+    ud.energy_range.min = energy_range.min;
+    ud.energy_range.max = energy_range.max;
 
+    ud.status_callback = status_callback;
+    ud.cur_itr = 0;
+    ud.total_itr = total_itr;
 
-TEMPLATE_DLL_EXPORT void fill_user_data<float>(User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Fit_Element_Map_Dict<float>* const elements_to_fit, const Base_Model<float>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
-TEMPLATE_DLL_EXPORT void fill_user_data<double>(User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Fit_Element_Map_Dict<double>* const elements_to_fit, const Base_Model<double>* const model, const Range energy_range, Callback_Func_Status_Def* status_callback, size_t total_itr, bool use_weights);
+    if (use_weights)
+    {
+        ArrayTr<T_real> weights = (T_real)1.0 / ((T_real)1.0 + (*spectra));
+        weights = convolve1d(weights, 5);
+        weights = Eigen::abs(weights);
+        weights /= weights.maxCoeff();
+        ud.weights = weights.segment(energy_range.min, energy_range.count());
+    }
+    else
+    {
+        ud.weights.resize(energy_range.count());
+        ud.weights.fill(1.0);
+    }
 
+    ArrayTr<T_real> background(spectra->size());
+    background.setZero(spectra->size());
+    if (fit_params->contains(STR_SNIP_WIDTH))
+    {
+        background = snip_background<T_real>(spectra,
+            fit_params->value(STR_ENERGY_OFFSET),
+            fit_params->value(STR_ENERGY_SLOPE),
+            fit_params->value(STR_ENERGY_QUADRATIC),
+            fit_params->value(STR_SNIP_WIDTH),
+            energy_range.min,
+            energy_range.max);
+    }
+    ud.spectra_background = background.segment(energy_range.min, energy_range.count());
+    ud.spectra_background = ud.spectra_background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    ud.spectra_model.resize(energy_range.count());
+}
+
+//----------------------------------------------------------------------------
 
 template<typename T_real>
 void fill_gen_user_data(Gen_User_Data<T_real>& ud,
@@ -161,18 +207,64 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         const Range energy_range,
                         const ArrayTr<T_real>* background,
                         Gen_Func_Def<T_real> gen_func,
-                        bool use_weights = false);
+                        bool use_weights = false)
+{
+    ud.func = gen_func;
+    // set spectra to fit
+    ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());;
+    //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+    //new (&ud.spectra) Eigen::Map<const ArrayTr<T_real>>(spectra->data() + energy_range.min, energy_range.count());
+    ud.fit_parameters = fit_params;
+    ud.energy_range.min = energy_range.min;
+    ud.energy_range.max = energy_range.max;
 
-TEMPLATE_DLL_EXPORT void fill_gen_user_data<float>(Gen_User_Data<float>& ud, Fit_Parameters<float>* fit_params, const Spectra<float>* const spectra, const Range energy_range, const ArrayTr<float>* background, Gen_Func_Def<float> gen_func, bool use_weights);
-TEMPLATE_DLL_EXPORT void fill_gen_user_data<double>(Gen_User_Data<double>& ud, Fit_Parameters<double>* fit_params, const Spectra<double>* const spectra, const Range energy_range, const ArrayTr<double>* background, Gen_Func_Def<double> gen_func, bool use_weights);
+    if (use_weights)
+    {
+        ArrayTr<T_real> weights = (T_real)1.0 / ((T_real)1.0 + (*spectra));
+        weights = convolve1d(weights, 5);
+        weights = Eigen::abs(weights);
+        weights /= weights.maxCoeff();
+        ud.weights = weights.segment(energy_range.min, energy_range.count());
+    }
+    else
+    {
+        ud.weights.resize(energy_range.count());
+        ud.weights.fill(1.0);
+    }
+    ud.spectra_background = *background;
+    ud.spectra_background = ud.spectra_background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
+    ud.spectra_model.resize(energy_range.count());
+}
+
+//----------------------------------------------------------------------------
 
 template<typename T_real>
-void update_background_user_data(User_Data<T_real> *ud);
+void update_background_user_data(User_Data<T_real> *ud)
+{
+    if (ud->fit_parameters->contains(STR_SNIP_WIDTH))
+    {
+        Fit_Param<T_real> fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
+        if (fit_snip_width.bound_type != E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
+        {
+            //ud->spectra_background = snip_background(ud->orig_spectra,
+            ArrayTr<T_real> background = snip_background<T_real>(ud->orig_spectra,
+                ud->fit_parameters->value(STR_ENERGY_OFFSET),
+                ud->fit_parameters->value(STR_ENERGY_SLOPE),
+                ud->fit_parameters->value(STR_ENERGY_QUADRATIC),
+                fit_snip_width.value,
+                ud->energy_range.min,
+                ud->energy_range.max);
 
-TEMPLATE_DLL_EXPORT void update_background_user_data<float>(User_Data<float>* ud);
-TEMPLATE_DLL_EXPORT void update_background_user_data<double>(User_Data<double>* ud);
+            ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
+            ud->spectra_background = ud->spectra_background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 
 /**
  * @brief The Optimizer class : Base class for error minimization to find optimal specta model

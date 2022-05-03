@@ -48,24 +48,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "mda_io.h"
 
-#include <string>
-#include <iostream>
-#include <fstream>
-
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "data_struct/scaler_lookup.h"
-
-
-#ifdef XDR_HACK
-    #include "support/mdautils-1.4.1/xdr_hack.h"
-#else
-  #include <rpc/types.h>
-  #include <rpc/xdr.h>
-#endif
 
 
 namespace io
@@ -1382,10 +1364,9 @@ data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned in
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool load_henke_from_xdr(std::string filename)
+bool MDA_IO<T_real>::load_henke_from_xdr(std::string filename)
 {
     data_struct::Element_Info_Map<T_real>* element_map = data_struct::Element_Info_Map<T_real>::inst();
 
@@ -1393,13 +1374,13 @@ bool load_henke_from_xdr(std::string filename)
 
     if (false == fileStream.good())
     {
-        logE<<"Opening file "<<filename<<"\n";
+        logE << "Opening file " << filename << "\n";
         return false;
     }
 
     std::FILE* xdr_file = fopen(filename.c_str(), "rb");
 
-    XDR *xdrstream;
+    XDR* xdrstream;
 #ifndef XDR_HACK
     XDR xdrs;
     xdrstream = &xdrs;
@@ -1411,12 +1392,12 @@ bool load_henke_from_xdr(std::string filename)
     int num_elements;
     int num_energies;
     int num_extra_energies;
-    if( xdr_int32_t( xdrstream, &num_elements) == 0)
+    if (xdr_int32_t(xdrstream, &num_elements) == 0)
     {
         std::fclose(xdr_file);
         return false;
     }
-    if( xdr_int32_t( xdrstream, &num_energies) == 0)
+    if (xdr_int32_t(xdrstream, &num_energies) == 0)
     {
         std::fclose(xdr_file);
         return false;
@@ -1424,7 +1405,7 @@ bool load_henke_from_xdr(std::string filename)
 
     element_map->_energies.resize(num_energies);
     //float *energy_arr = new float[num_energies];
-    if( xdr_vector( xdrstream, (char *) &(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+    if (xdr_vector(xdrstream, (char*)&(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
     {
         std::fclose(xdr_file);
         return false;
@@ -1434,14 +1415,14 @@ bool load_henke_from_xdr(std::string filename)
 
     //delete [] energy_arr;
 
-    for (int i=0; i<num_elements; i++)
+    for (int i = 0; i < num_elements; i++)
     {
-        data_struct::Element_Info<T_real>* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i + 1);
         if (element == nullptr)
         {
             element = new data_struct::Element_Info<T_real>();
-            element->number = i+1;
-            element->name = data_struct::Element_Symbols[i+1];
+            element->number = i + 1;
+            element->name = data_struct::Element_Symbols[i + 1];
             element_map->add_element(element);
         }
         //element->init_f_energies(num_energies);
@@ -1449,47 +1430,47 @@ bool load_henke_from_xdr(std::string filename)
         element->f2_atomic_scattering_imaginary.resize(num_energies);
 
         //element_information.
-        if( xdr_vector( xdrstream, (char *) &(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
     }
 
-    if( xdr_int32_t( xdrstream, &num_extra_energies) == 0)
+    if (xdr_int32_t(xdrstream, &num_extra_energies) == 0)
     {
         std::fclose(xdr_file);
         return false;
     }
 
-    for (int i=0; i<num_elements; i++)
+    for (int i = 0; i < num_elements; i++)
     {
-        data_struct::Element_Info<T_real>* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i + 1);
         element->init_extra_energies(num_extra_energies);
 
         int element_n;
-        if( xdr_int32_t( xdrstream, &element_n) == 0)
+        if (xdr_int32_t(xdrstream, &element_n) == 0)
         {
             std::fclose(xdr_file);
             return false;
         }
 
-        if( xdr_vector( xdrstream, (char *) &(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
@@ -1500,6 +1481,9 @@ bool load_henke_from_xdr(std::string filename)
 
     return true;
 }
+
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 int mda_get_multiplied_dims(std::string path)

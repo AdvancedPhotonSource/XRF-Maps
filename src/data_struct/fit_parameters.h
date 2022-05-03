@@ -260,10 +260,15 @@ TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<double>;
 
 //-----------------------------------------------------------------------------
 template<typename T_real>
-DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params);
+DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params)
+{
+    return get_energy_range(params->value(STR_MIN_ENERGY_TO_FIT),
+        params->value(STR_MAX_ENERGY_TO_FIT),
+        spectra_size,
+        params->value(STR_ENERGY_OFFSET),
+        params->value(STR_ENERGY_SLOPE));
+}
 
-TEMPLATE_DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<float>* params);
-TEMPLATE_DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<double>* params);
 
 /**
 * @brief get_energy_range: genereates a range which consists of min and max. This represents the min energy and max enegry of the spectra to fit.
@@ -274,10 +279,24 @@ TEMPLATE_DLL_EXPORT Range get_energy_range(size_t spectra_size, Fit_Parameters<d
 * @return Range structure with the min energy and max enegry of the spectra to fit.
 */
 template<typename T_real>
-DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope);
+DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope)
+{
 
-TEMPLATE_DLL_EXPORT Range get_energy_range(float min_energy, float max_energy, size_t spectra_size, float energy_offset, float energy_slope);
-TEMPLATE_DLL_EXPORT Range get_energy_range(double min_energy, double max_energy, size_t spectra_size, double energy_offset, double energy_slope);
+    struct Range energy_range;
+    energy_range.min = static_cast<size_t>(round((min_energy - energy_offset) / energy_slope));
+    energy_range.max = static_cast<size_t>(round((max_energy - energy_offset) / energy_slope));
+    //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
+    if ((energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min))
+    {
+        energy_range.max = spectra_size - 1;
+    }
+    if (energy_range.min > energy_range.max)
+    {
+        energy_range.min = 0;
+    }
+    return energy_range;
+
+}
 
 } //namespace data_struct
 

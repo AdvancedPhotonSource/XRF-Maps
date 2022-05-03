@@ -172,9 +172,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<float>;
-TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<double>;
-
 } //namespace data_struct
 
 #endif // Analysis_Job_H

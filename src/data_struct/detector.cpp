@@ -327,19 +327,19 @@ void Detector<T_real>::update_from_fit_paramseters()
     }
     if (fit_params_override_dict.be_window_thickness.length() > 0)
     {
-        beryllium_window_thickness = std::stof(fit_params_override_dict.be_window_thickness) * 1000.0;
+        beryllium_window_thickness = parse_input_real<T_real>(fit_params_override_dict.be_window_thickness) * 1000.0;
     }
     if (fit_params_override_dict.ge_dead_layer.length() > 0)
     {
-        germanium_dead_layer = std::stof(fit_params_override_dict.ge_dead_layer) * 1000.0;
+        germanium_dead_layer = parse_input_real<T_real>(fit_params_override_dict.ge_dead_layer) * 1000.0;
     }
     if (fit_params_override_dict.det_chip_thickness.length() > 0)
     {
-        detector_chip_thickness = std::stof(fit_params_override_dict.det_chip_thickness) * 1000.0;
+        detector_chip_thickness = parse_input_real<T_real>(fit_params_override_dict.det_chip_thickness) * 1000.0;
     }
     if (fit_params_override_dict.airpath.length() > 0)
     {
-        airpath = std::stof(fit_params_override_dict.airpath) * 1000.0;
+        airpath = parse_input_real<T_real>(fit_params_override_dict.airpath) * 1000.0;
     }
     if (fit_params_override_dict.fit_params.contains(STR_COHERENT_SCT_ENERGY))
     {

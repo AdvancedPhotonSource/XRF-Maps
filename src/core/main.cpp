@@ -601,11 +601,11 @@ int main(int argc, char *argv[])
 			}
         }
 
-        interate_datasets_and_update(analysis_job);
+        iterate_datasets_and_update(analysis_job);
     }
     else if( update_h5_without_fitting )
     {
-        interate_datasets_and_update(analysis_job);
+        iterate_datasets_and_update(analysis_job);
     }
     else
     {

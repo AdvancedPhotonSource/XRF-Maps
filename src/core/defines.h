@@ -77,7 +77,7 @@ static std::time_t now_c;
     #ifdef __GNUC__
       #define DLL_EXPORT __attribute__ ((dllexport))
     #else
-      #define DLL_EXPORT __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+      #define DLL_EXPORT __declspec(dllexport) 
     #endif
   #else
     #ifdef __GNUC__
@@ -101,14 +101,25 @@ static std::time_t now_c;
 
 
 #if defined _WIN32 || defined __CYGWIN__
-#define TEMPLATE_DLL_EXPORT template DLL_EXPORT 
 #define TEMPLATE_CLASS_DLL_EXPORT template DLL_EXPORT class
 #define TEMPLATE_STRUCT_DLL_EXPORT template DLL_EXPORT struct
 #else
-#define TEMPLATE_DLL_EXPORT template<> DLL_EXPORT 
 #define TEMPLATE_CLASS_DLL_EXPORT template class DLL_EXPORT
 #define TEMPLATE_STRUCT_DLL_EXPORT template struct DLL_EXPORT
 #endif
+
+template<typename T_real>
+T_real parse_input_real(std::string value)
+{
+    if (std::is_same<T_real, float>::value)
+    {
+        return std::stof(value);
+    }
+    else if (std::is_same<T_real, double>::value)
+    {
+        return std::stod(value);
+    }
+}
 
 // STRING KEYS
 using namespace std;

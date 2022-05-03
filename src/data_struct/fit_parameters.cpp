@@ -334,39 +334,5 @@ void Fit_Parameters<T_real>::remove(std::string key)
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-template<typename T_real>
-Range get_energy_range(size_t spectra_size, Fit_Parameters<T_real>* params)
-{
-	return get_energy_range(params->value(STR_MIN_ENERGY_TO_FIT),
-							params->value(STR_MAX_ENERGY_TO_FIT),
-							spectra_size,
-							params->value(STR_ENERGY_OFFSET),
-							params->value(STR_ENERGY_SLOPE));
-}
-
-
-//-----------------------------------------------------------------------------
-template<typename T_real>
-Range get_energy_range(T_real min_energy, T_real max_energy, size_t spectra_size, T_real energy_offset, T_real energy_slope)
-{
-
-	struct Range energy_range;
-	energy_range.min = static_cast<size_t>(round((min_energy - energy_offset) / energy_slope));
-	energy_range.max = static_cast<size_t>(round((max_energy - energy_offset) / energy_slope));
-	//if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
-	if ((energy_range.max > spectra_size - 1) || (energy_range.max <= energy_range.min))
-	{
-		energy_range.max = spectra_size - 1;
-	}
-    if (energy_range.min > energy_range.max)
-	{
-		energy_range.min = 0;
-	}
-	return energy_range;
-
-}
-
-//-----------------------------------------------------------------------------
 
 } //namespace data_struct

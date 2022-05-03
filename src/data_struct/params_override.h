@@ -139,10 +139,10 @@ public:
 			getline(f, el_name, ',');
 			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
-			float factor = 1.0;
+			T_real factor;
 			// 1
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][4] = factor;
 			branching_ratios[el_name][5] = factor;
 			branching_ratios[el_name][7] = factor;
@@ -151,14 +151,14 @@ public:
 
 			// 2
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][2] = factor;
 			branching_ratios[el_name][6] = factor;
 			branching_ratios[el_name][11] = factor;
 			
 			//3
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][0] = factor;
 			branching_ratios[el_name][1] = factor;
 			branching_ratios[el_name][3] = factor;
@@ -177,9 +177,9 @@ public:
 			
 			for (unsigned int i = 0; i < 12; i++)
 			{
-				float factor = 1.0;
+				T_real factor = 1.0;
 				std::getline(f, s, ',');
-				factor = std::stof(s);
+				factor = parse_input_real<T_real>(s);
 				branching_ratios[el_name][i] = factor;
 			}
 		}
@@ -195,18 +195,18 @@ public:
 
 			for (unsigned int i = 0; i < 4; i++)
 			{
-				float factor = 1.0;
+				T_real factor = 1.0;
 				std::getline(f, s, ',');
-				factor = std::stof(s);
+				factor = parse_input_real<T_real>(s);
 				branching_ratios[el_name][i] = factor;
 			}
 		}
 
 	}
 
-	map<int, float> get_custom_factor(string el_name)
+	map<int, T_real> get_custom_factor(string el_name)
 	{
-		map<int, float> factors;
+		map<int, T_real> factors;
 		if (branching_ratios.count(el_name) > 0)
 		{
 			return branching_ratios.at(el_name);
@@ -238,7 +238,7 @@ public:
     vector<string> branching_ratio_L;
     vector<string> branching_ratio_K;
 
-	unordered_map< string, map<int, float> > branching_ratios;
+	unordered_map< string, map<int, T_real> > branching_ratios;
 
     T_real sr_current;
     T_real US_IC;

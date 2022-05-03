@@ -174,4 +174,7 @@ void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<float>;
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<double>;
+
 } //namespace data_struct
