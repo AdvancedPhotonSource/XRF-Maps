@@ -58,8 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <cctype>
 
-#include "csv_io.h"
-
 const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
                                                        "Element_Weights_Names",
                                                        STR_DS_IC,

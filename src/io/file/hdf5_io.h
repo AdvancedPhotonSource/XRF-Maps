@@ -69,6 +69,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/element_info.h"
 #include "data_struct/scaler_lookup.h"
 
+#include "csv_io.h"
 namespace io
 {
 namespace file
@@ -4764,7 +4765,7 @@ public:
                 for (const auto& fit_itr : detector->fitting_quant_map)
                 {
 
-                    if (false == _open_or_create_group(Fitting_Routine_To_Str.at(fit_itr.first), xrf_fits_grp_id, q_fit_grp_id))
+                    if (false == _open_or_create_group(data_struct::Fitting_Routine_To_Str.at(fit_itr.first), xrf_fits_grp_id, q_fit_grp_id))
                     {
                         return false;
                     }
@@ -4874,7 +4875,7 @@ public:
 
             for (const auto& qitr : detector->fitting_quant_map)
             {
-                if (false == _open_or_create_group(Fitting_Routine_To_Str.at(qitr.first), calib_grp_id, q_fit_grp_id))
+                if (false == _open_or_create_group(data_struct::Fitting_Routine_To_Str.at(qitr.first), calib_grp_id, q_fit_grp_id))
                 {
                     return false;
                 }
@@ -5909,10 +5910,10 @@ public:
 
         if (file_id > 0)
         {
-            ArrayTr<T_real> energy_array;
-            ArrayTr<T_real> int_spectra;
-            ArrayTr<T_real> model_spectra;
-            ArrayTr<T_real> background_array;
+            data_struct::ArrayTr<T_real> energy_array;
+            data_struct::ArrayTr<T_real> int_spectra;
+            data_struct::ArrayTr<T_real> model_spectra;
+            data_struct::ArrayTr<T_real> background_array;
             std::string csv_path;
 
 
@@ -6081,7 +6082,7 @@ public:
                 hid_t error = _read_h5d<T_real>(mca_arr_id, memoryspace_id, mca_arr_space, H5P_DEFAULT, buffer.data());
                 if (error > -1)
                 {
-                    ArrayTr<T_real> background = data_struct::snip_background<T_real>((data_struct::Spectra<T_real>*) & buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
+                    data_struct::ArrayTr<T_real> background = data_struct::snip_background<T_real>((data_struct::Spectra<T_real>*) & buffer, params.fit_params.value(STR_ENERGY_OFFSET), params.fit_params.value(STR_ENERGY_SLOPE), params.fit_params.value(STR_ENERGY_QUADRATIC), params.fit_params.value(STR_SNIP_WIDTH), energy_range.min, energy_range.max);
                     error = _write_h5d<T_real>(back_arr_id, memoryspace_id, mca_arr_space, H5P_DEFAULT, background.data());
                     if (error < 0)
                     {
