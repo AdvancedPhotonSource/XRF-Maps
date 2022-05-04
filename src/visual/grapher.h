@@ -45,28 +45,6 @@ using namespace data_struct;
 namespace visual
 {
 
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
-DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
-                                data_struct::ArrayTr<T_real>* energy,
-                                data_struct::ArrayTr<T_real>* spectra,
-                                data_struct::ArrayTr<T_real>* model,
-                                data_struct::ArrayTr<T_real>* background,
-                                bool log_them)
-{
-    if (QCoreApplication::startingUp())
-    {
-        int argc = 0;
-        char** argv = nullptr;
-        QApplication app(argc, argv);
-        SavePlotSpectras(path, energy, spectra, model, background, log_them);
-    }
-    else
-    {
-        SavePlotSpectras(path, energy, spectra, model, background, log_them);
-    }
-}
 
 // ----------------------------------------------------------------------------
 
@@ -197,7 +175,28 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
     }
 
 }
+// ----------------------------------------------------------------------------
 
+template<typename T_real>
+DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
+    data_struct::ArrayTr<T_real>* energy,
+    data_struct::ArrayTr<T_real>* spectra,
+    data_struct::ArrayTr<T_real>* model,
+    data_struct::ArrayTr<T_real>* background,
+    bool log_them)
+{
+    if (QCoreApplication::startingUp())
+    {
+        int argc = 0;
+        char** argv = nullptr;
+        QApplication app(argc, argv);
+        SavePlotSpectras(path, energy, spectra, model, background, log_them);
+    }
+    else
+    {
+        SavePlotSpectras(path, energy, spectra, model, background, log_them);
+    }
+}
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
@@ -242,64 +241,6 @@ DLL_EXPORT bool contains_shell(quantification::models::Electron_Shell shell_idx,
 
 // ----------------------------------------------------------------------------
 
-template<typename T_real>
-DLL_EXPORT void SavePlotQuantificationFromConsole(std::string path, Detector<T_real>* detector)
-{
-    if (QCoreApplication::startingUp())
-    {
-        int argc = 0;
-        char** argv = nullptr;
-        QApplication app(argc, argv);
-        SavePlotQuantification(path, detector);
-    }
-    else
-    {
-        SavePlotQuantification(path, detector);
-    }
-
-}
-
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
-DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detector)
-{
-    if (detector == nullptr)
-    {
-        logW << "Detector == nullptr, can't save quantification\n";
-    }
-
-    //iterate through proc_type {roi, nnls, fitted}
-    for (auto& itr1 : detector->fitting_quant_map)
-    {
-        //iterate through quantifier {sr_current, us_ic, ds_ic}
-        for (auto& itr2 : itr1.second.quant_scaler_map)
-        {
-            for (const auto& shell_itr : Shells_Quant_List)
-            {
-                if (contains_shell(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
-                {
-                    int zstart = 0;
-                    int zstop = CALIBRATION_CURVE_SIZE;
-                    find_shell_Z_offset(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
-
-                    std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_" + quantification::models::Shell_To_String.at(shell_itr) + "_det";
-                    if (detector->number() != -1)
-                    {
-                        str_path_full += std::to_string(detector->number()) + ".png";
-                    }
-                    else
-                    {
-                        str_path_full += ".png";
-                    }
-                    SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(shell_itr)), zstart, zstop);
-                }
-            }
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
 template<typename T_real>
 DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                               Detector<T_real>* detector,
@@ -430,6 +371,64 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
 }
 
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detector)
+{
+    if (detector == nullptr)
+    {
+        logW << "Detector == nullptr, can't save quantification\n";
+    }
+
+    //iterate through proc_type {roi, nnls, fitted}
+    for (auto& itr1 : detector->fitting_quant_map)
+    {
+        //iterate through quantifier {sr_current, us_ic, ds_ic}
+        for (auto& itr2 : itr1.second.quant_scaler_map)
+        {
+            for (const auto& shell_itr : Shells_Quant_List)
+            {
+                if (contains_shell(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
+                {
+                    int zstart = 0;
+                    int zstop = CALIBRATION_CURVE_SIZE;
+                    find_shell_Z_offset(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
+
+                    std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_" + quantification::models::Shell_To_String.at(shell_itr) + "_det";
+                    if (detector->number() != -1)
+                    {
+                        str_path_full += std::to_string(detector->number()) + ".png";
+                    }
+                    else
+                    {
+                        str_path_full += ".png";
+                    }
+                    SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(shell_itr)), zstart, zstop);
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT void SavePlotQuantificationFromConsole(std::string path, Detector<T_real>* detector)
+{
+    if (QCoreApplication::startingUp())
+    {
+        int argc = 0;
+        char** argv = nullptr;
+        QApplication app(argc, argv);
+        SavePlotQuantification(path, detector);
+    }
+    else
+    {
+        SavePlotQuantification(path, detector);
+    }
+
+}
 // ----------------------------------------------------------------------------
 
 } // visual

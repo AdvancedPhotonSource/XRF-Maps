@@ -133,36 +133,6 @@ namespace csv
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT void save_quantification(std::string path, Detector<T_real>* detector)
-    {
-        if (detector == nullptr)
-        {
-            logW << "Detector == nullptr, can't save quantification\n";
-        }
-
-        //iterate through proc_type {roi, nnls, fitted}
-        for (auto& itr1 : detector->fitting_quant_map)
-        {
-            //iterate through quantifier {sr_current, us_ic, ds_ic}
-            for (auto& itr2 : itr1.second.quant_scaler_map)
-            {
-                std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det";
-                if (detector->number() != -1)
-                {
-                    str_path_full += std::to_string(detector->number()) + ".csv";
-                }
-                else
-                {
-                    str_path_full += ".csv";
-                }
-                save_calibration_curve(str_path_full, detector, &(detector->quantification_standards), itr1.first, itr2.first, &(itr2.second));
-            }
-        }
-    }
-
-    // ----------------------------------------------------------------------------
-
-    template<typename T_real>
     DLL_EXPORT bool save_calibration_curve(std::string path,
                                             Detector<T_real>* detector,
                                             std::map<string, Quantification_Standard<T_real>>* standards,
@@ -266,6 +236,35 @@ namespace csv
         return true;
     }
 
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
+    DLL_EXPORT void save_quantification(std::string path, Detector<T_real>* detector)
+    {
+        if (detector == nullptr)
+        {
+            logW << "Detector == nullptr, can't save quantification\n";
+        }
+
+        //iterate through proc_type {roi, nnls, fitted}
+        for (auto& itr1 : detector->fitting_quant_map)
+        {
+            //iterate through quantifier {sr_current, us_ic, ds_ic}
+            for (auto& itr2 : itr1.second.quant_scaler_map)
+            {
+                std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_K_det";
+                if (detector->number() != -1)
+                {
+                    str_path_full += std::to_string(detector->number()) + ".csv";
+                }
+                else
+                {
+                    str_path_full += ".csv";
+                }
+                save_calibration_curve(str_path_full, detector, &(detector->quantification_standards), itr1.first, itr2.first, &(itr2.second));
+            }
+        }
+    }
      // ----------------------------------------------------------------------------
 
     template<typename T_real>

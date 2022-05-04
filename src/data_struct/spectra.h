@@ -224,16 +224,6 @@ TEMPLATE_CLASS_DLL_EXPORT Spectra<double>;
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_size)
-{
-    ArrayTr<T_real> boxcar(boxcar_size);
-    boxcar.setConstant(boxcar_size, 1.0);
-    return convolve1d(arr, boxcar);
-}
-
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<T_real>& boxcar)
 {
     ArrayTr<T_real> new_background(arr.size());
@@ -264,6 +254,16 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
     }
 
     return new_background;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_size)
+{
+    ArrayTr<T_real> boxcar(boxcar_size);
+    boxcar.setConstant(boxcar_size, 1.0);
+    return convolve1d(arr, boxcar);
 }
 
 // ----------------------------------------------------------------------------
