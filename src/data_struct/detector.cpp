@@ -187,6 +187,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                                 {
                                     eq_itr.e_cal_ratio = (T_real)1.0 / e_cal;
                                 }
+                                else
                                 {
                                     T_real second_cal_ratio = (T_real)1.0 / e_cal;
                                     eq_itr.e_cal_ratio += second_cal_ratio;
