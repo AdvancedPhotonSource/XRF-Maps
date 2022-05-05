@@ -24,29 +24,7 @@
 /******************************************************************************/
 
 /* Set machine-dependent constants to values from float.h. */
-#ifdef _REAL_DOUBLE
-  #define LM_MACHEP DBL_EPSILON       /* resolution of arithmetic */
-  #define LM_DWARF DBL_MIN            /* smallest nonzero number */
-  #define LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
-  #define LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
-  #define LM_USERTOL 30 * LM_MACHEP   /* users are recommended to require this */
-#else
-/*
-  #define LM_MACHEP FLT_EPSILON       // resolution of arithmetic 
-  #define LM_DWARF FLT_MIN            // smallest nonzero number 
-  #define LM_SQRT_DWARF sqrt(FLT_MIN) // square should not underflow 
-  #define LM_SQRT_GIANT sqrt(FLT_MAX) // square should not overflow 
-  #define LM_USERTOL 1.e-7   // users are recommended to require this 
-  */
-#define LM_MACHEP 1.19209e-10f       // resolution of arithmetic 
-#define LM_DWARF 1.17549e-38f           // smallest nonzero number 
-#define LM_GIANT   3.40282e+38f
-#define LM_SQRT_DWARF (sqrt(LM_DWARF*1.5f)*10.0f) // square should not underflow 
-#define LM_SQRT_GIANT (sqrt(LM_GIANT)*0.1f) // square should not overflow 
-#define LM_USERTOL 1.19209e-10f  // users are recommended to require this 
-#define LM_EPSILON 1.19209e-7f  // MPFit's epsilon
 
-#endif
 /* If the above values do not work, the following seem good for an x86:
  LM_MACHEP     .555e-16
  LM_DWARF      9.9e-324
@@ -60,6 +38,21 @@
  LM_SQRT_GIANT 1.304e19
  LM_USER_TOL   1.e-14
 */
+
+#define DP_LM_MACHEP DBL_EPSILON       /* resolution of arithmetic */
+#define DP_LM_DWARF DBL_MIN            /* smallest nonzero number */
+#define DP_LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
+#define DP_LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
+#define DP_LM_USERTOL 30 * DP_LM_MACHEP   /* users are recommended to require this */
+#define DP_LM_EPSILON 1.19209e-14f  // MPFit's epsilon
+
+#define FP_LM_MACHEP 1.19209e-10f       // resolution of arithmetic 
+#define FP_LM_DWARF 1.17549e-38f           // smallest nonzero number 
+#define FP_LM_GIANT   3.40282e+38f
+#define FP_LM_SQRT_DWARF (sqrt(FP_LM_DWARF*1.5f)*10.0f) // square should not underflow 
+#define FP_LM_SQRT_GIANT (sqrt(FP_LM_GIANT)*0.1f) // square should not overflow 
+#define FP_LM_USERTOL 1.19209e-10f  // users are recommended to require this 
+#define FP_LM_EPSILON 1.19209e-7f  // MPFit's epsilon
 
 
 #define MIN(a, b) (((a) <= (b)) ? (a) : (b))
@@ -105,6 +98,19 @@ _T lm_enorm(int n, const _T* x)
 {
     int i;
     _T agiant, s1, s2, s3, xabs, x1max, x3max;
+
+    _T LM_SQRT_DWARF;
+    _T LM_SQRT_GIANT;
+    if (std::is_same<_T, float>::value)
+    {
+        LM_SQRT_DWARF = FP_LM_SQRT_DWARF;
+        LM_SQRT_GIANT = FP_LM_SQRT_GIANT;
+    }
+    else if (std::is_same<_T, double>::value)
+    {
+        LM_SQRT_DWARF = DP_LM_SQRT_DWARF;
+        LM_SQRT_GIANT = DP_LM_SQRT_GIANT;
+    }
 
     s1 = 0;
     s2 = 0;
@@ -391,6 +397,16 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     _T sum, temp;
     static _T p1 = (_T)0.1;
 
+    _T LM_DWARF;
+    if (std::is_same<_T, float>::value)
+    {
+        LM_DWARF = FP_LM_DWARF;
+    }
+    else if (std::is_same<_T, double>::value)
+    {
+        LM_DWARF = DP_LM_DWARF;
+    }
+
     /*** Compute and store in x the Gauss-Newton direction. If the Jacobian
          is rank-deficient, obtain a least-squares solution. ***/
 
@@ -572,6 +588,16 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
 {
     int i, j, k, kmax;
     _T ajnorm, sum, temp;
+
+    _T LM_MACHEP;
+    if (std::is_same<_T, float>::value)
+    {
+        LM_MACHEP = FP_LM_MACHEP;
+    }
+    else if (std::is_same<_T, double>::value)
+    {
+        LM_MACHEP = DP_LM_MACHEP;
+    }
 
 #ifdef LMFIT_DEBUG_MESSAGES
     printf("debug qrfac\n");
@@ -759,6 +785,19 @@ void lmmin(const int n, _T* x, const int m, const void* data,
         sum, temp, temp1, temp2, temp3;
 
     /***  Initialize internal variables.  ***/
+
+    _T LM_DWARF;
+    _T LM_MACHEP;
+    if (std::is_same<_T, float>::value)
+    {
+        LM_DWARF = FP_LM_DWARF;
+        LM_MACHEP = FP_LM_MACHEP;
+    }
+    else if (std::is_same<_T, double>::value)
+    {
+        LM_DWARF = DP_LM_DWARF;
+        LM_MACHEP = DP_LM_MACHEP;
+    }
 
     int maxfev = C->patience * (n+1);
 

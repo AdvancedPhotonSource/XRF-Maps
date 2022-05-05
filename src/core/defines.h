@@ -59,16 +59,6 @@ static std::time_t now_c;
 #define logW logit<<"Warning: "
 #define logI logit<<"Info: "
 
-#if defined _REAL_FLOAT
-//  #define str_to_real std::stof
-//  #define H5T_NATIVE_REAL H5T_NATIVE_FLOAT
-//  #define H5T_INTEL_R H5T_INTEL_F32
-#elif defined _REAL_DOUBLE
-//  #define str_to_real std::stod
-//  #define H5T_NATIVE_REAL H5T_NATIVE_DOUBLE
-//  #define H5T_INTEL_R H5T_INTEL_F64
-#endif
-
 #if defined _WIN32 || defined __CYGWIN__
   #pragma warning( disable : 4251 4127 4996 4505 4244 )
   #define DIR_END_CHAR '\\'

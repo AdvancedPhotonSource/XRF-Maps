@@ -174,20 +174,20 @@ typedef int (*mp_func)(int m, // Number of functions (elts of fvec)
 #define MP_GTOL (8)              /* gtol is too small; no further improvement*/
 
 /* Double precision numeric constants */
-#ifdef _REAL_DOUBLE
-  #define MP_MACHEP0 2.2204460e-16
-  #define MP_DWARF   2.2250739e-308
-  #define MP_GIANT   1.7976931e+308
-  #define MP_RDWARF  (sqrt(MP_DWARF*1.5)*10)
-  #define MP_RGIANT  (sqrt(MP_GIANT)*0.1)
-#else
+
+#define DP_MP_MACHEP0 2.2204460e-16
+#define DP_MP_DWARF   2.2250739e-308
+#define DP_MP_GIANT   1.7976931e+308
+#define DP_MP_RDWARF  (sqrt(DP_MP_DWARF*1.5)*10)
+#define DP_MP_RGIANT  (sqrt(DP_MP_GIANT)*0.1)
+
 /* Float precision */
-  #define MP_MACHEP0 1.19209e-7f
-  #define MP_DWARF   1.17549e-38f
-  #define MP_GIANT   3.40282e+38f
-  #define MP_RDWARF  (sqrt(MP_DWARF*1.5f)*10.0f)
-  #define MP_RGIANT  (sqrt(MP_GIANT)*0.1f)
-#endif
+#define FP_MP_MACHEP0 1.19209e-7f
+#define FP_MP_DWARF   1.17549e-38f
+#define FP_MP_GIANT   3.40282e+38f
+#define FP_MP_RDWARF  (sqrt(FP_MP_DWARF*1.5f)*10.0f)
+#define FP_MP_RGIANT  (sqrt(FP_MP_GIANT)*0.1f)
+
 
 
 
@@ -238,8 +238,20 @@ _T mp_enorm(int n, _T *x)
   int i;
   _T agiant,floatn,s1,s2,s3,xabs,x1max,x3max;
   _T ans, temp;
-  _T rdwarf = MP_RDWARF;
-  _T rgiant = MP_RGIANT;
+  _T rdwarf;
+  _T rgiant;
+
+  if (std::is_same<_T, float>::value)
+  {
+      rdwarf = FP_MP_RDWARF;
+      rgiant = FP_MP_RGIANT;
+  }
+  else if (std::is_same<_T, double>::value)
+  {
+      rdwarf = DP_MP_RDWARF;
+      rgiant = DP_MP_RGIANT;
+  }
+
   const _T zero = 0.0;
   const _T one = 1.0;
 
@@ -418,6 +430,16 @@ int mp_fdjac2(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *pri
   const _T zero = 0.0;
   int has_analytical_deriv = 0, has_numerical_deriv = 0;
   int has_debug_deriv = 0;
+
+  _T MP_MACHEP0;
+  if (std::is_same<_T, float>::value)
+  {
+      MP_MACHEP0 = FP_MP_MACHEP0;
+  }
+  else if (std::is_same<_T, double>::value)
+  {
+      MP_MACHEP0 = DP_MP_MACHEP0;
+  }
 
   temp = std::max<_T>(epsfcn,MP_MACHEP0);
   eps = sqrt(temp);
@@ -655,6 +677,16 @@ void mp_qrfac(int m, int n, _T *a, int lda,
   const _T zero = (_T)0.0;
   const _T one = (_T)1.0;
   const _T p05 = (_T)0.05;
+
+  _T MP_MACHEP0;
+  if (std::is_same<_T, float>::value)
+  {
+      MP_MACHEP0 = FP_MP_MACHEP0;
+  }
+  else if (std::is_same<_T, double>::value)
+  {
+      MP_MACHEP0 = DP_MP_MACHEP0;
+  }
 
   lda = 0;      /* Prevent compiler warning */
   lipvt = 0;    /* Prevent compiler warning */
@@ -1111,6 +1143,16 @@ void mp_lmpar(int n, _T *r, int ldr, int *ipvt, int *ifree, _T *diag,
   /* const _T one = 1.0; */
   const _T p1 = (_T)0.1;
   const _T p001 = (_T)0.001;
+
+  _T MP_DWARF;
+  if (std::is_same<_T, float>::value)
+  {
+      MP_DWARF = FP_MP_DWARF;
+  }
+  else if (std::is_same<_T, double>::value)
+  {
+      MP_DWARF = DP_MP_DWARF;
+  }
 
   /*
    *     compute and store in x the gauss-newton direction. if the
@@ -1701,6 +1743,16 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   mp_config<_T> conf;
   int i, j, info, iflag, nfree, npegged, iter;
   int qanylim = 0;
+
+  _T MP_MACHEP0;
+  if (std::is_same<_T, float>::value)
+  {
+      MP_MACHEP0 = FP_MP_MACHEP0;
+  }
+  else if (std::is_same<_T, double>::value)
+  {
+      MP_MACHEP0 = DP_MP_MACHEP0;
+  }
 
   int ij,jj,l;
   _T actred,delta,dirder,fnorm,fnorm1,gnorm, orignorm;

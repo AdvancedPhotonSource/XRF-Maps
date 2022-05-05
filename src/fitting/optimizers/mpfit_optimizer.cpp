@@ -177,10 +177,20 @@ template<typename T_real>
 MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-    _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-    _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    if (std::is_same<T_real, float>::value)
+    {
+        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = FP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    }
+    else if (std::is_same<T_real, double>::value)
+    {
+        _options.ftol = 1.192e-20;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = 1.192e-20;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = 1.192e-20;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = DP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    }
     _options.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     _options.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
