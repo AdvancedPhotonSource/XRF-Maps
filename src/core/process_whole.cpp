@@ -454,13 +454,28 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
                 }
             }
 
-        io::save_quantification_plots(analysis_job->dataset_directory, detector);
+            io::save_quantification_plots(analysis_job->dataset_directory, detector);
+
         }
     }
     else
     {
         logE<<"Loading quantification standard "<<analysis_job->quantification_standard_filename<<"\n";
         return false;
+    }
+
+    //Save quantification to each file
+    for (auto& dataset_file : analysis_job->dataset_files)
+    {
+        for (size_t detector_num : analysis_job->detector_num_arr)
+        {
+            data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
+            std::string str_detector_num = std::to_string(detector_num);
+            std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+            io::file::HDF5_IO::inst()->start_save_seq(full_save_path);
+            io::file::HDF5_IO::inst()->save_quantification(detector);
+            io::file::HDF5_IO::inst()->end_save_seq();
+        }
     }
 
     end = std::chrono::system_clock::now();
