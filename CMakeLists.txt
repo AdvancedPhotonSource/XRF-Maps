@@ -281,7 +281,6 @@ set(XRF_IO_HEADERS
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
 	src/io/file/aps/aps_fit_params_import.h
-  src/io/file/aps/aps_roi_io.h
 	src/io/file/hl_file_io.h
 	src/io/net/basic_serializer.h
 	src/workflow/source.h
@@ -308,7 +307,6 @@ set(XRF_IO_SOURCE
     src/io/file/netcdf_io.cpp
     src/io/file/csv_io.cpp
     src/io/file/aps/aps_fit_params_import.cpp
-    src/io/file/aps/aps_roi_io.cpp
     src/io/file/hl_file_io.cpp
     src/io/net/basic_serializer.cpp
     src/workflow/xrf/spectra_file_source.cpp

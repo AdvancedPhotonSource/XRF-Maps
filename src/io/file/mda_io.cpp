@@ -246,8 +246,8 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
     if (_mda_file->header->data_rank == 2)
     {
-        logI<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
-                  " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
+        logI<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+                  " acquired rows "<< _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
         if(hasNetCDF)
         {
@@ -761,8 +761,8 @@ bool MDA_IO::load_integrated_spectra(std::string path,
 
 	if (_mda_file->header->data_rank == 2)
 	{
-		logI << " requested cols " << _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
-			" acquired cols " << _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point << "\n";
+		logI << " requested rows " << _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+			" acquired rows " << _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point << "\n";
 
 		if (hasNetCDF)
 		{
