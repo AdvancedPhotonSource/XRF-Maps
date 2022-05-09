@@ -318,13 +318,20 @@ size_t NetCDF_IO::_load_spectra(E_load_type ltype,
         {
             output_counts = ((float)ii) / elapsed_realtime;
             (*spec_line)[j].output_counts(output_counts);
-
-            // recalculate elapsed lifetime
-            (*spec_line)[j].recalc_elapsed_livetime();
         }
         else if(ltype == E_load_type::INTEGRATED)
         {
             output_counts += ((float)ii) / elapsed_realtime;
+        }
+
+        if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
+        {
+            (*spec_line)[j].elapsed_livetime(elapsed_livetime);
+            (*spec_line)[j].elapsed_realtime(elapsed_realtime);
+            (*spec_line)[j].input_counts(input_counts);
+            (*spec_line)[j].output_counts(output_counts);
+            // recalculate elapsed lifetime
+            (*spec_line)[j].recalc_elapsed_livetime();
         }
 
         start[2] += header_size + (spectra_size * detector);

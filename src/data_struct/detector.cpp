@@ -171,8 +171,27 @@ void Detector::update_element_quants(Fitting_Routines routine,
 
                             real_t counts = standard->element_counts.at(routine).at(name);
                             real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
-                            real_t e_cal = e_cal_factor / counts;
-                            eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                            if (counts > 0.)
+                            {
+                                real_t e_cal = e_cal_factor / counts;
+                                if (eq_itr.e_cal_ratio == 0.)
+                                {
+                                    eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
+                                }
+                                else // else avg the two
+                                {
+                                    real_t second_cal_ratio = (real_t)1.0 / e_cal;
+                                    eq_itr.e_cal_ratio += second_cal_ratio;
+                                    eq_itr.e_cal_ratio *= 0.5;
+                                }
+                            }
+                            else
+                            {
+                                if (eq_itr.e_cal_ratio == 0.)
+                                {
+                                    eq_itr.e_cal_ratio = 1.0e-10;
+                                }
+                            }
                         }
                     }
                 }

@@ -229,8 +229,6 @@ DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr& boxcar);
 DLL_EXPORT ArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t width, real_t xmin, real_t xmax);
 
 
-DLL_EXPORT void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec);
-
 typedef std::function<void(size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> IO_Callback_Func_Def;
 
 

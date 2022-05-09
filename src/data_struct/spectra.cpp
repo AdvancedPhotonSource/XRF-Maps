@@ -238,16 +238,5 @@ ArrayXr snip_background(const Spectra* const spectra,
 
 }
 
-void gen_energy_vector(real_t number_channels, real_t energy_offset, real_t energy_slope, std::vector<real_t> *out_vec)
-{
-
-    out_vec->resize(number_channels);
-    for(int i=0; i<number_channels; i++)
-    {
-        (*out_vec)[i] = (i * energy_slope) + energy_offset;
-    }
-
-}
-
 } //namespace data_struct
 
