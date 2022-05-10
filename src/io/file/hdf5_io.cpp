@@ -888,7 +888,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
                         {
                             //hid_t dspace_id = H5Dget_space(analysis_ids[k]);
                             //H5Sselect_hyperslab(dspace_id, H5S_SELECT_SET, offset, nullptr, chunk_dims, nullptr);
-                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_REAL, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
+                            //error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, memoryspace_id, dspace_id, H5P_DEFAULT, buffer2.data());
                             error = H5Dread(analysis_ids[k], H5T_NATIVE_DOUBLE, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer2.data());
                             if (error > -1)
                             {

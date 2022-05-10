@@ -163,7 +163,7 @@ public:
         }
     }
 
-    void add(const Spectra& spectra)
+    void add(const Spectra<_T>& spectra)
     {
         *this += (ArrayTr<_T>)spectra;
         _T val = spectra.elapsed_livetime();
@@ -185,6 +185,39 @@ public:
         if(std::isfinite(val))
         {
             _output_counts += val;
+        }
+    }
+
+    // Note: T_real is different template typename, this is to convert double to float or the other way around.
+    template<typename T_real>
+    void add(const Spectra<T_real>* spectra)
+    {
+        if (spectra != nullptr)
+        {
+            for (int i = 0; i < size(); i++)
+            {
+                (ArrayTr<_T>(*this))(i) += static_cast<_T>( (*spectra)(i) );
+            }
+            _T val = spectra->elapsed_livetime();
+            if (std::isfinite(val))
+            {
+                _elapsed_livetime += val;
+            }
+            val = spectra->elapsed_realtime();
+            if (std::isfinite(val))
+            {
+                _elapsed_realtime += val;
+            }
+            val = spectra->input_counts();
+            if (std::isfinite(val))
+            {
+                _input_counts += val;
+            }
+            val = spectra->output_counts();
+            if (std::isfinite(val))
+            {
+                _output_counts += val;
+            }
         }
     }
 
