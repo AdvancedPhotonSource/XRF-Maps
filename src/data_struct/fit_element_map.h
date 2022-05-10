@@ -194,10 +194,30 @@ TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<double>;
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb);
+DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
+{
+    data_struct::Element_Info_Map<T_real>* element_info_map = data_struct::Element_Info_Map<T_real>::inst();
+    data_struct::Fit_Element_Map<T_real>* fit_map = nullptr;
 
-template<> DLL_EXPORT Fit_Element_Map<float>* gen_element_map(std::string element_symb);
-template<> DLL_EXPORT Fit_Element_Map<double>* gen_element_map(std::string element_symb);
+    element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+
+    // check if element_symb contains '_'
+    std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
+
+    //logI<<element_symb<<" : "<<base_element_symb<<"\n";
+
+    data_struct::Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
+    if (e_info == nullptr)
+    {
+        logW << "Can not find element " << base_element_symb << "\n";
+    }
+    else
+    {
+        fit_map = new data_struct::Fit_Element_Map<T_real>(element_symb, e_info);
+    }
+
+    return fit_map;
+}
 
 template<typename T_real>
 using Fit_Element_Map_Dict = std::unordered_map<std::string, Fit_Element_Map<T_real>*>;
