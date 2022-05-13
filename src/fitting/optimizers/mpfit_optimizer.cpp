@@ -186,9 +186,9 @@ MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
     }
     else if (std::is_same<T_real, double>::value)
     {
-        _options.ftol = 1.192e-20;       // Relative chi-square convergence criterium  Default: 1e-10
-        _options.xtol = 1.192e-20;       // Relative parameter convergence criterium   Default: 1e-10
-        _options.gtol = 1.192e-20;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
         _options.epsfcn = DP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     }
     _options.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
@@ -649,7 +649,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	_fill_limits(fit_params, par);
 
     info = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
-    logI << "Outcome: " << optimizer_outcome_to_str(this->_outcome_map[info]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << result.resid << "\n";
+    logI << "Outcome: " << optimizer_outcome_to_str(this->_outcome_map[info]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
 	_print_info(info);
 

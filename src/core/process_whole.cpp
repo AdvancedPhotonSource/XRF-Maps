@@ -222,6 +222,8 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
 {
     fitting::models::Gaussian_Model<double> model;
     quantification::models::Quantification_Model<double> quantification_model;
+    // Z number : count
+    std::unordered_map<int, float> element_amt_in_all_standards;
 
     data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
     data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
@@ -229,6 +231,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
     energy_range.min = 0;
+
 
     for (Quantification_Standard<double>& standard_itr : analysis_job->standard_element_weights)
     {
@@ -243,6 +246,15 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             data_struct::Element_Info<double>* e_info = data_struct::Element_Info_Map<double>::inst()->get_element(itr.first);
             elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
             elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
+
+            if (element_amt_in_all_standards.count(e_info->number) > 0)
+            {
+                element_amt_in_all_standards[e_info->number] += 1.0;
+            }
+            else
+            {
+                element_amt_in_all_standards[e_info->number] = 1.0;
+            }
         }
 
         unordered_map<string, double> pv_map;
@@ -399,6 +411,16 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             delete itr3.second;
         }
         elements_to_fit.clear();
+    }
+
+    float divisor = (float)analysis_job->standard_element_weights.size();    
+    
+    if (divisor > 1.0)
+    {
+        for (auto& fit_itr : detector->fit_routines)
+        {
+            detector->avg_element_quants(fit_itr.first, STR_SR_CURRENT, element_amt_in_all_standards);
+        }
     }
 }
 

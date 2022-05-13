@@ -183,25 +183,51 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                             if (counts > 0.)
                             {
                                 T_real e_cal = e_cal_factor / counts;
-                                if (eq_itr.e_cal_ratio == 0.)
-                                {
-                                    eq_itr.e_cal_ratio = (T_real)1.0 / e_cal;
-                                }
-                                else
-                                {
-                                    T_real second_cal_ratio = (T_real)1.0 / e_cal;
-                                    eq_itr.e_cal_ratio += second_cal_ratio;
-                                    eq_itr.e_cal_ratio *= 0.5;
-                                }
+                                // e_cal_ratio defined as 0 , add this value. If we have multiple standards
+                                // then we will normalize this later .
+                                eq_itr.e_cal_ratio += (T_real)1.0 / e_cal;
+
                             }
                             else
                             {
-                                if (eq_itr.e_cal_ratio == 0.)
-                                {
-                                    eq_itr.e_cal_ratio = 1.0e-10;
-                                }
+                                eq_itr.e_cal_ratio += 1.0e-10;
                             }
                         }
+                    }
+                }
+            }
+        }
+        else
+        {
+            logW << "Could not find quantifier scalers : " << quantifier_scaler << " .\n";
+        }
+    }
+    else
+    {
+        logW << "Could not find fitting routine " << Fitting_Routine_To_Str.at(routine) << " .\n";
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
+                                        string quantifier_scaler,
+                                        std::unordered_map<int, float>& element_amt_dict)
+{
+    if (fitting_quant_map.count(routine) > 0)
+    {
+        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        {
+            for (const auto& shell_itr : Shells_Quant_List)
+            {
+                vector<Element_Quant<T_real>>* element_z_vec = &fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr);
+                for (auto& itr: element_amt_dict)
+                {
+                    if (itr.second > 1.0)
+                    {
+                        // index is Z - 1
+                        (* element_z_vec)[itr.first - 1].e_cal_ratio /= itr.second;;
                     }
                 }
             }

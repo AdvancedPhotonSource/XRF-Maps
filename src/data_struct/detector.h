@@ -85,6 +85,10 @@ public:
                                 Quantification_Model<T_real>* quantification_model,
                                 T_real ic_quantifier);
 
+    void avg_element_quants(Fitting_Routines routine,
+                            string quantifier_scaler,
+                            std::unordered_map<int, float>& element_amt_dict);
+
     void update_calibration_curve(Fitting_Routines routine,
                                 string quantifier_scaler,
                                 Quantification_Model<T_real>* quantification_model,
