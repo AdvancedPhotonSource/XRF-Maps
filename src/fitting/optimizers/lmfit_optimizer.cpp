@@ -321,7 +321,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
 
     /* perform the fit */
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &_options, &status );
-    logI<< "Status after "<<status.nfev<<" function evaluations:\n  "<<lm_infmsg[status.outcome]<<"\r\n";
+    logI<< "Outcome: "<<lm_infmsg[status.outcome]<<"\nNum iter: "<<status.nfev<<"\n Norm of the residue vector: "<<status.fnorm<<"\n";
 
     fit_params->from_array(fitp_arr);
 
@@ -412,7 +412,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
     lm_status_struct<T_real> status;
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
-    logI<<lm_infmsg[status.outcome]<<"\n";
+    logI << "Outcome: " << lm_infmsg[status.outcome] << "\nNum iter: " << status.nfev << "\n Norm of the residue vector: " << status.fnorm << "\n";
 
     fit_params->from_array(fitp_arr);
 

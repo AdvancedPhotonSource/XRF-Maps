@@ -472,9 +472,14 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
             std::string str_detector_num = std::to_string(detector_num);
             std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
-            io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true);
-            io::file::HDF5_IO::inst()->save_quantification(detector);
-            io::file::HDF5_IO::inst()->end_save_seq();
+            if (io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true))
+            {
+                if(false ==io::file::HDF5_IO::inst()->save_quantification(detector))
+                {
+                    logE << "Error saving quantification to hdf5\n";
+                }
+                io::file::HDF5_IO::inst()->end_save_seq();
+            }
         }
     }
 

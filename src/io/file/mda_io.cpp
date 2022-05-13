@@ -171,21 +171,52 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
         _load_scalers(false);
     }
 
-    const data_struct::ArrayXXr<T_real>* arr = nullptr;
-    arr = _scan_info.scaler_values(STR_SR_CURRENT);
-    if (arr != nullptr)
+    //const data_struct::ArrayXXr<T_real>* arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* arr_curr = _scan_info.scaler_values(STR_SR_CURRENT);
+    const data_struct::ArrayXXr<T_real>* arr_us = _scan_info.scaler_values(STR_US_IC);
+    const data_struct::ArrayXXr<T_real>* arr_ds = _scan_info.scaler_values(STR_DS_IC);
+    T_real cnt_curr = 0.;
+    T_real sum_curr = 0.;
+    T_real cnt_us = 0.;
+    T_real sum_us = 0.;
+    T_real cnt_ds = 0.;
+    T_real sum_ds = 0.;
+
+    for (int i = 0; i < arr_us->rows(); i++)
     {
-        override_values->sr_current = arr->sum() / arr->size();
+        for (int j = 0; j < arr_us->cols(); j++)
+        {
+            if (arr_curr && std::isfinite((* arr_curr)(i, j)) && (*arr_curr)(i, j) > 0.)
+            {
+                cnt_curr += 1.0;
+                sum_curr += (*arr_curr)(i, j);
+            }
+            if (arr_us && std::isfinite((*arr_us)(i, j)) && (*arr_us)(i, j) > 0.)
+            {
+                cnt_us += 1.0;
+                sum_us += (*arr_us)(i, j);
+            }
+            if (arr_ds && std::isfinite((*arr_ds)(i, j)) && (*arr_ds)(i, j) > 0.)
+            {
+                cnt_ds += 1.0;
+                sum_ds += (*arr_ds)(i, j);
+            }
+        }
     }
-    arr = _scan_info.scaler_values(STR_US_IC);
-    if (arr != nullptr)
+
+
+
+    if (arr_curr != nullptr)
     {
-        override_values->US_IC = arr->sum() / arr->size();
+        override_values->sr_current = sum_curr / cnt_curr;
     }
-    arr = _scan_info.scaler_values(STR_DS_IC);
-    if (arr != nullptr)
+    if (arr_us != nullptr)
     {
-        override_values->DS_IC = arr->sum() / arr->size();
+        override_values->US_IC = sum_us / cnt_us;
+    }
+    if (arr_ds != nullptr)
+    {
+        override_values->DS_IC = sum_ds / cnt_ds;
     }
 
     return true;
@@ -236,8 +267,8 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
     if (_mda_file->header->data_rank == 2)
     {
-        logI<<" requested cols "<< _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
-                  " acquired cols "<< _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
+        logI<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+                  " acquired rows "<< _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
         if(hasNetCDF)
         {
@@ -753,8 +784,8 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 	if (_mda_file->header->data_rank == 2)
 	{
-		logI << " requested cols " << _mda_file->header->dimensions[0] << " requested rows " << _mda_file->header->dimensions[1] <<
-			" acquired cols " << _mda_file->scan->last_point << " acquired rows " << _mda_file->scan->sub_scans[0]->last_point << "\n";
+		logI << " requested rows " << _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+			" acquired rows " << _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point << "\n";
 
 		if (hasNetCDF)
 		{
@@ -1024,7 +1055,10 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                     _scan_info.scaler_maps.push_back(s_map);
                 }
 
-                _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
+                {
+                    _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                }
             }
 
             if (_mda_file->scan->sub_scans != nullptr && load_int_spec)
@@ -1088,7 +1122,10 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                         _scan_info.scaler_maps.push_back(s_map);
                     }
 
-                    _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                    if (std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
+                    {
+                        _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                    }
                 }
                 if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
                 {
@@ -1133,6 +1170,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                 if (itr.time_normalized)
                 {
                     itr.values = itr.values / (*time_array / time_clock);
+                    itr.values = itr.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
                 }
             }
         }

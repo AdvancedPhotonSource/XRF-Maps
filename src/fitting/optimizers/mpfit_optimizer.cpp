@@ -649,6 +649,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	_fill_limits(fit_params, par);
 
     info = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    logI << "Outcome: " << optimizer_outcome_to_str(this->_outcome_map[info]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << result.resid << "\n";
 
 	_print_info(info);
 
