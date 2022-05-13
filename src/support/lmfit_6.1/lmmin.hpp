@@ -44,7 +44,7 @@
 #define DP_LM_SQRT_DWARF sqrt(DBL_MIN) /* square should not underflow */
 #define DP_LM_SQRT_GIANT sqrt(DBL_MAX) /* square should not overflow */
 #define DP_LM_USERTOL 30 * DP_LM_MACHEP   /* users are recommended to require this */
-#define DP_LM_EPSILON 1.19209e-14f  // MPFit's epsilon
+#define DP_LM_EPSILON DBL_EPSILON  
 
 #define FP_LM_MACHEP 1.19209e-10f       // resolution of arithmetic 
 #define FP_LM_DWARF 1.17549e-38f           // smallest nonzero number 

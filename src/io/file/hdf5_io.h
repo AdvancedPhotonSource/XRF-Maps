@@ -4652,10 +4652,9 @@ public:
                     return false;
                 }
                 //save quantification_standard integrated spectra
-                data_struct::Spectra<T_real> spectra = quant_itr.second.integrated_spectra;
-                if (spectra.size() > 0)
+                if (quant_itr.second.integrated_spectra.size() > 0)
                 {
-                    count[0] = spectra.size();
+                    count[0] = quant_itr.second.integrated_spectra.size();
                     _create_memory_space(1, count, memoryspace2_id);
 
                     if (false == _open_h5_dataset<T_real>(STR_SPECTRA, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
@@ -4663,7 +4662,7 @@ public:
                         return false;
                     }
                     offset[0] = 0;
-                    status = _write_h5d<T_real>(dset_id, memoryspace2_id, dataspace_id, H5P_DEFAULT, (void*)&spectra[0]);
+                    status = _write_h5d<T_real>(dset_id, memoryspace2_id, dataspace_id, H5P_DEFAULT, quant_itr.second.integrated_spectra.data());
                     if (status < 0)
                     {
                         logE << "failed to write " << STR_INT_SPEC << "\n";
@@ -4715,7 +4714,7 @@ public:
                 }
 
                 //save real_time
-                T_real save_val = spectra.elapsed_realtime();
+                T_real save_val = quant_itr.second.integrated_spectra.elapsed_realtime();
                 if (false == _open_h5_dataset<T_real>(STR_ELAPSED_REAL_TIME, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
                 {
                     return false;
@@ -4727,7 +4726,7 @@ public:
                 }
 
                 //save life_time
-                save_val = spectra.elapsed_livetime();
+                save_val = quant_itr.second.integrated_spectra.elapsed_livetime();
                 if (false == _open_h5_dataset<T_real>(STR_ELAPSED_LIVE_TIME, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
                 {
                     return false;
@@ -4739,7 +4738,7 @@ public:
                 }
 
                 //save input counts
-                save_val = spectra.input_counts();
+                save_val = quant_itr.second.integrated_spectra.input_counts();
                 if (false == _open_h5_dataset<T_real>(STR_INPUT_COUNTS, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
                 {
                     return false;
@@ -4751,7 +4750,7 @@ public:
                 }
 
                 //save output counts
-                save_val = spectra.output_counts();
+                save_val = quant_itr.second.integrated_spectra.output_counts();
                 if (false == _open_h5_dataset<T_real>(STR_OUTPUT_COUNTS, q_int_spec_grp_id, 1, count, count, dset_id, dataspace_id))
                 {
                     return false;

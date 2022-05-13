@@ -59,6 +59,8 @@ namespace data_struct
 
 using namespace std;
 
+#define default_time_and_io_counts 0.000000001
+
 template<typename _T>
 using ArrayTr = Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>;
 
@@ -74,10 +76,10 @@ public:
      */
     Spectra() : ArrayTr<_T>()
 	{
-        _elapsed_livetime = 1.0;
-		_elapsed_realtime = 1.0;
-		_input_counts = 1.0;
-		_output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+		_elapsed_realtime = default_time_and_io_counts;
+		_input_counts = 0.0;
+		_output_counts = 0.0;
 	}
 
     Spectra(const Spectra &spectra) : ArrayTr<_T>(spectra)
@@ -91,10 +93,10 @@ public:
     Spectra(size_t sample_size) : ArrayTr<_T>(sample_size)
 	{
 		this->setZero();
-        _elapsed_livetime = 1.0;
-		_elapsed_realtime = 1.0;
-		_input_counts = 1.0;
-		_output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+		_elapsed_realtime = default_time_and_io_counts;
+		_input_counts = 0.0;
+		_output_counts = 0.0;
 	}
 
     Spectra(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : ArrayTr<_T>(sample_size)
@@ -108,10 +110,10 @@ public:
 
     Spectra(const ArrayTr<_T>& arr) : ArrayTr<_T>(arr)
     {
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
     }
 
     Spectra(const ArrayTr<_T>& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
@@ -124,10 +126,10 @@ public:
 
     Spectra(const ArrayTr<_T>&& arr) : ArrayTr<_T>(arr)
     {
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
     }
 
     Spectra(const ArrayTr<_T>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
@@ -140,10 +142,10 @@ public:
 
     Spectra(Eigen::Index& rows, Eigen::Index& cols) : ArrayTr<_T>(rows, cols)
 	{
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
 	}
 
     virtual ~Spectra()
