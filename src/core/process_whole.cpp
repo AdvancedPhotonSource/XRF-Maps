@@ -65,7 +65,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
     if (params_override != nullptr)
     {
         //load the quantification standard dataset
-        if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
+        if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
         {
             logE << "In optimize_integrated_dataset loading dataset" << dataset_filename << " for detector" << detector_num << "\n";
             return false;
@@ -124,7 +124,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             ret_val = false;
             break;
         }
-        io::save_optimized_fit_params(analysis_job->dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+        io::file::save_optimized_fit_params(analysis_job->dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
 
         delete fit_routine;
     }
@@ -162,9 +162,9 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
             {
                 params_override = new data_struct::Params_Override<double>();
                 //load override parameters
-                if (false == io::load_override_params(analysis_job->dataset_directory, detector_num, params_override))
+                if (false == io::file::load_override_params(analysis_job->dataset_directory, detector_num, params_override))
                 {
-                    if (false == io::load_override_params(analysis_job->dataset_directory, -1, params_override))
+                    if (false == io::file::load_override_params(analysis_job->dataset_directory, -1, params_override))
                     {
                         logE << "Loading maps_fit_parameters_override.txt\n";
                         delete params_override;
@@ -272,7 +272,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                     {
                         standard_itr.standard_filename[std_str_len - 2] = 'd';
                         quantification_standard->standard_filename = standard_itr.standard_filename;
-                        if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
+                        if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
                         {
                             logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
                             continue;
@@ -302,7 +302,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         }
         else
         {
-            if (false == io::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
+            if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
             {
                 logE << "Could not load file " << standard_itr.standard_filename << " for detector " << detector_num << "\n";
                 continue;
@@ -414,7 +414,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 
     vector<string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
 
-    if( io::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, analysis_job->standard_element_weights) )
+    if( io::file::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, analysis_job->standard_element_weights) )
     {
         for(size_t detector_num : analysis_job->detector_num_arr)
         {
@@ -454,7 +454,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
                 }
             }
 
-            io::save_quantification_plots(analysis_job->dataset_directory, detector);
+            io::file::save_quantification_plots(analysis_job->dataset_directory, detector);
 
         }
     }

@@ -446,7 +446,7 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
 
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
-                if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &loaded_from_analyzed_hdf5, true))
+                if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &loaded_from_analyzed_hdf5, true))
                 {
                     logW << "Skipping detector " << detector_num << "\n";
                     delete spectra_volume;
@@ -482,7 +482,7 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
     bool is_loaded_from_analyzed_h5 = false;
-    if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
+    if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
     {
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
         delete spectra_volume;
@@ -497,7 +497,7 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
     //load spectra volume
     for (int i = 1; i < analysis_job->detector_num_arr.size(); i++)
     {
-        if (false == io::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
+        if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
         {
             logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
             delete spectra_volume;
@@ -551,7 +551,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
         //average all detectors to one files
         if (analysis_job.generate_average_h5)
         {
-            io::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
+            io::file::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
         }
 
         if (analysis_job.add_background)
@@ -594,7 +594,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
 
 
         // Can scan for all hdf5 files in img.dat but will have to do it for multiple ext and filter out by detector num and avg
-        //for (auto& itr : io::find_all_dataset_files(analysis_job.dataset_directory + "img.dat", ".hdf5"))
+        //for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", ".hdf5"))
         //{
         //    hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + itr);
         //}

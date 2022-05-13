@@ -58,6 +58,8 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace io
 {
 
+namespace file
+{
 //-----------------------------------------------------------------------------
 
 void parse_scalers(const std::string& beamline, const YAML::Node& node, bool time_normalized)
@@ -474,7 +476,7 @@ void generate_h5_averages(std::string dataset_directory,
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)
 {
     std::vector<std::string> dataset_files;
@@ -484,7 +486,7 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     size_t search_str_size = search_str.length();
     if ((dir = opendir (dataset_directory.c_str())) != NULL)
     {
-        /* print all the files and directories within directory */
+        // print all the files and directories within directory 
         while ((ent = readdir (dir)) != NULL)
         {
             std::string fname(ent->d_name);
@@ -501,14 +503,14 @@ std::vector<std::string> find_all_dataset_files(std::string dataset_directory, s
     }
     else
     {
-        /* could not open directory */
+        // could not open directory 
         logW<<"Could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
     }
 
     logI<<"found "<<dataset_files.size()<<"\n";
     return dataset_files;
 }
-
+*/
 // ----------------------------------------------------------------------------
 
 void check_and_create_dirs(std::string dataset_directory)
@@ -618,4 +620,5 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
+}// end namespace file
 }// end namespace io

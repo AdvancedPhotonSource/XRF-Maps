@@ -59,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "io/file/mca_io.h"
 #include "io/file/hdf5_io.h"
 #include "io/file/csv_io.h"
+#include "io/file/file_scan.h"
 
 #include "data_struct/spectra_volume.h"
 
@@ -92,9 +93,12 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace io
 {
 
+namespace file
+{
+
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
 
-DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
+//DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
 DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr);
 
@@ -102,7 +106,7 @@ DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, std::string quantification_info_file, vector<Quantification_Standard<double>>& standard_element_weights);
 
-DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
+//DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
@@ -274,14 +278,14 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
 
-        if (false == io::load_override_params(analysis_job->dataset_directory, detector_num, override_params))
+        if (false == io::file::load_override_params(analysis_job->dataset_directory, detector_num, override_params))
         {
-            if (false == io::load_override_params(analysis_job->dataset_directory, -1, override_params))
+            if (false == io::file::load_override_params(analysis_job->dataset_directory, -1, override_params))
             {
                 //last case, check current directory for override. This will be used for streaming
-                if (false == io::load_override_params("./", detector_num, override_params))
+                if (false == io::file::load_override_params("./", detector_num, override_params))
                 {
-                    if (false == io::load_override_params("./", -1, override_params))
+                    if (false == io::file::load_override_params("./", -1, override_params))
                     {
                         return false;
                     }
@@ -357,7 +361,6 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     size_t out_cols;
     data_struct::IO_Callback_Func_Def<T_real>  cb_function = std::bind(&cb_load_spectra_data_helper<T_real>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 
-
     if (dataset_directory.back() != DIR_END_CHAR)
     {
         dataset_directory += DIR_END_CHAR;
@@ -377,7 +380,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     bool hasXspress = false;
     std::string file_middle = ""; //_2xfm3_ or dxpM...
     std::string bnp_netcdf_base_name = "bnp_fly_";
-    for (auto& itr : netcdf_files)
+    for (auto& itr : io::file::File_Scan::inst()->netcdf_files())
     {
         if (itr.find(tmp_dataset_file) == 0)
         {
@@ -396,7 +399,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             int file_index = std::atoi(footer.c_str());
             file_middle = std::to_string(file_index);
             bnp_netcdf_base_name = "bnp_fly_" + file_middle + "_";
-            for (auto& itr : bnp_netcdf_files)
+            for (auto& itr : io::file::File_Scan::inst()->bnp_netcdf_files())
             {
                 if (itr.find(bnp_netcdf_base_name) == 0)
                 {
@@ -408,7 +411,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
     if (hasNetcdf == false && hasBnpNetcdf == false)
     {
-        for (auto& itr : hdf_files)
+        for (auto& itr : io::file::File_Scan::inst()->hdf_files())
         {
             if (itr.find(tmp_dataset_file) == 0)
             {
@@ -421,7 +424,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
     if (hasNetcdf == false && hasBnpNetcdf == false && hasHdf == false)
     {
-        for (auto& itr : hdf_xspress_files)
+        for (auto& itr : io::file::File_Scan::inst()->hdf_xspress_files())
         {
             if (itr.find(tmp_dataset_file) == 0)
             {
@@ -645,7 +648,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     std::string file_middle = ""; //_2xfm3_, dxpM, or file index in case of bnp...
     std::string bnp_netcdf_base_name = "bnp_fly_";
     std::vector<int> bad_rows;
-    for (auto& itr : netcdf_files)
+    for (auto& itr : io::file::File_Scan::inst()->netcdf_files())
     {
         if (itr.find(tmp_dataset_file) == 0)
         {
@@ -664,7 +667,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             int file_index = std::atoi(footer.c_str());
             file_middle = std::to_string(file_index);
             bnp_netcdf_base_name = "bnp_fly_" + file_middle + "_";
-            for (auto& itr : bnp_netcdf_files)
+            for (auto& itr : io::file::File_Scan::inst()->bnp_netcdf_files())
             {
                 if (itr.find(bnp_netcdf_base_name) == 0)
                 {
@@ -676,7 +679,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
     if (hasNetcdf == false && hasBnpNetcdf == false)
     {
-        for (auto& itr : hdf_files)
+        for (auto& itr : io::file::File_Scan::inst()->hdf_files())
         {
             if (itr.find(tmp_dataset_file) == 0)
             {
@@ -689,7 +692,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
     if (hasNetcdf == false && hasBnpNetcdf == false && hasHdf == false)
     {
-        for (auto& itr : hdf_xspress_files)
+        for (auto& itr : io::file::File_Scan::inst()->hdf_xspress_files())
         {
             if (itr.find(tmp_dataset_file) == 0)
             {
@@ -971,6 +974,7 @@ DLL_EXPORT void save_quantification_plots(string path, Detector<T_real>* detecto
 #endif
 }
 
+}// end namespace file
 }// end namespace io
 
 #endif // HL_FILE_IO_H

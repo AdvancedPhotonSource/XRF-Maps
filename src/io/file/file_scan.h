@@ -45,8 +45,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /// Initial Author <2022>: Arthur Glowacki
 
-#ifndef HL_FILE_IO_H
-#define HL_FILE_IO_H
+#ifndef _FILE_SCAN_H
+#define _FILE_SCAN_H
 
 #if defined _WIN32
 #include "support/direct/dirent.h"
@@ -66,10 +66,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace io
 {
-
-    bool compare_file_size(const file_name_size& first, const file_name_size& second);
-
-    DLL_EXPORT class File_Scan
+    namespace file
     {
 
         struct file_name_size
@@ -79,29 +76,51 @@ namespace io
             long total_rank_size;
         };
 
-    public:
+        bool compare_file_size(const file_name_size& first, const file_name_size& second);
 
-        void populate_netcdf_hdf5_files(std::string dataset_dir);
+        class DLL_EXPORT File_Scan
+        {
 
-        void check_and_create_dirs(std::string dataset_directory);
+        public:
+            static File_Scan* inst();
 
-        std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
+            ~File_Scan();
 
-        void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
+            void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-    private:
+            //void check_and_create_dirs(std::string dataset_directory);
 
-        std::vector<std::string> netcdf_files;
-        std::vector<std::string> bnp_netcdf_files;
-        std::vector<std::string> hdf_files;
-        std::vector<std::string> hdf_xspress_files;
-        //std::vector<std::string> hdf_confocal_files;
-        std::vector<std::string> hdf_emd_files;
-    };
+            std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
+
+            void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
+
+            const std::vector<std::string>& netcdf_files() {  return _netcdf_files; }
+
+            const std::vector<std::string>& bnp_netcdf_files() { return _bnp_netcdf_files; }
+
+            const std::vector<std::string>& hdf_files() { return _hdf_files; }
+
+            const std::vector<std::string>& hdf_xspress_files() { return _hdf_xspress_files; }
+
+            const std::vector<std::string>& hdf_emd_files() { return _hdf_emd_files; }
+
+        private:
+
+            File_Scan();
+
+            static File_Scan* _this_inst;
+
+            std::vector<std::string> _netcdf_files;
+            std::vector<std::string> _bnp_netcdf_files;
+            std::vector<std::string> _hdf_files;
+            std::vector<std::string> _hdf_xspress_files;
+            //std::vector<std::string> _hdf_confocal_files;
+            std::vector<std::string> _hdf_emd_files;
+        };
 
 
-// ----------------------------------------------------------------------------
-
+        // ----------------------------------------------------------------------------
+    }
 }// end namespace io
 
 #endif // HL_FILE_IO_H

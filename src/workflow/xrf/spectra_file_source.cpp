@@ -187,9 +187,9 @@ void Spectra_File_Source<T_real>::run()
 		_analysis_job->mem_limit = std::min(_analysis_job->mem_limit, total_mem);
 	}
     
-    _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
-    _bnp_netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
-    _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
+    _netcdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
+    _bnp_netcdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
+    _hdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
 
     for(std::string dataset_file : _analysis_job->dataset_files)
     {

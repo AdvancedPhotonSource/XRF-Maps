@@ -294,7 +294,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
 
     //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
-    io::check_and_create_dirs(dataset_dir);
+    io::file::check_and_create_dirs(dataset_dir);
 
 
     //Look if files were specified
@@ -302,23 +302,23 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //if they were not then look for them in $dataset_directory/mda
     if (dset_file.length() < 1)
     {
-        for (auto& itr : io::find_all_dataset_files(dataset_dir, ".hdf5"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".hdf5"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
-        for (auto& itr : io::find_all_dataset_files(dataset_dir, ".h5"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".h5"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
-        for (auto& itr : io::find_all_dataset_files(dataset_dir, ".emd"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".emd"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
-        for (auto& itr : io::find_all_dataset_files(dataset_dir, ".mda"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".mda"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
-        for (auto& itr : io::find_all_dataset_files(dataset_dir + "mda" + DIR_END_CHAR, ".mda"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "mda" + DIR_END_CHAR, ".mda"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
@@ -328,7 +328,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             analysis_job.optimize_dataset_files.push_back(itr);
         }
 
-        for (auto& itr : io::find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
         {
             analysis_job.dataset_files.push_back(itr);
         }
@@ -339,8 +339,8 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             return -1;
         }
 
-        io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
-        io::sort_dataset_files_by_size(dataset_dir, &analysis_job.dataset_files);
+        io::file::File_Scan::inst()->sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
+        io::file::File_Scan::inst()->sort_dataset_files_by_size(dataset_dir, &analysis_job.dataset_files);
 
         //if no files were specified only take the 8 largest datasets
         while (analysis_job.optimize_dataset_files.size() > 9)
@@ -446,9 +446,9 @@ int run_optimization(Command_Line_Parser& clp)
         }
     }
 
-    if (io::init_analysis_job_detectors(&analysis_job))
+    if (io::file::init_analysis_job_detectors(&analysis_job))
     {
-        io::populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
         
         generate_optimal_params(&analysis_job);
         // reload override files
@@ -483,9 +483,9 @@ int run_quantification(Command_Line_Parser& clp)
         analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
     }
 
-    if (io::init_analysis_job_detectors(&analysis_job))
+    if (io::file::init_analysis_job_detectors(&analysis_job))
     {
-        io::populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
 
         if (analysis_job.quantification_standard_filename.length() > 0)
         {
@@ -521,9 +521,9 @@ int run_streaming(Command_Line_Parser& clp)
     set_fit_routines(clp, analysis_job);
 
     // init our job and run
-    if (io::init_analysis_job_detectors(&analysis_job))
+    if (io::file::init_analysis_job_detectors(&analysis_job))
     {
-        io::populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
         
         // If we have fitting routines then stream the counts per sec
         if (analysis_job.fitting_routines.size() > 0)
@@ -595,9 +595,9 @@ int run_fits(Command_Line_Parser& clp)
     */
 
     // init our job and run
-    if (io::init_analysis_job_detectors(&analysis_job))
+    if (io::file::init_analysis_job_detectors(&analysis_job))
     {
-        io::populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
         
         if (analysis_job.fitting_routines.size() > 0)
         {
@@ -717,18 +717,18 @@ int main(int argc, char* argv[])
     start = std::chrono::system_clock::now();
 
 
-    if (false == io::load_scalers_lookup(scaler_lookup_yaml))
+    if (false == io::file::load_scalers_lookup(scaler_lookup_yaml))
     {
         logE << " Could not load " << scaler_lookup_yaml << ". Won't be able to translate from PV to Label for scalers!\n";
     }
 
     //load element information
-    if (false == io::load_element_info<float>(element_henke_filename, element_csv_filename))
+    if (false == io::file::load_element_info<float>(element_henke_filename, element_csv_filename))
     {
         logE << "loading element information: " << "\n";
         return -1;
     }
-    if (false == io::load_element_info<double>(element_henke_filename, element_csv_filename))
+    if (false == io::file::load_element_info<double>(element_henke_filename, element_csv_filename))
     {
         logE << "loading element information: " << "\n";
         return -1;
