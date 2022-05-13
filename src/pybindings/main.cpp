@@ -36,36 +36,36 @@ namespace py = pybind11;
 
 //PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
-auto fit_counts(fitting::routines::Base_Fit_Routine* fit_route,
-	const fitting::models::Base_Model* const model,
-	const Spectra* const spectra,
-	const Fit_Element_Map_Dict* const elements_to_fit)
+auto fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
+	const fitting::models::Base_Model<float>* const model,
+	const Spectra<float>* const spectra,
+	const Fit_Element_Map_Dict<float>* const elements_to_fit)
 {
-	std::unordered_map<std::string, real_t> out_counts;
+	std::unordered_map<std::string, float> out_counts;
 	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
 	return out_counts;
 }
 
-auto fit_spectra(fitting::routines::Base_Fit_Routine* fit_route, 
-	fitting::models::Base_Model* const model,
-	const Spectra* const spectra,
-	const Fit_Element_Map_Dict* const elements_to_fit)
+auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
+	fitting::models::Base_Model<float>* const model,
+	const Spectra<float>* const spectra,
+	const Fit_Element_Map_Dict<float>* const elements_to_fit)
 {
-	std::unordered_map<std::string, real_t> out_counts;
-	data_struct::Fit_Parameters fit_params;
+	std::unordered_map<std::string, float> out_counts;
+	data_struct::Fit_Parameters<float> fit_params;
 	fit_params.append_and_update(model->fit_parameters());
 	data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
 	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
 	for (auto& itr : out_counts)
 	{
-		real_t val = out_counts.at(itr.first);
+		float val = out_counts.at(itr.first);
 		if (val != 0.0)
 		{
-			fit_params[itr.first] = data_struct::Fit_Param(itr.first, log10(val));
+			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, log10(val));
 		}
 		else
 		{
-			fit_params[itr.first] = data_struct::Fit_Param(itr.first, val);
+			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, val);
 		}
 	}
 	/*
@@ -140,113 +140,113 @@ PYBIND11_MODULE(pyxrfmaps, m) {
             });
 */
 
-    py::class_<data_struct::Spectra_Line>(m, "Spectra_Line", py::buffer_protocol())
+    py::class_<data_struct::Spectra_Line<float>>(m, "Spectra_Line", py::buffer_protocol())
         .def(py::init<>())
-        .def("__getitem__", [](const data_struct::Spectra_Line &s, size_t i) {
+        .def("__getitem__", [](const data_struct::Spectra_Line<float>&s, size_t i) {
         if (i >= s.size()) throw py::index_error();
         return s[i];
         })
-        .def("resize_and_zero", &data_struct::Spectra_Line::resize_and_zero)
-        .def("alloc_row_size", &data_struct::Spectra_Line::alloc_row_size)
-        .def("recalc_elapsed_livetime", &data_struct::Spectra_Line::recalc_elapsed_livetime)
-        .def("size", &data_struct::Spectra_Line::size);
+        .def("resize_and_zero", &data_struct::Spectra_Line<float>::resize_and_zero)
+        .def("alloc_row_size", &data_struct::Spectra_Line<float>::alloc_row_size)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Line<float>::recalc_elapsed_livetime)
+        .def("size", &data_struct::Spectra_Line<float>::size);
 
-    py::class_<data_struct::Spectra_Volume>(m, "Spectra_Volume", py::buffer_protocol())
+    py::class_<data_struct::Spectra_Volume<float>>(m, "Spectra_Volume", py::buffer_protocol())
         .def(py::init<>())
-        .def("__getitem__", [](const data_struct::Spectra_Volume &s, size_t i) {
+        .def("__getitem__", [](const data_struct::Spectra_Volume<float>&s, size_t i) {
         if (i >= s.rows()) throw py::index_error();
         return s[i];
         })
-        .def("resize_and_zero", &data_struct::Spectra_Volume::resize_and_zero)
-        .def("integrate", &data_struct::Spectra_Volume::integrate)
-        .def("generate_scaler_maps", &data_struct::Spectra_Volume::generate_scaler_maps)
-        .def("cols", &data_struct::Spectra_Volume::cols)
-        .def("rows", &data_struct::Spectra_Volume::rows)
-        .def("recalc_elapsed_livetime", &data_struct::Spectra_Volume::recalc_elapsed_livetime)
-        .def("samples_size", &data_struct::Spectra_Volume::samples_size)
-        .def("rank", &data_struct::Spectra_Volume::rank);
+        .def("resize_and_zero", &data_struct::Spectra_Volume<float>::resize_and_zero)
+        .def("integrate", &data_struct::Spectra_Volume<float>::integrate)
+        .def("generate_scaler_maps", &data_struct::Spectra_Volume<float>::generate_scaler_maps)
+        .def("cols", &data_struct::Spectra_Volume<float>::cols)
+        .def("rows", &data_struct::Spectra_Volume<float>::rows)
+        .def("recalc_elapsed_livetime", &data_struct::Spectra_Volume<float>::recalc_elapsed_livetime)
+        .def("samples_size", &data_struct::Spectra_Volume<float>::samples_size)
+        .def("rank", &data_struct::Spectra_Volume<float>::rank);
 
-    py::class_<data_struct::Element_Info>(m, "ElementInfo")
+    py::class_<data_struct::Element_Info<float>>(m, "ElementInfo")
     .def(py::init<>())
-    .def("init_f_energies", &data_struct::Element_Info::init_f_energies)
-    .def("init_extra_energies", &data_struct::Element_Info::init_extra_energies)
-    .def("get_energies_between", &data_struct::Element_Info::get_energies_between)
-    .def("calc_beta", &data_struct::Element_Info::calc_beta)
-    .def_readwrite("number", &data_struct::Element_Info::number)
-    .def_readwrite("name", &data_struct::Element_Info::name)
-    .def_readwrite("density", &data_struct::Element_Info::density)
-    .def_readwrite("mass", &data_struct::Element_Info::mass)
-    .def_readwrite("xrf", &data_struct::Element_Info::xrf)
-    .def_readwrite("xrf_abs_yield", &data_struct::Element_Info::xrf_abs_yield)
-    .def_readwrite("yieldD", &data_struct::Element_Info::yieldD)
-    .def_readwrite("bindingE", &data_struct::Element_Info::bindingE)
-    .def_readwrite("jump", &data_struct::Element_Info::jump)
-    .def_readwrite("f1_atomic_scattering_real", &data_struct::Element_Info::f1_atomic_scattering_real)
-    .def_readwrite("f2_atomic_scattering_imaginary", &data_struct::Element_Info::f2_atomic_scattering_imaginary)
-    .def_readwrite("energies", &data_struct::Element_Info::energies)
-    .def_readwrite("extra_energies", &data_struct::Element_Info::extra_energies)
-    .def_readwrite("extra_f1", &data_struct::Element_Info::extra_f1)
-    .def_readwrite("extra_f2", &data_struct::Element_Info::extra_f2);
+    .def("init_f_energies", &data_struct::Element_Info<float>::init_f_energies)
+    .def("init_extra_energies", &data_struct::Element_Info<float>::init_extra_energies)
+    .def("get_energies_between", &data_struct::Element_Info<float>::get_energies_between)
+    .def("calc_beta", &data_struct::Element_Info<float>::calc_beta)
+    .def_readwrite("number", &data_struct::Element_Info<float>::number)
+    .def_readwrite("name", &data_struct::Element_Info<float>::name)
+    .def_readwrite("density", &data_struct::Element_Info<float>::density)
+    .def_readwrite("mass", &data_struct::Element_Info<float>::mass)
+    .def_readwrite("xrf", &data_struct::Element_Info<float>::xrf)
+    .def_readwrite("xrf_abs_yield", &data_struct::Element_Info<float>::xrf_abs_yield)
+    .def_readwrite("yieldD", &data_struct::Element_Info<float>::yieldD)
+    .def_readwrite("bindingE", &data_struct::Element_Info<float>::bindingE)
+    .def_readwrite("jump", &data_struct::Element_Info<float>::jump)
+    .def_readwrite("f1_atomic_scattering_real", &data_struct::Element_Info<float>::f1_atomic_scattering_real)
+    .def_readwrite("f2_atomic_scattering_imaginary", &data_struct::Element_Info<float>::f2_atomic_scattering_imaginary)
+    .def_readwrite("energies", &data_struct::Element_Info<float>::energies)
+    .def_readwrite("extra_energies", &data_struct::Element_Info<float>::extra_energies)
+    .def_readwrite("extra_f1", &data_struct::Element_Info<float>::extra_f1)
+    .def_readwrite("extra_f2", &data_struct::Element_Info<float>::extra_f2);
 
-    py::class_<data_struct::Element_Info_Map>(m, "ElementInfoMap")
-    .def("inst", &data_struct::Element_Info_Map::inst)
-    .def("clear", &data_struct::Element_Info_Map::clear)
-    .def("generate_default_elements", &data_struct::Element_Info_Map::generate_default_elements)
-    .def("add_element", &data_struct::Element_Info_Map::add_element)
-    .def("calc_beta", &data_struct::Element_Info_Map::calc_beta)
-    .def("get_element", (data_struct::Element_Info* (data_struct::Element_Info_Map::*)(int)) &data_struct::Element_Info_Map::get_element)
-    .def("get_element", (data_struct::Element_Info* (data_struct::Element_Info_Map::*)(std::string)) &data_struct::Element_Info_Map::get_element)
-    .def("contains", &data_struct::Element_Info_Map::contains)
-    .def_readwrite("_energies", &data_struct::Element_Info_Map::_energies);
+    py::class_<data_struct::Element_Info_Map<float>>(m, "ElementInfoMap")
+    .def("inst", &data_struct::Element_Info_Map<float>::inst)
+    .def("clear", &data_struct::Element_Info_Map<float>::clear)
+    .def("generate_default_elements", &data_struct::Element_Info_Map<float>::generate_default_elements)
+    .def("add_element", &data_struct::Element_Info_Map<float>::add_element)
+    .def("calc_beta", &data_struct::Element_Info_Map<float>::calc_beta)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element)
+    .def("contains", &data_struct::Element_Info_Map<float>::contains)
+    .def_readwrite("_energies", &data_struct::Element_Info_Map<float>::_energies);
 
-    py::class_<data_struct::Element_Quant>(m, "ElementQuant")
+    py::class_<data_struct::Element_Quant<float>>(m, "ElementQuant")
     .def(py::init<>())
-    .def_readwrite("weight", &data_struct::Element_Quant::weight)
-    .def_readwrite("absorption", &data_struct::Element_Quant::absorption)
-    .def_readwrite("transmission_Be", &data_struct::Element_Quant::transmission_Be)
-    .def_readwrite("transmission_Ge", &data_struct::Element_Quant::transmission_Ge)
-    .def_readwrite("yield", &data_struct::Element_Quant::yield)
-    .def_readwrite("transmission_through_Si_detector", &data_struct::Element_Quant::transmission_through_Si_detector)
-    .def_readwrite("transmission_through_air", &data_struct::Element_Quant::transmission_through_air)
-    .def_readwrite("e_cal_ratio", &data_struct::Element_Quant::e_cal_ratio);
+    .def_readwrite("weight", &data_struct::Element_Quant<float>::weight)
+    .def_readwrite("absorption", &data_struct::Element_Quant<float>::absorption)
+    .def_readwrite("transmission_Be", &data_struct::Element_Quant<float>::transmission_Be)
+    .def_readwrite("transmission_Ge", &data_struct::Element_Quant<float>::transmission_Ge)
+    .def_readwrite("yield", &data_struct::Element_Quant<float>::yield)
+    .def_readwrite("transmission_through_Si_detector", &data_struct::Element_Quant<float>::transmission_through_Si_detector)
+    .def_readwrite("transmission_through_air", &data_struct::Element_Quant<float>::transmission_through_air)
+    .def_readwrite("e_cal_ratio", &data_struct::Element_Quant<float>::e_cal_ratio);
 
-	py::class_<data_struct::Fit_Element_Map>(m, "Fit_Element_Map")
+	py::class_<data_struct::Fit_Element_Map<float>>(m, "Fit_Element_Map")
 	.def(py::init<std::string, Element_Info*>())
-	.def("center", &data_struct::Fit_Element_Map::center)
-	.def("width", &data_struct::Fit_Element_Map::width)
-	.def("set_custom_multiply_ratio", &data_struct::Fit_Element_Map::set_custom_multiply_ratio)
-	.def("multiply_custom_multiply_ratio", &data_struct::Fit_Element_Map::multiply_custom_multiply_ratio)
-	.def("init_energy_ratio_for_detector_element", &data_struct::Fit_Element_Map::init_energy_ratio_for_detector_element)
-	.def("full_name", &data_struct::Fit_Element_Map::full_name)
-	.def("symbol", &data_struct::Fit_Element_Map::symbol)
-	.def("Z", &data_struct::Fit_Element_Map::Z)
-	.def("energy_ratios", &data_struct::Fit_Element_Map::energy_ratios)
-	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map::energy_ratio_multipliers)
-	.def("width_multi", &data_struct::Fit_Element_Map::width_multi)
-	.def("set_as_pileup", &data_struct::Fit_Element_Map::set_as_pileup)
-	.def("pileup_element", &data_struct::Fit_Element_Map::pileup_element)
-	.def("shell_type_as_string", &data_struct::Fit_Element_Map::shell_type_as_string)
-	.def("check_binding_energy", &data_struct::Fit_Element_Map::check_binding_energy);
+	.def("center", &data_struct::Fit_Element_Map<float>::center)
+	.def("width", &data_struct::Fit_Element_Map<float>::width)
+	.def("set_custom_multiply_ratio", &data_struct::Fit_Element_Map<float>::set_custom_multiply_ratio)
+	.def("multiply_custom_multiply_ratio", &data_struct::Fit_Element_Map<float>::multiply_custom_multiply_ratio)
+	.def("init_energy_ratio_for_detector_element", &data_struct::Fit_Element_Map<float>::init_energy_ratio_for_detector_element)
+	.def("full_name", &data_struct::Fit_Element_Map<float>::full_name)
+	.def("symbol", &data_struct::Fit_Element_Map<float>::symbol)
+	.def("Z", &data_struct::Fit_Element_Map<float>::Z)
+	.def("energy_ratios", &data_struct::Fit_Element_Map<float>::energy_ratios)
+	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map<float>::energy_ratio_multipliers)
+	.def("width_multi", &data_struct::Fit_Element_Map<float>::width_multi)
+	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup)
+	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element)
+	.def("shell_type_as_string", &data_struct::Fit_Element_Map<float>::shell_type_as_string)
+	.def("check_binding_energy", &data_struct::Fit_Element_Map<float>::check_binding_energy);
 
-    py::class_<data_struct::Params_Override>(m, "ParamsOverride")
+    py::class_<data_struct::Params_Override<float>>(m, "ParamsOverride")
     .def(py::init<>())
-    .def_readwrite("dataset_directory", &data_struct::Params_Override::dataset_directory)
-    .def_readwrite("detector_num", &data_struct::Params_Override::detector_num)
-    .def_readwrite("fit_params", &data_struct::Params_Override::fit_params)
-    .def_readwrite("elements_to_fit", &data_struct::Params_Override::elements_to_fit)
-    .def_readwrite("detector_element", &data_struct::Params_Override::detector_element)
-    .def_readwrite("si_escape_factor", &data_struct::Params_Override::si_escape_factor)
-    .def_readwrite("ge_escape_factor", &data_struct::Params_Override::ge_escape_factor)
-    .def_readwrite("si_escape_enabled", &data_struct::Params_Override::si_escape_enabled)
-    .def_readwrite("ge_escape_enabled", &data_struct::Params_Override::ge_escape_enabled)
-    .def_readwrite("fit_snip_width", &data_struct::Params_Override::fit_snip_width)
-    .def_readwrite("be_window_thickness", &data_struct::Params_Override::be_window_thickness)
-    .def_readwrite("det_chip_thickness", &data_struct::Params_Override::det_chip_thickness)
-    .def_readwrite("ge_dead_layer", &data_struct::Params_Override::ge_dead_layer)
-    .def_readwrite("us_amp_sens_num", &data_struct::Params_Override::us_amp_sens_num)
-    .def_readwrite("us_amp_sens_unit", &data_struct::Params_Override::us_amp_sens_unit)
-    .def_readwrite("ds_amp_sens_num", &data_struct::Params_Override::ds_amp_sens_num)
-    .def_readwrite("ds_amp_sens_unit", &data_struct::Params_Override::ds_amp_sens_unit);
+    .def_readwrite("dataset_directory", &data_struct::Params_Override<float>::dataset_directory)
+    .def_readwrite("detector_num", &data_struct::Params_Override<float>::detector_num)
+    .def_readwrite("fit_params", &data_struct::Params_Override<float>::fit_params)
+    .def_readwrite("elements_to_fit", &data_struct::Params_Override<float>::elements_to_fit)
+    .def_readwrite("detector_element", &data_struct::Params_Override<float>::detector_element)
+    .def_readwrite("si_escape_factor", &data_struct::Params_Override<float>::si_escape_factor)
+    .def_readwrite("ge_escape_factor", &data_struct::Params_Override<float>::ge_escape_factor)
+    .def_readwrite("si_escape_enabled", &data_struct::Params_Override<float>::si_escape_enabled)
+    .def_readwrite("ge_escape_enabled", &data_struct::Params_Override<float>::ge_escape_enabled)
+    .def_readwrite("fit_snip_width", &data_struct::Params_Override<float>::fit_snip_width)
+    .def_readwrite("be_window_thickness", &data_struct::Params_Override<float>::be_window_thickness)
+    .def_readwrite("det_chip_thickness", &data_struct::Params_Override<float>::det_chip_thickness)
+    .def_readwrite("ge_dead_layer", &data_struct::Params_Override<float>::ge_dead_layer)
+    .def_readwrite("us_amp_sens_num", &data_struct::Params_Override<float>::us_amp_sens_num)
+    .def_readwrite("us_amp_sens_unit", &data_struct::Params_Override<float>::us_amp_sens_unit)
+    .def_readwrite("ds_amp_sens_num", &data_struct::Params_Override<float>::ds_amp_sens_num)
+    .def_readwrite("ds_amp_sens_unit", &data_struct::Params_Override<float>::ds_amp_sens_unit);
     /*
     py::class_<data_struct::Calibration_Curve>(m, "CalibrationCurve")
     .def(py::init<>())

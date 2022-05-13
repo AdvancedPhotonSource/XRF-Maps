@@ -268,11 +268,12 @@ set(XRF_IO_HEADERS
 	src/core/mem_info.h
 	src/support/mdautils-1.4.1/mda-load.h
 	src/io/file/mda_io.h
-    src/io/file/mca_io.h
+  src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
 	src/io/file/aps/aps_fit_params_import.h
+  src/io/file/file_scan.h
 	src/io/file/hl_file_io.h
 	src/io/net/basic_serializer.h
 	src/workflow/source.h
@@ -284,9 +285,9 @@ set(XRF_IO_HEADERS
 	src/workflow/xrf/detector_sum_spectra_source.h
 	src/workflow/xrf/spectra_stream_saver.h
 	src/workflow/xrf/spectra_net_streamer.h
-    src/core/process_streaming.h
-    src/core/process_whole.h
-   )
+  src/core/process_streaming.h
+  src/core/process_whole.h
+)
 
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
@@ -296,6 +297,7 @@ set(XRF_IO_SOURCE
     src/io/file/mda_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
+    src/io/file/file_scan.cpp
     src/io/file/hl_file_io.cpp
     src/io/net/basic_serializer.cpp
     src/workflow/xrf/spectra_file_source.cpp

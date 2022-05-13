@@ -340,6 +340,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         }
 
         io::sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
+        io::sort_dataset_files_by_size(dataset_dir, &analysis_job.dataset_files);
 
         //if no files were specified only take the 8 largest datasets
         while (analysis_job.optimize_dataset_files.size() > 9)
@@ -746,12 +747,6 @@ int main(int argc, char* argv[])
         run_optimization(clp);
     }
 
-    if (clp.option_exists("--quantify-with"))
-    {
-        run_quantification(clp);
-    }
-    //TODO: add --quantify-only option if you already did the fits and just want to add quantification
-
     if (clp.option_exists("--streamin") || clp.option_exists("--streamout") )
     {
         run_streaming(clp);
@@ -759,6 +754,11 @@ int main(int argc, char* argv[])
     else if (clp.option_exists("--fit") )
     {
         run_fits(clp);
+    }
+
+    if (clp.option_exists("--quantify-with"))
+    {
+        run_quantification(clp);
     }
 
     run_h5_file_updates(clp);

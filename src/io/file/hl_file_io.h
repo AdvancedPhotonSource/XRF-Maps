@@ -92,26 +92,7 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace io
 {
 
-static std::vector<std::string> netcdf_files;
-static std::vector<std::string> bnp_netcdf_files;
-static std::vector<std::string> hdf_files;
-static std::vector<std::string> hdf_xspress_files;
-// static std::vector<std::string> hdf_confocal_files;
-static std::vector<std::string> hdf_emd_files;
-    
-// ----------------------------------------------------------------------------
-
-struct DLL_EXPORT file_name_size
-{
-    file_name_size(std::string name, long size) { filename = name; total_rank_size = size;}
-    std::string filename;
-    long total_rank_size;
-};
-
-
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
-
-DLL_EXPORT bool compare_file_size(const file_name_size& first, const file_name_size& second);
 
 DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
@@ -125,7 +106,7 @@ DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
-DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
+//DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 
 // ----------------------------------------------------------------------------
 

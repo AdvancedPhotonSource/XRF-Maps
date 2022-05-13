@@ -3807,9 +3807,9 @@ public:
 
     bool close_dataset(size_t d_hash);
 
-    bool start_save_seq(const std::string filename, bool force_new_file=false);
+    bool start_save_seq(const std::string filename, bool force_new_file=false, bool open_file_only=false);
 
-    bool start_save_seq(bool force_new_file=false){ return start_save_seq(_cur_filename, force_new_file);}
+    bool start_save_seq(bool force_new_file=false){ return start_save_seq(_cur_filename, force_new_file, false);}
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 

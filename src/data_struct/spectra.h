@@ -194,7 +194,7 @@ public:
     {
         if (spectra != nullptr)
         {
-            for (int i = 0; i < size(); i++)
+            for (int i = 0; i < this->size(); i++)
             {
                 (ArrayTr<_T>(*this))(i) += static_cast<_T>( (*spectra)(i) );
             }

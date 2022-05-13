@@ -58,45 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace io
 {
 
-//std::vector<std::string> netcdf_files;
-//std::vector<std::string> bnp_netcdf_files;
-//std::vector<std::string> hdf_files;
-//std::vector<std::string> hdf_xspress_files;
-//std::vector<std::string> hdf_confocal_files;
-//std::vector<std::string> hdf_emd_files;
-
-// ----------------------------------------------------------------------------
-
-bool compare_file_size (const file_name_size& first, const file_name_size& second)
-{
-    return ( first.total_rank_size > second.total_rank_size );
-}
-
-// ----------------------------------------------------------------------------
-
-void populate_netcdf_hdf5_files(std::string dataset_dir)
-{
-    netcdf_files.clear();
-    bnp_netcdf_files.clear();
-    hdf_files.clear();
-    hdf_xspress_files.clear();
-    hdf_emd_files.clear();
-
-    std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
-    if (dataset_dir[dataset_dir.length() - 1] != DIR_END_CHAR)
-    {
-        dataset_dir += DIR_END_CHAR;
-    }
-
-    //populate netcdf and hdf5 files for fly scans
-    netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF"+ DIR_END_CHAR, "_0.nc");
-    bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF"+ DIR_END_CHAR, "_001.nc");
-    hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
-    hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress"+ DIR_END_CHAR, "_0.h5");
-    //hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
-    hdf_emd_files = find_all_dataset_files(dataset_dir , ".emd");
-}
-
 //-----------------------------------------------------------------------------
 
 void parse_scalers(const std::string& beamline, const YAML::Node& node, bool time_normalized)
@@ -611,7 +572,7 @@ void check_and_create_dirs(std::string dataset_directory)
 }
 
 // ----------------------------------------------------------------------------
-
+/*
 void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string> *dataset_files)
 {
     // only supports soring mda files
@@ -634,7 +595,10 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
             std::string full_path = dataset_directory + DIR_END_CHAR + itr;
             std::ifstream in(full_path.c_str(), std::ifstream::ate | std::ifstream::binary);
             long fsize = in.tellg();
-            f_list.push_back(file_name_size(itr, fsize));
+            if (fsize > -1)
+            {
+                f_list.push_back(file_name_size(itr, fsize));
+            }
         }
     }
     
@@ -650,7 +614,7 @@ void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::
     }
     logI<<"done"<<"\n";
 }
-
+*/
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 

@@ -376,7 +376,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
+bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file, bool open_file_only)
 {
 
     if (_cur_file_id > -1)
@@ -389,8 +389,15 @@ bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file)
         _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
     if (_cur_file_id < 1)
     {
-        logI<<"Creating file "<<filename<<"\n";
-        _cur_file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        if (open_file_only == false)
+        {
+            logI << "Creating file " << filename << "\n";
+            _cur_file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        else
+        {
+            return false;
+        }
     }
     if(_cur_file_id < 0)
     {
