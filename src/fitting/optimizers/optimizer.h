@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "quantification/models/quantification_model.h"
 
 
-DLL_EXPORT typedef std::function<void(size_t, size_t)> Callback_Func_Status_Def;
+typedef std::function<void(size_t, size_t)> Callback_Func_Status_Def;
 
 
 namespace fitting
