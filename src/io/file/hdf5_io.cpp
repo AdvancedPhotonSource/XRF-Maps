@@ -1938,7 +1938,8 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
 void HDF5_IO::add_v9_layout(std::string dataset_file)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-
+    double* dbuf = nullptr;
+    float* fbuf = nullptr;
     logI  << dataset_file << "\n";
     hid_t saved_file_id = _cur_file_id;
 
@@ -2100,12 +2101,12 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
             void* buf = nullptr;
             if (H5Tequal(max_type, H5T_NATIVE_DOUBLE) || H5Tequal(max_type, H5T_INTEL_F64))
             {
-                double* dbuf = new double[count2d[1]];
+                dbuf = new double[count2d[1]];
                 buf = dbuf;
             }
             else
             {
-                float* fbuf = new float[count2d[1]];
+                fbuf = new float[count2d[1]];
                 buf = fbuf;
             }
 			count2d[0] = 1;
@@ -2160,8 +2161,17 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
                 }
                 H5Dclose(back_id);
             }
-			delete[]buf;
-			H5Dclose(v9_max_id);
+
+            if (dbuf != nullptr)
+            {
+                delete[] dbuf;
+            }
+            if(fbuf != nullptr)
+            { 
+                delete [] fbuf;
+            }
+			
+            H5Dclose(v9_max_id);
 		}
 		H5Sclose(v9_space);
 	}
