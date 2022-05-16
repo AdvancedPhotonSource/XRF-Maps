@@ -340,7 +340,6 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         }
 
         io::file::File_Scan::inst()->sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
-        io::file::File_Scan::inst()->sort_dataset_files_by_size(dataset_dir, &analysis_job.dataset_files);
 
         //if no files were specified only take the 8 largest datasets
         while (analysis_job.optimize_dataset_files.size() > 9)
@@ -368,6 +367,8 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     }
 
     analysis_job.dataset_directory = dataset_dir;
+
+    return 0;
 }
 
 // ----------------------------------------------------------------------------
