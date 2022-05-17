@@ -626,6 +626,8 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<float> analysis_job;
 
+    set_general_options(clp, analysis_job);
+
     //Should create an averaged file of all detectors processed
     if (clp.option_exists("--generate-avg-h5"))
     {
