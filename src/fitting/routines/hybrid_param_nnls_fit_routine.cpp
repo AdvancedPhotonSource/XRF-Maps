@@ -64,46 +64,50 @@ namespace routines
 
 // ----------------------------------------------------------------------------
 
-Hybrid_Param_NNLS_Fit_Routine::Hybrid_Param_NNLS_Fit_Routine() : NNLS_Fit_Routine()
+template<typename T_real>
+Hybrid_Param_NNLS_Fit_Routine<T_real>::Hybrid_Param_NNLS_Fit_Routine() : NNLS_Fit_Routine<T_real>()
 {
     _model = nullptr;
     _elements_to_fit = nullptr;
     _spectra = nullptr;
-    _max_iter = 4000;
+    this->_max_iter = 4000;
 }
 
 // ----------------------------------------------------------------------------
 
-Hybrid_Param_NNLS_Fit_Routine::~Hybrid_Param_NNLS_Fit_Routine()
+template<typename T_real>
+Hybrid_Param_NNLS_Fit_Routine<T_real>::~Hybrid_Param_NNLS_Fit_Routine()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Hybrid_Param_NNLS_Fit_Routine::model_spectrum(const Fit_Parameters* const fit_params,
+template<typename T_real>
+void Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<T_real>* const fit_params,
                                                     const struct Range* const energy_range,
-                                                    Spectra* spectra_model)
+                                                    Spectra<T_real>* spectra_model)
 {
     if (_model != nullptr && _elements_to_fit != nullptr)
     {
         _model->update_fit_params_values(fit_params);
-        initialize(_model, _elements_to_fit, *energy_range);
-        fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
+        this->initialize(_model, _elements_to_fit, *energy_range);
+        this->fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
     }
 }
 
 // ----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
-                                                                    const Spectra * const spectra,
-                                                                    const Fit_Element_Map_Dict * const elements_to_fit,
-                                                                    Fit_Parameters& out_fit_params,
+template<typename T_real>
+OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(const models::Base_Model<T_real>* const model,
+                                                                    const Spectra<T_real>* const spectra,
+                                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                                    Fit_Parameters<T_real>& out_fit_params,
                                                                     Callback_Func_Status_Def* status_callback)
 {
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     
     if (fit_params.contains(STR_COMPTON_AMPLITUDE))
     {
@@ -124,42 +128,42 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine::fit_spectra_parameters(const mo
     }
     else
     {
-        if(_optimizer != nullptr)
+        if(this->_optimizer != nullptr)
         {
             //ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
-            std::function<void(const Fit_Parameters* const, const  Range* const, Spectra*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
             if (fit_params.contains(STR_SNIP_WIDTH))
             {
-                ArrayXr bkg = snip_background(spectra,
+                ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
                     fit_params.value(STR_ENERGY_OFFSET),
                     fit_params.value(STR_ENERGY_SLOPE),
                     fit_params.value(STR_ENERGY_QUADRATIC),
                     fit_params.value(STR_SNIP_WIDTH),
-                    _energy_range.min,
-                    _energy_range.max);
+                    this->_energy_range.min,
+                    this->_energy_range.max);
 
-                _background = bkg.segment(_energy_range.min, _energy_range.count());
+                _background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
             }
             else
             {
-                _background.setZero(_energy_range.count());
+                _background.setZero(this->_energy_range.count());
             }
-            _model = (models::Base_Model*)model;
+            _model = (models::Base_Model<T_real>*)model;
             _elements_to_fit = elements_to_fit;
             _spectra = spectra;
 
-            ret_val = _optimizer->minimize_func(&fit_params, spectra, _energy_range, &_background, gen_func);
+            ret_val = this->_optimizer->minimize_func(&fit_params, spectra, this->_energy_range, &_background, gen_func);
 
             _model->update_fit_params_values(&fit_params);
-            initialize(_model, elements_to_fit, _energy_range);
-            std::unordered_map<std::string, real_t> out_counts;
-            fit_spectra(_model, spectra, elements_to_fit, out_counts);
+            this->initialize(_model, elements_to_fit, this->_energy_range);
+            std::unordered_map<std::string, T_real> out_counts;
+            this->fit_spectra(_model, spectra, elements_to_fit, out_counts);
 
             out_fit_params.append_and_update(fit_params);
             for (const auto& itr : *elements_to_fit)
             {
-                out_fit_params.add_parameter(Fit_Param(itr.first, log10(out_counts[itr.first])));
+                out_fit_params.add_parameter(Fit_Param<T_real>(itr.first, log10(out_counts[itr.first])));
             }
         }
     }

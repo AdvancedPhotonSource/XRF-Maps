@@ -48,42 +48,115 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef PROCESS_STREAMING_H
 #define PROCESS_STREAMING_H
 
-#include <iostream>
-#include <queue>
-#include <string>
-#include <array>
-#include <vector>
-#include <unordered_map>
-#include <chrono>
-#include <ctime>
-#include <limits>
-#include <sstream>
-#include <fstream>
-
-#include <stdlib.h>
-
 #include "core/defines.h"
-
-#include "io/file/hl_file_io.h"
-#include "data_struct/element_info.h"
-#include "data_struct/fit_element_map.h"
 #include "data_struct/analysis_job.h"
-#include "core/command_line_parser.h"
 #include "data_struct/stream_block.h"
-#include "workflow/pipeline.h"
-#include "workflow/xrf/spectra_file_source.h"
-#include "workflow/xrf/integrated_spectra_source.h"
 #include "workflow/xrf/detector_sum_spectra_source.h"
-#include "workflow/xrf/spectra_stream_saver.h"
+#include "workflow/xrf/integrated_spectra_source.h"
+#include "workflow/xrf/spectra_file_source.h"
 #include "workflow/xrf/spectra_net_source.h"
 #include "workflow/xrf/spectra_net_streamer.h"
-#include "fitting/routines/param_optimized_fit_routine.h"
-#include "fitting/models/gaussian_model.h"
+#include "workflow/xrf/spectra_stream_saver.h"
 
-DLL_EXPORT data_struct::Stream_Block* proc_spectra_block( data_struct::Stream_Block* stream_block );
+// ----------------------------------------------------------------------------
 
-DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job* job);
+template<typename T_real>
+DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block<T_real>* stream_block )
+{
 
-DLL_EXPORT void stream_spectra(data_struct::Analysis_Job* job);
+    for (auto& itr : stream_block->fitting_blocks)
+    {
+        std::unordered_map<std::string, T_real> counts_dict;
+        stream_block->fitting_blocks[itr.first].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit, counts_dict);
+        //make count / sec
+        for (auto& el_itr : *(stream_block->elements_to_fit))
+        {
+            stream_block->fitting_blocks[itr.first].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_livetime();
+        }
+        stream_block->fitting_blocks[itr.first].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
+    }
+    return stream_block;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
+{
+    workflow::Source<data_struct::Stream_Block<T_real>*>* source;
+    workflow::Distributor<data_struct::Stream_Block<T_real>*, data_struct::Stream_Block<T_real>*> distributor(job->num_threads);
+    workflow::Sink<data_struct::Stream_Block<T_real>*>* sink;
+
+    //setup input
+    if (job->quick_and_dirty)
+    {
+        source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
+    }
+    else if (job->is_network_source)
+    {
+        if (job->network_source_ip.length() > 0)
+        {
+            source = new workflow::xrf::Spectra_Net_Source<T_real>(job, job->network_source_ip, job->network_source_port);
+        }
+        else
+        {
+            source = new workflow::xrf::Spectra_Net_Source<T_real>(job);
+        }
+    }
+    else
+    {
+        source = new workflow::xrf::Spectra_File_Source<T_real>(job);
+    }
+
+    //setup output
+    if (job->stream_over_network)
+    {
+        sink = new workflow::xrf::Spectra_Net_Streamer<T_real>(job->network_stream_port);
+    }
+    else
+    {
+        sink = new workflow::xrf::Spectra_Stream_Saver<T_real>();
+    }
+
+    distributor.set_function(proc_spectra_block<T_real>);
+    source->connect(&distributor);
+    sink->connect(&distributor);
+
+
+    sink->start();
+    source->run();
+    sink->wait_and_stop();
+
+    delete source;
+    delete sink;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job)
+{
+    workflow::Source<data_struct::Stream_Block<T_real>*>* source;
+    workflow::xrf::Spectra_Net_Streamer<T_real> sink(job->network_stream_port);
+    sink.set_send_counts(false);
+    sink.set_send_spectra(true);
+
+    //setup input
+    if (job->quick_and_dirty)
+    {
+        source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
+    }
+    else
+    {
+        source = new workflow::xrf::Spectra_File_Source<T_real>(job);
+    }
+
+    source->connect(&sink);
+    source->run();
+
+    delete source;
+}
+
+// ----------------------------------------------------------------------------
 
 #endif

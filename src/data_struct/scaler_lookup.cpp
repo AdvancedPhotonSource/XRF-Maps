@@ -152,7 +152,7 @@ bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, real_t>& pv_map, string& out_pv, double& out_clock, string& out_beamline)
+bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, double>& pv_map, string& out_pv, double& out_clock, string& out_beamline)
 {
     for (const auto& itr : pv_map)
     {

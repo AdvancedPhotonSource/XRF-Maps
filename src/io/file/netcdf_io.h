@@ -59,14 +59,9 @@ namespace io
 namespace file
 {
 
-#ifdef _REAL_DOUBLE
-	#define nc_get_vars_real nc_get_vars_double 
-#else
-	#define nc_get_vars_real nc_get_vars_float
-#endif
-
 enum class E_load_type { LINE = 0, CALLBACKF = 1, INTEGRATED = 2 };
 
+template<typename T_real>
 class DLL_EXPORT NetCDF_IO
 {
 public:
@@ -82,33 +77,51 @@ public:
      * @param spec_line
      * @return the number of spectra loaded. 0 if fail.
      */
-    size_t load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line* spec_line);
+    size_t load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line<T_real>* spec_line);
 
     bool load_spectra_line_with_callback(std::string path,
 										const std::vector<size_t>& detector_num_arr,
                                         int row,
                                         size_t max_rows,
                                         size_t max_cols,
-                                        data_struct::IO_Callback_Func_Def callback_fun,
+                                        data_struct::IO_Callback_Func_Def<T_real> callback_fun,
                                         void* user_data);
 
-    size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra* spectra);
+    size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra);
 
 private:
     NetCDF_IO();
 
+    int _nc_get_vars_real(int ncid, int varid, const size_t* startp, const size_t* countp, const ptrdiff_t* stridep, T_real* ip)
+    {
+        if (std::is_same<T_real, float>::value)
+        {
+            return nc_get_vars_float(ncid, varid, startp, countp, stridep, (float*)ip);
+        }
+        else if (std::is_same<T_real, double>::value)
+        {
+            return nc_get_vars_double(ncid, varid, startp, countp, stridep, (double*)ip);
+        }
+
+        return -1;
+
+    }
+
     size_t _load_spectra(E_load_type ltype,
                         std::string path,
                         size_t detector,
-                        data_struct::Spectra_Line* spec_line,
+                        data_struct::Spectra_Line<T_real>* spec_line,
                         size_t line_size, 
-                        data_struct::Spectra* spectra);
+                        data_struct::Spectra<T_real>* spectra);
 
     static NetCDF_IO *_this_inst;
 
     static std::mutex _mutex;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<float>;
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<double>;
 
 }// end namespace file
 }// end namespace io

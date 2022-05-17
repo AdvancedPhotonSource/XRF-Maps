@@ -54,7 +54,8 @@ namespace data_struct
 
 //-----------------------------------------------------------------------------
 
-Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
+template<typename T_real>
+Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>* element_info)
 {
 
     _full_name = name;
@@ -64,6 +65,10 @@ Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
     _pileup_element_info = nullptr;
 
     _width_multi = 1.0;
+
+    _center = 0;
+
+    _width = 0;
 
     size_t num_ratios = 1;
 
@@ -95,7 +100,8 @@ Fit_Element_Map::Fit_Element_Map(std::string name, Element_Info* element_info)
 
 //-----------------------------------------------------------------------------
 
-Fit_Element_Map::~Fit_Element_Map()
+template<typename T_real>
+Fit_Element_Map<T_real>::~Fit_Element_Map()
 {
 
     _energy_ratios.clear();
@@ -105,7 +111,8 @@ Fit_Element_Map::~Fit_Element_Map()
 
 //-----------------------------------------------------------------------------
 
-void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka, bool disable_La)
+template<typename T_real>
+void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Element_Info<T_real> * const detector_element, bool disable_Ka, bool disable_La)
 {
 
     if(_element_info == nullptr)
@@ -114,7 +121,7 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
         //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
-    //real_t weight =  Element_Weight.at(element_info->number);
+    //T_real weight =  Element_Weight.at(element_info->number);
 
     _energy_ratios.clear();
 
@@ -186,7 +193,8 @@ void Fit_Element_Map::init_energy_ratio_for_detector_element(const Element_Info 
 
 //-----------------------------------------------------------------------------
 
-void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element)
+template<typename T_real>
+void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element)
 {
     if(_element_info == nullptr)
     {
@@ -195,12 +203,12 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
         return;
     }
 
-    real_t e_tmp = energy * (real_t)1000.0;
-    real_t molecules_per_cc;
-    real_t mu_fraction;
-    real_t density = Henke_Compound_Density_Map.at(detector_element->name);
+    T_real e_tmp = energy * (T_real)1000.0;
+    T_real molecules_per_cc;
+    T_real mu_fraction;
+    T_real density = Henke_Compound_Density_Map<T_real>.at(detector_element->name);
 
-    if (energy == (real_t)0.0)
+    if (energy == (T_real)0.0)
     {
         return;
     }
@@ -211,49 +219,50 @@ void Fit_Element_Map::generate_energy_ratio(real_t energy, real_t ratio, Element
     }
     else
     {
-        molecules_per_cc = (real_t)0.0;
+        molecules_per_cc = (T_real)0.0;
     }
 
-    real_t wavelength_angstroms = HC_ANGSTROMS / e_tmp;
+    T_real wavelength_angstroms = HC_ANGSTROMS / e_tmp;
     // This constant has wavelength in angstroms and then
     // they are converted to centimeters
 
-    real_t constant = RE * ((real_t)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((real_t)2.0 * (real_t)M_PI);
+    T_real constant = RE * ((T_real)1.0e-16 * wavelength_angstroms * wavelength_angstroms) * molecules_per_cc / ((T_real)2.0 * (T_real)M_PI);
 
     size_t hi_e_ind;
     size_t lo_e_ind;
-    real_t lower_energy;
-    real_t high_energy;
+    T_real lower_energy;
+    T_real high_energy;
 
     _element_info->get_energies_between(e_tmp, &lower_energy, &high_energy, &lo_e_ind, &hi_e_ind);
 
-    real_t ln_lower_energy = std::log(lower_energy);
-    real_t ln_higher_energy = std::log(high_energy);
+    T_real ln_lower_energy = std::log(lower_energy);
+    T_real ln_higher_energy = std::log(high_energy);
     if (ln_lower_energy == ln_higher_energy)
     {
         mu_fraction = 0.0f;
     }
     else
     {
-        real_t fraction = (std::log(e_tmp) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
-        real_t ln_f2_lower = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[lo_e_ind]));
-        real_t ln_f2_higher = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[hi_e_ind]));
-        real_t f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
-        real_t beta = constant * f2;
+        T_real fraction = (std::log(e_tmp) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
+        T_real ln_f2_lower = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[lo_e_ind]));
+        T_real ln_f2_higher = std::log(std::abs(detector_element->f2_atomic_scattering_imaginary[hi_e_ind]));
+        T_real f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
+        T_real beta = constant * f2;
 
-        mu_fraction = (e_tmp * (real_t)4.0 * (real_t)M_PI * beta) / (density * (real_t)1.239852) * (real_t)10000.0;
+        mu_fraction = (e_tmp * (T_real)4.0 * (T_real)M_PI * beta) / (density * (T_real)1.239852) * (T_real)10000.0;
     }
     if (false == std::isfinite(mu_fraction))
     {
         mu_fraction = 0.0f;
     }
 
-    _energy_ratios.push_back(Element_Energy_Ratio(energy, ratio, mu_fraction, et));
+    _energy_ratios.push_back(Element_Energy_Ratio<T_real>(energy, ratio, mu_fraction, et));
 }
 
 //-----------------------------------------------------------------------------
 
-void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
+template<typename T_real>
+void Fit_Element_Map<T_real>::set_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
     if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
     {
@@ -263,7 +272,8 @@ void Fit_Element_Map::set_custom_multiply_ratio(unsigned int idx, real_t multi)
 
 //-----------------------------------------------------------------------------
 
-void Fit_Element_Map::multiply_custom_multiply_ratio(unsigned int idx, real_t multi)
+template<typename T_real>
+void Fit_Element_Map<T_real>::multiply_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
     if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
     {
@@ -273,7 +283,8 @@ void Fit_Element_Map::multiply_custom_multiply_ratio(unsigned int idx, real_t mu
 
 //-----------------------------------------------------------------------------
 
-void Fit_Element_Map::set_as_pileup(std::string name, Element_Info* element_info)
+template<typename T_real>
+void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_real>* element_info)
 {
     if(_pileup_element_info == nullptr)
     {
@@ -297,9 +308,10 @@ void Fit_Element_Map::set_as_pileup(std::string name, Element_Info* element_info
 
 //-----------------------------------------------------------------------------
 
-bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ratio_idx) const
+template<typename T_real>
+bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int energy_ratio_idx) const
 {
-	real_t binding_e;
+	T_real binding_e;
 	if (_element_info != nullptr)
 	{
 		if (_shell_type == "K")
@@ -357,34 +369,6 @@ bool Fit_Element_Map::check_binding_energy(real_t incident_energy, int energy_ra
 		}
 	}
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-data_struct::Fit_Element_Map* gen_element_map(std::string element_symb)
-{
-	data_struct::Element_Info_Map * element_info_map = data_struct::Element_Info_Map::inst();
-	data_struct::Fit_Element_Map* fit_map = nullptr;
-
-	element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-
-	// check if element_symb contains '_'
-	std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
-
-	//logI<<element_symb<<" : "<<base_element_symb<<"\n";
-
-	data_struct::Element_Info* e_info = element_info_map->get_element(base_element_symb);
-	if (e_info == nullptr)
-	{
-		logW << "Can not find element " << base_element_symb << "\n";
-	}
-	else
-	{
-		fit_map = new data_struct::Fit_Element_Map(element_symb, e_info);
-	}
-
-	return fit_map;
 }
 
 //-----------------------------------------------------------------------------

@@ -60,25 +60,28 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Detector_Sum_Spectra_Source : public Spectra_File_Source
+template<typename T_real>
+class DLL_EXPORT Detector_Sum_Spectra_Source : public Spectra_File_Source<T_real>
 {
 
 public:
 
     Detector_Sum_Spectra_Source();
 
-    Detector_Sum_Spectra_Source(data_struct::Analysis_Job* analysis_job);
+    Detector_Sum_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job);
 
     virtual ~Detector_Sum_Spectra_Source();
 
-    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data);
 
 protected:
 
     std::vector<size_t> _detector_num_arr;
-    data_struct::Spectra* _spectra;
+    data_struct::Spectra<T_real>* _spectra;
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<double>;
 
 } //namespace xrf
 } //namespace workflow

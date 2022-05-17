@@ -56,9 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-const real_t ENERGY_RES_OFFSET = 150.0;
-const real_t ENERGY_RES_SQRT = 12.0;
-
 //-----------------------------------------------------------------------------
 
 //enum Element_Param_Basic_Type{ None = 0, Ka_Line = 1, Kb_Line = 2, L_Line = 3, M_Line = 7 };
@@ -109,10 +106,10 @@ const static std::map<Element_Param_Type, float> Element_Param_Percent_Map{   {K
 
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct Element_Energy_Ratio
 {
-
-    Element_Energy_Ratio(real_t e, real_t r, real_t m, Element_Param_Type et)
+    Element_Energy_Ratio(T_real e, T_real r, T_real m, Element_Param_Type et)
     {
         energy = e;
         ratio = r;
@@ -120,9 +117,9 @@ struct Element_Energy_Ratio
         ptype = et;
     }
 
-    real_t energy;
-    real_t ratio;
-    real_t mu_fraction;
+    T_real energy;
+    T_real ratio;
+    T_real mu_fraction;
     Element_Param_Type ptype;
 };
 
@@ -132,23 +129,24 @@ struct Element_Energy_Ratio
 /// \brief The Fit_Element class: Class that hold element information and the results of the fitting to a spectra.
 ///                                Able to store 2d image of the fit an element
 ///
+template<typename T_real>
 class DLL_EXPORT Fit_Element_Map
 {
 
 public:
-    Fit_Element_Map(std::string name, Element_Info* element_info);
+    Fit_Element_Map(std::string name, Element_Info<T_real>* element_info);
 
     ~Fit_Element_Map();
 
-    const real_t& center() const { return _center; }
+    const T_real& center() const { return _center; }
 
-    const real_t& width() const { return _width; }
+    const T_real& width() const { return _width; }
 
-    void set_custom_multiply_ratio(unsigned int idx, real_t multi);
+    void set_custom_multiply_ratio(unsigned int idx, T_real multi);
     
-    void multiply_custom_multiply_ratio(unsigned int idx, real_t multi);
+    void multiply_custom_multiply_ratio(unsigned int idx, T_real multi);
 
-    void init_energy_ratio_for_detector_element(const Element_Info * const detector_element, bool disable_Ka=false, bool disable_La = false);
+    void init_energy_ratio_for_detector_element(const Element_Info<T_real> * const detector_element, bool disable_Ka=false, bool disable_La = false);
 
     const std::string& full_name() const { return _full_name; }
 
@@ -156,46 +154,73 @@ public:
 
     int Z() const {return _element_info==nullptr? -1:_element_info->number;}
 
-    const std::vector<Element_Energy_Ratio>& energy_ratios() const { return _energy_ratios; }
+    const std::vector<Element_Energy_Ratio<T_real>>& energy_ratios() const { return _energy_ratios; }
 
-    const  std::vector<real_t>& energy_ratio_multipliers() const {return _energy_ratio_custom_multipliers;}
+    const  std::vector<T_real>& energy_ratio_multipliers() const {return _energy_ratio_custom_multipliers;}
 
-    const real_t& width_multi() const { return _width_multi; }
+    const T_real& width_multi() const { return _width_multi; }
 
-    void set_as_pileup(std::string name, Element_Info* element_info);
+    void set_as_pileup(std::string name, Element_Info<T_real>* element_info);
 
-    const Element_Info* pileup_element() const { return _pileup_element_info; }
+    const Element_Info<T_real>* pileup_element() const { return _pileup_element_info; }
 
 	const string& shell_type_as_string() const { return _shell_type; }
 
-	bool check_binding_energy(real_t incident_energy, int energy_ratio_idx) const;
+	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
 protected:
 
-    void generate_energy_ratio(real_t energy, real_t ratio, Element_Param_Type et, const Element_Info * const detector_element);
+    void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element);
 
     // reference to element information from Database
-    Element_Info* _element_info;
+    Element_Info<T_real>* _element_info;
 
     std::string _full_name;
-    std::vector<Element_Energy_Ratio> _energy_ratios;
-    std::vector<real_t> _energy_ratio_custom_multipliers;
+    std::vector<Element_Energy_Ratio<T_real>> _energy_ratios;
+    std::vector<T_real> _energy_ratio_custom_multipliers;
 
     std::string _shell_type;
 
-    real_t _center;
-    real_t _width;
-    real_t _width_multi;
+    T_real _center;
+    T_real _width;
+    T_real _width_multi;
 
-    Element_Info* _pileup_element_info;
+    Element_Info<T_real>* _pileup_element_info;
     std::string _pileup_shell_type;
 };
 
+TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<float>;
+TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<double>;
+
 //-----------------------------------------------------------------------------
 
-DLL_EXPORT Fit_Element_Map* gen_element_map(std::string element_symb);
+template<typename T_real>
+DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
+{
+    data_struct::Element_Info_Map<T_real>* element_info_map = data_struct::Element_Info_Map<T_real>::inst();
+    data_struct::Fit_Element_Map<T_real>* fit_map = nullptr;
 
-typedef std::unordered_map<std::string, Fit_Element_Map*> Fit_Element_Map_Dict;
+    element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
+    // check if element_symb contains '_'
+    std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
+
+    //logI<<element_symb<<" : "<<base_element_symb<<"\n";
+
+    data_struct::Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
+    if (e_info == nullptr)
+    {
+        logW << "Can not find element " << base_element_symb << "\n";
+    }
+    else
+    {
+        fit_map = new data_struct::Fit_Element_Map<T_real>(element_symb, e_info);
+    }
+
+    return fit_map;
+}
+
+template<typename T_real>
+using Fit_Element_Map_Dict = std::unordered_map<std::string, Fit_Element_Map<T_real>*>;
 
 } //namespace data_struct
 

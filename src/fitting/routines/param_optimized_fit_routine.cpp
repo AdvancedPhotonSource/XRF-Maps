@@ -55,7 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <string.h>
 
-#define SQRT_2xPI (real_t)2.506628275 // sqrt ( 2.0 * M_PI )
+#define SQRT_2xPI (T_real)2.506628275 // sqrt ( 2.0 * M_PI )
 
 using namespace data_struct;
 
@@ -66,7 +66,8 @@ namespace routines
 
 // ----------------------------------------------------------------------------
 
-Param_Optimized_Fit_Routine::Param_Optimized_Fit_Routine() : Base_Fit_Routine()
+template<typename T_real>
+Param_Optimized_Fit_Routine<T_real>::Param_Optimized_Fit_Routine() : Base_Fit_Routine<T_real>()
 {
 
     _optimizer = nullptr;
@@ -78,46 +79,48 @@ Param_Optimized_Fit_Routine::Param_Optimized_Fit_Routine() : Base_Fit_Routine()
 
 // ----------------------------------------------------------------------------
 
-Param_Optimized_Fit_Routine::~Param_Optimized_Fit_Routine()
+template<typename T_real>
+Param_Optimized_Fit_Routine<T_real>::~Param_Optimized_Fit_Routine()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters *fit_params,
-                                                                  const Spectra * const spectra,
-                                                                  const Fit_Element_Map_Dict * const elements_to_fit)
+template<typename T_real>
+void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Parameters<T_real>* fit_params,
+                                                                  const Spectra<T_real>* const spectra,
+                                                                  const Fit_Element_Map_Dict<T_real>* const elements_to_fit)
 {
 
-    real_t this_factor = (real_t)8.0;
+    T_real this_factor = (T_real)8.0;
 
     for (auto el_itr : *elements_to_fit)
     {
         if( false == fit_params->contains(el_itr.first) )
         {
-            real_t e_guess = (real_t)1.0e-10;
+            T_real e_guess = (T_real)1.0e-10;
 
-            Fit_Element_Map *element = el_itr.second;
-            std::vector<Element_Energy_Ratio> energies = element->energy_ratios();
+            Fit_Element_Map<T_real>* element = el_itr.second;
+            std::vector<Element_Energy_Ratio<T_real>> energies = element->energy_ratios();
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
             {
-                Fit_Param fp(element->full_name(), (real_t)-11.0, 300, e_guess, (real_t)0.1, E_Bound_Type::FIT);
+                Fit_Param<T_real> fp(element->full_name(), (T_real)-11.0, 300, e_guess, (T_real)0.1, E_Bound_Type::FIT);
                 (*fit_params)[el_itr.first] = fp;
             }
             if(spectra != nullptr  && energies.size() > 0)
             {
-                real_t e_energy = element->energy_ratios()[0].energy;
-                real_t min_e =  e_energy - (real_t)0.1;
-                real_t max_e =  e_energy + (real_t)0.1;
+                T_real e_energy = element->energy_ratios()[0].energy;
+                T_real min_e =  e_energy - (T_real)0.1;
+                T_real max_e =  e_energy + (T_real)0.1;
 
                 struct Range energy_range = get_energy_range(min_e, max_e, spectra->size(), fit_params->at(STR_ENERGY_OFFSET).value, fit_params->at(STR_ENERGY_SLOPE).value);
 
-                real_t sum = spectra->segment(energy_range.min, energy_range.count()).sum();
+                T_real sum = spectra->segment(energy_range.min, energy_range.count()).sum();
                 sum /= energy_range.count();
-                e_guess = std::max( sum * this_factor + (real_t)0.01, (real_t)1.0);
-                //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (real_t)0.01), 1.0);
+                e_guess = std::max( sum * this_factor + (T_real)0.01, (T_real)1.0);
+                //e_guess = std::max( (spectra->mean(energy_range.min, energy_range.max + 1) * this_factor + (T_real)0.01), 1.0);
                 e_guess = std::log10(e_guess);
 
                 (*fit_params)[el_itr.first].value = e_guess;
@@ -133,13 +136,13 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
     if( false == fit_params->contains(STR_NUM_ITR) )
     {
         //add number of iteration it took
-        Fit_Param fp(STR_NUM_ITR, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
+        Fit_Param<T_real> fp(STR_NUM_ITR, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
         (*fit_params)[STR_NUM_ITR] = fp;
     }
     if (false == fit_params->contains(STR_RESIDUAL))
     {
         //add number of iteration it took
-        Fit_Param fp(STR_RESIDUAL, (real_t)-1.0, 999999, 0.0, (real_t)0.00001, E_Bound_Type::FIXED);
+        Fit_Param<T_real> fp(STR_RESIDUAL, (T_real)-1.0, 999999, 0.0, (T_real)0.00001, E_Bound_Type::FIXED);
         (*fit_params)[STR_RESIDUAL] = fp;
     }
     (*fit_params)[STR_NUM_ITR].value = 0.0;
@@ -148,20 +151,21 @@ void Param_Optimized_Fit_Routine::_add_elements_to_fit_parameters(Fit_Parameters
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parameters* fitp,
-                                                                      const Spectra * const spectra)
+template<typename T_real>
+void Param_Optimized_Fit_Routine<T_real>::_calc_and_update_coherent_amplitude(Fit_Parameters<T_real>* fitp,
+                                                                      const Spectra<T_real>* const spectra)
 {
     //STR_COHERENT_SCT_ENERGY
     //STR_COHERENT_SCT_AMPLITUDE
-    real_t min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (real_t)0.4;
-    real_t max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (real_t)0.4;
-    real_t this_factor = (real_t)8.0;
+    T_real min_e = fitp->at(STR_COHERENT_SCT_ENERGY).value - (T_real)0.4;
+    T_real max_e = fitp->at(STR_COHERENT_SCT_ENERGY).value + (T_real)0.4;
+    T_real this_factor = (T_real)8.0;
     fitting::models::Range energy_range = fitting::models::get_energy_range(min_e, max_e, spectra->size(), fitp->value(STR_ENERGY_OFFSET), fitp->value(STR_ENERGY_SLOPE));
     size_t e_size = (energy_range.max + 1) - energy_range.min;
-    real_t sum = spectra->segment(energy_range.min, e_size).sum();
+    T_real sum = spectra->segment(energy_range.min, e_size).sum();
     sum /= energy_range.count();
-    real_t e_guess = std::max(sum * this_factor + (real_t)0.01, (real_t)1.0);
-    real_t logval = std::log10(e_guess);
+    T_real e_guess = std::max(sum * this_factor + (T_real)0.01, (T_real)1.0);
+    T_real logval = std::log10(e_guess);
     (*fitp)[STR_COMPTON_AMPLITUDE].value = logval;
     (*fitp)[STR_COHERENT_SCT_AMPLITUDE].value = logval;
 
@@ -169,10 +173,11 @@ void Param_Optimized_Fit_Routine::_calc_and_update_coherent_amplitude(Fit_Parame
 
 // ----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                           const Spectra * const spectra,
-                                                           const Fit_Element_Map_Dict * const elements_to_fit,
-                                                           std::unordered_map<std::string, real_t>& out_counts)
+template<typename T_real>
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+                                                           const Spectra<T_real>* const spectra,
+                                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                           std::unordered_map<std::string, T_real>& out_counts)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
     //int xmax = np.argmin(abs(x - (fitp.g.xmax - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
@@ -180,9 +185,9 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Mo
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {
@@ -209,9 +214,9 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Mo
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
-            real_t value =  fit_params.at(el_itr.first).value;
+            T_real value =  fit_params.at(el_itr.first).value;
             //convert from log10
-            value = std::pow((real_t)10.0, value);
+            value = std::pow((T_real)10.0, value);
             out_counts[el_itr.first] = value;
         }
 
@@ -233,10 +238,11 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra(const models::Base_Mo
 
 // ----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const models::Base_Model * const model,
-                                                                    const Spectra * const spectra,
-                                                                    const Fit_Element_Map_Dict * const elements_to_fit,
-                                                                    Fit_Parameters& out_fit_params,
+template<typename T_real>
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(const models::Base_Model<T_real>* const model,
+                                                                    const Spectra<T_real>* const spectra,
+                                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                                    Fit_Parameters<T_real>& out_fit_params,
                                                                     Callback_Func_Status_Def* status_callback)
 {
     //int xmin = np.argmin(abs(x - (fitp.g.xmin - fitp.s.val[keywords.energy_pos[0]]) / fitp.s.val[keywords.energy_pos[1]]));
@@ -244,10 +250,10 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const mode
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    Fit_Parameters fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
     //Add fit param for number of iterations
-    fit_params.add_parameter(Fit_Param(STR_NUM_ITR, 0.0));
-    fit_params.add_parameter(Fit_Param(STR_RESIDUAL, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {
@@ -274,8 +280,9 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine::fit_spectra_parameters(const mode
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
-                                             const Fit_Element_Map_Dict * const elements_to_fit,
+template<typename T_real>
+void Param_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
+                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                              const struct Range energy_range)
 {
     _energy_range = energy_range;
@@ -283,7 +290,8 @@ void Param_Optimized_Fit_Routine::initialize(models::Base_Model * const model,
 
 // ----------------------------------------------------------------------------
 
-void Param_Optimized_Fit_Routine::set_optimizer(Optimizer* optimizer)
+template<typename T_real>
+void Param_Optimized_Fit_Routine<T_real>::set_optimizer(Optimizer<T_real>* optimizer)
 {
 
     _optimizer = optimizer;

@@ -64,8 +64,8 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::Stream_Block* >
+template<typename T_real>
+class DLL_EXPORT Spectra_Stream_Saver : public Sink<data_struct::Stream_Block<T_real>* >
 {
 
 public:
@@ -74,9 +74,9 @@ public:
 
     virtual ~Spectra_Stream_Saver();
 
-    void save_stream(data_struct::Stream_Block* stream_block);
+    void save_stream(data_struct::Stream_Block<T_real>* stream_block);
 
-    virtual void set_function(std::function<void (data_struct::Stream_Block*)> func) { }
+    virtual void set_function(std::function<void (data_struct::Stream_Block<T_real>*)> func) { }
 
 protected:
 
@@ -98,8 +98,8 @@ protected:
         }
 
         int last_row;
-        data_struct::Spectra integrated_spectra;
-        std::vector< data_struct::Spectra* > spectra_line;
+        data_struct::Spectra<T_real> integrated_spectra;
+        std::vector< data_struct::Spectra<T_real>* > spectra_line;
     };
 
     class Dataset_Save
@@ -134,9 +134,9 @@ protected:
         std::map<int, Detector_Save*> detector_map;
     };
 
-    void _new_dataset(size_t d_hash, data_struct::Stream_Block* stream_block);
+    void _new_dataset(size_t d_hash, data_struct::Stream_Block<T_real>* stream_block);
 
-    void _new_detector(Dataset_Save *dataset, data_struct::Stream_Block* stream_block);
+    void _new_detector(Dataset_Save *dataset, data_struct::Stream_Block<T_real>* stream_block);
 
     void _finalize_dataset(Dataset_Save *dataset);
 
@@ -144,6 +144,9 @@ protected:
     std::map<size_t, Dataset_Save*> _dataset_map;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<double>;
 
 //-----------------------------------------------------------------------------
 

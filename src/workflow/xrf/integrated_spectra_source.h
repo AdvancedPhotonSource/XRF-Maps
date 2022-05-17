@@ -60,23 +60,26 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Integrated_Spectra_Source : public Spectra_File_Source
+template<typename T_real>
+class DLL_EXPORT Integrated_Spectra_Source : public Spectra_File_Source<T_real>
 {
 
 public:
 
-    Integrated_Spectra_Source(data_struct::Analysis_Job* analysis_job);
+    Integrated_Spectra_Source(data_struct::Analysis_Job<T_real>* analysis_job);
 
     virtual ~Integrated_Spectra_Source();
 
-    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data);
+    virtual void cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data);
 
 protected:
 
-    std::map<int, data_struct::Stream_Block *> _stream_block_list;
+    std::map<int, data_struct::Stream_Block<T_real>*> _stream_block_list;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Integrated_Spectra_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Integrated_Spectra_Source<double>;
 
 } //namespace xrf
 } //namespace workflow

@@ -48,7 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "spectra_file_source.h"
-#include "io/file/hl_file_io.h"
+//#include "io/file/hl_file_io.h"
 #include "core/mem_info.h"
 
 namespace workflow
@@ -57,38 +57,42 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-Spectra_File_Source::Spectra_File_Source() : Source<data_struct::Stream_Block*>()
+    
+template<typename T_real>
+Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_Block<T_real>*>()
 {
     _analysis_job = nullptr;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
 	_max_num_stream_blocks = -1;
-    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Spectra_File_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_File_Source::Spectra_File_Source(data_struct::Analysis_Job* analysis_job) : Source<data_struct::Stream_Block*>()
+template<typename T_real>
+Spectra_File_Source<T_real>::Spectra_File_Source(data_struct::Analysis_Job<T_real>* analysis_job) : Source<data_struct::Stream_Block<T_real>*>()
 {
     _analysis_job = analysis_job;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
     _init_fitting_routines = true;
 	_max_num_stream_blocks = -1;
-    _cb_function = std::bind(&Spectra_File_Source::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
+    _cb_function = std::bind(&Spectra_File_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
 
 //-----------------------------------------------------------------------------
 
-Spectra_File_Source::~Spectra_File_Source()
+template<typename T_real>
+Spectra_File_Source<T_real>::~Spectra_File_Source()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
+template<typename T_real>
+bool Spectra_File_Source<T_real>::load_netcdf_line(std::string dirpath,
 										   std::string filename,
                                            const std::vector<size_t>& detector_num_arr,
                                            size_t row,
@@ -98,7 +102,7 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 	bool retVal;
 	_current_dataset_directory = new std::string(dirpath);
 	_current_dataset_name = new std::string(filename);
-	retVal = io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
+	retVal = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
 	delete _current_dataset_directory;
 	delete _current_dataset_name;
 	return retVal;
@@ -106,29 +110,31 @@ bool Spectra_File_Source::load_netcdf_line(std::string dirpath,
 
 // ----------------------------------------------------------------------------
 
-data_struct::Stream_Block* Spectra_File_Source::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
+template<typename T_real>
+data_struct::Stream_Block<T_real>* Spectra_File_Source<T_real>::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
 {
 	if (_max_num_stream_blocks == -1)
 	{
-		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(real_t));
+		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(T_real));
 	}
-	return new data_struct::Stream_Block(detector, row, col, height, width);
+	return new data_struct::Stream_Block<T_real>(detector, row, col, height, width);
 }
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra* spectra, void* user_data)
+template<typename T_real>
+void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
 
-    if(_output_callback_func != nullptr)
+    if(this->_output_callback_func != nullptr)
     {
-		data_struct::Stream_Block * stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
+		data_struct::Stream_Block<T_real>* stream_block = _alloc_stream_block(detector_num, row, col, height, width, spectra->size());
 
         if(_init_fitting_routines && _analysis_job != nullptr)
         {
             _analysis_job->init_fit_routines(spectra->size());
 
-            struct data_struct::Detector* cp = _analysis_job->get_detector(detector_num);
+            struct data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
 
             if(cp == nullptr)
             {
@@ -150,7 +156,7 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
         stream_block->dataset_directory = _current_dataset_directory;
         stream_block->dataset_name = _current_dataset_name;
 
-        _output_callback_func(stream_block);
+        this->_output_callback_func(stream_block);
     }
     else
     {
@@ -161,7 +167,8 @@ void Spectra_File_Source::cb_load_spectra_data(size_t row, size_t col, size_t he
 
 // ----------------------------------------------------------------------------
 
-void Spectra_File_Source::run()
+template<typename T_real>
+void Spectra_File_Source<T_real>::run()
 {
     if(_analysis_job == nullptr)
     {
@@ -179,10 +186,10 @@ void Spectra_File_Source::run()
 	{
 		_analysis_job->mem_limit = std::min(_analysis_job->mem_limit, total_mem);
 	}
-
-    _netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
-    _bnp_netcdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
-    _hdf_files = io::find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
+    
+    _netcdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_0.nc");
+    _bnp_netcdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF"+ DIR_END_CHAR, "_001.nc");
+    _hdf_files = io::file::File_Scan::inst()->find_all_dataset_files(_analysis_job->dataset_directory + "flyXRF.h5"+ DIR_END_CHAR, "_0.h5");
 
     for(std::string dataset_file : _analysis_job->dataset_files)
     {
@@ -194,11 +201,11 @@ void Spectra_File_Source::run()
         }
 
 		//send end of file stream block
-		data_struct::Stream_Block* end_block = new data_struct::Stream_Block(-1, -1, -1, -1, -1);
+		data_struct::Stream_Block<T_real>* end_block = new data_struct::Stream_Block<T_real>(-1, -1, -1, -1, -1);
 		end_block->dataset_directory = _current_dataset_directory;
 		end_block->dataset_name = _current_dataset_name;
 		end_block->del_str_ptr = true;
-		_output_callback_func(end_block);
+		this->_output_callback_func(end_block);
 
 		_current_dataset_directory = nullptr;
 		_current_dataset_name = nullptr;
@@ -207,13 +214,14 @@ void Spectra_File_Source::run()
 
 //-----------------------------------------------------------------------------
 
-bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset_directory,
+template<typename T_real>
+bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string dataset_directory,
                                                                  std::string dataset_file,
                                                                  const std::vector<size_t>& detector_num_arr,
-																 data_struct::IO_Callback_Func_Def callback_fun)
+																 data_struct::IO_Callback_Func_Def<T_real> callback_fun)
 {
     //Dataset importer
-    io::file::MDA_IO mda_io;
+    io::file::MDA_IO<T_real> mda_io;
     //data_struct::Detector detector;
     std::string tmp_dataset_file = dataset_file;
 
@@ -310,7 +318,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else
@@ -337,7 +345,7 @@ bool Spectra_File_Source::_load_spectra_volume_with_callback(std::string dataset
                     }
                     row_idx_str_full += row_idx_str;
                     full_filename = dataset_directory + "flyXRF"+ DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                    io::file::NetCDF_IO::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
+                    io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(full_filename, detector_num_arr, i, row_size, col_size, callback_fun, nullptr);
                 }
             }
             else

@@ -52,10 +52,13 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-Detector::Detector(unsigned int number)
+//-----------------------------------------------------------------------------
+    
+template<typename T_real>
+Detector<T_real>::Detector(unsigned int number)
 {
     model = nullptr;
-    detector_element = data_struct::Element_Info_Map::inst()->get_element("Si");
+    detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
     beryllium_window_thickness = 0.0; //24.000000
     germanium_dead_layer = 0.0; //350.0
     detector_chip_thickness = 0.0;
@@ -64,7 +67,10 @@ Detector::Detector(unsigned int number)
     _number = number;
 }
 
-Detector::~Detector()
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Detector<T_real>::~Detector()
 {
     if (model != nullptr)
     {
@@ -73,7 +79,7 @@ Detector::~Detector()
     }
     for (auto& itr : fit_routines)
     {
-        fitting::routines::Base_Fit_Routine* fit_routine = itr.second;
+        fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
         if (fit_routine != nullptr)
         {
             delete fit_routine;
@@ -94,14 +100,15 @@ Detector::~Detector()
 
 //-----------------------------------------------------------------------------
 
-void Detector::append_element(Fitting_Routines routine, string quant_scaler, string name, real_t weight)
+template<typename T_real>
+void Detector<T_real>::append_element(Fitting_Routines routine, string quant_scaler, string name, T_real weight)
 {
     if (fitting_quant_map.count(routine) == 0)
     {
-        fitting_quant_map[routine] = Fitting_Quantification_Struct();
+        fitting_quant_map[routine] = Fitting_Quantification_Struct<T_real>();
     }
 
-    Element_Info* element = Element_Info_Map::inst()->get_element(name);
+    Element_Info<T_real>* element = Element_Info_Map<T_real>::inst()->get_element(name);
     if (element != nullptr)
     {
         Electron_Shell shell = get_shell_by_name(name);
@@ -120,11 +127,12 @@ void Detector::append_element(Fitting_Routines routine, string quant_scaler, str
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_element_quants(Fitting_Routines routine,
+template<typename T_real>
+void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                                     string quantifier_scaler,
-                                    Quantification_Standard* standard,
-                                    Quantification_Model* quantification_model,
-                                    real_t ic_quantifier)
+                                    Quantification_Standard<T_real>* standard,
+                                    Quantification_Model<T_real>* quantification_model,
+                                    T_real ic_quantifier)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -134,7 +142,7 @@ void Detector::update_element_quants(Fitting_Routines routine,
             {
                 for (auto& eq_itr : fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr))
                 {
-                    Element_Info* element = Element_Info_Map::inst()->get_element(eq_itr.Z);
+                    Element_Info<T_real>* element = Element_Info_Map<T_real>::inst()->get_element(eq_itr.Z);
                     if (element == nullptr)
                     {
                         continue;
@@ -169,28 +177,20 @@ void Detector::update_element_quants(Fitting_Routines routine,
                                 ic_quantifier = 1.0;
                             }
 
-                            real_t counts = standard->element_counts.at(routine).at(name);
-                            real_t e_cal_factor = (eq_itr.weight * (ic_quantifier));
+                            T_real counts = standard->element_counts.at(routine).at(name);
+                            T_real e_cal_factor = (eq_itr.weight * (ic_quantifier));
+
                             if (counts > 0.)
                             {
-                                real_t e_cal = e_cal_factor / counts;
-                                if (eq_itr.e_cal_ratio == 0.)
-                                {
-                                    eq_itr.e_cal_ratio = (real_t)1.0 / e_cal;
-                                }
-                                else // else avg the two
-                                {
-                                    real_t second_cal_ratio = (real_t)1.0 / e_cal;
-                                    eq_itr.e_cal_ratio += second_cal_ratio;
-                                    eq_itr.e_cal_ratio *= 0.5;
-                                }
+                                T_real e_cal = e_cal_factor / counts;
+                                // e_cal_ratio defined as 0 , add this value. If we have multiple standards
+                                // then we will normalize this later .
+                                eq_itr.e_cal_ratio += (T_real)1.0 / e_cal;
+
                             }
                             else
                             {
-                                if (eq_itr.e_cal_ratio == 0.)
-                                {
-                                    eq_itr.e_cal_ratio = 1.0e-10;
-                                }
+                                eq_itr.e_cal_ratio += 1.0e-10;
                             }
                         }
                     }
@@ -210,15 +210,51 @@ void Detector::update_element_quants(Fitting_Routines routine,
 
 //-----------------------------------------------------------------------------
 
-void Detector::generage_avg_quantification_scalers()
+template<typename T_real>
+void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
+                                        string quantifier_scaler,
+                                        std::unordered_map<int, float>& element_amt_dict)
 {
-    real_t avg_sr_current = 0.0;
-    real_t avg_US_IC = 0.0;
-    real_t avg_DS_IC = 0.0;
+    if (fitting_quant_map.count(routine) > 0)
+    {
+        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        {
+            for (const auto& shell_itr : Shells_Quant_List)
+            {
+                vector<Element_Quant<T_real>>* element_z_vec = &fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr);
+                for (auto& itr: element_amt_dict)
+                {
+                    if (itr.second > 1.0)
+                    {
+                        // index is Z - 1
+                        (* element_z_vec)[itr.first - 1].e_cal_ratio /= itr.second;;
+                    }
+                }
+            }
+        }
+        else
+        {
+            logW << "Could not find quantifier scalers : " << quantifier_scaler << " .\n";
+        }
+    }
+    else
+    {
+        logW << "Could not find fitting routine " << Fitting_Routine_To_Str.at(routine) << " .\n";
+    }
+}
 
-    real_t crnt_cnt = 0.0;
-    real_t us_cnt = 0.0;
-    real_t ds_cnt = 0.0;
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Detector<T_real>::generage_avg_quantification_scalers()
+{
+    T_real avg_sr_current = 0.0;
+    T_real avg_US_IC = 0.0;
+    T_real avg_DS_IC = 0.0;
+
+    T_real crnt_cnt = 0.0;
+    T_real us_cnt = 0.0;
+    T_real ds_cnt = 0.0;
 
     //average quantification scalers
     for (const auto& itr : quantification_standards)
@@ -286,10 +322,11 @@ void Detector::generage_avg_quantification_scalers()
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_calibration_curve(Fitting_Routines routine,
+template<typename T_real>
+void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
                                         string quantifier_scaler,
-                                        Quantification_Model* quantification_model,
-                                        real_t val)
+                                        Quantification_Model<T_real>* quantification_model,
+                                        T_real val)
 {
     if (fitting_quant_map.count(routine) > 0)
     {
@@ -297,7 +334,7 @@ void Detector::update_calibration_curve(Fitting_Routines routine,
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
-                vector<Element_Quant>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
+                vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
                 quantification_model->model_calibrationcurve(quant_vec, val);
             }
         }
@@ -306,29 +343,30 @@ void Detector::update_calibration_curve(Fitting_Routines routine,
 
 //-----------------------------------------------------------------------------
 
-void Detector::update_from_fit_paramseters()
+template<typename T_real>
+void Detector<T_real>::update_from_fit_paramseters()
 {
     //Parameters for calibration curve
     if (fit_params_override_dict.detector_element.length() > 0)
     {
         // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-        detector_element = (data_struct::Element_Info_Map::inst()->get_element(fit_params_override_dict.detector_element));
+        detector_element = (data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element));
     }
     if (fit_params_override_dict.be_window_thickness.length() > 0)
     {
-        beryllium_window_thickness = std::stof(fit_params_override_dict.be_window_thickness) * 1000.0;
+        beryllium_window_thickness = parse_input_real<T_real>(fit_params_override_dict.be_window_thickness) * 1000.0;
     }
     if (fit_params_override_dict.ge_dead_layer.length() > 0)
     {
-        germanium_dead_layer = std::stof(fit_params_override_dict.ge_dead_layer) * 1000.0;
+        germanium_dead_layer = parse_input_real<T_real>(fit_params_override_dict.ge_dead_layer) * 1000.0;
     }
     if (fit_params_override_dict.det_chip_thickness.length() > 0)
     {
-        detector_chip_thickness = std::stof(fit_params_override_dict.det_chip_thickness) * 1000.0;
+        detector_chip_thickness = parse_input_real<T_real>(fit_params_override_dict.det_chip_thickness) * 1000.0;
     }
     if (fit_params_override_dict.airpath.length() > 0)
     {
-        airpath = std::stof(fit_params_override_dict.airpath) * 1000.0;
+        airpath = parse_input_real<T_real>(fit_params_override_dict.airpath) * 1000.0;
     }
     if (fit_params_override_dict.fit_params.contains(STR_COHERENT_SCT_ENERGY))
     {

@@ -63,11 +63,11 @@ namespace optimizers
 {
 
 //-----------------------------------------------------------------------------
-
-int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
+template<typename T_real>
+int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
     // Get user passed data
-    User_Data* ud = static_cast<User_Data*>(usr_data);
+    User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -78,7 +78,7 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
     //Calculate residuals
     for (int i=0; i<m; i++)
@@ -104,10 +104,11 @@ int residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t *
 
 //-----------------------------------------------------------------------------
 
-int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
+template<typename T_real>
+int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
     // Get user passed data
-    Gen_User_Data* ud = static_cast<Gen_User_Data*>(usr_data);
+    Gen_User_Data<T_real>* ud = static_cast<Gen_User_Data<T_real>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -117,7 +118,7 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayXr)ud->spectra_model.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
+    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
@@ -134,23 +135,24 @@ int gen_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real
 
 //-----------------------------------------------------------------------------
 
-int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_t *dy, real_t **dvec, void *usr_data)
+template<typename T_real>
+int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
-    ///(std::valarray<real_t> p, std::valarray<real_t> y, std::valarray<real_t> x)
+    ///(std::valarray<T_real> p, std::valarray<T_real> y, std::valarray<T_real> x)
 
     //y is array of elements standards
     //x is indexes of elements in standard
     //p is array size 2 but seems only first index is used
     ///return (y - this->fit_calibrationcurve(x, p));
 
-    Quant_User_Data* ud = (Quant_User_Data*)(usr_data);
+    Quant_User_Data<T_real>* ud = (Quant_User_Data<T_real>*)(usr_data);
 
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
     //Model spectra based on new fit parameters
 
     //Calculate residuals
-    std::unordered_map<std::string, real_t> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, params[0]);
+    std::unordered_map<std::string, T_real> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, params[0]);
 
     int idx = 0;
     for(auto& itr : ud->quant_map)
@@ -171,16 +173,26 @@ int quantification_residuals_mpfit(int m, int params_size, real_t *params, real_
 
 // =====================================================================================================================
 
-
-MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
+template<typename T_real>
+MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 {
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-    _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-    _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-    _options.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    _options.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
-    _options.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    if (std::is_same<T_real, float>::value)
+    {
+        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = FP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    }
+    else if (std::is_same<T_real, double>::value)
+    {
+        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = DP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+    }
+    _options.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
+    _options.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     _options.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
@@ -201,22 +213,23 @@ MPFit_Optimizer::MPFit_Optimizer() : Optimizer()
     _options.iterproc = 0;         // Placeholder pointer - must set to 0
 
 
-    _outcome_map[0] = OPTIMIZER_OUTCOME::FAILED;
-    _outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
-    _outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
-    _outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
-    _outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
-    _outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
+    this->_outcome_map[0] = OPTIMIZER_OUTCOME::FAILED;
+    this->_outcome_map[1] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[2] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[3] = OPTIMIZER_OUTCOME::CONVERGED;
+    this->_outcome_map[4] = OPTIMIZER_OUTCOME::TRAPPED;
+    this->_outcome_map[5] = OPTIMIZER_OUTCOME::TRAPPED;
+    this->_outcome_map[6] = OPTIMIZER_OUTCOME::F_TOL_LT_TOL;
+    this->_outcome_map[7] = OPTIMIZER_OUTCOME::X_TOL_LT_TOL;
+    this->_outcome_map[8] = OPTIMIZER_OUTCOME::G_TOL_LT_TOL;
 
 }
 // ----------------------------------------------------------------------------
 
-unordered_map<string, real_t> MPFit_Optimizer::get_options()
+template<typename T_real>
+unordered_map<string, T_real> MPFit_Optimizer<T_real>::get_options()
 {
-    unordered_map<string, real_t> opts{
+    unordered_map<string, T_real> opts{
     {STR_OPT_FTOL, _options.ftol},
     {STR_OPT_XTOL, _options.xtol},
     {STR_OPT_GTOL, _options.gtol},
@@ -231,7 +244,8 @@ unordered_map<string, real_t> MPFit_Optimizer::get_options()
 
 // ----------------------------------------------------------------------------
 
-void MPFit_Optimizer::set_options(unordered_map<string, real_t> opt)
+template<typename T_real>
+void MPFit_Optimizer<T_real>::set_options(unordered_map<string, T_real> opt)
 {
     if (opt.count(STR_OPT_FTOL) > 0)
     {
@@ -266,24 +280,24 @@ void MPFit_Optimizer::set_options(unordered_map<string, real_t> opt)
 //-----------------------------------------------------------------------------
 
 
-
-void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp_par<real_t> > &par)
+template<typename T_real>
+void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , vector<struct mp_par<T_real> > &par)
 {
 	for (auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
 	{
-		Fit_Param fit = (*fit_params)[itr->first];
+		Fit_Param<T_real> fit = (*fit_params)[itr->first];
 		if (fit.opt_array_index > -1)
 		{
 
 			if (fit.value > fit.max_val)
 			{
-				fit.max_val = fit.value + (real_t)1.0;
-				(*fit_params)[itr->first].max_val = fit.value + (real_t)1.0;
+				fit.max_val = fit.value + (T_real)1.0;
+				(*fit_params)[itr->first].max_val = fit.value + (T_real)1.0;
 			}
 			if (fit.value < fit.min_val)
 			{
-				fit.min_val = fit.value - (real_t)1.0;
-				(*fit_params)[itr->first].min_val = fit.value - (real_t)1.0;
+				fit.min_val = fit.value - (T_real)1.0;
+				(*fit_params)[itr->first].min_val = fit.value - (T_real)1.0;
 			}
 			if (fit.bound_type == E_Bound_Type::LIMITED_HI
 				|| fit.bound_type == E_Bound_Type::LIMITED_LO
@@ -291,10 +305,10 @@ void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp
 			{
 				if (fit.max_val == fit.min_val)
 				{
-					fit.max_val += (real_t)1.0;
-					fit.min_val -= (real_t)1.0;
-					(*fit_params)[itr->first].max_val += (real_t)1.0;
-					(*fit_params)[itr->first].min_val -= (real_t)1.0;
+					fit.max_val += (T_real)1.0;
+					fit.min_val -= (T_real)1.0;
+					(*fit_params)[itr->first].max_val += (T_real)1.0;
+					(*fit_params)[itr->first].min_val -= (T_real)1.0;
 				}
 			}
 
@@ -305,14 +319,14 @@ void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp
 			case E_Bound_Type::LIMITED_HI:
 				par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
 				par[fit.opt_array_index].limited[1] = 1;
-				par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[0] = std::numeric_limits<T_real>::min();   // lower/upper limit boundary value
 				par[fit.opt_array_index].limits[1] = fit.max_val;
 				break;
 			case E_Bound_Type::LIMITED_LO:
 				par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
 				par[fit.opt_array_index].limited[1] = 0;
 				par[fit.opt_array_index].limits[0] = fit.min_val;   // lower/upper limit boundary value
-				par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+				par[fit.opt_array_index].limits[1] = std::numeric_limits<T_real>::max();
 				break;
 			case E_Bound_Type::LIMITED_LO_HI:
 				par[fit.opt_array_index].limited[0] = 1;   // 1 = low/upper limit; 0 = no limit
@@ -323,8 +337,8 @@ void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp
 			default:
 				par[fit.opt_array_index].limited[0] = 0;   // 1 = low/upper limit; 0 = no limit
 				par[fit.opt_array_index].limited[1] = 0;
-				par[fit.opt_array_index].limits[0] = std::numeric_limits<real_t>::min();   // lower/upper limit boundary value
-				par[fit.opt_array_index].limits[1] = std::numeric_limits<real_t>::max();
+				par[fit.opt_array_index].limits[0] = std::numeric_limits<T_real>::min();   // lower/upper limit boundary value
+				par[fit.opt_array_index].limits[1] = std::numeric_limits<T_real>::max();
 				break;
 			}
 
@@ -349,15 +363,16 @@ void MPFit_Optimizer::_fill_limits(Fit_Parameters *fit_params , vector<struct mp
 					   //  you want to compare the user-analytical one to
 					   //  (0, 1, -1, or 2).
 
-			par[fit.opt_array_index].deriv_reltol = (real_t)0.00001; // Relative tolerance for derivative debug printout
-			par[fit.opt_array_index].deriv_abstol = (real_t)0.00001; // Absolute tolerance for derivative debug printout
+			par[fit.opt_array_index].deriv_reltol = (T_real)0.00001; // Relative tolerance for derivative debug printout
+			par[fit.opt_array_index].deriv_abstol = (T_real)0.00001; // Absolute tolerance for derivative debug printout
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
 
-void MPFit_Optimizer::_print_info(int info)
+template<typename T_real>
+void MPFit_Optimizer<T_real>::_print_info(int info)
 {
 	switch (info)
 	{
@@ -396,19 +411,20 @@ void MPFit_Optimizer::_print_info(int info)
 
 //-----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
-                                            const Spectra * const spectra,
-                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                            const Base_Model * const model,
+template<typename T_real>
+OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_params,
+                                            const Spectra<T_real>* const spectra,
+                                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                            const Base_Model<T_real>* const model,
                                             const Range energy_range,
                                             Callback_Func_Status_Def* status_callback)
-            {
-    User_Data ud;
+{
+    User_Data<T_real> ud;
     size_t num_itr = _options.maxiter;
 
-    std::vector<real_t> fitp_arr = fit_params->to_array();
-    std::vector<real_t> perror(fitp_arr.size());
-    std::vector<real_t> resid(energy_range.count());
+    std::vector<T_real> fitp_arr = fit_params->to_array();
+    std::vector<T_real> perror(fitp_arr.size());
+    std::vector<T_real> resid(energy_range.count());
 
     size_t total_itr = num_itr * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
@@ -416,13 +432,13 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     int info;
     /*
     /////// init config ////////////
-    struct mp_config<real_t> config;
+    struct mp_config<T_real> config;
     config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
     config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
-    config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    config.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
+    config.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     config.maxiter = num_itr;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
@@ -444,19 +460,19 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
 
     */
     /////////////// init params limits /////////////////////////
-	vector<struct mp_par<real_t> > par;
+	vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
 	_fill_limits(fit_params, par);
 
-    mp_result<real_t> result;
+    mp_result<T_real> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    info = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 
@@ -467,7 +483,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
-        real_t sum_resid = 0.0;
+        T_real sum_resid = 0.0;
         for (int i = 0; i < energy_range.count(); i++)
         {
             sum_resid += resid[i];
@@ -475,37 +491,38 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize(Fit_Parameters *fit_params,
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
 
 //-----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
-                                                const Spectra * const spectra,
+template<typename T_real>
+OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> *fit_params,
+                                                const Spectra<T_real>* const spectra,
                                                 const Range energy_range,
-                                                const ArrayXr* background,
-									            Gen_Func_Def gen_func)
+                                                const ArrayTr<T_real>* background,
+									            Gen_Func_Def<T_real> gen_func)
 {
-    Gen_User_Data ud;
+    Gen_User_Data<T_real> ud;
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
 
-    std::vector<real_t> fitp_arr = fit_params->to_array();
-    std::vector<real_t> perror(fitp_arr.size());
-    std::vector<real_t> resid(energy_range.count());
+    std::vector<T_real> fitp_arr = fit_params->to_array();
+    std::vector<T_real> perror(fitp_arr.size());
+    std::vector<T_real> resid(energy_range.count());
 
     int info;
     /*
     /////// init config ////////////
-    struct mp_config<real_t> mp_config;
+    struct mp_config<T_real> mp_config;
     mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     mp_config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
-    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    mp_config.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
+    mp_config.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     mp_config.maxiter = 200;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
@@ -528,16 +545,16 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
-	vector<struct mp_par<real_t> > par;
+	vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    mp_result<real_t> result;
+    mp_result<T_real> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(gen_residuals_mpfit, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
+    info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
 /*
     
 */
@@ -545,11 +562,11 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
 
     if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+        (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(result.nfev);
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
-        real_t sum_resid = 0.0;
+        T_real sum_resid = 0.0;
         for (int i = 0; i< energy_range.count(); i++)
         {
              sum_resid += std::abs(resid[i]);
@@ -557,19 +574,20 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_func(Fit_Parameters *fit_params,
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
 
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
 
 //-----------------------------------------------------------------------------
 
-OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_params,
-                                                          std::unordered_map<std::string, Element_Quant*> * quant_map,
-                                                          quantification::models::Quantification_Model * quantification_model)
+template<typename T_real>
+OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameters<T_real> *fit_params,
+                                                          std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
+                                                          quantification::models::Quantification_Model<T_real>* quantification_model)
 {
-    Quant_User_Data ud;
+    Quant_User_Data<T_real> ud;
 
     if (quant_map != nullptr)
     {
@@ -581,20 +599,20 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 
-    std::vector<real_t> fitp_arr = fit_params->to_array();
-    std::vector<real_t> perror(fitp_arr.size());
-    std::vector<real_t> resid(quant_map->size());
+    std::vector<T_real> fitp_arr = fit_params->to_array();
+    std::vector<T_real> perror(fitp_arr.size());
+    std::vector<T_real> resid(quant_map->size());
 
     int info;
     /*
     /////// init config ////////////
-    struct mp_config<real_t> mp_config;
+    struct mp_config<T_real> mp_config;
     mp_config.ftol = 1e-10;       // Relative chi-square convergence criterium  Default: 1e-10
     mp_config.xtol = 1e-10;       // Relative parameter convergence criterium   Default: 1e-10
     mp_config.gtol = 1e-10;       // Orthogonality convergence criterium        Default: 1e-10
     mp_config.epsfcn = MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
-    mp_config.stepfactor = (real_t)100.0;   // Initial step bound                         Default: 100.0
-    mp_config.covtol = (real_t)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
+    mp_config.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
+    mp_config.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
     mp_config.maxiter = 1000;        //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
                                     //    then basic error checking is done, and parameter
                                     //    errors/covariances are estimated based on input
@@ -618,19 +636,20 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
-    mp_result<real_t> result;
+    mp_result<T_real> result;
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     result.resid = &resid[0];
-//    struct mp_par<real_t> *mp_par = nullptr;
+//    struct mp_par<T_real> *mp_par = nullptr;
 //	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
 
 	
-	vector<struct mp_par<real_t> > par;
+	vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    info = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[info]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
 	_print_info(info);
 
@@ -638,19 +657,19 @@ OPTIMIZER_OUTCOME MPFit_Optimizer::minimize_quantification(Fit_Parameters *fit_p
 
     if (fit_params->contains(STR_NUM_ITR) )
     {
-        (*fit_params)[STR_NUM_ITR].value = static_cast<real_t>(result.nfev);
+        (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(result.nfev);
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
-        real_t sum_resid = 0.0;
+        T_real sum_resid = 0.0;
         for (int i = 0; i < quant_map->size(); i++)
         {
             sum_resid += resid[i];
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
-    if (_outcome_map.count(info) > 0)
-        return _outcome_map[info];
+    if (this->_outcome_map.count(info) > 0)
+        return this->_outcome_map[info];
 
     return OPTIMIZER_OUTCOME::FAILED;
 

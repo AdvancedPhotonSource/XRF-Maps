@@ -62,10 +62,11 @@ namespace data_struct
 ///
 /// \brief The Stream_Fitting_Block struct
 ///
+template<typename T_real>
 struct Stream_Fitting_Block
 {
-    fitting::routines::Base_Fit_Routine * fit_routine;
-    std::unordered_map<std::string, real_t> fit_counts;
+    fitting::routines::Base_Fit_Routine<T_real>* fit_routine;
+    std::unordered_map<std::string, T_real> fit_counts;
 };
 
 //-----------------------------------------------------------------------------
@@ -73,6 +74,7 @@ struct Stream_Fitting_Block
 ///
 /// \brief The Stream_Block class
 ///
+template<typename T_real>
 class DLL_EXPORT Stream_Block
 {
 
@@ -88,7 +90,7 @@ public:
 
     ~Stream_Block();
 
-    void init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> *fit_routines, Fit_Element_Map_Dict * elements_to_fit_);
+    void init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> *fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
 
     const size_t& row() { return _row; }
 
@@ -106,7 +108,7 @@ public:
 
 
     //by Fitting_Routines
-    std::unordered_map<Fitting_Routines, Stream_Fitting_Block> fitting_blocks;
+    std::unordered_map<Fitting_Routines, Stream_Fitting_Block<T_real>> fitting_blocks;
 
     size_t dataset_hash();
 
@@ -114,14 +116,14 @@ public:
 
     std::string *dataset_name;
 
-    Spectra * spectra;
+    Spectra<T_real>* spectra;
 
-    Fit_Element_Map_Dict * elements_to_fit;
+    Fit_Element_Map_Dict<T_real> * elements_to_fit;
     //data_struct::Params_Override *fit_params_override_dict;
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
-    fitting::models::Base_Model * model;
+    fitting::models::Base_Model<T_real> * model;
 
     float theta;
 
@@ -140,6 +142,9 @@ protected:
     int _detector;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<float>;
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<double>;
 
 } //namespace data_struct
 

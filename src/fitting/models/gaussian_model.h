@@ -51,7 +51,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Gaussian_Model_H
 
 #include "fitting/models/base_model.h"
-#include "fitting/optimizers/optimizer.h"
 #include "data_struct/fit_parameters.h"
 
 namespace fitting
@@ -59,33 +58,33 @@ namespace fitting
 namespace models
 {
 
-	using namespace data_struct;
-	using namespace fitting::optimizers;
+using namespace data_struct;
 
-class DLL_EXPORT Gaussian_Model: public Base_Model
+template<typename T_real>
+class DLL_EXPORT Gaussian_Model: public Base_Model<T_real>
 {
 public:
     Gaussian_Model();
 
     ~Gaussian_Model();
 
-    virtual const Fit_Parameters& fit_parameters() const { return _fit_parameters; }
+    virtual const Fit_Parameters<T_real>& fit_parameters() const { return _fit_parameters; }
 
     // single threaded
-    virtual const Spectra model_spectrum(const Fit_Parameters * const fit_params,
-                                         const Fit_Element_Map_Dict * const elements_to_fit,
-                                         unordered_map<string, ArrayXr>* labeled_spectras,
-                                         const struct Range energy_range);
+    virtual const Spectra<T_real> model_spectrum(const Fit_Parameters<T_real>* const fit_params,
+                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                    unordered_map<string, ArrayTr<T_real>>* labeled_spectras,
+                                                    const struct Range energy_range);
 
     // multi threaded
-    virtual const Spectra model_spectrum_mp(const Fit_Parameters * const fit_params,
-                                            const Fit_Element_Map_Dict * const elements_to_fit,
-                                            const struct Range energy_range);
+    virtual const Spectra<T_real> model_spectrum_mp(const Fit_Parameters<T_real>* const fit_params,
+                                                        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                        const struct Range energy_range);
 
-    virtual const Spectra model_spectrum_element(const Fit_Parameters * const fitp,
-                                                 const Fit_Element_Map * const element_to_fit,
-                                                 const ArrayXr &ev,
-                                                 unordered_map<string, ArrayXr>* labeled_spectras);
+    virtual const Spectra<T_real> model_spectrum_element(const Fit_Parameters<T_real>* const fitp,
+                                                            const Fit_Element_Map<T_real>* const element_to_fit,
+                                                            const ArrayTr<T_real> &ev,
+                                                            unordered_map<string, ArrayTr<T_real>>* labeled_spectras);
 
     void set_fit_params_preset(Fit_Params_Preset lock_macro);
 
@@ -98,7 +97,7 @@ public:
      * @param delta_energy
      * @return
      */
-    virtual const ArrayXr peak(real_t gain, real_t sigma, const ArrayXr& delta_energy) const;
+    virtual const ArrayTr<T_real> peak(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy) const;
 
     /**
      * @brief gauss_step : gain / 2.0 /  peak_E * erfc(delta_energy/(M_SQRT2 * sigma));
@@ -108,33 +107,40 @@ public:
      * @param peak_E
      * @return
      */
-    virtual const ArrayXr step(real_t gain, real_t sigma, const ArrayXr& delta_energy, real_t peak_E) const;
+    virtual const ArrayTr<T_real> step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const;
 
-    virtual const ArrayXr tail(real_t gain, real_t sigma, ArrayXr delta_energy, real_t gamma) const;
+    virtual const ArrayTr<T_real> tail(T_real gain, T_real sigma, ArrayTr<T_real> delta_energy, T_real gamma) const;
 
-    virtual const ArrayXr elastic_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
+    virtual const ArrayTr<T_real> elastic_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real gain) const;
 
-    virtual const ArrayXr compton_peak(const Fit_Parameters * const fitp, const ArrayXr& ev, real_t gain) const;
+    virtual const ArrayTr<T_real> compton_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real gain) const;
 
-    virtual const ArrayXr escape_peak(const Fit_Parameters* const fitp, const ArrayXr& ev, real_t  gain) const;
+    virtual const ArrayTr<T_real> escape_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real  gain) const;
 
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 
-    virtual void update_fit_params_values(const Fit_Parameters *fit_params) { _fit_parameters.update_values(fit_params); }
+    virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) { _fit_parameters.update_values(fit_params); }
 
-    void update_and_add_fit_params_values_gt_zero(Fit_Parameters *fit_params) { _fit_parameters.update_and_add_values_gt_zero(fit_params); }
+    void update_and_add_fit_params_values_gt_zero(Fit_Parameters<T_real>* fit_params) { _fit_parameters.update_and_add_values_gt_zero(fit_params); }
 
 protected:
 
-    Fit_Parameters _generate_default_fit_parameters();
+    Fit_Parameters<T_real> _generate_default_fit_parameters();
 
-    Fit_Parameters _fit_parameters;
+    Fit_Parameters<T_real> _fit_parameters;
 
 };
 
-DLL_EXPORT ArrayXr generate_ev_array(Range energy_range, Fit_Parameters& fit_params);
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<float>;
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<double>;
 
-DLL_EXPORT ArrayXr generate_ev_array(Range energy_range, real_t energy_offset, real_t energy_slope, real_t energy_quad);
+
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params);
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, T_real energy_offset, T_real energy_slope, T_real energy_quad);
 
 } //namespace models
 

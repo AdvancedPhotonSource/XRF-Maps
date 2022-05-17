@@ -64,8 +64,8 @@ namespace xrf
 {
 
 //-----------------------------------------------------------------------------
-
-class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::Stream_Block* >
+template<typename T_real>
+class DLL_EXPORT Spectra_Net_Streamer : public Sink<data_struct::Stream_Block<T_real>* >
 {
 
 public:
@@ -74,7 +74,7 @@ public:
 
     virtual ~Spectra_Net_Streamer();
 
-    void stream(data_struct::Stream_Block* stream_block);
+    void stream(data_struct::Stream_Block<T_real>* stream_block);
 
     void set_send_counts(bool val) {_send_counts = val;}
 
@@ -86,13 +86,16 @@ protected:
 
 	zmq::socket_t *_zmq_socket;
 #endif
-	io::net::Basic_Serializer _serializer;
+	io::net::Basic_Serializer<T_real> _serializer;
 
     bool _send_counts;
 
     bool _send_spectra;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<double>;
 
 //-----------------------------------------------------------------------------
 

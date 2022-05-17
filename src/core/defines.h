@@ -59,18 +59,6 @@ static std::time_t now_c;
 #define logW logit<<"Warning: "
 #define logI logit<<"Info: "
 
-#if defined _REAL_FLOAT
-  #define real_t float
-  #define str_to_real std::stof
-  #define H5T_NATIVE_REAL H5T_NATIVE_FLOAT
-  #define H5T_INTEL_R H5T_INTEL_F32
-#elif defined _REAL_DOUBLE
-  #define real_t double
-  #define str_to_real std::stod
-  #define H5T_NATIVE_REAL H5T_NATIVE_DOUBLE
-  #define H5T_INTEL_R H5T_INTEL_F64
-#endif
-
 #if defined _WIN32 || defined __CYGWIN__
   #pragma warning( disable : 4251 4127 4996 4505 4244 )
   #define DIR_END_CHAR '\\'
@@ -79,7 +67,7 @@ static std::time_t now_c;
     #ifdef __GNUC__
       #define DLL_EXPORT __attribute__ ((dllexport))
     #else
-      #define DLL_EXPORT __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+      #define DLL_EXPORT __declspec(dllexport) 
     #endif
   #else
     #ifdef __GNUC__
@@ -101,6 +89,28 @@ static std::time_t now_c;
   #endif
 #endif
 
+
+#if defined _WIN32 || defined __CYGWIN__
+#define TEMPLATE_CLASS_DLL_EXPORT template DLL_EXPORT class
+#define TEMPLATE_STRUCT_DLL_EXPORT template DLL_EXPORT struct
+#else
+#define TEMPLATE_CLASS_DLL_EXPORT template class DLL_EXPORT
+#define TEMPLATE_STRUCT_DLL_EXPORT template struct DLL_EXPORT
+#endif
+
+template<typename T_real>
+T_real parse_input_real(std::string value)
+{
+    if (std::is_same<T_real, float>::value)
+    {
+        return std::stof(value);
+    }
+    else if (std::is_same<T_real, double>::value)
+    {
+        return std::stod(value);
+    }
+}
+
 // STRING KEYS
 using namespace std;
 
@@ -108,6 +118,12 @@ using namespace std;
 
 //namespace keys
 //{
+
+#define AVOGADRO 6.02204531e23
+#define HC_ANGSTROMS 12398.52
+#define RE 2.817938070e-13		// in cm
+#define ENERGY_RES_OFFSET 150.0
+#define ENERGY_RES_SQRT 12.0
 
 /**
 * @brief String defines for fit parameters string value pair.
