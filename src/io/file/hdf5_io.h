@@ -4894,6 +4894,7 @@ public:
                     }
 
                     int j = 0;
+
                     //for(auto& shell_itr : quant_itr.second)
                     for (const auto& calib_itr : quant_scaler_itr.second.curve_quant_map)
                     {
@@ -4902,6 +4903,19 @@ public:
                         //create dataset for different shell curves
                         std::vector<T_real> calibration_curve;
                         std::vector<std::string> calibration_curve_labels;
+
+                        if (calib_itr.first == Electron_Shell::K_SHELL)
+                        {
+                            j = 0;
+                        }
+                        else if (calib_itr.first == Electron_Shell::L_SHELL)
+                        {
+                            j = 1;
+                        }
+                        else if (calib_itr.first == Electron_Shell::M_SHELL)
+                        {
+                            j = 2;
+                        }
 
                         for (const auto& citr : calib_itr.second)
                         {
@@ -4944,8 +4958,6 @@ public:
                                 logE << "failed to write " << STR_CALIB_LABELS << "\n";
                             }
                         }
-                        j++;
-
                     }
                 }
             }

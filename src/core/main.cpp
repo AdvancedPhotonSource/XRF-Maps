@@ -483,6 +483,10 @@ int run_quantification(Command_Line_Parser& clp)
     {
         analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
     }
+    if (clp.option_exists("--quantify-fit"))
+    {
+        //TODO: parse save as --fit so we can generate calibration curve without refitting
+    }
 
     if (io::file::init_analysis_job_detectors(&analysis_job))
     {
@@ -499,7 +503,7 @@ int run_quantification(Command_Line_Parser& clp)
         }
 
 
-        iterate_datasets_and_update(analysis_job);
+        //iterate_datasets_and_update(analysis_job);
     }
     else
     {
@@ -610,7 +614,7 @@ int run_fits(Command_Line_Parser& clp)
             logW << "No fitting routines picked! Please select from [--fit roi,nnls,matrix]\n";
         }
 
-        iterate_datasets_and_update(analysis_job);
+        //iterate_datasets_and_update(analysis_job);
     }
     else
     {
