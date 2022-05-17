@@ -51,40 +51,38 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <Eigen/SVD>
 
-//debug
-#include <iostream>
-
 namespace fitting
 {
 namespace routines
 {
 
-SVD_Fit_Routine::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine()
+template<typename T_real>
+SVD_Fit_Routine<T_real>::SVD_Fit_Routine() : Matrix_Optimized_Fit_Routine<T_real>()
 {
 
 }
 
 // ----------------------------------------------------------------------------
 
-SVD_Fit_Routine::~SVD_Fit_Routine()
+template<typename T_real>
+SVD_Fit_Routine<T_real>::~SVD_Fit_Routine()
 {
 	_element_row_index.clear();
 
 	_fitmatrix.resize(1, 1);
 }
 
-
-
 // ----------------------------------------------------------------------------
 
-void SVD_Fit_Routine::_generate_fitmatrix()
+template<typename T_real>
+void SVD_Fit_Routine<T_real>::_generate_fitmatrix()
 {
 
     _element_row_index.clear();
-    _fitmatrix.resize(_energy_range.count(), _element_models.size());
+    _fitmatrix.resize(this->_energy_range.count(), this->_element_models.size());
 
     int i = 0;
-    for (const auto& itr : _element_models)
+    for (const auto& itr : this->_element_models)
     {
         //Spectra element_model = itr.second;
         for (int j = 0; j < itr.second.size(); j++)
@@ -100,47 +98,48 @@ void SVD_Fit_Routine::_generate_fitmatrix()
 
 // ----------------------------------------------------------------------------
 
-optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Model * const model,
-                                                           const Spectra * const spectra,
-                                                           const Fit_Element_Map_Dict * const elements_to_fit,
-                                                           std::unordered_map<std::string, real_t>& out_counts)
+template<typename T_real>
+optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+                                                           const Spectra<T_real>* const spectra,
+                                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                           std::unordered_map<std::string, T_real>& out_counts)
 {
-    Eigen::JacobiSVD<Eigen::Matrix<real_t, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
-	VectorXr rhs = spectra->segment(_energy_range.min, _energy_range.count());
+    Eigen::JacobiSVD<Eigen::Matrix<T_real, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
+    VectorTr<T_real> rhs = spectra->segment(this->_energy_range.min, this->_energy_range.count());
 
-    Fit_Parameters fit_params = model->fit_parameters();
-    VectorXr background;
+    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    VectorTr<T_real> background;
     if (fit_params.contains(STR_SNIP_WIDTH))
     {
-        ArrayXr bkg = snip_background(spectra,
+        ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
             fit_params.value(STR_ENERGY_OFFSET),
             fit_params.value(STR_ENERGY_SLOPE),
             fit_params.value(STR_ENERGY_QUADRATIC),
             fit_params.value(STR_SNIP_WIDTH),
-            _energy_range.min,
-            _energy_range.max);
+            this->_energy_range.min,
+            this->_energy_range.max);
 
-        background = bkg.segment(_energy_range.min, _energy_range.count());
+        background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
     }
     else
     {
-        background.setZero(_energy_range.count());
+        background.setZero(this->_energy_range.count());
     }
     
     rhs -= background;
-    rhs = rhs.unaryExpr([](real_t v) { return v > 0.0 ? v : (real_t)0.0; });
+    rhs = rhs.unaryExpr([](T_real v) { return v > 0.0 ? v : (T_real)0.0; });
 
-    ArrayXr spectra_model = background;
+    ArrayTr<T_real> spectra_model = background;
 
-	VectorXr result = svd.solve(rhs);
+    VectorTr<T_real> result = svd.solve(rhs);
 
     for(const auto& itr : *elements_to_fit)
     {
         
         out_counts[itr.first] = result[_element_row_index[itr.first]];
-        for (int j = 0; j < _energy_range.count(); j++)
+        for (int j = 0; j < this->_energy_range.count(); j++)
         {
-            real_t val = _fitmatrix(j, _element_row_index[itr.first]) * result[_element_row_index[itr.first]];
+            T_real val = _fitmatrix(j, _element_row_index[itr.first]) * result[_element_row_index[itr.first]];
             if (std::isfinite(val))
             {
                 spectra_model[j] += val;
@@ -150,8 +149,8 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Mo
 
     //lock and integrate results
     {
-        std::lock_guard<std::mutex> lock(_int_spec_mutex);
-        _integrated_fitted_spectra.add(spectra_model);
+        std::lock_guard<std::mutex> lock(this->_int_spec_mutex);
+        this->_integrated_fitted_spectra.add(spectra_model);
         //_integrated_background.add(background);
     }
 
@@ -162,12 +161,13 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine::fit_spectra(const models::Base_Mo
 
 // ----------------------------------------------------------------------------
 
-void SVD_Fit_Routine::initialize(models::Base_Model * const model,
-                                 const Fit_Element_Map_Dict * const elements_to_fit,
+template<typename T_real>
+void SVD_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
+                                 const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                  const struct Range energy_range)
 {
 
-    Matrix_Optimized_Fit_Routine::initialize(model, elements_to_fit, energy_range);
+    Matrix_Optimized_Fit_Routine<T_real>::initialize(model, elements_to_fit, energy_range);
     _generate_fitmatrix();
 
 }

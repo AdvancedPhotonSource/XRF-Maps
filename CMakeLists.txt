@@ -75,7 +75,6 @@ option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
-option(DOUBLE_PREC "Double Precision" OFF)
 option(STATIC_BUILD "Static build libxrf_io and libxrf_fit" OFF)
 # If compiled on some intel mahcines this causes crashes so let user set it for compile
 option(AVX512 "Compule with arch AVX512 on MSVC" OFF)
@@ -105,12 +104,6 @@ IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
 ENDIF()
 
-IF (DOUBLE_PREC)
-  set(PREC _REAL_DOUBLE)
-ELSE()
-  set(PREC _REAL_FLOAT)
-ENDIF()
-
 IF (BUILD_WITH_QT)
   IF(NOT DEFINED CMAKE_PREFIX_PATH)
     set(CMAKE_PREFIX_PATH CACHE PATH "")
@@ -119,7 +112,7 @@ IF (BUILD_WITH_QT)
   add_definitions(-D_BUILD_WITH_QT)
   set(CMAKE_CXX_STANDARD 14)
   find_package(Qt5 COMPONENTS Core Charts REQUIRED)
-  set(VISUAL_INC src/visual/grapher.h src/visual/grapher.cpp )
+  set(VISUAL_INC src/visual/grapher.h )
   include_directories(src/visual/)
   include_directories(${Qt5Charts_INCLUDES})
   set(CMAKE_CXX_FLAGS "${Qt5Charts_EXECUTABLE_COMPILE_FLAGS}")
@@ -140,8 +133,8 @@ include(CheckCXXCompilerFlag)
 
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__ -D${PREC} -fPIC -g -fopenmp")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__ -D${PREC} -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__  -fPIC -g -fopenmp")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__  -fPIC")
   IF(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xMIC-AVX512")
@@ -182,7 +175,7 @@ ELSEIF(MSVC)
     ENDIF()
   ENDIF()
     
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /D${PREC} /DNOMINMAX /openmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /DNOMINMAX /openmp")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ot /Qvec-report:2 /GL /MP /bigobj")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
@@ -252,7 +245,6 @@ set(libxrf_fit_SOURCE
     src/data_struct/scaler_lookup.cpp
     src/data_struct/fit_parameters.cpp
     src/data_struct/fit_element_map.cpp
-    src/data_struct/spectra.cpp
     src/data_struct/spectra_line.cpp
     src/data_struct/spectra_volume.cpp
     src/data_struct/stream_block.cpp
@@ -281,6 +273,7 @@ set(XRF_IO_HEADERS
 	src/io/file/netcdf_io.h
 	src/io/file/csv_io.h
 	src/io/file/aps/aps_fit_params_import.h
+  src/io/file/file_scan.h
 	src/io/file/hl_file_io.h
 	src/io/net/basic_serializer.h
 	src/workflow/source.h
@@ -294,7 +287,7 @@ set(XRF_IO_HEADERS
 	src/workflow/xrf/spectra_net_streamer.h
   src/core/process_streaming.h
   src/core/process_whole.h
-  )
+)
 
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
@@ -302,11 +295,9 @@ set(XRF_IO_SOURCE
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/mda_io.cpp
-    src/io/file/mca_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
-    src/io/file/csv_io.cpp
-    src/io/file/aps/aps_fit_params_import.cpp
+    src/io/file/file_scan.cpp
     src/io/file/hl_file_io.cpp
     src/io/net/basic_serializer.cpp
     src/workflow/xrf/spectra_file_source.cpp
@@ -315,7 +306,6 @@ set(XRF_IO_SOURCE
     src/workflow/xrf/detector_sum_spectra_source.cpp
     src/workflow/xrf/spectra_stream_saver.cpp
     src/workflow/xrf/spectra_net_streamer.cpp
-    src/core/process_streaming.cpp
     src/core/process_whole.cpp
     )
 

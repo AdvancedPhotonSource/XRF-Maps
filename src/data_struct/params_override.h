@@ -64,6 +64,7 @@ using namespace std;
 /**
  * @brief The Params_Override struct
  */
+template<typename T_real>
 class DLL_EXPORT Params_Override
 {
 
@@ -138,10 +139,10 @@ public:
 			getline(f, el_name, ',');
 			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
-			float factor = 1.0;
+			T_real factor;
 			// 1
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][4] = factor;
 			branching_ratios[el_name][5] = factor;
 			branching_ratios[el_name][7] = factor;
@@ -150,14 +151,14 @@ public:
 
 			// 2
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][2] = factor;
 			branching_ratios[el_name][6] = factor;
 			branching_ratios[el_name][11] = factor;
 			
 			//3
 			std::getline(f, s, ',');
-			factor = std::stof(s);
+			factor = parse_input_real<T_real>(s);
 			branching_ratios[el_name][0] = factor;
 			branching_ratios[el_name][1] = factor;
 			branching_ratios[el_name][3] = factor;
@@ -176,9 +177,9 @@ public:
 			
 			for (unsigned int i = 0; i < 12; i++)
 			{
-				float factor = 1.0;
+				T_real factor = 1.0;
 				std::getline(f, s, ',');
-				factor = std::stof(s);
+				factor = parse_input_real<T_real>(s);
 				branching_ratios[el_name][i] = factor;
 			}
 		}
@@ -194,18 +195,18 @@ public:
 
 			for (unsigned int i = 0; i < 4; i++)
 			{
-				float factor = 1.0;
+				T_real factor = 1.0;
 				std::getline(f, s, ',');
-				factor = std::stof(s);
+				factor = parse_input_real<T_real>(s);
 				branching_ratios[el_name][i] = factor;
 			}
 		}
 
 	}
 
-	map<int, float> get_custom_factor(string el_name)
+	map<int, T_real> get_custom_factor(string el_name)
 	{
-		map<int, float> factors;
+		map<int, T_real> factors;
 		if (branching_ratios.count(el_name) > 0)
 		{
 			return branching_ratios.at(el_name);
@@ -216,15 +217,15 @@ public:
 
     string dataset_directory;
     int detector_num;
-    Fit_Parameters fit_params;
-    Fit_Element_Map_Dict elements_to_fit;
+	Fit_Parameters<T_real> fit_params;
+    Fit_Element_Map_Dict<T_real> elements_to_fit;
     string detector_element;
     
-    real_t si_escape_factor;
-    real_t ge_escape_factor;
+    T_real si_escape_factor;
+    T_real ge_escape_factor;
     bool si_escape_enabled;
     bool ge_escape_enabled;
-    real_t fit_snip_width;
+    T_real fit_snip_width;
 
     string be_window_thickness;
     string det_chip_thickness;
@@ -237,18 +238,21 @@ public:
     vector<string> branching_ratio_L;
     vector<string> branching_ratio_K;
 
-	unordered_map< string, map<int, float> > branching_ratios;
+	unordered_map< string, map<int, T_real> > branching_ratios;
 
-    real_t sr_current;
-    real_t US_IC;
-    real_t DS_IC;
+    T_real sr_current;
+    T_real US_IC;
+    T_real DS_IC;
 
-    real_t us_amp_sens_num;
+    T_real us_amp_sens_num;
     string us_amp_sens_unit;
-    real_t ds_amp_sens_num;
+    T_real ds_amp_sens_num;
     string ds_amp_sens_unit;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Params_Override<float>;
+TEMPLATE_CLASS_DLL_EXPORT Params_Override<double>;
 
 //-----------------------------------------------------------------------------
 

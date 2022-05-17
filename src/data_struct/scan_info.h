@@ -72,37 +72,45 @@ struct Extra_PV
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
+template<typename T_real>
 struct Scaler_Map
 {
     string name;
     string unit;
     bool time_normalized;
     //bool is_timer;
-    ArrayXXr values;
+    ArrayXXr<T_real> values;
 };
 
+TEMPLATE_STRUCT_DLL_EXPORT Scaler_Map<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Scaler_Map<double>;
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
 struct Scan_Meta_Info
 {
     string name;
     string scan_time_stamp;
-    vector<real_t> x_axis;
-    vector<real_t> y_axis;
+    vector<T_real> x_axis;
+    vector<T_real> y_axis;
     int requested_cols;
     int requested_rows;
     vector<int> detectors;
-    real_t theta;
+    float theta;
     
 };
+
+TEMPLATE_STRUCT_DLL_EXPORT Scan_Meta_Info<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Scan_Meta_Info<double>;
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 /**
  * @brief The Params_Override struct
  */
+template<typename T_real>
 class DLL_EXPORT Scan_Info
 {
 
@@ -118,7 +126,7 @@ public:
         
     }
 
-    const ArrayXXr* scaler_values(const string& scaler_name) const
+    const ArrayXXr<T_real>* scaler_values(const string& scaler_name) const
     {
         for (const auto& itr : scaler_maps)
         {
@@ -130,11 +138,14 @@ public:
         return nullptr;
     }
 
-    Scan_Meta_Info meta_info;
-    vector<Scaler_Map> scaler_maps;
+    Scan_Meta_Info<T_real> meta_info;
+    vector<Scaler_Map<T_real>> scaler_maps;
     vector<Extra_PV> extra_pvs;
     bool has_netcdf; 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Scan_Info<float>;
+TEMPLATE_CLASS_DLL_EXPORT Scan_Info<double>;
 
 //-----------------------------------------------------------------------------
 

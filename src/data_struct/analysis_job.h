@@ -61,7 +61,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/params_override.h"
 #include "fitting/optimizers/lmfit_optimizer.h"
 #include "fitting/optimizers/mpfit_optimizer.h"
-#include <iostream>
 
 namespace data_struct
 {
@@ -73,6 +72,7 @@ namespace data_struct
 ///
 /// \brief The Analysis_Job class
 ///
+template<typename T_real>
 class DLL_EXPORT Analysis_Job
 {
 public:
@@ -81,13 +81,13 @@ public:
 
     ~Analysis_Job();
 
-    Detector* get_first_detector();
+    Detector<T_real> *get_first_detector();
 
-    Detector* get_detector(int detector_num);
+    Detector<T_real>* get_detector(int detector_num);
 
     void set_optimizer(std::string optimizer);
 
-    fitting::optimizers::Optimizer *optimizer(){return _optimizer;}
+    fitting::optimizers::Optimizer<T_real>* optimizer(){return _optimizer;}
 
     void init_fit_routines(size_t spectra_samples, bool force=false);
 
@@ -113,7 +113,7 @@ public:
 
     std::vector<Fitting_Routines> fitting_routines;
 
-    std::map<int, Detector> detectors_meta_data;
+    std::map<int, Detector<T_real>> detectors_meta_data;
 
     fitting::models::Fit_Params_Preset optimize_fit_params_preset;
 
@@ -154,14 +154,14 @@ public:
     OPTIMIZE_FIT_ROUTINE optimize_fit_routine;
 
     //list of quantification standards to use
-    vector<Quantification_Standard> standard_element_weights;
+    vector<Quantification_Standard<T_real>> standard_element_weights;
 
 protected:
 
     //Optimizers for fitting models
-    fitting::optimizers::LMFit_Optimizer _lmfit_optimizer;
-    fitting::optimizers::MPFit_Optimizer _mpfit_optimizer;
-    fitting::optimizers::Optimizer *_optimizer;
+    fitting::optimizers::LMFit_Optimizer<T_real> _lmfit_optimizer;
+    fitting::optimizers::MPFit_Optimizer<T_real> _mpfit_optimizer;
+    fitting::optimizers::Optimizer<T_real>*_optimizer;
 
     size_t _last_init_sample_size;
 

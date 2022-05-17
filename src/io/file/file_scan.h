@@ -45,57 +45,82 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /// Initial Author <2022>: Arthur Glowacki
 
+#ifndef _FILE_SCAN_H
+#define _FILE_SCAN_H
+
+#if defined _WIN32
+#include "support/direct/dirent.h"
+#else
+#include <dirent.h>
+#endif
+
+#include "io/file/netcdf_io.h"
+#include "io/file/mda_io.h"
+#include "io/file/mca_io.h"
+#include "io/file/hdf5_io.h"
+#include "io/file/csv_io.h"
+
+#include "data_struct/spectra_volume.h"
 
 
-#ifndef Hybrid_Param_NNLS_Fit_Routine_H
-#define Hybrid_Param_NNLS_Fit_Routine_H
 
-#include "fitting/routines/nnls_fit_routine.h"
-
-namespace fitting
+namespace io
 {
-namespace routines
-{
+    namespace file
+    {
 
-using namespace std;
-using namespace data_struct;
-using namespace fitting::optimizers;
+        struct file_name_size
+        {
+            file_name_size(std::string name, long size) { filename = name; total_rank_size = size; }
+            std::string filename;
+            long total_rank_size;
+        };
 
-template<typename T_real>
-class DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine: public NNLS_Fit_Routine<T_real>
-{
-public:
-    Hybrid_Param_NNLS_Fit_Routine();
+        bool compare_file_size(const file_name_size& first, const file_name_size& second);
 
-	virtual ~Hybrid_Param_NNLS_Fit_Routine();
+        class DLL_EXPORT File_Scan
+        {
 
-    virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model<T_real>* const model,
-                                          const Spectra<T_real>* const spectra,
-                                          const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                          Fit_Parameters<T_real>& out_fit_params,
-                                          Callback_Func_Status_Def* status_callback = nullptr);
+        public:
+            static File_Scan* inst();
 
-    virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
+            ~File_Scan();
 
-    virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
-                                const struct Range* const energy_range,
-                                Spectra<T_real>* spectra_model);
+            void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-protected:
+            //void check_and_create_dirs(std::string dataset_directory);
 
-private:
-    models::Base_Model<T_real>* _model;
-    ArrayTr<T_real> _background;
-    const Fit_Element_Map_Dict<T_real>* _elements_to_fit;
-    const data_struct::Spectra<T_real>* _spectra;
-    
-};
+            std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-TEMPLATE_CLASS_DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine<float>;
-TEMPLATE_CLASS_DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine<double>;
+            void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 
-} //namespace routines
+            const std::vector<std::string>& netcdf_files() {  return _netcdf_files; }
 
-} //namespace fitting
+            const std::vector<std::string>& bnp_netcdf_files() { return _bnp_netcdf_files; }
 
-#endif // Hybrid_Param_NNLS_Fit_Routine_H
+            const std::vector<std::string>& hdf_files() { return _hdf_files; }
+
+            const std::vector<std::string>& hdf_xspress_files() { return _hdf_xspress_files; }
+
+            const std::vector<std::string>& hdf_emd_files() { return _hdf_emd_files; }
+
+        private:
+
+            File_Scan();
+
+            static File_Scan* _this_inst;
+
+            std::vector<std::string> _netcdf_files;
+            std::vector<std::string> _bnp_netcdf_files;
+            std::vector<std::string> _hdf_files;
+            std::vector<std::string> _hdf_xspress_files;
+            //std::vector<std::string> _hdf_confocal_files;
+            std::vector<std::string> _hdf_emd_files;
+        };
+
+
+        // ----------------------------------------------------------------------------
+    }
+}// end namespace io
+
+#endif // HL_FILE_IO_H

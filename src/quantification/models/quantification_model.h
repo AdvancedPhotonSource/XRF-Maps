@@ -81,6 +81,7 @@ const static map<Electron_Shell, string> Shell_To_String = { {Electron_Shell::K_
 ///
 /// \brief The Quantification_Model class:
 ///
+template<typename T_real>
 class DLL_EXPORT Quantification_Model
 {
 
@@ -89,27 +90,30 @@ public:
 
     ~Quantification_Model();
 
-    void init_element_quant(Element_Quant& out_quant,
-                            real_t incident_energy,
-                            Element_Info* detector_element,
+    void init_element_quant(Element_Quant<T_real>& out_quant,
+                            T_real incident_energy,
+                            Element_Info<T_real>* detector_element,
                             Electron_Shell shell,
-                            real_t airpath,
-                            real_t detector_chip_thickness,
-                            real_t beryllium_window_thickness,
-                            real_t germanium_dead_layer,
+                            T_real airpath,
+                            T_real detector_chip_thickness,
+                            T_real beryllium_window_thickness,
+                            T_real germanium_dead_layer,
                             size_t z_number);
 
-    real_t transmission(real_t thickness, real_t beta, real_t llambda) const;
+    T_real transmission(T_real thickness, T_real beta, T_real llambda) const;
 
-    real_t absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor=1) const;
+    T_real absorption(T_real thickness, T_real beta, T_real llambda, T_real shell_factor=1) const;
 
-    std::unordered_map<std::string, real_t> model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p);
+    std::unordered_map<std::string, T_real> model_calibrationcurve(std::unordered_map<std::string, Element_Quant<T_real>> quant_map, T_real p);
 
-    void model_calibrationcurve(std::vector<Element_Quant>* quant_vec, real_t p);
+    void model_calibrationcurve(std::vector<Element_Quant<T_real>>* quant_vec, T_real p);
 
 protected:
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<float>;
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<double>;
 
 //-----------------------------------------------------------------------------
 

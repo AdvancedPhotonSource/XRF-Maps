@@ -59,27 +59,30 @@ namespace data_struct
 
 using namespace std;
 
-typedef Eigen::Array<real_t, Eigen::Dynamic, Eigen::RowMajor> ArrayXr;
-typedef Eigen::Vector<real_t, Eigen::Dynamic> VectorXr;
+#define default_time_and_io_counts 0.000000001
 
 template<typename _T>
-class Spectra_T : public Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>
+using ArrayTr = Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>;
+
+template<typename _T>
+using VectorTr = Eigen::Vector<_T, Eigen::Dynamic>;
+
+template<typename _T>
+class Spectra : public ArrayTr<_T>
 {
 public:
-	typedef Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor> TArrayXr;
-
     /**
      * @brief Spectra : Constructor
      */
-    Spectra_T() : TArrayXr()
+    Spectra() : ArrayTr<_T>()
 	{
-        _elapsed_livetime = 1.0;
-		_elapsed_realtime = 1.0;
-		_input_counts = 1.0;
-		_output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+		_elapsed_realtime = default_time_and_io_counts;
+		_input_counts = 0.0;
+		_output_counts = 0.0;
 	}
 
-    Spectra_T(const Spectra_T &spectra) : TArrayXr(spectra)
+    Spectra(const Spectra &spectra) : ArrayTr<_T>(spectra)
 	{
         _elapsed_livetime = spectra._elapsed_livetime;
 		_elapsed_realtime = spectra._elapsed_realtime;
@@ -87,16 +90,16 @@ public:
 		_output_counts = spectra._output_counts;
 	}
 
-    Spectra_T(size_t sample_size) : TArrayXr(sample_size)
+    Spectra(size_t sample_size) : ArrayTr<_T>(sample_size)
 	{
 		this->setZero();
-        _elapsed_livetime = 1.0;
-		_elapsed_realtime = 1.0;
-		_input_counts = 1.0;
-		_output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+		_elapsed_realtime = default_time_and_io_counts;
+		_input_counts = 0.0;
+		_output_counts = 0.0;
 	}
 
-    Spectra_T(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : TArrayXr(sample_size)
+    Spectra(size_t sample_size, _T elt, _T ert, _T incnt, _T outcnt) : ArrayTr<_T>(sample_size)
     {
         this->setZero();
         _elapsed_livetime = elt;
@@ -105,31 +108,15 @@ public:
         _output_counts = outcnt;
     }
 
-    Spectra_T(const TArrayXr& arr) : TArrayXr(arr)
+    Spectra(const ArrayTr<_T>& arr) : ArrayTr<_T>(arr)
     {
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
     }
 
-    Spectra_T(const TArrayXr& arr, _T livetime, _T realtime, _T incnt, _T outnt) : TArrayXr(arr)
-    {
-        _elapsed_livetime = livetime;
-        _elapsed_realtime = realtime;
-        _input_counts = incnt;
-        _output_counts = outnt;
-    }
-
-    Spectra_T(const TArrayXr&& arr) : TArrayXr(arr)
-    {
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
-    }
-
-    Spectra_T(const TArrayXr&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : TArrayXr(arr)
+    Spectra(const ArrayTr<_T>& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
     {
         _elapsed_livetime = livetime;
         _elapsed_realtime = realtime;
@@ -137,15 +124,31 @@ public:
         _output_counts = outnt;
     }
 
-    Spectra_T(Eigen::Index& rows, Eigen::Index& cols) : TArrayXr(rows, cols)
+    Spectra(const ArrayTr<_T>&& arr) : ArrayTr<_T>(arr)
+    {
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
+    }
+
+    Spectra(const ArrayTr<_T>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
+    {
+        _elapsed_livetime = livetime;
+        _elapsed_realtime = realtime;
+        _input_counts = incnt;
+        _output_counts = outnt;
+    }
+
+    Spectra(Eigen::Index& rows, Eigen::Index& cols) : ArrayTr<_T>(rows, cols)
 	{
-        _elapsed_livetime = 1.0;
-        _elapsed_realtime = 1.0;
-        _input_counts = 1.0;
-        _output_counts = 1.0;
+        _elapsed_livetime = default_time_and_io_counts;
+        _elapsed_realtime = default_time_and_io_counts;
+        _input_counts = 0.0;
+        _output_counts = 0.0;
 	}
 
-    virtual ~Spectra_T()
+    virtual ~Spectra()
     {
 
     }
@@ -162,10 +165,10 @@ public:
         }
     }
 
-    void add(const Spectra_T& spectra)
+    void add(const Spectra<_T>& spectra)
     {
-        *this += (TArrayXr)spectra;
-        real_t val = spectra.elapsed_livetime();
+        *this += (ArrayTr<_T>)spectra;
+        _T val = spectra.elapsed_livetime();
         if(std::isfinite(val))
         {
             _elapsed_livetime += val;
@@ -187,6 +190,39 @@ public:
         }
     }
 
+    // Note: T_real is different template typename, this is to convert double to float or the other way around.
+    template<typename T_real>
+    void add(const Spectra<T_real>* spectra)
+    {
+        if (spectra != nullptr)
+        {
+            for (int i = 0; i < this->size(); i++)
+            {
+                (ArrayTr<_T>(*this))(i) += static_cast<_T>( (*spectra)(i) );
+            }
+            _T val = spectra->elapsed_livetime();
+            if (std::isfinite(val))
+            {
+                _elapsed_livetime += val;
+            }
+            val = spectra->elapsed_realtime();
+            if (std::isfinite(val))
+            {
+                _elapsed_realtime += val;
+            }
+            val = spectra->input_counts();
+            if (std::isfinite(val))
+            {
+                _input_counts += val;
+            }
+            val = spectra->output_counts();
+            if (std::isfinite(val))
+            {
+                _output_counts += val;
+            }
+        }
+    }
+
     void elapsed_livetime(_T val) { _elapsed_livetime = val; }
 
     const _T elapsed_livetime() const { return _elapsed_livetime; }
@@ -203,9 +239,9 @@ public:
 
     const _T output_counts() const { return _output_counts; }
 
-    Spectra_T sub_spectra(size_t start, size_t count) const
+    Spectra sub_spectra(size_t start, size_t count) const
 	{
-        return Spectra_T(this->segment(start, count), _elapsed_livetime, _elapsed_realtime, _input_counts, _output_counts);
+        return Spectra(this->segment(start, count), _elapsed_livetime, _elapsed_realtime, _input_counts, _output_counts);
 	}
 
 private:
@@ -217,20 +253,176 @@ private:
 
 };
 
-#if defined _WIN32 || defined __CYGWIN__
-	template DLL_EXPORT class Spectra_T<real_t>;
-#else
-	template class DLL_EXPORT Spectra_T<real_t>;
-#endif
-typedef Spectra_T<real_t> Spectra;
+TEMPLATE_CLASS_DLL_EXPORT Spectra<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra<double>;
 
-DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, size_t boxcar_size);
-DLL_EXPORT ArrayXr convolve1d(const ArrayXr& arr, const ArrayXr& boxcar);
-DLL_EXPORT ArrayXr snip_background(const Spectra * const spectra, real_t energy_offset, real_t energy_linear, real_t energy_quadratic, real_t width, real_t xmin, real_t xmax);
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<T_real>& boxcar)
+{
+    ArrayTr<T_real> new_background(arr.size());
+    new_background.setZero(arr.size());
+    //convolve 1d
+
+    size_t const nf = arr.size();
+    size_t const ng = boxcar.size();
+    ArrayTr<T_real> const& min_v = (nf < ng) ? arr : boxcar;
+    ArrayTr<T_real> const& max_v = (nf < ng) ? boxcar : arr;
+    size_t const n = std::max(nf, ng) - std::min(nf, ng) + 1;
+    ArrayTr<T_real> out(n);
+    out.setZero(n);
+    for (size_t i = 0; i < n; ++i)
+    {
+        for (int j(min_v.size() - 1), k(i); j >= 0; --j)
+        {
+            out[i] += min_v[j] * max_v[k];
+            ++k;
+        }
+    }
+    T_real norm = 1 / T_real(boxcar.size());
+    int j = min_v.size() / 2;
+    for (size_t i = 0; i < n; i++)
+    {
+        new_background[j] = out[i] * norm;
+        j++;
+    }
+
+    return new_background;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_size)
+{
+    ArrayTr<T_real> boxcar(boxcar_size);
+    boxcar.setConstant(boxcar_size, 1.0);
+    return convolve1d(arr, boxcar);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra, T_real energy_offset, T_real energy_linear, T_real energy_quadratic, T_real width, T_real xmin, T_real xmax)
+{
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(spectra->size(), 0, spectra->size() - 1);
+
+    ArrayTr<T_real> background;
+
+    energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (T_real)2.0) * energy_quadratic);
+
+    ArrayTr<T_real> tmp = std::pow((energy_offset / (T_real)2.3548), (T_real)2.0) + energy * (T_real)2.96 * energy_linear;
+    tmp = tmp.unaryExpr([](T_real r) { return r < 0.0 ? (T_real)0.0 : r;  });
+
+    //ArrayTr<T_real> fwhm = 2.35 * std::sqrt(tmp);
+    ArrayTr<T_real> current_width = (T_real)2.35 * Eigen::sqrt(tmp);
+
+    ArrayTr<T_real> boxcar;
+    // smooth the background
+    boxcar.resize(5);
+    boxcar.setConstant(5, 1.0);
 
 
-typedef std::function<void(size_t, size_t, size_t, size_t, size_t, data_struct::Spectra*, void*)> IO_Callback_Func_Def;
+    if (spectra != nullptr)
+    {
+        if (spectra->size() > 0)
+        {
+            //convolve 1d
+            background = convolve1d(*spectra, boxcar);
+        }
+        else
+        {
+            return background;
+        }
+    }
+    else
+    {
+        return background;
+    }
+    //fwhm
+    current_width = width * current_width / energy_linear;  // in channels
 
+    background = Eigen::log(Eigen::log(background + (T_real)1.0) + (T_real)1.0);
+
+    // FIRST SNIPPING
+    int no_iterations = 2;
+
+    int max_of_xmin = (std::max)(xmin, (T_real)0.0);
+    int min_of_xmax = (std::min)(xmax, T_real(spectra->size() - 1));
+    for (int j = 0; j < no_iterations; j++)
+    {
+        for (long int k = 0; k < background.size(); k++)
+        {
+            long int lo_index = k - current_width[k];
+            long int hi_index = k + current_width[k];
+            if (lo_index < max_of_xmin)
+            {
+                lo_index = max_of_xmin;
+            }
+            if (lo_index > min_of_xmax)
+            {
+                lo_index = min_of_xmax;
+            }
+            if (hi_index > min_of_xmax)
+            {
+                hi_index = min_of_xmax;
+            }
+            if (hi_index < max_of_xmin)
+            {
+                hi_index = max_of_xmin;
+            }
+            T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
+            if (background[k] > temp)
+            {
+                background[k] = temp;
+            }
+        }
+    }
+
+    while (current_width.maxCoeff() >= 0.5)
+    {
+        for (long int k = 0; k < background.size(); k++)
+        {
+            long int lo_index = k - current_width[k];
+            long int hi_index = k + current_width[k];
+            if (lo_index < max_of_xmin)
+            {
+                lo_index = max_of_xmin;
+            }
+            if (lo_index > min_of_xmax)
+            {
+                lo_index = min_of_xmax;
+            }
+            if (hi_index > min_of_xmax)
+            {
+                hi_index = min_of_xmax;
+            }
+            if (hi_index < max_of_xmin)
+            {
+                hi_index = max_of_xmin;
+            }
+            T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
+            if (background[k] > temp)
+            {
+                background[k] = temp;
+            }
+        }
+
+        current_width = current_width / T_real(M_SQRT2); // window_rf
+    }
+
+    background = Eigen::exp(Eigen::exp(background) - (T_real)1.0) - (T_real)1.0;
+    background = background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+
+    return background;
+
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+using IO_Callback_Func_Def = std::function<void(size_t, size_t, size_t, size_t, size_t, Spectra<T_real>*, void*)>;
 
 } //namespace data_struct
 

@@ -59,6 +59,7 @@ namespace data_struct
 /**
  * @brief The Spectra_Volume class : A volume of spectras
  */
+template<typename T_real>
 class DLL_EXPORT Spectra_Volume
 {
 public:
@@ -66,15 +67,15 @@ public:
 
 	~Spectra_Volume();
 
-    Spectra_Line& operator [](std::size_t row) { return _data_vol[row]; }
+    Spectra_Line<T_real>& operator [](std::size_t row) { return _data_vol[row]; }
 
-    const Spectra_Line& operator [](std::size_t row) const { return _data_vol[row]; }
+    const Spectra_Line<T_real>& operator [](std::size_t row) const { return _data_vol[row]; }
 
     void resize_and_zero(size_t rows, size_t cols, size_t samples);
 
-    Spectra integrate();
+    Spectra<T_real> integrate();
 
-    void generate_scaler_maps(vector<Scaler_Map>* scaler_maps);
+    void generate_scaler_maps(vector<Scaler_Map<T_real>>* scaler_maps);
 
 	size_t cols() const { if (_data_vol.size() > 0) return _data_vol[0].size(); else return 0; }
 
@@ -88,10 +89,12 @@ public:
 
 private:
 
-    std::vector<Spectra_Line> _data_vol;
-//    std::vector<std::vector< Spectra* > > array3D;
+    std::vector<Spectra_Line<T_real> > _data_vol;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<double>;
 
 } //namespace data_struct
 

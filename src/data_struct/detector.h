@@ -69,6 +69,7 @@ namespace data_struct
 ///
 /// \brief The Detector class
 ///
+template<typename T_real>
 class DLL_EXPORT Detector
 {
 public:
@@ -76,18 +77,22 @@ public:
 
     ~Detector();
 
-    void append_element(Fitting_Routines routine, string name, string quant_scaler, real_t weight);
+    void append_element(Fitting_Routines routine, string name, string quant_scaler, T_real weight);
 
     void update_element_quants(Fitting_Routines routine,
                                 string quantifier_scaler,
-                                Quantification_Standard * standard,
-                                Quantification_Model* quantification_model,
-                                real_t ic_quantifier);
+                                Quantification_Standard<T_real>* standard,
+                                Quantification_Model<T_real>* quantification_model,
+                                T_real ic_quantifier);
+
+    void avg_element_quants(Fitting_Routines routine,
+                            string quantifier_scaler,
+                            std::unordered_map<int, float>& element_amt_dict);
 
     void update_calibration_curve(Fitting_Routines routine,
                                 string quantifier_scaler,
-                                Quantification_Model* quantification_model,
-                                real_t val);
+                                Quantification_Model<T_real>* quantification_model,
+                                T_real val);
 
     void update_from_fit_paramseters();
 
@@ -96,36 +101,39 @@ public:
     unsigned int number() { return _number; }
 
     // Fitting routines map
-    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine *> fit_routines;
+    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> fit_routines;
 
     // Fitting model
-    fitting::models::Base_Model * model;
+    fitting::models::Base_Model<T_real>* model;
 
     // Quantification
-    std::map<string, Quantification_Standard> quantification_standards;
+    std::map<string, Quantification_Standard<T_real>> quantification_standards;
 
-    unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct> fitting_quant_map;
+    unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
 
     //  proc_type          quantifier            element    quant_prop
-    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant*>>> all_element_quants;
+    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant<T_real>*>>> all_element_quants;
 
     // Fit Parameters Override for model
-    Params_Override fit_params_override_dict;
+    Params_Override<T_real> fit_params_override_dict;
 
-    real_t beryllium_window_thickness;
-    real_t germanium_dead_layer;
-    real_t detector_chip_thickness;
-    real_t incident_energy;
-    real_t airpath;
-    data_struct::Element_Info* detector_element;
+    T_real beryllium_window_thickness;
+    T_real germanium_dead_layer;
+    T_real detector_chip_thickness;
+    T_real incident_energy;
+    T_real airpath;
+    data_struct::Element_Info<T_real>* detector_element;
 
     // SR_CURRENT, US_IC, DS_IC  : average if we have multiple standards
-    unordered_map<string, real_t> avg_quantification_scaler_map;
+    unordered_map<string, T_real> avg_quantification_scaler_map;
 
 private:
     unsigned int _number;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Detector<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector<double>;
 
 } //namespace data_struct
 

@@ -54,7 +54,8 @@ namespace data_struct
 
 //-----------------------------------------------------------------------------
 
-Analysis_Job::Analysis_Job()
+template<typename T_real>
+Analysis_Job<T_real>::Analysis_Job()
 {
     _optimizer = &_lmfit_optimizer;
     optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::ALL_PARAMS;
@@ -88,7 +89,8 @@ Analysis_Job::Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-Analysis_Job::~Analysis_Job()
+template<typename T_real>
+Analysis_Job<T_real>::~Analysis_Job()
 {
 	dataset_files.clear();
 	optimize_dataset_files.clear();
@@ -98,9 +100,10 @@ Analysis_Job::~Analysis_Job()
 
 //-----------------------------------------------------------------------------
 
-Detector* Analysis_Job::get_first_detector()
+template<typename T_real>
+Detector<T_real>* Analysis_Job<T_real>::get_first_detector()
 {
-       Detector* detector = nullptr;
+       Detector<T_real>* detector = nullptr;
        for(auto &itr : detectors_meta_data)
        {
            detector = &(itr.second);
@@ -111,9 +114,10 @@ Detector* Analysis_Job::get_first_detector()
 
 //-----------------------------------------------------------------------------
 
-Detector* Analysis_Job::get_detector(int detector_num)
+template<typename T_real>
+Detector<T_real>* Analysis_Job<T_real>::get_detector(int detector_num)
 {
-       Detector* detector = nullptr;
+       Detector<T_real>* detector = nullptr;
        if(detectors_meta_data.count(detector_num) > 0)
        {
             detector = &(detectors_meta_data.at(detector_num));
@@ -123,7 +127,8 @@ Detector* Analysis_Job::get_detector(int detector_num)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
+template<typename T_real>
+void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force)
 {
     if(_first_init || force)// && _last_init_sample_size != spectra_samples)
     {
@@ -131,7 +136,7 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num : detector_num_arr)
         {
-            Detector *detector = &detectors_meta_data[detector_num];
+            Detector<T_real>* detector = &detectors_meta_data[detector_num];
 
             if(detector != nullptr)
             {
@@ -140,10 +145,10 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
                 for(auto &proc_type : fitting_routines)
                 {
                     //Fitting models
-                    fitting::routines::Base_Fit_Routine *fit_routine = detector->fit_routines[proc_type];
+                    fitting::routines::Base_Fit_Routine<T_real>* fit_routine = detector->fit_routines[proc_type];
                     //logI << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
 
-                    Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
+                    Fit_Element_Map_Dict<T_real>* elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
                     //Initialize model
                     fit_routine->initialize(detector->model, elements_to_fit, energy_range);
                 }
@@ -154,7 +159,8 @@ void Analysis_Job::init_fit_routines(size_t spectra_samples,  bool force)
 
 //-----------------------------------------------------------------------------
 
-void Analysis_Job::set_optimizer(std::string optimizer)
+template<typename T_real>
+void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
 {
     if(optimizer == "mpfit")
     {
@@ -167,5 +173,8 @@ void Analysis_Job::set_optimizer(std::string optimizer)
 }
 
 //-----------------------------------------------------------------------------
+
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<float>;
+TEMPLATE_CLASS_DLL_EXPORT Analysis_Job<double>;
 
 } //namespace data_struct

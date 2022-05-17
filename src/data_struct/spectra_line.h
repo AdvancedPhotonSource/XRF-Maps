@@ -59,6 +59,7 @@ namespace data_struct
 /**
  * @brief The Spectra_Line class : A row of spectras
  */
+template<typename T_real>
 class DLL_EXPORT Spectra_Line
 {
 public:
@@ -66,9 +67,9 @@ public:
 
     ~Spectra_Line();
 
-    Spectra& operator [](std::size_t row) { return _data_line[row]; }
+    Spectra<T_real>& operator [](std::size_t row) { return _data_line[row]; }
 
-    const Spectra& operator [](std::size_t row) const { return _data_line[row]; }
+    const Spectra<T_real>& operator [](std::size_t row) const { return _data_line[row]; }
 
     void resize_and_zero(size_t cols, size_t samples);
 
@@ -83,9 +84,12 @@ private:
 
     void _alloc_spectra_size(size_t n);
 
-    std::vector<Spectra> _data_line;
+    std::vector<Spectra<T_real> > _data_line;
 
 };
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<double>;
 
 } //namespace data_struct
 

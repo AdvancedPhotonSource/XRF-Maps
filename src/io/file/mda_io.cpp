@@ -48,24 +48,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "mda_io.h"
 
-#include <string>
-#include <iostream>
-#include <fstream>
-
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "data_struct/scaler_lookup.h"
-
-
-#ifdef XDR_HACK
-    #include "support/mdautils-1.4.1/xdr_hack.h"
-#else
-  #include <rpc/types.h>
-  #include <rpc/xdr.h>
-#endif
 
 
 namespace io
@@ -75,7 +57,8 @@ namespace file
 
 //-----------------------------------------------------------------------------
 
-MDA_IO::MDA_IO()
+template<typename T_real>
+MDA_IO<T_real>::MDA_IO()
 {
     _mda_file = nullptr;
     _mda_file_info = nullptr;
@@ -84,14 +67,18 @@ MDA_IO::MDA_IO()
 
 //-----------------------------------------------------------------------------
 
-MDA_IO::~MDA_IO()
+template<typename T_real>
+MDA_IO<T_real>::~MDA_IO()
 {
 
     unload();
 
 }
 
-bool MDA_IO::load_scalers(std::string path)
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+bool MDA_IO<T_real>::load_scalers(std::string path)
 {
     if (_mda_file != nullptr)
     {
@@ -128,7 +115,8 @@ bool MDA_IO::load_scalers(std::string path)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::unload()
+template<typename T_real>
+void MDA_IO<T_real>::unload()
 {
     if(_mda_file != nullptr)
     {
@@ -144,7 +132,8 @@ void MDA_IO::unload()
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_Override *override_values)
+template<typename T_real>
+bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::Params_Override<T_real>* override_values)
 {
     if (override_values == nullptr)
     {
@@ -182,21 +171,52 @@ bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_O
         _load_scalers(false);
     }
 
-    const data_struct::ArrayXXr* arr = nullptr;
-    arr = _scan_info.scaler_values(STR_SR_CURRENT);
-    if (arr != nullptr)
+    //const data_struct::ArrayXXr<T_real>* arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* arr_curr = _scan_info.scaler_values(STR_SR_CURRENT);
+    const data_struct::ArrayXXr<T_real>* arr_us = _scan_info.scaler_values(STR_US_IC);
+    const data_struct::ArrayXXr<T_real>* arr_ds = _scan_info.scaler_values(STR_DS_IC);
+    T_real cnt_curr = 0.;
+    T_real sum_curr = 0.;
+    T_real cnt_us = 0.;
+    T_real sum_us = 0.;
+    T_real cnt_ds = 0.;
+    T_real sum_ds = 0.;
+
+    for (int i = 0; i < arr_us->rows(); i++)
     {
-        override_values->sr_current = arr->sum() / arr->size();
+        for (int j = 0; j < arr_us->cols(); j++)
+        {
+            if (arr_curr && std::isfinite((* arr_curr)(i, j)) && (*arr_curr)(i, j) > 0.)
+            {
+                cnt_curr += 1.0;
+                sum_curr += (*arr_curr)(i, j);
+            }
+            if (arr_us && std::isfinite((*arr_us)(i, j)) && (*arr_us)(i, j) > 0.)
+            {
+                cnt_us += 1.0;
+                sum_us += (*arr_us)(i, j);
+            }
+            if (arr_ds && std::isfinite((*arr_ds)(i, j)) && (*arr_ds)(i, j) > 0.)
+            {
+                cnt_ds += 1.0;
+                sum_ds += (*arr_ds)(i, j);
+            }
+        }
     }
-    arr = _scan_info.scaler_values(STR_US_IC);
-    if (arr != nullptr)
+
+
+
+    if (arr_curr != nullptr)
     {
-        override_values->US_IC = arr->sum() / arr->size();
+        override_values->sr_current = sum_curr / cnt_curr;
     }
-    arr = _scan_info.scaler_values(STR_DS_IC);
-    if (arr != nullptr)
+    if (arr_us != nullptr)
     {
-        override_values->DS_IC = arr->sum() / arr->size();
+        override_values->US_IC = sum_us / cnt_us;
+    }
+    if (arr_ds != nullptr)
+    {
+        override_values->DS_IC = sum_ds / cnt_ds;
     }
 
     return true;
@@ -204,16 +224,17 @@ bool MDA_IO::load_quantification_scalers(std::string path, data_struct::Params_O
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_spectra_volume(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                                  size_t detector_num,
-                                 data_struct::Spectra_Volume* vol,
+                                 data_struct::Spectra_Volume<T_real>* vol,
                                  bool hasNetCDF)
 {
     bool is_single_row = false;
-    const data_struct::ArrayXXr* elt_arr = nullptr;
-    const data_struct::ArrayXXr* ert_arr = nullptr;
-    const data_struct::ArrayXXr* icr_arr = nullptr;
-    const data_struct::ArrayXXr* ocr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* elt_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ert_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* icr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ocr_arr = nullptr;
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
 
     size_t cols = 1;
@@ -453,20 +474,21 @@ bool MDA_IO::load_spectra_volume(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_spectra_volume_with_callback(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 												const std::vector<size_t>& detector_num_arr,
                                                  bool hasNetCDF,
-                                                 data_struct::Analysis_Job *analysis_job,
+                                                 data_struct::Analysis_Job<T_real>* analysis_job,
                                                  size_t &out_rows,
                                                  size_t &out_cols,
-												 data_struct::IO_Callback_Func_Def callback_func,
+												 data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                                  void *user_data)
 {
 	// detector , index
-	map<size_t, const data_struct::ArrayXXr*> elt_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> ert_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> incnt_arr_map;
-	map<size_t, const data_struct::ArrayXXr*> outcnt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> elt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> ert_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> incnt_arr_map;
+	map<size_t, const data_struct::ArrayXXr<T_real>*> outcnt_arr_map;
     size_t max_detecotr_num = 0;
     bool is_single_row = false;
 
@@ -644,7 +666,7 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
                 for(size_t detector_num : detector_num_arr)
                 {
-                    data_struct::Spectra* spectra = new data_struct::Spectra(samples);
+                    data_struct::Spectra<T_real>* spectra = new data_struct::Spectra<T_real>(samples);
 
                     if (is_single_row)
                     {
@@ -716,16 +738,17 @@ bool MDA_IO::load_spectra_volume_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::load_integrated_spectra(std::string path,
+template<typename T_real>
+bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		size_t detector_num,
-		data_struct::Spectra *out_integrated_spectra,
+		data_struct::Spectra<T_real>* out_integrated_spectra,
 		bool hasNetCDF)
 {
 	//index per row and col
-    const data_struct::ArrayXXr* elt_arr = nullptr;
-    const data_struct::ArrayXXr* ert_arr = nullptr;
-    const data_struct::ArrayXXr* icr_arr = nullptr;
-    const data_struct::ArrayXXr* ocr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* elt_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ert_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* icr_arr = nullptr;
+    const data_struct::ArrayXXr<T_real>* ocr_arr = nullptr;
 	bool is_single_row = false;
 
 	std::FILE *fptr = std::fopen(path.c_str(), "rb");
@@ -942,7 +965,8 @@ bool MDA_IO::load_integrated_spectra(std::string path,
 
 //-----------------------------------------------------------------------------
 
-bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
+template<typename T_real>
+bool MDA_IO<T_real>::_find_theta(std::string pv_name, float* theta_out)
 {
     float *tmpf;
     double *tmpd;
@@ -979,7 +1003,8 @@ bool MDA_IO::_find_theta(std::string pv_name, float* theta_out)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_scalers(bool load_int_spec)
+template<typename T_real>
+void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
 {
     if (_mda_file == nullptr)
     {
@@ -1015,7 +1040,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
             {
                 if (i == 0)
                 {
-                    data_struct::Scaler_Map s_map;
+                    data_struct::Scaler_Map<T_real> s_map;
                     s_map.values.resize(rows, cols);
                     s_map.values.setZero(rows, cols);
                     s_map.name = std::string(_mda_file->scan->detectors[k]->name);
@@ -1030,14 +1055,17 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                     _scan_info.scaler_maps.push_back(s_map);
                 }
 
-                _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
+                {
+                    _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                }
             }
 
             if (_mda_file->scan->sub_scans != nullptr && load_int_spec)
             {
                 for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
                 {
-                    data_struct::ArrayXr* int_spec;
+                    data_struct::ArrayTr<T_real>* int_spec;
                     if (_integrated_spectra_map.count(d) == 0)
                     {
                         // if this is the first one then zero it out
@@ -1079,7 +1107,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                 {
                     if (i == 0 && j == 0)
                     {
-                        data_struct::Scaler_Map s_map;
+                        data_struct::Scaler_Map<T_real> s_map;
                         s_map.values.resize(rows, cols);
                         s_map.values.setZero(rows, cols);
                         s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
@@ -1094,13 +1122,16 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                         _scan_info.scaler_maps.push_back(s_map);
                     }
 
-                    _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                    if (std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
+                    {
+                        _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                    }
                 }
                 if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
                 {
                     for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
                     {
-                        data_struct::ArrayXr* int_spec;
+                        data_struct::ArrayTr<T_real>* int_spec;
                         if (_integrated_spectra_map.count(d) == 0)
                         {
                             // if this is the first one then zero it out
@@ -1131,7 +1162,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
     double time_clock = 0.0;
     if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_names, time_pv, time_clock, beamline))
     {
-        const data_struct::ArrayXXr* time_array = _scan_info.scaler_values(time_pv);
+        const data_struct::ArrayXXr<T_real>* time_array = _scan_info.scaler_values(time_pv);
         if (time_array != nullptr)
         {
             for (auto& itr : _scan_info.scaler_maps)
@@ -1139,6 +1170,7 @@ void MDA_IO::_load_scalers(bool load_int_spec)
                 if (itr.time_normalized)
                 {
                     itr.values = itr.values / (*time_array / time_clock);
+                    itr.values = itr.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
                 }
             }
         }
@@ -1149,13 +1181,13 @@ void MDA_IO::_load_scalers(bool load_int_spec)
     {
         for (const auto& itr : *summed_scalers)
         {
-            data_struct::Scaler_Map s_map;
+            data_struct::Scaler_Map<T_real> s_map;
             s_map.name = itr.scaler_name;
             s_map.values.resize(rows, cols);
             s_map.values.setZero(rows, cols);
             for (const auto& sitr : itr.scalers_to_sum)
             {
-                const data_struct::ArrayXXr* arr = _scan_info.scaler_values(sitr);
+                const data_struct::ArrayXXr<T_real>* arr = _scan_info.scaler_values(sitr);
                 if (arr != nullptr)
                 {
                     s_map.values += (*arr);
@@ -1168,7 +1200,8 @@ void MDA_IO::_load_scalers(bool load_int_spec)
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_extra_pvs_vector()
+template<typename T_real>
+void MDA_IO<T_real>::_load_extra_pvs_vector()
 {
 
     if (_mda_file == nullptr)
@@ -1251,7 +1284,8 @@ void MDA_IO::_load_extra_pvs_vector()
 
 //-----------------------------------------------------------------------------
 
-void MDA_IO::_load_meta_info()
+template<typename T_real>
+void MDA_IO<T_real>::_load_meta_info()
 {
     bool single_row_scan = false;
 
@@ -1357,7 +1391,8 @@ void MDA_IO::_load_meta_info()
 
 //-----------------------------------------------------------------------------
 
-data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
+template<typename T_real>
+data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned int detector)
 {
     if (_integrated_spectra_map.count(detector) > 0)
     {
@@ -1367,23 +1402,23 @@ data_struct::ArrayXr* MDA_IO::get_integrated_spectra(unsigned int detector)
 }
 
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
 
-bool load_henke_from_xdr(std::string filename)
+template<typename T_real>
+bool MDA_IO<T_real>::load_henke_from_xdr(std::string filename)
 {
-    data_struct::Element_Info_Map *element_map = data_struct::Element_Info_Map::inst();
+    data_struct::Element_Info_Map<T_real>* element_map = data_struct::Element_Info_Map<T_real>::inst();
 
     std::ifstream fileStream(filename);
 
     if (false == fileStream.good())
     {
-        logE<<"Opening file "<<filename<<"\n";
+        logE << "Opening file " << filename << "\n";
         return false;
     }
 
     std::FILE* xdr_file = fopen(filename.c_str(), "rb");
 
-    XDR *xdrstream;
+    XDR* xdrstream;
 #ifndef XDR_HACK
     XDR xdrs;
     xdrstream = &xdrs;
@@ -1395,12 +1430,12 @@ bool load_henke_from_xdr(std::string filename)
     int num_elements;
     int num_energies;
     int num_extra_energies;
-    if( xdr_int32_t( xdrstream, &num_elements) == 0)
+    if (xdr_int32_t(xdrstream, &num_elements) == 0)
     {
         std::fclose(xdr_file);
         return false;
     }
-    if( xdr_int32_t( xdrstream, &num_energies) == 0)
+    if (xdr_int32_t(xdrstream, &num_energies) == 0)
     {
         std::fclose(xdr_file);
         return false;
@@ -1408,7 +1443,7 @@ bool load_henke_from_xdr(std::string filename)
 
     element_map->_energies.resize(num_energies);
     //float *energy_arr = new float[num_energies];
-    if( xdr_vector( xdrstream, (char *) &(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+    if (xdr_vector(xdrstream, (char*)&(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
     {
         std::fclose(xdr_file);
         return false;
@@ -1418,14 +1453,14 @@ bool load_henke_from_xdr(std::string filename)
 
     //delete [] energy_arr;
 
-    for (int i=0; i<num_elements; i++)
+    for (int i = 0; i < num_elements; i++)
     {
-        data_struct::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i + 1);
         if (element == nullptr)
         {
-            element = new data_struct::Element_Info();
-            element->number = i+1;
-            element->name = data_struct::Element_Symbols[i+1];
+            element = new data_struct::Element_Info<T_real>();
+            element->number = i + 1;
+            element->name = data_struct::Element_Symbols[i + 1];
             element_map->add_element(element);
         }
         //element->init_f_energies(num_energies);
@@ -1433,47 +1468,47 @@ bool load_henke_from_xdr(std::string filename)
         element->f2_atomic_scattering_imaginary.resize(num_energies);
 
         //element_information.
-        if( xdr_vector( xdrstream, (char *) &(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
     }
 
-    if( xdr_int32_t( xdrstream, &num_extra_energies) == 0)
+    if (xdr_int32_t(xdrstream, &num_extra_energies) == 0)
     {
         std::fclose(xdr_file);
         return false;
     }
 
-    for (int i=0; i<num_elements; i++)
+    for (int i = 0; i < num_elements; i++)
     {
-        data_struct::Element_Info* element = element_map->get_element(i+1);
+        data_struct::Element_Info<T_real>* element = element_map->get_element(i + 1);
         element->init_extra_energies(num_extra_energies);
 
         int element_n;
-        if( xdr_int32_t( xdrstream, &element_n) == 0)
+        if (xdr_int32_t(xdrstream, &element_n) == 0)
         {
             std::fclose(xdr_file);
             return false;
         }
 
-        if( xdr_vector( xdrstream, (char *) &(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if( xdr_vector( xdrstream, (char *) &(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t) xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
         {
             std::fclose(xdr_file);
             return false;
@@ -1484,6 +1519,9 @@ bool load_henke_from_xdr(std::string filename)
 
     return true;
 }
+
+
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 int mda_get_multiplied_dims(std::string path)

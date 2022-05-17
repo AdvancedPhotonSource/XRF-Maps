@@ -56,13 +56,14 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct::Stream_Block*>()
+template<typename T_real>
+Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data_struct::Stream_Block<T_real>*>()
 {
 #ifdef _BUILD_WITH_ZMQ
     _send_counts = true;
     _send_spectra = true;
 
-    _callback_func = std::bind(&Spectra_Net_Streamer::stream, this, std::placeholders::_1);
+    this->_callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
 
     std::string conn_str = "tcp://*:" + port;
 	_context = new zmq::context_t(1);
@@ -75,7 +76,8 @@ Spectra_Net_Streamer::Spectra_Net_Streamer(std::string port) : Sink<data_struct:
 
 //-----------------------------------------------------------------------------
 
-Spectra_Net_Streamer::~Spectra_Net_Streamer()
+template<typename T_real>
+Spectra_Net_Streamer<T_real>::~Spectra_Net_Streamer()
 {
 #ifdef _BUILD_WITH_ZMQ
     if(_zmq_socket != nullptr)
@@ -95,7 +97,8 @@ Spectra_Net_Streamer::~Spectra_Net_Streamer()
 
 // ----------------------------------------------------------------------------
 
-void Spectra_Net_Streamer::stream(data_struct::Stream_Block* stream_block)
+template<typename T_real>
+void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* stream_block)
 {
 #ifdef _BUILD_WITH_ZMQ
 	std::string data;

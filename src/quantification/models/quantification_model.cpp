@@ -63,28 +63,31 @@ namespace models
 
 //-----------------------------------------------------------------------------
 
-Quantification_Model::Quantification_Model()
+template<typename T_real>
+Quantification_Model<T_real>::Quantification_Model()
 {
 
 }
 
 //-----------------------------------------------------------------------------
 
-Quantification_Model::~Quantification_Model()
+template<typename T_real>
+Quantification_Model<T_real>::~Quantification_Model()
 {
 
 }
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Model::init_element_quant(Element_Quant& element_quant,
-                                            real_t incident_energy,
-                                            Element_Info* detector_element,
+template<typename T_real>
+void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& element_quant,
+                                            T_real incident_energy,
+                                            Element_Info<T_real>* detector_element,
                                             Electron_Shell shell,
-                                            real_t airpath,
-                                            real_t detector_chip_thickness,
-                                            real_t beryllium_window_thickness,
-                                            real_t germanium_dead_layer,
+                                            T_real airpath,
+                                            T_real detector_chip_thickness,
+                                            T_real beryllium_window_thickness,
+                                            T_real germanium_dead_layer,
                                             size_t z_number)
 {
     //incident_E(incident_energy) == COHERENT_SCT_ENERGY: Maps_fit_params
@@ -92,15 +95,15 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
     //fit_t_ge == GE_DEAD_LAYER * 1000 if detector is not Si
     //add_float['a'] == DET_CHIP_THICKNESS   * 1000
 
-    real_t beta;
-    real_t shell_factor = 0.0;
-    real_t ev;
-    real_t jump_factor = 0.0;
-    real_t total_jump_factor = 0.0;
+    T_real beta;
+    T_real shell_factor = 0.0;
+    T_real ev;
+    T_real jump_factor = 0.0;
+    T_real total_jump_factor = 0.0;
 
     
 
-    Element_Info* element_info = Element_Info_Map::inst()->get_element(z_number);
+    Element_Info<T_real>* element_info = Element_Info_Map<T_real>::inst()->get_element(z_number);
     if(element_info == nullptr)
     {
         return;
@@ -112,7 +115,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
     switch(shell)
     {
     case Electron_Shell::K_SHELL:
-        ev = element_info->xrf.at("ka1") * (real_t)1000.0;
+        ev = element_info->xrf.at("ka1") * (T_real)1000.0;
         element_quant.yield = element_info->yieldD.at("k");
         if( incident_energy > element_info->bindingE.at("K") )
         {
@@ -120,7 +123,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
         }
         break;
     case Electron_Shell::L_SHELL:
-        ev = element_info->xrf.at("la1") * (real_t)1000.0;
+        ev = element_info->xrf.at("la1") * (T_real)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("la1");
         jump_factor = element_info->jump.at("L3");
         if( incident_energy > element_info->bindingE.at("L2") )
@@ -133,7 +136,7 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
         }
         break;
     case Electron_Shell::M_SHELL:
-        ev = element_info->xrf.at("ma1") * (real_t)1000.0;
+        ev = element_info->xrf.at("ma1") * (T_real)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("ma1");
         jump_factor = element_info->jump.at("M5");
         total_jump_factor = element_info->jump.at("M1") * element_info->jump.at("M2") * element_info->jump.at("M3") * element_info->jump.at("M4");
@@ -150,42 +153,42 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
     {
         if( total_jump_factor == 0.0 )
         {
-            shell_factor = (jump_factor - (real_t)1.0) / jump_factor;
+            shell_factor = (jump_factor - (T_real)1.0) / jump_factor;
         }
         else
         {
-            shell_factor = (jump_factor - (real_t)1.0) / jump_factor / total_jump_factor;
+            shell_factor = (jump_factor - (T_real)1.0) / jump_factor / total_jump_factor;
         }
     }
     // replace straight henke routines, with those
     // that take the absorption edges into account
     // make sure we are a bit above the absorption edge to make sure that for calibration purposes we do not eoncouner any weird things.
-    beta = element_info->calc_beta(element_info->density, (incident_energy + (real_t)0.1) * (real_t)1000.0);
+    beta = element_info->calc_beta(element_info->density, (incident_energy + (T_real)0.1) * (T_real)1000.0);
     // stds in microgram/cm2
     // density rho = g/cm3 = 1 microgram/cm2 /1000/1000/cm = 1 microgram/cm2 /1000/1000/*10*1000/um = 1 microgram/cm2 /100/um
     // thickness for 1 ugr/cm2
     // =1/(density[g/cm3]/10)
 
-    real_t thickness = (real_t)1.0 / (element_info->density * (real_t)10.0) * (real_t)1000.0;
+    T_real thickness = (T_real)1.0 / (element_info->density * (T_real)10.0) * (T_real)1000.0;
     ////aux_arr[mm, 0] = self.absorption(thickness, beta, 1239.852/((self.maps_conf.incident_E+0.1)*1000.), shell_factor=shell_factor)
-    element_quant.absorption = absorption(thickness, beta, (real_t)1239.852 / ((incident_energy + (real_t)0.1) * (real_t)1000.0), shell_factor);
+    element_quant.absorption = absorption(thickness, beta, (T_real)1239.852 / ((incident_energy + (T_real)0.1) * (T_real)1000.0), shell_factor);
 
     if(ev > 0)
     {
-        beta  = Element_Info_Map::inst()->calc_beta("Be", (real_t)1.848, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Be", (T_real)1.848, ev);
         ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
-        element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (real_t)1239.852 / ev);
+        element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (T_real)1239.852 / ev);
 
-        beta  = Element_Info_Map::inst()->calc_beta("Ge", (real_t)5.323, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Ge", (T_real)5.323, ev);
         ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
-        element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (real_t)1239.852 / ev);
+        element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (T_real)1239.852 / ev);
     }
  
 
     if (detector_element->name == "Si" && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
-        beta  = Element_Info_Map::inst()->calc_beta("Si", (real_t)2.3, ev);
-        element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (real_t)1239.852 / ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Si", (T_real)2.3, ev);
+        element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (T_real)1239.852 / ev);
     }
     ////aux_arr[mm, 4] = self.transmission(self.maps_conf.add_float['a'], beta, 1239.852/ev)
     else // ( (self.maps_conf.add_float['a'] == 0.) || (self.maps_conf.add_long['a'] != 1) )
@@ -198,14 +201,14 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
     if( airpath > 0 && ev > 0)
     {
         //density = 1.0
-        real_t density = (real_t)0.00117;
+        T_real density = (T_real)0.00117;
         //air_ele = 'N78.08O20.95Ar0.93'
         //density = 1.2047e-3
         //f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt = Chenke.get_henke_single('air', density, ev)
-        beta = Element_Info_Map::inst()->calc_beta("N:78.08,O:20.95,Ar:0.93", density, ev); // air
+        beta = Element_Info_Map<T_real>::inst()->calc_beta("N:78.08,O:20.95,Ar:0.93", density, ev); // air
         ////aux_arr[mm, 5] = self.transmission(airpath*1000., beta, 1239.852/ev)  // airpath is read in microns, transmission function expects nm
         // airpath is read in microns, transmission function expects nm
-        element_quant.transmission_through_air = transmission( airpath , beta, (real_t)1239.852 / ev);
+        element_quant.transmission_through_air = transmission( airpath , beta, (T_real)1239.852 / ev);
     }
     else
     {
@@ -216,25 +219,28 @@ void Quantification_Model::init_element_quant(Element_Quant& element_quant,
 
 //-----------------------------------------------------------------------------
 
-real_t Quantification_Model::transmission(real_t thickness, real_t beta, real_t llambda) const
+template<typename T_real>
+T_real Quantification_Model<T_real>::transmission(T_real thickness, T_real beta, T_real llambda) const
 {
-    return std::abs( std::exp( ( (real_t)-4.0 * (real_t)M_PI * thickness * beta / llambda ) ) );
+    return std::abs( std::exp( ( (T_real)-4.0 * (T_real)M_PI * thickness * beta / llambda ) ) );
 }
 
 //-----------------------------------------------------------------------------
 
-real_t Quantification_Model::absorption(real_t thickness, real_t beta, real_t llambda, real_t shell_factor) const
+template<typename T_real>
+T_real Quantification_Model<T_real>::absorption(T_real thickness, T_real beta, T_real llambda, T_real shell_factor) const
 {
     // shell factor <1 is to determine how much is
     // absorbed by a subshell, and is essentially the
     // ratio of jump factor -1 / jump factor
 
-    return ( 1 - std::abs( std::exp( ((real_t)-4.0 * (real_t)M_PI * thickness * shell_factor * beta / llambda) ) ) );
+    return ( 1 - std::abs( std::exp( ((T_real)-4.0 * (T_real)M_PI * thickness * shell_factor * beta / llambda) ) ) );
 }
 
 //-----------------------------------------------------------------------------
 
-std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationcurve(std::unordered_map<std::string, Element_Quant> quant_map, real_t p)
+template<typename T_real>
+std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_calibrationcurve(std::unordered_map<std::string, Element_Quant<T_real>> quant_map, T_real p)
 {
     // aux_arr[mm, 0] = absorption
     // aux_arr[mm, 1] = transmission, Be
@@ -246,16 +252,16 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
     //aux_arr = self.aux_arr;
 //returns array size 3
     //z_prime is array size 3 of element index of calibraion elements
-    //std::vector<real_t> result(aux_arr.size);
-    std::unordered_map<std::string, real_t> result_map;
+    //std::vector<T_real> result(aux_arr.size);
+    std::unordered_map<std::string, T_real> result_map;
     for(auto& itr : quant_map)
     {
-        real_t val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((real_t)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
+        T_real val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((T_real)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
         if(false == std::isfinite(val))
         {
             val = 0;
         }
-        result_map.emplace(std::pair<std::string, real_t>(itr.first, val));
+        result_map.emplace(std::pair<std::string, T_real>(itr.first, val));
     }
 
     return result_map;
@@ -264,11 +270,12 @@ std::unordered_map<std::string, real_t> Quantification_Model::model_calibrationc
 
 //-----------------------------------------------------------------------------
 
-void Quantification_Model::model_calibrationcurve(std::vector<Element_Quant> *quant_vec, real_t p)
+template<typename T_real>
+void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Quant<T_real>> *quant_vec, T_real p)
 {
     for(auto &itr : *quant_vec)
     {
-        real_t val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((real_t)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
+        T_real val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((T_real)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
         if (false == std::isfinite(val))
         {
             val = 0;

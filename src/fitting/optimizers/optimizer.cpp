@@ -55,6 +55,8 @@ namespace fitting
 namespace optimizers
 {
 
+    // ----------------------------------------------------------------------------
+    
     std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome)
     {
         switch (outcome)
@@ -87,122 +89,8 @@ namespace optimizers
         return "";
     }
 
-    void fill_user_data(User_Data& ud,
-                        Fit_Parameters* fit_params,
-                        const Spectra* const spectra,
-                        const Fit_Element_Map_Dict* const elements_to_fit,
-                        const Base_Model* const model,
-                        const Range energy_range,
-                        Callback_Func_Status_Def* status_callback,
-                        size_t total_itr,
-                        bool use_weights)
-	{
-		ud.fit_model = (Base_Model*)model;
-		// set spectra to fit
-        ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
-        //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
-        //new (&(ud.spectra)) Eigen::Map<const ArrayXr>(spectra->data() + energy_range.min, energy_range.count());
-        ud.orig_spectra = spectra;
-		ud.fit_parameters = fit_params;
-		ud.elements = (Fit_Element_Map_Dict *)elements_to_fit;
-        ud.energy_range.min = energy_range.min;
-        ud.energy_range.max = energy_range.max;
+    // ----------------------------------------------------------------------------
 
-        ud.status_callback = status_callback;
-        ud.cur_itr = 0;
-        ud.total_itr = total_itr;
-
-        if (use_weights)
-        {
-            ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
-            weights = convolve1d(weights, 5);
-            weights = Eigen::abs(weights);
-            weights /= weights.maxCoeff();
-            ud.weights = weights.segment(energy_range.min, energy_range.count());
-        }
-        else
-        {
-            ud.weights.resize(energy_range.count());
-            ud.weights.fill(1.0);
-        }
-
-        ArrayXr background(spectra->size());
-        background.setZero(spectra->size());
-        if(fit_params->contains(STR_SNIP_WIDTH))
-        {
-            background = snip_background(spectra,
-                                         fit_params->value(STR_ENERGY_OFFSET),
-                                         fit_params->value(STR_ENERGY_SLOPE),
-                                         fit_params->value(STR_ENERGY_QUADRATIC),
-                                         fit_params->value(STR_SNIP_WIDTH),
-                                         energy_range.min,
-                                         energy_range.max);
-        }
-        ud.spectra_background = background.segment(energy_range.min, energy_range.count());
-        ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
-		ud.spectra_model.resize(energy_range.count());
-	}
-
-	void fill_gen_user_data(Gen_User_Data &ud,
-                            Fit_Parameters *fit_params,
-                            const Spectra * const spectra,
-                            const Range energy_range,
-                            const ArrayXr* background,
-                            Gen_Func_Def gen_func,
-                            bool use_weights)
-	{
-		ud.func = gen_func;
-		// set spectra to fit
-        ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());;
-        //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
-        //new (&ud.spectra) Eigen::Map<const ArrayXr>(spectra->data() + energy_range.min, energy_range.count());
-		ud.fit_parameters = fit_params;
-        ud.energy_range.min = energy_range.min;
-        ud.energy_range.max = energy_range.max;
-
-        if(use_weights)
-        {
-		    ArrayXr weights = (real_t)1.0 / ((real_t)1.0 + (*spectra));
-		    weights = convolve1d(weights, 5);
-		    weights = Eigen::abs(weights);
-		    weights /= weights.maxCoeff();
-		    ud.weights = weights.segment(energy_range.min, energy_range.count());
-        }
-        else
-        {
-            ud.weights.resize(energy_range.count());
-            ud.weights.fill(1.0);
-        }
-        ud.spectra_background = *background;
-        ud.spectra_background = ud.spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
-        
-		ud.spectra_model.resize(energy_range.count());
-	}
-
-    void update_background_user_data(User_Data *ud)
-    {
-        if(ud->fit_parameters->contains(STR_SNIP_WIDTH))
-        {
-            Fit_Param fit_snip_width = ud->fit_parameters->at(STR_SNIP_WIDTH);
-            if(fit_snip_width.bound_type != E_Bound_Type::FIXED && ud->orig_spectra != nullptr)
-            {
-                //ud->spectra_background = snip_background(ud->orig_spectra,
-				ArrayXr background = snip_background(ud->orig_spectra,
-                                             ud->fit_parameters->value(STR_ENERGY_OFFSET),
-                                             ud->fit_parameters->value(STR_ENERGY_SLOPE),
-                                             ud->fit_parameters->value(STR_ENERGY_QUADRATIC),
-                                             fit_snip_width.value,
-                                             ud->energy_range.min,
-                                             ud->energy_range.max);
-
-				ud->spectra_background = background.segment(ud->energy_range.min, ud->energy_range.count());
-                ud->spectra_background = ud->spectra_background.unaryExpr([](real_t v) { return std::isfinite(v) ? v : (real_t)0.0; });
-				
-            }
-        }
-
-
-    }
 
 } //namespace optimizers
 } //namespace fitting
