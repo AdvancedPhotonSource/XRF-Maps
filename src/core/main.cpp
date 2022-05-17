@@ -630,79 +630,81 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<float> analysis_job;
 
-    set_general_options(clp, analysis_job);
-
-    //Should create an averaged file of all detectors processed
-    if (clp.option_exists("--generate-avg-h5"))
+    if (set_general_options(clp, analysis_job) != -1)
     {
-        analysis_job.generate_average_h5 = true;
-    }
 
-    if (clp.option_exists("--add-v9layout"))
-    {
-        analysis_job.add_v9_layout = true;
-    }
 
-    if (clp.option_exists("--update-theta"))
-    {
-        analysis_job.update_theta_str = clp.get_option("--update-theta");
-    }
-
-    /*
-    if (clp.option_exists("--update-scalers"))
-    {
-        analysis_job.update_scalers = true;
-    }
-    */
-
-    if (clp.option_exists("--update-amps"))
-    {
-        string amps = clp.get_option("--update-amps");
-        size_t idx = amps.find(',');
-        if (idx != string::npos)
+        //Should create an averaged file of all detectors processed
+        if (clp.option_exists("--generate-avg-h5"))
         {
-            analysis_job.update_us_amps_str = amps.substr(0, idx);
-            analysis_job.update_ds_amps_str = amps.substr(idx + 1);
+            analysis_job.generate_average_h5 = true;
         }
-        else
+
+        if (clp.option_exists("--add-v9layout"))
         {
-            logW << "Could not find ',' while parsing --update-amps\n";
+            analysis_job.add_v9_layout = true;
         }
-    }
 
-    if (clp.option_exists("--update-quant-amps"))
-    {
-        string amps = clp.get_option("--update-quant-amps");
-        size_t idx = amps.find(',');
-        if (idx != string::npos)
+        if (clp.option_exists("--update-theta"))
         {
-            analysis_job.update_quant_us_amps_str = amps.substr(0, idx);
-            analysis_job.update_quant_ds_amps_str = amps.substr(idx + 1);
+            analysis_job.update_theta_str = clp.get_option("--update-theta");
         }
-        else
+
+        /*
+        if (clp.option_exists("--update-scalers"))
         {
-            logW << "Could not find ',' while parsing --update-quant-amps\n";
+            analysis_job.update_scalers = true;
         }
+        */
+
+        if (clp.option_exists("--update-amps"))
+        {
+            string amps = clp.get_option("--update-amps");
+            size_t idx = amps.find(',');
+            if (idx != string::npos)
+            {
+                analysis_job.update_us_amps_str = amps.substr(0, idx);
+                analysis_job.update_ds_amps_str = amps.substr(idx + 1);
+            }
+            else
+            {
+                logW << "Could not find ',' while parsing --update-amps\n";
+            }
+        }
+
+        if (clp.option_exists("--update-quant-amps"))
+        {
+            string amps = clp.get_option("--update-quant-amps");
+            size_t idx = amps.find(',');
+            if (idx != string::npos)
+            {
+                analysis_job.update_quant_us_amps_str = amps.substr(0, idx);
+                analysis_job.update_quant_ds_amps_str = amps.substr(idx + 1);
+            }
+            else
+            {
+                logW << "Could not find ',' while parsing --update-quant-amps\n";
+            }
+        }
+
+        //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
+        if (clp.option_exists("--add-exchange"))
+        {
+            analysis_job.add_exchange_layout = true;
+        }
+
+        if (clp.option_exists("--export-csv"))
+        {
+            analysis_job.export_int_fitted_to_csv = true;
+        }
+
+        if (clp.option_exists("--add_background"))
+        {
+            analysis_job.add_background = true;
+        }
+
+        iterate_datasets_and_update(analysis_job);
     }
-
-    //Added exchange format to output file. Used as an interface to allow other analysis software to load out output file
-    if (clp.option_exists("--add-exchange"))
-    {
-        analysis_job.add_exchange_layout = true;
-    }
-
-    if (clp.option_exists("--export-csv"))
-    {
-        analysis_job.export_int_fitted_to_csv = true;
-    }
-
-    if (clp.option_exists("--add_background"))
-    {
-        analysis_job.add_background = true;
-    }
-
-    iterate_datasets_and_update(analysis_job);
-
     return 0;
 }
 
