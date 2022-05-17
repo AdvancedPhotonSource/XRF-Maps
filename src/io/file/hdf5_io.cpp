@@ -2828,7 +2828,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
         logE << "Error creating " << str_version << "\n";
         return false;
     }
-    H5Dwrite(dset_id, H5T_NATIVE_DOUBLE, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
+    H5Dwrite(dset_id, H5T_NATIVE_FLOAT, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&save_val);
     
 
     //Add theta
