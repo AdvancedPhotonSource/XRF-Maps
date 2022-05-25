@@ -53,23 +53,17 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis_job,
-                                    std::string  dataset_filename,
+                                    data_struct::Spectra<double>& int_spectra,
                                     size_t detector_num,
                                     data_struct::Params_Override<double>* params_override,
+                                    std::string save_filename,
                                     data_struct::Fit_Parameters<double>& out_fitp)
 {
     fitting::models::Gaussian_Model<double> model;
     bool ret_val = false;
-    data_struct::Spectra<double> int_spectra;
 
     if (params_override != nullptr)
     {
-        //load the quantification standard dataset
-        if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, dataset_filename, detector_num, &int_spectra, params_override))
-        {
-            logE << "In optimize_integrated_dataset loading dataset" << dataset_filename << " for detector" << detector_num << "\n";
-            return false;
-        }
         //Range of energy in spectra to fit
         fitting::models::Range energy_range = data_struct::get_energy_range<double>(int_spectra.size(), &(params_override->fit_params));
 
@@ -124,7 +118,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             ret_val = false;
             break;
         }
-        io::file::save_optimized_fit_params(analysis_job->dataset_directory, dataset_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+        io::file::save_optimized_fit_params(analysis_job->dataset_directory, save_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
 
         delete fit_routine;
     }
@@ -141,6 +135,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
     std::unordered_map<int, data_struct::Params_Override<double>*> params;
     std::unordered_map<int, float> detector_file_cnt;
     data_struct::Params_Override<double>* params_override = nullptr;
+    data_struct::Spectra<double> int_spectra;
 
     std::string full_path = analysis_job->dataset_directory + DIR_END_CHAR + "maps_fit_parameters_override.txt";
 
@@ -179,18 +174,26 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 				
             }
 
-            data_struct::Fit_Parameters<double> out_fitp;
-            if (optimize_integrated_fit_params(analysis_job, itr, detector_num, params_override, out_fitp))
+            //load the int spectra from the dataset.
+            if (io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, &int_spectra, params_override))
             {
-                detector_file_cnt[detector_num] += 1.0;
-                if (fit_params_avgs.count(detector_num) > 0)
+                data_struct::Fit_Parameters<double> out_fitp;
+                if (optimize_integrated_fit_params(analysis_job, int_spectra, detector_num, params_override, itr, out_fitp))
                 {
-                    fit_params_avgs[detector_num].sum_values(out_fitp);
+                    detector_file_cnt[detector_num] += 1.0;
+                    if (fit_params_avgs.count(detector_num) > 0)
+                    {
+                        fit_params_avgs[detector_num].sum_values(out_fitp);
+                    }
+                    else
+                    {
+                        fit_params_avgs[detector_num] = out_fitp;
+                    }
                 }
-                else
-                {
-                    fit_params_avgs[detector_num] = out_fitp;
-                }
+            }
+            else
+            {
+                logE << "In optimize_integrated_dataset loading dataset" << itr << " for detector" << detector_num << "\n";
             }
         }
     }
@@ -517,7 +520,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, data_struct::Detector<double>* detector, std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois, std::string search_filename)
+void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int detector_num, std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois, std::string search_filename)
 {
     std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
     if (files.size() > 0)
@@ -528,7 +531,22 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, data
             std::string file_path = analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + files[0];
             if (io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
             {
-                // optimize roi
+                data_struct::Params_Override<double> params_override;
+                //load override parameters
+                if (false == io::file::load_override_params(analysis_job.dataset_directory, detector_num, &params_override))
+                {
+                    if (false == io::file::load_override_params(analysis_job.dataset_directory, -1, &params_override))
+                    {
+                        logE << "Loading maps_fit_parameters_override.txt\n";
+                        return;
+                    }
+                }
+                data_struct::Fit_Parameters<double> out_fitp;
+                std::string roi_name = std::to_string(roi_itr.first);
+                if (optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, &params_override, files[0]+ "_roi_" + roi_name, out_fitp))
+                {
+                    
+                }
             }
         }
     }
@@ -545,7 +563,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
     std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
     std::string search_filename;
-    data_struct::Detector<double>* detector;
+    //data_struct::Detector<double>* detector;
     if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
     {
         logI << "Loaded roi file "<<roi_file_name << "\n";
@@ -558,17 +576,19 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
             // iterate through all 
             for (size_t detector_num : analysis_job.detector_num_arr)
             {
-                detector = analysis_job.get_detector(detector_num);
-                std::string str_detector_num = std::to_string(detector_num);
-                search_filename = dataset_num + ".h5" + str_detector_num;
-                find_and_optimize_roi(analysis_job, detector, rois, search_filename);
-                
+                //detector = analysis_job.get_detector(detector_num);
+                if (detector_num != -1)
+                {
+                    std::string str_detector_num = std::to_string(detector_num);
+                    search_filename = dataset_num + ".h5" + str_detector_num;
+                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename);
+                }
             }
             //now for the avg h5
-            detector = analysis_job.get_detector(-1);
+            //detector = analysis_job.get_detector(-1);
             search_filename = dataset_num + ".h5";
             dataset_num + ".h5";
-            find_and_optimize_roi(analysis_job, detector, rois, search_filename);
+            find_and_optimize_roi(analysis_job, -1, rois, search_filename);
         }
         else
         {
