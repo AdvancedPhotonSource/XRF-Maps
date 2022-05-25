@@ -2839,7 +2839,9 @@ public:
 
         logI << path << "\n";
 
-        hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id, dset_scalers, dset_scaler_names;
+        hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id;
+        hid_t   memoryspace_1;
+        hid_t    dset_rt_id, dset_lt_id, dset_scalers, dset_scaler_names;
         hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id, dataspace_scalers, dataspace_scaler_names;
         herr_t   error;
         hsize_t dims_in[3] = { 0,0,0 };
@@ -2847,6 +2849,8 @@ public:
         hsize_t count[3] = { 1,1,1 };
         hsize_t offset_time[2] = { 0,0 };
         hsize_t count_time[2] = { 1,1 };
+        hsize_t offset_1[1] = { 0 };
+        hsize_t count_1[1] = { 1 };
 
         hsize_t elt_off = -1, ert_off = -1, in_off = -1, out_off = -1;
 
@@ -2884,12 +2888,43 @@ public:
 
             dataspace_scaler_names = H5Dget_space(dset_scaler_names);
             close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
+            hid_t memtype = H5Dget_type(dset_scaler_names);
 
-            elt_off = 12;
-            ert_off = 13;
-            in_off = 14;
-            out_off = 15;
+            //  read scaler names and search for elt1, ert1, incnt1, outcnt1
+            hsize_t dims_out[1];
+            unsigned int status_n = H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
+            char tmp_name[256] = { 0 };
+            memoryspace_1 = H5Screate_simple(1, count, nullptr);
+            for (hsize_t idx = 0; idx < dims_out[0]; idx++)
+            {
+                offset_1[0] = idx;
+                memset(&tmp_name[0], 0, 254);
+                H5Sselect_hyperslab(dataspace_scaler_names, H5S_SELECT_SET, offset_1, nullptr, count_1, nullptr);
+                error = H5Dread(dset_scaler_names, memtype, memoryspace_1, dataspace_scaler_names, H5P_DEFAULT, (void*)&tmp_name[0]);
+                if (error == 0)
+                {
+                    std::string name = std::string(tmp_name);
+
+                    if (name == STR_ELT + "1")
+                    {
+                        elt_off = idx;
+                    }
+                    else if (name == STR_ERT + "1")
+                    {
+                        ert_off = idx;
+                    }
+                    else if (name == STR_ICR + "1")
+                    {
+                        in_off = idx;
+                    }
+                    else if (name == STR_OCR + "1")
+                    {
+                        out_off = idx;
+                    }
+                }
+            }
             is_v9 = true;
+            H5Tclose(memtype);
         }
         else
         {
