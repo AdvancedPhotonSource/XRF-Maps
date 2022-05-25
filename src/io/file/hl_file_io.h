@@ -442,7 +442,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         fullpath += std::to_string(detector_num);
     }
-    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, false))
+    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false))
     {
         logI << "Loaded integradted spectra from h5.\n";
         if (params_override != nullptr)

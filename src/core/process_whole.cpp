@@ -517,16 +517,68 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name)
+void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, data_struct::Detector<double>* detector, std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois, std::string search_filename)
 {
-    std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
-    if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
+    std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
+    if (files.size() > 0)
     {
-        logI << "Loaded "<<roi_file_name << "\n";
+        for (auto& roi_itr : rois)
+        {
+            Spectra<double> int_spectra;
+            std::string file_path = analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + files[0];
+            if (io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
+            {
+                // optimize roi
+            }
+        }
     }
     else
     {
-        logI << "Error loading "<< roi_file_name << "\n";
+        logE << "Could not dataset file for " << search_filename << "\n";
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name)
+{
+    //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
+    std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
+    std::string search_filename;
+    data_struct::Detector<double>* detector;
+    if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
+    {
+        logI << "Loaded roi file "<<roi_file_name << "\n";
+        //get dataset file number
+        std::string dataset_num;
+        std::istringstream strstream(roi_file_name);
+        std::getline(strstream, dataset_num, '_');
+        if (dataset_num.length() > 0)
+        {
+            // iterate through all 
+            for (size_t detector_num : analysis_job.detector_num_arr)
+            {
+                detector = analysis_job.get_detector(detector_num);
+                std::string str_detector_num = std::to_string(detector_num);
+                search_filename = dataset_num + ".h5" + str_detector_num;
+                find_and_optimize_roi(analysis_job, detector, rois, search_filename);
+                
+            }
+            //now for the avg h5
+            detector = analysis_job.get_detector(-1);
+            search_filename = dataset_num + ".h5";
+            dataset_num + ".h5";
+            find_and_optimize_roi(analysis_job, detector, rois, search_filename);
+        }
+        else
+        {
+            logE<<"Error parsing dataset number for "<< roi_file_name << "\n";
+        }
+
+    }
+    else
+    {
+        logE << "Error loading roi file "<< roi_file_name << "\n";
     }
 }
 
