@@ -74,6 +74,7 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
+    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
@@ -515,6 +516,22 @@ int run_quantification(Command_Line_Parser& clp)
 
 // ----------------------------------------------------------------------------
 
+int run_optimize_rois(Command_Line_Parser& clp)
+{
+    data_struct::Analysis_Job<double> analysis_job;
+
+    if (set_general_options(clp, analysis_job) == -1)
+    {
+        return -1;
+    }
+
+    optimize_rois(analysis_job);
+
+    return 0;
+}
+
+// ----------------------------------------------------------------------------
+
 int run_streaming(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<float> analysis_job;
@@ -768,6 +785,11 @@ int main(int argc, char* argv[])
     if (clp.option_exists("--quantify-with"))
     {
         run_quantification(clp);
+    }
+
+    if (clp.option_exists("--optimize-rois"))
+    {
+        run_optimize_rois(clp);
     }
 
     run_h5_file_updates(clp);

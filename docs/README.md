@@ -10,11 +10,11 @@
 #### Description
 ROI fitting 
 
-### NNLS
+### Non-Negative Least Squares (NNLS)
 
-### SVD
+### Singualr Value Decomposition (SVD)
 
-### MATRIX
+### Per Pixel (MATRIX)
 
 ## Quantification
 ### Option

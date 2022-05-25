@@ -516,5 +516,30 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 }
 
 // ----------------------------------------------------------------------------
+
+void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name)
+{
+    std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
+    if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
+    {
+        logI << "Loaded "<<roi_file_name << "\n";
+    }
+    else
+    {
+        logI << "Error loading "<< roi_file_name << "\n";
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
+{
+    for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "rois", ".roi"))
+    {
+        optimize_single_roi(analysis_job, itr);
+    }
+}
+
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
