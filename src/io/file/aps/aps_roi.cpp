@@ -86,7 +86,7 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
     Num val;
     unsigned int width;
     unsigned int height;
-    unsigned int roi_idx;
+    unsigned int mask;
     std::vector<unsigned int> myData;
     if (fileStream.is_open())
     {
@@ -107,8 +107,15 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
                 if (myData[i])
                 {
                     val.num = myData[i];
-                    roi_idx = swapOrder(val);
-                    rois[roi_idx].push_back(int_point(x, y));
+                    mask = swapOrder(val);
+                    for (int idx = 1; idx < 11; idx++)
+                    {
+                        if ((idx & mask) == idx)
+                        {
+                            rois[idx-1].push_back(int_point(x, y));
+                        }
+                    }
+                    
                 }
                 i++;
             }
