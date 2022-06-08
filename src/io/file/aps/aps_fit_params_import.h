@@ -206,520 +206,520 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
         paramFileStream.exceptions(std::ifstream::failbit);
         //std::string line;
         std::string tag;
+        
         try
         {
             for (std::string line; std::getline(paramFileStream, line, '\n'); )
                 //while(std::getline(paramFileStream, line))
             {
-                std::istringstream strstream(line);
-                std::getline(strstream, tag, ':');
-                //tag.erase(std::remove_if(tag.begin(), tag.end(), ::isspace), tag.end());
-                //logD<<"tag : "<<tag<<"\n";
-                if (tag == "VERSION" || tag == "DATE")
+                try
                 {
-                    //logD << line << "\n";
-                }
-                else if (tag == "DETECTOR_ELEMENTS")
-                {
-
-                }
-                else if (tag == "ELEMENTS_TO_FIT")
-                {
-                    std::string element_symb;
-                    while (std::getline(strstream, element_symb, ','))
+                    std::istringstream strstream(line);
+                    std::getline(strstream, tag, ':');
+                    //tag.erase(std::remove_if(tag.begin(), tag.end(), ::isspace), tag.end());
+                    //logD<<"tag : "<<tag<<"\n";
+                    if (tag == "VERSION" || tag == "DATE")
                     {
-                        element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-
-                        // check if element_symb contains '_'
-                        std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
-
-                        //logD<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
-
-                        Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
-                        if (e_info == nullptr)
-                        {
-                            logW << "Can not find element " << base_element_symb << "\n";
-                        }
-                        else
-                        {
-                            Fit_Element_Map<T_real>* fit_map;
-                            if (params_override->elements_to_fit.count(element_symb) < 1)
-                            {
-                                fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
-                                params_override->elements_to_fit[element_symb] = fit_map;
-                            }
-                        }
+                        //logD << line << "\n";
                     }
-
-                }
-                else if (tag == "ELEMENTS_WITH_PILEUP")
-                {
-                    std::string element_symb;
-                    while (std::getline(strstream, element_symb, ','))
+                    else if (tag == "DETECTOR_ELEMENTS")
                     {
-                        Element_Info<T_real>* e_info1 = nullptr;
-                        Element_Info<T_real>* e_info2 = nullptr;
-                        std::string efull_name1;
-                        std::string efull_name2;
 
-                        element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-                        //logI<<"Element with pileup : "<<element_symb<<"\n";
-                        std::string orig_el_symb = element_symb;
-
-                        std::vector<std::string> string_list;
-                        std::size_t found = element_symb.find("_");
-                        size_t prev = 0;
-                        while (found != std::string::npos)
+                    }
+                    else if (tag == "ELEMENTS_TO_FIT")
+                    {
+                        std::string element_symb;
+                        while (std::getline(strstream, element_symb, ','))
                         {
-                            string_list.push_back(element_symb.substr(prev, found));
-                            element_symb = element_symb.substr(found + 1, element_symb.size());
-                            prev = found;
-                            found = element_symb.find("_");
-                        }
-                        if (element_symb.size() > 0)
-                        {
-                            string_list.push_back(element_symb);
-                        }
+                            element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
+                            // check if element_symb contains '_'
+                            std::string base_element_symb = element_symb.substr(0, element_symb.find_last_of("_"));
 
-                        if (string_list.size() == 4)
-                        {
-                            if ((string_list[1] == "L" || string_list[1] == "M") && (string_list[3] == "L" || string_list[3] == "M"))
+                            //logD<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
+
+                            Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
+                            if (e_info == nullptr)
                             {
-                                e_info1 = element_info_map->get_element(string_list[0]);
-                                e_info2 = element_info_map->get_element(string_list[2]);
-                                efull_name1 = string_list[0] + "_" + string_list[1];
-                                efull_name2 = string_list[2] + "_" + string_list[3];
+                                logW << "Can not find element " << base_element_symb << "\n";
+                            }
+                            else
+                            {
+                                Fit_Element_Map<T_real>* fit_map;
+                                if (params_override->elements_to_fit.count(element_symb) < 1)
+                                {
+                                    fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
+                                    params_override->elements_to_fit[element_symb] = fit_map;
+                                }
                             }
                         }
-                        else if (string_list.size() == 3)
+
+                    }
+                    else if (tag == "ELEMENTS_WITH_PILEUP")
+                    {
+                        std::string element_symb;
+                        while (std::getline(strstream, element_symb, ','))
                         {
-                            if (string_list[1] == "L" || string_list[1] == "M")
+                            Element_Info<T_real>* e_info1 = nullptr;
+                            Element_Info<T_real>* e_info2 = nullptr;
+                            std::string efull_name1;
+                            std::string efull_name2;
+
+                            element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+                            //logI<<"Element with pileup : "<<element_symb<<"\n";
+                            std::string orig_el_symb = element_symb;
+
+                            std::vector<std::string> string_list;
+                            std::size_t found = element_symb.find("_");
+                            size_t prev = 0;
+                            while (found != std::string::npos)
                             {
-                                e_info1 = element_info_map->get_element(string_list[0]);
-                                e_info2 = element_info_map->get_element(string_list[2]);
-                                efull_name1 = string_list[0] + "_" + string_list[1];
-                                efull_name2 = string_list[2];
+                                string_list.push_back(element_symb.substr(prev, found));
+                                element_symb = element_symb.substr(found + 1, element_symb.size());
+                                prev = found;
+                                found = element_symb.find("_");
                             }
-                            else if (string_list[2] == "L" || string_list[2] == "M")
+                            if (element_symb.size() > 0)
+                            {
+                                string_list.push_back(element_symb);
+                            }
+
+
+                            if (string_list.size() == 4)
+                            {
+                                if ((string_list[1] == "L" || string_list[1] == "M") && (string_list[3] == "L" || string_list[3] == "M"))
+                                {
+                                    e_info1 = element_info_map->get_element(string_list[0]);
+                                    e_info2 = element_info_map->get_element(string_list[2]);
+                                    efull_name1 = string_list[0] + "_" + string_list[1];
+                                    efull_name2 = string_list[2] + "_" + string_list[3];
+                                }
+                            }
+                            else if (string_list.size() == 3)
+                            {
+                                if (string_list[1] == "L" || string_list[1] == "M")
+                                {
+                                    e_info1 = element_info_map->get_element(string_list[0]);
+                                    e_info2 = element_info_map->get_element(string_list[2]);
+                                    efull_name1 = string_list[0] + "_" + string_list[1];
+                                    efull_name2 = string_list[2];
+                                }
+                                else if (string_list[2] == "L" || string_list[2] == "M")
+                                {
+                                    e_info1 = element_info_map->get_element(string_list[0]);
+                                    e_info2 = element_info_map->get_element(string_list[1]);
+                                    efull_name1 = string_list[0];
+                                    efull_name2 = string_list[1] + "_" + string_list[2];
+                                }
+                            }
+                            else if (string_list.size() == 2)
                             {
                                 e_info1 = element_info_map->get_element(string_list[0]);
                                 e_info2 = element_info_map->get_element(string_list[1]);
                                 efull_name1 = string_list[0];
-                                efull_name2 = string_list[1] + "_" + string_list[2];
+                                efull_name2 = string_list[1];
                             }
-                        }
-                        else if (string_list.size() == 2)
-                        {
-                            e_info1 = element_info_map->get_element(string_list[0]);
-                            e_info2 = element_info_map->get_element(string_list[1]);
-                            efull_name1 = string_list[0];
-                            efull_name2 = string_list[1];
-                        }
 
 
-                        if (e_info1 != nullptr && e_info2 != nullptr)
-                        {
-                            Fit_Element_Map<T_real>* fit_map;
-                            if (params_override->elements_to_fit.count(orig_el_symb) < 1)
+                            if (e_info1 != nullptr && e_info2 != nullptr)
                             {
-                                fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
-                                fit_map->set_as_pileup(efull_name2, e_info2);
-                                params_override->elements_to_fit[orig_el_symb] = fit_map;
+                                Fit_Element_Map<T_real>* fit_map;
+                                if (params_override->elements_to_fit.count(orig_el_symb) < 1)
+                                {
+                                    fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
+                                    fit_map->set_as_pileup(efull_name2, e_info2);
+                                    params_override->elements_to_fit[orig_el_symb] = fit_map;
+                                }
                             }
+                            else
+                            {
+                                logW << "Could not parse pileup string: " << orig_el_symb << ".\n";
+                            }
+                        }
+                    }
+                    else if (FILE_TAGS_TRANSLATION.count(tag) > 0)
+                    {
+                        //ignore quadratic min because we don't want it to be negative so we default min to 0
+                        if (tag == "CAL_QUAD_[E_QUADRATIC]_MIN")
+                        {
+                            continue;
+                        }
+
+                        std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
+                        if (false == params_override->fit_params.contains(tag_name))
+                        {
+                            params_override->fit_params.add_parameter(Fit_Param<T_real>(tag_name));
+                        }
+
+                        std::string str_value;
+                        std::getline(strstream, str_value, ':');
+                        float fvalue = parse_input_real<T_real>(str_value);
+
+                        if (tag.find("_MAX") != std::string::npos)
+                        {
+                            params_override->fit_params[tag_name].max_val = fvalue;
+                        }
+                        else if (tag.find("_MIN") != std::string::npos)
+                        {
+                            params_override->fit_params[tag_name].min_val = fvalue;
                         }
                         else
                         {
-                            logW << "Could not parse pileup string: " << orig_el_symb << ".\n";
+                            params_override->fit_params[tag_name].value = fvalue;
                         }
                     }
-                }
-                else if (FILE_TAGS_TRANSLATION.count(tag) > 0)
-                {
-                    //ignore quadratic min because we don't want it to be negative so we default min to 0
-                    if (tag == "CAL_QUAD_[E_QUADRATIC]_MIN")
+                    else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
                     {
-                        continue;
-                    }
+                        unsigned int cnt = 0;
 
-                    std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
-                    if (false == params_override->fit_params.contains(tag_name))
-                    {
-                        params_override->fit_params.add_parameter(Fit_Param<T_real>(tag_name));
-                    }
-
-                    std::string str_value;
-                    std::getline(strstream, str_value, ':');
-                    float fvalue = parse_input_real<T_real>(str_value);
-
-                    if (tag.find("_MAX") != std::string::npos)
-                    {
-                        params_override->fit_params[tag_name].max_val = fvalue;
-                    }
-                    else if (tag.find("_MIN") != std::string::npos)
-                    {
-                        params_override->fit_params[tag_name].min_val = fvalue;
-                    }
-                    else
-                    {
-                        params_override->fit_params[tag_name].value = fvalue;
-                    }
-                }
-                else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
-                {
-                    unsigned int cnt = 0;
-
-                    if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L")
-                    {
-                        params_override->branching_family_L.push_back(line);
-                        cnt = 3;
-                    }
-                    else if (tag == "BRANCHING_RATIO_ADJUSTMENT_K")
-                    {
-                        params_override->branching_ratio_K.push_back(line);
-                        cnt = 4;
-                    }
-                    else if (tag == "BRANCHING_RATIO_ADJUSTMENT_L")
-                    {
-                        params_override->branching_ratio_L.push_back(line);
-                        cnt = 12;
-                    }
-
-                    std::string element_symb;
-                    std::string str_value;
-
-                    std::getline(strstream, element_symb, ',');
-                    element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
-
-                    Fit_Element_Map<T_real>* fit_map;
-                    if (params_override->elements_to_fit.count(element_symb) > 0)
-                    {
-                        fit_map = params_override->elements_to_fit[element_symb];
-                        if (cnt == 3) // family
+                        if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L")
                         {
-                            float factor = 1.0;
-
-                            // 1
-                            std::getline(strstream, str_value, ',');
-                            factor = parse_input_real<T_real>(str_value);
-                            fit_map->multiply_custom_multiply_ratio(4, factor);
-                            fit_map->multiply_custom_multiply_ratio(5, factor);
-                            fit_map->multiply_custom_multiply_ratio(7, factor);
-                            fit_map->multiply_custom_multiply_ratio(8, factor);
-                            fit_map->multiply_custom_multiply_ratio(9, factor);
-
-                            // 2
-                            std::getline(strstream, str_value, ',');
-                            factor = parse_input_real<T_real>(str_value);
-                            fit_map->multiply_custom_multiply_ratio(2, factor);
-                            fit_map->multiply_custom_multiply_ratio(6, factor);
-                            fit_map->multiply_custom_multiply_ratio(11, factor);
-
-                            //3
-                            std::getline(strstream, str_value, ',');
-                            factor = parse_input_real<T_real>(str_value);
-                            fit_map->multiply_custom_multiply_ratio(0, factor);
-                            fit_map->multiply_custom_multiply_ratio(1, factor);
-                            fit_map->multiply_custom_multiply_ratio(3, factor);
-                            fit_map->multiply_custom_multiply_ratio(10, factor);
+                            params_override->branching_family_L.push_back(line);
+                            cnt = 3;
                         }
-                        else // ratio's
+                        else if (tag == "BRANCHING_RATIO_ADJUSTMENT_K")
                         {
-                            for (unsigned int i = 0; i < cnt; i++)
+                            params_override->branching_ratio_K.push_back(line);
+                            cnt = 4;
+                        }
+                        else if (tag == "BRANCHING_RATIO_ADJUSTMENT_L")
+                        {
+                            params_override->branching_ratio_L.push_back(line);
+                            cnt = 12;
+                        }
+
+                        std::string element_symb;
+                        std::string str_value;
+
+                        std::getline(strstream, element_symb, ',');
+                        element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+
+                        Fit_Element_Map<T_real>* fit_map;
+                        if (params_override->elements_to_fit.count(element_symb) > 0)
+                        {
+                            fit_map = params_override->elements_to_fit[element_symb];
+                            if (cnt == 3) // family
                             {
                                 float factor = 1.0;
+
+                                // 1
                                 std::getline(strstream, str_value, ',');
                                 factor = parse_input_real<T_real>(str_value);
-                                fit_map->multiply_custom_multiply_ratio(i, factor);
+                                fit_map->multiply_custom_multiply_ratio(4, factor);
+                                fit_map->multiply_custom_multiply_ratio(5, factor);
+                                fit_map->multiply_custom_multiply_ratio(7, factor);
+                                fit_map->multiply_custom_multiply_ratio(8, factor);
+                                fit_map->multiply_custom_multiply_ratio(9, factor);
+
+                                // 2
+                                std::getline(strstream, str_value, ',');
+                                factor = parse_input_real<T_real>(str_value);
+                                fit_map->multiply_custom_multiply_ratio(2, factor);
+                                fit_map->multiply_custom_multiply_ratio(6, factor);
+                                fit_map->multiply_custom_multiply_ratio(11, factor);
+
+                                //3
+                                std::getline(strstream, str_value, ',');
+                                factor = parse_input_real<T_real>(str_value);
+                                fit_map->multiply_custom_multiply_ratio(0, factor);
+                                fit_map->multiply_custom_multiply_ratio(1, factor);
+                                fit_map->multiply_custom_multiply_ratio(3, factor);
+                                fit_map->multiply_custom_multiply_ratio(10, factor);
+                            }
+                            else // ratio's
+                            {
+                                for (unsigned int i = 0; i < cnt; i++)
+                                {
+                                    float factor = 1.0;
+                                    std::getline(strstream, str_value, ',');
+                                    factor = parse_input_real<T_real>(str_value);
+                                    fit_map->multiply_custom_multiply_ratio(i, factor);
+                                }
                             }
                         }
                     }
-                }
-                else if (tag == STR_FIT_SNIP_WIDTH)
-                {
-                    std::string str_value;
-                    std::getline(strstream, str_value, ':');
-                    str_value.erase(std::remove(str_value.begin(), str_value.end(), '\n'), str_value.end());
-                    str_value.erase(std::remove(str_value.begin(), str_value.end(), '\r'), str_value.end());
-                    str_value.erase(std::remove(str_value.begin(), str_value.end(), ' '), str_value.end());
-                    float fvalue = parse_input_real<T_real>(str_value);
-                    params_override->fit_snip_width = fvalue;
-
-                    if (false == params_override->fit_params.contains(STR_SNIP_WIDTH))
+                    else if (tag == STR_FIT_SNIP_WIDTH)
                     {
-                        params_override->fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH));
-                    }
+                        std::string str_value;
+                        std::getline(strstream, str_value, ':');
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\n'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\r'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), ' '), str_value.end());
+                        float fvalue = parse_input_real<T_real>(str_value);
+                        params_override->fit_snip_width = fvalue;
 
-                    if (fvalue > 0.0)
-                        params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
+                        if (false == params_override->fit_params.contains(STR_SNIP_WIDTH))
+                        {
+                            params_override->fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH));
+                        }
+
+                        if (fvalue > 0.0)
+                            params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
+                        else
+                            params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+                    }
+                    else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+
+                        if (value == "0")
+                        {
+                            params_override->detector_element = "Ge";
+                        }
+                        else if (value == "1")
+                        {
+                            params_override->detector_element = "Si";
+                        }
+                        else
+                        {
+                            logE << "Unknown detector element enumeration : " << value << "\n";
+                        }
+                    }
+                    else if (tag == "US_AMP_SENS_NUM")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                        params_override->us_amp_sens_num = translate_sens_num<T_real>(value);
+                    }
+                    else if (tag == "US_AMP_SENS_UNIT")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                        if (value == "0")
+                        {
+                            params_override->us_amp_sens_unit = "pA/V";
+                        }
+                        else if (value == "1")
+                        {
+                            params_override->us_amp_sens_unit = "nA/V";
+                        }
+                        else if (value == "2")
+                        {
+                            params_override->us_amp_sens_unit = "uA/V";
+                        }
+                        else if (value == "3")
+                        {
+                            params_override->us_amp_sens_unit = "mA/V";
+                        }
+                    }
+                    else if (tag == "DS_AMP_SENS_NUM")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                        params_override->ds_amp_sens_num = translate_sens_num<T_real>(value);
+                    }
+                    else if (tag == "DS_AMP_SENS_UNIT")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
+                        if (value == "0")
+                        {
+                            params_override->ds_amp_sens_unit = "pA/V";
+                        }
+                        else if (value == "1")
+                        {
+                            params_override->ds_amp_sens_unit = "nA/V";
+                        }
+                        else if (value == "2")
+                        {
+                            params_override->ds_amp_sens_unit = "uA/V";
+                        }
+                        else if (value == "3")
+                        {
+                            params_override->ds_amp_sens_unit = "mA/V";
+                        }
+
+                    }
+                    else if (tag == "US_AMP_NUM")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->us_amp_sens_num = parse_input_real<T_real>(value);
+                    }
+                    else if (tag == "US_AMP_UNIT")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->us_amp_sens_unit = value;
+                    }
+                    else if (tag == "DS_AMP_NUM")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->ds_amp_sens_num = parse_input_real<T_real>(value);
+                    }
+                    else if (tag == "DS_AMP_UNIT")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->ds_amp_sens_unit = value;
+                    }
+                    else if (tag == "BE_WINDOW_THICKNESS")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->be_window_thickness = value;
+                    }
+                    else if (tag == "DET_CHIP_THICKNESS")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->det_chip_thickness = value;
+                    }
+                    else if (tag == "GE_DEAD_LAYER")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->ge_dead_layer = value;
+                    }
+                    else if (tag == "AIRPATH")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->airpath = value;
+                    }
+                    else if (tag == "SI_ESCAPE_ENABLE")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+
+                        if (value == "1")
+                        {
+                            params_override->si_escape_enabled = true;
+                        }
+                        else
+                        {
+                            params_override->si_escape_enabled = false;
+                        }
+                    }
+                    else if (tag == "GE_ESCAPE_ENABLE")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+
+                        if (value == "1")
+                        {
+                            params_override->ge_escape_enabled = true;
+                        }
+                        else
+                        {
+                            params_override->ge_escape_enabled = false;
+                        }
+                    }
+                    else if (tag == "LINEAR_ESCAPE_FACTOR")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        //params_override->ge_dead_layer = std::stoi(value);
+                    }
+                    else if (tag == "TAIL_FRACTION_ADJUST_SI")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        //params_override->ge_dead_layer = std::stoi(value);
+                    }
+                    else if (tag == "TAIL_WIDTH_ADJUST_SI")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        //params_override->ge_dead_layer = std::stoi(value);
+                    }
+                    else if (tag == "IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        //params_override->ge_dead_layer = std::stoi(value);
+                    }
+                    else if (tag == "THETA_PV")
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->theta_pv = value;
+                    }
+                }
+                catch (std::exception& e)
+                {
+                    if (paramFileStream.eof() == 0 && (paramFileStream.bad() || paramFileStream.fail()))
+                    {
+                        logE << "ios Exception happened: " << e.what() << "\n"
+                            << "Error bits are: "
+                            << "\nfailbit: " << paramFileStream.fail()
+                            << "\neofbit: " << paramFileStream.eof()
+                            << "\nbadbit: " << paramFileStream.bad() << "\n";
+                        break;
+                    }
                     else
-                        params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
-                }
-                else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-
-
-                    if (value == "0")
                     {
-                        params_override->detector_element = "Ge";
+                        logE << e.what() << "\n";
                     }
-                    else if (value == "1")
-                    {
-                        params_override->detector_element = "Si";
-                    }
-                    else
-                    {
-                        logE << "Unknown detector element enumeration : " << value << "\n";
-                    }
-                }
-                else if (tag == "US_AMP_SENS_NUM")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                    params_override->us_amp_sens_num = translate_sens_num<T_real>(value);
-                }
-                else if (tag == "US_AMP_SENS_UNIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                    if (value == "0")
-                    {
-                        params_override->us_amp_sens_unit = "pA/V";
-                    }
-                    else if (value == "1")
-                    {
-                        params_override->us_amp_sens_unit =  "nA/V";
-                    }
-                    else if (value == "2")
-                    {
-                        params_override->us_amp_sens_unit =  "uA/V";
-                    }
-                    else if (value == "3")
-                    {
-                        params_override->us_amp_sens_unit =  "mA/V";
-                    }
-                }
-                else if (tag == "DS_AMP_SENS_NUM")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                    params_override->ds_amp_sens_num = translate_sens_num<T_real>(value);
-                }
-                else if (tag == "DS_AMP_SENS_UNIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                    if (value == "0")
-                    {
-                        params_override->ds_amp_sens_unit = "pA/V";
-                    }
-                    else if (value == "1")
-                    {
-                        params_override->ds_amp_sens_unit = "nA/V";
-                    }
-                    else if (value == "2")
-                    {
-                        params_override->ds_amp_sens_unit = "uA/V";
-                    }
-                    else if (value == "3")
-                    {
-                        params_override->ds_amp_sens_unit = "mA/V";
-                    }
-                    
-                }
-                else if (tag == "US_AMP_NUM")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_num = parse_input_real<T_real>(value);
-                }
-                else if (tag == "US_AMP_UNIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->us_amp_sens_unit = value;
-                }
-                else if (tag == "DS_AMP_NUM")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_num = parse_input_real<T_real>(value);
-                }
-                else if (tag == "DS_AMP_UNIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ds_amp_sens_unit = value;
-                }
-                else if (tag == "BE_WINDOW_THICKNESS")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->be_window_thickness = value;
-                }
-                else if (tag == "DET_CHIP_THICKNESS")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->det_chip_thickness = value;
-                }
-                else if (tag == "GE_DEAD_LAYER")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->ge_dead_layer = value;
-                }
-                else if (tag == "AIRPATH")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->airpath = value;
-                }
-                else if (tag == "SI_ESCAPE_ENABLE")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-
-
-                    if (value == "1")
-                    {
-                        params_override->si_escape_enabled = true;
-                    }
-                    else
-                    {
-                        params_override->si_escape_enabled = false;
-                    }
-                }
-                else if (tag == "GE_ESCAPE_ENABLE")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-
-
-                    if (value == "1")
-                    {
-                        params_override->ge_escape_enabled = true;
-                    }
-                    else
-                    {
-                        params_override->ge_escape_enabled = false;
-                    }
-                }
-                /*
-                else if (tag == "MAX_ENERGY_TO_FIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->max_energy = parse_input_real<T_real>(value);
-                }
-                else if (tag == "MIN_ENERGY_TO_FIT")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->min_energy = parse_input_real<T_real>(value);
-                }
-                */
-                else if (tag == "LINEAR_ESCAPE_FACTOR")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
-                }
-                else if (tag == "TAIL_FRACTION_ADJUST_SI")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
-                }
-                else if (tag == "TAIL_WIDTH_ADJUST_SI")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
-                }
-                else if (tag == "IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    //params_override->ge_dead_layer = std::stoi(value);
-                }
-                else if (tag == "THETA_PV")
-                {
-                    std::string value;
-                    std::getline(strstream, value);
-                    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                    value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                    params_override->theta_pv = value;
                 }
             }
         }
@@ -727,14 +727,17 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
         {
             if (paramFileStream.eof() == 0 && (paramFileStream.bad() || paramFileStream.fail()))
             {
-                std::cerr << "ios Exception happened: " << e.what() << "\n"
+                logE << "ios Exception happened: " << e.what() << "\n"
                     << "Error bits are: "
                     << "\nfailbit: " << paramFileStream.fail()
                     << "\neofbit: " << paramFileStream.eof()
                     << "\nbadbit: " << paramFileStream.bad() << "\n";
             }
+            else
+            {
+                return false;
+            }
         }
-
         params_override->parse_and_gen_branching_ratios();
 
         paramFileStream.close();
