@@ -1001,25 +1001,50 @@ DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_
     std::time_t tt;
     tt = std::chrono::system_clock::to_time_t(today);
 
-    std::map<std::string, T_real> sorted_values;
-
+    std::map<std::string, T_real> sorted_params;
+    std::map<std::string, T_real> sorted_elements;
+    
     for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
     {
-        sorted_values[itr->second.name] = itr->second.value;
+        std::string::size_type pos = itr->second.name.find('_');
+        if (pos == std::string::npos)
+        {
+            sorted_elements[itr->second.name] = itr->second.value;
+        }
+        else if (pos < 3)
+        {
+            if (itr->second.name.find("F_") == 0 || itr->second.name.find("KB_F_") == 0)
+            {
+                sorted_params[itr->second.name] = itr->second.value;
+            }
+            else
+            {
+                sorted_elements[itr->second.name] = itr->second.value;
+            }
+        }
+        else
+        {
+            sorted_params[itr->second.name] = itr->second.value;
+        }
     }
 
     if (out_stream.is_open())
     {
         out_stream << "Fitting_Result," << result << "\n";
-        //for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
-        for (auto itr : sorted_values)
+        for (auto itr : sorted_params)
         {
             out_stream << itr.first << "," << itr.second << "\n";
         }
 
+        //out_stream <<  "\n";
+
+        for (auto itr : sorted_elements)
+        {
+            out_stream << itr.first << "," << pow((T_real)10.0, itr.second) << "\n";
+        }
+
         out_stream.close();
         return true;
-
     }
 
     logE << "Couldn't opening file " << path << "\n";
