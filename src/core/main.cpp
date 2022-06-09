@@ -713,7 +713,12 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 int main(int argc, char* argv[])
 {
     
-    //std::string whole_command_line = "";
+    std::string whole_command_line = "";
+    for (int i = 0; i < argc; i++)
+    {
+        whole_command_line += std::string(argv[i]) + " ";
+    }
+    logI << whole_command_line << "\n";
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;

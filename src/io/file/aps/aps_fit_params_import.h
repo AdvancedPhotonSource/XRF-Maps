@@ -202,8 +202,8 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
     if (paramFileStream.is_open())
     {
-        //paramFileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        paramFileStream.exceptions(std::ifstream::failbit);
+        paramFileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        //paramFileStream.exceptions(std::ifstream::failbit);
         //std::string line;
         std::string tag;
         
@@ -733,8 +733,9 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                     << "\neofbit: " << paramFileStream.eof()
                     << "\nbadbit: " << paramFileStream.bad() << "\n";
             }
-            else
+            else if (paramFileStream.fail() == 0)
             {
+                logE << e.what() << "\n";
                 return false;
             }
         }
