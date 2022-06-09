@@ -997,12 +997,20 @@ DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_
     std::time_t tt;
     tt = std::chrono::system_clock::to_time_t(today);
 
+    std::map<std::string, T_real> sorted_values;
+
+    for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+    {
+        sorted_values[itr->second.name] = itr->second.value;
+    }
+
     if (out_stream.is_open())
     {
         out_stream << "Fitting_Result," << result << "\n";
-        for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        //for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
+        for (auto itr : sorted_values)
         {
-            out_stream << itr->second.name << "," << itr->second.value << "\n";
+            out_stream << itr.first << "," << itr.second << "\n";
         }
 
         out_stream.close();

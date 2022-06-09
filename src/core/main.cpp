@@ -109,6 +109,15 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     {
         analysis_job.set_optimizer(clp.get_option("--optimizer"));
     }
+
+    if (clp.option_exists("--optimize-fit-routine"))
+    {
+        std::string opt = clp.get_option("--optimize-fit-routine");
+        if (opt == "hybrid")
+        {
+            analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -439,15 +448,6 @@ int run_optimization(Command_Line_Parser& clp)
         }
     }
 
-    if (clp.option_exists("--optimize-fit-routine"))
-    {
-        std::string opt = clp.get_option("--optimize-fit-routine");
-        if (opt == "hybrid")
-        {
-            analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
-        }
-    }
-
     if (io::file::init_analysis_job_detectors(&analysis_job))
     {
         io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
@@ -730,7 +730,12 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 int main(int argc, char* argv[])
 {
     
-    //std::string whole_command_line = "";
+    std::string whole_command_line = "";
+    for (int i = 0; i < argc; i++)
+    {
+        whole_command_line += std::string(argv[i]) + " ";
+    }
+    logI << whole_command_line << "\n";
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;

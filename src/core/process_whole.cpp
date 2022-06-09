@@ -552,7 +552,7 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
     }
     else
     {
-        logE << "Could not dataset file for " << search_filename << "\n";
+        logE << "Could not find dataset file for " << search_filename << "\n";
     }
 }
 

@@ -255,7 +255,9 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
     data_struct::Spectra<double> snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
-    data_struct::Spectra<double> model_spectra = model.model_spectrum_mp(fit_params, elements_to_fit, energy_range);
+    unordered_map<string, ArrayTr<double>> labeled_spectras;
+    data_struct::Spectra<double> model_spectra = model.model_spectrum(fit_params, elements_to_fit, &labeled_spectras, energy_range);
+    
     data_struct::ArrayTr<double> background;
 
     double energy_offset = fit_params->value(STR_ENERGY_OFFSET);
@@ -304,7 +306,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     visual::SavePlotSpectrasFromConsole(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
-    io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background);
+    io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background, &labeled_spectras);
     io::file::aps::save_fit_parameters_override(fp_full_path, *fit_params, result);
     std::unordered_map<std::string, double> scaler_map;
     scaler_map[STR_ENERGY_OFFSET] = energy_offset;

@@ -144,7 +144,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                         logW << "MCA_IO only supports loading 1 channel. This file has " << value << " channels.\n";
                     }
                 }
-                else if (tag == "T_realIME")
+                else if (tag == "REAL_TIME")
                 {
                     std::string value;
                     std::getline(strstream, value);
@@ -336,7 +336,7 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<T
         paramFileStream << "ELEMENTS: 1\n";
         paramFileStream << "DATE: \n";
         paramFileStream << "CHANNELS: " << spectra->size() << "\n";
-        paramFileStream << "T_realIME: " << spectra->elapsed_realtime() << "\n";
+        paramFileStream << "REAL_TIME: " << spectra->elapsed_realtime() << "\n";
         paramFileStream << "LIVE_TIME: " << spectra->elapsed_livetime() << "\n";
         paramFileStream << "CAL_OFFSET: " << offset << "\n";
         paramFileStream << "CAL_SLOPE: " << slope << "\n";

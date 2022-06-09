@@ -108,12 +108,14 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
                 {
                     val.num = myData[i];
                     mask = swapOrder(val);
-                    for (int idx = 1; idx < 11; idx++)
+                    unsigned int m = 1;
+                    for (int idx = 1; idx < 12; idx++)
                     {
-                        if ((idx & mask) == idx)
+                        if ((m & mask) == m)
                         {
                             rois[idx-1].push_back(int_point(x, y));
                         }
+                        m = m << 1;
                     }
                     
                 }
