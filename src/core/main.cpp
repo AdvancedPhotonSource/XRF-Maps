@@ -222,9 +222,13 @@ template <typename T_real>
 void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
     //Look for which analysis types we want to run
-    if (clp.option_exists("--fit"))
+    if (clp.option_exists("--fit") || clp.option_exists("--quantify-fit"))
     {
         std::string fitting = clp.get_option("--fit");
+        if (fitting.length() < 1)
+        {
+            fitting = clp.option_exists("--quantify-fit");
+        }
         if (fitting.find(',') != std::string::npos)
         {
             // if we found a comma, split the string to get list of dataset files
@@ -483,10 +487,6 @@ int run_quantification(Command_Line_Parser& clp)
     if (clp.option_exists("--quantify-with"))
     {
         analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
-    }
-    if (clp.option_exists("--quantify-fit"))
-    {
-        //TODO: parse save as --fit so we can generate calibration curve without refitting
     }
 
     if (io::file::init_analysis_job_detectors(&analysis_job))

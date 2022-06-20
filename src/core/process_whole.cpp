@@ -543,9 +543,9 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
                 }
                 data_struct::Fit_Parameters<double> out_fitp;
                 std::string roi_name = std::to_string(roi_itr.first);
-                if (optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, &params_override, files[0]+ "_roi_" + roi_name, out_fitp))
+                if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, &params_override, files[0]+ "_roi_" + roi_name, out_fitp))
                 {
-                    
+                    logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
                 }
             }
         }
