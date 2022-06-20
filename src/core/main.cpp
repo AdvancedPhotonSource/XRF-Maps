@@ -227,7 +227,7 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         std::string fitting = clp.get_option("--fit");
         if (fitting.length() < 1)
         {
-            fitting = clp.option_exists("--quantify-fit");
+            fitting = clp.get_option("--quantify-fit");
         }
         if (fitting.find(',') != std::string::npos)
         {
@@ -482,7 +482,11 @@ int run_quantification(Command_Line_Parser& clp)
         return -1;
     }
     set_fit_routines(clp, analysis_job);
-
+    if (analysis_job.fitting_routines.size() == 0)
+    {
+        logE << "Please specify fit routines with --quantify-fit roi,nnls,matrix \n";
+        return -1;
+    }
     //Check if we want to quantifiy with a standard
     if (clp.option_exists("--quantify-with"))
     {
