@@ -3101,15 +3101,30 @@ public:
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
             return false;
 
-        if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/DS_IC", file_id))
-            return false;
+        if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/DS_IC", file_id, false, false))
+        {
+            if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/DS_IC", file_id))
+            {
+                return false;
+            }
+        }
+            
 
-        if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/US_IC", file_id))
-            return false;
+        if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/US_IC", file_id, false, false))
+        {
+            if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/US_IC", file_id))
+            {
+                return false;
+            }
+        }
 
-        if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Scalers/SR_Current", file_id))
-            return false;
-
+        if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/SR_Current", file_id, false, false))
+        {
+            if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/SR_Current", file_id))
+            {
+                return false;
+            }
+        }
 
         //read in scaler
         hid_t d_space = H5Dget_space(srcurrent_id);
