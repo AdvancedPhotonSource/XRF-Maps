@@ -99,6 +99,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "data_struct/quantification_standard.h"
 
+#include "io/file/aps/aps_roi.h"
+
 
 using namespace std::placeholders; //for _1, _2,
 
@@ -116,6 +118,10 @@ DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job);
 
 void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, vector<Quantification_Standard<double>>& standard_element_weights, unordered_map<size_t, double>& quant_map);
+
+void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name);
+
+DLL_EXPORT void optimize_rois(data_struct::Analysis_Job<double>& analysis_job);
 
 // ----------------------------------------------------------------------------
 
@@ -639,6 +645,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
         }
     }
 }
+
 // ----------------------------------------------------------------------------
 
 #endif

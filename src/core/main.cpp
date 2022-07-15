@@ -74,6 +74,7 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
+    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
@@ -107,6 +108,15 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     if (clp.option_exists("--optimizer"))
     {
         analysis_job.set_optimizer(clp.get_option("--optimizer"));
+    }
+
+    if (clp.option_exists("--optimize-fit-routine"))
+    {
+        std::string opt = clp.get_option("--optimize-fit-routine");
+        if (opt == "hybrid")
+        {
+            analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
+        }
     }
 }
 
@@ -212,9 +222,13 @@ template <typename T_real>
 void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
     //Look for which analysis types we want to run
-    if (clp.option_exists("--fit"))
+    if (clp.option_exists("--fit") || clp.option_exists("--quantify-fit"))
     {
         std::string fitting = clp.get_option("--fit");
+        if (fitting.length() < 1)
+        {
+            fitting = clp.get_option("--quantify-fit");
+        }
         if (fitting.find(',') != std::string::npos)
         {
             // if we found a comma, split the string to get list of dataset files
@@ -438,15 +452,6 @@ int run_optimization(Command_Line_Parser& clp)
         }
     }
 
-    if (clp.option_exists("--optimize-fit-routine"))
-    {
-        std::string opt = clp.get_option("--optimize-fit-routine");
-        if (opt == "hybrid")
-        {
-            analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
-        }
-    }
-
     if (io::file::init_analysis_job_detectors(&analysis_job))
     {
         io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
@@ -477,15 +482,15 @@ int run_quantification(Command_Line_Parser& clp)
         return -1;
     }
     set_fit_routines(clp, analysis_job);
-
+    if (analysis_job.fitting_routines.size() == 0)
+    {
+        logE << "Please specify fit routines with --quantify-fit roi,nnls,matrix \n";
+        return -1;
+    }
     //Check if we want to quantifiy with a standard
     if (clp.option_exists("--quantify-with"))
     {
         analysis_job.quantification_standard_filename = clp.get_option("--quantify-with");
-    }
-    if (clp.option_exists("--quantify-fit"))
-    {
-        //TODO: parse save as --fit so we can generate calibration curve without refitting
     }
 
     if (io::file::init_analysis_job_detectors(&analysis_job))
@@ -510,6 +515,22 @@ int run_quantification(Command_Line_Parser& clp)
         logE << "Error initalizing detectors!\n";
         return -1;
     }
+    return 0;
+}
+
+// ----------------------------------------------------------------------------
+
+int run_optimize_rois(Command_Line_Parser& clp)
+{
+    data_struct::Analysis_Job<double> analysis_job;
+
+    if (set_general_options(clp, analysis_job) == -1)
+    {
+        return -1;
+    }
+
+    optimize_rois(analysis_job);
+
     return 0;
 }
 
@@ -713,7 +734,12 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 int main(int argc, char* argv[])
 {
     
-    //std::string whole_command_line = "";
+    std::string whole_command_line = "";
+    for (int i = 0; i < argc; i++)
+    {
+        whole_command_line += std::string(argv[i]) + " ";
+    }
+    logI << whole_command_line << "\n";
 
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -768,6 +794,11 @@ int main(int argc, char* argv[])
     if (clp.option_exists("--quantify-with"))
     {
         run_quantification(clp);
+    }
+
+    if (clp.option_exists("--optimize-rois"))
+    {
+        run_optimize_rois(clp);
     }
 
     run_h5_file_updates(clp);

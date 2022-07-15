@@ -356,9 +356,9 @@ namespace csv
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background)
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, ArrayTr<T_real>>* labeled_spectras = nullptr)
     {
-        return save_fit_and_int_spectra_labeled<T_real>(fullpath, energy, spectra, spectra_model, background, nullptr);
+        return save_fit_and_int_spectra_labeled(fullpath, energy, spectra, spectra_model, background, labeled_spectras);
     }
 
     // ----------------------------------------------------------------------------
