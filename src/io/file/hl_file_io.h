@@ -712,11 +712,10 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
     else
     {
-        char buffer[33];
         for (int i = 0; i < 8; i++)
         {
-            const char* ending = std::to_string(i).c_str();
-            if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == *ending)
+            std::string s1 = std::to_string(i);
+            if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == s1[0])
             {
                 ends_in_h5 = true;
                 break;
@@ -751,8 +750,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     {
         logI << "Loaded spectra volume from h5.\n";
         *is_loaded_from_analyazed_h5 = true;
-        io::file::HDF5_IO::inst()->start_save_seq(false);
-        return true;
+        return io::file::HDF5_IO::inst()->start_save_seq(false);
     }
     else
     {

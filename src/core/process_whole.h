@@ -441,12 +441,12 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     {
                         str_detector_num = std::to_string(detector_num);
                     }
-                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+                    std::string full_save_path = analysis_job->dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
                 else
                 {
-                    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file;
+                    std::string full_save_path = analysis_job->dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
 
