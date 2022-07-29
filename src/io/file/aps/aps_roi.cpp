@@ -80,7 +80,7 @@ int swapOrder(Num num)
 
 bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
 {
-    std::ifstream fileStream(path, std::ios::in | std::ios::binary);
+    std::ifstream fileStream;
 
     logI << "Loading:  " << path << "\n";
     Num val;
@@ -88,48 +88,60 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
     unsigned int height;
     unsigned int mask;
     std::vector<unsigned int> myData;
-    if (fileStream.is_open())
+
+    try
     {
-        fileStream.read((char*)&val, sizeof(val));
-        width = swapOrder(val);
-        fileStream.read((char*)&val, sizeof(val));
-        height = swapOrder(val);
-
-        myData.resize(width * height);
-        fileStream.read((char*)myData.data(), (width * height) * sizeof(unsigned int));
-        fileStream.close();
-
-        unsigned long i = 0;
-        for (unsigned int y = 0; y < height; y++)
+        fileStream.exceptions(fileStream.failbit);
+        fileStream.open(path, std::ios::in | std::ios::binary);
+        if (fileStream.is_open())
         {
-            for (unsigned int x = 0; x < width; x++)
+            fileStream.read((char*)&val, sizeof(val));
+            width = swapOrder(val);
+            fileStream.read((char*)&val, sizeof(val));
+            height = swapOrder(val);
+
+            myData.resize(width * height);
+            fileStream.read((char*)myData.data(), (width * height) * sizeof(unsigned int));
+            fileStream.close();
+
+            unsigned long i = 0;
+            for (unsigned int y = 0; y < height; y++)
             {
-                if (myData[i])
+                for (unsigned int x = 0; x < width; x++)
                 {
-                    val.num = myData[i];
-                    mask = swapOrder(val);
-                    unsigned int m = 1;
-                    for (int idx = 1; idx < 12; idx++)
+                    if (myData[i])
                     {
-                        if ((m & mask) == m)
+                        val.num = myData[i];
+                        mask = swapOrder(val);
+                        unsigned int m = 1;
+                        for (int idx = 1; idx < 12; idx++)
                         {
-                            rois[idx-1].push_back(int_point(x, y));
+                            if ((m & mask) == m)
+                            {
+                                rois[idx - 1].push_back(int_point(x, y));
+                            }
+                            m = m << 1;
                         }
-                        m = m << 1;
+
                     }
-                    
+                    i++;
                 }
-                i++;
             }
+            fileStream.close();
         }
-        fileStream.close();
+        else
+        {
+            return false;
+        }
+
     }
-    else
+    catch (const std::ios_base::failure& e)
     {
+        logE << "Caught an ios_base::failure.\n"
+            << "Explanatory string: " << e.what() << '\n'
+            << "Error code: " << e.code() << '\n';
         return false;
     }
-
-
     return true;
 
 }
