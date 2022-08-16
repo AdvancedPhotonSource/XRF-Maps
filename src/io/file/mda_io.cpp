@@ -285,7 +285,8 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else
         {
-            if(_mda_file->header->dimensions[1] == 2000)
+            // 2000 = APS step scan, 2048 = APS xanes scan
+            if(_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048)
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < detector_num)
                 {
@@ -1321,16 +1322,22 @@ void MDA_IO<T_real>::_load_meta_info()
             {
                 _scan_info.meta_info.requested_rows = _mda_file->header->dimensions[0];
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1];
-                // save y axis
-                for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                if (_mda_file->scan->number_positioners > 0)
                 {
-                    _scan_info.meta_info.y_axis.push_back(_mda_file->scan->positioners_data[0][i]);
+                    // save y axis
+                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                    {
+                        _scan_info.meta_info.y_axis.push_back(_mda_file->scan->positioners_data[0][i]);
+                    }
                 }
-                
-                // save x axis
-                for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
+
+                if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
-                    _scan_info.meta_info.x_axis.push_back(_mda_file->scan->sub_scans[0]->positioners_data[0][i]);
+                    // save x axis
+                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
+                    {
+                        _scan_info.meta_info.x_axis.push_back(_mda_file->scan->sub_scans[0]->positioners_data[0][i]);
+                    }
                 }
             }
         }
