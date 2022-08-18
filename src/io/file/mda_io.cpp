@@ -545,7 +545,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
         }
         else
         {
-            if(_mda_file->header->dimensions[1] == 2000)
+            if(_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048)
             {
                 if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < max_detecotr_num)
                 {
@@ -803,7 +803,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		}
 		else
 		{
-			if (_mda_file->header->dimensions[1] == 2000)
+			if (_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048)
 			{
 				if ((size_t)_mda_file->scan->sub_scans[0]->number_detectors - 1 < detector_num)
 				{
@@ -1017,7 +1017,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
 
     if (_mda_file->header->data_rank == 2)
     {
-        if (_hasNetcdf == false && _mda_file->header->dimensions[1] == 2000)
+        if (_hasNetcdf == false && (_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048))
         {
             single_row_scan = true;
         }
@@ -1302,7 +1302,7 @@ void MDA_IO<T_real>::_load_meta_info()
         {
             if (_mda_file->header->data_rank == 2)
             {
-                if (_mda_file->header->dimensions[1] == 2000)
+                if (_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048)
                 {
                     single_row_scan = true;
                 }
@@ -1330,6 +1330,13 @@ void MDA_IO<T_real>::_load_meta_info()
                         _scan_info.meta_info.y_axis.push_back(_mda_file->scan->positioners_data[0][i]);
                     }
                 }
+                else
+                {
+                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                    {
+                        _scan_info.meta_info.y_axis.push_back(0);
+                    }
+                }
 
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
@@ -1337,6 +1344,13 @@ void MDA_IO<T_real>::_load_meta_info()
                     for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
                     {
                         _scan_info.meta_info.x_axis.push_back(_mda_file->scan->sub_scans[0]->positioners_data[0][i]);
+                    }
+                }
+                else
+                {
+                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
+                    {
+                        _scan_info.meta_info.x_axis.push_back(0);
                     }
                 }
             }
