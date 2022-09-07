@@ -705,10 +705,15 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
 
     bool ends_in_h5 = false;
+    bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
     if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
     {
         ends_in_h5 = true;
+    }
+    else if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
+    {
+        ends_in_mca = true;
     }
     else
     {
@@ -720,6 +725,24 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 ends_in_h5 = true;
                 break;
             }
+            else if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+            {
+                ends_in_mca = true;
+                break;
+            }
+        }
+    }
+
+    if (ends_in_mca)
+    {
+        Spectra<T_real> spec;
+        unordered_map<string, T_real> pv_map;
+        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
+        {
+            spectra_volume->resize_and_zero(1, 1, spec.size());
+            (*spectra_volume)[0][0] = spec;
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            return true;
         }
     }
 

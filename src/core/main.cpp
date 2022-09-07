@@ -50,6 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/process_whole.h"
 #include <cctype>
 
+
+#define MAX_DETECTORS 7
+
 // ----------------------------------------------------------------------------
 
 void help()
@@ -209,7 +212,7 @@ void set_detectors(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     }
     else
     {
-        for (size_t det = 0; det < 7; det++)
+        for (size_t det = 0; det < MAX_DETECTORS; det++)
         {
             analysis_job.detector_num_arr.push_back(det);
         }
@@ -316,27 +319,28 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //if they were not then look for them in $dataset_directory/mda
     if (dset_file.length() < 1)
     {
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".hdf5"))
+        std::vector<std::string> search_ext_list;
+        std::vector<std::string> search_ext_mda_list;
+
+        search_ext_list.push_back(".hdf5");
+        search_ext_list.push_back(".h5");
+        search_ext_list.push_back(".emd");
+        search_ext_list.push_back(".mda");
+
+        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir, search_ext_list, analysis_job.dataset_files);
+
+
+        search_ext_mda_list.push_back(".mda");
+        search_ext_mda_list.push_back(".mca");
+        for (int i = 0; i < MAX_DETECTORS; i++)
         {
-            analysis_job.dataset_files.push_back(itr);
+            std::string mca_str = ".mca" + std::to_string(i);
+            search_ext_mda_list.push_back(mca_str);
         }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".h5"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".emd"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".mda"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "mda" + DIR_END_CHAR, ".mda"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        // don't want to open h5 avg files for optimize
+
+        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + "mda" + DIR_END_CHAR, search_ext_mda_list, analysis_job.dataset_files);
+
+        // don't want to open h5 avg files for optimize because we optimize by detector , not avg
         for (auto& itr : analysis_job.dataset_files)
         {
             analysis_job.optimize_dataset_files.push_back(itr);
