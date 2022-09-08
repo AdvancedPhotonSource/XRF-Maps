@@ -163,6 +163,42 @@ namespace io
         }
 
         // ----------------------------------------------------------------------------
+        
+        void File_Scan::find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs, std::vector<std::string>& out_dataset_files)
+        {
+            DIR* dir;
+            struct dirent* ent;
+            if ((dir = opendir(dataset_directory.c_str())) != NULL)
+            {
+                /* print all the files and directories within directory */
+                while ((ent = readdir(dir)) != NULL)
+                {
+                    std::string fname(ent->d_name);
+                    // check if extension is .mda
+                    if (fname.size() > 4)
+                    {
+                        for (auto& itr : search_strs)
+                        {
+                            size_t search_str_size = itr.length();
+                            if (fname.rfind(itr) == fname.size() - search_str_size)
+                            {
+                                out_dataset_files.push_back(fname);
+                            }
+                        }
+                    }
+                }
+                closedir(dir);
+            }
+            else
+            {
+                /* could not open directory */
+                logW << "Could not open directory " << dataset_directory << "\n";
+            }
+            
+        }
+
+        // ----------------------------------------------------------------------------
+
         /*
         void File_Scan::check_and_create_dirs(std::string dataset_directory)
         {

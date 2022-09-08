@@ -70,7 +70,8 @@ find_package(netCDF CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
-
+# todo 
+# option(BUILD_WITH_OPENCL "Build with OPENCL support" OFF)
 option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
@@ -466,6 +467,11 @@ IF (BUILD_WITH_TIRPC)
   link_directories(AFTER "/lib64" "/usr/lib")
   target_link_libraries (libxrf_io LINK_PUBLIC libtirpc.so  )
   target_link_libraries (xrf_maps LINK_PUBLIC libtirpc.so)
+ENDIF()
+
+IF (BUILD_WITH_OPENCL)
+    find_package(CLBlast CONFIG REQUIRED)
+    target_link_libraries(xrf_maps PRIVATE clblast)
 ENDIF()
 
 #install(TARGETS xrf_maps libxrf_io libxrf_fit 

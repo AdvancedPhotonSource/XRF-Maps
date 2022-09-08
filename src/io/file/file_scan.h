@@ -92,6 +92,8 @@ namespace io
 
             std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
+            void find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs, std::vector<std::string>& out_dataset_files);
+
             void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 
             const std::vector<std::string>& netcdf_files() {  return _netcdf_files; }
