@@ -80,7 +80,7 @@ namespace file
 
 #define HDF5_EXCHANGE_VERSION 1.0
 
-enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE, H5O_PROPERTY};
+enum H5_OBJECTS{H5O_FILE, H5O_GROUP, H5O_DATASPACE, H5O_DATASET, H5O_ATTRIBUTE, H5O_PROPERTY, H5O_DATATYPE};
 
 enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
@@ -704,6 +704,7 @@ public:
 
         char* acquisition[1];
         hid_t ftype = H5Dget_type(acqui_id);
+        close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
@@ -1010,6 +1011,7 @@ public:
 
         char* acquisition[1];
         hid_t ftype = H5Dget_type(acqui_id);
+        close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
@@ -2889,6 +2891,7 @@ public:
             dataspace_scaler_names = H5Dget_space(dset_scaler_names);
             close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
             hid_t memtype = H5Dget_type(dset_scaler_names);
+            close_map.push({ memtype, H5O_DATATYPE });
 
             //  read scaler names and search for elt1, ert1, incnt1, outcnt1
             hsize_t dims_out[1];
@@ -3132,21 +3135,27 @@ public:
 
         //read in scaler
         hid_t d_space = H5Dget_space(srcurrent_id);
+        close_map.push({ d_space, H5O_DATASPACE });
         hid_t d_type = H5Dget_type(srcurrent_id);
+        close_map.push({ d_type, H5O_DATATYPE });
         hid_t status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
         if (status > -1)
         {
             override_values->sr_current = (srcurrent);
         }
         d_space = H5Dget_space(us_ic_id);
+        close_map.push({ d_space, H5O_DATASPACE });
         d_type = H5Dget_type(us_ic_id);
+        close_map.push({ d_type, H5O_DATATYPE });
         status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
         if (status > -1)
         {
             override_values->US_IC = (us_ic);
         }
         d_space = H5Dget_space(ds_ic_id);
+        close_map.push({ d_space, H5O_DATASPACE });
         d_type = H5Dget_type(ds_ic_id);
+        close_map.push({ d_type, H5O_DATATYPE });
         status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
         if (status > -1)
         {
@@ -3164,6 +3173,86 @@ public:
         return true;
     }
 
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool _load_calibration_curve_analyzed_h5(hid_t file_id, Fitting_Routines fitting_routine, data_struct::Detector<T_real>* detector)
+    {
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        hid_t cc_id;
+        hid_t cc_labels_id;
+        
+        std::string str_cc_ds = "/MAPS/"+ STR_QUANTIFICATION + "/" + STR_CALIBRATION +  "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_DS_IC;
+        std::string str_cc_us = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_US_IC;
+        std::string str_cc_sr = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_SR_CUR;
+        std::string str_cc_labels = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_LABELS;
+        
+        if (false == _open_h5_object(cc_labels_id, H5O_DATASET, close_map, str_cc_labels, file_id))
+        {
+            logW << "Could not find labels " << str_cc_labels << ". Can not load the rest for " << Fitting_Routine_To_Str.at(fitting_routine) << "\n";
+            return false;
+        }
+
+        detector->fitting_quant_map[fitting_routine] = Fitting_Quantification_Struct<T_real>();
+
+        std::map <std::string, std::string> ion_chambers = { {STR_DS_IC,str_cc_ds}, {STR_US_IC,str_cc_us}, {STR_SR_CURRENT,str_cc_sr} };
+
+        // read ion chambers DS_IC, US_IC, and SR_Current
+        for (auto& itr : ion_chambers)
+        {
+            //detector->fitting_quant_map.at(fitting_routine)[itr.first] = Quantification_Scaler_Struct<T_real>();
+            if (true == _open_h5_object(cc_id, H5O_DATASET, close_map, itr.second.c_str(), file_id, false, false))
+            {
+                hsize_t offset[2] = { 0,0 };
+                hsize_t count[2] = { 1,1 };
+                hsize_t dims_in[2] = { 0,0 };
+                hid_t d_space = H5Dget_space(cc_id);
+                close_map.push({ d_space, H5O_DATASPACE });
+                hid_t d_type = H5Dget_type(cc_id);
+                close_map.push({ d_type, H5O_DATATYPE });
+
+                int rank = H5Sget_simple_extent_ndims(d_space);
+                if (rank != 2)
+                {
+                    _close_h5_objects(close_map);
+                    logE << itr.second <<"  rank != 2. rank = " << rank << ". Can't load dataset. returning" << "\n";
+                    return false;
+                }
+
+                int status_n = H5Sget_simple_extent_dims(d_space, &dims_in[0], nullptr);
+                if (status_n < 0)
+                {
+                    _close_h5_objects(close_map);
+                    logE << "getting dataset dims for "<< itr.second << "\n";
+                    return false;
+                }
+
+                for (int i = 0; i < rank; i++)
+                {
+
+                    offset[i] = 0;
+                    count[i] = dims_in[i];
+                }
+
+
+                //detector->fitting_quant_map.at(fitting_routine).at(itr.first][Electron_Shell::K_SHELL].resize(count[1]);
+                //detector->fitting_quant_map.at(fitting_routine).at(itr.first][Electron_Shell::L_SHELL].resize(count[1]);
+                //detector->fitting_quant_map.at(fitting_routine)[itr.first][Electron_Shell::M_SHELL].resize(count[1]);
+                // vector < Element_Quant<T_real>
+            }
+            else
+            {
+                logW << "Could not find " << itr.second << "\n";
+            }
+        }
+
+        _close_h5_objects(close_map);
+
+        return true;
+    }
+
     //-----------------------------------------------------------------------------
 
     /**
@@ -3171,7 +3260,7 @@ public:
     */
 
     template<typename T_real>
-    bool load_quantification_analyzed_h5(std::string path, data_struct::Detector<T_real>& detector)
+    bool load_quantification_analyzed_h5(std::string path, data_struct::Detector<T_real>* detector)
     {
 
         std::lock_guard<std::mutex> lock(_mutex);
@@ -3179,45 +3268,117 @@ public:
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
-        hid_t    dset_id, memoryspace_id, dataspace_id, filetype, dataspace_ch_id, dataspace_un_id, memtype, dset_ch_id, dset_un_id, q_int_spec_grp_id;
-        hid_t   memtype_label, filetype_label, q_memoryspace_label_id, q_dataspace_label_id;
-        hid_t   count_dataspace_id, count_dset_id, standard_grp_id, calib_grp_id;
-        hid_t  memoryspace1_id, memoryspace2_id;
+        int num_standards = 0;
 
-        hid_t q_dataspace_id, q_memoryspace_id, q_dset_id, q_grp_id, q_fit_grp_id, maps_grp_id, scalers_grp_id, xrf_fits_grp_id;
-        hid_t dset_labels_id;
-        hsize_t offset[3];
-        hsize_t count[3];
+        hid_t file_id = -1;
+        hid_t num_standards_id = -1;
+        hid_t name_id = -1;
+        hid_t ic_id = -1;
+
         herr_t status;
 
-        char unit_char[255] = 0;
+        char dset_name[2048] = { 0 };
 
-        hsize_t q_dims_out[2];
-
-        offset[0] = 0;
-        offset[1] = 0;
-        offset[2] = 0;
-        count[0] = 1;
-        count[1] = 0;
-        count[2] = 0;
+        hsize_t count[1] = { 1 };
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        if (detector == nullptr)
+        {
+            logW << "Can not load to nullptr detector\n";
+            return false;
+        }
+
+        hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
+        close_map.push({ readwrite_space, H5O_DATASPACE });
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
             logE << "Failed to open " << path << "\n";
             return false;
         }
-        
-        if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/DS_IC", file_id, false, false))
+
+        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::NNLS, detector);
+        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::GAUSS_MATRIX, detector);
+        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::ROI, detector);
+        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::SVD, detector);
+
+        if (_open_h5_object(num_standards_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id))
         {
-            if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/DS_IC", file_id))
-            {
-                return false;
-            }
+            hid_t d_space = H5Dget_space(num_standards_id);
+            close_map.push({ d_space, H5O_DATASPACE });
+            hid_t d_type = H5Dget_type(num_standards_id);
+            close_map.push({ d_type, H5O_DATATYPE });
+            status = H5Dread(num_standards_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&num_standards);
+        }
+        else
+        {
+            logE << "Could not determine the number of standards! Returning\n";
+            return false;
         }
 
-        detector.quantification_standards[STR_FIT_ROI].
+        // iterate over number of standards and load 
+        for (int i = 0; i < num_standards; i++)
+        {
+            // name
+            std::string std_name = "";
+            std::string str_std_name_loc = "/MAPS/Quantification/Standard" + std::to_string(0) + "/" + STR_STANDARD_NAME;
+            if (_open_h5_object(name_id, H5O_DATASET, close_map, str_std_name_loc, file_id, false, false))
+            {
+                hid_t d_space = H5Dget_space(name_id);
+                close_map.push({ d_space, H5O_DATASPACE });
+                hid_t d_type = H5Dget_type(name_id);
+                close_map.push({ d_type, H5O_DATATYPE });
+                status = H5Dread(name_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)dset_name);
+                if (status > -1)
+                {
+                    std_name = std::string(dset_name, 2048);
+                    std_name.erase(std::remove_if(std_name.begin(), std_name.end(), ::isspace), std_name.end());
+                }
+            }
+            
+            if (std_name.length() == 0)
+            {
+                std_name = std::to_string(i);
+            }
+
+            detector->quantification_standards[std_name] = Quantification_Standard<T_real>();
+
+            std::vector <std::string> ion_chambers = { STR_DS_IC, STR_US_IC, STR_SR_CURRENT };
+
+            // read ion chambers DS_IC, US_IC, and SR_Current
+            for (auto& itr : ion_chambers)
+            {
+                std::string str_loc = "/MAPS/Quantification/Standard" + std::to_string(0) + "/" + STR_SCALERS + "/" + itr;
+                if (_open_h5_object(ic_id, H5O_DATASET, close_map, str_loc, file_id, false, false))
+                {
+
+                    hid_t d_space = H5Dget_space(ic_id);
+                    close_map.push({ d_space, H5O_DATASPACE });
+                    hid_t d_type = H5Dget_type(ic_id);
+                    close_map.push({ d_type, H5O_DATATYPE });
+
+
+                    T_real* val_addr = nullptr;
+
+                    if (itr == STR_DS_IC)
+                        val_addr = &(detector->quantification_standards[std_name].DS_IC);
+                    else if (itr == STR_US_IC)
+                        val_addr = &(detector->quantification_standards[std_name].US_IC);
+                    else if (itr == STR_SR_CURRENT)
+                        val_addr = &(detector->quantification_standards[std_name].sr_current);
+                    else
+                        val_addr = nullptr;
+                    
+
+                    if (val_addr != nullptr)
+                    {
+                        //read value
+                        status = _read_h5d<T_real>(ic_id, readwrite_space, d_space, H5P_DEFAULT, (void*)val_addr);
+                    }
+                }
+            }
+        }
 
         _close_h5_objects(close_map);
 
@@ -3280,7 +3441,7 @@ public:
 
         //read in scaler
         hid_t d_space = H5Dget_space(us_ic_id);
-        //hid_t d_type = H5Dget_type(us_ic_id);
+        close_map.push({ d_space, H5O_DATASPACE });
         status = H5Sget_simple_extent_dims(d_space, &dims3[0], nullptr);
         if (status < 0)
         {
@@ -3447,8 +3608,11 @@ public:
         }
 
         hid_t name_type = H5Dget_type(scaler_name_id);
+        close_map.push({ name_type, H5O_DATATYPE });
         hid_t scaler_type = H5Dget_type(scaler_val_id);
+        close_map.push({ scaler_type, H5O_DATATYPE });
         hid_t scaler_val_space = H5Dget_space(scaler_val_id);
+        close_map.push({ scaler_val_space, H5O_DATASPACE });
         hid_t val_rank = H5Sget_simple_extent_ndims(scaler_val_space);
         val_dims_in = new hsize_t[val_rank];
         H5Sget_simple_extent_dims(scaler_val_space, &val_dims_in[0], NULL);
@@ -3624,6 +3788,7 @@ public:
                             close_map.push({ mem_name_space, H5O_DATASPACE });
 
                             hid_t scalers_type = H5Dget_type(data2_id);
+                            close_map.push({ scalers_type, H5O_DATATYPE });
 
                             err = H5Dread(data2_id, scalers_type, mem_name_space, dspace_id, H5P_DEFAULT, acqui_data);
                             if (err > -1)
@@ -3718,6 +3883,7 @@ public:
                     hid_t scaler_space = H5Dget_space(dsid);
                     close_map.push({ scaler_space, H5O_DATASPACE });
                     hid_t scalers_type = H5Dget_type(dsid);
+                    close_map.push({ scalers_type, H5O_DATATYPE });
 
                     if (first_save)
                     {
@@ -3741,6 +3907,7 @@ public:
             close_map.push({ scaler_space, H5O_DATASPACE });
             H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
             hid_t scalers_type = H5Dget_type(detectors_grp_id);
+            close_map.push({ scalers_type, H5O_DATATYPE });
             hsize_t scaler_amt = scalers_count[2];
             scalers_count[2] = 1;
             mem_count[0] = scalers_count[0];
@@ -3864,8 +4031,11 @@ public:
                     if (_open_h5_object(value_id, H5O_DATASET, close_map, "value", environ_grp_id, false, false))
                     {
                         hid_t name_type = H5Dget_type(name_id);
+                        close_map.push({ name_type, H5O_DATATYPE });
                         hid_t value_type = H5Dget_type(value_id);
+                        close_map.push({ value_type, H5O_DATATYPE });
                         hid_t value_space = H5Dget_space(value_id);
+                        close_map.push({ value_space, H5O_DATASPACE });
                         hid_t val_rank = H5Sget_simple_extent_ndims(value_space);
                         val_dims_in = new hsize_t[val_rank];
                         H5Sget_simple_extent_dims(value_space, &val_dims_in[0], NULL);
@@ -3995,8 +4165,11 @@ public:
         }
 
         hid_t name_type = H5Dget_type(scaler_name_id);
+        close_map.push({ name_type, H5O_DATATYPE });
         hid_t scaler_type = H5Dget_type(scaler_val_id);
+        close_map.push({ scaler_type, H5O_DATATYPE });
         hid_t scaler_val_space = H5Dget_space(scaler_val_id);
+        close_map.push({ scaler_val_space, H5O_DATASPACE });
         hid_t val_rank = H5Sget_simple_extent_ndims(scaler_val_space);
         val_dims_in = new hsize_t[val_rank];
         H5Sget_simple_extent_dims(scaler_val_space, &val_dims_in[0], NULL);
@@ -5479,6 +5652,7 @@ public:
         _global_close_map.push({ ypos_dataspace_id, H5O_DATASPACE });
 
         hid_t xy_type = H5Dget_type(xpos_id);
+        _global_close_map.push({ xy_type, H5O_DATATYPE });
         det_rank = H5Sget_simple_extent_ndims(xpos_dataspace_id);
         det_dims_in = new hsize_t[det_rank];
         H5Sget_simple_extent_dims(xpos_dataspace_id, &det_dims_in[0], NULL);
@@ -5550,6 +5724,7 @@ public:
                     hid_t scaler_space = H5Dget_space(dsid);
                     _global_close_map.push({ scaler_space, H5O_DATASPACE });
                     hid_t scalers_type = H5Dget_type(dsid);
+                    _global_close_map.push({ scalers_type, H5O_DATATYPE });
                     names_off[0] = i;
                     if (first_save)
                     {
@@ -5622,6 +5797,7 @@ public:
             value_count[1] = scalers_count[0];
             value_count[2] = scalers_count[1];
             hid_t scalers_type = H5Dget_type(dset_detectors_id);
+            _global_close_map.push({ scalers_type, H5O_DATATYPE });
             if (false == _open_h5_dataset(STR_VALUES, scalers_type, scalers_grp_id, 3, &value_count[0], &value_count[0], values_id, value_space))
             {
                 logE << "Error creating " << STR_NAMES << "\n";
@@ -5778,6 +5954,7 @@ public:
         _global_close_map.push({ xypos_dataspace_id, H5O_DATASPACE });
 
         hid_t xy_type = H5Dget_type(xypos_id);
+        _global_close_map.push({ xy_type, H5O_DATATYPE });
         det_rank = H5Sget_simple_extent_ndims(xypos_dataspace_id);
         det_dims_in = new hsize_t[det_rank];
         H5Sget_simple_extent_dims(xypos_dataspace_id, &det_dims_in[0], NULL);
@@ -6057,6 +6234,7 @@ public:
         _global_close_map.push({ xypos_dataspace_id, H5O_DATASPACE });
 
         hid_t xy_type = H5Dget_type(xypos_id);
+        _global_close_map.push({ xy_type, H5O_DATATYPE });
         det_rank = H5Sget_simple_extent_ndims(xypos_dataspace_id);
         det_dims_in = new hsize_t[det_rank];
         H5Sget_simple_extent_dims(xypos_dataspace_id, &det_dims_in[0], NULL);
@@ -6113,7 +6291,9 @@ public:
         }
 
         hid_t name_type = H5Dget_type(scaler_name_id);
+        _global_close_map.push({ name_type, H5O_DATATYPE });
         hid_t scaler_type = H5Dget_type(scaler_val_id);
+        _global_close_map.push({ scaler_type, H5O_DATATYPE });
         hid_t scaler_val_space = H5Dget_space(scaler_val_id);
         hid_t val_rank = H5Sget_simple_extent_ndims(scaler_val_space);
         val_dims_in = new hsize_t[val_rank];

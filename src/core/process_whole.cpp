@@ -542,6 +542,14 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
                         return;
                     }
                 }
+
+                
+
+                if (io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, analysis_job.get_detector(detector_num)))
+                {
+
+                }
+
                 data_struct::Fit_Parameters<double> out_fitp;
                 std::string roi_name = std::to_string(roi_itr.first);
                 if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, &params_override, files[0]+ "_roi_" + roi_name, out_fitp))
@@ -553,7 +561,8 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
         }
 
         // save all to csv
-
+        //io::file::csv::save_roi_group();
+        //io::file::csv::save_roi_with_calib_curve();
     }
     else
     {
@@ -586,6 +595,8 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
                 {
                     std::string str_detector_num = std::to_string(detector_num);
                     search_filename = dataset_num + ".h5" + str_detector_num;
+                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename);
+                    search_filename = dataset_num + ".mda.h5" + str_detector_num;
                     find_and_optimize_roi(analysis_job, detector_num, rois, search_filename);
                 }
             }

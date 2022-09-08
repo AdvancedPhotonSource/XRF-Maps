@@ -127,7 +127,6 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
                     i++;
                 }
             }
-            fileStream.close();
         }
         else
         {

@@ -532,9 +532,10 @@ int run_optimize_rois(Command_Line_Parser& clp)
     {
         return -1;
     }
-
-    optimize_rois(analysis_job);
-
+    if (io::file::init_analysis_job_detectors(&analysis_job))
+    {
+        optimize_rois(analysis_job);
+    }
     return 0;
 }
 

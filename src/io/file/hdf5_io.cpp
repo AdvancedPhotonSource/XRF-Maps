@@ -363,6 +363,14 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
                 logW<<"Could not close h5 attribute id "<<obj.first<<"\n";
             }
         }
+        else if (obj.second == H5O_DATATYPE)
+        {
+            err = H5Tclose(obj.first);
+            if (err > 0)
+            {
+                logW << "Could not close h5 type id " << obj.first << "\n";
+            }
+        }
         else if (obj.second == H5O_PROPERTY)
         {
             err = H5Pclose(obj.first);
