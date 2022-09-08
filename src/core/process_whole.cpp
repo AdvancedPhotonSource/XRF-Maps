@@ -522,6 +522,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 
 void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int detector_num, std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois, std::string search_filename)
 {
+    std::map<std::string, data_struct::Fit_Parameters<double>> roi_fit_params;
     std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
     if (files.size() > 0)
     {
@@ -547,8 +548,12 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
                 {
                     logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
                 }
+                roi_fit_params[files[0] + "_roi_" + roi_name] = out_fitp;
             }
         }
+
+        // save all to csv
+
     }
     else
     {

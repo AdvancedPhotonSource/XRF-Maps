@@ -3078,6 +3078,10 @@ public:
  
     //-----------------------------------------------------------------------------
 
+    /**
+    * Loads only Upstream/Downstream Ion chambers and SR_Current
+    */
+
     template<typename T_real>
     bool load_quantification_scalers_analyzed_h5(std::string path, data_struct::Params_Override<T_real> *override_values)
     {
@@ -3154,6 +3158,71 @@ public:
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
         //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+
+        return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    /**
+    * Loads whole quantification info
+    */
+
+    template<typename T_real>
+    bool load_quantification_analyzed_h5(std::string path, data_struct::Detector<T_real>& detector)
+    {
+
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+
+        hid_t    dset_id, memoryspace_id, dataspace_id, filetype, dataspace_ch_id, dataspace_un_id, memtype, dset_ch_id, dset_un_id, q_int_spec_grp_id;
+        hid_t   memtype_label, filetype_label, q_memoryspace_label_id, q_dataspace_label_id;
+        hid_t   count_dataspace_id, count_dset_id, standard_grp_id, calib_grp_id;
+        hid_t  memoryspace1_id, memoryspace2_id;
+
+        hid_t q_dataspace_id, q_memoryspace_id, q_dset_id, q_grp_id, q_fit_grp_id, maps_grp_id, scalers_grp_id, xrf_fits_grp_id;
+        hid_t dset_labels_id;
+        hsize_t offset[3];
+        hsize_t count[3];
+        herr_t status;
+
+        char unit_char[255] = 0;
+
+        hsize_t q_dims_out[2];
+
+        offset[0] = 0;
+        offset[1] = 0;
+        offset[2] = 0;
+        count[0] = 1;
+        count[1] = 0;
+        count[2] = 0;
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            logE << "Failed to open " << path << "\n";
+            return false;
+        }
+        
+        if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/DS_IC", file_id, false, false))
+        {
+            if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/DS_IC", file_id))
+            {
+                return false;
+            }
+        }
+
+        detector.quantification_standards[STR_FIT_ROI].
+
+        _close_h5_objects(close_map);
+
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
 
         logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
