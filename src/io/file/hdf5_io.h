@@ -109,67 +109,67 @@ int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::st
 }
 
 template<typename T_real>
-float translate_back_sens_num(int value)
+T_real translate_back_sens_num(int value)
 {
     if (value == 1)
     {
-        return 0.;
+        return T_real(0.);
     }
     else if (value == 2)
     {
-        return 1.;
+        return T_real(1.);
     }
     else if (value == 5)
     {
-        return 2.;
+        return T_real(2.);
     }
     else if (value == 10)
     {
-        return 3.;
+        return T_real(3.);
     }
     else if (value == 20)
     {
-        return 4.;
+        return T_real(4.);
     }
     else if (value == 50)
     {
-        return 5.;
+        return T_real(5.);
     }
     else if (value == 100)
     {
-        return 6.;
+        return T_real(6.);
     }
     else if (value == 200)
     {
-        return 7.;
+        return T_real(7.);
     }
     else if (value == 500)
     {
-        return 8.;
+        return T_real(8.);
     }
-    return -1.;
+    return T_real(-1.);
 }
 
 template<typename T_real>
-float translate_back_sens_unit(string value)
+T_real translate_back_sens_unit(string value)
 {
     if (value == "pA/V")
     {
-        return 0;
+        return T_real(0);
     }
     else if (value == "nA/V")
     {
-        return 1;
+        return T_real(1);
     }
     else if (value == "uA/V")
     {
-        return 2;
+        return T_real(2);
     }
     else if (value == "mA/V")
     {
-        return 3;
+        return T_real(3);
     }
-    return -1;
+    return T_real (-1);
 }
 
 template<typename T_real>
@@ -3195,8 +3195,6 @@ public:
             return false;
         }
 
-        detector->fitting_quant_map[fitting_routine] = Fitting_Quantification_Struct<T_real>();
-
         std::map <std::string, std::string> ion_chambers = { {STR_DS_IC,str_cc_ds}, {STR_US_IC,str_cc_us}, {STR_SR_CURRENT,str_cc_sr} };
 
         // read ion chambers DS_IC, US_IC, and SR_Current
@@ -3236,6 +3234,7 @@ public:
                     count[i] = dims_in[i];
                 }
 
+                //detector->fitting_quant_map.at(fitting_routine).at(itr.first).at(Electron_Shell::K_SHELL)
 
                 //detector->fitting_quant_map.at(fitting_routine).at(itr.first][Electron_Shell::K_SHELL].resize(count[1]);
                 //detector->fitting_quant_map.at(fitting_routine).at(itr.first][Electron_Shell::L_SHELL].resize(count[1]);
@@ -3259,6 +3258,7 @@ public:
     * Loads whole quantification info
     */
 
+    // TODO FINISH before using
     template<typename T_real>
     bool load_quantification_analyzed_h5(std::string path, data_struct::Detector<T_real>* detector)
     {
@@ -3267,6 +3267,8 @@ public:
 
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
+
+        quantification::models::Quantification_Model<T_real> quantification_model;
 
         int num_standards = 0;
 
@@ -3280,6 +3282,8 @@ public:
         char dset_name[2048] = { 0 };
 
         hsize_t count[1] = { 1 };
+
+        std::vector< Fitting_Routines> fit_routes = { Fitting_Routines::NNLS, Fitting_Routines::GAUSS_MATRIX ,Fitting_Routines::ROI, Fitting_Routines::SVD };
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
@@ -3298,11 +3302,6 @@ public:
             return false;
         }
 
-        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::NNLS, detector);
-        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::GAUSS_MATRIX, detector);
-        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::ROI, detector);
-        _load_calibration_curve_analyzed_h5(file_id, Fitting_Routines::SVD, detector);
-
         if (_open_h5_object(num_standards_id, H5O_DATASET, close_map, "/MAPS/Quantification/Number_Of_Standards", file_id))
         {
             hid_t d_space = H5Dget_space(num_standards_id);
@@ -3315,6 +3314,12 @@ public:
         {
             logE << "Could not determine the number of standards! Returning\n";
             return false;
+        }
+
+        // Init fit quant map with all fitting routines
+        for (auto& itr : fit_routes)
+        {
+            detector->fitting_quant_map[itr] = Fitting_Quantification_Struct<T_real>();
         }
 
         // iterate over number of standards and load 
@@ -3375,9 +3380,26 @@ public:
                     {
                         //read value
                         status = _read_h5d<T_real>(ic_id, readwrite_space, d_space, H5P_DEFAULT, (void*)val_addr);
+                        if (status > -1)
+                        {
+                            Quantification_Standard<T_real>* quantification_standard = &(detector->quantification_standards[std_name]);
+                            for (auto& fit_itr : fit_routes)
+                            {
+                                detector->update_element_quants(fit_itr, itr, quantification_standard, &quantification_model, *val_addr);
+                            }
+                        }
+                        else
+                        {
+                            logE << "Could not read in " << str_loc << "\n";
+                        }
                     }
                 }
             }
+        }
+
+        for (auto& itr : fit_routes)
+        {
+            _load_calibration_curve_analyzed_h5(file_id, itr, detector);
         }
 
         _close_h5_objects(close_map);

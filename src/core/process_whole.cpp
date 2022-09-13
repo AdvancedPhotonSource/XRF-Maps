@@ -68,8 +68,8 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         fitting::models::Range energy_range = data_struct::get_energy_range<double>(int_spectra.size(), &(params_override->fit_params));
 
         //Fitting routines
-        fitting::routines::Param_Optimized_Fit_Routine<double> *fit_routine;
-        
+        fitting::routines::Param_Optimized_Fit_Routine<double>* fit_routine;
+
 
         if (analysis_job->optimize_fit_routine == OPTIMIZE_FIT_ROUTINE::HYBRID)
         {
@@ -81,7 +81,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         }
 
         fit_routine->set_optimizer(analysis_job->optimizer());
-		fit_routine->set_update_coherent_amplitude_on_fit(false);
+        fit_routine->set_update_coherent_amplitude_on_fit(false);
 
         //reset model fit parameters to defaults
         model.reset_to_default_fit_params();
@@ -95,6 +95,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
 
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+        out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_OUTCOME, double(outcome)));
         std::string result = optimizer_outcome_to_str(outcome);
         logI << "Outcome = " << result << "\n";
         switch (outcome)
@@ -429,7 +430,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
 
 // ----------------------------------------------------------------------------
 
-bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
+bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, bool save_when_done)
 {
     quantification::models::Quantification_Model<double> quantification_model;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -480,8 +481,10 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
                 }
             }
 
-            io::file::save_quantification_plots(analysis_job->dataset_directory, detector);
-
+            if (save_when_done)
+            {
+                io::file::save_quantification_plots(analysis_job->dataset_directory, detector);
+            }
         }
     }
     else
@@ -490,25 +493,27 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
         return false;
     }
 
-    //Save quantification to each file
-    for (auto& dataset_file : analysis_job->dataset_files)
+    if (save_when_done)
     {
-        for (size_t detector_num : analysis_job->detector_num_arr)
+        //Save quantification to each file
+        for (auto& dataset_file : analysis_job->dataset_files)
         {
-            data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
-            std::string str_detector_num = std::to_string(detector_num);
-            std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
-            if (io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true))
+            for (size_t detector_num : analysis_job->detector_num_arr)
             {
-                if(false ==io::file::HDF5_IO::inst()->save_quantification(detector))
+                data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
+                std::string str_detector_num = std::to_string(detector_num);
+                std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+                if (io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true))
                 {
-                    logE << "Error saving quantification to hdf5\n";
+                    if (false == io::file::HDF5_IO::inst()->save_quantification(detector))
+                    {
+                        logE << "Error saving quantification to hdf5\n";
+                    }
+                    io::file::HDF5_IO::inst()->end_save_seq();
                 }
-                io::file::HDF5_IO::inst()->end_save_seq();
             }
         }
     }
-
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
@@ -520,9 +525,12 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int detector_num, std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois, std::string search_filename)
+void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
+                            int detector_num,
+                            std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois,
+                            std::string search_filename,
+                            std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params)
 {
-    std::map<std::string, data_struct::Fit_Parameters<double>> roi_fit_params;
     std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
     if (files.size() > 0)
     {
@@ -532,37 +540,61 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
             std::string file_path = analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + files[0];
             if (io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
             {
-                data_struct::Params_Override<double> params_override;
-                //load override parameters
-                if (false == io::file::load_override_params(analysis_job.dataset_directory, detector_num, &params_override))
-                {
-                    if (false == io::file::load_override_params(analysis_job.dataset_directory, -1, &params_override))
-                    {
-                        logE << "Loading maps_fit_parameters_override.txt\n";
-                        return;
-                    }
-                }
-
+                //io::file::HDF5_IO::inst()->load_scalers_analyzed_h5();
                 
-
+                data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
+                if (detector == nullptr)
+                {
+                    logE << "Detector " << detector_num << " is not initialized, skipping..\n";
+                    continue;
+                }
+                
+                data_struct::Params_Override<double>* params_override = &(detector->fit_params_override_dict);
+                
+                // Need to save more info from Quantification first, then we can finish implementing loading quant from hdf5 instead of rerunning each time roi's are done
+                /*
                 if (io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, analysis_job.get_detector(detector_num)))
                 {
 
                 }
+                */
 
                 data_struct::Fit_Parameters<double> out_fitp;
                 std::string roi_name = std::to_string(roi_itr.first);
-                if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, &params_override, files[0]+ "_roi_" + roi_name, out_fitp))
+                if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, files[0]+ "_roi_" + roi_name, out_fitp))
                 {
                     logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
                 }
-                roi_fit_params[files[0] + "_roi_" + roi_name] = out_fitp;
+
+                double sr_current = 0.0;
+                double us_ic = 0.0;
+                double ds_ic = 0.0;
+                
+
+                // add in other properties that will be saved to csv
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("us_IC", us_ic));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("ds_IC", ds_ic));
+                //out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", ));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("total_perror", out_fitp.at(STR_RESIDUAL).value));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", std::abs(out_fitp.at(STR_RESIDUAL).value)));
+                //out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", ));
+                //out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", ));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", rois.size()));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", 0));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_num", params_override->ds_amp_sens_num));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_unit", io::file::translate_back_sens_unit<double>(params_override->ds_amp_sens_unit)));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", 0));
+                out_roi_fit_params[files[0] + "_roi_" + roi_name] = out_fitp;
+
             }
         }
-
-        // save all to csv
-        //io::file::csv::save_roi_group();
-        //io::file::csv::save_roi_with_calib_curve();
     }
     else
     {
@@ -572,7 +604,9 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job, int 
 
 // ----------------------------------------------------------------------------
 
-void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name)
+void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
+    std::string roi_file_name,
+    std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> & out_roi_fit_params)
 {
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
     std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
@@ -584,7 +618,14 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
         //get dataset file number
         std::string dataset_num;
         std::istringstream strstream(roi_file_name);
-        std::getline(strstream, dataset_num, '_');
+        if (roi_file_name.find('_') != std::string::npos)
+        {
+            std::getline(strstream, dataset_num, '_');
+        }
+        else if (roi_file_name.find('-') != std::string::npos)
+        {
+            std::getline(strstream, dataset_num, '-');
+        }
         if (dataset_num.length() > 0)
         {
             // iterate through all 
@@ -594,17 +635,18 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
                 if (detector_num != -1)
                 {
                     std::string str_detector_num = std::to_string(detector_num);
-                    search_filename = dataset_num + ".h5" + str_detector_num;
-                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename);
+                    search_filename = dataset_num + ".h5" + str_detector_num; // v9 save
+                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename, out_roi_fit_params[detector_num]);
                     search_filename = dataset_num + ".mda.h5" + str_detector_num;
-                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename);
+                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename, out_roi_fit_params[detector_num]);
                 }
             }
             //now for the avg h5
-            //detector = analysis_job.get_detector(-1);
-            search_filename = dataset_num + ".h5";
-            dataset_num + ".h5";
-            find_and_optimize_roi(analysis_job, -1, rois, search_filename);
+            //detector = analysis_job.get_detector(-1); 
+            search_filename = dataset_num + ".h5"; // v9 save
+            find_and_optimize_roi(analysis_job, -1, rois, search_filename, out_roi_fit_params[-1]);
+            search_filename = dataset_num + ".mda.h5";
+            find_and_optimize_roi(analysis_job, -1, rois, search_filename, out_roi_fit_params[-1]);
         }
         else
         {
@@ -622,9 +664,24 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::s
 
 void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
 {
+     //       detector_num        file_name_roi           fit_params
+    std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> roi_fit_params;
+
     for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "rois", ".roi"))
     {
-        optimize_single_roi(analysis_job, itr);
+        optimize_single_roi(analysis_job, itr, roi_fit_params);
+    }
+
+    // save all to csv
+    for (auto detector_num : analysis_job.detector_num_arr)
+    {
+        std::string save_path = analysis_job.dataset_directory + "output/specfit_results" + std::to_string(detector_num) + ".csv";
+        std::string quant_save_path = analysis_job.dataset_directory + "output/specfit_results" + std::to_string(detector_num) + "_quantified.csv";
+        io::file::csv::save_v9_specfit(save_path, roi_fit_params.at(detector_num));
+        if (analysis_job.get_detector(detector_num)->quantification_standards.size() > 0)
+        {
+            io::file::csv::save_v9_specfit_quantified(quant_save_path, analysis_job.get_detector(detector_num), roi_fit_params.at(detector_num));
+        }
     }
 }
 

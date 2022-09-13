@@ -239,6 +239,180 @@ namespace csv
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
+    DLL_EXPORT bool save_v9_specfit(std::string path,
+        std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
+    {
+        const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "dummy", "dummy", "Mo_L", "Tc_L", "Ru_L", "Rh_L", "Pd_L", "Ag_L", "Cd_L", "In_L", "Sn_L", "Sb_L", "Te_L", "I_L", "Xe_L", " ", "Cs_L", "Ba_L", "La_L", "Ce_L", "Pr_L", "Nd_L", "Pm_L", "Sm_L", "Eu_L", "Gd_L", "Tb_L", "Dy_L", "Br_L", "Er_L", "Tm_L", "Yb_L", "Lu_L", "Hf_L", "Ta_L", "W_L", "Re_L", "Os_L", "Ir_L", "Pt_L", "Au_L", "Hg_L", "Tl_L", "Pb_L", "Bi_L", "Po_L", "At_L", "Rn_L", "Ho_L", "Ac_L", "Th_L", "Pa_L", "U_L", "Np_L", "Pu_L", "Zr_L", "Au_M", "Pb_M", "U_M", "Hg_M", "Pt_M", "Os_M", "Bi_M", "dummy", "dummy", "real_time", "live_time", "SRcurrent", "us_IC", "ds_IC", "total_counts", "status", "niter", "total_perror", "abs_error", "relative_error", "roi_areas", "roi_pixels", "US_num", "US_unit", "US_sensfactor", "DS_num", "DS_unit", "DS_sensfactor" };
+
+        const std::vector<std::string> p_list = { "perror_Na", "perror_Mg", "perror_Al", "perror_Si", "perror_P", "perror_S", "perror_Cl", "perror_Ar", "perror_K", "perror_Ca", "perror_Sc", "perror_Ti", "perror_V", "perror_Cr", "perror_Mn", "perror_Fe", "perror_Co", "perror_Ni", "perror_Cu", "perror_Zn", "perror_Ga", "perror_Ge", "perror_As", "perror_Se", "perror_Br", "perror_Kr", "perror_Rb", "perror_Sr", "perror_Y", "perror_Zr", "perror_Nb", "perror_Mo", "perror_Tc", "perror_Ru", "perror_Rh", "perror_Pd", "perror_Ag", "perror_Cd", "perror_In", "perror_Sn", "perror_Sb", "perror_Te", "perror_I", "perror_dummy", "perror_dummy", "perror_Mo_L", "perror_Tc_L", "perror_Ru_L", "perror_Rh_L", "perror_Pd_L", "perror_Ag_L", "perror_Cd_L", "perror_In_L", "perror_Sn_L", "perror_Sb_L", "perror_Te_L", "perror_I_L", "perror_Xe_L", "", "perror_Cs_L", "perror_Ba_L", "perror_La_L", "perror_Ce_L", "perror_Pr_L", "perror_Nd_L", "perror_Pm_L", "perror_Sm_L", "perror_Eu_L", "perror_Gd_L", "perror_Tb_L", "perror_Dy_L", "perror_Br_L", "perror_Er_L", "perror_Tm_L", "perror_Yb_L", "perror_Lu_L", "perror_Hf_L", "perror_Ta_L", "perror_W_L", "perror_Re_L", "perror_Os_L", "perror_Ir_L", "perror_Pt_L", "perror_Au_L", "perror_Hg_L", "perror_Tl_L", "perror_Pb_L", "perror_Bi_L", "perror_Po_L", "perror_At_L", "perror_Rn_L", "perror_Ho_L", "perror_Ac_L", "perror_Th_L", "perror_Pa_L", "perror_U_L", "perror_Np_L", "perror_Pu_L", "perror_Zr_L", "perror_Au_M", "perror_Pb_M", "perror_U_M", "perror_Hg_M", "perror_Pt_M", "perror_Os_M", "perror_Bi_M", "perror_dummy", "perror_dummy" };
+
+        const std::vector<std::string> l_list = { "chisquare", "chisqred", "gen_pars_at_bndry", "ele_pars_at_bndry", "free_pars" };
+
+        logI << "Exporting roi results to " << path << "\n";
+
+        std::ofstream file_stream(path);
+        if (file_stream.is_open())
+        {
+
+            file_stream << "spec_name, e_offset, e_linear, e_quadratic, fwhm_offset, fwhm_fanoprime, coherent_sct_energy, coherent_sct_amplitude, compton_angle, compton_fwhm_corr, compton_amplitude, compton_f_step, compton_f_tail, compton_gamma, compton_hi_f_tail, compton_hi_gamma, snip_width, si_escape, ge_escape, linear, pileup, pileup, pileup, pileup, pileup, pileup, pileup, pileup, pileup, f_step_offset, f_step_linear, f_step_quadratic, f_tail_offset, f_tail_linear, f_tail_quadratic, gamma_offset, gamma_linear, gamma_quadratic, kb_f_tail_offset, kb_f_tail_linear, kb_f_tail_quadratic, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, dummy, dummy, Mo_L, Tc_L, Ru_L, Rh_L, Pd_L, Ag_L, Cd_L, In_L, Sn_L, Sb_L, Te_L, I_L, Xe_L, , Cs_L, Ba_L, La_L, Ce_L, Pr_L, Nd_L, Pm_L, Sm_L, Eu_L, Gd_L, Tb_L, Dy_L, Br_L, Er_L, Tm_L, Yb_L, Lu_L, Hf_L, Ta_L, W_L, Re_L, Os_L, Ir_L, Pt_L, Au_L, Hg_L, Tl_L, Pb_L, Bi_L, Po_L, At_L, Rn_L, Ho_L, Ac_L, Th_L, Pa_L, U_L, Np_L, Pu_L, Zr_L, Au_M, Pb_M, U_M, Hg_M, Pt_M, Os_M, Bi_M, dummy, dummy, real_time, live_time, SRcurrent, us_IC, ds_IC, total_counts, status, niter, total_perror, abs_error, relative_error, roi_areas, roi_pixels, US_num, US_unit, US_sensfactor, DS_num, DS_unit, DS_sensfactor, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_dummy, perror_dummy, perror_Mo_L, perror_Tc_L, perror_Ru_L, perror_Rh_L, perror_Pd_L, perror_Ag_L, perror_Cd_L, perror_In_L, perror_Sn_L, perror_Sb_L, perror_Te_L, perror_I_L, perror_Xe_L, , perror_Cs_L, perror_Ba_L, perror_La_L, perror_Ce_L, perror_Pr_L, perror_Nd_L, perror_Pm_L, perror_Sm_L, perror_Eu_L, perror_Gd_L, perror_Tb_L, perror_Dy_L, perror_Br_L, perror_Er_L, perror_Tm_L, perror_Yb_L, perror_Lu_L, perror_Hf_L, perror_Ta_L, perror_W_L, perror_Re_L, perror_Os_L, perror_Ir_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Tl_L, perror_Pb_L, perror_Bi_L, perror_Po_L, perror_At_L, perror_Rn_L, perror_Ho_L, perror_Ac_L, perror_Th_L, perror_Pa_L, perror_U_L, perror_Np_L, perror_Pu_L, perror_Zr_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Hg_M, perror_Pt_M, perror_Os_M, perror_Bi_M, perror_dummy, perror_dummy, chisquare, chisqred, gen_pars_at_bndry, ele_pars_at_bndry, free_pars,\n";
+            for (const auto& itr : roi_files_fits_map)
+            {
+                file_stream << itr.first << "," << itr.second.at(STR_ENERGY_OFFSET).value << "," << itr.second.at(STR_ENERGY_SLOPE).value << "," << itr.second.at(STR_ENERGY_QUADRATIC).value << "," << itr.second.at(STR_FWHM_OFFSET).value
+                    << "," << itr.second.at(STR_FWHM_FANOPRIME).value << "," << itr.second.at(STR_COHERENT_SCT_ENERGY).value << "," << itr.second.at(STR_COHERENT_SCT_AMPLITUDE).value << "," << itr.second.at(STR_COMPTON_ANGLE).value
+                    << "," << itr.second.at(STR_COMPTON_FWHM_CORR).value << "," << itr.second.at(STR_COMPTON_AMPLITUDE).value << "," << itr.second.at(STR_COMPTON_F_STEP).value << "," << itr.second.at(STR_COMPTON_F_TAIL).value
+                    << "," << itr.second.at(STR_COMPTON_GAMMA).value << "," << itr.second.at(STR_COMPTON_HI_F_TAIL).value << "," << itr.second.at(STR_COMPTON_HI_GAMMA).value << "," << itr.second.at(STR_SNIP_WIDTH).value
+                    << ",0,0,0,0,0,0,0,0,0,0,0,0," << itr.second.at(STR_F_STEP_OFFSET).value << "," << itr.second.at(STR_F_STEP_LINEAR).value << "," << itr.second.at(STR_F_STEP_QUADRATIC).value << "," << itr.second.at(STR_F_TAIL_OFFSET).value
+                    << "," << itr.second.at(STR_F_TAIL_LINEAR).value << "," << itr.second.at(STR_F_TAIL_QUADRATIC).value << "," << itr.second.at(STR_GAMMA_OFFSET).value << "," << itr.second.at(STR_GAMMA_LINEAR).value
+                    << "," << itr.second.at(STR_GAMMA_QUADRATIC).value << "," << itr.second.at(STR_KB_F_TAIL_OFFSET).value << "," << itr.second.at(STR_KB_F_TAIL_LINEAR).value << "," << itr.second.at(STR_KB_F_TAIL_QUADRATIC).value << ",";
+                for (auto& e_itr : e_list)
+                {
+                    if (itr.second.contains(e_itr))
+                    {
+                        file_stream << itr.second.at(e_itr).value << ",";
+                    }
+                    else
+                    {
+                        file_stream << "1.0e-10, ";
+                    }
+                }
+
+                for (auto& p_itr : p_list)
+                {
+                    file_stream << "1.0e-10, ";
+                }
+                
+                for (auto& l_itr : l_list)
+                {
+                    if (itr.second.contains(l_itr))
+                    {
+                        file_stream << itr.second.at(l_itr).value << ",";
+                    }
+                    else
+                    {
+                        file_stream << "1.0e-10, ";
+                    }
+                }
+
+                file_stream << "\n";
+            }
+
+            file_stream.close();
+        }
+        else
+        {
+            logE << "Could not open file " << path << "\n";
+            return false;
+        }
+
+        return true;
+    }
+
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
+    DLL_EXPORT bool save_v9_specfit_quantified(std::string path,
+        Detector<T_real>* detector,
+        std::map<std::string, data_struct::Fit_Parameters<double>>& roi_files_fits_map)
+    {
+        if (detector == nullptr)
+        {
+            logW << "standards or quants_map or detector are null. Cannot save csv " << path << ". \n";
+            return false;
+        }
+
+        std::ofstream file_stream(path);
+        if (file_stream.is_open())
+        {
+
+            for (const auto& itr : detector->quantification_standards)
+            {
+                file_stream << "Standard Filename: " << itr.first << "\n";
+                file_stream << " SR_Current: " << itr.second.sr_current << "\n";
+                file_stream << " US_IC: " << itr.second.US_IC << "\n";
+                file_stream << " DS_IC: " << itr.second.DS_IC << "\n";
+                file_stream << "\n\n";
+            }
+            file_stream << "beryllium_window_thickness : " << detector->beryllium_window_thickness << "\n";
+            file_stream << "germanium_dead_layer : " << detector->germanium_dead_layer << "\n";
+            file_stream << "detector_chip_thickness : " << detector->detector_chip_thickness << "\n";
+            file_stream << "incident_energy : " << detector->incident_energy << "\n";
+            file_stream << "airpath : " << detector->airpath << "\n";
+            file_stream << "detector_element : " << detector->detector_element->name << "\n";
+            /*
+            if (detector->avg_quantification_scaler_map.count(quantifier_scaler_name) > 0)
+            {
+                file_stream << quantifier_scaler_name << ": " << detector->avg_quantification_scaler_map.at(quantifier_scaler_name) << "\n";
+            }
+
+            file_stream << "\n\n";
+
+            for (const auto& shell_itr : Shells_Quant_List)
+            {
+                file_stream << "\n\n";
+                file_stream << "Element,Z,Counts,e_cal_ratio,absorption,transmission_Be,transmission_Ge,yield,transmission_through_Si_detector,transmission_through_air,weight  \n";
+
+                for (const auto& itr : quants_map->curve_quant_map[shell_itr])
+                {
+                    string name = itr.name;
+                    T_real counts = 0.0;
+                    if (shell_itr == Electron_Shell::L_SHELL)
+                    {
+                        name += "_L";
+                    }
+                    else if (shell_itr == Electron_Shell::M_SHELL)
+                    {
+                        name += "_M";
+                    }
+
+                    for (const auto& s_itr : *standards)
+                    {
+                        if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                        {
+                            counts = s_itr.second.element_counts.at(routine).at(name);
+                            break;
+                        }
+                    }
+
+                    file_stream << name << "," <<
+                        itr.Z << "," <<
+                        counts << "," <<
+                        itr.e_cal_ratio << "," <<
+                        itr.absorption << "," <<
+                        itr.transmission_Be << "," <<
+                        itr.transmission_Ge << "," <<
+                        itr.yield << "," <<
+                        itr.transmission_through_Si_detector << "," <<
+                        itr.transmission_through_air << "," <<
+                        itr.weight << "\n";
+                }
+            }
+            file_stream << "\n\n";
+            file_stream << "\n\n";
+
+            file_stream << "Element,Z,K Shell,L Shell,M Shell\n";
+            for (int i = 0; i < quants_map->curve_quant_map[Electron_Shell::K_SHELL].size(); i++)
+            {
+                file_stream << quants_map->curve_quant_map[Electron_Shell::K_SHELL][i].name << ","
+                    << i + 1 << ","
+                    << quants_map->curve_quant_map[Electron_Shell::K_SHELL][i].calib_curve_val << ","
+                    << quants_map->curve_quant_map[Electron_Shell::L_SHELL][i].calib_curve_val << ","
+                    << quants_map->curve_quant_map[Electron_Shell::M_SHELL][i].calib_curve_val << "\n";
+            }
+            file_stream << "\n\n";
+            */
+            file_stream.close();
+        }
+        else
+        {
+            logE << "Could not open file " << path << "\n";
+            return false;
+        }
+        return true;
+    }
+
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
     DLL_EXPORT void save_quantification(std::string path, Detector<T_real>* detector)
     {
         if (detector == nullptr)

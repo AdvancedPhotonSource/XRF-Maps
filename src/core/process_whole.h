@@ -107,7 +107,7 @@ using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job);
+DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, bool save_when_done);
 
 DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>* analysis_job,
     std::string  dataset_filename,
