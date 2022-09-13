@@ -741,9 +741,40 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         unordered_map<string, T_real> pv_map;
         if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
         {
+            data_struct::Scan_Info<T_real> scan_info;
+
+            for (auto& itr : pv_map)
+            {
+                data_struct::Scaler_Map<T_real> sm;
+                sm.name = itr.first;
+                sm.unit = " ";
+                sm.time_normalized = false;
+                sm.values.resize(1,1);
+                sm.values(0, 0) = itr.second;
+                scan_info.scaler_maps.push_back(sm);
+            }
+            
+            scan_info.meta_info.requested_rows = 1;
+            scan_info.meta_info.requested_cols = 1;
+            scan_info.meta_info.x_axis.push_back(0.0);
+            scan_info.meta_info.y_axis.push_back(0.0);
+            scan_info.meta_info.theta = 0.0;
+
+            data_struct::Extra_PV ep;
+            ep.name = "Name";
+            ep.description = "Filename";
+            ep.unit = "Str";
+            ep.value = dataset_file;
+
+            scan_info.extra_pvs.push_back(ep);
+
             spectra_volume->resize_and_zero(1, 1, spec.size());
             (*spectra_volume)[0][0] = spec;
             io::file::HDF5_IO::inst()->start_save_seq(true);
+
+            // add ELT, ERT, INCNT, OUTCNT to scaler map
+            spectra_volume->generate_scaler_maps(&(scan_info.scaler_maps));
+            io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
             return true;
         }
     }
