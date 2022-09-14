@@ -200,8 +200,6 @@ public:
 
     Fit_Param<T_real>& operator [](std::string name) { return _params[name]; }
 
-    //const Fit_Param& operator [](std::string name) const { return _params[name]; }
-
     void add_parameter(Fit_Param<T_real> param);
 
 	void append_and_update(const Fit_Parameters& fit_params);

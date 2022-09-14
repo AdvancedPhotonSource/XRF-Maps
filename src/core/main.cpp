@@ -50,6 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/process_whole.h"
 #include <cctype>
 
+
+#define MAX_DETECTORS 7
+
 // ----------------------------------------------------------------------------
 
 void help()
@@ -59,6 +62,7 @@ void help()
     logit_s<<"Options: \n";
     logit_s<<"--nthreads : <int> number of threads to use (default is all system threads) \n";
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
+    logit_s<<"--quantify-fit <routines,>: If you want to perform quantification without having to re-fit all datasets. See --fit for routine options \n";
     logit_s<<"--detectors : <int,..> Detectors to process, Defaults to 0,1,2,3 for 4 detector \n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
@@ -74,7 +78,8 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
-    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. \n";
+    logit_s<<"--optimizer-fxg-tols <tol_override_val> : Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
@@ -97,6 +102,8 @@ void help()
     logit_s<<"xrf_maps --fit roi,matrix --dir /data/dataset1 --files scan1.mda,scan2.mda \n";
     logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification \n";
     logit_s<<"xrf_maps --fit roi,matrix,nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
+    logit_s<<"   Perform optimization of an integrated roi spectra \n";
+    logit_s<<"xrf_maps  --optimize-rois --quantify-rois maps_standardinfo.txt --quantify-fit roi,matrix,nnls --dir /data/dataset1 \n";
 }
 
 // ----------------------------------------------------------------------------
@@ -115,8 +122,31 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
         std::string opt = clp.get_option("--optimize-fit-routine");
         if (opt == "hybrid")
         {
+            logI << "Using Hybrid optimizer\n";
             analysis_job.optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::HYBRID;
         }
+    }
+
+    if (clp.option_exists("--optimizer-fxg-tols"))
+    {
+        T_real fxg_tol; 
+        if (std::is_same<T_real, float>::value)
+        {
+            fxg_tol = std::stof(clp.get_option("--optimizer-fxg-tols"));
+        }
+        else if (std::is_same<T_real, double>::value)
+        {
+            fxg_tol = std::stod(clp.get_option("--optimizer-fxg-tols"));
+        }
+        
+        std::unordered_map<std::string, T_real> opt_map;
+        opt_map[STR_OPT_FTOL] = fxg_tol;
+        opt_map[STR_OPT_XTOL] = fxg_tol;
+        opt_map[STR_OPT_GTOL] = fxg_tol;
+
+        logI << "Setting FTOL, XTOL, GTOL to " << fxg_tol << "\n";
+
+        analysis_job.optimizer()->set_options(opt_map);
     }
 }
 
@@ -209,7 +239,7 @@ void set_detectors(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     }
     else
     {
-        for (size_t det = 0; det < 7; det++)
+        for (size_t det = 0; det < MAX_DETECTORS; det++)
         {
             analysis_job.detector_num_arr.push_back(det);
         }
@@ -316,27 +346,28 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //if they were not then look for them in $dataset_directory/mda
     if (dset_file.length() < 1)
     {
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".hdf5"))
+        std::vector<std::string> search_ext_list;
+        std::vector<std::string> search_ext_mda_list;
+
+        search_ext_list.push_back(".hdf5");
+        search_ext_list.push_back(".h5");
+        search_ext_list.push_back(".emd");
+        search_ext_list.push_back(".mda");
+
+        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir, search_ext_list, analysis_job.dataset_files);
+
+
+        search_ext_mda_list.push_back(".mda");
+        search_ext_mda_list.push_back(".mca");
+        for (int i = 0; i < MAX_DETECTORS; i++)
         {
-            analysis_job.dataset_files.push_back(itr);
+            std::string mca_str = ".mca" + std::to_string(i);
+            search_ext_mda_list.push_back(mca_str);
         }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".h5"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".emd"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir, ".mda"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "mda" + DIR_END_CHAR, ".mda"))
-        {
-            analysis_job.dataset_files.push_back(itr);
-        }
-        // don't want to open h5 avg files for optimize
+
+        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + "mda" + DIR_END_CHAR, search_ext_mda_list, analysis_job.dataset_files);
+
+        // don't want to open h5 avg files for optimize because we optimize by detector , not avg
         for (auto& itr : analysis_job.dataset_files)
         {
             analysis_job.optimize_dataset_files.push_back(itr);
@@ -499,16 +530,13 @@ int run_quantification(Command_Line_Parser& clp)
 
         if (analysis_job.quantification_standard_filename.length() > 0)
         {
-            perform_quantification(&analysis_job);
+            perform_quantification(&analysis_job, true);
         }
         else
         {
             logE << "Please specify filename with quantification information (usually maps_standardinfo.txt)\n";
             return -1;
         }
-
-
-        //iterate_datasets_and_update(analysis_job);
     }
     else
     {
@@ -524,12 +552,40 @@ int run_optimize_rois(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<double> analysis_job;
 
+    // Force perform quantification until we have proper loading quant from hdf5 finished
     if (set_general_options(clp, analysis_job) == -1)
     {
         return -1;
     }
+    set_fit_routines(clp, analysis_job);
+    /*
+    if (analysis_job.fitting_routines.size() == 0)
+    {
+        logE << "Please specify fit routines with --quantify-fit roi,nnls,matrix \n";
+        return -1;
+    }
+    */
+    //Check if we want to quantifiy with a standard
+    if (clp.option_exists("--quantify-rois"))
+    {
+        analysis_job.quantification_standard_filename = clp.get_option("--quantify-rois");
+    }
 
-    optimize_rois(analysis_job);
+    if (io::file::init_analysis_job_detectors(&analysis_job))
+    {
+        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+
+        if (analysis_job.quantification_standard_filename.length() > 0)
+        {
+            perform_quantification(&analysis_job, false);
+        }
+        optimize_rois(analysis_job);
+    }
+    else
+    {
+        logE << "Error initalizing detectors!\n";
+        return -1;
+    }
 
     return 0;
 }

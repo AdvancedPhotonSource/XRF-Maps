@@ -107,7 +107,7 @@ using namespace std::placeholders; //for _1, _2,
 
 // ----------------------------------------------------------------------------
 
-DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job);
+DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, bool save_when_done);
 
 DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>* analysis_job,
     std::string  dataset_filename,
@@ -434,7 +434,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
 
                 std::string fullpath;
                 size_t dlen = dataset_file.length();
-                if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a')
+                bool is_mda = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a');
+                bool is_mca = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a');
+                bool is_mcad = (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a');
+                if (is_mda || is_mca || is_mcad)
                 {
                     std::string str_detector_num = "";
                     if (detector_num != -1)

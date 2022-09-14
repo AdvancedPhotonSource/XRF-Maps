@@ -109,6 +109,9 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
 
     Fit_Parameters<T_real> fit_params = model->fit_parameters();
     
+    fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
+
     if (fit_params.contains(STR_COMPTON_AMPLITUDE))
     {
         fit_params[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIXED;

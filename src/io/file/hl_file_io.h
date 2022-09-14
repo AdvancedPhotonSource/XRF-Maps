@@ -110,6 +110,8 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, 
 
 DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
+////DLL_EXPORT void save_roi_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
+
 //DLL_EXPORT void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 
 // ----------------------------------------------------------------------------
@@ -705,10 +707,15 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
 
     bool ends_in_h5 = false;
+    bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
     if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
     {
         ends_in_h5 = true;
+    }
+    else if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
+    {
+        ends_in_mca = true;
     }
     else
     {
@@ -720,6 +727,55 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 ends_in_h5 = true;
                 break;
             }
+            else if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+            {
+                ends_in_mca = true;
+                break;
+            }
+        }
+    }
+
+    if (ends_in_mca)
+    {
+        Spectra<T_real> spec;
+        unordered_map<string, T_real> pv_map;
+        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
+        {
+            data_struct::Scan_Info<T_real> scan_info;
+
+            for (auto& itr : pv_map)
+            {
+                data_struct::Scaler_Map<T_real> sm;
+                sm.name = itr.first;
+                sm.unit = " ";
+                sm.time_normalized = false;
+                sm.values.resize(1,1);
+                sm.values(0, 0) = itr.second;
+                scan_info.scaler_maps.push_back(sm);
+            }
+            
+            scan_info.meta_info.requested_rows = 1;
+            scan_info.meta_info.requested_cols = 1;
+            scan_info.meta_info.x_axis.push_back(0.0);
+            scan_info.meta_info.y_axis.push_back(0.0);
+            scan_info.meta_info.theta = 0.0;
+
+            data_struct::Extra_PV ep;
+            ep.name = "Name";
+            ep.description = "Filename";
+            ep.unit = "Str";
+            ep.value = dataset_file;
+
+            scan_info.extra_pvs.push_back(ep);
+
+            spectra_volume->resize_and_zero(1, 1, spec.size());
+            (*spectra_volume)[0][0] = spec;
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+
+            // add ELT, ERT, INCNT, OUTCNT to scaler map
+            spectra_volume->generate_scaler_maps(&(scan_info.scaler_maps));
+            io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
+            return true;
         }
     }
 
