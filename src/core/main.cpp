@@ -340,6 +340,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
     io::file::check_and_create_dirs(dataset_dir);
 
+    analysis_job.dataset_directory = dataset_dir;
 
     //Look if files were specified
     std::string dset_file = clp.get_option("--files");
@@ -411,8 +412,6 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         analysis_job.optimize_dataset_files.push_back(dset_file);
     }
 
-    analysis_job.dataset_directory = dataset_dir;
-
     return 0;
 }
 
@@ -430,6 +429,44 @@ void set_whole_command(Command_Line_Parser& clp, data_struct::Analysis_Job<T_rea
     analysis_job.command_line = whole_command_line;
     logI << "whole command line : " << whole_command_line << "\n";
     */
+}
+
+// ----------------------------------------------------------------------------
+
+template <typename T_real>
+void set_streaming_options(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
+{
+    if (clp.option_exists("--streamin"))
+    {
+        analysis_job.is_network_source = true;
+        std::string source_addr = clp.get_option("--streamin");
+        if (source_addr.length() > 0)
+        {
+            size_t idx = source_addr.find(':');
+            if (idx != std::string::npos)
+            {
+                analysis_job.network_source_ip = source_addr.substr(0, idx);
+                analysis_job.network_source_port = source_addr.substr(idx+1);
+            }
+            else
+            {
+                analysis_job.network_source_ip = source_addr;
+                analysis_job.network_source_port = "43434";
+            }
+        }
+    }
+    if (clp.option_exists("--streamout"))
+    {
+        analysis_job.stream_over_network = true;
+        // set default streaming out port
+        analysis_job.network_stream_port = "43434";
+        // if port is specified, then update it
+        std::string out_port = clp.get_option("--streamout");
+        if (out_port.length() > 0)
+        {
+            analysis_job.network_stream_port = out_port;
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -596,10 +633,8 @@ int run_streaming(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<float> analysis_job;
 
-    if (set_general_options(clp, analysis_job) == -1)
-    {
-        return -1;
-    }
+    set_streaming_options(clp, analysis_job);
+    set_general_options(clp, analysis_job);
     set_fit_routines(clp, analysis_job);
 
     // init our job and run
