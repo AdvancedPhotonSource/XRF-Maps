@@ -147,6 +147,7 @@ const string STR_PILEUP8 = "PILEUP8";
 const string STR_NUM_ITR = "Num_Iter";
 const string STR_RESIDUAL = "Fit_Residual";
 const string STR_OUTCOME = "Fit_Outcome";
+const string STR_CHISQUARE = "chisquare";
 const string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
 const string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
 const string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";

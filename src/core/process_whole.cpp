@@ -584,7 +584,10 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", std::abs(out_fitp.at(STR_RESIDUAL).value)));
                 //out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", ));
                 //out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", ));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", rois.size()));
+                // roi.area = roi.pixels * 1000.*1000.* (x_coord_arr.max() - x_coord_arr.min()) / (x_coord_arr.size() - 1) * (y_coord_arr.max() - y_coord_arr.min()) / (y_coord_arr.size() - 1)
+                
+
+                out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", 0));

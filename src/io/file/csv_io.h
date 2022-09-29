@@ -278,7 +278,14 @@ namespace csv
 
                 for (auto& p_itr : p_list)
                 {
-                    file_stream << "1.0e-10, ";
+                    if (itr.second.contains(p_itr))
+                    {
+                        file_stream << itr.second.at(p_itr).value << ",";
+                    }
+                    else
+                    {
+                        file_stream << "1.0e-10, ";
+                    }
                 }
                 
                 for (auto& l_itr : l_list)
