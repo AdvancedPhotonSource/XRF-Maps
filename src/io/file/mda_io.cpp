@@ -1312,45 +1312,41 @@ void MDA_IO<T_real>::_load_meta_info()
             {
                 _scan_info.meta_info.requested_rows = 1;
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0];
-                _scan_info.meta_info.y_axis.push_back(0.0);
+                _scan_info.meta_info.y_axis.resize(1);
+                _scan_info.meta_info.y_axis.setZero(1);
+                _scan_info.meta_info.x_axis.resize(_mda_file->scan->last_point);
+                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->last_point);
                 for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
                 {
-                    _scan_info.meta_info.x_axis.push_back(_mda_file->scan->positioners_data[0][i]);
+                    _scan_info.meta_info.x_axis(i) = _mda_file->scan->positioners_data[0][i];
                 }
             }
             else
             {
                 _scan_info.meta_info.requested_rows = _mda_file->header->dimensions[0];
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1];
+                // resize and zero y axis
+                _scan_info.meta_info.y_axis.resize(_mda_file->scan->last_point);
+                _scan_info.meta_info.y_axis.setZero(_mda_file->scan->last_point);
+                // if positioner exists, then read it
                 if (_mda_file->scan->number_positioners > 0)
                 {
                     // save y axis
                     for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
                     {
-                        _scan_info.meta_info.y_axis.push_back(_mda_file->scan->positioners_data[0][i]);
+                        _scan_info.meta_info.y_axis(i) = _mda_file->scan->positioners_data[0][i];
                     }
                 }
-                else
-                {
-                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
-                    {
-                        _scan_info.meta_info.y_axis.push_back(0);
-                    }
-                }
-
+                // resize and zero x axis
+                _scan_info.meta_info.x_axis.resize(_mda_file->scan->sub_scans[0]->last_point);
+                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->sub_scans[0]->last_point);
+                // if positioner exists, then read it
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
                     // save x axis
                     for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
                     {
-                        _scan_info.meta_info.x_axis.push_back(_mda_file->scan->sub_scans[0]->positioners_data[0][i]);
-                    }
-                }
-                else
-                {
-                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
-                    {
-                        _scan_info.meta_info.x_axis.push_back(0);
+                        _scan_info.meta_info.x_axis(i) = _mda_file->scan->sub_scans[0]->positioners_data[0][i];
                     }
                 }
             }

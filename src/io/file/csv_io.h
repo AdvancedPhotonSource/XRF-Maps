@@ -67,6 +67,29 @@ namespace csv
 {
    
     template<typename T_real>
+    DLL_EXPORT string translate_sens_unit(int value)
+    {
+        if (value == 0)
+        {
+            return "pA/V";
+        }
+        else if (value == 1)
+        {
+            return "nA/V";
+        }
+        else if (value == 2)
+        {
+            return "uA/V";
+        }
+        else if (value == 3)
+        {
+            return "mA/V";
+        }
+    }
+
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
     DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data)
     {
         std::ifstream file_stream(filename);
@@ -268,7 +291,14 @@ namespace csv
                 {
                     if (itr.second.contains(e_itr))
                     {
-                        file_stream << itr.second.at(e_itr).value << ",";
+                        if (e_itr == "US_unit" || e_itr == "DS_unit")
+                        {
+                            file_stream << translate_sens_unit<T_real>(int( itr.second.at(e_itr).value)) << ",";
+                        }
+                        else
+                        {
+                            file_stream << itr.second.at(e_itr).value << ",";
+                        }
                     }
                     else
                     {
@@ -319,8 +349,15 @@ namespace csv
     template<typename T_real>
     DLL_EXPORT bool save_v9_specfit_quantified(std::string path,
         Detector<T_real>* detector,
-        std::map<std::string, data_struct::Fit_Parameters<double>>& roi_files_fits_map)
+        std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
     {
+
+        const std::vector<string> norm_names = { "DOWNSTREAM", "UPSTREAM", "SR_CURRENT" };
+        const std::map<int, std::string> normalize_by_map = { {0, STR_DS_IC}, {1, STR_US_IC}, {2, STR_SR_CURRENT} };
+        const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Mo_L", "Ag_L", "Sn_L", "Cd_L", "I_L", "Cs_L", "Ba_L", "Eu_L", "Gd_L", "W_L", "Pt_L", "Au_L", "Hg_L", "Pb_L", "U_L", "La_L", "Re_L", "Pr_L", "Ce_L", "Zr_L", "Os_L", "Ru_L", "Au_M", "Pb_M", "U_M", "Bi_M", "Hg_M" };
+
+        const std::vector<std::string> p_list = { "perror_Na", "perror_Mg", "perror_Al", "perror_Si", "perror_P", "perror_S", "perror_Cl", "perror_Ar", "perror_K", "perror_Ca", "perror_Sc", "perror_Ti", "perror_V", "perror_Cr", "perror_Mn", "perror_Fe", "perror_Co", "perror_Ni", "perror_Cu", "perror_Zn", "perror_Ga", "perror_Ge", "perror_As", "perror_Se", "perror_Br", "perror_Kr", "perror_Rb", "perror_Sr", "perror_Y", "perror_Zr", "perror_Nb", "perror_Mo", "perror_Tc", "perror_Ru", "perror_Rh", "perror_Pd", "perror_Ag", "perror_Cd", "perror_In", "perror_Sn", "perror_Sb", "perror_Te", "perror_I", "perror_Mo_L", "perror_Ag_L", "perror_Sn_L", "perror_Cd_L", "perror_I_L", "perror_Cs_L", "perror_Ba_L", "perror_Eu_L", "perror_Gd_L", "perror_W_L", "perror_Pt_L", "perror_Au_L", "perror_Hg_L", "perror_Pb_L", "perror_U_L", "perror_La_L", "perror_Re_L", "perror_Pr_L", "perror_Ce_L", "perror_Zr_L", "perror_Os_L", "perror_Ru_L", "perror_Au_M", "perror_Pb_M", "perror_U_M", "perror_Bi_M", "perror_Hg_M" };
+
         if (detector == nullptr)
         {
             logW << "standards or quants_map or detector are null. Cannot save csv " << path << ". \n";
@@ -330,13 +367,17 @@ namespace csv
         std::ofstream file_stream(path);
         if (file_stream.is_open())
         {
-
+            file_stream << "standard information :\n";
             for (const auto& itr : detector->quantification_standards)
             {
                 file_stream << "Standard Filename: " << itr.first << "\n";
-                file_stream << " SR_Current: " << itr.second.sr_current << "\n";
-                file_stream << " US_IC: " << itr.second.US_IC << "\n";
-                file_stream << " DS_IC: " << itr.second.DS_IC << "\n";
+                file_stream << "realtime[s]:, " << itr.second.integrated_spectra.elapsed_realtime() << "\n";
+                file_stream << "livetime[s]:, " << itr.second.integrated_spectra.elapsed_livetime() << "\n";
+                file_stream << " I_[mA]:, " << itr.second.sr_current << "\n";
+                file_stream << " US_IC[cts/s]:, " << itr.second.US_IC << "\n";
+                file_stream << " DS_IC[cts/s]:, " << itr.second.DS_IC << "\n";
+                //file_stream << " US_AMPS[num,unit]:, " << itr.second.US_IC << "\n";
+                //file_stream << " DS_AMPS[num,unit]:, " << itr.second.DS_IC << "\n";
                 file_stream << "\n\n";
             }
             file_stream << "beryllium_window_thickness : " << detector->beryllium_window_thickness << "\n";
@@ -345,6 +386,78 @@ namespace csv
             file_stream << "incident_energy : " << detector->incident_energy << "\n";
             file_stream << "airpath : " << detector->airpath << "\n";
             file_stream << "detector_element : " << detector->detector_element->name << "\n";
+            file_stream << "\n\n\n";
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+
+            std::ostringstream oss;
+            oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+            file_stream << "calibrated:, " << oss.str() << "\n"; //Mon Apr 23 20 : 37 : 44 2018
+            file_stream << "unless stated otherwise, element units are given as microgram / cm2\n";
+            file_stream << "in order to get the total content in femtogram(10 ^ -15g) you will need to multiply the relevant columns with the column for roi area(in um ^ 2) and multiply by * 10. (ug->femtog; um->cm; *1000. * 1000. * 1000. / 1000. / 1000. / 10. / 10.)\n";
+            file_stream << "perror id the formal 1 - sigma error for each parameter.If a parameter is fixed, or hits a boundary, then the error is printed as zero.\n";
+            file_stream << "perror can be used as an indication on the accuracy of a measurement for an element, e.g., when it is larger than the actual reported elemental content, this means that probably the element is not really present\n";
+            file_stream << "BUT, it should not be trusted blindly, there can be occurances where perror is small, but the presences of a peak still questionable.\n\n";
+
+            for (auto &n_itr : normalize_by_map)
+            {
+                T_real normalizer = 1.0;
+                file_stream << "calibrated using the "<< norm_names[n_itr.first]<<" ionchamber";
+                
+                file_stream << "\n\n\n";
+                file_stream << "name, ds_IC, ds_IC_amp_factor, us_IC, us_IC_amp_factor, live_time, real_time, roi_pixels, roi_areas, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Mo_L, Ag_L, Sn_L, Cd_L, I_L, Cs_L, Ba_L, Eu_L, Gd_L, W_L, Pt_L, Au_L, Hg_L, Pb_L, U_L, La_L, Re_L, Pr_L, Ce_L, Zr_L, Os_L, Ru_L, Au_M, Pb_M, U_M, Bi_M, Hg_M, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_Mo_L, perror_Ag_L, perror_Sn_L, perror_Cd_L, perror_I_L, perror_Cs_L, perror_Ba_L, perror_Eu_L, perror_Gd_L, perror_W_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Pb_L, perror_U_L, perror_La_L, perror_Re_L, perror_Pr_L, perror_Ce_L, perror_Zr_L, perror_Os_L, perror_Ru_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Bi_M, perror_Hg_M\n";
+                for (auto& itr : roi_files_fits_map)
+                {
+                    T_real roi_pixels = 1.0e-10;
+                    T_real roi_area = 1.0e-10;
+                    if (itr.second.contains("roi_pixels"))
+                    {
+                        roi_pixels = itr.second.at("roi_pixels").value;
+                    }
+                    if (itr.second.contains("roi_area"))
+                    {
+                        roi_pixels = itr.second.at("roi_area").value;
+                    }
+
+                    file_stream << itr.first << ",";
+                    file_stream << "0" << ","; // ds_ic
+                    file_stream << "0" << ","; // ds_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
+                    file_stream << "0" << ","; // us_ic
+                    file_stream << "0" << ","; // us_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
+                    file_stream << "0" << ","; // live_time
+                    file_stream << "0" << ","; // real_time
+                    file_stream << roi_pixels << ","; // roi_pixels
+                    file_stream << roi_area << ","; // roi_areas
+
+
+                    for (auto& e_itr : e_list)
+                    {
+                        if (itr.second.contains(e_itr))
+                        {
+                            double e_cal_val = 1.0;
+                            //detector->fit_params_override_dict->
+                            T_real val = itr.second.at(e_itr).value / normalizer / e_cal_val;
+                            file_stream << val << ",";
+                        }
+                        else
+                        {
+                            file_stream << "1.0e-10, ";
+                        }
+                    }
+
+                    for (auto& p_itr : p_list)
+                    {
+                        if (itr.second.contains(p_itr))
+                        {
+                            file_stream << itr.second.at(p_itr).value << ",";
+                        }
+                        else
+                        {
+                            file_stream << "1.0e-10, ";
+                        }
+                    }
+                }
+            }
             /*
             if (detector->avg_quantification_scaler_map.count(quantifier_scaler_name) > 0)
             {

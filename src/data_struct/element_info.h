@@ -125,6 +125,8 @@ public:
 
     Element_Info<T_real>* get_element(std::string element_name);
 
+    bool Element_Info_Map<T_real>::is_element(std::string element_name);
+
     //void set_energies(float* energy_arr, int num_energies);
 
     bool contains(std::string element_name) {return _name_element_info_map.count(element_name) > 0 ? true : false; }

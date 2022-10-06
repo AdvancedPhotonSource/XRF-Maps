@@ -255,6 +255,9 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     fit_params.add_parameter(Fit_Param<T_real>(STR_CHISQUARE, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_CHISQRED, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_FREE_PARS, 0.0));
+        
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
     if(_update_coherent_amplitude_on_fit)
     {

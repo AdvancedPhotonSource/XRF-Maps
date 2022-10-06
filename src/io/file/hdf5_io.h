@@ -3173,7 +3173,6 @@ public:
         return true;
     }
 
-
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
@@ -3337,7 +3336,7 @@ public:
                 status = H5Dread(name_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)dset_name);
                 if (status > -1)
                 {
-                    std_name = std::string(dset_name, 2048);
+                    std_name = std::string(dset_name, 2047);
                     std_name.erase(std::remove_if(std_name.begin(), std_name.end(), ::isspace), std_name.end());
                 }
             }
@@ -3348,6 +3347,7 @@ public:
             }
 
             detector->quantification_standards[std_name] = Quantification_Standard<T_real>();
+            detector->quantification_standards[std_name].standard_filename = std_name;
 
             std::vector <std::string> ion_chambers = { STR_DS_IC, STR_US_IC, STR_SR_CURRENT };
 
@@ -3409,6 +3409,242 @@ public:
 
         logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
+        return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool load_scalers_analyzed_h5(std::string path, std::map<std::string, data_struct::ArrayXXr<T_real>> &scalers_map)
+    {
+        hid_t file_id = -1;
+        hid_t maps_grp_id = -1;
+        hid_t sub_grp_id, counts_dset_id, channels_dset_id, counts_dspace_id, channels_dspace_id, fit_int_spec_dset_id;
+        hid_t memoryspace_id, memoryspace_name_id, error;
+        hsize_t offset[3] = { 0,0,0 };
+        hsize_t count[3] = { 1,1,1 };
+        hsize_t offset_name[1] = { 0 };
+        hsize_t count_name[1] = { 1 };
+        char tmp_name[255] = { 0 };
+        hid_t   filetype, memtype, status;
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            logE << "Failed to open " << path << "\n";
+            return false;
+        }
+
+        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "MAPS", file_id))
+        {
+            return false;
+        }
+
+        if (false == _open_h5_object(sub_grp_id, H5O_GROUP, close_map, "Scalers", maps_grp_id))
+        {
+            return false;
+        }
+        
+        if (false == _open_h5_object(counts_dset_id, H5O_DATASET, close_map, "Values", sub_grp_id))
+        {
+            return false;
+        }
+        counts_dspace_id = H5Dget_space(counts_dset_id);
+        close_map.push({ counts_dspace_id, H5O_DATASPACE });
+
+        if (false == _open_h5_object(channels_dset_id, H5O_DATASET, close_map, "Names", sub_grp_id))
+        {
+            return false;
+        }
+        
+        channels_dspace_id = H5Dget_space(channels_dset_id);
+        close_map.push({ channels_dspace_id, H5O_DATASPACE });
+
+        int rank = H5Sget_simple_extent_ndims(counts_dspace_id);
+        if (rank != 3)
+        {
+            logE << "Error getting rank for /MAPS/Scalers/Values\n";
+        }
+        hsize_t* dims_out = new hsize_t[rank];
+        unsigned int status_n = H5Sget_simple_extent_dims(counts_dspace_id, &dims_out[0], nullptr);
+
+        filetype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(filetype, 256);
+        memtype = H5Tcopy(H5T_C_S1);
+        status = H5Tset_size(memtype, 255);
+
+        for (int i = 0; i < 3; i++)
+        {
+            offset[i] = 0;
+            count[i] = dims_out[i];
+        }
+
+        count[0] = 1;
+
+        memoryspace_id = H5Screate_simple(3, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
+        memoryspace_name_id = H5Screate_simple(1, count_name, nullptr);
+        close_map.push({ memoryspace_name_id, H5O_DATASPACE });
+        H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+        H5Sselect_hyperslab(memoryspace_name_id, H5S_SELECT_SET, offset_name, nullptr, count_name, nullptr);
+
+        for (hsize_t el_idx = 0; el_idx < dims_out[0]; el_idx++)
+        {
+            offset[0] = el_idx;
+            offset_name[0] = el_idx;
+            memset(&tmp_name[0], 0, 254);
+            H5Sselect_hyperslab(channels_dspace_id, H5S_SELECT_SET, offset_name, nullptr, count_name, nullptr);
+            error = H5Dread(channels_dset_id, memtype, memoryspace_name_id, channels_dspace_id, H5P_DEFAULT, (void*)&tmp_name[0]);
+            std::string el_name = std::string(tmp_name);
+            scalers_map.emplace(std::pair<std::string, data_struct::ArrayXXr<T_real>>(el_name, data_struct::ArrayXXr<T_real>()));
+            scalers_map.at(el_name).resize(count[1], count[2]);
+
+            H5Sselect_hyperslab(counts_dspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+            status = _read_h5d<T_real>(counts_dset_id, memoryspace_id, counts_dspace_id, H5P_DEFAULT, (void*)(scalers_map.at(el_name).data()));
+        }
+
+        delete[]dims_out;
+
+        _close_h5_objects(close_map);
+
+        //nan to 0.f
+        for (auto& itr : scalers_map)
+        {
+            itr.second = itr.second.unaryExpr([](T_real v) { return std::isfinite(v) ? v : 0.0f; });
+        }
+
+        return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool load_scan_info_analyzed_h5(std::string path, data_struct::Detector<T_real>* detector, data_struct::Scan_Info<T_real> &scan_info)
+    {
+
+        hid_t file_id = -1;
+        hid_t x_axis_id = -1;
+        hid_t y_axis_id = -1;
+        hid_t amp_id = -1;
+        hsize_t xdims[1] = { 0 };
+        hsize_t ydims[1] = { 0 };
+        herr_t status;
+        hid_t amp_space = -1;
+        char tmp_char[256] = { 0 };
+        hid_t type;
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            logE << "Failed to open " << path << "\n";
+            return false;
+        }
+
+        if (false == _open_h5_object(x_axis_id, H5O_DATASET, close_map, "/MAPS/Scan/x_axis", file_id))
+            return false;
+
+        if (false == _open_h5_object(y_axis_id, H5O_DATASET, close_map, "/MAPS/Scan/y_axis", file_id))
+            return false;
+
+        hid_t x_space = H5Dget_space(x_axis_id);
+        close_map.push({ x_space, H5O_DATASPACE });
+        hid_t y_space = H5Dget_space(y_axis_id);
+        close_map.push({ y_space, H5O_DATASPACE });
+        status = H5Sget_simple_extent_dims(x_space, &xdims[0], nullptr);
+        if (status < 0)
+        {
+            _close_h5_objects(close_map);
+            logE << "getting dataset X dims" << "\n";
+            return false;
+        }
+
+        status = H5Sget_simple_extent_dims(y_space, &ydims[0], nullptr);
+        if (status < 0)
+        {
+            _close_h5_objects(close_map);
+            logE << "getting dataset Y dims" << "\n";
+            return false;
+        }
+
+        scan_info.meta_info.x_axis.resize(xdims[0]);
+        scan_info.meta_info.y_axis.resize(ydims[0]);
+
+        status = _read_h5d<T_real>(x_axis_id, x_space, x_space, H5P_DEFAULT, scan_info.meta_info.x_axis.data());
+        if (status < 0)
+        {
+            logW << "Failed reading x_axis\n";
+        }
+
+        status = _read_h5d<T_real>(y_axis_id, y_space, y_space, H5P_DEFAULT, scan_info.meta_info.y_axis.data());
+        if (status < 0)
+        {
+            logW << "Failed reading x_axis\n";
+        }
+
+        // US_AMPS_NUM
+        if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp_num", file_id))
+            return false;
+
+        amp_space = H5Dget_space(amp_id);
+        close_map.push({ amp_space, H5O_DATASPACE });
+
+        status = _read_h5d<T_real>(amp_id, amp_space, amp_space, H5P_DEFAULT, (void*)&(detector->fit_params_override_dict.us_amp_sens_num));
+        if (status < 0)
+        {
+            logW << "Failed reading us_amp_sens_num\n";
+        }
+
+        // US_AMPS_UNIT
+        if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp_unit", file_id))
+            return false;
+
+        amp_space = H5Dget_space(amp_id);
+        close_map.push({ amp_space, H5O_DATASPACE });
+
+        type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
+        if (status < 0)
+        {
+            logW << "Failed reading us_amp_sens_unit\n";
+        }
+        detector->fit_params_override_dict.us_amp_sens_unit = std::string(tmp_char, 255);
+        detector->fit_params_override_dict.us_amp_sens_unit.erase(std::remove_if(detector->fit_params_override_dict.us_amp_sens_unit.begin(), detector->fit_params_override_dict.us_amp_sens_unit.end(), ::isspace), detector->fit_params_override_dict.us_amp_sens_unit.end());
+
+
+        // DS_AMPS_NUM
+        if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp_num", file_id))
+            return false;
+
+        amp_space = H5Dget_space(amp_id);
+        close_map.push({ amp_space, H5O_DATASPACE });
+
+        status = _read_h5d<T_real>(amp_id, amp_space, amp_space, H5P_DEFAULT, (void*)&(detector->fit_params_override_dict.ds_amp_sens_num));
+        if (status < 0)
+        {
+            logW << "Failed reading ds_amp_sens_num\n";
+        }
+
+        // DS_AMPS_UNIT
+        if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp_unit", file_id))
+            return false;
+
+        amp_space = H5Dget_space(amp_id);
+        close_map.push({ amp_space, H5O_DATASPACE });
+
+        type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
+        if (status < 0)
+        {
+            logW << "Failed reading us_amp_sens_unit\n";
+        }
+        detector->fit_params_override_dict.ds_amp_sens_unit = std::string(tmp_char,255);
+        detector->fit_params_override_dict.ds_amp_sens_unit.erase(std::remove_if(detector->fit_params_override_dict.ds_amp_sens_unit.begin(), detector->fit_params_override_dict.ds_amp_sens_unit.end(), ::isspace), detector->fit_params_override_dict.ds_amp_sens_unit.end());
+
+
+
+        _close_h5_objects(close_map);
+        
         return true;
     }
 

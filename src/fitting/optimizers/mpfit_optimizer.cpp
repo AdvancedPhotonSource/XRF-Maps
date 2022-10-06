@@ -494,7 +494,14 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
-
+    if (fit_params->contains(STR_CHISQRED))
+    {
+        (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
+    }
+    if (fit_params->contains(STR_FREE_PARS))
+    {
+        (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }
     // add perror_ fit params
     Fit_Parameters<T_real> error_params;
     for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params->begin(); itr != fit_params->end(); itr++)
@@ -693,6 +700,17 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
+
+    if (fit_params->contains(STR_CHISQRED))
+    {
+        (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
+    }
+
+    if (fit_params->contains(STR_FREE_PARS))
+    {
+        (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }    
+
     if (this->_outcome_map.count(info) > 0)
         return this->_outcome_map[info];
 

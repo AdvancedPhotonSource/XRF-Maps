@@ -93,8 +93,8 @@ struct Scan_Meta_Info
 {
     string name;
     string scan_time_stamp;
-    vector<T_real> x_axis;
-    vector<T_real> y_axis;
+    ArrayTr<T_real> x_axis;
+    ArrayTr<T_real> y_axis;
     int requested_cols;
     int requested_rows;
     vector<int> detectors;
