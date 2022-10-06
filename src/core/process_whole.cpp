@@ -616,8 +616,8 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("us_IC", us_ic));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("ds_IC", ds_ic));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
+                out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
                 out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
@@ -721,7 +721,7 @@ void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
         io::file::csv::save_v9_specfit(save_path, roi_fit_params.at(detector_num));
         if (analysis_job.get_detector(detector_num)->quantification_standards.size() > 0)
         {
-            io::file::csv::save_v9_specfit_quantified(quant_save_path, analysis_job.get_detector(detector_num), roi_fit_params.at(detector_num));
+            io::file::csv::save_v9_specfit_quantified(quant_save_path, analysis_job.get_detector(detector_num), analysis_job.fitting_routines, roi_fit_params.at(detector_num));
         }
     }
 }

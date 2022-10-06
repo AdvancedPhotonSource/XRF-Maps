@@ -80,7 +80,7 @@ void help()
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
     logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
-    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
+    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois-with <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
@@ -104,7 +104,7 @@ void help()
     logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification \n";
     logit_s<<"xrf_maps --fit roi,matrix,nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
     logit_s<<"   Perform optimization of an integrated roi spectra \n";
-    logit_s<<"xrf_maps  --optimize-rois --quantify-rois maps_standardinfo.txt --quantify-fit roi,matrix,nnls --dir /data/dataset1 \n";
+    logit_s<<"xrf_maps  --optimize-rois --quantify-rois-with maps_standardinfo.txt --quantify-fit roi,matrix,nnls --dir /data/dataset1 \n";
 }
 
 // ----------------------------------------------------------------------------
@@ -626,9 +626,9 @@ int run_optimize_rois(Command_Line_Parser& clp)
     }
     */
     //Check if we want to quantifiy with a standard
-    if (clp.option_exists("--quantify-rois"))
+    if (clp.option_exists("--quantify-rois-with"))
     {
-        analysis_job.quantification_standard_filename = clp.get_option("--quantify-rois");
+        analysis_job.quantification_standard_filename = clp.get_option("--quantify-rois-with");
     }
 
     if (io::file::init_analysis_job_detectors(&analysis_job))

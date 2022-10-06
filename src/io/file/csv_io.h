@@ -265,7 +265,7 @@ namespace csv
     DLL_EXPORT bool save_v9_specfit(std::string path,
         std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
     {
-        const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "dummy", "dummy", "Mo_L", "Tc_L", "Ru_L", "Rh_L", "Pd_L", "Ag_L", "Cd_L", "In_L", "Sn_L", "Sb_L", "Te_L", "I_L", "Xe_L", " ", "Cs_L", "Ba_L", "La_L", "Ce_L", "Pr_L", "Nd_L", "Pm_L", "Sm_L", "Eu_L", "Gd_L", "Tb_L", "Dy_L", "Br_L", "Er_L", "Tm_L", "Yb_L", "Lu_L", "Hf_L", "Ta_L", "W_L", "Re_L", "Os_L", "Ir_L", "Pt_L", "Au_L", "Hg_L", "Tl_L", "Pb_L", "Bi_L", "Po_L", "At_L", "Rn_L", "Ho_L", "Ac_L", "Th_L", "Pa_L", "U_L", "Np_L", "Pu_L", "Zr_L", "Au_M", "Pb_M", "U_M", "Hg_M", "Pt_M", "Os_M", "Bi_M", "dummy", "dummy", "real_time", "live_time", "SRcurrent", "us_IC", "ds_IC", "total_counts", "status", "niter", "total_perror", "abs_error", "relative_error", "roi_areas", "roi_pixels", "US_num", "US_unit", "US_sensfactor", "DS_num", "DS_unit", "DS_sensfactor" };
+        const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "dummy", "dummy", "Mo_L", "Tc_L", "Ru_L", "Rh_L", "Pd_L", "Ag_L", "Cd_L", "In_L", "Sn_L", "Sb_L", "Te_L", "I_L", "Xe_L", " ", "Cs_L", "Ba_L", "La_L", "Ce_L", "Pr_L", "Nd_L", "Pm_L", "Sm_L", "Eu_L", "Gd_L", "Tb_L", "Dy_L", "Br_L", "Er_L", "Tm_L", "Yb_L", "Lu_L", "Hf_L", "Ta_L", "W_L", "Re_L", "Os_L", "Ir_L", "Pt_L", "Au_L", "Hg_L", "Tl_L", "Pb_L", "Bi_L", "Po_L", "At_L", "Rn_L", "Ho_L", "Ac_L", "Th_L", "Pa_L", "U_L", "Np_L", "Pu_L", "Zr_L", "Au_M", "Pb_M", "U_M", "Hg_M", "Pt_M", "Os_M", "Bi_M", "dummy", "dummy", "real_time", "live_time", "SRcurrent", "US_IC", "DS_IC", "total_counts", "status", "niter", "total_perror", "abs_error", "relative_error", "roi_areas", "roi_pixels", "US_num", "US_unit", "US_sensfactor", "DS_num", "DS_unit", "DS_sensfactor" };
 
         const std::vector<std::string> p_list = { "perror_Na", "perror_Mg", "perror_Al", "perror_Si", "perror_P", "perror_S", "perror_Cl", "perror_Ar", "perror_K", "perror_Ca", "perror_Sc", "perror_Ti", "perror_V", "perror_Cr", "perror_Mn", "perror_Fe", "perror_Co", "perror_Ni", "perror_Cu", "perror_Zn", "perror_Ga", "perror_Ge", "perror_As", "perror_Se", "perror_Br", "perror_Kr", "perror_Rb", "perror_Sr", "perror_Y", "perror_Zr", "perror_Nb", "perror_Mo", "perror_Tc", "perror_Ru", "perror_Rh", "perror_Pd", "perror_Ag", "perror_Cd", "perror_In", "perror_Sn", "perror_Sb", "perror_Te", "perror_I", "perror_dummy", "perror_dummy", "perror_Mo_L", "perror_Tc_L", "perror_Ru_L", "perror_Rh_L", "perror_Pd_L", "perror_Ag_L", "perror_Cd_L", "perror_In_L", "perror_Sn_L", "perror_Sb_L", "perror_Te_L", "perror_I_L", "perror_Xe_L", "", "perror_Cs_L", "perror_Ba_L", "perror_La_L", "perror_Ce_L", "perror_Pr_L", "perror_Nd_L", "perror_Pm_L", "perror_Sm_L", "perror_Eu_L", "perror_Gd_L", "perror_Tb_L", "perror_Dy_L", "perror_Br_L", "perror_Er_L", "perror_Tm_L", "perror_Yb_L", "perror_Lu_L", "perror_Hf_L", "perror_Ta_L", "perror_W_L", "perror_Re_L", "perror_Os_L", "perror_Ir_L", "perror_Pt_L", "perror_Au_L", "perror_Hg_L", "perror_Tl_L", "perror_Pb_L", "perror_Bi_L", "perror_Po_L", "perror_At_L", "perror_Rn_L", "perror_Ho_L", "perror_Ac_L", "perror_Th_L", "perror_Pa_L", "perror_U_L", "perror_Np_L", "perror_Pu_L", "perror_Zr_L", "perror_Au_M", "perror_Pb_M", "perror_U_M", "perror_Hg_M", "perror_Pt_M", "perror_Os_M", "perror_Bi_M", "perror_dummy", "perror_dummy" };
 
@@ -349,11 +349,12 @@ namespace csv
     template<typename T_real>
     DLL_EXPORT bool save_v9_specfit_quantified(std::string path,
         Detector<T_real>* detector,
-        std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
+        const std::vector<Fitting_Routines> &fitting_routines,
+        const std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
     {
 
-        const std::vector<string> norm_names = { "DOWNSTREAM", "UPSTREAM", "SR_CURRENT" };
-        const std::map<int, std::string> normalize_by_map = { {0, STR_DS_IC}, {1, STR_US_IC}, {2, STR_SR_CURRENT} };
+        const std::vector<string> norm_names = { "DOWNSTREAM", "UPSTREAM", "SR_CURRENT", "Counts Per Sec" };
+        const std::map<int, std::string> normalize_by_map = { {0, STR_DS_IC}, {1, STR_US_IC}, {2, STR_SR_CURRENT}, {3, "Counts Per Sec"} };
         const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Mo_L", "Ag_L", "Sn_L", "Cd_L", "I_L", "Cs_L", "Ba_L", "Eu_L", "Gd_L", "W_L", "Pt_L", "Au_L", "Hg_L", "Pb_L", "U_L", "La_L", "Re_L", "Pr_L", "Ce_L", "Zr_L", "Os_L", "Ru_L", "Au_M", "Pb_M", "U_M", "Bi_M", "Hg_M" };
 
         const std::vector<std::string> p_list = { "perror_Na", "perror_Mg", "perror_Al", "perror_Si", "perror_P", "perror_S", "perror_Cl", "perror_Ar", "perror_K", "perror_Ca", "perror_Sc", "perror_Ti", "perror_V", "perror_Cr", "perror_Mn", "perror_Fe", "perror_Co", "perror_Ni", "perror_Cu", "perror_Zn", "perror_Ga", "perror_Ge", "perror_As", "perror_Se", "perror_Br", "perror_Kr", "perror_Rb", "perror_Sr", "perror_Y", "perror_Zr", "perror_Nb", "perror_Mo", "perror_Tc", "perror_Ru", "perror_Rh", "perror_Pd", "perror_Ag", "perror_Cd", "perror_In", "perror_Sn", "perror_Sb", "perror_Te", "perror_I", "perror_Mo_L", "perror_Ag_L", "perror_Sn_L", "perror_Cd_L", "perror_I_L", "perror_Cs_L", "perror_Ba_L", "perror_Eu_L", "perror_Gd_L", "perror_W_L", "perror_Pt_L", "perror_Au_L", "perror_Hg_L", "perror_Pb_L", "perror_U_L", "perror_La_L", "perror_Re_L", "perror_Pr_L", "perror_Ce_L", "perror_Zr_L", "perror_Os_L", "perror_Ru_L", "perror_Au_M", "perror_Pb_M", "perror_U_M", "perror_Bi_M", "perror_Hg_M" };
@@ -391,7 +392,7 @@ namespace csv
             auto tm = *std::localtime(&t);
 
             std::ostringstream oss;
-            oss << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+            oss << std::put_time(&tm, "%m/%d/%Y %H:%M:%S");
             file_stream << "calibrated:, " << oss.str() << "\n"; //Mon Apr 23 20 : 37 : 44 2018
             file_stream << "unless stated otherwise, element units are given as microgram / cm2\n";
             file_stream << "in order to get the total content in femtogram(10 ^ -15g) you will need to multiply the relevant columns with the column for roi area(in um ^ 2) and multiply by * 10. (ug->femtog; um->cm; *1000. * 1000. * 1000. / 1000. / 1000. / 10. / 10.)\n";
@@ -399,61 +400,176 @@ namespace csv
             file_stream << "perror can be used as an indication on the accuracy of a measurement for an element, e.g., when it is larger than the actual reported elemental content, this means that probably the element is not really present\n";
             file_stream << "BUT, it should not be trusted blindly, there can be occurances where perror is small, but the presences of a peak still questionable.\n\n";
 
-            for (auto &n_itr : normalize_by_map)
+
+            for (auto& n_itr : normalize_by_map)
             {
-                T_real normalizer = 1.0;
-                file_stream << "calibrated using the "<< norm_names[n_itr.first]<<" ionchamber";
-                
-                file_stream << "\n\n\n";
-                file_stream << "name, ds_IC, ds_IC_amp_factor, us_IC, us_IC_amp_factor, live_time, real_time, roi_pixels, roi_areas, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Mo_L, Ag_L, Sn_L, Cd_L, I_L, Cs_L, Ba_L, Eu_L, Gd_L, W_L, Pt_L, Au_L, Hg_L, Pb_L, U_L, La_L, Re_L, Pr_L, Ce_L, Zr_L, Os_L, Ru_L, Au_M, Pb_M, U_M, Bi_M, Hg_M, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_Mo_L, perror_Ag_L, perror_Sn_L, perror_Cd_L, perror_I_L, perror_Cs_L, perror_Ba_L, perror_Eu_L, perror_Gd_L, perror_W_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Pb_L, perror_U_L, perror_La_L, perror_Re_L, perror_Pr_L, perror_Ce_L, perror_Zr_L, perror_Os_L, perror_Ru_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Bi_M, perror_Hg_M\n";
-                for (auto& itr : roi_files_fits_map)
+                for (auto& f_itr : fitting_routines)
                 {
-                    T_real roi_pixels = 1.0e-10;
-                    T_real roi_area = 1.0e-10;
-                    if (itr.second.contains("roi_pixels"))
-                    {
-                        roi_pixels = itr.second.at("roi_pixels").value;
-                    }
-                    if (itr.second.contains("roi_area"))
-                    {
-                        roi_pixels = itr.second.at("roi_area").value;
-                    }
+                    const vector < Element_Quant<T_real> >* k_calib_curve = nullptr;
+                    const vector < Element_Quant<T_real> >* l_calib_curve = nullptr;
+                    const vector < Element_Quant<T_real> >* m_calib_curve = nullptr;
 
-                    file_stream << itr.first << ",";
-                    file_stream << "0" << ","; // ds_ic
-                    file_stream << "0" << ","; // ds_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
-                    file_stream << "0" << ","; // us_ic
-                    file_stream << "0" << ","; // us_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
-                    file_stream << "0" << ","; // live_time
-                    file_stream << "0" << ","; // real_time
-                    file_stream << roi_pixels << ","; // roi_pixels
-                    file_stream << roi_area << ","; // roi_areas
-
-
-                    for (auto& e_itr : e_list)
+                    if (detector->fitting_quant_map.count(f_itr) > 0)
                     {
-                        if (itr.second.contains(e_itr))
+                        const auto& quant_struct = detector->fitting_quant_map.at(f_itr);
+                        if (quant_struct.quant_scaler_map.count(n_itr.second) > 0)
                         {
-                            double e_cal_val = 1.0;
-                            //detector->fit_params_override_dict->
-                            T_real val = itr.second.at(e_itr).value / normalizer / e_cal_val;
-                            file_stream << val << ",";
+                            //Quantification_Scaler_Struct
+                            auto& quant_element = quant_struct.quant_scaler_map.at(n_itr.second);
+                            k_calib_curve = &(quant_element.curve_quant_map.at(Electron_Shell::K_SHELL));
+                            l_calib_curve = &(quant_element.curve_quant_map.at(Electron_Shell::L_SHELL));
+                            m_calib_curve = &(quant_element.curve_quant_map.at(Electron_Shell::M_SHELL));
+                        }
+                    }
+
+
+                    file_stream << "\n\n\n";
+
+                    T_real normalizer = 1.0;
+                    file_stream << "calibrated using the " << norm_names[n_itr.first] << " ionchamber, fitted using "<< Fitting_Routine_To_Str.at(f_itr);
+
+                    file_stream << "\n\n\n";
+                    file_stream << "name, DS_IC, ds_IC_amp_factor, US_IC, us_IC_amp_factor, live_time, real_time, roi_pixels, roi_areas, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Mo_L, Ag_L, Sn_L, Cd_L, I_L, Cs_L, Ba_L, Eu_L, Gd_L, W_L, Pt_L, Au_L, Hg_L, Pb_L, U_L, La_L, Re_L, Pr_L, Ce_L, Zr_L, Os_L, Ru_L, Au_M, Pb_M, U_M, Bi_M, Hg_M, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_Mo_L, perror_Ag_L, perror_Sn_L, perror_Cd_L, perror_I_L, perror_Cs_L, perror_Ba_L, perror_Eu_L, perror_Gd_L, perror_W_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Pb_L, perror_U_L, perror_La_L, perror_Re_L, perror_Pr_L, perror_Ce_L, perror_Zr_L, perror_Os_L, perror_Ru_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Bi_M, perror_Hg_M,\n";
+                    for (auto& itr : roi_files_fits_map)
+                    {
+                        if (itr.second.contains(n_itr.second))
+                        {
+                            normalizer = itr.second.at(n_itr.second).value;
                         }
                         else
                         {
-                            file_stream << "1.0e-10, ";
+                            normalizer = 1.0;
                         }
+
+                        T_real roi_pixels = 1.0e-10;
+                        T_real roi_areas = 1.0e-10;
+                        T_real us_ic = 1.0e-10;
+                        T_real ds_ic = 1.0e-10;
+                        T_real real_time = 1.0e-10;
+                        T_real live_time = 1.0e-10;
+                        T_real us_sensfactor = 1.0e-10;
+                        T_real ds_sensfactor = 1.0e-10;
+                        if (itr.second.contains("roi_pixels"))
+                        {
+                            roi_pixels = itr.second.at("roi_pixels").value;
+                        }
+                        if (itr.second.contains("roi_areas"))
+                        {
+                            roi_areas = itr.second.at("roi_areas").value;
+                        }
+                        if (itr.second.contains(STR_US_IC))
+                        {
+                            us_ic = itr.second.at(STR_US_IC).value;
+                        }
+                        if (itr.second.contains(STR_DS_IC))
+                        {
+                            ds_ic = itr.second.at(STR_DS_IC).value;
+                        }
+                        if (itr.second.contains("real_time"))
+                        {
+                            real_time = itr.second.at("real_time").value;
+                        }
+                        if (itr.second.contains("live_time"))
+                        {
+                            live_time = itr.second.at("live_time").value;
+                        }
+                        if (itr.second.contains("US_sensfactor"))
+                        {
+                            us_sensfactor = itr.second.at("US_sensfactor").value;
+                        }
+                        if (itr.second.contains("DS_sensfactor"))
+                        {
+                            ds_sensfactor = itr.second.at("DS_sensfactor").value;
+                        }
+
+
+
+                        file_stream << itr.first << ",";
+                        file_stream << ds_ic << ","; // ds_ic
+                        file_stream << ds_sensfactor << ","; // ds_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
+                        file_stream << us_ic << ","; // us_ic
+                        file_stream << us_sensfactor << ","; // us_IC_amp_factor //  file_stream << translate_sens_unit<T_real>(int(itr.second.at(e_itr).value)) << ",";
+                        file_stream << live_time << ","; // live_time
+                        file_stream << real_time << ","; // real_time
+                        file_stream << roi_pixels << ","; // roi_pixels
+                        file_stream << roi_areas << ","; // roi_areas
+
+
+                        for (auto& e_itr : e_list)
+                        {
+                            if (itr.second.contains(e_itr))
+                            {
+                                double e_cal_val = 1.0;
+                                Electron_Shell shell = get_shell_by_name(e_itr);
+                                auto* element = data_struct::Element_Info_Map<double>::inst()->get_element(e_itr);
+                                if (element != nullptr)
+                                {
+                                    int idx = element->number - 1;
+                                    if (shell == Electron_Shell::K_SHELL && k_calib_curve != nullptr)
+                                    {
+                                        e_cal_val = k_calib_curve->at(idx).calib_curve_val;
+                                    }
+                                    else if (shell == Electron_Shell::L_SHELL && l_calib_curve != nullptr)
+                                    {
+                                        e_cal_val = l_calib_curve->at(idx).calib_curve_val;
+                                    }
+                                    else if (shell == Electron_Shell::M_SHELL && m_calib_curve != nullptr)
+                                    {
+                                        e_cal_val = m_calib_curve->at(idx).calib_curve_val;
+                                    }
+                                }
+                                T_real val = itr.second.at(e_itr).value / normalizer / e_cal_val;
+                                file_stream << val << ",";
+                            }
+                            else
+                            {
+                                file_stream << "1.0e-10,";
+                            }
+                        }
+
+                        for (auto& p_itr : p_list)
+                        {
+                            if (itr.second.contains(p_itr))
+                            {
+                                file_stream << itr.second.at(p_itr).value << ",";
+                            }
+                            else
+                            {
+                                file_stream << "1.0e-10,";
+                            }
+                        }
+                        file_stream << "\n";
                     }
 
-                    for (auto& p_itr : p_list)
+                    // save calib_curves
+                    if (k_calib_curve != nullptr)
                     {
-                        if (itr.second.contains(p_itr))
+                        file_stream << "\n Quantification Calibration Curve \n";
+                        for (auto& k_itr : *k_calib_curve)
                         {
-                            file_stream << itr.second.at(p_itr).value << ",";
+                            file_stream << k_itr.name << ",";
                         }
-                        else
+                        file_stream << "\n";
+                        for (auto& k_itr : *k_calib_curve)
                         {
-                            file_stream << "1.0e-10, ";
+                            file_stream << k_itr.calib_curve_val << ",";
+                        }
+                        file_stream << "\n";
+                        if (l_calib_curve != nullptr)
+                        {
+                            for (auto& l_itr : *l_calib_curve)
+                            {
+                                file_stream << l_itr.calib_curve_val << ",";
+                            }
+                            file_stream << "\n";
+                        }
+                        if (m_calib_curve != nullptr)
+                        {
+                            for (auto& m_itr : *m_calib_curve)
+                            {
+                                file_stream << m_itr.calib_curve_val << ",";
+                            }
+                            file_stream << "\n";
                         }
                     }
                 }
