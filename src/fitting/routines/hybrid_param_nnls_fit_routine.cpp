@@ -111,6 +111,9 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
     
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_CHISQUARE, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_CHISQRED, 0.0));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_FREE_PARS, 0.0));
 
     if (fit_params.contains(STR_COMPTON_AMPLITUDE))
     {

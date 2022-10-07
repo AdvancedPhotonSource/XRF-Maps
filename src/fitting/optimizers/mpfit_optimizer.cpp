@@ -490,6 +490,32 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    if (fit_params->contains(STR_CHISQUARE))
+    {
+        (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
+    }
+    if (fit_params->contains(STR_CHISQRED))
+    {
+        (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
+    }
+    if (fit_params->contains(STR_FREE_PARS))
+    {
+        (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }
+    // add perror_ fit params
+    Fit_Parameters<T_real> error_params;
+    for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params->begin(); itr != fit_params->end(); itr++)
+    {
+        if (itr->second.opt_array_index > -1)
+        {
+            data_struct::Fit_Param<T_real> fp("perror_" + itr->first, 0.0);
+            fp.opt_array_index = itr->second.opt_array_index;
+            error_params.add_parameter(fp);
+        }
+    }
+    error_params.from_array(perror);
+
+    fit_params->append_and_update(error_params);
 
     if (this->_outcome_map.count(info) > 0)
         return this->_outcome_map[info];
@@ -555,9 +581,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     result.resid = &resid[0];
 
     info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
-/*
-    
-*/
+
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR) )
@@ -572,6 +596,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
              sum_resid += std::abs(resid[i]);
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
+    }
+    if (fit_params->contains(STR_CHISQUARE))
+    {
+        (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
 
     if (this->_outcome_map.count(info) > 0)
@@ -668,6 +696,21 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    if (fit_params->contains(STR_CHISQUARE))
+    {
+        (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
+    }
+
+    if (fit_params->contains(STR_CHISQRED))
+    {
+        (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
+    }
+
+    if (fit_params->contains(STR_FREE_PARS))
+    {
+        (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }    
+
     if (this->_outcome_map.count(info) > 0)
         return this->_outcome_map[info];
 

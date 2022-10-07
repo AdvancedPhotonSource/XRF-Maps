@@ -503,6 +503,17 @@ Element_Info<T_real>* Element_Info_Map<T_real>::get_element(std::string element_
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+bool Element_Info_Map<T_real>::is_element(std::string element_name)
+{
+    bool ret = false;
+    if (_name_element_info_map.count(element_name) > 0)
+        ret = true;
+    return ret;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 void Element_Info_Map<T_real>::generate_default_elements(int start_element, int end_element)
 {
     for (int i = start_element; i <end_element; i++)

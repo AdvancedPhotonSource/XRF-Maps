@@ -78,8 +78,9 @@ void help()
                "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
-    logit_s<<"--optimizer-fxg-tols <tol_override_val> : Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
-    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
+    logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+    logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+    logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois-with <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
     logit_s<<"  roi : element energy region of interest \n";
@@ -103,7 +104,7 @@ void help()
     logit_s<<"   Perform roi, matrix, and nnls  analysis on the directory /data/dataset1, use maps_standard.txt information for quantification \n";
     logit_s<<"xrf_maps --fit roi,matrix,nnls --quantify-with maps_standard.txt --dir /data/dataset1 \n";
     logit_s<<"   Perform optimization of an integrated roi spectra \n";
-    logit_s<<"xrf_maps  --optimize-rois --quantify-rois maps_standardinfo.txt --quantify-fit roi,matrix,nnls --dir /data/dataset1 \n";
+    logit_s<<"xrf_maps  --optimize-rois --quantify-rois-with maps_standardinfo.txt --quantify-fit roi,matrix,nnls --dir /data/dataset1 \n";
 }
 
 // ----------------------------------------------------------------------------
@@ -111,6 +112,9 @@ void help()
 template <typename T_real>
 void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
+    bool fx_exists = clp.option_exists("--optimizer-fx-tols");
+    bool fxg_exists = clp.option_exists("--optimizer-fxg-tols");
+
     //Which optimizer do we want to pick. Default is lmfit
     if (clp.option_exists("--optimizer"))
     {
@@ -127,25 +131,44 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
         }
     }
 
-    if (clp.option_exists("--optimizer-fxg-tols"))
+    if (fx_exists || fxg_exists)
     {
         T_real fxg_tol; 
         if (std::is_same<T_real, float>::value)
         {
-            fxg_tol = std::stof(clp.get_option("--optimizer-fxg-tols"));
+            if (fxg_exists)
+            {
+                fxg_tol = std::stof(clp.get_option("--optimizer-fxg-tols"));
+            }
+            else if (fx_exists)
+            {
+                fxg_tol = std::stof(clp.get_option("--optimizer-fx-tols"));
+            }
         }
         else if (std::is_same<T_real, double>::value)
         {
-            fxg_tol = std::stod(clp.get_option("--optimizer-fxg-tols"));
+            if (fxg_exists)
+            {
+                fxg_tol = std::stod(clp.get_option("--optimizer-fxg-tols"));
+            }
+            else if (fx_exists)
+            {
+                fxg_tol = std::stod(clp.get_option("--optimizer-fx-tols"));
+            }
         }
         
         std::unordered_map<std::string, T_real> opt_map;
         opt_map[STR_OPT_FTOL] = fxg_tol;
         opt_map[STR_OPT_XTOL] = fxg_tol;
-        opt_map[STR_OPT_GTOL] = fxg_tol;
-
-        logI << "Setting FTOL, XTOL, GTOL to " << fxg_tol << "\n";
-
+        if (fxg_exists)
+        {
+            opt_map[STR_OPT_GTOL] = fxg_tol;
+            logI << "Setting FTOL, XTOL, GTOL to " << fxg_tol << "\n";
+        }
+        else
+        {
+            logI << "Setting FTOL, XTOL to " << fxg_tol << "\n";
+        }
         analysis_job.optimizer()->set_options(opt_map);
     }
 }
@@ -603,9 +626,9 @@ int run_optimize_rois(Command_Line_Parser& clp)
     }
     */
     //Check if we want to quantifiy with a standard
-    if (clp.option_exists("--quantify-rois"))
+    if (clp.option_exists("--quantify-rois-with"))
     {
-        analysis_job.quantification_standard_filename = clp.get_option("--quantify-rois");
+        analysis_job.quantification_standard_filename = clp.get_option("--quantify-rois-with");
     }
 
     if (io::file::init_analysis_job_detectors(&analysis_job))
