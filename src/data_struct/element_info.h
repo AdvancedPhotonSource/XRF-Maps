@@ -125,7 +125,7 @@ public:
 
     Element_Info<T_real>* get_element(std::string element_name);
 
-    bool Element_Info_Map<T_real>::is_element(std::string element_name);
+    bool is_element(std::string element_name);
 
     //void set_energies(float* energy_arr, int num_energies);
 
