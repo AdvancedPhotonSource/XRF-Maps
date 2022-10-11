@@ -765,7 +765,9 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 {
     data_struct::Analysis_Job<float> analysis_job;
 
-    if (set_general_options(clp, analysis_job) != -1)
+    set_detectors(clp, analysis_job);
+    set_whole_command(clp, analysis_job);
+    if (set_dir_and_files(clp, analysis_job) != -1)
     {
 
 
