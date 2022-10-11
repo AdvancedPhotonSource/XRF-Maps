@@ -377,8 +377,8 @@ namespace csv
                 file_stream << " I_[mA]:, " << itr.second.sr_current << "\n";
                 file_stream << " US_IC[cts/s]:, " << itr.second.US_IC << "\n";
                 file_stream << " DS_IC[cts/s]:, " << itr.second.DS_IC << "\n";
-                //file_stream << " US_AMPS[num,unit]:, " << itr.second.US_IC << "\n";
-                //file_stream << " DS_AMPS[num,unit]:, " << itr.second.DS_IC << "\n";
+                file_stream << " US_AMPS[num,unit]:, " << detector->fit_params_override_dict.us_amp_sens_num << ","<< detector->fit_params_override_dict.us_amp_sens_unit << "\n";
+                file_stream << " DS_AMPS[num,unit]:, " << detector->fit_params_override_dict.ds_amp_sens_num << "," << detector->fit_params_override_dict.ds_amp_sens_unit << "\n";
                 file_stream << "\n\n";
             }
             file_stream << "beryllium_window_thickness : " << detector->beryllium_window_thickness << "\n";

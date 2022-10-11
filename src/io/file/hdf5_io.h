@@ -3419,7 +3419,7 @@ public:
     {
         hid_t file_id = -1;
         hid_t maps_grp_id = -1;
-        hid_t sub_grp_id, counts_dset_id, channels_dset_id, counts_dspace_id, channels_dspace_id, fit_int_spec_dset_id;
+        hid_t counts_dset_id, channels_dset_id, counts_dspace_id, channels_dspace_id, fit_int_spec_dset_id;
         hid_t memoryspace_id, memoryspace_name_id, error;
         hsize_t offset[3] = { 0,0,0 };
         hsize_t count[3] = { 1,1,1 };
@@ -3440,22 +3440,23 @@ public:
         {
             return false;
         }
-
-        if (false == _open_h5_object(sub_grp_id, H5O_GROUP, close_map, "Scalers", maps_grp_id))
-        {
-            return false;
-        }
         
-        if (false == _open_h5_object(counts_dset_id, H5O_DATASET, close_map, "Values", sub_grp_id))
+        if (false == _open_h5_object(counts_dset_id, H5O_DATASET, close_map, "Scalers/Values", maps_grp_id, false, false))
         {
-            return false;
+            if (false == _open_h5_object(counts_dset_id, H5O_DATASET, close_map, "scalers", maps_grp_id, false, false))
+            {
+                return false;
+            }
         }
         counts_dspace_id = H5Dget_space(counts_dset_id);
         close_map.push({ counts_dspace_id, H5O_DATASPACE });
 
-        if (false == _open_h5_object(channels_dset_id, H5O_DATASET, close_map, "Names", sub_grp_id))
+        if (false == _open_h5_object(channels_dset_id, H5O_DATASET, close_map, "Scalers/Names", maps_grp_id, false, false))
         {
-            return false;
+            if (false == _open_h5_object(channels_dset_id, H5O_DATASET, close_map, "scaler_names", maps_grp_id))
+            {
+                return false;
+            }
         }
         
         channels_dspace_id = H5Dget_space(channels_dset_id);
