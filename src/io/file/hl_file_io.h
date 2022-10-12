@@ -438,6 +438,48 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
     }
 
+
+    bool ends_in_mca = false;
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
+    {
+        ends_in_mca = true;
+    }
+    else
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            std::string s1 = std::to_string(i);
+            if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+            {
+                ends_in_mca = true;
+                break;
+            }
+        }
+    }
+
+    if (ends_in_mca)
+    {
+        Spectra<T_real> spec;
+        unordered_map<string, T_real> pv_map;
+        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map))
+        {
+            if (pv_map.count(STR_SR_CURRENT) > 0)
+            {
+                params_override->sr_current = pv_map.at(STR_SR_CURRENT);
+            }
+            if (pv_map.count(STR_US_IC) > 0)
+            {
+                params_override->US_IC = pv_map.at(STR_US_IC);
+            }
+            if (pv_map.count(STR_DS_IC) > 0)
+            {
+                params_override->DS_IC = pv_map.at(STR_DS_IC);
+            }    
+            return true;
+        }
+    }
+
     //  try to load from a pre analyzed file because they should contain the integrated spectra
     std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
     if (detector_num != -1)
