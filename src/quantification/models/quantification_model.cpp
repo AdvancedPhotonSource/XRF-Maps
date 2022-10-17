@@ -178,16 +178,16 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
         beta  = Element_Info_Map<T_real>::inst()->calc_beta("Be", (T_real)1.848, ev);
         ////aux_arr[mm, 1] = self.transmission(self.maps_conf.fit_t_be, beta, 1239.852/ev)
         element_quant.transmission_Be = transmission(beryllium_window_thickness, beta, (T_real)1239.852 / ev);
-
+        // get density (second arg) from henke lookup
         beta  = Element_Info_Map<T_real>::inst()->calc_beta("Ge", (T_real)5.323, ev);
         ////aux_arr[mm, 2] = self.transmission(self.maps_conf.fit_t_ge, beta, 1239.852/ev)
         element_quant.transmission_Ge = transmission(germanium_dead_layer, beta, (T_real)1239.852 / ev);
     }
  
 
-    if (detector_element->name == "Si" && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
+    if (detector_element->name.length() > 0 && data_struct::Henke_Compound_Density_Map<T_real>.count(detector_element->name) > 0 && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
-        beta  = Element_Info_Map<T_real>::inst()->calc_beta("Si", (T_real)2.3, ev);
+        beta  = Element_Info_Map<T_real>::inst()->calc_beta(detector_element->name, data_struct::Henke_Compound_Density_Map<T_real>.at(detector_element->name), ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (T_real)1239.852 / ev);
     }
     ////aux_arr[mm, 4] = self.transmission(self.maps_conf.add_float['a'], beta, 1239.852/ev)
@@ -244,9 +244,9 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
 {
     // aux_arr[mm, 0] = absorption
     // aux_arr[mm, 1] = transmission, Be
-    // aux_arr[mm, 2] = transmission, Ge or Si dead layer
+    // aux_arr[mm, 2] = transmission, detector dead layer
     // aux_arr[mm, 3] = yield
-    // aux_arr[mm, 4] = transmission through Si detector
+    // aux_arr[mm, 4] = transmission through detector element
     // aux_arr[mm, 5] = transmission through  air (N2)
 //aux array[92, 6] (92 elements)
     //aux_arr = self.aux_arr;

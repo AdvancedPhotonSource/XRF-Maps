@@ -466,7 +466,6 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
 
-
                         if (value == "0")
                         {
                             params_override->detector_element = "Ge";
@@ -477,7 +476,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         }
                         else
                         {
-                            logE << "Unknown detector element enumeration : " << value << "\n";
+                            params_override->detector_element = value;
                         }
                     }
                     else if (tag == "US_AMP_SENS_NUM")
