@@ -215,10 +215,13 @@ namespace csv
 
                     for (const auto& s_itr : *standards)
                     {
-                        if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                        if (s_itr.second.element_counts.count(routine) > 0)
                         {
-                            counts = s_itr.second.element_counts.at(routine).at(name);
-                            break;
+                            if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                            {
+                                counts = s_itr.second.element_counts.at(routine).at(name);
+                                break;
+                            }
                         }
                     }
 

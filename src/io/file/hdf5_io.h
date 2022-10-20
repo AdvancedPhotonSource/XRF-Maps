@@ -5531,7 +5531,11 @@ public:
                     }
 
                     //save quantification_standard counts
-                    std::unordered_map<std::string, T_real> element_counts = quant_itr.second.element_counts.at(fit_itr.first);
+                    std::unordered_map<std::string, T_real> element_counts;
+                    if (quant_itr.second.element_counts.count(fit_itr.first) > 0)
+                    {
+                        element_counts = quant_itr.second.element_counts.at(fit_itr.first);
+                    }
                     count[0] = element_counts.size();
 
                     _create_memory_space(1, count, memoryspace_id);
