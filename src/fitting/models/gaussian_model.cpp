@@ -677,6 +677,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real  gain) const
 {
+    // check detector element for how much to move escape peaks.
     ArrayTr<T_real>counts(ev.size());
     counts.setZero();
     /*
