@@ -277,7 +277,10 @@ namespace io
                 {
                     std::string full_path = dataset_directory + DIR_END_CHAR + "mda" + DIR_END_CHAR + itr;
                     long fsize = file::mda_get_multiplied_dims(full_path);
-                    f_list.push_back(file_name_size(itr, fsize));
+                    if (fsize > -1)
+                    {
+                        f_list.push_back(file_name_size(itr, fsize));
+                    }
                 }
                 else
                 {

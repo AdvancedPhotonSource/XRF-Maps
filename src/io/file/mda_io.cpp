@@ -1547,30 +1547,32 @@ int mda_get_multiplied_dims(std::string path)
 
 
     std::FILE* fptr = std::fopen(path.c_str(), "rb");
-    struct mda_header* header = mda_header_load(fptr);
-
-    std::fclose(fptr);
-
-    if (header == nullptr)
+    if (fptr != nullptr)
     {
-        logE << "Unable to open mda file " << path << "\n";
-        return f_size;
-    }
-    else if (header->data_rank == 1)
-    {
-        f_size = header->dimensions[0];
-    }
-    else if (header->data_rank == 2 || header->data_rank == 3)
-    {
-        f_size = header->dimensions[0] * header->dimensions[1];
-    }
-    else
-    {
-        logW << "Unsupported mda data rank " << header->data_rank << " . Skipping file " << path << "\n";
-    }
+        struct mda_header* header = mda_header_load(fptr);
 
-    mda_header_unload(header);
+        std::fclose(fptr);
 
+        if (header == nullptr)
+        {
+            logE << "Unable to open mda file " << path << "\n";
+            return f_size;
+        }
+        else if (header->data_rank == 1)
+        {
+            f_size = header->dimensions[0];
+        }
+        else if (header->data_rank == 2 || header->data_rank == 3)
+        {
+            f_size = header->dimensions[0] * header->dimensions[1];
+        }
+        else
+        {
+            logW << "Unsupported mda data rank " << header->data_rank << " . Skipping file " << path << "\n";
+        }
+
+        mda_header_unload(header);
+    }
     return f_size;
 }
 
