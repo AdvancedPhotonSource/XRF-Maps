@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fit_element_map.h"
 #include <iostream>
+#include "xraylib.h"
 
 namespace data_struct
 {
@@ -91,6 +92,11 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
     {
         num_ratios = 12;
     }
+    else if (_shell_type == "M")
+    {
+        num_ratios = 4;
+    }
+
     for(size_t i=0; i<num_ratios; i++)
     {
         _energy_ratio_custom_multipliers.push_back(1.0);
@@ -178,11 +184,22 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
     }
     else if(_shell_type == "M")
     {
-        //TODO: finish adding M info
-        generate_energy_ratio(_element_info->xrf["ma1"], 1.0, Element_Param_Type::Ma1_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["ma2"], 1.0, Element_Param_Type::Ma2_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["mb"], 1.0, Element_Param_Type::Mb_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["mg"], 1.0, Element_Param_Type::Mg_Line, detector_element);
+        // M5 - N7	
+        T_real ratio = 1.0;
+        //ratio = RadRate(_element_info->number, M5N7_LINE, nullptr);
+        generate_energy_ratio(_element_info->xrf["ma1"], ratio, Element_Param_Type::Ma1_Line, detector_element);
+        // M5 - N6	
+        //ratio = (_element_info->xrf_abs_yield["ma2"] / _element_info->xrf_abs_yield["ma1"])* _energy_ratio_custom_multipliers[1]
+        ratio = RadRate(_element_info->number, M5N6_LINE, nullptr) * _energy_ratio_custom_multipliers[1];
+        generate_energy_ratio(_element_info->xrf["ma2"], ratio, Element_Param_Type::Ma2_Line, detector_element);
+        // M4 - N6	
+        //ratio = (_element_info->xrf_abs_yield["mb"] / _element_info->xrf_abs_yield["ma1"])* _energy_ratio_custom_multipliers[2]
+        ratio = RadRate(_element_info->number, M4N6_LINE, nullptr) * _energy_ratio_custom_multipliers[2];
+        generate_energy_ratio(_element_info->xrf["mb"], ratio, Element_Param_Type::Mb_Line, detector_element);
+        // M3 - N5
+        //ratio = (_element_info->xrf_abs_yield["mg"] / _element_info->xrf_abs_yield["ma1"])* _energy_ratio_custom_multipliers[3]
+        ratio = RadRate(_element_info->number, M3N5_LINE, nullptr) * _energy_ratio_custom_multipliers[3];
+        generate_energy_ratio(_element_info->xrf["mg"], ratio, Element_Param_Type::Mg_Line, detector_element);
     }
 
     _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );

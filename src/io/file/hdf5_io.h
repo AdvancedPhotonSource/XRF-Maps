@@ -1265,7 +1265,7 @@ public:
 
         buffer = new T_real[dims_in[0] * dims_in[2]]; // cols x spectra_size
         count_row[0] = dims_in[0];
-        count_row[1] = 1;
+        count_row[1] = detector_num; // this should be detector number.
         count_row[2] = dims_in[2];
 
         size_t greater_cols = std::max(spec_row->size(), (size_t)dims_in[0]);

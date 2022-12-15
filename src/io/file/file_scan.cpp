@@ -122,6 +122,7 @@ namespace io
             _bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
             _hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5" + DIR_END_CHAR, "_0.h5");
             _hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress" + DIR_END_CHAR, "_0.h5");
+            _hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.hdf5");
             //_hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
             _hdf_emd_files = find_all_dataset_files(dataset_dir, ".emd");
         }
