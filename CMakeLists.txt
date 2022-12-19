@@ -83,11 +83,6 @@ option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
 option(AVX "Compule with arch AVX on MSVC" OFF)
 option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
 
-set(XRAYLIB_INCLUDES "${PROJECT_SOURCE_DIR}/../xraylib/include" CACHE PATH "xraylib include folder")
-set(XRAYLIB_LIB "${PROJECT_SOURCE_DIR}/../xraylib/builddir/src/xrl.lib" CACHE FILEPATH "xraylib lib")
-
-include_directories(${XRAYLIB_INCLUDES})
-
 # Opitons for getting YouCompleteMe plugin working with this project
 SET( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
@@ -338,8 +333,6 @@ ELSE()
              ${XRF_IO_SOURCE}
              )
 ENDIF()
-
-target_link_libraries(libxrf_fit PRIVATE ${XRAYLIB_LIB})
 
 #--------------- start pyxrf-maps lib -----------------
 IF (BUILD_WITH_PYBIND11)
