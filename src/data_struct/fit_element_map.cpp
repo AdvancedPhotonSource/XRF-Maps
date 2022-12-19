@@ -302,7 +302,7 @@ void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio,
 template<typename T_real>
 void Fit_Element_Map<T_real>::set_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
-    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
+    if (idx < _energy_ratio_custom_multipliers.size()) 
     {
         _energy_ratio_custom_multipliers[idx] = multi;
     }
@@ -313,7 +313,7 @@ void Fit_Element_Map<T_real>::set_custom_multiply_ratio(unsigned int idx, T_real
 template<typename T_real>
 void Fit_Element_Map<T_real>::multiply_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
-    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
+    if ( idx < _energy_ratio_custom_multipliers.size()) 
     {
         _energy_ratio_custom_multipliers[idx] *= multi;
     }
