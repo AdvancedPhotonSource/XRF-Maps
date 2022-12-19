@@ -48,6 +48,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fit_element_map.h"
 #include <iostream>
+//#include "xraylib.h"
 
 namespace data_struct
 {
@@ -91,6 +92,11 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
     {
         num_ratios = 12;
     }
+    else if (_shell_type == "M")
+    {
+        num_ratios = 4;
+    }
+
     for(size_t i=0; i<num_ratios; i++)
     {
         _energy_ratio_custom_multipliers.push_back(1.0);
@@ -127,19 +133,19 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
 
     if (_shell_type == "K") // K line
     {
-        if(_pileup_element_info != nullptr)
+        if(_pileup_element_info != nullptr) // pileup's
         {
             _center = _element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"];
             if (false == disable_Ka)
             {
-                generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka1_Line, detector_element);
-                generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["kb1"], (_pileup_element_info->xrf_abs_yield["kb1"] / _pileup_element_info->xrf_abs_yield["ka1"]), Element_Param_Type::Kb1_Line, detector_element);
+                generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["ka1"], _energy_ratio_custom_multipliers[0], Element_Param_Type::Ka1_Line, detector_element);
+                generate_energy_ratio(_element_info->xrf["ka1"] + _pileup_element_info->xrf["kb1"], (_pileup_element_info->xrf_abs_yield["kb1"] / _pileup_element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Kb1_Line, detector_element);
             }
-            generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * (_pileup_element_info->xrf_abs_yield["kb1"] / _pileup_element_info->xrf_abs_yield["ka1"]), Element_Param_Type::Kb1_Line, detector_element);
+            generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * (_pileup_element_info->xrf_abs_yield["kb1"] / _pileup_element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb1_Line, detector_element);
 
             if(_element_info != _pileup_element_info)
             {
-                generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["ka1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]), Element_Param_Type::Kb1_Line, detector_element);
+                generate_energy_ratio(_element_info->xrf["kb1"] + _pileup_element_info->xrf["ka1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[3], Element_Param_Type::Kb1_Line, detector_element);
             }
 
         }
@@ -148,7 +154,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
             _center = _element_info->xrf["ka1"];
             if (false == disable_Ka)
             {
-                generate_energy_ratio(_element_info->xrf["ka1"], 1.0, Element_Param_Type::Ka1_Line, detector_element);
+                generate_energy_ratio(_element_info->xrf["ka1"], _energy_ratio_custom_multipliers[0], Element_Param_Type::Ka1_Line, detector_element);
                 generate_energy_ratio(_element_info->xrf["ka2"], (_element_info->xrf_abs_yield["ka2"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[1], Element_Param_Type::Ka2_Line, detector_element);
             }
             generate_energy_ratio(_element_info->xrf["kb1"], (_element_info->xrf_abs_yield["kb1"] / _element_info->xrf_abs_yield["ka1"]) * _energy_ratio_custom_multipliers[2], Element_Param_Type::Kb1_Line, detector_element);
@@ -176,13 +182,45 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
         generate_energy_ratio(_element_info->xrf["ll"], (_element_info->xrf_abs_yield["ll"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[10], Element_Param_Type::Ll_Line, detector_element);
         generate_energy_ratio(_element_info->xrf["ln"], (_element_info->xrf_abs_yield["ln"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[11], Element_Param_Type::Ln_Line, detector_element);
     }
-    else if(_shell_type == "M")
+    else if (_shell_type == "M")
     {
-        //TODO: finish adding M info
-        generate_energy_ratio(_element_info->xrf["ma1"], 1.0, Element_Param_Type::Ma1_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["ma2"], 1.0, Element_Param_Type::Ma2_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["mb"], 1.0, Element_Param_Type::Mb_Line, detector_element);
-        //generate_energy_ratio(_element_info->xrf["mg"], 1.0, Element_Param_Type::Mg_Line, detector_element);
+        // M5 - N7	
+        T_real ratio = 1.0;
+        //ratio = RadRate(_element_info->number, M5N7_LINE, nullptr);
+        generate_energy_ratio(_element_info->xrf["ma1"], ratio, Element_Param_Type::Ma1_Line, detector_element);
+        // M5 - N6	
+        if (_element_info->xrf_abs_yield["ma2"] == 0)
+        {
+            ratio = _energy_ratio_custom_multipliers[1];
+        }
+        else
+        {
+            ratio = (_element_info->xrf_abs_yield["ma2"] / _element_info->xrf_abs_yield["ma1"]) * _energy_ratio_custom_multipliers[1];
+        }
+        //ratio = RadRate(_element_info->number, M5N6_LINE, nullptr) * _energy_ratio_custom_multipliers[1]; //xraylib
+        generate_energy_ratio(_element_info->xrf["ma2"], ratio, Element_Param_Type::Ma2_Line, detector_element);
+        // M4 - N6	
+        if (_element_info->xrf_abs_yield["mb"] == 0)
+        {
+            ratio = _energy_ratio_custom_multipliers[2];
+        }
+        else
+        {
+            ratio = (_element_info->xrf_abs_yield["mb"] / _element_info->xrf_abs_yield["ma1"]) * _energy_ratio_custom_multipliers[2];
+        }
+        //ratio = RadRate(_element_info->number, M4N6_LINE, nullptr) * _energy_ratio_custom_multipliers[2]; // xraylib
+        generate_energy_ratio(_element_info->xrf["mb"], ratio, Element_Param_Type::Mb_Line, detector_element);
+        // M3 - N5
+        if (_element_info->xrf_abs_yield["mg"] == 0)
+        {
+            ratio = _energy_ratio_custom_multipliers[3];
+        }
+        else
+        {
+            ratio = (_element_info->xrf_abs_yield["mg"] / _element_info->xrf_abs_yield["ma1"]) * _energy_ratio_custom_multipliers[3];
+        }
+        //ratio = RadRate(_element_info->number, M3N5_LINE, nullptr) * _energy_ratio_custom_multipliers[3]; //xraylib
+        generate_energy_ratio(_element_info->xrf["mg"], ratio, Element_Param_Type::Mg_Line, detector_element);
     }
 
     _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );
@@ -264,7 +302,7 @@ void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio,
 template<typename T_real>
 void Fit_Element_Map<T_real>::set_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
-    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
+    if (idx < _energy_ratio_custom_multipliers.size()) 
     {
         _energy_ratio_custom_multipliers[idx] = multi;
     }
@@ -275,7 +313,7 @@ void Fit_Element_Map<T_real>::set_custom_multiply_ratio(unsigned int idx, T_real
 template<typename T_real>
 void Fit_Element_Map<T_real>::multiply_custom_multiply_ratio(unsigned int idx, T_real multi)
 {
-    if (idx > 0 && idx < _energy_ratio_custom_multipliers.size()) // index 0 has to be 1.0
+    if ( idx < _energy_ratio_custom_multipliers.size()) 
     {
         _energy_ratio_custom_multipliers[idx] *= multi;
     }

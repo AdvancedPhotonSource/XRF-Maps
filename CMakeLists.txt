@@ -335,7 +335,6 @@ ELSE()
 ENDIF()
 
 #--------------- start pyxrf-maps lib -----------------
-
 IF (BUILD_WITH_PYBIND11)
     add_subdirectory(src/support/pybind11)
     # .PYD file extension on Windows

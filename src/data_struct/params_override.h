@@ -127,6 +127,28 @@ public:
 		elements_to_fit.clear();
     }
 
+	void _parse_ratios(vector<string> &branching_ratio_shell, int amt)
+	{
+		for (const auto& itr : branching_ratio_shell)
+		{
+			istringstream f(itr);
+			string s;
+			string el_name;
+			getline(f, s, ':');
+			getline(f, el_name, ',');
+			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
+
+
+			for (unsigned int i = 0; i < amt; i++)
+			{
+				T_real factor = 1.0;
+				std::getline(f, s, ',');
+				factor = parse_input_real<T_real>(s);
+				branching_ratios[el_name][i] = factor;
+			}
+		}
+	}
+
 	void parse_and_gen_branching_ratios()
 	{
 		branching_ratios.clear();
@@ -165,43 +187,12 @@ public:
 			branching_ratios[el_name][10] = factor;
 
 		}
-		for (const auto& itr : branching_ratio_L)
-		{
-			istringstream f(itr);
-			string s;
-			string el_name;
-			getline(f, s, ':');
-			getline(f, el_name, ',');
-			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
-			
-			for (unsigned int i = 0; i < 12; i++)
-			{
-				T_real factor = 1.0;
-				std::getline(f, s, ',');
-				factor = parse_input_real<T_real>(s);
-				branching_ratios[el_name][i] = factor;
-			}
-		}
-		for (const auto& itr : branching_ratio_K)
-		{
-			istringstream f(itr);
-			string s;
-			string el_name;
-			getline(f, s, ':');
-			getline(f, el_name, ',');
-			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
+        _parse_ratios(branching_ratio_K, 4);
 
+		_parse_ratios(branching_ratio_L, 12);
 
-			for (unsigned int i = 0; i < 4; i++)
-			{
-				T_real factor = 1.0;
-				std::getline(f, s, ',');
-				factor = parse_input_real<T_real>(s);
-				branching_ratios[el_name][i] = factor;
-			}
-		}
-
+		_parse_ratios(branching_ratio_M, 4);
 	}
 
 	map<int, T_real> get_custom_factor(string el_name)
@@ -237,6 +228,7 @@ public:
     vector<string> branching_family_L;
     vector<string> branching_ratio_L;
     vector<string> branching_ratio_K;
+	vector<string> branching_ratio_M;
 
 	unordered_map< string, map<int, T_real> > branching_ratios;
 

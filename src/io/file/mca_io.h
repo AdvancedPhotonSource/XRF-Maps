@@ -227,6 +227,15 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     if (f_idx > -1)
                     {
                         string pv_name = value.substr(0, f_idx);
+                        string new_name;
+                        string beamline;
+                        bool is_time_norm;
+                        // Translate pv_name with scaler ref file
+                        if (data_struct::Scaler_Lookup::inst()->search_pv(pv_name, new_name, is_time_norm, beamline))
+                        {
+                            pv_name = new_name;
+                        }
+
                         value = value.substr(f_idx + 1);
                         if (value[0] == '"')
                         {
@@ -237,7 +246,17 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                                 try
                                 {
                                     pv_map[pv_name] = parse_input_real<T_real>(pv_value);
-
+                                    // update icr ocr in spectra
+                                    // if starts with ICR
+                                    if (pv_name.find("ICR") == 0)
+                                    {
+                                        spectra->input_counts(pv_map[pv_name]);
+                                    }
+                                    // if starts with OCR
+                                    if (pv_name.find("OCR") == 0)
+                                    {
+                                        spectra->output_counts(pv_map[pv_name]);
+                                    }
                                 }
                                 catch (std::exception& e)
                                 {
@@ -259,6 +278,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                         float fvalue = parse_input_real<T_real>(value);
                         (*spectra)[i] = fvalue;
                     }
+                    spectra->recalc_elapsed_livetime();
                 }
             }
         }

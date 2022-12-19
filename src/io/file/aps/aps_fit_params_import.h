@@ -368,7 +368,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             params_override->fit_params[tag_name].value = fvalue;
                         }
                     }
-                    else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K")
+                    else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K" || tag == "BRANCHING_RATIO_ADJUSTMENT_M")
                     {
                         unsigned int cnt = 0;
 
@@ -386,6 +386,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         {
                             params_override->branching_ratio_L.push_back(line);
                             cnt = 12;
+                        }
+                        else if (tag == "BRANCHING_RATIO_ADJUSTMENT_M")
+                        {
+                            params_override->branching_ratio_M.push_back(line);
+                            cnt = 4;
                         }
 
                         std::string element_symb;
@@ -891,6 +896,10 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
                     }
+                    else if (itr.second->shell_type_as_string() == "M")
+                    {
+                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_M: " << itr.first;
+                    }
                     for (float r : itr.second->energy_ratio_multipliers())
                     {
                         out_stream << "," << r;
@@ -962,6 +971,28 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
                 out_stream << itr << "\n";
             }
         }
+        out_stream << "    this allows manual adjustment of the branhcing ratios between the different M lines, such as Ma1, Ma2, Mb, Mg\n";
+        out_stream << "    Please note, these are all RELATIVE RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value, etc.\n";
+        out_stream << "    all will be normalized to the Ma1 line, and the values need to be in the following order:\n";
+        out_stream << "    Ma1, Ma2, Mb, Mg\n";
+        out_stream << "    please note, the first value (Ma1) MUST BE A 1. !!!\n";
+        for (const auto& itr : params_override->branching_ratio_M)
+        {
+            bool found = false;
+            for (std::string element_name : branching_ratios_updated)
+            {
+                if (itr.find(element_name) != std::string::npos)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (false == found)
+            {
+                out_stream << itr << "\n";
+            }
+        }
+
         out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
         out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
         out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
