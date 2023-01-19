@@ -334,6 +334,9 @@ ELSE()
              )
 ENDIF()
 
+set(HDF5_LIB_LEN 0)
+list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
+
 #--------------- start pyxrf-maps lib -----------------
 IF (BUILD_WITH_PYBIND11)
     add_subdirectory(src/support/pybind11)
@@ -462,8 +465,7 @@ ELSEIF (UNIX)
   ENDIF()
 ENDIF()
 
-set(HDF5_LIB_LEN 0)
-list(LENGTH HDF5_LIBRARIES HDF5_LIB_LEN)
+
 # Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
   target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp ${CMAKE_THREAD_LIBS_INIT} )
