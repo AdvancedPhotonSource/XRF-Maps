@@ -80,6 +80,8 @@ Scaler_Lookup::Scaler_Lookup()
 Scaler_Lookup::~Scaler_Lookup()
 {
     clear();
+	delete _this_inst;
+	_this_inst = nullptr;
 }
 
 // ----------------------------------------------------------------------------
