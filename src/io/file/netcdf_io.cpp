@@ -267,7 +267,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
             elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-            (*spec_line)[j].elapsed_realtime(elapsed_realtime);
+            (*spec_line)[j].elapsed_livetime(elapsed_livetime);
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
@@ -275,9 +275,14 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         if(elapsed_livetime == 0)
         {
-            if(j < spec_cntr-2) // usually the last two are missing which spams the log ouput.
+            if (j > 0 && j < spec_cntr - 2) // copy the previous value
             {
-                logW<<"Reading in elapsed lifetime for Col:"<<j<<" is 0. Setting it to 1.0. path :"<<path<<"\n";
+                logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to "<<j-1<<". path :" << path << "\n";
+                (*spec_line)[j].elapsed_livetime((*spec_line)[j-1].elapsed_livetime());
+            }
+            else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+            {
+                logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
                 elapsed_livetime = 1.0;
             }
         }
@@ -296,7 +301,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         if(elapsed_realtime == 0)
         {
-            if(j < spec_cntr-2) // usually the last two are missing which spams the log ouput.
+            if (j > 0 && j < spec_cntr - 2) // copy the previous value
+            {
+                logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
+                (*spec_line)[j].elapsed_realtime((*spec_line)[j - 1].elapsed_realtime());
+            }
+            else if(j < spec_cntr-2) // usually the last two are missing which spams the log ouput.
             {
                 logW<<"Reading in elapsed realtime for Col:"<<j<<" is 0. Setting it to 1.0. path :"<<path<<"\n";
                 elapsed_realtime = 1.0;
@@ -425,7 +435,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
     size_t header_size = 256;
     int ncid, varid, retval;
     size_t start[] = {0, 0, 0};
-    size_t count[] = {1, 2, header_size};
+    size_t count[] = {1, 1, header_size};
     ptrdiff_t stride[] = {1, 1, 1};
     T_real *data_in;
     size_t spectra_size;
