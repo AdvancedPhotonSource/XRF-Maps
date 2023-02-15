@@ -267,25 +267,29 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
             elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-            (*spec_line)[j].elapsed_livetime(elapsed_livetime);
+            if (elapsed_livetime == 0)
+            {
+                if (j > 0 && j < spec_cntr - 2) // copy the previous value
+                {
+                    logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
+                    elapsed_livetime = (*spec_line)[j - 1].elapsed_livetime();
+                }
+                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                {
+                    logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
+                    elapsed_livetime = 1.0;
+                }
+            }
+            else
+            {
+                (*spec_line)[j].elapsed_livetime(elapsed_livetime);
+            }
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
             elapsed_livetime += ((float)ii) * 320e-9f; 
         }
-        if(elapsed_livetime == 0)
-        {
-            if (j > 0 && j < spec_cntr - 2) // copy the previous value
-            {
-                logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to "<<j-1<<". path :" << path << "\n";
-                (*spec_line)[j].elapsed_livetime((*spec_line)[j-1].elapsed_livetime());
-            }
-            else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
-            {
-                logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
-                elapsed_livetime = 1.0;
-            }
-        }
+        
 
         i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)];
         i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)+1];
@@ -293,25 +297,29 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
             elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-            (*spec_line)[j].elapsed_realtime(elapsed_realtime);
+            if (elapsed_realtime == 0)
+            {
+                if (j > 0 && j < spec_cntr - 2) // copy the previous value
+                {
+                    logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
+                    elapsed_realtime = (*spec_line)[j - 1].elapsed_realtime();
+                }
+                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                {
+                    logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
+                    elapsed_realtime = 1.0;
+                }
+            }
+            else
+            {
+                (*spec_line)[j].elapsed_realtime(elapsed_realtime);
+            }
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
             elapsed_realtime += ((float)ii) * 320e-9f;
         }
-        if(elapsed_realtime == 0)
-        {
-            if (j > 0 && j < spec_cntr - 2) // copy the previous value
-            {
-                logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
-                (*spec_line)[j].elapsed_realtime((*spec_line)[j - 1].elapsed_realtime());
-            }
-            else if(j < spec_cntr-2) // usually the last two are missing which spams the log ouput.
-            {
-                logW<<"Reading in elapsed realtime for Col:"<<j<<" is 0. Setting it to 1.0. path :"<<path<<"\n";
-                elapsed_realtime = 1.0;
-            }
-        }
+        
 
         i1 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)+1];
@@ -319,7 +327,23 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
             input_counts = ((float)ii) / elapsed_livetime;
-            (*spec_line)[j].input_counts(input_counts);
+            if (input_counts == 0)
+            {
+                if (j > 0 && j < spec_cntr - 2) // copy the previous value
+                {
+                    logW << "Reading in elapsed input_counts for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
+                    input_counts = (*spec_line)[j - 1].input_counts();
+                }
+                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                {
+                    logW << "Reading in elapsed input_counts for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
+                    input_counts = 1.0;
+                }
+            }
+            else
+            {
+                (*spec_line)[j].input_counts(input_counts);
+            }
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
@@ -332,7 +356,23 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
             output_counts = ((float)ii) / elapsed_realtime;
-            (*spec_line)[j].output_counts(output_counts);
+            if (output_counts == 0)
+            {
+                if (j > 0 && j < spec_cntr - 2) // copy the previous value
+                {
+                    logW << "Reading in elapsed output_counts for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
+                    output_counts = (*spec_line)[j - 1].output_counts();
+                }
+                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                {
+                    logW << "Reading in elapsed output_counts for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
+                    output_counts = 1.0;
+                }
+            }
+            else
+            {
+                (*spec_line)[j].output_counts(output_counts);
+            }
         }
         else if(ltype == E_load_type::INTEGRATED)
         {

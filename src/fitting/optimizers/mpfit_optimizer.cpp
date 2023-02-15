@@ -617,13 +617,13 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 {
     Quant_User_Data<T_real> ud;
 
-    if (quant_map != nullptr)
+    assert(quant_map != nullptr);
+    
+    for (const auto& itr : *quant_map)
     {
-        for (const auto& itr : *quant_map)
-        {
-            ud.quant_map[itr.first] = *(itr.second);
-        }
+        ud.quant_map[itr.first] = *(itr.second);
     }
+    
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
 
