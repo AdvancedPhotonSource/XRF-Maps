@@ -110,7 +110,7 @@ namespace csv
             num_lines--;
             bool first_line = true;
             int line_num = 0;
-            std::vector<string> names;
+            std::vector<std::string> names;
             for (std::string line; std::getline(file_stream, line); )
             {
                 std::stringstream strstream(line);

@@ -4152,7 +4152,7 @@ public:
                         first_save = false;
                     }
                     data_struct::Scaler_Map<T_real> sm;
-                    sm.name = string(str_dset_name, len);
+                    sm.name = std::string(str_dset_name, len);
                     sm.values.resize(scalers_count[0], scalers_count[1]);
                     status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, sm.values.data());
                     scan_info->scaler_maps.push_back(sm);
@@ -4199,7 +4199,7 @@ public:
                 int i = 0;
                 for (auto& itr : scan_info->scaler_maps)
                 {
-                    itr.name = string(detector_names[i], strlen(detector_names[i]));
+                    itr.name = std::string(detector_names[i], strlen(detector_names[i]));
                     i++;
                 }
             }
