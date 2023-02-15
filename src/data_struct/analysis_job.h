@@ -154,7 +154,7 @@ public:
     OPTIMIZE_FIT_ROUTINE optimize_fit_routine;
 
     //list of quantification standards to use
-    vector<Quantification_Standard<T_real>> standard_element_weights;
+    std::vector<Quantification_Standard<T_real>> standard_element_weights;
 
 protected:
 

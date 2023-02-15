@@ -200,7 +200,7 @@ DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<T_real>*>* all_elements_with_weights, int& zstart, int& zstop)
+DLL_EXPORT void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights, int& zstart, int& zstop)
 {
     int low = CALIBRATION_CURVE_SIZE;
     int high = 0;
@@ -226,7 +226,7 @@ DLL_EXPORT void find_shell_Z_offset(quantification::models::Electron_Shell shell
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool contains_shell(quantification::models::Electron_Shell shell_idx, unordered_map<string, Element_Quant<T_real>*>* element_quants)
+DLL_EXPORT bool contains_shell(quantification::models::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* element_quants)
 {
     for (auto& itr : *element_quants)
     {
@@ -244,9 +244,9 @@ DLL_EXPORT bool contains_shell(quantification::models::Electron_Shell shell_idx,
 template<typename T_real>
 DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                               Detector<T_real>* detector,
-                              string quantifier_scaler_name,
-                              unordered_map<string, Element_Quant<T_real>*>* all_elements_with_weights,
-                              vector<Element_Quant<T_real>>* calibration_curve,
+                                std::string quantifier_scaler_name,
+                                std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights,
+                                std::vector<Element_Quant<T_real>>* calibration_curve,
                               int zstart,
                               int zstop)
 {

@@ -152,7 +152,7 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
         {
             for (int j = 0; j < this->_energy_range.count(); j++)
             {
-                (*spectra_model)[j] = numeric_limits<T_real>::quiet_NaN();
+                (*spectra_model)[j] = std::numeric_limits<T_real>::quiet_NaN();
             }
             break;
         }

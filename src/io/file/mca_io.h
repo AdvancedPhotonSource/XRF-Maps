@@ -66,7 +66,7 @@ namespace mca
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map)
+DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, std::unordered_map<std::string, T_real>& pv_map)
 {
     std::ifstream paramFileStream(path);
 
@@ -226,9 +226,9 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     int f_idx = value.find('=');
                     if (f_idx > -1)
                     {
-                        string pv_name = value.substr(0, f_idx);
-                        string new_name;
-                        string beamline;
+                        std::string pv_name = value.substr(0, f_idx);
+                        std::string new_name;
+                        std::string beamline;
                         bool is_time_norm;
                         // Translate pv_name with scaler ref file
                         if (data_struct::Scaler_Lookup::inst()->search_pv(pv_name, new_name, is_time_norm, beamline))
@@ -242,7 +242,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                             f_idx = value.find('"', 1);
                             if (f_idx > -1)
                             {
-                                string pv_value = value.substr(1, f_idx - 1);
+                                std::string pv_value = value.substr(1, f_idx - 1);
                                 try
                                 {
                                     pv_map[pv_name] = parse_input_real<T_real>(pv_value);
@@ -305,7 +305,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, unordered_map<string, T_real>& pv_map)
+DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, std::unordered_map<std::string, T_real>& pv_map)
 {
     std::ofstream paramFileStream(path);
 

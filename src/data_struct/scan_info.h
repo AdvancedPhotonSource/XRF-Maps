@@ -57,17 +57,15 @@
 namespace data_struct
 {
 
-using namespace std;
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 struct Extra_PV
 {
-    string name;
-    string description;
-    string value;
-    string unit;
+    std::string name;
+    std::string description;
+    std::string value;
+    std::string unit;
 };
 
 //-----------------------------------------------------------------------------
@@ -75,8 +73,8 @@ struct Extra_PV
 template<typename T_real>
 struct Scaler_Map
 {
-    string name;
-    string unit;
+    std::string name;
+    std::string unit;
     bool time_normalized;
     //bool is_timer;
     ArrayXXr<T_real> values;
@@ -91,13 +89,13 @@ TEMPLATE_STRUCT_DLL_EXPORT Scaler_Map<double>;
 template<typename T_real>
 struct Scan_Meta_Info
 {
-    string name;
-    string scan_time_stamp;
+    std::string name;
+    std::string scan_time_stamp;
     ArrayTr<T_real> x_axis;
     ArrayTr<T_real> y_axis;
     int requested_cols;
     int requested_rows;
-    vector<int> detectors;
+    std::vector<int> detectors;
     float theta;
     
 };
@@ -126,7 +124,7 @@ public:
         
     }
 
-    const ArrayXXr<T_real>* scaler_values(const string& scaler_name) const
+    const ArrayXXr<T_real>* scaler_values(const std::string& scaler_name) const
     {
         for (const auto& itr : scaler_maps)
         {
@@ -139,8 +137,8 @@ public:
     }
 
     Scan_Meta_Info<T_real> meta_info;
-    vector<Scaler_Map<T_real>> scaler_maps;
-    vector<Extra_PV> extra_pvs;
+    std::vector<Scaler_Map<T_real>> scaler_maps;
+    std::vector<Extra_PV> extra_pvs;
     bool has_netcdf; 
 };
 

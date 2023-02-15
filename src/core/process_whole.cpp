@@ -261,7 +261,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             }
         }
 
-        unordered_map<string, double> pv_map;
+        std::unordered_map<std::string, double> pv_map;
         //load the quantification standard dataset
         size_t fn_str_len = quantification_standard->standard_filename.length();
         if (fn_str_len > 5 &&
@@ -438,7 +438,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
     logI << "Perform_quantification()"<<"\n";
 
-    vector<string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
+    std::vector<std::string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
 
     if( io::file::load_quantification_standardinfo(analysis_job->dataset_directory, analysis_job->quantification_standard_filename, analysis_job->standard_element_weights) )
     {

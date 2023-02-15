@@ -62,10 +62,9 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-using namespace std;
 using namespace quantification::models;
 
-const static vector<Electron_Shell> Shells_Quant_List({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
+const static std::vector<Electron_Shell> Shells_Quant_List({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -75,7 +74,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
 {
     Quantification_Scaler_Struct(unsigned int max_z= CALIBRATION_CURVE_SIZE)
     {
-        vector<Element_Quant<T_real>> e_quants;
+        std::vector<Element_Quant<T_real>> e_quants;
         for (int i = 0; i < max_z; i++)
         {
             e_quants.emplace_back(Element_Quant<T_real>(i + 1));
@@ -85,7 +84,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
             curve_quant_map[itr] = e_quants;
         }
     }
-    unordered_map<Electron_Shell, vector<Element_Quant<T_real>> > curve_quant_map;
+    std::unordered_map<Electron_Shell, std::vector<Element_Quant<T_real>> > curve_quant_map;
 };
 
 TEMPLATE_STRUCT_DLL_EXPORT Quantification_Scaler_Struct<float>;
@@ -100,16 +99,16 @@ struct DLL_EXPORT Fitting_Quantification_Struct
 {
     Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 92 (U)
     {
-        vector<string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
+        std::vector<std::string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
         init(quant_scalers, max_z);
     }
 
-    Fitting_Quantification_Struct(vector<string> quantifier_scalers, unsigned int max_z= CALIBRATION_CURVE_SIZE)
+    Fitting_Quantification_Struct(std::vector<std::string> quantifier_scalers, unsigned int max_z= CALIBRATION_CURVE_SIZE)
     {
         init(quantifier_scalers, max_z);
     }
 
-    void init(vector<string> quantifier_scalers, unsigned int max_z)
+    void init(std::vector<std::string> quantifier_scalers, unsigned int max_z)
     {
         for (const auto& itr : quantifier_scalers)
         {
@@ -126,7 +125,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
     }
 
     //            Quantifier {SR_Current, US_IC, DS_IC}
-    unordered_map<string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
+    std::unordered_map<std::string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
 };
 
 
@@ -166,7 +165,7 @@ public:
     std::unordered_map<std::string, T_real> element_standard_weights;
 
     // element name       cts
-    unordered_map<Fitting_Routines, unordered_map<string, T_real> > element_counts;
+    std::unordered_map<Fitting_Routines, std::unordered_map<std::string, T_real> > element_counts;
 
     Spectra<T_real> integrated_spectra;
 

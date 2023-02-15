@@ -73,7 +73,7 @@ public:
     // single threaded
     virtual const Spectra<T_real> model_spectrum(const Fit_Parameters<T_real>* const fit_params,
                                                     const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                                    unordered_map<string, ArrayTr<T_real>>* labeled_spectras,
+                                                    std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
                                                     const struct Range energy_range);
 
     // multi threaded
@@ -84,7 +84,7 @@ public:
     virtual const Spectra<T_real> model_spectrum_element(const Fit_Parameters<T_real>* const fitp,
                                                             const Fit_Element_Map<T_real>* const element_to_fit,
                                                             const ArrayTr<T_real> &ev,
-                                                            unordered_map<string, ArrayTr<T_real>>* labeled_spectras);
+                                                            std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras);
 
     void set_fit_params_preset(Fit_Params_Preset lock_macro);
 

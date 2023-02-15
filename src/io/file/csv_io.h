@@ -67,7 +67,7 @@ namespace csv
 {
    
     template<typename T_real>
-    DLL_EXPORT string translate_sens_unit(int value)
+    DLL_EXPORT std::string translate_sens_unit(int value)
     {
         if (value == 0)
         {
@@ -90,7 +90,7 @@ namespace csv
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool load_raw_spectra(std::string filename, unordered_map<string, ArrayTr<T_real>> &data)
+    DLL_EXPORT bool load_raw_spectra(std::string filename, std::unordered_map<std::string, ArrayTr<T_real>> &data)
     {
         std::ifstream file_stream(filename);
         try
@@ -158,9 +158,9 @@ namespace csv
     template<typename T_real>
     DLL_EXPORT bool save_calibration_curve(std::string path,
                                             Detector<T_real>* detector,
-                                            std::map<string, Quantification_Standard<T_real>>* standards,
+                                            std::map<std::string, Quantification_Standard<T_real>>* standards,
                                             Fitting_Routines routine,
-                                            string quantifier_scaler_name, 
+                                            std::string quantifier_scaler_name,
                                             Quantification_Scaler_Struct<T_real>* quants_map)
     {
         if (standards == nullptr || quants_map == nullptr || detector == nullptr)
@@ -202,7 +202,7 @@ namespace csv
 
                 for (const auto& itr : quants_map->curve_quant_map[shell_itr])
                 {
-                    string name = itr.name;
+                    std::string name = itr.name;
                     T_real counts = 0.0;
                     if (shell_itr == Electron_Shell::L_SHELL)
                     {
@@ -356,7 +356,7 @@ namespace csv
         const std::map<std::string, data_struct::Fit_Parameters<T_real>>& roi_files_fits_map)
     {
 
-        const std::vector<string> norm_names = { "DOWNSTREAM", "UPSTREAM", "SR_CURRENT", "Counts Per Sec" };
+        const std::vector<std::string> norm_names = { "DOWNSTREAM", "UPSTREAM", "SR_CURRENT", "Counts Per Sec" };
         const std::map<int, std::string> normalize_by_map = { {0, STR_DS_IC}, {1, STR_US_IC}, {2, STR_SR_CURRENT}, {3, "Counts Per Sec"} };
         const std::vector<std::string> e_list = { "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Mo_L", "Ag_L", "Sn_L", "Cd_L", "I_L", "Cs_L", "Ba_L", "Eu_L", "Gd_L", "W_L", "Pt_L", "Au_L", "Hg_L", "Pb_L", "U_L", "La_L", "Re_L", "Pr_L", "Ce_L", "Zr_L", "Os_L", "Ru_L", "Au_M", "Pb_M", "U_M", "Bi_M", "Hg_M" };
 
@@ -408,9 +408,9 @@ namespace csv
             {
                 for (auto& f_itr : fitting_routines)
                 {
-                    const vector < Element_Quant<T_real> >* k_calib_curve = nullptr;
-                    const vector < Element_Quant<T_real> >* l_calib_curve = nullptr;
-                    const vector < Element_Quant<T_real> >* m_calib_curve = nullptr;
+                    const std::vector < Element_Quant<T_real> >* k_calib_curve = nullptr;
+                    const std::vector < Element_Quant<T_real> >* l_calib_curve = nullptr;
+                    const std::vector < Element_Quant<T_real> >* m_calib_curve = nullptr;
 
                     if (detector->fitting_quant_map.count(f_itr) > 0)
                     {
@@ -681,7 +681,7 @@ namespace csv
      // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool save_fit_and_int_spectra_labeled(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, data_struct::ArrayTr<T_real>>* labeled_spectras)
+    DLL_EXPORT bool save_fit_and_int_spectra_labeled(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, std::unordered_map<std::string, data_struct::ArrayTr<T_real>>* labeled_spectras)
     {
         if (energy == nullptr || spectra == nullptr || spectra_model == nullptr || background == nullptr)
         {
@@ -769,7 +769,7 @@ namespace csv
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, unordered_map<string, ArrayTr<T_real>>* labeled_spectras = nullptr)
+    DLL_EXPORT bool save_fit_and_int_spectra(const std::string fullpath, const data_struct::ArrayTr<T_real>* energy, const data_struct::ArrayTr<T_real>* spectra, const data_struct::ArrayTr<T_real>* spectra_model, const data_struct::ArrayTr<T_real>* background, std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras = nullptr)
     {
         return save_fit_and_int_spectra_labeled(fullpath, energy, spectra, spectra_model, background, labeled_spectras);
     }

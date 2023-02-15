@@ -486,10 +486,10 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                                                  void *user_data)
 {
 	// detector , index
-	map<size_t, const data_struct::ArrayXXr<T_real>*> elt_arr_map;
-	map<size_t, const data_struct::ArrayXXr<T_real>*> ert_arr_map;
-	map<size_t, const data_struct::ArrayXXr<T_real>*> incnt_arr_map;
-	map<size_t, const data_struct::ArrayXXr<T_real>*> outcnt_arr_map;
+	std::map<size_t, const data_struct::ArrayXXr<T_real>*> elt_arr_map;
+	std::map<size_t, const data_struct::ArrayXXr<T_real>*> ert_arr_map;
+	std::map<size_t, const data_struct::ArrayXXr<T_real>*> incnt_arr_map;
+	std::map<size_t, const data_struct::ArrayXXr<T_real>*> outcnt_arr_map;
     size_t max_detecotr_num = 0;
     bool is_single_row = false;
 
@@ -1023,7 +1023,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         }
     }
 
-    string beamline = "";
+    std::string beamline = "";
 
     //save scalers
     if (single_row_scan)

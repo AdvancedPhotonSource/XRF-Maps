@@ -157,7 +157,7 @@ data_struct::Stream_Block<T_real>* Basic_Serializer<T_real>::_decode_meta(char* 
         }
     }
     idx = idx2+1;
-    out_stream_block->dataset_name = new string(tmp_char_arr);
+    out_stream_block->dataset_name = new std::string(tmp_char_arr);
     out_stream_block->del_str_ptr = true;
     //find dataset dir
     for(size_t i=idx; i < message_len; i++)
@@ -182,7 +182,7 @@ data_struct::Stream_Block<T_real>* Basic_Serializer<T_real>::_decode_meta(char* 
         }
     }
     idx = idx2+1;
-    out_stream_block->dataset_directory = new string(tmp_char_arr);
+    out_stream_block->dataset_directory = new std::string(tmp_char_arr);
 
     return out_stream_block;
 }

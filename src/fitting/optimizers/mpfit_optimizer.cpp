@@ -227,9 +227,9 @@ MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-unordered_map<string, T_real> MPFit_Optimizer<T_real>::get_options()
+std::unordered_map<std::string, T_real> MPFit_Optimizer<T_real>::get_options()
 {
-    unordered_map<string, T_real> opts{
+    std::unordered_map<std::string, T_real> opts{
     {STR_OPT_FTOL, _options.ftol},
     {STR_OPT_XTOL, _options.xtol},
     {STR_OPT_GTOL, _options.gtol},
@@ -245,7 +245,7 @@ unordered_map<string, T_real> MPFit_Optimizer<T_real>::get_options()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void MPFit_Optimizer<T_real>::set_options(unordered_map<string, T_real> opt)
+void MPFit_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real> opt)
 {
     if (opt.count(STR_OPT_FTOL) > 0)
     {
@@ -281,7 +281,7 @@ void MPFit_Optimizer<T_real>::set_options(unordered_map<string, T_real> opt)
 
 
 template<typename T_real>
-void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , vector<struct mp_par<T_real> > &par)
+void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , std::vector<struct mp_par<T_real> > &par)
 {
 	for (auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
 	{
@@ -460,7 +460,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 
     */
     /////////////// init params limits /////////////////////////
-	vector<struct mp_par<T_real> > par;
+	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
@@ -571,7 +571,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
-	vector<struct mp_par<T_real> > par;
+	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
@@ -672,7 +672,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 //	info = mpfit(quantification_residuals_mpfit, quant_map->size(), fitp_arr.size(), &fitp_arr[0], mp_par, &mp_config, (void *)&ud, &result);
 
 	
-	vector<struct mp_par<T_real> > par;
+	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 

@@ -164,7 +164,7 @@ public:
 
     const Element_Info<T_real>* pileup_element() const { return _pileup_element_info; }
 
-	const string& shell_type_as_string() const { return _shell_type; }
+	const std::string& shell_type_as_string() const { return _shell_type; }
 
 	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
 protected:

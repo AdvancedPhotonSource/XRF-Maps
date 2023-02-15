@@ -101,7 +101,7 @@ Detector<T_real>::~Detector()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Detector<T_real>::append_element(Fitting_Routines routine, string quant_scaler, string name, T_real weight)
+void Detector<T_real>::append_element(Fitting_Routines routine, std::string quant_scaler, std::string name, T_real weight)
 {
     if (fitting_quant_map.count(routine) == 0)
     {
@@ -129,7 +129,7 @@ void Detector<T_real>::append_element(Fitting_Routines routine, string quant_sca
 
 template<typename T_real>
 void Detector<T_real>::update_element_quants(Fitting_Routines routine,
-                                    string quantifier_scaler,
+                                    std::string quantifier_scaler,
                                     Quantification_Standard<T_real>* standard,
                                     Quantification_Model<T_real>* quantification_model,
                                     T_real ic_quantifier)
@@ -160,7 +160,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                     // if we have weight for this element, update e_cal_ratio
                     if (eq_itr.weight > 0.0)
                     {
-                        string name = eq_itr.name;
+                        std::string name = eq_itr.name;
                         if (shell_itr == Electron_Shell::L_SHELL)
                         {
                             name += "_L";
@@ -212,7 +212,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
 
 template<typename T_real>
 void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
-                                        string quantifier_scaler,
+                                        std::string quantifier_scaler,
                                         std::unordered_map<int, float>& element_amt_dict)
 {
     if (fitting_quant_map.count(routine) > 0)
@@ -221,7 +221,7 @@ void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
-                vector<Element_Quant<T_real>>* element_z_vec = &fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr);
+                std::vector<Element_Quant<T_real>>* element_z_vec = &fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr);
                 for (auto& itr: element_amt_dict)
                 {
                     if (itr.second > 1.0)
@@ -324,7 +324,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
 
 template<typename T_real>
 void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
-                                        string quantifier_scaler,
+                                        std::string quantifier_scaler,
                                         Quantification_Model<T_real>* quantification_model,
                                         T_real val)
 {
@@ -334,7 +334,7 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
-                vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
+                std::vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
                 quantification_model->model_calibrationcurve(quant_vec, val);
             }
         }
