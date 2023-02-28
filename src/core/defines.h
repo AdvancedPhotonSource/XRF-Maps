@@ -111,9 +111,6 @@ T_real parse_input_real(std::string value)
     }
 }
 
-// STRING KEYS
-using namespace std;
-
 #define CALIBRATION_CURVE_SIZE 92
 
 //namespace keys
@@ -128,182 +125,182 @@ using namespace std;
 /**
 * @brief String defines for fit parameters string value pair.
 */
-const string STR_MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
-const string STR_MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
+const std::string STR_MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
+const std::string STR_MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
 
-const string STR_SI_ESCAPE = "SI_ESCAPE";
-const string STR_GE_ESCAPE = "GE_ESCAPE";
-const string STR_ESCAPE_LINEAR = "ESCAPE_LINEAR";
-const string STR_PILEUP0 = "PILEUP0";
-const string STR_PILEUP1 = "PILEUP1";
-const string STR_PILEUP2 = "PILEUP2";
-const string STR_PILEUP3 = "PILEUP3";
-const string STR_PILEUP4 = "PILEUP4";
-const string STR_PILEUP5 = "PILEUP5";
-const string STR_PILEUP6 = "PILEUP6";
-const string STR_PILEUP7 = "PILEUP7";
-const string STR_PILEUP8 = "PILEUP8";
+const std::string STR_SI_ESCAPE = "SI_ESCAPE";
+const std::string STR_GE_ESCAPE = "GE_ESCAPE";
+const std::string STR_ESCAPE_LINEAR = "ESCAPE_LINEAR";
+const std::string STR_PILEUP0 = "PILEUP0";
+const std::string STR_PILEUP1 = "PILEUP1";
+const std::string STR_PILEUP2 = "PILEUP2";
+const std::string STR_PILEUP3 = "PILEUP3";
+const std::string STR_PILEUP4 = "PILEUP4";
+const std::string STR_PILEUP5 = "PILEUP5";
+const std::string STR_PILEUP6 = "PILEUP6";
+const std::string STR_PILEUP7 = "PILEUP7";
+const std::string STR_PILEUP8 = "PILEUP8";
 
-const string STR_NUM_ITR = "Num_Iter";
-const string STR_RESIDUAL = "Fit_Residual";
-const string STR_OUTCOME = "Fit_Outcome";
-const string STR_CHISQUARE = "chisquare";
-const string STR_CHISQRED = "chisqred";
-const string STR_FREE_PARS = "free_pars";
-const string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
-const string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
-const string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
-const string STR_GE_DEAD_LAYER = "GE_DEAD_LAYER";
+const std::string STR_NUM_ITR = "Num_Iter";
+const std::string STR_RESIDUAL = "Fit_Residual";
+const std::string STR_OUTCOME = "Fit_Outcome";
+const std::string STR_CHISQUARE = "chisquare";
+const std::string STR_CHISQRED = "chisqred";
+const std::string STR_FREE_PARS = "free_pars";
+const std::string STR_DETECTOR_ELEMENT = "DETECTOR_ELEMENT";
+const std::string STR_BE_WINDOW_THICKNESS = "BE_WINDOW_THICKNESS";
+const std::string STR_DET_CHIP_THICKNESS = "DET_CHIP_THICKNESS";
+const std::string STR_GE_DEAD_LAYER = "GE_DEAD_LAYER";
 
 //namespace gaussian_model
 //{
-const string STR_ENERGY_OFFSET = "ENERGY_OFFSET";
-const string STR_ENERGY_SLOPE = "ENERGY_SLOPE";
-const string STR_ENERGY_QUADRATIC = "ENERGY_QUADRATIC";
+const std::string STR_ENERGY_OFFSET = "ENERGY_OFFSET";
+const std::string STR_ENERGY_SLOPE = "ENERGY_SLOPE";
+const std::string STR_ENERGY_QUADRATIC = "ENERGY_QUADRATIC";
 
-const string STR_FWHM_OFFSET = "FWHM_OFFSET";
-const string STR_FWHM_FANOPRIME = "FWHM_FANOPRIME";
+const std::string STR_FWHM_OFFSET = "FWHM_OFFSET";
+const std::string STR_FWHM_FANOPRIME = "FWHM_FANOPRIME";
 
-const string STR_COHERENT_SCT_ENERGY = "COHERENT_SCT_ENERGY";
-const string STR_COHERENT_SCT_AMPLITUDE = "COHERENT_SCT_AMPLITUDE";
+const std::string STR_COHERENT_SCT_ENERGY = "COHERENT_SCT_ENERGY";
+const std::string STR_COHERENT_SCT_AMPLITUDE = "COHERENT_SCT_AMPLITUDE";
 
-const string STR_COMPTON_ANGLE = "COMPTON_ANGLE";
-const string STR_COMPTON_FWHM_CORR = "COMPTON_FWHM_CORR";
-const string STR_COMPTON_AMPLITUDE = "COMPTON_AMPLITUDE";
-const string STR_COMPTON_F_STEP = "COMPTON_F_STEP";
-const string STR_COMPTON_F_TAIL = "COMPTON_F_TAIL";
-const string STR_COMPTON_GAMMA = "COMPTON_GAMMA";
-const string STR_COMPTON_HI_F_TAIL = "COMPTON_HI_F_TAIL";
-const string STR_COMPTON_HI_GAMMA = "COMPTON_HI_GAMMA";
+const std::string STR_COMPTON_ANGLE = "COMPTON_ANGLE";
+const std::string STR_COMPTON_FWHM_CORR = "COMPTON_FWHM_CORR";
+const std::string STR_COMPTON_AMPLITUDE = "COMPTON_AMPLITUDE";
+const std::string STR_COMPTON_F_STEP = "COMPTON_F_STEP";
+const std::string STR_COMPTON_F_TAIL = "COMPTON_F_TAIL";
+const std::string STR_COMPTON_GAMMA = "COMPTON_GAMMA";
+const std::string STR_COMPTON_HI_F_TAIL = "COMPTON_HI_F_TAIL";
+const std::string STR_COMPTON_HI_GAMMA = "COMPTON_HI_GAMMA";
 
-const string STR_SNIP_WIDTH = "SNIP_WIDTH";
-const string STR_FIT_SNIP_WIDTH = "FIT_SNIP_WIDTH";
+const std::string STR_SNIP_WIDTH = "SNIP_WIDTH";
+const std::string STR_FIT_SNIP_WIDTH = "FIT_SNIP_WIDTH";
 
-const string STR_F_STEP_OFFSET = "F_STEP_OFFSET";
-const string STR_F_STEP_LINEAR = "F_STEP_LINEAR";
-const string STR_F_STEP_QUADRATIC = "F_STEP_QUADRATIC";
+const std::string STR_F_STEP_OFFSET = "F_STEP_OFFSET";
+const std::string STR_F_STEP_LINEAR = "F_STEP_LINEAR";
+const std::string STR_F_STEP_QUADRATIC = "F_STEP_QUADRATIC";
 
-const string STR_F_TAIL_OFFSET = "F_TAIL_OFFSET";
-const string STR_F_TAIL_LINEAR = "F_TAIL_LINEAR";
-const string STR_F_TAIL_QUADRATIC = "F_TAIL_QUADRATIC";
+const std::string STR_F_TAIL_OFFSET = "F_TAIL_OFFSET";
+const std::string STR_F_TAIL_LINEAR = "F_TAIL_LINEAR";
+const std::string STR_F_TAIL_QUADRATIC = "F_TAIL_QUADRATIC";
 
-const string STR_GAMMA_OFFSET = "GAMMA_OFFSET";
-const string STR_GAMMA_LINEAR = "GAMMA_LINEAR";
-const string STR_GAMMA_QUADRATIC = "GAMMA_QUADRATIC";
+const std::string STR_GAMMA_OFFSET = "GAMMA_OFFSET";
+const std::string STR_GAMMA_LINEAR = "GAMMA_LINEAR";
+const std::string STR_GAMMA_QUADRATIC = "GAMMA_QUADRATIC";
 
-const string STR_KB_F_TAIL_OFFSET = "KB_F_TAIL_OFFSET";
-const string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
-const string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
+const std::string STR_KB_F_TAIL_OFFSET = "KB_F_TAIL_OFFSET";
+const std::string STR_KB_F_TAIL_LINEAR = "KB_F_TAIL_LINEAR";
+const std::string STR_KB_F_TAIL_QUADRATIC = "KB_F_TAIL_QUADRATIC";
 
-const string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
+const std::string STR_SUM_ELASTIC_INELASTIC_AMP = "Sum_Elastic_Inelastic";
 
-const string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
+const std::string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
 
-const string STR_FIT_ROI = "ROI";
-const string STR_FIT_SVD = "SVD";
-const string STR_FIT_NNLS = "NNLS";
-const string STR_FIT_GAUSS_MATRIX = "Fitted";
-const string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
-const string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
+const std::string STR_FIT_ROI = "ROI";
+const std::string STR_FIT_SVD = "SVD";
+const std::string STR_FIT_NNLS = "NNLS";
+const std::string STR_FIT_GAUSS_MATRIX = "Fitted";
+const std::string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
+const std::string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
 
-const string STR_SR_CURRENT = "SR_Current";
-const string STR_US_IC = "US_IC";
-const string STR_DS_IC = "DS_IC";
-const string STR_CFG_2 = "CFG_2";
-const string STR_CFG_3 = "CFG_3";
-const string STR_CFG_4 = "CFG_4";
-const string STR_CFG_5 = "CFG_5";
-
-
-const string STR_K_A_LINES = "K Alpha";
-const string STR_K_B_LINES = "K Beta";
-const string STR_L_LINES = "L Lines";
-const string STR_M_LINES = "M Lines";
-const string STR_STEP_LINES = "Step";
-const string STR_TAIL_LINES = "Tail";
-const string STR_ELASTIC_LINES = "Elastic";
-const string STR_COMPTON_LINES = "Compton";
-const string STR_PILEUP_LINES = "Pile Up";
-const string STR_ESCAPE_LINES = "Escape";
-
-const string STR_INT_SPEC = "Integrated_Spectra";
-const string STR_FIT_INT_SPEC = "Fitted_Integrated_Spectra";
-const string STR_MAX_CHANNELS_INT_SPEC = "Max_Channels_Integrated_Spectra";
-const string STR_MAX10_INT_SPEC = "Max_10_Channels_Integrated_Spectra";
-const string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
-
-const string STR_CALIB_CURVE_SR_CUR = "Calibration_Curve_SR_Current";
-const string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
-const string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
-const string STR_CALIB_LABELS = "Calibration_Curve_Labels";
-
-const string STR_BEAMLINES = "BeamLines";
-const string STR_SCALERS = "Scalers";
-const string STR_TIME_NORMALIZED_SCALERS = "TimeNormalizedScalers";
-const string STR_SUMMED_SCALERS = "Summed_Scalers";
-const string STR_TIMING = "Timing";
-const string STR_ELT = "ELT";
-const string STR_ERT = "ERT";
-const string STR_ICR = "ICR";
-const string STR_OCR = "OCR";
-const string STR_DEAD_TIME = "Dead_Time";
-
-const string STR_GENERAL_BEAMLINE = "General";
-
-const string STR_ENERGY = "Energy";
-const string STR_ENERGY_CALIB = "Energy_Calibration";
-
-const string STR_ELAPSED_REAL_TIME = "Elapsed_Realtime";
-const string STR_ELAPSED_LIVE_TIME = "Elapsed_Livetime";
-const string STR_INPUT_COUNTS = "Input_Counts";
-const string STR_OUTPUT_COUNTS = "Output_Counts";
-
-const string STR_MAPS = "MAPS";
-const string STR_SCAN = "Scan";
-const string STR_SPECTRA = "Spectra";
-const string STR_VERSION = "version";
-const string STR_XRF_ANALYZED = "XRF_Analyzed";
-const string STR_COUNTS_PER_SEC = "Counts_Per_Sec";
-const string STR_CHANNEL_NAMES = "Channel_Names";
-const string STR_CHANNEL_UNITS = "Channel_Units";
-const string STR_FIT_PARAMETERS_OVERRIDE = "Fit_Parameters_Override";
-const string STR_FIT_PARAMETERS = "Fit_Parameters";
-
-const string STR_QUANTIFICATION = "Quantification";
-const string STR_CALIBRATION = "Calibration";
-const string STR_NUMBER_OF_STANDARDS = "Number_Of_Standards";
-const string STR_ELEMENT_WEIGHTS = "Element_Weights";
-const string STR_ELEMENT_WEIGHTS_NAMES = "Element_Weights_Names";
-const string STR_STANDARD_NAME = "Standard_Name";
-
-const string STR_Y_AXIS = "y_axis";
-const string STR_X_AXIS = "x_axis";
-const string STR_REQUESTED_ROWS = "requested_rows";
-const string STR_REQUESTED_COLS = "requested_cols";
-const string STR_THETA = "theta";
-const string STR_SCAN_TIME_STAMP = "scan_time_stamp";
-const string STR_NAME = "name";
+const std::string STR_SR_CURRENT = "SR_Current";
+const std::string STR_US_IC = "US_IC";
+const std::string STR_DS_IC = "DS_IC";
+const std::string STR_CFG_2 = "CFG_2";
+const std::string STR_CFG_3 = "CFG_3";
+const std::string STR_CFG_4 = "CFG_4";
+const std::string STR_CFG_5 = "CFG_5";
 
 
-const string STR_EXTRA_PVS = "Extra_PVs";
-const string STR_NAMES = "Names";
-const string STR_VALUES = "Values";
-const string STR_DESCRIPTION = "Description";
-const string STR_UNIT = "Unit";
-const string STR_UNITS = "Units";
+const std::string STR_K_A_LINES = "K Alpha";
+const std::string STR_K_B_LINES = "K Beta";
+const std::string STR_L_LINES = "L Lines";
+const std::string STR_M_LINES = "M Lines";
+const std::string STR_STEP_LINES = "Step";
+const std::string STR_TAIL_LINES = "Tail";
+const std::string STR_ELASTIC_LINES = "Elastic";
+const std::string STR_COMPTON_LINES = "Compton";
+const std::string STR_PILEUP_LINES = "Pile Up";
+const std::string STR_ESCAPE_LINES = "Escape";
 
-const string STR_US_AMP = "us_amp";
-const string STR_DS_AMP = "ds_amp";
-const string STR_US_AMP_NUM = "us_amp_num";
-const string STR_DS_AMP_NUM = "ds_amp_num";
-const string STR_US_AMP_UNIT = "us_amp_unit";
-const string STR_DS_AMP_UNIT = "ds_amp_unit";
-const string STR_US_AMP_NUM_UPPR = "US_AMP_NUM";
-const string STR_DS_AMP_NUM_UPPR = "DS_AMP_NUM";
-const string STR_US_AMP_UNIT_UPPR = "US_AMP_UNIT";
-const string STR_DS_AMP_UNIT_UPPR = "DS_AMP_UNIT";
+const std::string STR_INT_SPEC = "Integrated_Spectra";
+const std::string STR_FIT_INT_SPEC = "Fitted_Integrated_Spectra";
+const std::string STR_MAX_CHANNELS_INT_SPEC = "Max_Channels_Integrated_Spectra";
+const std::string STR_MAX10_INT_SPEC = "Max_10_Channels_Integrated_Spectra";
+const std::string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
 
-const string STR_NBS_1832 = "nbs1832";
+const std::string STR_CALIB_CURVE_SR_CUR = "Calibration_Curve_SR_Current";
+const std::string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
+const std::string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
+const std::string STR_CALIB_LABELS = "Calibration_Curve_Labels";
+
+const std::string STR_BEAMLINES = "BeamLines";
+const std::string STR_SCALERS = "Scalers";
+const std::string STR_TIME_NORMALIZED_SCALERS = "TimeNormalizedScalers";
+const std::string STR_SUMMED_SCALERS = "Summed_Scalers";
+const std::string STR_TIMING = "Timing";
+const std::string STR_ELT = "ELT";
+const std::string STR_ERT = "ERT";
+const std::string STR_ICR = "ICR";
+const std::string STR_OCR = "OCR";
+const std::string STR_DEAD_TIME = "Dead_Time";
+
+const std::string STR_GENERAL_BEAMLINE = "General";
+
+const std::string STR_ENERGY = "Energy";
+const std::string STR_ENERGY_CALIB = "Energy_Calibration";
+
+const std::string STR_ELAPSED_REAL_TIME = "Elapsed_Realtime";
+const std::string STR_ELAPSED_LIVE_TIME = "Elapsed_Livetime";
+const std::string STR_INPUT_COUNTS = "Input_Counts";
+const std::string STR_OUTPUT_COUNTS = "Output_Counts";
+
+const std::string STR_MAPS = "MAPS";
+const std::string STR_SCAN = "Scan";
+const std::string STR_SPECTRA = "Spectra";
+const std::string STR_VERSION = "version";
+const std::string STR_XRF_ANALYZED = "XRF_Analyzed";
+const std::string STR_COUNTS_PER_SEC = "Counts_Per_Sec";
+const std::string STR_CHANNEL_NAMES = "Channel_Names";
+const std::string STR_CHANNEL_UNITS = "Channel_Units";
+const std::string STR_FIT_PARAMETERS_OVERRIDE = "Fit_Parameters_Override";
+const std::string STR_FIT_PARAMETERS = "Fit_Parameters";
+
+const std::string STR_QUANTIFICATION = "Quantification";
+const std::string STR_CALIBRATION = "Calibration";
+const std::string STR_NUMBER_OF_STANDARDS = "Number_Of_Standards";
+const std::string STR_ELEMENT_WEIGHTS = "Element_Weights";
+const std::string STR_ELEMENT_WEIGHTS_NAMES = "Element_Weights_Names";
+const std::string STR_STANDARD_NAME = "Standard_Name";
+
+const std::string STR_Y_AXIS = "y_axis";
+const std::string STR_X_AXIS = "x_axis";
+const std::string STR_REQUESTED_ROWS = "requested_rows";
+const std::string STR_REQUESTED_COLS = "requested_cols";
+const std::string STR_THETA = "theta";
+const std::string STR_SCAN_TIME_STAMP = "scan_time_stamp";
+const std::string STR_NAME = "name";
+
+
+const std::string STR_EXTRA_PVS = "Extra_PVs";
+const std::string STR_NAMES = "Names";
+const std::string STR_VALUES = "Values";
+const std::string STR_DESCRIPTION = "Description";
+const std::string STR_UNIT = "Unit";
+const std::string STR_UNITS = "Units";
+
+const std::string STR_US_AMP = "us_amp";
+const std::string STR_DS_AMP = "ds_amp";
+const std::string STR_US_AMP_NUM = "us_amp_num";
+const std::string STR_DS_AMP_NUM = "ds_amp_num";
+const std::string STR_US_AMP_UNIT = "us_amp_unit";
+const std::string STR_DS_AMP_UNIT = "ds_amp_unit";
+const std::string STR_US_AMP_NUM_UPPR = "US_AMP_NUM";
+const std::string STR_DS_AMP_NUM_UPPR = "DS_AMP_NUM";
+const std::string STR_US_AMP_UNIT_UPPR = "US_AMP_UNIT";
+const std::string STR_DS_AMP_UNIT_UPPR = "DS_AMP_UNIT";
+
+const std::string STR_NBS_1832 = "nbs1832";
 
 //}
 

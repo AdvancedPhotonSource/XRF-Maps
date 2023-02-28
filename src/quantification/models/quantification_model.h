@@ -68,7 +68,7 @@ using namespace data_struct;
 
 enum class Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
 
-const static map<Electron_Shell, string> Shell_To_String = { {Electron_Shell::K_SHELL, "K"},
+const static std::map<Electron_Shell, std::string> Shell_To_String = { {Electron_Shell::K_SHELL, "K"},
                                                             {Electron_Shell::L_SHELL, "L"} ,
                                                             {Electron_Shell::M_SHELL, "M"} ,
                                                             {Electron_Shell::N_SHELL, "N"} ,

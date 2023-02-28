@@ -61,7 +61,6 @@ namespace routines
 {
 
 using namespace data_struct;
-using namespace std;
 
 /**
  * @brief The Matrix_Optimized_Fit_Routine class : Matrix fit model
@@ -99,7 +98,7 @@ public:
 
 protected:
 
-    unordered_map<string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>* const model,
+    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>* const model,
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                             struct Range energy_range);
 
@@ -108,7 +107,7 @@ protected:
 	data_struct::Spectra<T_real> _max_channels_spectra;
 	data_struct::Spectra<T_real> _max_10_channels_spectra;
 
-    unordered_map<string, Spectra<T_real>> _element_models;
+    std::unordered_map<std::string, Spectra<T_real>> _element_models;
 
     static std::mutex _int_spec_mutex;
 

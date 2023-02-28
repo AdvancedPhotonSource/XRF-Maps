@@ -75,7 +75,7 @@ public:
 
     Spectra<T_real> integrate();
 
-    void generate_scaler_maps(vector<Scaler_Map<T_real>>* scaler_maps);
+    void generate_scaler_maps(std::vector<Scaler_Map<T_real>>* scaler_maps);
 
 	size_t cols() const { if (_data_vol.size() > 0) return _data_vol[0].size(); else return 0; }
 

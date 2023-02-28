@@ -796,9 +796,9 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 
         if (clp.option_exists("--update-amps"))
         {
-            string amps = clp.get_option("--update-amps");
+            std::string amps = clp.get_option("--update-amps");
             size_t idx = amps.find(',');
-            if (idx != string::npos)
+            if (idx != std::string::npos)
             {
                 analysis_job.update_us_amps_str = amps.substr(0, idx);
                 analysis_job.update_ds_amps_str = amps.substr(idx + 1);
@@ -811,9 +811,9 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 
         if (clp.option_exists("--update-quant-amps"))
         {
-            string amps = clp.get_option("--update-quant-amps");
+            std::string amps = clp.get_option("--update-quant-amps");
             size_t idx = amps.find(',');
-            if (idx != string::npos)
+            if (idx != std::string::npos)
             {
                 analysis_job.update_quant_us_amps_str = amps.substr(0, idx);
                 analysis_job.update_quant_ds_amps_str = amps.substr(idx + 1);

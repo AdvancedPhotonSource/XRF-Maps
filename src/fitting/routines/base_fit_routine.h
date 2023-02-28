@@ -62,7 +62,6 @@ namespace routines
 {
 
 using namespace data_struct;
-using namespace std;
 
 
 /**

@@ -117,7 +117,7 @@ DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>
 
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job);
 
-void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, vector<Quantification_Standard<double>>& standard_element_weights, unordered_map<size_t, double>& quant_map);
+void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, std::vector<Quantification_Standard<double>>& standard_element_weights, std::unordered_map<size_t, double>& quant_map);
 
 void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name);
 
@@ -342,7 +342,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void find_quantifier_scalers(unordered_map<string, double>& pv_map, Quantification_Standard<T_real>* quantification_standard)
+void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Quantification_Standard<T_real>* quantification_standard)
 {
 
     // find time scaler
@@ -359,7 +359,7 @@ void find_quantifier_scalers(unordered_map<string, double>& pv_map, Quantificati
     // update pv names to labels
     for (auto& itr : pv_map)
     {
-        string label = "";
+        std::string label = "";
         bool is_time_normalized = false;
         if (data_struct::Scaler_Lookup::inst()->search_pv(itr.first, label, is_time_normalized, beamline))
         {
@@ -373,7 +373,7 @@ void find_quantifier_scalers(unordered_map<string, double>& pv_map, Quantificati
     }
 
     // add any summded scalers to pv_map
-    const vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
+    const std::vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
     if (summed_scalers != nullptr)
     {
         for (const auto& itr : *summed_scalers)

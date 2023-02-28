@@ -151,7 +151,7 @@ namespace aps
 
 
 template<typename T_real>
-T_real translate_sens_num(string value)
+T_real translate_sens_num(std::string value)
 {
     if (value == "0")
     {
@@ -1020,7 +1020,7 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, string result)
+DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, std::string result)
 {
 
     std::ofstream out_stream(path);

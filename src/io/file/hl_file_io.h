@@ -104,11 +104,11 @@ DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string 
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
-DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, std::string quantification_info_file, vector<Quantification_Standard<double>>& standard_element_weights);
+DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, std::string quantification_info_file, std::vector<Quantification_Standard<double>>& standard_element_weights);
 
 //DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
+DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
 ////DLL_EXPORT void save_roi_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
@@ -461,7 +461,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     if (ends_in_mca)
     {
         Spectra<T_real> spec;
-        unordered_map<string, T_real> pv_map;
+        std::unordered_map<std::string, T_real> pv_map;
         if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map))
         {
             if (pv_map.count(STR_SR_CURRENT) > 0)
@@ -780,7 +780,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     if (ends_in_mca)
     {
         Spectra<T_real> spec;
-        unordered_map<string, T_real> pv_map;
+        std::unordered_map<std::string, T_real> pv_map;
         if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
         {
             data_struct::Scan_Info<T_real> scan_info;
@@ -1062,7 +1062,7 @@ DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::
 }
 
 template<typename T_real>
-DLL_EXPORT void save_quantification_plots(string path, Detector<T_real>* detector)
+DLL_EXPORT void save_quantification_plots(std::string path, Detector<T_real>* detector)
 {
     std::string str_path = path + "/output/";
     //if(analysis_job->get_detector(detector_num))

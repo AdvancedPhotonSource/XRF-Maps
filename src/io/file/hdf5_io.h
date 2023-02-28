@@ -151,7 +151,7 @@ T_real translate_back_sens_num(int value)
 }
 
 template<typename T_real>
-T_real translate_back_sens_unit(string value)
+T_real translate_back_sens_unit(std::string value)
 {
     if (value == "pA/V")
     {
@@ -1398,7 +1398,7 @@ public:
         std::string incnt_str = "ICR Ch ";
         std::string outcnt_str = "OCR Ch ";
 
-        std::string det_num_p1 = to_string(detector_num + 1);
+        std::string det_num_p1 = std::to_string(detector_num + 1);
         detector_path = "MCA " + det_num_p1;
         incnt_str += det_num_p1;
         outcnt_str += det_num_p1;
@@ -3904,8 +3904,8 @@ public:
                 std::string read_name = std::string(tmp_char, 255);
                 read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
                 read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
-                string out_label = "";
-                string beamline = "";
+                std::string out_label = "";
+                std::string beamline = "";
                 bool tmpb;
                 if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
                 {
@@ -4152,7 +4152,7 @@ public:
                         first_save = false;
                     }
                     data_struct::Scaler_Map<T_real> sm;
-                    sm.name = string(str_dset_name, len);
+                    sm.name = std::string(str_dset_name, len);
                     sm.values.resize(scalers_count[0], scalers_count[1]);
                     status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, sm.values.data());
                     scan_info->scaler_maps.push_back(sm);
@@ -4199,7 +4199,7 @@ public:
                 int i = 0;
                 for (auto& itr : scan_info->scaler_maps)
                 {
-                    itr.name = string(detector_names[i], strlen(detector_names[i]));
+                    itr.name = std::string(detector_names[i], strlen(detector_names[i]));
                     i++;
                 }
             }
@@ -5356,7 +5356,7 @@ public:
             for (const auto& quant_itr : detector->quantification_standards)
             {
                 //create group
-                string standard_group_name = "Standard" + std::to_string(standard_idx);
+                std::string standard_group_name = "Standard" + std::to_string(standard_idx);
                 if (false == _open_or_create_group(standard_group_name, q_grp_id, standard_grp_id))
                 {
                     return false;
@@ -5684,7 +5684,7 @@ public:
 
                         for (const auto& citr : calib_itr.second)
                         {
-                            string name = citr.name;
+                            std::string name = citr.name;
                             if (calib_itr.first == Electron_Shell::L_SHELL)
                             {
                                 name += "_L";
@@ -5792,8 +5792,8 @@ public:
         // if us_amps is not set in override file, search for it in extra_pvs
         if (params_override->us_amp_sens_num == -1 || params_override->ds_amp_sens_num == -1)
         {
-            string label = "";
-            string beamline = "";
+            std::string label = "";
+            std::string beamline = "";
             bool is_time_normalized = false;
             for (auto& itr : scan_info->extra_pvs)
             {
@@ -6614,8 +6614,8 @@ public:
                 std::string read_name = std::string(tmp_char, 255);
                 read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
                 read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
-                string out_label = "";
-                string beamline = "";
+                std::string out_label = "";
+                std::string beamline = "";
                 bool tmpb;
                 if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
                 {
@@ -7131,7 +7131,7 @@ private:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<T_real>>*scalers_map, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, string ds_amps_unit)
+    bool _save_scalers(hid_t maps_grp_id, std::vector<data_struct::Scaler_Map<T_real>>*scalers_map, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, std::string ds_amps_unit)
     {
 
         hid_t dataspace_values_id = -1, memoryspace_id = -1, dataspace_names_id = -1, memoryspace_str_id = -1;
@@ -7335,7 +7335,7 @@ private:
                     idx++;
                     char tmp_char[255] = { 0 };
                     char tmp_char_units[255] = { 0 };
-                    string out_label, out_beamline;
+                    std::string out_label, out_beamline;
                     if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, out_label, itr.time_normalized, out_beamline))
                     {
                         out_label.copy(tmp_char, 254);
@@ -7379,7 +7379,7 @@ private:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    void _save_amps(hid_t scalers_grp_id, T_real us_amp_sens_num_val, string us_amp_sens_unit_val, T_real ds_amp_sens_num_val, string ds_amp_sens_unit_val)
+    void _save_amps(hid_t scalers_grp_id, T_real us_amp_sens_num_val, std::string us_amp_sens_unit_val, T_real ds_amp_sens_num_val, std::string ds_amp_sens_unit_val)
     {
 
         hid_t dataspace_us_id, dataspace_ds_id, memoryspace_id;

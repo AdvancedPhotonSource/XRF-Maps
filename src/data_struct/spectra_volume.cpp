@@ -131,7 +131,7 @@ void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Volume<T_real>::generate_scaler_maps(vector<Scaler_Map<T_real>> *scaler_maps)
+void Spectra_Volume<T_real>::generate_scaler_maps(std::vector<Scaler_Map<T_real>> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {

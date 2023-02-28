@@ -77,20 +77,20 @@ public:
 
     ~Detector();
 
-    void append_element(Fitting_Routines routine, string name, string quant_scaler, T_real weight);
+    void append_element(Fitting_Routines routine, std::string name, std::string quant_scaler, T_real weight);
 
     void update_element_quants(Fitting_Routines routine,
-                                string quantifier_scaler,
+                                std::string quantifier_scaler,
                                 Quantification_Standard<T_real>* standard,
                                 Quantification_Model<T_real>* quantification_model,
                                 T_real ic_quantifier);
 
     void avg_element_quants(Fitting_Routines routine,
-                            string quantifier_scaler,
+                            std::string quantifier_scaler,
                             std::unordered_map<int, float>& element_amt_dict);
 
     void update_calibration_curve(Fitting_Routines routine,
-                                string quantifier_scaler,
+                                std::string quantifier_scaler,
                                 Quantification_Model<T_real>* quantification_model,
                                 T_real val);
 
@@ -107,12 +107,12 @@ public:
     fitting::models::Base_Model<T_real>* model;
 
     // Quantification
-    std::map<string, Quantification_Standard<T_real>> quantification_standards;
+    std::map<std::string, Quantification_Standard<T_real>> quantification_standards;
 
-    unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
+    std::unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
 
     //  proc_type          quantifier            element    quant_prop
-    map<Fitting_Routines, map<string, unordered_map<string, Element_Quant<T_real>*>>> all_element_quants;
+    std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> all_element_quants;
 
     // Fit Parameters Override for model
     Params_Override<T_real> fit_params_override_dict;
@@ -125,7 +125,7 @@ public:
     data_struct::Element_Info<T_real>* detector_element;
 
     // SR_CURRENT, US_IC, DS_IC  : average if we have multiple standards
-    unordered_map<string, T_real> avg_quantification_scaler_map;
+    std::unordered_map<std::string, T_real> avg_quantification_scaler_map;
 
 private:
     unsigned int _number;

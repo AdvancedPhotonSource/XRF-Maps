@@ -210,9 +210,9 @@ LMFit_Optimizer<T_real>::LMFit_Optimizer() : Optimizer<T_real>()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-unordered_map<string, T_real> LMFit_Optimizer<T_real>::get_options()
+std::unordered_map<std::string, T_real> LMFit_Optimizer<T_real>::get_options()
 {
-    unordered_map<string, T_real> opts{
+    std::unordered_map<std::string, T_real> opts{
         {STR_OPT_FTOL, _options.ftol},
         {STR_OPT_XTOL, _options.xtol},
         {STR_OPT_GTOL, _options.gtol},
@@ -227,7 +227,7 @@ unordered_map<string, T_real> LMFit_Optimizer<T_real>::get_options()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void LMFit_Optimizer<T_real>::set_options(unordered_map<string, T_real> opt)
+void LMFit_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real> opt)
 {
     if (opt.count(STR_OPT_FTOL) > 0)
     {

@@ -59,7 +59,6 @@ namespace models
 {
 
 using namespace data_struct;
-using namespace std;
 
 /*
  1 batch_a: matrix batch fit
@@ -103,7 +102,7 @@ public:
      */
     virtual const Spectra<T_real> model_spectrum(const Fit_Parameters<T_real> * const fit_params,
                                          const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
-                                         unordered_map<string, ArrayTr<T_real> >* labeled_spectras,
+                                         std::unordered_map<std::string, ArrayTr<T_real> >* labeled_spectras,
                                          const struct Range energy_range) = 0;
 
 
@@ -115,7 +114,7 @@ public:
     virtual const Spectra<T_real> model_spectrum_element(const Fit_Parameters<T_real> * const fitp,
                                                  const Fit_Element_Map<T_real> * const element_to_fit,
                                                  const ArrayTr<T_real>  &ev,
-                                                 unordered_map<string, ArrayTr<T_real> >* labeled_spectras) = 0;
+                                                 std::unordered_map<std::string, ArrayTr<T_real> >* labeled_spectras) = 0;
 
     virtual const ArrayTr<T_real>  peak(T_real gain, T_real sigma, const ArrayTr<T_real> & delta_energy) const = 0;
 

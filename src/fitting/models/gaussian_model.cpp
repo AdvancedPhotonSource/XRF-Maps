@@ -302,12 +302,12 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
 
 template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameters<T_real> * const fit_params,
-                                             const unordered_map<string, Fit_Element_Map<T_real>*> * const elements_to_fit,
-                                             unordered_map<string, ArrayTr<T_real>>* labeled_spectras,
+                                             const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
+                                             std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
                                              const struct Range energy_range)
 {
 
-    vector<string> spectra_labels = { STR_K_A_LINES, STR_K_B_LINES, STR_L_LINES, STR_M_LINES, STR_STEP_LINES, STR_TAIL_LINES, STR_ELASTIC_LINES, STR_COMPTON_LINES, STR_PILEUP_LINES, STR_ESCAPE_LINES };
+    std::vector<std::string> spectra_labels = { STR_K_A_LINES, STR_K_B_LINES, STR_L_LINES, STR_M_LINES, STR_STEP_LINES, STR_TAIL_LINES, STR_ELASTIC_LINES, STR_COMPTON_LINES, STR_PILEUP_LINES, STR_ESCAPE_LINES };
 
     if (labeled_spectras != nullptr) // if this stucture is not null then initialize
     {
@@ -374,7 +374,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
 template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parameters<T_real> * const fit_params,
-                                                const unordered_map<string, Fit_Element_Map<T_real>*> * const elements_to_fit,
+                                                const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
                                                 const struct Range energy_range)
 {
 
@@ -423,7 +423,7 @@ template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_Parameters<T_real> * const fitp,
                                                      const Fit_Element_Map<T_real>* const element_to_fit,
                                                      const ArrayTr<T_real> &ev,
-                                                     unordered_map<string, ArrayTr<T_real> > * labeled_spectras)
+                                                     std::unordered_map<std::string, ArrayTr<T_real> > * labeled_spectras)
 {
     Spectra<T_real> spectra_model(ev.size());
 
@@ -438,7 +438,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         return spectra_model;
 
     //T_real fwhm_offset = fitp->value(STR_FWHM_OFFSET);
-    const vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
+    const std::vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
 
     //for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
     for (int idx = 0; idx < energy_ratios.size(); idx++)
@@ -459,7 +459,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         // gaussian peak shape
 		ArrayTr<T_real> delta_energy = ev - er_struct.energy;
 
-        string label = "";
+        std::string label = "";
 
         T_real incident_energy = fitp->at(STR_COHERENT_SCT_ENERGY).value;
 

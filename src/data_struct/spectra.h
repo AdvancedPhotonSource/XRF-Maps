@@ -57,8 +57,6 @@ POSSIBILITY OF SUCH DAMAGE.
 namespace data_struct
 {
 
-using namespace std;
-
 #define default_time_and_io_counts 0.000000001
 
 template<typename _T>

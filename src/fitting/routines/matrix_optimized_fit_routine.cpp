@@ -122,12 +122,12 @@ void Matrix_Optimized_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<T
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-unordered_map<string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_generate_element_models(models::Base_Model<T_real>* const model,
+std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_generate_element_models(models::Base_Model<T_real>* const model,
                                                                                       const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                                                       struct Range energy_range)
 {
     // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
-    unordered_map<string, Spectra<T_real>> element_spectra;
+    std::unordered_map<std::string, Spectra<T_real>> element_spectra;
 
     //n_pileup = 9
     //valarray<T_real> value(0.0, energy_range.count());
@@ -268,8 +268,8 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         std::function<void(const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
         //set num iter to 300;
-        unordered_map<string, T_real> opt_options{ {STR_OPT_MAXITER, 300.}, {STR_OPT_FTOL, 1.0e-11 }, {STR_OPT_GTOL, 1.0e-11 } };
-        unordered_map<string, T_real> saved_options = this->_optimizer->get_options();        
+        std::unordered_map<std::string, T_real> opt_options{ {STR_OPT_MAXITER, 300.}, {STR_OPT_FTOL, 1.0e-11 }, {STR_OPT_GTOL, 1.0e-11 } };
+        std::unordered_map<std::string, T_real> saved_options = this->_optimizer->get_options();
         this->_optimizer->set_options(opt_options);
 
 
@@ -287,7 +287,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         out_counts[STR_RESIDUAL] = fit_params.at(STR_RESIDUAL).value;
 
 		//get max and top 10 max channels
-		vector<pair<int, T_real> > max_map;
+        std::vector<std::pair<int, T_real> > max_map;
 		data_struct::Spectra<T_real> max_vals = *spectra;
 		typename data_struct::Spectra<T_real>::Index idx;
 		for (int i = 0; i < 10; i++)

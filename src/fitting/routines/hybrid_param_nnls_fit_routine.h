@@ -57,7 +57,6 @@ namespace fitting
 namespace routines
 {
 
-using namespace std;
 using namespace data_struct;
 using namespace fitting::optimizers;
 

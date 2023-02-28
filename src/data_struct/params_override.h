@@ -58,7 +58,6 @@
 namespace data_struct
 {
 
-using namespace std;
 
 //-----------------------------------------------------------------------------
 /**
@@ -95,7 +94,7 @@ public:
         theta_pv = "";
     }
 
-    Params_Override(string dir, int detector)
+    Params_Override(std::string dir, int detector)
     {
 
         si_escape_factor = 0.0;
@@ -127,15 +126,15 @@ public:
 		elements_to_fit.clear();
     }
 
-	void _parse_ratios(vector<string> &branching_ratio_shell, int amt)
+	void _parse_ratios(std::vector<std::string> &branching_ratio_shell, int amt)
 	{
 		for (const auto& itr : branching_ratio_shell)
 		{
-			istringstream f(itr);
-			string s;
-			string el_name;
-			getline(f, s, ':');
-			getline(f, el_name, ',');
+            std::istringstream f(itr);
+			std::string s;
+			std::string el_name;
+            std::getline(f, s, ':');
+            std::getline(f, el_name, ',');
 			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
 
@@ -154,11 +153,11 @@ public:
 		branching_ratios.clear();
 		for (const auto& itr : branching_family_L)
 		{
-			istringstream f(itr);
-			string s;
-			string el_name;
-			getline(f, s, ':');
-			getline(f, el_name, ',');
+			std::istringstream f(itr);
+			std::string s;
+			std::string el_name;
+			std::getline(f, s, ':');
+			std::getline(f, el_name, ',');
 			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
 			T_real factor;
@@ -195,9 +194,9 @@ public:
 		_parse_ratios(branching_ratio_M, 4);
 	}
 
-	map<int, T_real> get_custom_factor(string el_name)
+	std::map<int, T_real> get_custom_factor(std::string el_name)
 	{
-		map<int, T_real> factors;
+		std::map<int, T_real> factors;
 		if (branching_ratios.count(el_name) > 0)
 		{
 			return branching_ratios.at(el_name);
@@ -206,11 +205,11 @@ public:
 		return factors;
 	}
 
-    string dataset_directory;
+    std::string dataset_directory;
     int detector_num;
 	Fit_Parameters<T_real> fit_params;
     Fit_Element_Map_Dict<T_real> elements_to_fit;
-    string detector_element;
+    std::string detector_element;
     
     T_real si_escape_factor;
     T_real ge_escape_factor;
@@ -218,28 +217,28 @@ public:
     bool ge_escape_enabled;
     T_real fit_snip_width;
 
-    string be_window_thickness;
-    string det_chip_thickness;
-    string ge_dead_layer;
-    string airpath;
+    std::string be_window_thickness;
+    std::string det_chip_thickness;
+    std::string ge_dead_layer;
+    std::string airpath;
 
-    string theta_pv;
+    std::string theta_pv;
 
-    vector<string> branching_family_L;
-    vector<string> branching_ratio_L;
-    vector<string> branching_ratio_K;
-	vector<string> branching_ratio_M;
+    std::vector<std::string> branching_family_L;
+    std::vector<std::string> branching_ratio_L;
+    std::vector<std::string> branching_ratio_K;
+	std::vector<std::string> branching_ratio_M;
 
-	unordered_map< string, map<int, T_real> > branching_ratios;
+	std::unordered_map< std::string, std::map<int, T_real> > branching_ratios;
 
     T_real sr_current;
     T_real US_IC;
     T_real DS_IC;
 
     T_real us_amp_sens_num;
-    string us_amp_sens_unit;
+    std::string us_amp_sens_unit;
     T_real ds_amp_sens_num;
-    string ds_amp_sens_unit;
+    std::string ds_amp_sens_unit;
 
 };
 

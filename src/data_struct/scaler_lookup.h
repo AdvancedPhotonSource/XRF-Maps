@@ -60,8 +60,8 @@ namespace data_struct
 {
     struct Summed_Scaler
     {
-        string scaler_name;
-        std::vector<string> scalers_to_sum;
+        std::string scaler_name;
+        std::vector<std::string> scalers_to_sum;
     };
 
 //singleton
@@ -75,19 +75,19 @@ public:
 
 	void clear();
 
-	void add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized);
+	void add_beamline_scaler(const std::string& beamline, const std::string& scaler_label, const std::string& scaler_pv, bool is_time_normalized);
 
-    void add_timing_info(const string& beamline, const string& time_pv, double clock);
+    void add_timing_info(const std::string& beamline, const std::string& time_pv, double clock);
 
-    void add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list);
+    void add_summed_scaler(const std::string& beamline, const std::string& scaler_label, const std::vector<std::string>& scaler_list);
 
-    bool search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline);
+    bool search_for_timing_info(const std::vector<std::string>& pv_list, std::string& out_pv, double& out_clock, std::string& out_beamline);
 
-    bool search_for_timing_info(const unordered_map<string, double>& pv_map, string& out_pv, double& out_clock, string& out_beamline);
+    bool search_for_timing_info(const std::unordered_map<std::string, double>& pv_map, std::string& out_pv, double& out_clock, std::string& out_beamline);
 
-    bool search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline);
+    bool search_pv(const std::string& pv, std::string& out_label, bool& out_is_time_normalized, std::string& out_beamline);
 
-    const vector<struct Summed_Scaler>* get_summed_scaler_list(string beamline) const;
+    const std::vector<struct Summed_Scaler>* get_summed_scaler_list(std::string beamline) const;
 
 private:
 
@@ -98,17 +98,17 @@ private:
 	struct BeamLine
 	{
 		//     PV    Label
-		map< string, string > scaler_pv_label_map;
+        std::map< std::string, std::string > scaler_pv_label_map;
 		//     PV    Label
-		map< string, string > time_normalized_scaler_pv_label_map;
+        std::map< std::string, std::string > time_normalized_scaler_pv_label_map;
 		//    Time_PV  Clock
-		map< string, double > timing_info;
+        std::map< std::string, double > timing_info;
 		//   beamline      summed scalers
-		vector<struct Summed_Scaler> summed_scalers;
+        std::vector<struct Summed_Scaler> summed_scalers;
 	};
 	
     //   beamline     Label
-    map< string, struct BeamLine > _beamline_map;
+    std::map< std::string, struct BeamLine > _beamline_map;
  
 };
      

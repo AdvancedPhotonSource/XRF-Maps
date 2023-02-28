@@ -99,7 +99,7 @@ void Scaler_Lookup::clear()
 
 // ----------------------------------------------------------------------------
 
-void Scaler_Lookup::add_beamline_scaler(const string& beamline, const string& scaler_label, const string& scaler_pv, bool is_time_normalized)
+void Scaler_Lookup::add_beamline_scaler(const std::string& beamline, const std::string& scaler_label, const std::string& scaler_pv, bool is_time_normalized)
 {
     if (is_time_normalized)
     {
@@ -113,14 +113,14 @@ void Scaler_Lookup::add_beamline_scaler(const string& beamline, const string& sc
 
 // ----------------------------------------------------------------------------
 
-void Scaler_Lookup::add_timing_info(const string& beamline, const string& time_pv, double clock)
+void Scaler_Lookup::add_timing_info(const std::string& beamline, const std::string& time_pv, double clock)
 {
 	_beamline_map[beamline].timing_info[time_pv] = clock;
 }
 
 // ----------------------------------------------------------------------------
 
-void Scaler_Lookup::add_summed_scaler(const string& beamline, const string& scaler_label, const vector<string>& scaler_list)
+void Scaler_Lookup::add_summed_scaler(const std::string& beamline, const std::string& scaler_label, const std::vector<std::string>& scaler_list)
 {
     data_struct::Summed_Scaler s_scal;
     s_scal.scaler_name = scaler_label;
@@ -133,7 +133,7 @@ void Scaler_Lookup::add_summed_scaler(const string& beamline, const string& scal
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string& out_pv, double& out_clock, string& out_beamline)
+bool Scaler_Lookup::search_for_timing_info(const std::vector<std::string>& pv_list, std::string& out_pv, double& out_clock, std::string& out_beamline)
 {
 	
 	for (const auto& itr : pv_list)
@@ -154,7 +154,7 @@ bool Scaler_Lookup::search_for_timing_info(const vector<string>& pv_list, string
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, double>& pv_map, string& out_pv, double& out_clock, string& out_beamline)
+bool Scaler_Lookup::search_for_timing_info(const std::unordered_map<std::string, double>& pv_map, std::string& out_pv, double& out_clock, std::string& out_beamline)
 {
     for (const auto& itr : pv_map)
     {
@@ -174,7 +174,7 @@ bool Scaler_Lookup::search_for_timing_info(const unordered_map<string, double>& 
 
 // ----------------------------------------------------------------------------
 
-bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_time_normalized, string& out_beamline)
+bool Scaler_Lookup::search_pv(const std::string& pv, std::string& out_label, bool& out_is_time_normalized, std::string& out_beamline)
 {
 	for (const auto& bItr : _beamline_map)
 	{
@@ -204,7 +204,7 @@ bool Scaler_Lookup::search_pv(const string& pv, string& out_label, bool& out_is_
 
 // ----------------------------------------------------------------------------
 
-const vector<struct Summed_Scaler>* Scaler_Lookup::get_summed_scaler_list(string beamline) const
+const std::vector<struct Summed_Scaler>* Scaler_Lookup::get_summed_scaler_list(std::string beamline) const
 {
 	if(_beamline_map.count(beamline) > 0)
 	{

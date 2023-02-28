@@ -58,8 +58,6 @@ namespace fitting
 namespace optimizers
 {
 
-using namespace std;
-
 using namespace data_struct;
 
 /**
@@ -90,9 +88,9 @@ public:
                                                     std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                                     quantification::models::Quantification_Model<T_real>* quantification_model);
 
-    virtual unordered_map<string, T_real> get_options();
+    virtual std::unordered_map<std::string, T_real> get_options();
 
-    virtual void set_options(unordered_map<string, T_real> opt);
+    virtual void set_options(std::unordered_map<std::string, T_real> opt);
 
 private:
 

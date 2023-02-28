@@ -299,9 +299,18 @@ static struct mda_scan *scan_read(XDR *xdrs, enum recurse_option recurse_flag,
         if( scan->offsets[i] < 0)
           return mda_scan_unload( scan), NULL;
       // there can be no zero offsets for the first "last_point" values
-      for( i = 0; i < scan->last_point; i++)
-        if( scan->offsets[i] == 0)
-          return mda_scan_unload( scan), NULL;
+      for (i = 0; i < scan->last_point; i++)
+      {
+          if (scan->offsets[i] == 0)
+          {
+              if (i > 0)
+              {
+                  scan->last_point = i - 1;
+                  break;
+              }
+              return mda_scan_unload(scan), NULL;
+          }
+      }
     }
   /* else */
   /*   scan->scan_rank = NULL; */
@@ -618,9 +627,12 @@ static struct mda_file *mda_load_full( FILE *fptr, enum test_option test_flag)
     }
   if( mda->header->extra_pvs_offset)
     {
-      if( !xdr_setpos( xdrstream, mda->header->extra_pvs_offset ) ||
-          ( (mda->extra = extra_read( xdrstream)) == NULL) )
-        goto Load_Error;
+      if (!xdr_setpos(xdrstream, mda->header->extra_pvs_offset))
+      {
+          goto Load_Error;
+          
+      }
+      mda->extra = extra_read(xdrstream);
     }
   /* else */
   /*   mda->extra = NULL; */

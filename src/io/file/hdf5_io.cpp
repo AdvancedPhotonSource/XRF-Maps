@@ -709,7 +709,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
                     if (src_fit_grp_id > -1)
                     {
                         hid_t dst_fit_grp_id = H5Gcreate(dst_calib_fit_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-                        string chan_name_loc = analysis_grp_name + "/" + STR_CALIB_LABELS;
+                        std::string chan_name_loc = analysis_grp_name + "/" + STR_CALIB_LABELS;
                         status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_SR_CUR, STR_CALIB_CURVE_SR_CUR, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_DS_IC, STR_CALIB_CURVE_DS_IC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
@@ -733,8 +733,8 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
                 {
                     for (int i = 0; i < num_standards; i++)
                     {
-                        string standard_group_name = "Standard" + std::to_string(i);
-                        string whole_standard_name = "MAPS/Quantification/" + standard_group_name;
+                        std::string standard_group_name = "Standard" + std::to_string(i);
+                        std::string whole_standard_name = "MAPS/Quantification/" + standard_group_name;
                         hid_t standard_grp_id = H5Gopen(src_quant_grp_id, standard_group_name.c_str(), H5P_DEFAULT);
                         hid_t dst_standard_id = H5Gcreate(dst_quant_grp_id, standard_group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                         status = H5Ocopy(standard_grp_id, "Element_Weights", dst_standard_id, "Element_Weights", ocpypl_id, H5P_DEFAULT);
@@ -1364,10 +1364,10 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	float us_amp_value = parse_input_real<float>(us_amp_str);
 	float ds_amp_value = parse_input_real<float>(ds_amp_str);
 	int num_stands;
-	string q_loc_pre_str = "/MAPS/Quantification/Standard";
-	string q_loc_post_str = "/Scalers/";
-	string q_us_str = "us_amp";
-	string q_ds_str = "ds_amp";
+    std::string q_loc_pre_str = "/MAPS/Quantification/Standard";
+    std::string q_loc_post_str = "/Scalers/";
+    std::string q_us_str = "us_amp";
+    std::string q_ds_str = "ds_amp";
 
 
 	file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -1395,7 +1395,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 			}
 			for (int i = 0; i < num_stands; ++i)
 			{
-				string q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_us_str;
+                std::string q_loc = q_loc_pre_str + std::to_string(i) + q_loc_post_str + q_us_str;
 				if (false == _open_h5_object(us_amp_id, H5O_DATASET, close_map, q_loc.c_str(), file_id, false, false))
 				{
 					count_1d[0] = 3;
@@ -1416,7 +1416,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 					rerror = H5Dwrite(us_amp_id, H5T_NATIVE_FLOAT, memoryspace_id, amp_space, H5P_DEFAULT, (void*)&us_amp_value);
 				}
 
-				q_loc = q_loc_pre_str + to_string(i) + q_loc_post_str + q_ds_str;
+				q_loc = q_loc_pre_str + std::to_string(i) + q_loc_post_str + q_ds_str;
 				if (false == _open_h5_object(ds_amp_id, H5O_DATASET, close_map, q_loc.c_str(), file_id, false, false))
 				{
 					count_1d[0] = 3;

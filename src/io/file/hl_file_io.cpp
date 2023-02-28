@@ -69,12 +69,12 @@ void parse_scalers(const std::string& beamline, const YAML::Node& node, bool tim
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Scalar:
-            data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it->second.as<string>(), time_normalized);
+            data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<std::string>(), it->second.as<std::string>(), time_normalized);
 			break;
 		case YAML::NodeType::Sequence:
             for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
             {
-                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<string>(), it2->as<string>(), time_normalized);
+                data_struct::Scaler_Lookup::inst()->add_beamline_scaler(beamline, it->first.as<std::string>(), it2->as<std::string>(), time_normalized);
             }
 			break;
 		case YAML::NodeType::Map:
@@ -92,15 +92,15 @@ void parse_summed_scalers(const std::string& beamline, const YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
-        vector<string> scaler_list;
+        std::vector<std::string> scaler_list;
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Sequence:
 			for (YAML::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 			{
-                scaler_list.push_back(it2->as<string>());
+                scaler_list.push_back(it2->as<std::string>());
 			}
-            data_struct::Scaler_Lookup::inst()->add_summed_scaler(beamline, it->first.as<string>(), scaler_list);
+            data_struct::Scaler_Lookup::inst()->add_summed_scaler(beamline, it->first.as<std::string>(), scaler_list);
 			break;
 		case YAML::NodeType::Map:
 		case YAML::NodeType::Scalar:
@@ -118,7 +118,7 @@ void parse_time_normalized_scalers(const std::string& beamline, const YAML::Node
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
-		string val = it->first.as<string>();
+        std::string val = it->first.as<std::string>();
         switch (it->second.Type())
         {
         case YAML::NodeType::Sequence:
@@ -127,7 +127,7 @@ void parse_time_normalized_scalers(const std::string& beamline, const YAML::Node
                 YAML::Node timing_node = it->second.as<YAML::Node>();
                 if (timing_node.size() == 2)
                 {
-                    data_struct::Scaler_Lookup::inst()->add_timing_info(beamline, timing_node[0].as<string>(), timing_node[1].as<double>());
+                    data_struct::Scaler_Lookup::inst()->add_timing_info(beamline, timing_node[0].as<std::string>(), timing_node[1].as<double>());
                 }
                 else
                 {
@@ -156,7 +156,7 @@ void parse_beamline(const std::string& beamline, const YAML::Node& node)
 {
 	for (YAML::const_iterator it = node.begin(); it != node.end(); ++it)
 	{
-		string val = it->first.as<string>();
+        std::string val = it->first.as<std::string>();
 		switch (it->second.Type())
 		{
 		case YAML::NodeType::Map:
@@ -204,7 +204,7 @@ bool load_scalers_lookup(const std::string filename)
 
 // ----------------------------------------------------------------------------
 
-void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double> *fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit)
+void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double> *fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit)
 {
     std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
     std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec" + dataset_filename;
@@ -255,7 +255,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra->size(), fit_params);
     data_struct::Spectra<double> snip_spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
 
-    unordered_map<string, ArrayTr<double>> labeled_spectras;
+    std::unordered_map<std::string, ArrayTr<double>> labeled_spectras;
     data_struct::Spectra<double> model_spectra = model.model_spectrum(fit_params, elements_to_fit, &labeled_spectras, energy_range);
     
     data_struct::ArrayTr<double> background;
@@ -320,7 +320,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
 
 DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
                                                  std::string quantification_info_file,
-                                                 vector<Quantification_Standard<double>> &standards)
+                                                std::vector<Quantification_Standard<double>> &standards)
 {
     std::string path = dataset_directory + quantification_info_file;
     std::ifstream paramFileStream(path);
