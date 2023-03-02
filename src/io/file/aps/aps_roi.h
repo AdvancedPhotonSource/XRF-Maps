@@ -62,7 +62,7 @@ namespace file
 namespace aps
 {
 
-typedef std::pair<unsigned int, unsigned int> int_point;
+typedef std::pair<int, int> int_point;
 
 DLL_EXPORT bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>> &rois);
 

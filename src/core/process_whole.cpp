@@ -527,7 +527,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
 void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             int detector_num,
-                            std::map<int, std::vector<std::pair<unsigned int, unsigned int>>>& rois,
+                            std::map<int, std::vector<std::pair<int, int>>>& rois,
                             std::string search_filename,
                             std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params)
 {
@@ -650,7 +650,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
     std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> & out_roi_fit_params)
 {
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
-    std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
+    std::map<int, std::vector<std::pair<int, int>>> rois;
     std::string search_filename;
     //data_struct::Detector<double>* detector;
     if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
