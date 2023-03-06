@@ -546,18 +546,25 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             {
                 int_spectra = int_spectra_map.at(search_filename);
                 sfile_name = search_filename;
+                file_path += sfile_name;
             }
             else
             {
+                if (files.size() == 1) // v9 will find just 1, 
+                {
+                    sfile_name = files[0];
+                }
+                else // v10 finds more so we just use search name
+                {
+                    sfile_name = search_filename;
+                }
+                file_path += sfile_name;
                 if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
                 {
                     logE << "Could not load int spectra for " << file_path << ".  skipping..\n";
                     continue;
                 }
-                sfile_name = files[0];
             }
-
-            file_path += sfile_name;
 
             data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
             if (detector == nullptr)
