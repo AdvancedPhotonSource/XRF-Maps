@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 #include <math.h>
 #include <string.h>
 

@@ -627,11 +627,7 @@ static struct mda_file *mda_load_full( FILE *fptr, enum test_option test_flag)
     }
   if( mda->header->extra_pvs_offset)
     {
-      if (!xdr_setpos(xdrstream, mda->header->extra_pvs_offset))
-      {
-          goto Load_Error;
-          
-      }
+      xdr_setpos(xdrstream, mda->header->extra_pvs_offset);
       mda->extra = extra_read(xdrstream);
     }
   /* else */

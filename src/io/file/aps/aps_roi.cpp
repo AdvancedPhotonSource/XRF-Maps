@@ -78,7 +78,7 @@ int swapOrder(Num num)
     return num.num;
 }
 
-bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
+bool load_v9_rois(std::string path, std::map<std::string, std::vector<int_point>>& rois)
 {
     std::ifstream fileStream;
 
@@ -118,7 +118,7 @@ bool load_v9_rois(std::string path, std::map<int, std::vector<int_point>>& rois)
                         {
                             if ((m & mask) == m)
                             {
-                                rois[idx - 1].push_back(int_point(x, y));
+                                rois[std::to_string(idx - 1)].push_back(int_point(x, y));
                             }
                             m = m << 1;
                         }

@@ -86,7 +86,7 @@ enum H5_SPECTRA_LAYOUTS {MAPS_RAW, MAPS_V9, MAPS_V10, XSPRESS, APS_SEC20};
 
 enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
-using ROI_Vec = std::vector<std::pair<unsigned int, unsigned int>>;
+using ROI_Vec = std::vector<std::pair<int, int>>;
 
 template<typename T_real>
 int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::string lookup_str)

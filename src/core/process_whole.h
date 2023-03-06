@@ -119,7 +119,7 @@ DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analy
 
 void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, std::vector<Quantification_Standard<double>>& standard_element_weights, std::unordered_map<size_t, double>& quant_map);
 
-void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name);
+DLL_EXPORT void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name, std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>>& out_roi_fit_params);
 
 DLL_EXPORT void optimize_rois(data_struct::Analysis_Job<double>& analysis_job);
 
