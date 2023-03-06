@@ -15,7 +15,7 @@ jobs:
       submodules: true
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - script: echo set(VCPKG_BUILD_TYPE release)>>vcpkg\triplets\x64-windows.cmake
-    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq jsoncpp --triplet x64-windows
     - script: mkdir build
     - task: CMake@1
       inputs:

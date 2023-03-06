@@ -527,114 +527,129 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
 void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             int detector_num,
-                            std::map<int, std::vector<std::pair<int, int>>>& rois,
+                            std::map<std::string, std::vector<std::pair<int, int>>>& rois,
+                            std::unordered_map<std::string, data_struct::Spectra<double> >& int_spectra_map,
                             std::string search_filename,
                             std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params)
 {
+    int cnt = int_spectra_map.count(search_filename);
     std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
-    if (files.size() > 0)
+    if (files.size() > 0 || cnt > 0)
     {
+        std::string sfile_name;
         for (auto& roi_itr : rois)
         {
-            Spectra<double> int_spectra;
-            std::string file_path = analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + files[0];
-            if (io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
+            data_struct::Spectra<double> int_spectra;
+
+            std::string file_path = analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR; 
+            if (cnt > 0)
             {
-                data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
-                if (detector == nullptr)
+                int_spectra = int_spectra_map.at(search_filename);
+                sfile_name = search_filename;
+            }
+            else
+            {
+                if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
                 {
-                    logE << "Detector " << detector_num << " is not initialized, skipping..\n";
+                    logE << "Could not load int spectra for " << file_path << ".  skipping..\n";
                     continue;
                 }
-                
-                data_struct::Params_Override<double>* params_override = &(detector->fit_params_override_dict);
-                
-                /// If quant is not done also, Need to save more info from Quantification first, then we can finish implementing loading quant from hdf5 instead of rerunning each time roi's are done
-                ///io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, detector);
-                // load scalers and scan info
-                data_struct::Scan_Info<double> scan_info;
-                io::file::HDF5_IO::inst()->load_scan_info_analyzed_h5(file_path, detector, scan_info);
-
-                double sr_current = 1.0;
-                double us_ic = 1.0;
-                double ds_ic = 1.0;
-
-                std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
-                if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
-                {
-                    for (auto& in_itr : roi_itr.second)
-                    {
-                        hsize_t xoffset = in_itr.first;
-                        hsize_t yoffset = in_itr.second;
-                        if (scalers_map.count(STR_DS_IC) > 0)
-                        {
-                            ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
-                        }
-                        if (scalers_map.count(STR_US_IC) > 0)
-                        {
-                            us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
-                        }
-                        if (scalers_map.count(STR_SR_CURRENT) > 0)
-                        {
-                            sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
-                        }
-                    }
-                }
-                else
-                {
-                    sr_current = detector->fit_params_override_dict.sr_current;
-                    us_ic = detector->fit_params_override_dict.US_IC;
-                    ds_ic = detector->fit_params_override_dict.DS_IC;
-                }
-
-
-                data_struct::Fit_Parameters<double> out_fitp;
-                std::string roi_name = std::to_string(roi_itr.first);
-                if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, files[0]+ "_roi_" + roi_name, out_fitp))
-                {
-                    logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
-                }
-
-                
-                
-                
-                double total_counts = 0.0;
-                for (auto& itr : out_fitp)
-                {
-                    if (data_struct::Element_Info_Map<double>::inst()->is_element(itr.first))
-                    {
-                        total_counts += itr.second.value;
-                    }
-                }
-                
-
-                double abs_err = std::abs(out_fitp.at(STR_RESIDUAL).value);
-                double rel_err = abs_err / int_spectra.sum();;
-                double roi_area = roi_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
-
-                // add in other properties that will be saved to csv
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("total_perror", out_fitp.at(STR_RESIDUAL).value));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", abs_err));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", rel_err));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", roi_area));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", params_override->us_amp_sens_num));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_num", params_override->ds_amp_sens_num));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_unit", io::file::translate_back_sens_unit<double>(params_override->ds_amp_sens_unit)));
-                out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", params_override->ds_amp_sens_num));
-                out_roi_fit_params[files[0] + "_roi_" + roi_name] = out_fitp;
-
+                sfile_name = files[0];
             }
+
+            file_path += sfile_name;
+
+            data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
+            if (detector == nullptr)
+            {
+                logE << "Detector " << detector_num << " is not initialized, skipping..\n";
+                continue;
+            }
+                
+            data_struct::Params_Override<double>* params_override = &(detector->fit_params_override_dict);
+                
+            /// If quant is not done also, Need to save more info from Quantification first, then we can finish implementing loading quant from hdf5 instead of rerunning each time roi's are done
+            ///io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, detector);
+            // load scalers and scan info
+            data_struct::Scan_Info<double> scan_info;
+            io::file::HDF5_IO::inst()->load_scan_info_analyzed_h5(file_path, detector, scan_info);
+
+            double sr_current = 1.0;
+            double us_ic = 1.0;
+            double ds_ic = 1.0;
+
+            std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
+            if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
+            {
+                for (auto& in_itr : roi_itr.second)
+                {
+                    hsize_t xoffset = in_itr.first;
+                    hsize_t yoffset = in_itr.second;
+                    if (scalers_map.count(STR_DS_IC) > 0)
+                    {
+                        ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
+                    }
+                    if (scalers_map.count(STR_US_IC) > 0)
+                    {
+                        us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
+                    }
+                    if (scalers_map.count(STR_SR_CURRENT) > 0)
+                    {
+                        sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
+                    }
+                }
+            }
+            else
+            {
+                sr_current = detector->fit_params_override_dict.sr_current;
+                us_ic = detector->fit_params_override_dict.US_IC;
+                ds_ic = detector->fit_params_override_dict.DS_IC;
+            }
+
+
+            data_struct::Fit_Parameters<double> out_fitp;
+            std::string roi_name = roi_itr.first;
+            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp))
+            {
+                logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
+            }
+
+                
+            double total_counts = 0.0;
+            for (auto& itr : out_fitp)
+            {
+                if (data_struct::Element_Info_Map<double>::inst()->is_element(itr.first))
+                {
+                    total_counts += itr.second.value;
+                }
+            }
+                
+
+            double abs_err = std::abs(out_fitp.at(STR_RESIDUAL).value);
+            double rel_err = abs_err / int_spectra.sum();;
+            double roi_area = roi_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
+
+            // add in other properties that will be saved to csv
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("total_perror", out_fitp.at(STR_RESIDUAL).value));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", abs_err));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", rel_err));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", roi_area));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", params_override->us_amp_sens_num));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_num", params_override->ds_amp_sens_num));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_unit", io::file::translate_back_sens_unit<double>(params_override->ds_amp_sens_unit)));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", params_override->ds_amp_sens_num));
+            out_roi_fit_params[sfile_name + "_roi_" + roi_name] = out_fitp;
         }
     }
     else
@@ -650,54 +665,90 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
     std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> & out_roi_fit_params)
 {
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
-    std::map<int, std::vector<std::pair<int, int>>> rois;
+    std::map<std::string, std::vector<std::pair<int, int>>> rois;
     std::string search_filename;
-    //data_struct::Detector<double>* detector;
-    if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
+    // int specs loaded from v10 version
+    std::unordered_map<std::string, data_struct::Spectra<double> > int_specs;
+
+    int slen = roi_file_name.size();
+    if (slen < 6)
     {
-        logI << "Loaded roi file "<<roi_file_name << "\n";
-        //get dataset file number
-        std::string dataset_num;
-        std::istringstream strstream(roi_file_name);
-        if (roi_file_name.find('_') != std::string::npos)
+        logE << "Roi file name too short " << roi_file_name << ". Skipping file.\n";
+        return;
+    }
+    std::string base_file_name = roi_file_name.substr(0, slen - 4);
+
+    if (roi_file_name[slen - 4] == '.' && roi_file_name[slen - 3] == 'r' && roi_file_name[slen - 2] == '0' && roi_file_name[slen - 1] == 'i')
+    {
+        if (io::file::aps::load_v10_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois, int_specs))
         {
-            std::getline(strstream, dataset_num, '_');
-        }
-        else if (roi_file_name.find('-') != std::string::npos)
-        {
-            std::getline(strstream, dataset_num, '-');
-        }
-        if (dataset_num.length() > 0)
-        {
-            // iterate through all 
             for (size_t detector_num : analysis_job.detector_num_arr)
             {
-                //detector = analysis_job.get_detector(detector_num);
                 if (detector_num != -1)
                 {
                     std::string str_detector_num = std::to_string(detector_num);
-                    search_filename = dataset_num + ".h5" + str_detector_num; // v9 save
-                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename, out_roi_fit_params[detector_num]);
-                    search_filename = dataset_num + ".mda.h5" + str_detector_num;
-                    find_and_optimize_roi(analysis_job, detector_num, rois, search_filename, out_roi_fit_params[detector_num]);
+                    
+                    search_filename = base_file_name + ".mda.h5" + str_detector_num;
+                    find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
                 }
             }
             //now for the avg h5
-            //detector = analysis_job.get_detector(-1); 
-            search_filename = dataset_num + ".h5"; // v9 save
-            find_and_optimize_roi(analysis_job, -1, rois, search_filename, out_roi_fit_params[-1]);
-            search_filename = dataset_num + ".mda.h5";
-            find_and_optimize_roi(analysis_job, -1, rois, search_filename, out_roi_fit_params[-1]);
+            search_filename = base_file_name + ".mda.h5";
+            find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
         }
         else
         {
-            logE<<"Error parsing dataset number for "<< roi_file_name << "\n";
+            logE << "Error loading roi file " << roi_file_name << "\n";
         }
-
     }
     else
     {
-        logE << "Error loading roi file "<< roi_file_name << "\n";
+        if (io::file::aps::load_v9_rois(analysis_job.dataset_directory + "rois" + DIR_END_CHAR + roi_file_name, rois))
+        {
+            logI << "Loaded roi file " << roi_file_name << "\n";
+            //get dataset file number
+            std::string dataset_num;
+            std::istringstream strstream(roi_file_name);
+            if (roi_file_name.find('_') != std::string::npos)
+            {
+                std::getline(strstream, dataset_num, '_');
+            }
+            else if (roi_file_name.find('-') != std::string::npos)
+            {
+                std::getline(strstream, dataset_num, '-');
+            }
+            if (dataset_num.length() > 0)
+            {
+                // iterate through all 
+                for (size_t detector_num : analysis_job.detector_num_arr)
+                {
+                    //detector = analysis_job.get_detector(detector_num);
+                    if (detector_num != -1)
+                    {
+                        std::string str_detector_num = std::to_string(detector_num);
+                        search_filename = dataset_num + ".h5" + str_detector_num; // v9 save
+                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
+                        search_filename = dataset_num + ".mda.h5" + str_detector_num;
+                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
+                    }
+                }
+                //now for the avg h5
+                //detector = analysis_job.get_detector(-1); 
+                search_filename = dataset_num + ".h5"; // v9 save
+                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
+                search_filename = dataset_num + ".mda.h5";
+                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
+            }
+            else
+            {
+                logE << "Error parsing dataset number for " << roi_file_name << "\n";
+            }
+
+        }
+        else
+        {
+            logE << "Error loading roi file " << roi_file_name << "\n";
+        }
     }
 }
 
@@ -707,8 +758,17 @@ void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
 {
      //       detector_num        file_name_roi           fit_params
     std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> roi_fit_params;
+    // old v9 format
+    std::vector<std::string> files_to_proc = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "rois", ".roi");
+    // new roi format
+    std::vector<std::string> r0i_files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "rois", ".r0i");
 
-    for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "rois", ".roi"))
+    for (auto itr : r0i_files)
+    {
+        files_to_proc.push_back(itr);
+    }
+
+    for (auto& itr : files_to_proc)
     {
         optimize_single_roi(analysis_job, itr, roi_fit_params);
     }

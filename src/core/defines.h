@@ -302,6 +302,15 @@ const std::string STR_DS_AMP_UNIT_UPPR = "DS_AMP_UNIT";
 
 const std::string STR_NBS_1832 = "nbs1832";
 
+// ROI
+const std::string STR_MAPS_ROIS = "MAPS_ROIS";
+const std::string STR_MAP_ROI_NAME = "Name";
+const std::string STR_MAP_ROI_COLOR = "Color";
+const std::string STR_MAP_ROI_COLOR_ALPHA = "Color_Alpha";
+const std::string STR_MAP_ROI_PIXEL_LOC = "Pixel_Loc";
+const std::string STR_MAP_ROI_INT_SPEC = "Integrated_Spectras";
+const std::string STR_MAP_ROI_INT_SPEC_FILENAME = "File_Name";
+
 //}
 
 //}// namespace keys
