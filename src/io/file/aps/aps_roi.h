@@ -75,12 +75,13 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
     bool parsed = false;
 
     std::ifstream file(path);
+    std::istream& stream = file;
     // json reader
     Json::Reader reader;
     // this will contain complete JSON data
     Json::Value completeJsonData;
     // reader reads the data and stores it in completeJsonData
-    parsed = reader.parse(file, completeJsonData);
+    parsed = reader.parse(stream, completeJsonData, false);
     
     if (completeJsonData.isMember(STR_MAPS_ROIS))
     {
