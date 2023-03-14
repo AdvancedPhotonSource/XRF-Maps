@@ -471,11 +471,11 @@ ENDIF()
 
 # Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp jsoncpp_lib jsoncpp_object JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp jsoncpp_lib jsoncpp_object JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
 ELSE()
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp jsoncpp_lib jsoncpp_object JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp jsoncpp_lib jsoncpp_object JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
 
 IF (BUILD_WITH_QT)
