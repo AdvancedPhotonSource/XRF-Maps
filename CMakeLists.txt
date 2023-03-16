@@ -239,6 +239,7 @@ set(libxrf_fit_HEADERS
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
     src/data_struct/detector.h
+    src/stats/correlation_coefficient.h
     src/data_struct/analysis_job.h
     src/workflow/threadpool.h
 )
