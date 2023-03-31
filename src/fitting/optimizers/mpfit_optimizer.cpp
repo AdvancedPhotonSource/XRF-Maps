@@ -428,7 +428,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     std::vector<T_real> resid(energy_range.count());
 
     size_t total_itr = num_itr * (fitp_arr.size() + 1);
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr);
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, true);
 
     int info;
     /*
@@ -534,7 +534,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 									            Gen_Func_Def<T_real> gen_func)
 {
     Gen_User_Data<T_real> ud;
-    fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func);
+    fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func, true);
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
     std::vector<T_real> perror(fitp_arr.size());
