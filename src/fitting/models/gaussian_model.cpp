@@ -131,6 +131,8 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_LINEAR,		 (T_real)0.0, (T_real)0.02, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
+    fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+
     return fit_params;
 
 }
@@ -365,8 +367,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
         agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     }
 
- //   agr_spectra += escape_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-
     return agr_spectra;
 }
 
@@ -411,8 +411,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-
-    //   agr_spectra += escape_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
 
     return agr_spectra;
 }
@@ -503,7 +501,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 			faktor = (T_real)0.0;
 		}
 
-
+        
         if (labeled_spectras != nullptr && label.length() > 0)
         {
             Spectra<T_real> tmp_spec(ev.size());
@@ -538,6 +536,36 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
             }
             spectra_model += tmp_spec;
 
+            // escape peaks
+            if (fitp->at(STR_SI_ESCAPE).value > 0.0)
+            {
+                Spectra<T_real> escape_spec(ev.size());
+
+                T_real esacpe_energy = er_struct.energy - 1.73998;
+                T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
+                delta_energy = ev - esacpe_energy;
+
+                sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (esacpe_energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
+                f_step = std::abs<T_real>(er_struct.mu_fraction * (fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * esacpe_energy)));
+                f_tail = std::abs<T_real>(fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+                kb_f_tail = std::abs<T_real>(fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+                value = 1.0;
+
+                escape_spec += escape_faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+                if (f_step > 0.0)
+                {
+                    value = faktor * f_step;
+                    escape_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, esacpe_energy);
+                }
+                if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+                {
+                    T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (esacpe_energy)) * element_to_fit->width_multi();
+                    value = faktor * kb_f_tail;
+                    escape_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                }
+                (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
+                spectra_model += escape_spec;
+            }
         }
         else
         {
@@ -560,6 +588,36 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
                 value = faktor * kb_f_tail;
                 spectra_model += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
                 //fit_counts.tail = fit_counts.tail + value;
+            }
+
+            // escape peaks
+            if (fitp->at(STR_SI_ESCAPE).value > 0.0)
+            {
+                Spectra<T_real> escape_spec(ev.size());
+
+                T_real esacpe_energy = er_struct.energy - 1.73998;
+                T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
+                delta_energy = ev - esacpe_energy;
+
+                sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (esacpe_energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
+                f_step = std::abs<T_real>(er_struct.mu_fraction * (fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * esacpe_energy)));
+                f_tail = std::abs<T_real>(fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+                kb_f_tail = std::abs<T_real>(fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+                value = 1.0;
+
+                escape_spec += escape_faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+                if (f_step > 0.0)
+                {
+                    value = faktor * f_step;
+                    escape_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, esacpe_energy);
+                }
+                if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+                {
+                    T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (esacpe_energy)) * element_to_fit->width_multi();
+                    value = faktor * kb_f_tail;
+                    escape_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                }
+                spectra_model += escape_spec;
             }
         }
     }
@@ -672,40 +730,6 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     return counts;
 }
 
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
-const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real  gain) const
-{
-    // check detector element for how much to move escape peaks.
-    ArrayTr<T_real>counts(ev.size());
-    counts.setZero();
-    /*
-    //escape
-    //if (np.sum(np.abs(pall[keywords.added_params[1:4]])) >= 0.0)
-    {
-        // si escape
-        if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
-            //if (pall[keywords.added_params[1]] > 0.0)
-        {
-            T_real escape_E = (T_real)1.73998;
-            for (size_t i = 0; i < ev.size(); i++)
-            {
-                if (ev[i] > (escape_E + ev[0]))
-                {
-                    escape_factor = pall[keywords.added_params[1]] + pall[keywords.added_params[3]] * ev;
-
-                    for (int ii = 0; ii < len(wo[0]); ii++)
-                    {
-                        fit_counts.escape[ii] = counts[wo[0][ii]] * std::max(np.append(escape_factor[wo[0][ii]], 0.0));
-                    }
-                }
-            }
-        }
-    }
-    */
-    return counts;
-}
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

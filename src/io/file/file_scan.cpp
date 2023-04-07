@@ -105,6 +105,8 @@ namespace io
 
         void File_Scan::populate_netcdf_hdf5_files(std::string dataset_dir)
         {
+            std::vector<std::string> tmp_vec;
+
             _netcdf_files.clear();
             _bnp_netcdf_files.clear();
             _hdf_files.clear();
@@ -121,8 +123,12 @@ namespace io
             _netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.nc");
             _bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
             _hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5" + DIR_END_CHAR, "_0.h5");
-            _hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXspress" + DIR_END_CHAR, "_0.h5");
-            _hdf_xspress_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.hdf5");
+            //tmp_vec = find_all_dataset_files(dataset_dir + "flyXspress" + DIR_END_CHAR, "_0.h5");
+            //_hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
+            tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.hdf5");
+            _hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
+            tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_1.hdf5");
+            _hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
             //_hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
             _hdf_emd_files = find_all_dataset_files(dataset_dir, ".emd");
         }

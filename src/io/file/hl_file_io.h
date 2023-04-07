@@ -438,6 +438,27 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
     }
 
+    if (hasNetcdf == false && hasBnpNetcdf == false && hasHdf == false && hasXspress == false)
+    {
+
+        int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
+        if (idx == 0)
+        {
+            std::string footer = tmp_dataset_file.substr(7, tmp_dataset_file.length() - 7);
+            int file_index = std::atoi(footer.c_str());
+            file_middle = std::to_string(file_index);
+            bnp_netcdf_base_name = "bnp_fly_" + file_middle + "_";
+            for (auto& itr : io::file::File_Scan::inst()->hdf_xspress_files())
+            {
+                if (itr.find(bnp_netcdf_base_name) == 0)
+                {
+                    hasXspress = true;
+                    break;
+                }
+            }
+        }
+    }
+
 
     bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
@@ -642,7 +663,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                 for (size_t i = 0; i < dims[0]; i++)
                 {
-                    full_filename = dataset_directory + "flyXspress" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
+                    full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
                     if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line))
                     {
                         for (size_t k = 0; k < spectra_line.size(); k++)
@@ -744,6 +765,27 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 file_middle = itr.substr(tmp_dataset_file.length(), slen);
                 hasXspress = true;
                 break;
+            }
+        }
+    }
+
+    if (hasNetcdf == false && hasBnpNetcdf == false && hasHdf == false && hasXspress == false)
+    {
+
+        int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
+        if (idx == 0)
+        {
+            std::string footer = tmp_dataset_file.substr(7, tmp_dataset_file.length() - 7);
+            int file_index = std::atoi(footer.c_str());
+            file_middle = std::to_string(file_index);
+            bnp_netcdf_base_name = "bnp_fly_" + file_middle + "_";
+            for (auto& itr : io::file::File_Scan::inst()->hdf_xspress_files())
+            {
+                if (itr.find(bnp_netcdf_base_name) == 0)
+                {
+                    hasXspress = true;
+                    break;
+                }
             }
         }
     }
@@ -993,10 +1035,12 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         else if (hasXspress)
         {
             std::string full_filename;
-            for (size_t i = 0; i < spectra_volume->rows(); i++)
+            //for (size_t i = 0; i < spectra_volume->rows(); i++)
+            for (size_t i = 1; i <= spectra_volume->rows(); i++) //BNP hack of starting at 1 instead of 0
             {
-                full_filename = dataset_directory + "flyXspress" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
-                io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                //full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
+                full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
+                io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i-1]);
             }
         }
 
