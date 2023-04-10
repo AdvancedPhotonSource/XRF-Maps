@@ -495,17 +495,17 @@ IF (BUILD_WITH_OPENCL)
     target_link_libraries(xrf_maps PRIVATE clblast)
 ENDIF()
 
-#install(TARGETS xrf_maps libxrf_io libxrf_fit 
-#        EXPORT libxrf-export
-#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-#        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-#)
+install(TARGETS xrf_maps libxrf_io libxrf_fit 
+        EXPORT xrfmaps-export
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
-#install(EXPORT libxrf-export
-#        FILE xrf-mapsTargets.cmake
-#        NAMESPACE XRF_Maps::
-#        DESTINATION lib/cmake
-#)
+install(EXPORT xrfmaps-export
+        FILE xrfmaps-config.cmake
+        NAMESPACE XRF_Maps::
+        DESTINATION lib/cmake/xrfmaps
+)

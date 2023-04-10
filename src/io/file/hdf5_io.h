@@ -1222,7 +1222,7 @@ public:
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
             return false;
 
-        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id))
+        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id))
             return false;
 
         if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "/entry/instrument/NDAttributes", file_id))
