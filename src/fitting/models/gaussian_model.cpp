@@ -54,8 +54,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 
 #include <string.h>
-
+#ifdef _OPENMP
 #include <omp.h>
+#endif
+
 
 #define SQRT_2xPI (T_real)2.506628275 // sqrt ( 2.0 * M_PI )
 
