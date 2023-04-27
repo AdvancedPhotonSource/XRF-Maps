@@ -50,6 +50,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #if defined _WIN32 || defined __CYGWIN__
 #include "windows.h"
+#elif defined(__APPLE__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #else
 #include "sys/types.h"
 #include "sys/sysinfo.h"

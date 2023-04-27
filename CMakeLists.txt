@@ -134,11 +134,13 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
 include(CheckCXXCompilerFlag)
 
-IF (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-ENDIF()
-
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+  # Apple clang does not come compiled with openmp
+  IF (NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+  ELSE()
+    set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -D__APPLE__")
+  ENDIF()
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -D__Unix__  -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__  -fPIC")

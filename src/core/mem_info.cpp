@@ -45,16 +45,26 @@ POSSIBILITY OF SUCH DAMAGE.
 
 /// Initial Author <2019>: Arthur Glowacki
 #include "mem_info.h"
+#include <exception>
 
 long long get_available_mem()
 {
 #if defined _WIN32 || defined __CYGWIN__
-
-
 	MEMORYSTATUSEX memInfo;
 	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&memInfo);
 	return memInfo.ullAvailPhys;
+#elif defined __APPLE__
+	int mib[2];
+	int64_t physical_memory;
+	size_t length;
+	// Get the Physical memory size
+	mib[0] = CTL_HW;
+	mib[1] = HW_MEMSIZE;
+	length = sizeof(int64_t);
+	sysctl(mib, 2, &physical_memory, &length, NULL, 0);
+	// HACK: 80% of physical mem
+	return physical_memory * .8;
 #else
 	struct sysinfo memInfo;
 
@@ -71,12 +81,20 @@ long long get_available_mem()
 long long get_total_mem()
 {
 #if defined _WIN32 || defined __CYGWIN__
-
-
 	MEMORYSTATUSEX memInfo;
 	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&memInfo);
 	return memInfo.ullTotalPhys;
+#elif defined __APPLE__
+	int mib[2];
+	int64_t physical_memory;
+	size_t length;
+	// Get the Physical memory size
+	mib[0] = CTL_HW;
+	mib[1] = HW_MEMSIZE;
+	length = sizeof(int64_t);
+	sysctl(mib, 2, &physical_memory, &length, NULL, 0);
+	return physical_memory;
 #else
 	struct sysinfo memInfo;
 
