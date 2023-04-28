@@ -60,6 +60,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: XRF-Maps_Linux_x86_64
-        path: 
-          - ${{github.workspace}}/bin/ 
-          - ${{github.workspace}}/reference/ 
+        path: ${{github.workspace}}/bin/ 
