@@ -55,7 +55,7 @@ jobs:
       shell: bash
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --fit roi
+      run: ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 1 --fit roi --detectors 0
     - name: Cp Ref to Install
       working-directory: ${{github.workspace}}
       shell: bash
@@ -64,5 +64,5 @@ jobs:
       run: cp -r reference install
     - uses: actions/upload-artifact@v3
       with:
-        name: XRF-Maps_Linux_x86_64
+        name: XRF-Maps_${{ matrix.os }}_x86_64
         path: ${{github.workspace}}/install/ 
