@@ -55,11 +55,6 @@ namespace data_struct
 
 // ----------------------------------------------------------------------------
 
-TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
-TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
-
-// ----------------------------------------------------------------------------
-
 template<typename T_real>
 Element_Info<T_real>::Element_Info()
 {
@@ -534,5 +529,8 @@ void Element_Info_Map<T_real>::generate_default_elements(int start_element, int 
     }
 }
 // ----------------------------------------------------------------------------
+
+template struct Element_Info<float>;
+template struct Element_Info<double>;
 
 } //namespace data_struct
