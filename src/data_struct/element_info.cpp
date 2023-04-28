@@ -533,4 +533,7 @@ void Element_Info_Map<T_real>::generate_default_elements(int start_element, int 
 TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
 TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
 
+TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<float>;
+TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<double>;
+
 } //namespace data_struct

@@ -143,9 +143,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Stream_Block<float>;
-TEMPLATE_CLASS_DLL_EXPORT Stream_Block<double>;
-
 } //namespace data_struct
 
 #endif // Stream_Block_H

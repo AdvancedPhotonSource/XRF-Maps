@@ -112,9 +112,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<float>;
-TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<double>;
-
 //-----------------------------------------------------------------------------
 
 DLL_EXPORT Electron_Shell get_shell_by_name(std::string element_name);

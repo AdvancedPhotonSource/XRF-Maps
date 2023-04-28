@@ -674,5 +674,8 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<float>;
+TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<double>;
+
 } //end namespace file
 }// end namespace io

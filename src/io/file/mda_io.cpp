@@ -1619,5 +1619,9 @@ int mda_get_rank_and_dims(std::string path, size_t* dims)
 
 //-----------------------------------------------------------------------------
 
+
+TEMPLATE_CLASS_DLL_EXPORT MDA_IO<float>;
+TEMPLATE_CLASS_DLL_EXPORT MDA_IO<double>;
+
 } //end namespace file
 }// end namespace io

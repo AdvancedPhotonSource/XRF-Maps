@@ -188,9 +188,6 @@ protected:
     std::string _pileup_shell_type;
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<float>;
-TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<double>;
-
 //-----------------------------------------------------------------------------
 
 template<typename T_real>

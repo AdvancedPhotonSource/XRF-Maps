@@ -179,10 +179,6 @@ struct DLL_EXPORT Fit_Param
     int opt_array_index;
 };
 
-TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<float>;
-TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<double>;
-
-
 //-----------------------------------------------------------------------------
 /**
  * @brief The Fit_Parameters class: Dictionary of fit parameters. Many fit routines use arrays so there are convert to and from array functions.
@@ -251,9 +247,6 @@ private:
     std::unordered_map<std::string, Fit_Param<T_real> > _params;
 
 };
-
-TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<float>;
-TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<double>;
 
 //-----------------------------------------------------------------------------
 

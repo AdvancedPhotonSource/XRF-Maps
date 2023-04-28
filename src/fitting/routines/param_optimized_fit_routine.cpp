@@ -304,5 +304,8 @@ void Param_Optimized_Fit_Routine<T_real>::set_optimizer(Optimizer<T_real>* optim
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Param_Optimized_Fit_Routine<float>;
+TEMPLATE_CLASS_DLL_EXPORT Param_Optimized_Fit_Routine<double>;
+
 } //namespace routines
 } //namespace fitting

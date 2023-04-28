@@ -120,9 +120,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<float>;
-TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<double>;
-
 }// end namespace file
 }// end namespace io
 

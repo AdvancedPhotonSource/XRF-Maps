@@ -154,5 +154,8 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector_Sum_Spectra_Source<double>;
+
 } //namespace xrf
 } //namespace workflow

@@ -194,4 +194,7 @@ size_t Stream_Block<T_real>::dataset_hash()
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<float>;
+TEMPLATE_CLASS_DLL_EXPORT Stream_Block<double>;
+
 } //namespace data_struct

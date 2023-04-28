@@ -99,10 +99,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT MPFit_Optimizer<float>;
-TEMPLATE_CLASS_DLL_EXPORT MPFit_Optimizer<double>;
-
-
 } //namespace optimizers
 
 } //namespace fitting

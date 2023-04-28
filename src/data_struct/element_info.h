@@ -97,10 +97,6 @@ struct DLL_EXPORT Element_Info
     std::vector<float> extra_f2;
 };
 
-//TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
-//TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
-
-
 //singleton
 template<typename T_real>
 class DLL_EXPORT Element_Info_Map
@@ -145,10 +141,6 @@ private:
 
 };
    
-TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<float>;
-TEMPLATE_CLASS_DLL_EXPORT Element_Info_Map<double>;
-
-
 // placeholder so H starts at 1
 const std::string Element_Symbols[] = {" ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
 						                        "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As",

@@ -433,5 +433,9 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<float>;
+TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<double>;
+
+
 } //namespace optimizers
 } //namespace fitting

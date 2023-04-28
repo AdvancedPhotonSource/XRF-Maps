@@ -367,5 +367,10 @@ bool Spectra_File_Source<T_real>::_load_spectra_volume_with_callback(std::string
     return true;
 }
 
+//--------------------------------------------------------------
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<double>;
+
 } //namespace xrf
 } //namespace workflow

@@ -176,4 +176,7 @@ void Spectra_Volume<T_real>::generate_scaler_maps(std::vector<Scaler_Map<T_real>
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<double>;
+
 } //namespace data_struct

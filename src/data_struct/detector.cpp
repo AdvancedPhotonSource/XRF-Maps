@@ -376,4 +376,7 @@ void Detector<T_real>::update_from_fit_paramseters()
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Detector<float>;
+TEMPLATE_CLASS_DLL_EXPORT Detector<double>;
+
 } //namespace data_struct

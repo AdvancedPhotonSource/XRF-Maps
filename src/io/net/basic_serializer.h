@@ -107,9 +107,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<float>;
-TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<double>;
-
 }// end namespace net
 }// end namespace io
 

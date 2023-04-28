@@ -311,5 +311,9 @@ Electron_Shell get_shell_by_name(std::string element_name)
     return quantification::models::Electron_Shell::K_SHELL;
 }
 
+
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<float>;
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<double>;
+
 } //namespace models
 } //namespace quantification

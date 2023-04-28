@@ -704,5 +704,9 @@ ArrayTr<T_real> generate_ev_array(Range energy_range, T_real energy_offset, T_re
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<float>;
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<double>;
+
+
 } //namespace models
 } //namespace fitting

@@ -132,5 +132,8 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
 
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Integrated_Spectra_Source<float>;
+TEMPLATE_CLASS_DLL_EXPORT Integrated_Spectra_Source<double>;
+
 } //namespace xrf
 } //namespace workflow

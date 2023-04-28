@@ -145,9 +145,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<float>;
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<double>;
-
 //-----------------------------------------------------------------------------
 
 } //namespace xrf
