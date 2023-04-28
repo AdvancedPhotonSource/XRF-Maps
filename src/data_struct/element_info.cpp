@@ -55,6 +55,11 @@ namespace data_struct
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
+
+// ----------------------------------------------------------------------------
+
 template<typename T_real>
 Element_Info<T_real>::Element_Info()
 {

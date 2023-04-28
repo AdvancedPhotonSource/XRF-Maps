@@ -97,8 +97,7 @@ struct DLL_EXPORT Element_Info
     std::vector<float> extra_f2;
 };
 
-TEMPLATE_STRUCT_DLL_EXPORT Element_Info<float>;
-TEMPLATE_STRUCT_DLL_EXPORT Element_Info<double>;
+
 
 
 //singleton
