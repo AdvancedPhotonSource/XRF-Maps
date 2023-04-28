@@ -26,10 +26,15 @@ jobs:
         maximumCpuCount: true
         platform: 'x64'
     - task: CopyFiles@2
-      displayName: 'Copy Ref Files to install'
+      displayName: 'Copy bin Files to install'
+      inputs:
+        SourceFolder: $(System.DefaultWorkingDirectory)/bin
+        TargetFolder: $(System.DefaultWorkingDirectory)/install/bin
+    - task: CopyFiles@2
+      displayName: 'Copy ref Files to install'
       inputs:
         SourceFolder: $(System.DefaultWorkingDirectory)/reference
-        TargetFolder: $(System.DefaultWorkingDirectory)/install/
+        TargetFolder: $(System.DefaultWorkingDirectory)/install/reference
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: $(System.DefaultWorkingDirectory)/install/
