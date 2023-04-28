@@ -60,4 +60,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: bin-artifact
-        path: /Users/runner/work/XRF-Maps/XRF-Maps/bin/ 
+        path: ${{github.workspace}}/bin/ 
