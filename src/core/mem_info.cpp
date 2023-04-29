@@ -56,7 +56,9 @@ long long get_available_mem()
 	return memInfo.ullAvailPhys;
 #elif defined __APPLE__
 	int mib[2];
+	int64_t one_gig = 1024 * 1024 * 1024;
 	int64_t physical_memory;
+	int64_t fraction = 4;
 	size_t length;
 	// Get the Physical memory size
 	mib[0] = CTL_HW;
@@ -64,7 +66,11 @@ long long get_available_mem()
 	length = sizeof(int64_t);
 	sysctl(mib, 2, &physical_memory, &length, NULL, 0);
 	// HACK: 80% of physical mem
-	return physical_memory * .8;
+	if physical_memory < one_gig)
+	{
+		return one_gig;
+	}
+	return physical_memory / fraction;
 #else
 	struct sysinfo memInfo;
 

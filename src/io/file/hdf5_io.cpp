@@ -852,7 +852,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
 
         //long long avail_mem = get_total_mem() * .95;
         long long avail_mem = get_available_mem();
-
+        logI << "Available memory: " << avail_mem << "\n";
         
         if (H5Tequal(file_type, H5T_NATIVE_DOUBLE) || H5Tequal(file_type, H5T_INTEL_F64))
         {
