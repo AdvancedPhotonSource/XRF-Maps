@@ -24,6 +24,23 @@ jobs:
         submodules: 'recursive'
     - name: Gen vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh
+    - name: Cache vcpkg modules
+        id: cache-vcpkg
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-vcpkg
+        with:
+          path: ~/vcpkg/installed
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - if: ${{ steps.cache-vcpkg.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        #run: npm list
     - name: Run vcpkg
       run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq jsoncpp
     - name: Create Build Environment
@@ -57,7 +74,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         ls -lha
-        ls -lha ../install
         ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 2 --fit roi --detectors 0
     - name: Cp Ref to Install
       working-directory: ${{github.workspace}}
