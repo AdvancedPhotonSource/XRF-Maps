@@ -82,8 +82,8 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         mkdir install
-        rsync -R reference install
-        rsync -R bin install
+        rsync -RavzP reference install
+        rsync -RavzP bin install
     - uses: actions/upload-artifact@v3
       with:
         name: XRF-Maps_${{ matrix.os }}_x86_64

@@ -16,11 +16,11 @@ jobs:
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - task: Cache@2
       inputs:
-        key: '"$(Pipeline.Workspace)/vcpkg-cache" | "$(Agent.OS)"'
+        key: '"$(Pipeline.Workspace)\\vcpkg-cache" | "$(Agent.OS)"'
         restoreKeys: |
-          "$(Pipeline.Workspace)/vcpkg-cache"
-          "$(Pipeline.Workspace)/vcpkg-cache" | "$(Agent.OS)"
-        path: $(Pipeline.Workspace)/vcpkg/installed
+          "$(Pipeline.Workspace)\\vcpkg-cache"
+          "$(Pipeline.Workspace)\\vcpkg-cache" | "$(Agent.OS)"
+        path: $(Pipeline.Workspace)\\vcpkg\\installed
         cacheHitVar: CACHE_RESTORED
         displayName: Cache vcpkg packages
     - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq jsoncpp --triplet x64-windows
@@ -48,4 +48,4 @@ jobs:
     - task: PublishPipelineArtifact@1
       inputs:
         targetPath: $(System.DefaultWorkingDirectory)/install/
-        artifactName: XRF-Maps
+        artifactName: XRF-Maps_Windows_x64_AVX2
