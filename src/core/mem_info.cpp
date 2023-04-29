@@ -66,7 +66,7 @@ long long get_available_mem()
 	length = sizeof(int64_t);
 	sysctl(mib, 2, &physical_memory, &length, NULL, 0);
 	// HACK: 80% of physical mem
-	if physical_memory < one_gig)
+	if (physical_memory < one_gig)
 	{
 		return one_gig;
 	}
