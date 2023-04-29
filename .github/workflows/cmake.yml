@@ -57,8 +57,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         ls -lha
-        ls -lha ./bin
-        ls -lha ./install
+        ls -lha ../install
         ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 2 --fit roi --detectors 0
     - name: Cp Ref to Install
       working-directory: ${{github.workspace}}
