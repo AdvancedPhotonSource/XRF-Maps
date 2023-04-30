@@ -4,6 +4,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   VCPKG_DEFAULT_TRIPLET: 'x64-windows'
+  VCPKG_CONFIG_CACHE: D:/a/1/s/vcpkg/installed
 jobs:
   - job: Default
     timeoutInMinutes: 360
@@ -16,11 +17,11 @@ jobs:
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - task: Cache@2
       inputs:
-        key: '"$(Pipeline.Workspace)\\vcpkg-cache" | "$(Agent.OS)"'
+        key: vcpkg-cache | $(Agent.OS)
         restoreKeys: |
-          "$(Pipeline.Workspace)\\vcpkg-cache"
-          "$(Pipeline.Workspace)\\vcpkg-cache" | "$(Agent.OS)"
-        path: $(Pipeline.Workspace)\\vcpkg\\installed
+          vcpkg-cache | $(Agent.OS)
+          vcpkg-cache
+        path: $(VCPKG_CONFIG_CACHE)
         cacheHitVar: CACHE_RESTORED
         displayName: Cache vcpkg packages
     - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq jsoncpp --triplet x64-windows

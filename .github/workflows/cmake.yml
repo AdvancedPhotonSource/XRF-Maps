@@ -71,8 +71,10 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
           export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/x64-osx/bin
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/bin
           ./xrf_maps
         else
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-linux/bin
           ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 2 --fit roi --detectors 0
         fi
     - name: Cp Ref to Install
