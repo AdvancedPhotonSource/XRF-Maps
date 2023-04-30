@@ -69,11 +69,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
-          ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/lib
           #export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/x64-osx/bin
           ./xrf_maps
         else
-          ls -lh ${{github.workspace}}/vcpkg/installed/x64-linux/
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-linux/lib
           ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 2 --fit roi --detectors 0
         fi
     - name: Cp Ref to Install
@@ -86,7 +86,7 @@ jobs:
         rsync -RavzP reference install
         rsync -RavzP bin install
         cd install
-        echo '{\"branchName\":\"$(github.ref)\",\"commitHash\":\"$(github.sha)\"}' >> version.json
+        echo '{"branchName":"${{ github.ref }}","commitHash":"${{ github.sha }}"}' >> version.json
     - uses: actions/upload-artifact@v3
       with:
         name: XRF-Maps_${{ matrix.os }}_x86_64
