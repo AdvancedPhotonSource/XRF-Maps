@@ -37,15 +37,7 @@ jobs:
         configuration: Release
         maximumCpuCount: true
         platform: 'x64'
-    - script: |
-      # Write your PowerShell commands here.
-
-      new-item -itemtype file -path $(System.DefaultWorkingDirectory)/install -name "version.json" -force -value '{
-      \"buildNumber\":\"$(Build.BuildNumber)\",
-      \"buildId\":\"$(Build.BuildId)\",
-      \"branchName\":\"$(Build.SourceBranchName)\",
-      \"commitHash\":\"$(Build.SourceVersion)\"
-      }'
+    - script: new-item -itemtype file -path $(System.DefaultWorkingDirectory)/install -name "version.json" -force -value '{\"buildNumber\":\"$(Build.BuildNumber)\",\"buildId\":\"$(Build.BuildId)\",\"branchName\":\"$(Build.SourceBranchName)\",\"commitHash\":\"$(Build.SourceVersion)\"}'
     - task: CopyFiles@2
       displayName: 'Copy bin Files to install'
       inputs:
