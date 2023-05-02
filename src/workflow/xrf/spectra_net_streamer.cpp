@@ -146,5 +146,8 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Net_Streamer<double>;
+
 } //namespace xrf
 } //namespace workflow

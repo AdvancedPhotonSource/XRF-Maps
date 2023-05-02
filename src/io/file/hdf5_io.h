@@ -1203,7 +1203,7 @@ public:
         logI << path << " detector : " << detector_num << "\n";
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, memoryspace_id, memoryspace_meta_id, dset_lt_id;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id, dset_lt_id;
         //hid_t    dset_incnt_id, dset_outcnt_id, dset_rt_id;
         hid_t    dataspace_lt_id;
         //hid_t dataspace_inct_id, dataspace_outct_id;
@@ -1222,10 +1222,13 @@ public:
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
             return false;
 
-        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id))
+        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id))
             return false;
 
         if (false == _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "/entry/instrument/NDAttributes", file_id))
+            return false;
+
+        if (false == _open_h5_object(scaler2_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector/NDAttributes", file_id))
             return false;
 
         if (false == _open_h5_object(dset_id, H5O_DATASET, close_map, "data", maps_grp_id))
@@ -1233,8 +1236,14 @@ public:
         dataspace_id = H5Dget_space(dset_id);
         close_map.push({ dataspace_id, H5O_DATASPACE });
 
-        if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler_grp_id))
-            return false;
+        if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler_grp_id, false, false))
+        {
+            if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler2_grp_id))
+            {
+                return false;
+            }
+        }
+            
         dataspace_lt_id = H5Dget_space(dset_lt_id);
         close_map.push({ dataspace_lt_id, H5O_DATASPACE });
 

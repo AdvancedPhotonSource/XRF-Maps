@@ -88,9 +88,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<float>;
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<double>;
-
 } //namespace data_struct
 
 #endif // SPECTRALINE_H

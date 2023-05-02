@@ -8,11 +8,15 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        compiler: [g++-10]
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    runs-on:  ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -20,13 +24,25 @@ jobs:
         submodules: 'recursive'
     - name: Gen vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh
+    - name: Restore cached vcpkg
+      id: cache-vcpkg-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: vcpkg/installed
+        key: ${{ runner.os }}-vcpkg
     - name: Run vcpkg
+      if: ${{ steps.cache-vcpkg-restore.outputs.cache-hit != 'true' }}
       run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq jsoncpp
+    - name: Save vcpkg cache
+      id: cache-vcpkg-save
+      uses: actions/cache/save@v3
+      with:
+        path: vcpkg/installed
+        key: ${{ runner.os }}-vcpkg
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
-
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -35,17 +51,43 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_ZMQ=ON -DBUILD_WITH_TIRPC=ON
-
+      run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_ZMQ=ON
+          else
+            cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_ZMQ=ON -DBUILD_WITH_TIRPC=ON
+          fi
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
-
+      run: cmake --build . --config $BUILD_TYPE 
     - name: Test
       working-directory: ${{github.workspace}}/bin
       shell: bash
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --fit roi
+      run: |
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/lib
+          #export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/x64-osx/bin
+          ./xrf_maps
+        else
+          ls -lh ${{github.workspace}}/vcpkg/installed/x64-linux/lib
+          ./xrf_maps --dir ${{github.workspace}}/test/2_ID_E_dataset --nthreads 2 --fit roi --detectors 0
+        fi
+    - name: Cp Ref to Install
+      working-directory: ${{github.workspace}}
+      shell: bash
+      # Execute tests defined by the CMake configuration.  
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: |
+        mkdir install
+        rsync -RavzP reference install
+        rsync -RavzP bin install
+        cd install
+        echo '{"branchName":"${{ github.ref }}","commitHash":"${{ github.sha }}"}' >> version.json
+    - uses: actions/upload-artifact@v3
+      with:
+        name: XRF-Maps_${{ matrix.os }}_x86_64
+        path: ${{github.workspace}}/install/ 

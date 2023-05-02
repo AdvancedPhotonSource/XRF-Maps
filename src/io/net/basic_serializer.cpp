@@ -444,5 +444,9 @@ data_struct::Stream_Block<T_real>* Basic_Serializer<T_real>::decode_counts_and_s
 
 //-----------------------------------------------------------------------------
 
+
+TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Basic_Serializer<double>;
+
 } //end namespace net
 }// end namespace io

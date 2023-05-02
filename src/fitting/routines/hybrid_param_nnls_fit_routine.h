@@ -90,9 +90,6 @@ private:
     
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine<float>;
-TEMPLATE_CLASS_DLL_EXPORT Hybrid_Param_NNLS_Fit_Routine<double>;
-
 } //namespace routines
 
 } //namespace fitting

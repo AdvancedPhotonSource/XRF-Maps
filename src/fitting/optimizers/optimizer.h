@@ -107,9 +107,6 @@ struct User_Data
     size_t total_itr;
 };
 
-TEMPLATE_STRUCT_DLL_EXPORT User_Data<float>;
-TEMPLATE_STRUCT_DLL_EXPORT User_Data<double>;
-
 template<typename T_real>
 struct Gen_User_Data
 {
@@ -122,9 +119,6 @@ struct Gen_User_Data
 	Spectra<T_real>  spectra_model;
 };
 
-TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<float>;
-TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<double>;
-
 template<typename T_real>
 struct Quant_User_Data
 {
@@ -132,10 +126,6 @@ struct Quant_User_Data
     Fit_Parameters<T_real>* fit_parameters;
     std::unordered_map<std::string, Element_Quant<T_real>> quant_map;
 };
-
-TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<float>;
-TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<double>;
-
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -302,11 +292,6 @@ protected:
     std::map<int, OPTIMIZER_OUTCOME> _outcome_map;
 
 };
-
-
-TEMPLATE_CLASS_DLL_EXPORT Optimizer<float>;
-TEMPLATE_CLASS_DLL_EXPORT Optimizer<double>;
-
 
 } //namespace optimizers
 

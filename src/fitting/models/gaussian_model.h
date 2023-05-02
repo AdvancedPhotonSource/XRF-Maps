@@ -129,10 +129,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<float>;
-TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<double>;
-
-
 
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params);

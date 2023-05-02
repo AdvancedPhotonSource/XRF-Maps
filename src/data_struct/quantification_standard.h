@@ -181,9 +181,6 @@ public:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<float>;
-TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<double>;
-
 
 //-----------------------------------------------------------------------------
 

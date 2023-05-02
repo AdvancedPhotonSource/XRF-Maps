@@ -97,10 +97,6 @@ private:
     struct lm_control_struct<T_real> _options;
 };
 
-TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<float>;
-TEMPLATE_CLASS_DLL_EXPORT LMFit_Optimizer<double>;
-
-
 } //namespace optimizers
 
 } //namespace fitting

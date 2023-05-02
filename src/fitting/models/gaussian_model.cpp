@@ -54,8 +54,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 
 #include <string.h>
-
+#ifdef _OPENMP
 #include <omp.h>
+#endif
+
 
 #define SQRT_2xPI (T_real)2.506628275 // sqrt ( 2.0 * M_PI )
 
@@ -502,30 +504,47 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 		}
 
         
+        Spectra<T_real> tmp_spec(ev.size());
+        Spectra<T_real> escape_spec(ev.size());
+        escape_spec.setZero();
+        // peak, gauss
+        tmp_spec += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
+        ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
+
+        //  peak, step
+        if (f_step > 0.0)
+        {
+            value = faktor * f_step;
+            //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
+            tmp_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
+            //counts_arr->step = fit_counts.step + value;
+        }
+        //  peak, tail;; use different tail for K beta vs K alpha lines
+        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
+        {
+            T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+            value = faktor * kb_f_tail;
+            tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+            //fit_counts.tail = fit_counts.tail + value;
+        }
+
+        spectra_model += tmp_spec;
+
+        // escape peaks
+        if (fitp->at(STR_SI_ESCAPE).value > 0.0)
+        {
+            T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
+            // Si = 1.73998
+            int bins = 1.73998 / (ev(1) - ev(0));
+            for (int i = 0; i < ev.size() - bins; ++i)
+            {
+                escape_spec(i) = tmp_spec(i + bins) * escape_faktor;
+            }
+            spectra_model += escape_spec;
+        }
+        
         if (labeled_spectras != nullptr && label.length() > 0)
         {
-            Spectra<T_real> tmp_spec(ev.size());
-            // peak, gauss
-            tmp_spec += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-            ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
-
-            //  peak, step
-            if (f_step > 0.0)
-            {
-                value = faktor * f_step;
-                //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
-                tmp_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
-                //counts_arr->step = fit_counts.step + value;
-            }
-            //  peak, tail;; use different tail for K beta vs K alpha lines
-            if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-            {
-                T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
-                value = faktor * kb_f_tail;
-                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-                //fit_counts.tail = fit_counts.tail + value;
-            }
-
             if (element_to_fit->pileup_element() != nullptr) // check if it is pileup 
             {
                 (*labeled_spectras)[STR_PILEUP_LINES] += tmp_spec;
@@ -534,91 +553,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
             {
                 (*labeled_spectras)[label] += tmp_spec;
             }
-            spectra_model += tmp_spec;
-
-            // escape peaks
-            if (fitp->at(STR_SI_ESCAPE).value > 0.0)
-            {
-                Spectra<T_real> escape_spec(ev.size());
-
-                T_real esacpe_energy = er_struct.energy - 1.73998;
-                T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
-                delta_energy = ev - esacpe_energy;
-
-                sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (esacpe_energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
-                f_step = std::abs<T_real>(er_struct.mu_fraction * (fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * esacpe_energy)));
-                f_tail = std::abs<T_real>(fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-                kb_f_tail = std::abs<T_real>(fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-                value = 1.0;
-
-                escape_spec += escape_faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-                if (f_step > 0.0)
-                {
-                    value = faktor * f_step;
-                    escape_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, esacpe_energy);
-                }
-                if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-                {
-                    T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (esacpe_energy)) * element_to_fit->width_multi();
-                    value = faktor * kb_f_tail;
-                    escape_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-                }
-                (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
-                spectra_model += escape_spec;
-            }
-        }
-        else
-        {
-            // peak, gauss
-            spectra_model += faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-            ////spectra_model += faktor * (fitp->at(STR_ENERGY_SLOPE).value / ( sigma * SQRT_2xPI ) *  Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
-
-            //  peak, step
-            if (f_step > 0.0)
-            {
-                value = faktor * f_step;
-                //value = value * this->step(gain, sigma, delta_energy, er_struct.energy);
-                spectra_model += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
-                //counts_arr->step = fit_counts.step + value;
-            }
-            //  peak, tail;; use different tail for K beta vs K alpha lines
-            if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-            {
-                T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
-                value = faktor * kb_f_tail;
-                spectra_model += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-                //fit_counts.tail = fit_counts.tail + value;
-            }
-
-            // escape peaks
-            if (fitp->at(STR_SI_ESCAPE).value > 0.0)
-            {
-                Spectra<T_real> escape_spec(ev.size());
-
-                T_real esacpe_energy = er_struct.energy - 1.73998;
-                T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
-                delta_energy = ev - esacpe_energy;
-
-                sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (esacpe_energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
-                f_step = std::abs<T_real>(er_struct.mu_fraction * (fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * esacpe_energy)));
-                f_tail = std::abs<T_real>(fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-                kb_f_tail = std::abs<T_real>(fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-                value = 1.0;
-
-                escape_spec += escape_faktor * this->peak(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy);
-                if (f_step > 0.0)
-                {
-                    value = faktor * f_step;
-                    escape_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, esacpe_energy);
-                }
-                if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-                {
-                    T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (esacpe_energy)) * element_to_fit->width_multi();
-                    value = faktor * kb_f_tail;
-                    escape_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-                }
-                spectra_model += escape_spec;
-            }
+            (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
         }
     }
     return spectra_model;
@@ -768,6 +703,10 @@ ArrayTr<T_real> generate_ev_array(Range energy_range, T_real energy_offset, T_re
 }
 
 // ----------------------------------------------------------------------------
+
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<float>;
+TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<double>;
+
 
 } //namespace models
 } //namespace fitting

@@ -123,9 +123,6 @@ protected:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<float>;
-TEMPLATE_CLASS_DLL_EXPORT Spectra_File_Source<double>;
-
 } //namespace xrf
 } //namespace workflow
 

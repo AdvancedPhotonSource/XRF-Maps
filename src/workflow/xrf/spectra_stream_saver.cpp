@@ -198,5 +198,8 @@ void Spectra_Stream_Saver<T_real>::_finalize_dataset(Dataset_Save* dataset)
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Stream_Saver<double>;
+
 } //namespace xrf
 } //namespace workflow

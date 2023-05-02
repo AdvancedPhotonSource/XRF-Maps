@@ -93,9 +93,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<float>;
-TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<double>;
-
 } //namespace data_struct
 
 #endif // SpectraVolume_H

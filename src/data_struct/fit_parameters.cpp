@@ -335,4 +335,11 @@ void Fit_Parameters<T_real>::remove(std::string key)
 
 //-----------------------------------------------------------------------------
 
+
+TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<double>;
+
+TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<float>;
+TEMPLATE_CLASS_DLL_EXPORT Fit_Parameters<double>;
+
 } //namespace data_struct

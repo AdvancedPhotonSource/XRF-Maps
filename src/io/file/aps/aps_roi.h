@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define _APS_ROI_
 
 #include "core/defines.h"
+#include <fstream>
 #include <string>
 #include <vector>
 #include <map>

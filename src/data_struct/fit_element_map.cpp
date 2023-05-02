@@ -412,4 +412,7 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<float>;
+TEMPLATE_CLASS_DLL_EXPORT Fit_Element_Map<double>;
+
 } //namespace data_struct

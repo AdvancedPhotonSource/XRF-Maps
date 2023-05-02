@@ -129,4 +129,10 @@ void Spectra_Line<T_real>::recalc_elapsed_livetime()
     }
 }
 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<float>;
+TEMPLATE_CLASS_DLL_EXPORT Spectra_Line<double>;
+
 } //namespace data_struct

@@ -174,5 +174,8 @@ void SVD_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model
 
 // ----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT SVD_Fit_Routine<float>;
+TEMPLATE_CLASS_DLL_EXPORT SVD_Fit_Routine<double>;
+
 } //namespace routines
 } //namespace fitting

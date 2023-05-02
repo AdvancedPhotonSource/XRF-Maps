@@ -132,9 +132,6 @@ private:
 
 };
 
-TEMPLATE_CLASS_DLL_EXPORT Detector<float>;
-TEMPLATE_CLASS_DLL_EXPORT Detector<double>;
-
 } //namespace data_struct
 
 #endif // DETECTOR_H

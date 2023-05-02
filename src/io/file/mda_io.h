@@ -166,10 +166,6 @@ private:
     std::unordered_map<unsigned int, data_struct::ArrayTr<T_real>> _integrated_spectra_map;
 };
 
-
-TEMPLATE_CLASS_DLL_EXPORT MDA_IO<float>;
-TEMPLATE_CLASS_DLL_EXPORT MDA_IO<double>;
-
 DLL_EXPORT int mda_get_multiplied_dims(std::string path);
 
 DLL_EXPORT int mda_get_rank_and_dims(std::string path, size_t* dims);

@@ -151,4 +151,8 @@ void Quantification_Standard<T_real>::normalize_counts_by_time(Fitting_Routines 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<float>;
+TEMPLATE_CLASS_DLL_EXPORT Quantification_Standard<double>;
+
+
 } //namespace data_struct

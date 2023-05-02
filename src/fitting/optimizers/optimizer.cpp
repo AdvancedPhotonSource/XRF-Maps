@@ -92,5 +92,14 @@ namespace optimizers
     // ----------------------------------------------------------------------------
 
 
+TEMPLATE_STRUCT_DLL_EXPORT User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT User_Data<double>;
+TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Gen_User_Data<double>;
+TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<float>;
+TEMPLATE_STRUCT_DLL_EXPORT Quant_User_Data<double>;
+TEMPLATE_CLASS_DLL_EXPORT Optimizer<float>;
+TEMPLATE_CLASS_DLL_EXPORT Optimizer<double>;
+
 } //namespace optimizers
 } //namespace fitting
