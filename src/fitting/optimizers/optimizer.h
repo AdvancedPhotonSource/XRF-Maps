@@ -158,7 +158,16 @@ void fill_user_data(User_Data<T_real> &ud,
 
     if (use_weights)
     {
+        /*
         ArrayTr<T_real> weights = (T_real)1.0 / ((T_real)1.0 + (*spectra));
+        weights = convolve1d(weights, 5);
+        weights = Eigen::abs(weights);
+        weights /= weights.maxCoeff();
+        ud.weights = weights.segment(energy_range.min, energy_range.count());
+        */
+        ArrayTr<T_real> weights = (*spectra);
+        weights = weights.log10();
+        weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
@@ -271,13 +280,15 @@ public:
                           const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                           const Base_Model<T_real>* const model,
                           const Range energy_range,
+                          bool use_weights,
                           Callback_Func_Status_Def* status_callback = nullptr) = 0;
 
     virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters<T_real>*fit_params,
                                const Spectra<T_real>* const spectra,
                                const Range energy_range,
                                const ArrayTr<T_real>* background,
-                               Gen_Func_Def<T_real> gen_func) = 0;
+                               Gen_Func_Def<T_real> gen_func,
+                               bool use_weights) = 0;
 
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,

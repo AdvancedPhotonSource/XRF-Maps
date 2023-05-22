@@ -231,7 +231,8 @@ template<typename T_real>
 OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const models::Base_Model<T_real>* const model,
                                                             const Spectra<T_real>* const spectra,
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                                            std::unordered_map<std::string, T_real>& out_counts)
+                                                            std::unordered_map<std::string, T_real>& out_counts,
+                                                            bool use_weights)
 {
 
     Fit_Parameters<T_real> fit_params = model->fit_parameters();
@@ -273,7 +274,7 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         this->_optimizer->set_options(opt_options);
 
 
-        ret_val = this->_optimizer->minimize_func(&fit_params, spectra, this->_energy_range, &background, gen_func);
+        ret_val = this->_optimizer->minimize_func(&fit_params, spectra, this->_energy_range, &background, gen_func, use_weights);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {

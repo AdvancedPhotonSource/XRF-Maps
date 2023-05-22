@@ -80,6 +80,7 @@ void help()
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
     logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+    logit_s<<"--optimizer-use-weights : Calculate and use weights for residual error function.\n";
     logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois-with <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
@@ -114,6 +115,8 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
 {
     bool fx_exists = clp.option_exists("--optimizer-fx-tols");
     bool fxg_exists = clp.option_exists("--optimizer-fxg-tols");
+
+    analysis_job.use_weights = clp.option_exists("--optimizer-use-weights");
 
     //Which optimizer do we want to pick. Default is lmfit
     if (clp.option_exists("--optimizer"))

@@ -78,6 +78,7 @@ public:
     virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model<T_real>* const model,
                                           const Spectra<T_real>* const spectra,
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                          bool use_weights,
                                           Fit_Parameters<T_real>& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 

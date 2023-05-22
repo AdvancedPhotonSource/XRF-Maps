@@ -143,6 +143,8 @@ public:
 
 	long long mem_limit;
 
+    bool use_weights;
+
 	std::string update_us_amps_str;
 
 	std::string update_ds_amps_str;
