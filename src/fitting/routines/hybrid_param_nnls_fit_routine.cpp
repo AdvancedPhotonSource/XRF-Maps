@@ -98,7 +98,7 @@ void Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<
         if (status_callback != nullptr)
         {
             _cur_iter++;
-            (*status_callback)(_cur_iter, _max_iter);
+            (*status_callback)(_cur_iter, this->_max_iter);
         }
     }
 }
@@ -186,7 +186,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
 
     if (status_callback != nullptr)
     {
-        (*status_callback)(_max_iter, _max_iter);
+        (*status_callback)(this->_max_iter, this->_max_iter);
     }
 
     return ret_val;
