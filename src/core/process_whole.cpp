@@ -94,7 +94,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
         //Fit the spectra saving the element counts in element_fit_count_dict
-        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, out_fitp);
+        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp);
         out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_OUTCOME, double(outcome)));
         std::string result = optimizer_outcome_to_str(outcome);
         logI << "Outcome = " << result << "\n";

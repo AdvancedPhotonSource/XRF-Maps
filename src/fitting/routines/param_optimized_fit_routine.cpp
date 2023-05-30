@@ -209,7 +209,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
 
     if(_optimizer != nullptr)
     {
-        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range);
+        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, false);
 
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -242,6 +242,7 @@ template<typename T_real>
 OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(const models::Base_Model<T_real>* const model,
                                                                     const Spectra<T_real>* const spectra,
                                                                     const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                                    bool use_weights,
                                                                     Fit_Parameters<T_real>& out_fit_params,
                                                                     Callback_Func_Status_Def* status_callback)
 {
@@ -274,7 +275,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
     {
         if(_optimizer != nullptr)
         {
-            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, status_callback);
+            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, use_weights, status_callback);
         }
     }
     out_fit_params.append_and_update(fit_params);

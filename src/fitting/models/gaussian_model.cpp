@@ -326,7 +326,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
     }
 
     Spectra<T_real> agr_spectra(energy_range.count());
-    Spectra<T_real> tmp_spec(energy_range.count());
 
     T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
@@ -349,24 +348,31 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
     if (labeled_spectras != nullptr)
     {
-        tmp_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-        (*labeled_spectras)[STR_ELASTIC_LINES] += tmp_spec;
-        agr_spectra += tmp_spec;
+        Spectra<T_real> elastic_spec(energy_range.count());
+        Spectra<T_real> compton_spec(energy_range.count());
+        
+        elastic_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        compton_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        (*labeled_spectras)[STR_ELASTIC_LINES] += elastic_spec;
+        (*labeled_spectras)[STR_COMPTON_LINES] += compton_spec;
+        agr_spectra += elastic_spec;
+        agr_spectra += compton_spec;
+        if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
+        {
+            Spectra<T_real> escape_spec(energy_range.count());
+            escape_spec = escape_peak(agr_spectra, ev, fit_params->at(STR_SI_ESCAPE).value);
+            (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
+            agr_spectra += escape_spec;
+        }
     }
     else
     {
         agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-    }
-
-    if (labeled_spectras != nullptr)
-    {
-        tmp_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-        (*labeled_spectras)[STR_COMPTON_LINES] += tmp_spec;
-        agr_spectra += tmp_spec;
-    }
-    else
-    {
         agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
+        {
+            agr_spectra += escape_peak(agr_spectra, ev, fit_params->at(STR_SI_ESCAPE).value);
+        }
     }
 
     return agr_spectra;
@@ -413,7 +419,10 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
 
     agr_spectra += elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
     agr_spectra += compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-
+    if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
+    {
+        agr_spectra += escape_peak(agr_spectra, ev, fit_params->at(STR_SI_ESCAPE).value);
+    }
     return agr_spectra;
 }
 
@@ -529,19 +538,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         }
 
         spectra_model += tmp_spec;
-
-        // escape peaks
-        if (fitp->at(STR_SI_ESCAPE).value > 0.0)
-        {
-            T_real escape_faktor = fitp->at(STR_SI_ESCAPE).value;
-            // Si = 1.73998
-            int bins = 1.73998 / (ev(1) - ev(0));
-            for (int i = 0; i < ev.size() - bins; ++i)
-            {
-                escape_spec(i) = tmp_spec(i + bins) * escape_faktor;
-            }
-            spectra_model += escape_spec;
-        }
         
         if (labeled_spectras != nullptr && label.length() > 0)
         {
@@ -553,7 +549,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
             {
                 (*labeled_spectras)[label] += tmp_spec;
             }
-            (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
         }
     }
     return spectra_model;
@@ -665,6 +660,19 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     return counts;
 }
 
+// ----------------------------------------------------------------------------
+template<typename T_real>
+const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor) const
+{
+    Spectra<T_real> escape_spec(spectra.count());
+    // Si = 1.73998
+    int bins = 1.73998 / (ev(1) - ev(0));
+    for (int i = 0; i < ev.size() - bins; ++i)
+    {
+        escape_spec(i) = spectra(i + bins) * escape_factor;
+    }
+    return escape_spec;
+}
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

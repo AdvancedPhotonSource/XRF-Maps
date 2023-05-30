@@ -71,6 +71,7 @@ public:
     virtual OPTIMIZER_OUTCOME fit_spectra_parameters(const models::Base_Model<T_real>* const model,
                                           const Spectra<T_real>* const spectra,
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                          bool use_weights,
                                           Fit_Parameters<T_real>& out_fit_params,
                                           Callback_Func_Status_Def* status_callback = nullptr);
 
@@ -78,11 +79,14 @@ public:
 
     virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
                                 const struct Range* const energy_range,
-                                Spectra<T_real>* spectra_model);
+                                Spectra<T_real>* spectra_model,
+                                Callback_Func_Status_Def* status_callback);
 
 protected:
 
 private:
+    size_t _cur_iter;
+
     models::Base_Model<T_real>* _model;
     ArrayTr<T_real> _background;
     const Fit_Element_Map_Dict<T_real>* _elements_to_fit;

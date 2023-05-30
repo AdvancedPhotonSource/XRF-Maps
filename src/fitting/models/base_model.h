@@ -126,6 +126,8 @@ public:
 
     virtual const ArrayTr<T_real>  compton_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
 
+    virtual const ArrayTr<T_real> escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor) const = 0;
+
     virtual void reset_to_default_fit_params() = 0;
 
     virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) = 0;

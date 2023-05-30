@@ -76,7 +76,8 @@ public:
     virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
                                           const Spectra<T_real>* const spectra,
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                          std::unordered_map<std::string, T_real>& out_counts);
+                                          std::unordered_map<std::string, T_real>& out_counts,
+                                          bool use_weights = false);
 
     virtual std::string get_name() { return STR_FIT_GAUSS_MATRIX; }
 
