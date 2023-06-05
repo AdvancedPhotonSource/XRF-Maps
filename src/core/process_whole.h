@@ -110,16 +110,17 @@ using namespace std::placeholders; //for _1, _2,
 DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, bool save_when_done);
 
 DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>* analysis_job,
-    std::string  dataset_filename,
-    size_t detector_num,
-    data_struct::Params_Override<double>* params_override,
-    data_struct::Fit_Parameters<double>& out_fitp);
+                                                std::string  dataset_filename,
+                                                size_t detector_num,
+                                                data_struct::Params_Override<double>* params_override,
+                                                data_struct::Fit_Parameters<double>& out_fitp,
+                                                Callback_Func_Status_Def* status_callback = nullptr);
 
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job);
 
 void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, std::vector<Quantification_Standard<double>>& standard_element_weights, std::unordered_map<size_t, double>& quant_map);
 
-DLL_EXPORT void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name, std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>>& out_roi_fit_params);
+DLL_EXPORT void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name, std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>>& out_roi_fit_params, Callback_Func_Status_Def* status_callback = nullptr);
 
 DLL_EXPORT void optimize_rois(data_struct::Analysis_Job<double>& analysis_job);
 
