@@ -57,7 +57,8 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
                                     size_t detector_num,
                                     data_struct::Params_Override<double>* params_override,
                                     std::string save_filename,
-                                    data_struct::Fit_Parameters<double>& out_fitp)
+                                    data_struct::Fit_Parameters<double>& out_fitp,
+                                    Callback_Func_Status_Def* status_callback)
 {
     fitting::models::Gaussian_Model<double> model;
     bool ret_val = false;
@@ -94,7 +95,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
         //Fit the spectra saving the element counts in element_fit_count_dict
-        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp);
+        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp, status_callback);
         out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_OUTCOME, double(outcome)));
         std::string result = optimizer_outcome_to_str(outcome);
         logI << "Outcome = " << result << "\n";
@@ -179,7 +180,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
             if (io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, &int_spectra, params_override))
             {
                 data_struct::Fit_Parameters<double> out_fitp;
-                if (optimize_integrated_fit_params(analysis_job, int_spectra, detector_num, params_override, itr, out_fitp))
+                if (optimize_integrated_fit_params(analysis_job, int_spectra, detector_num, params_override, itr, out_fitp, nullptr))
                 {
                     detector_file_cnt[detector_num] += 1.0;
                     if (fit_params_avgs.count(detector_num) > 0)
@@ -530,7 +531,8 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             std::map<std::string, std::vector<std::pair<int, int>>>& rois,
                             std::unordered_map<std::string, data_struct::Spectra<double> >& int_spectra_map,
                             std::string search_filename,
-                            std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params)
+                            std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params,
+                            Callback_Func_Status_Def* status_callback)
 {
     int cnt = int_spectra_map.count(search_filename);
     std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", search_filename);
@@ -616,7 +618,7 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
             data_struct::Fit_Parameters<double> out_fitp;
             std::string roi_name = roi_itr.first;
-            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp))
+            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, status_callback))
             {
                 logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
             }
@@ -669,7 +671,9 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
 void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
     std::string roi_file_name,
-    std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> & out_roi_fit_params)
+    std::map<int, std::map<std::string,
+    data_struct::Fit_Parameters<double>>> & out_roi_fit_params,
+    Callback_Func_Status_Def* status_callback)
 {
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;
     std::map<std::string, std::vector<std::pair<int, int>>> rois;
@@ -696,12 +700,12 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     std::string str_detector_num = std::to_string(detector_num);
                     
                     search_filename = base_file_name + ".mda.h5" + str_detector_num;
-                    find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
+                    find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
                 }
             }
             //now for the avg h5
             search_filename = base_file_name + ".mda.h5";
-            find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
+            find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
         }
         else
         {
@@ -734,17 +738,17 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     {
                         std::string str_detector_num = std::to_string(detector_num);
                         search_filename = dataset_num + ".h5" + str_detector_num; // v9 save
-                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
+                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
                         search_filename = dataset_num + ".mda.h5" + str_detector_num;
-                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num]);
+                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
                     }
                 }
                 //now for the avg h5
                 //detector = analysis_job.get_detector(-1); 
                 search_filename = dataset_num + ".h5"; // v9 save
-                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
+                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
                 search_filename = dataset_num + ".mda.h5";
-                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1]);
+                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
             }
             else
             {
