@@ -1030,7 +1030,17 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         }
         else if (hasHdf)
         {
-            io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume);
+            if (false == io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume))
+            {
+                std::string full_filename;
+                for (size_t i = 0; i < spectra_volume->rows(); i++)
+                {
+                    //everyone else
+                    full_filename = dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                }
+
+            }
         }
         else if (hasXspress)
         {

@@ -1214,6 +1214,7 @@ public:
         hsize_t count_row[3] = { 0,0,0 };
         hsize_t offset_meta[1] = { 0 };
         hsize_t count_meta[1] = { 1 };
+        bool bLoadElt = true;
 
         std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num + 1) + "SCA0";
         //std::string real_time_dataset_name = "CHAN" + std::to_string(detector_num+1) + "EventWidth";
@@ -1240,12 +1241,15 @@ public:
         {
             if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler2_grp_id))
             {
-                return false;
+                bLoadElt = false;
             }
         }
-            
-        dataspace_lt_id = H5Dget_space(dset_lt_id);
-        close_map.push({ dataspace_lt_id, H5O_DATASPACE });
+        if (bLoadElt)
+        {
+
+            dataspace_lt_id = H5Dget_space(dset_lt_id);
+            close_map.push({ dataspace_lt_id, H5O_DATASPACE });
+        }
 
         int rank = H5Sget_simple_extent_ndims(dataspace_id);
         if (rank != 3)
@@ -1313,10 +1317,12 @@ public:
                 offset_meta[0] = col;
                 data_struct::Spectra<T_real>* spectra = &((*spec_row)[col]);
 
-                H5Sselect_hyperslab(dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-                error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
-                spectra->elapsed_livetime(live_time * 0.000000125);
-
+                if (bLoadElt)
+                {
+                    H5Sselect_hyperslab(dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                    error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
+                    spectra->elapsed_livetime(live_time * 0.000000125);
+                }
                 //H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
                 //error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
                 //spectra->elapsed_realtime(real_time);
