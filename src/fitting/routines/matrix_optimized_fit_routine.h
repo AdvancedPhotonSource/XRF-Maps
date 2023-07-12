@@ -73,11 +73,10 @@ public:
 
     virtual ~Matrix_Optimized_Fit_Routine();
 
-    virtual OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
                                           const Spectra<T_real>* const spectra,
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                          std::unordered_map<std::string, T_real>& out_counts,
-                                          bool use_weights = false);
+                                          std::unordered_map<std::string, T_real>& out_counts);
 
     virtual std::string get_name() { return STR_FIT_GAUSS_MATRIX; }
 
@@ -97,6 +96,8 @@ public:
 
 	const Spectra<T_real>& max_10_integrated_spectra() { return _max_10_channels_spectra; }
 
+    void set_use_weights(bool val) {_use_weights = val;}
+
 protected:
 
     std::unordered_map<std::string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>* const model,
@@ -107,6 +108,8 @@ protected:
     data_struct::Spectra<T_real> _integrated_background;
 	data_struct::Spectra<T_real> _max_channels_spectra;
 	data_struct::Spectra<T_real> _max_10_channels_spectra;
+
+    bool _use_weights;
 
     std::unordered_map<std::string, Spectra<T_real>> _element_models;
 
