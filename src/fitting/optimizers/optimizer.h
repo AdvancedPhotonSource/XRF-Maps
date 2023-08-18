@@ -158,19 +158,21 @@ void fill_user_data(User_Data<T_real> &ud,
 
     if (use_weights)
     {
-        /*
+        
         ArrayTr<T_real> weights = (T_real)1.0 / ((T_real)1.0 + (*spectra));
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
+        weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
         ud.weights = weights.segment(energy_range.min, energy_range.count());
-        */
+        /*
         ArrayTr<T_real> weights = (*spectra);
         weights = weights.log10();
         weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
+        */
         ud.weights = weights.segment(energy_range.min, energy_range.count());
     }
     else
@@ -222,6 +224,7 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
+        weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
         ud.weights = weights.segment(energy_range.min, energy_range.count());
     }
     else

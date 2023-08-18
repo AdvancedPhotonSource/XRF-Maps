@@ -84,7 +84,7 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-		dy[i] = (ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+		dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
 			logE << "\n\n\n";
@@ -123,7 +123,7 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
-        dy[i] = ( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
+        dy[i] = pow(( ud->spectra[i] - ud->spectra_model[i] ),2) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
 			dy[i] = ud->spectra[i];
