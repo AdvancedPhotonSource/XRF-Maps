@@ -56,29 +56,29 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
                       data_struct::ArrayTr<T_real> *background,
                       bool log_them)
 {
-    QtCharts::QLogValueAxis* axisYLog10 = new QtCharts::QLogValueAxis();
+    QLogValueAxis* axisYLog10 = new QLogValueAxis();
     axisYLog10->setTitleText("Counts Log10");
     axisYLog10->setLabelFormat("%.1e");
     //axisYLog10->setRange(1.0, 10000.0);
     axisYLog10->setBase(10.0);
 
-    QtCharts::QValueAxis* axisX = new QtCharts::QValueAxis();
+    QValueAxis* axisX = new QValueAxis();
     axisX->setTitleText("Energy (keV)");
     axisX->setLabelFormat("%1.0f");
     //axisX->setTickCount(series->count());
     //axisX->setRange(0, 2048);
     axisX->setTickCount(11);
 
-    QtCharts::QValueAxis* axisY = new QtCharts::QValueAxis();
+    QValueAxis* axisY = new QValueAxis();
     axisY->setTitleText("Counts");
     axisY->setLabelFormat("%i");
     //axisY->setTickCount(series->count());
 
-    QtCharts::QChartView* chartView = new QtCharts::QChartView();
+    QChartView* chartView = new QChartView();
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->resize(1024, 768);
 
-    QtCharts::QChart* chart = chartView->chart();
+    QChart* chart = chartView->chart();
     chart->addAxis(axisX, Qt::AlignBottom);
 
     if (log_them)
@@ -90,9 +90,9 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
         chart->addAxis(axisY, Qt::AlignLeft);
     }
 
-    QtCharts::QLineSeries* series_spectra = new QtCharts::QLineSeries();
-    QtCharts::QLineSeries* series_model = new QtCharts::QLineSeries();
-    QtCharts::QLineSeries* series_background = new QtCharts::QLineSeries();
+    QLineSeries* series_spectra = new QLineSeries();
+    QLineSeries* series_model = new QLineSeries();
+    QLineSeries* series_background = new QLineSeries();
 
     series_spectra->setName("Integrated Spectra");
     series_spectra->setColor(QColor(Qt::green));
@@ -274,28 +274,28 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
         }
     }
 
-    QtCharts::QLogValueAxis* axisYLog10 = new QtCharts::QLogValueAxis();
+    QLogValueAxis* axisYLog10 = new QLogValueAxis();
     axisYLog10->setTitleText("Log10");
     axisYLog10->setLabelFormat("%.1e");
     axisYLog10->setBase(10.0);
 
-    //QtCharts::QValueAxis *axisY = new QtCharts::QValueAxis();
+    //QValueAxis *axisY = new QValueAxis();
 
 
-    QtCharts::QChartView* chartView = new QtCharts::QChartView();
+    QChartView* chartView = new QChartView();
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->resize(width_res, height_res);
 
-    QtCharts::QChart* chart = chartView->chart();
+    QChart* chart = chartView->chart();
     chart->addAxis(axisYLog10, Qt::AlignLeft);
     //chart->addAxis(axisY, Qt::AlignLeft);
 
 
-    QtCharts::QBarCategoryAxis* axisX = new QtCharts::QBarCategoryAxis();
+    QBarCategoryAxis* axisX = new QBarCategoryAxis();
     QStringList categories;
-    QtCharts::QBarSet* set0 = new QtCharts::QBarSet("Element");
+    QBarSet* set0 = new QBarSet("Element");
 
-    QtCharts::QBarSeries* series = new QtCharts::QBarSeries();
+    QBarSeries* series = new QBarSeries();
     series->setName(QString::fromStdString(quantifier_scaler_name));
 
     T_real min_y = 9999999.0;
@@ -323,7 +323,7 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
     for (auto& s_itr : detector->quantification_standards)
     {
-        QtCharts::QScatterSeries* e_series = new QtCharts::QScatterSeries();
+        QScatterSeries* e_series = new QScatterSeries();
         e_series->setName(QString::fromStdString(s_itr.first));
 
         for (const auto& itr : s_itr.second.element_standard_weights)
