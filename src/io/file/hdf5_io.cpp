@@ -1148,11 +1148,11 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
         _gen_average(group_name+"/Integrated_Spectra/Elapsed_Realtime", "Elapsed_Realtime", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Input_Counts", "Input_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
         _gen_average(group_name+"/Integrated_Spectra/Output_Counts", "Output_Counts", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC, STR_MAX_CHANNELS_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
-		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX10_INT_SPEC, STR_MAX10_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC, STR_MAX_CHANNELS_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
+		_gen_average(group_name + "/Integrated_Spectra/"+ STR_MAX10_INT_SPEC, STR_MAX10_INT_SPEC, src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
 
         //don't average the integrated spectra, just sum it
-        _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids);
+        _gen_average(group_name+"/Integrated_Spectra/Spectra", "Spectra", src_inner_grp_id, dst_inner_grp_id, ocpypl_id, hdf5_file_ids, false);
 
         H5Gclose(dst_inner_grp_id);
         H5Gclose(src_inner_grp_id);
