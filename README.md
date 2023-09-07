@@ -59,10 +59,6 @@ ZeroMQ : http://zeromq.org/area:download
 
 -DBUILD_FOR_PHI=ON
 
-### Set double presision instead of single
-
--DDOUBLE_PREC=ON
-
 ### Can't auto find Libraries
 
 #### HDF5
