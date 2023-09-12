@@ -73,7 +73,7 @@ Analysis_Job<T_real>::Analysis_Job()
     //update_scalers = false;
     export_int_fitted_to_csv = false;
     add_background = false;
-    use_weights = false;
+    use_weights = true;
     command_line = "";
     theta_pv = "";
     network_source_ip = "";

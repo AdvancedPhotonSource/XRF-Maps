@@ -139,7 +139,7 @@ void fill_user_data(User_Data<T_real> &ud,
                     const Range energy_range,
                     Callback_Func_Status_Def* status_callback,
                     size_t total_itr,
-                    bool use_weights = false)
+                    bool use_weights = true)
 {
     ud.fit_model = (Base_Model<T_real>*)model;
     // set spectra to fit
@@ -207,7 +207,7 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         const Range energy_range,
                         const ArrayTr<T_real>* background,
                         Gen_Func_Def<T_real> gen_func,
-                        bool use_weights = false)
+                        bool use_weights = true)
 {
     ud.func = gen_func;
     // set spectra to fit
