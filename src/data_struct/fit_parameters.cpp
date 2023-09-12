@@ -335,6 +335,23 @@ void Fit_Parameters<T_real>::remove(std::string key)
 
 //-----------------------------------------------------------------------------
 
+template<typename T_real>
+size_t Fit_Parameters<T_real>::size_non_fixed()
+{
+    size_t sum = 0;
+    for (auto& itr : _params)
+    {
+        bool is_fit = (itr.second.bound_type == E_Bound_Type::LIMITED_LO_HI) || (itr.second.bound_type == E_Bound_Type::LIMITED_LO) || (itr.second.bound_type == E_Bound_Type::LIMITED_HI) || (itr.second.bound_type == E_Bound_Type::FIT);
+        if (is_fit)
+        {
+            sum++;
+        }
+    }
+    return sum;
+}
+
+//-----------------------------------------------------------------------------
+
 
 TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<float>;
 TEMPLATE_STRUCT_DLL_EXPORT Fit_Param<double>;

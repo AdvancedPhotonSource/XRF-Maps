@@ -87,10 +87,11 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
 		dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
-			logE << "\n\n\n";
+			//logE << "\n\n\n";
 			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
-			logE << "\n\n\n";
-			dy[i] = ud->spectra[i];
+			//logE << "\n\n\n";
+			//dy[i] = ud->spectra[i];
+            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
 	

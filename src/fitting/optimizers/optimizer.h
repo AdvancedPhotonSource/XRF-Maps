@@ -154,7 +154,7 @@ void fill_user_data(User_Data<T_real> &ud,
 
     ud.status_callback = status_callback;
     ud.cur_itr = 0;
-    ud.total_itr = total_itr;
+    ud.total_itr = total_itr * fit_params->size_non_fixed();
 
     if (use_weights)
     {
