@@ -178,7 +178,7 @@ void Spectra_File_Source<T_real>::run()
 
 	// if no memory limit is set, then query the system memory and make a stream block queue
 	long long total_mem = get_available_mem();
-    logI << "Available memory: " << total_mem << "\n";
+    //logI << "Available memory: " << total_mem << "\n";
 	if (_analysis_job->mem_limit == -1)
 	{
 		_analysis_job->mem_limit = total_mem;
