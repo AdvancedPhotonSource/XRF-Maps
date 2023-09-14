@@ -507,7 +507,14 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         fullpath += std::to_string(detector_num);
     }
-    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false))
+    bool loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false);
+    if (false == loaded0)
+    {
+        // if failed, try just the name in img.dat folder
+        fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+        loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false);
+    }
+    if (true == loaded0)
     {
         logI << "Loaded integradted spectra from h5.\n";
         if (params_override != nullptr)

@@ -242,6 +242,7 @@ public:
 
     size_t size() const { return _params.size(); }
 
+    size_t size_non_fixed();
 private:
 
     std::unordered_map<std::string, Fit_Param<T_real> > _params;
