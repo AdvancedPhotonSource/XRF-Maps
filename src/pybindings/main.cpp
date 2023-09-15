@@ -57,9 +57,11 @@ auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	data_struct::Fit_Parameters<float> fit_params;
 	fit_params.append_and_update(model->fit_parameters());
 	data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
+
 	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
 	for (auto& itr : out_counts)
 	{
+        
 		float val = out_counts.at(itr.first);
 		if (val != 0.0)
 		{
@@ -69,7 +71,9 @@ auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 		{
 			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, val);
 		}
+        
 	}
+    
 	/*
 	for (auto itr = fit_params.begin(); itr != fit_params.end(); itr++)
 	{
@@ -248,7 +252,26 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("us_amp_sens_num", &data_struct::Params_Override<float>::us_amp_sens_num)
     .def_readwrite("us_amp_sens_unit", &data_struct::Params_Override<float>::us_amp_sens_unit)
     .def_readwrite("ds_amp_sens_num", &data_struct::Params_Override<float>::ds_amp_sens_num)
-    .def_readwrite("ds_amp_sens_unit", &data_struct::Params_Override<float>::ds_amp_sens_unit);
+    .def_readwrite("ds_amp_sens_unit", &data_struct::Params_Override<float>::ds_amp_sens_unit)
+    .def("fill_elements_from_dict", [&](data_struct::Params_Override<float> &self, py::list elements, std::string detector_element)
+        {
+            auto elist = elements.cast<std::vector<std::string>>();
+            data_struct::Element_Info<float>* detector_info = data_struct::Element_Info_Map<float>::inst()->get_element(detector_element);
+            if (detector_info != nullptr)
+            {
+                for (auto& itr : elist)
+                {
+                    data_struct::Element_Info<float>* element_info = data_struct::Element_Info_Map<float>::inst()->get_element(itr);
+                    auto fit_element_map = new data_struct::Fit_Element_Map(itr, element_info);
+                    fit_element_map->init_energy_ratio_for_detector_element(detector_info);
+                    self.elements_to_fit[itr] = fit_element_map;
+                }                
+            }
+            else
+            {
+                logE << "Could not find element for detector " << detector_element << "\n";
+            }
+        });
     /*
     py::class_<data_struct::Calibration_Curve>(m, "CalibrationCurve")
     .def(py::init<>())
