@@ -5791,6 +5791,54 @@ public:
                             }
                         }
                     }
+
+                    hsize_t e_offset[2] = { 0 };
+                    hsize_t e_count[2] = { 0 };
+                    hid_t e_name_id = -1;
+                    hid_t e_prop_id = -1;
+                    hid_t e_name_dataspace_id = -1;
+                    hid_t e_prop_dataspace_id = -1;
+
+                    e_count[0] = detector->all_element_quants[qitr.first][quant_scaler_itr.first].size();
+                    e_count[1] = 10; // all properties of Element_Quant except for name
+
+                    // save quant generation info
+                    std::string e_gen_idx = quant_scaler_itr.first + "Element_Info_Index";
+                    std::string e_gen_name = quant_scaler_itr.first + "Element_Info_Names";
+                    std::string e_gen_props = quant_scaler_itr.first + "Element_Info_Props";
+                    _open_h5_dataset<T_real>(e_gen_name, q_fit_grp_id, 1, e_count, e_count, e_name_id, e_name_dataspace_id);
+                    if (_open_h5_dataset<T_real>(e_gen_props, q_fit_grp_id, 2, e_count, e_count, e_prop_id, e_prop_dataspace_id))
+                    {
+                        int c = 0;
+                        // proc_type          quant_scaler      element    quant_prop
+                        for (auto& element_itr : detector->all_element_quants[qitr.first][quant_scaler_itr.first])
+                        {
+
+                            memset(label, 0, 10);
+                            element_itr.first.copy(&label[0], 9);
+
+                            e_offset[0] = c;
+                            e_offset[0] = 0;
+                            e_count[0] = 1;
+                            e_count[1] = 1;
+                            status = H5Sselect_hyperslab(e_dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)&label);
+                            if (status < 0)
+                            {
+                                logE << "failed to write name\n";
+                            }
+
+                            e_offset[0] = c;
+                            e_offset[0] = 1;
+                            status = H5Sselect_hyperslab(e_dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&element_info.second.);
+                            if (status < 0)
+                            {
+                                logE << "failed to write " << STR_CALIB_LABELS << "\n";
+                            }
+
+                        }
+                    }
                 }
             }
         }
