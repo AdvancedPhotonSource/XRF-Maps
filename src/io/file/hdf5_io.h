@@ -6068,13 +6068,7 @@ public:
         {
             return false;
         }
-        if (false == _open_or_create_group(STR_FIT_PARAMETERS_OVERRIDE, maps_grp_id, po_grp_id))
-        {
-            return false;
-        }
-
-        _save_params_override(po_grp_id, params_override);
-
+        
         _save_scan_meta_data(scan_grp_id, &(scan_info->meta_info));
 
         _save_extras(scan_grp_id, &(scan_info->extra_pvs));
@@ -7173,6 +7167,117 @@ public:
 
     //-----------------------------------------------------------------------------
 
+    template<typename T_real>
+    bool save_params_override(data_struct::Params_Override<T_real>* params_override)
+    {
+
+        if (params_override == nullptr)
+        {
+            logE << " Params_override is null\n";
+            return false;
+        }
+        hid_t   memtype_label, filetype_label, memoryspace_id, maps_grp_id, po_grp_id;
+        hid_t fitp_names_id, fitp_values_id;
+        hid_t fitp_names_space, fitp_values_space;
+
+        filetype_label = H5Tcopy(H5T_FORTRAN_S1);
+        H5Tset_size(filetype_label, 50);
+        memtype_label = H5Tcopy(H5T_C_S1);
+        hid_t status = H5Tset_size(memtype_label, 50);
+
+        hsize_t f_offset[1] = { 0 };
+        hsize_t f_count[1] = { 0 };
+        hsize_t fp_offset[2] = { 0 };
+        hsize_t fp_count[2] = { 0 };
+        f_count[0] = params_override->fit_params.size();
+        fp_count[0] = f_count[0];
+        fp_count[1] = 4; // value, min, max, step
+
+        if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
+        {
+            return false;
+        }
+        if (false == _open_or_create_group(STR_FIT_PARAMETERS_OVERRIDE, maps_grp_id, po_grp_id))
+        {
+            return false;
+        }
+
+        std::string str_name = STR_FIT_PARAMETERS + "_Names";
+        std::string str_values = STR_FIT_PARAMETERS + "_Values";
+        bool name_ok = _open_h5_dataset(str_name, filetype_label, po_grp_id, 1, f_count, f_count, fitp_names_id, fitp_names_space);
+        bool prop_ok = _open_h5_dataset<T_real>(str_values, po_grp_id, 2, fp_count, fp_count, fitp_values_id, fitp_values_space);
+
+        if (false == name_ok || false == prop_ok)
+        {
+            logE << " Failed to open or create datasetsl\n";
+            return false;
+        }
+
+        int cnt = f_count[0];
+
+        f_count[0] = 1;
+        _create_memory_space(1, f_count, memoryspace_id);
+        fp_count[0] = 1;
+        fp_count[1] = 1;
+
+        int i = 0;
+        for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = params_override->fit_params.begin(); itr != params_override->fit_params.end(); itr++)
+        {
+            f_offset[0] = i;
+            fp_offset[0] = i;
+
+            char label[50] = { 0 };
+            itr->first.copy(&label[0], 49);
+
+            status = H5Sselect_hyperslab(fitp_names_space, H5S_SELECT_SET, f_offset, nullptr, f_count, nullptr);
+
+            status = H5Dwrite(fitp_names_id, memtype_label, memoryspace_id, fitp_names_space, H5P_DEFAULT, (void*)&label);
+            if (status < 0)
+            {
+                logE << "failed to write name\n";
+            }
+
+            fp_offset[1] = 0;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.value));
+            if (status < 0)
+            {
+                logE << "failed to write value\n";
+            }
+
+            fp_offset[1] = 1;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.min_val));
+            if (status < 0)
+            {
+                logE << "failed to write min value\n";
+            }
+
+            fp_offset[1] = 2;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.max_val));
+            if (status < 0)
+            {
+                logE << "failed to write max value\n";
+            }
+
+            fp_offset[1] = 3;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.step_size));
+            if (status < 0)
+            {
+                logE << "failed to write step size\n";
+            }
+
+            i++;
+        }
+
+        return true;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
 private:
 
     HDF5_IO();
@@ -7765,107 +7870,6 @@ private:
 
     }
     
-    //-----------------------------------------------------------------------------
-
-    template<typename T_real>
-	bool _save_params_override(hid_t group_id, data_struct::Params_Override<T_real> * params_override)
-    {
-
-        if (params_override == nullptr)
-        {
-            logE << " Params_override is null\n";
-            return false;
-        }
-        hid_t   memtype_label, filetype_label, memoryspace_id;
-        hid_t fitp_names_id, fitp_values_id;
-        hid_t fitp_names_space, fitp_values_space;
-
-        filetype_label = H5Tcopy(H5T_FORTRAN_S1);
-        H5Tset_size(filetype_label, 50);
-        memtype_label = H5Tcopy(H5T_C_S1);
-        hid_t status = H5Tset_size(memtype_label, 50);
-
-        hsize_t f_offset[1] = { 0 };
-        hsize_t f_count[1] = { 0 };
-        hsize_t fp_offset[1] = { 0 };
-        hsize_t fp_count[2] = { 0 };
-        f_count[0] = params_override->fit_params.size();
-        fp_count[0] = f_count[0];
-        fp_count[1] = 4; // value, min, max, step
-
-        std::string str_name = STR_FIT_PARAMETERS + "_Names";
-        std::string str_values = STR_FIT_PARAMETERS + "_Values";
-        bool name_ok = _open_h5_dataset(str_name, filetype_label, group_id, 1, f_count, f_count, fitp_names_id, fitp_names_space);
-        bool prop_ok = _open_h5_dataset<T_real>(str_values, group_id, 2, fp_count, fp_count, fitp_values_id, fitp_values_space);
-
-        if (false == name_ok || false == prop_ok)
-        {
-            logE << " Failed to open or create datasetsl\n";
-            return false;
-        }
-
-        int cnt = f_count[0];
-
-        f_count[0] = 1;
-        _create_memory_space(1, f_count, memoryspace_id);
-        fp_count[0] = 1;
-        fp_count[1] = 1;
-
-        int i = 0;
-        for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = params_override->fit_params.begin(); itr != params_override->fit_params.end(); itr++)
-        {
-            f_offset[0] = i;
-            fp_offset[0] = i;
-
-            char label[50] = { 0 };
-            itr->first.copy(&label[0], 49);
-
-            status = H5Sselect_hyperslab(fitp_names_space, H5S_SELECT_SET, f_offset, nullptr, f_count, nullptr);
-            
-            status = H5Dwrite(fitp_names_id, memtype_label, memoryspace_id, fitp_names_space, H5P_DEFAULT, (void*)&label);
-            if (status < 0)
-            {
-                logE << "failed to write name\n";
-            }
-
-            fp_offset[1] = 0;
-            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
-            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.value));
-            if (status < 0)
-            {
-                logE << "failed to write value\n";
-            }
-
-            fp_offset[1] = 1;
-            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
-            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.min_val));
-            if (status < 0)
-            {
-                logE << "failed to write min value\n";
-            }
-
-            fp_offset[1] = 2;
-            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
-            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.max_val));
-            if (status < 0)
-            {
-                logE << "failed to write max value\n";
-            }
-
-            fp_offset[1] = 3;
-            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
-            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.step_size));
-            if (status < 0)
-            {
-                logE << "failed to write step size\n";
-            }
-
-            i++;
-        }
-
-        return true;
-    }
-
     //-----------------------------------------------------------------------------
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);
