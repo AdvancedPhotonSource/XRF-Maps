@@ -332,6 +332,7 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
     {
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
         {
+            fitting_quant_map.at(routine).quantifier_map[quantifier_scaler] = val;
             for (const auto& shell_itr : Shells_Quant_List)
             {
                 std::vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));

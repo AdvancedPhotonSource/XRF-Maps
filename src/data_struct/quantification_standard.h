@@ -126,6 +126,8 @@ struct DLL_EXPORT Fitting_Quantification_Struct
 
     //            Quantifier {SR_Current, US_IC, DS_IC}
     std::unordered_map<std::string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
+    // saved value from optimizer, {SR_Current, US_IC, DS_IC}
+    std::unordered_map<std::string, T_real> quantifier_map;
 };
 
 

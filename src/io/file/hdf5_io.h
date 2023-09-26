@@ -5386,9 +5386,9 @@ public:
 
 
         filetype_label = H5Tcopy(H5T_FORTRAN_S1);
-        H5Tset_size(filetype_label, 10);
+        H5Tset_size(filetype_label, 50);
         memtype_label = H5Tcopy(H5T_C_S1);
-        status = H5Tset_size(memtype_label, 10);
+        status = H5Tset_size(memtype_label, 50);
 
 
         //--                        save calibration curve                  --
@@ -5791,6 +5791,229 @@ public:
                             }
                         }
                     }
+
+                    bool index_ok = false;
+                    bool name_ok = false;
+                    bool prop_ok = false;
+                    hsize_t p_offset[1] = { 0 };
+                    hsize_t p_count[1] = { 0 };
+                    hsize_t e_offset[2] = { 0 };
+                    hsize_t e_count[2] = { 0 };
+                    hid_t e_index_id = -1;
+                    hid_t e_name_id = -1;
+                    hid_t e_prop_id = -1;
+                    hid_t e_index_dataspace_id = -1;
+                    hid_t e_name_dataspace_id = -1;
+                    hid_t e_prop_dataspace_id = -1;
+
+                    e_count[0] = detector->all_element_quants[qitr.first][quant_scaler_itr.first].size();
+                    e_count[1] = 10; // all properties of Element_Quant except for name
+                    p_count[0] = 10; // all properties of Element_Quant except for name
+
+                    // save quant generation info
+                    std::string e_gen_idx = quant_scaler_itr.first + "_Element_Info_Index";
+                    std::string e_gen_name = quant_scaler_itr.first + "_Element_Info_Names";
+                    std::string e_gen_props = quant_scaler_itr.first + "_Element_Info_Values";
+                    index_ok = _open_h5_dataset(e_gen_idx, filetype_label, q_fit_grp_id, 1, e_count, e_count, e_index_id, e_index_dataspace_id);
+                    name_ok = _open_h5_dataset(e_gen_name, filetype_label, q_fit_grp_id, 1, p_count, p_count, e_name_id, e_name_dataspace_id);
+                    prop_ok = _open_h5_dataset<T_real>(e_gen_props, q_fit_grp_id, 2, e_count, e_count, e_prop_id, e_prop_dataspace_id);
+                    if (index_ok && name_ok && prop_ok)
+                    {
+                        int c = 0;
+                        // proc_type          quant_scaler      element    quant_prop
+                        for (auto& element_itr : detector->all_element_quants[qitr.first][quant_scaler_itr.first])
+                        {
+
+                            char label[50] = { 0 };
+                            element_itr.first.copy(&label[0], 49);
+
+                            e_offset[0] = c;
+                            e_count[0] = 1;
+                            e_count[1] = 1;
+                            status = H5Sselect_hyperslab(e_index_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_index_id, memtype_label, q_memoryspace_label_id, e_index_dataspace_id, H5P_DEFAULT, (void*)&label);
+                            if (status < 0)
+                            {
+                                logE << "failed to write Index name\n";
+                            }
+
+                            p_count[0] = 1;
+
+                            // save properties 
+                            p_offset[0] = 0;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"weight");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 0;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->weight));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+
+                            // 
+                            p_offset[0] = 1;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"absorption");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 1;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->absorption));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 2;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"transmission_Be");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 2;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->transmission_Be));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 3;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"transmission_Ge");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 3;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->transmission_Ge));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 4;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"yield");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 4;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->yield));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 5;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"transmission_through_Si_detector");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 5;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->transmission_through_Si_detector));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 6;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"transmission_through_air");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 6;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->transmission_through_air));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 7;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"Z");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 7;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_INT, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->Z));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 8;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"e_cal_ratio");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 8;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->e_cal_ratio));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            // 
+                            p_offset[0] = 9;
+                            status = H5Sselect_hyperslab(e_name_dataspace_id, H5S_SELECT_SET, p_offset, nullptr, p_count, nullptr);
+                            status = H5Dwrite(e_name_id, memtype_label, q_memoryspace_label_id, e_name_dataspace_id, H5P_DEFAULT, (void*)"calib_curve_val");
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop name\n";
+                            }
+
+                            e_offset[1] = 9;
+                            status = H5Sselect_hyperslab(e_prop_dataspace_id, H5S_SELECT_SET, e_offset, nullptr, e_count, nullptr);
+                            status = H5Dwrite(e_prop_id, H5T_NATIVE_DOUBLE, q_memoryspace_label_id, e_prop_dataspace_id, H5P_DEFAULT, (void*)&(element_itr.second->calib_curve_val));
+                            if (status < 0)
+                            {
+                                logE << "failed to write prop value\n";
+                            }
+
+                            c++;
+
+                        }
+                    }
                 }
             }
         }
@@ -5845,13 +6068,7 @@ public:
         {
             return false;
         }
-        if (false == _open_or_create_group(STR_FIT_PARAMETERS_OVERRIDE, maps_grp_id, po_grp_id))
-        {
-            return false;
-        }
-
-        _save_params_override(po_grp_id, params_override);
-
+        
         _save_scan_meta_data(scan_grp_id, &(scan_info->meta_info));
 
         _save_extras(scan_grp_id, &(scan_info->extra_pvs));
@@ -6950,6 +7167,117 @@ public:
 
     //-----------------------------------------------------------------------------
 
+    template<typename T_real>
+    bool save_params_override(data_struct::Params_Override<T_real>* params_override)
+    {
+
+        if (params_override == nullptr)
+        {
+            logE << " Params_override is null\n";
+            return false;
+        }
+        hid_t   memtype_label, filetype_label, memoryspace_id, maps_grp_id, po_grp_id;
+        hid_t fitp_names_id, fitp_values_id;
+        hid_t fitp_names_space, fitp_values_space;
+
+        filetype_label = H5Tcopy(H5T_FORTRAN_S1);
+        H5Tset_size(filetype_label, 50);
+        memtype_label = H5Tcopy(H5T_C_S1);
+        hid_t status = H5Tset_size(memtype_label, 50);
+
+        hsize_t f_offset[1] = { 0 };
+        hsize_t f_count[1] = { 0 };
+        hsize_t fp_offset[2] = { 0 };
+        hsize_t fp_count[2] = { 0 };
+        f_count[0] = params_override->fit_params.size();
+        fp_count[0] = f_count[0];
+        fp_count[1] = 4; // value, min, max, step
+
+        if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
+        {
+            return false;
+        }
+        if (false == _open_or_create_group(STR_FIT_PARAMETERS_OVERRIDE, maps_grp_id, po_grp_id))
+        {
+            return false;
+        }
+
+        std::string str_name = STR_FIT_PARAMETERS + "_Names";
+        std::string str_values = STR_FIT_PARAMETERS + "_Values";
+        bool name_ok = _open_h5_dataset(str_name, filetype_label, po_grp_id, 1, f_count, f_count, fitp_names_id, fitp_names_space);
+        bool prop_ok = _open_h5_dataset<T_real>(str_values, po_grp_id, 2, fp_count, fp_count, fitp_values_id, fitp_values_space);
+
+        if (false == name_ok || false == prop_ok)
+        {
+            logE << " Failed to open or create datasetsl\n";
+            return false;
+        }
+
+        int cnt = f_count[0];
+
+        f_count[0] = 1;
+        _create_memory_space(1, f_count, memoryspace_id);
+        fp_count[0] = 1;
+        fp_count[1] = 1;
+
+        int i = 0;
+        for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = params_override->fit_params.begin(); itr != params_override->fit_params.end(); itr++)
+        {
+            f_offset[0] = i;
+            fp_offset[0] = i;
+
+            char label[50] = { 0 };
+            itr->first.copy(&label[0], 49);
+
+            status = H5Sselect_hyperslab(fitp_names_space, H5S_SELECT_SET, f_offset, nullptr, f_count, nullptr);
+
+            status = H5Dwrite(fitp_names_id, memtype_label, memoryspace_id, fitp_names_space, H5P_DEFAULT, (void*)&label);
+            if (status < 0)
+            {
+                logE << "failed to write name\n";
+            }
+
+            fp_offset[1] = 0;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.value));
+            if (status < 0)
+            {
+                logE << "failed to write value\n";
+            }
+
+            fp_offset[1] = 1;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.min_val));
+            if (status < 0)
+            {
+                logE << "failed to write min value\n";
+            }
+
+            fp_offset[1] = 2;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.max_val));
+            if (status < 0)
+            {
+                logE << "failed to write max value\n";
+            }
+
+            fp_offset[1] = 3;
+            status = H5Sselect_hyperslab(fitp_values_space, H5S_SELECT_SET, fp_offset, nullptr, fp_count, nullptr);
+            status = _write_h5d<T_real>(fitp_values_id, memoryspace_id, fitp_values_space, H5P_DEFAULT, (void*)&(itr->second.step_size));
+            if (status < 0)
+            {
+                logE << "failed to write step size\n";
+            }
+
+            i++;
+        }
+
+        return true;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
 private:
 
     HDF5_IO();
@@ -7542,25 +7870,6 @@ private:
 
     }
     
-    //-----------------------------------------------------------------------------
-
-    template<typename T_real>
-	bool _save_params_override(hid_t group_id, data_struct::Params_Override<T_real> * params_override)
-    {
-        //TODO : save param override to hdf5 
-
-        hid_t fit_params_grp_id;
-
-        if (false == _open_or_create_group(STR_FIT_PARAMETERS, group_id, fit_params_grp_id))
-        {
-            return false;
-        }
-
-        // closed by caller func
-
-        return true;
-    }
-
     //-----------------------------------------------------------------------------
 
     void _gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_analyzed_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg=true);

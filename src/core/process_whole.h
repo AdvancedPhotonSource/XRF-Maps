@@ -283,6 +283,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
         logI << "Fitting [ " << fit_routine->get_name() << " ] elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
         io::file::HDF5_IO::inst()->save_element_fits(fit_routine->get_name(), element_fit_count_dict);
+        io::file::HDF5_IO::inst()->save_params_override(override_params);
 
         if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX
             || itr.first == data_struct::Fitting_Routines::NNLS
