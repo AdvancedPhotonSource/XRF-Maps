@@ -234,6 +234,10 @@ const std::string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
 const std::string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
 const std::string STR_CALIB_LABELS = "Calibration_Curve_Labels";
 
+const std::string STR_DS_IC_ELEMENT_INFO_VALUES = "DS_IC_Element_Info_Values";
+const std::string STR_US_IC_ELEMENT_INFO_VALUES = "US_IC_Element_Info_Values";
+const std::string STR_SR_CURRENT_ELEMENT_INFO_VALUES = "SR_Current_Element_Info_Values";
+
 const std::string STR_BEAMLINES = "BeamLines";
 const std::string STR_SCALERS = "Scalers";
 const std::string STR_TIME_NORMALIZED_SCALERS = "TimeNormalizedScalers";
