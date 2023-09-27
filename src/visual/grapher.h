@@ -36,9 +36,9 @@ freely, subject to the following restrictions:
 #include <QtCharts/QLogValueAxis>
 #include <QtCharts/QValueAxis>
 #include <QApplication>
-#include <QtCharts/QBarSeries>
+#include <QtCharts/QLineSeries>
 #include <QtCharts/QBarSet>
-#include <QtCharts/QBarCategoryAxis>
+#include <QtCharts/QScatterSeries>
 
 using namespace data_struct;
 
@@ -246,11 +246,12 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                               Detector<T_real>* detector,
                                 std::string quantifier_scaler_name,
                                 std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights,
-                                std::vector<Element_Quant<T_real>>* calibration_curve,
+                                std::unordered_map<Electron_Shell, std::vector<Element_Quant<T_real>> >* curve_quant_map,
+                                //std::vector<Element_Quant<T_real>>* calibration_curve,
                               int zstart,
                               int zstop)
 {
-    if (all_elements_with_weights == nullptr || detector == nullptr || calibration_curve == nullptr)
+    if (all_elements_with_weights == nullptr || detector == nullptr || curve_quant_map == nullptr)
     {
         logW << "detector is null. Cannot save png " << path << ". \n";
         return;
@@ -289,38 +290,42 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
     QChart* chart = chartView->chart();
     chart->addAxis(axisYLog10, Qt::AlignLeft);
     //chart->addAxis(axisY, Qt::AlignLeft);
+    chart->setTitle(QString::fromStdString(quantifier_scaler_name));
 
-
-    QBarCategoryAxis* axisX = new QBarCategoryAxis();
-    QStringList categories;
-    QBarSet* set0 = new QBarSet("Element");
-
-    QBarSeries* series = new QBarSeries();
-    series->setName(QString::fromStdString(quantifier_scaler_name));
-
+    QCategoryAxis* axisX = new QCategoryAxis();    
+    bool isfirst = true;
     T_real min_y = 9999999.0;
     T_real max_y = -9999999.0;
-    for (int i = zstart; i <= zstop; i++)
+    for (const auto& citr : *curve_quant_map)
     {
-        T_real val = (*calibration_curve)[i].calib_curve_val;
-        if (val <= 0)
+        QLineSeries* series = new QLineSeries();
+        series->setName(QString::fromStdString(quantification::models::Shell_To_String.at(citr.first)));
+        for (int i = zstart-1; i <= zstop; i++)
         {
-            val = 0.00000001;
+            T_real val = citr.second[i].calib_curve_val;
+            if (val <= 0)
+            {
+                val = 0.00000001;
+            }
+            series->append(i, val);
+            series->append(i + 1, val);
+            if (isfirst)
+            {
+                axisX->append(QString::fromStdString(citr.second[i].name), i);
+            }
         }
-        categories << QString::fromStdString((*calibration_curve)[i].name);
-        *set0 << val;
-        min_y = std::min(min_y, val);
-        max_y = std::max(max_y, val);
+        chart->addSeries(series);
+        if (isfirst)
+        {
+            chart->addAxis(axisX, Qt::AlignBottom);
+        }
+        series->attachAxis(axisX);
+        series->attachAxis(axisYLog10);
+        
+        isfirst = false;
     }
-    series->append(set0);
-    chart->addSeries(series);
-
-    axisX->append(categories);
-    chart->addAxis(axisX, Qt::AlignBottom);
-    series->attachAxis(axisX);
-    series->attachAxis(axisYLog10);
-    //series->attachAxis(axisY);
-
+    
+    
     for (auto& s_itr : detector->quantification_standards)
     {
         QScatterSeries* e_series = new QScatterSeries();
@@ -339,7 +344,7 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                     {
                         plot_val = 0.000000001;
                     }
-                    e_series->append(((element_info->number - 1) - zstart), plot_val);
+                    e_series->append(((element_info->number - 1.5)), plot_val);
                     min_y = std::min(min_y, plot_val);
                     max_y = std::max(max_y, plot_val);
                 }
@@ -351,11 +356,9 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
         //e_series->attachAxis(axisY);
     }
 
-    //min_y -= 1.0;
-    max_y += 10.0;
-
-    axisYLog10->setMin(min_y);
-    axisYLog10->setMax(max_y);
+    T_real diff = (max_y - min_y ) / 5.0;
+    T_real diff2 = (max_y - min_y) / 100.0;
+    axisYLog10->setRange(min_y - diff2, max_y + diff);
 
 
     QPixmap pix = chartView->grab();
@@ -387,26 +390,32 @@ DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detec
         //iterate through quantifier {sr_current, us_ic, ds_ic}
         for (auto& itr2 : itr1.second.quant_scaler_map)
         {
+
+            int minZ = CALIBRATION_CURVE_SIZE;
+            int maxZ = 0;
             for (const auto& shell_itr : Shells_Quant_List)
             {
+                int zstart = 0;
+                int zstop = CALIBRATION_CURVE_SIZE;
+
                 if (contains_shell(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
                 {
-                    int zstart = 0;
-                    int zstop = CALIBRATION_CURVE_SIZE;
                     find_shell_Z_offset(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
-
-                    std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_" + quantification::models::Shell_To_String.at(shell_itr) + "_det";
-                    if (detector->number() != -1)
-                    {
-                        str_path_full += std::to_string(detector->number()) + ".png";
-                    }
-                    else
-                    {
-                        str_path_full += ".png";
-                    }
-                    SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map.at(shell_itr)), zstart, zstop);
+                    minZ = std::min(minZ, zstart);
+                    maxZ = std::max(maxZ, zstop);
                 }
             }
+            std::string str_path_full = path + "calib_" + Fitting_Routine_To_Str.at(itr1.first) + "_" + itr2.first + "_det";
+            if (detector->number() != -1)
+            {
+                str_path_full += std::to_string(detector->number()) + ".png";
+            }
+            else
+            {
+                str_path_full += ".png";
+            }
+            SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map), minZ, maxZ);
+             
         }
     }
 }
