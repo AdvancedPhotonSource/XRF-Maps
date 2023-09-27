@@ -514,7 +514,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                 if (fn_str_len > 5 &&
                     dataset_file[fn_str_len - 4] == '.' &&
                     dataset_file[fn_str_len - 3] == 'm' &&
-                    dataset_file[fn_str_len - 2] == 'c' &&
+                    dataset_file[fn_str_len - 2] == 'd' &&
                     dataset_file[fn_str_len - 1] == 'a')
                 {
                     full_save_path += ".h5" + str_detector_num;
