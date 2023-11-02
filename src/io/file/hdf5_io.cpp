@@ -1122,8 +1122,8 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
 
                 if (analysis_grp_name == STR_FIT_NNLS || analysis_grp_name == STR_FIT_GAUSS_MATRIX)
                 {
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_SPEC, STR_FIT_INT_SPEC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
-                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_BACKGROUND, STR_FIT_INT_BACKGROUND, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_SPEC, STR_FIT_INT_SPEC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
+                    _gen_average(group_name + "/XRF_Analyzed/" + analysis_grp_name + "/"+ STR_FIT_INT_BACKGROUND, STR_FIT_INT_BACKGROUND, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids, false);
                 }
                 H5Gclose(dst_fit_grp_id);
                 H5Gclose(src_fit_grp_id);
