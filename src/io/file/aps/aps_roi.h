@@ -75,31 +75,40 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
 
     bool parsed = false;
 
-    std::ifstream file(path);
-    std::istream& stream = file;
+    std::ifstream fstream(path);
     // json reader
-    Json::Reader reader;
+    JSONCPP_STRING err;
+    Json::CharReaderBuilder builder;
+    //const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
     // this will contain complete JSON data
     Json::Value completeJsonData;
-    // reader reads the data and stores it in completeJsonData
-    parsed = reader.parse(stream, completeJsonData, false);
-    
-    if (completeJsonData.isMember(STR_MAPS_ROIS))
+    if (false == fstream.good())
     {
-        const Json::Value json_rois = completeJsonData[STR_MAPS_ROIS];
+        return false;
+    }
+    // reader reads the data and stores it in completeJsonData
+    //parsed = reader.parse(stream, completeJsonData, false);
+    parsed = Json::parseFromStream(builder, fstream, &completeJsonData, &err);
+    if (false == parsed)
+    {
+        return false;
+    }
+    if (completeJsonData.isMember(STR_MAPS_ROIS.c_str()))
+    {
+        const Json::Value json_rois = completeJsonData[STR_MAPS_ROIS.c_str()];
         for (int i = 0; i < json_rois.size(); ++i)
         {
             const Json::Value json_map_roi = json_rois[i];
             
             std::string roi_name = std::to_string(i);
             // get the value associated with grade key
-            if (json_map_roi.isMember(STR_MAP_ROI_NAME))
+            if (json_map_roi.isMember(STR_MAP_ROI_NAME.c_str()))
             {
-                roi_name = json_map_roi[STR_MAP_ROI_NAME].asString();
+                roi_name = json_map_roi[STR_MAP_ROI_NAME.c_str()].asString();
             }
             logI << "Loading roi name :" << roi_name << " from file " << path << "\n";
             // load pixel locations
-            const Json::Value json_pixel_locs = json_map_roi[STR_MAP_ROI_PIXEL_LOC];
+            const Json::Value json_pixel_locs = json_map_roi[STR_MAP_ROI_PIXEL_LOC.c_str()];
             for (int index = 0; index < json_pixel_locs.size(); ++index)
             {
                 const Json::Value json_ppair = json_pixel_locs[index];
@@ -107,26 +116,26 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
                 rois[roi_name].push_back({ json_ppair[0].asInt() ,json_ppair[1].asInt() });
             }
             // load integrated spectras
-            if (json_map_roi.isMember(STR_MAP_ROI_INT_SPEC))
+            if (json_map_roi.isMember(STR_MAP_ROI_INT_SPEC.c_str()))
             {
-                const Json::Value json_int_specs = json_map_roi[STR_MAP_ROI_INT_SPEC];
+                const Json::Value json_int_specs = json_map_roi[STR_MAP_ROI_INT_SPEC.c_str()];
                 for (int j = 0; j < json_int_specs.size(); ++j)
                 {
                     const Json::Value json_spectra = json_int_specs[j];
-                    if (json_spectra.isMember(STR_MAP_ROI_INT_SPEC_FILENAME)
-                        && json_spectra.isMember(STR_SPECTRA)
-                        && json_spectra.isMember(STR_ELT)
-                        && json_spectra.isMember(STR_ERT)
-                        && json_spectra.isMember(STR_ICR)
-                        && json_spectra.isMember(STR_OCR))
+                    if (json_spectra.isMember(STR_MAP_ROI_INT_SPEC_FILENAME.c_str())
+                        && json_spectra.isMember(STR_SPECTRA.c_str())
+                        && json_spectra.isMember(STR_ELT.c_str())
+                        && json_spectra.isMember(STR_ERT.c_str())
+                        && json_spectra.isMember(STR_ICR.c_str())
+                        && json_spectra.isMember(STR_OCR.c_str()))
                     {
-                        std::string filename = json_spectra[STR_MAP_ROI_INT_SPEC_FILENAME].asString();
-                        const Json::Value json_spectra_values = json_spectra[STR_SPECTRA];
+                        std::string filename = json_spectra[STR_MAP_ROI_INT_SPEC_FILENAME.c_str()].asString();
+                        const Json::Value json_spectra_values = json_spectra[STR_SPECTRA.c_str()];
                         int_specs[filename].resize(json_spectra_values.size());
-                        int_specs[filename].elapsed_livetime(json_spectra[STR_ELT].asDouble());
-                        int_specs[filename].elapsed_realtime(json_spectra[STR_ERT].asDouble());
-                        int_specs[filename].input_counts(json_spectra[STR_ICR].asDouble());
-                        int_specs[filename].output_counts(json_spectra[STR_OCR].asDouble());
+                        int_specs[filename].elapsed_livetime(json_spectra[STR_ELT.c_str()].asDouble());
+                        int_specs[filename].elapsed_realtime(json_spectra[STR_ERT.c_str()].asDouble());
+                        int_specs[filename].input_counts(json_spectra[STR_ICR.c_str()].asDouble());
+                        int_specs[filename].output_counts(json_spectra[STR_OCR.c_str()].asDouble());
 
                         for (int k = 0; k < json_spectra_values.size(); ++k)
                         {
@@ -142,6 +151,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
         logE << "Could not find key: " << STR_MAPS_ROIS << " . Skipping file: " << path << "\n";
         parsed = false;
     }
+
     return parsed;
 }
 
