@@ -60,8 +60,8 @@ Detector<T_real>::Detector(unsigned int number)
     model = nullptr;
     detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
     beryllium_window_thickness = 0.0; //24.000000
-    germanium_dead_layer = 0.0; //350.0
-    detector_chip_thickness = 0.0;
+    germanium_dead_layer = 0.0; 
+    detector_chip_thickness = 0.0; //350.0
     incident_energy = 10.0;
     airpath = 0.0;
     _number = number;
