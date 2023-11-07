@@ -331,14 +331,28 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(status.nfev);
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, static_cast<T_real>(status.nfev)));
+    }
+
     if (fit_params->contains(STR_RESIDUAL))
     {
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_RESIDUAL, status.fnorm));
+    }
+
     if (fit_params->contains(STR_OUTCOME))
     {
         if (this->_outcome_map.count(status.outcome) > 0)
             (*fit_params)[STR_OUTCOME].value = (T_real)(this->_outcome_map[status.outcome]);
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_OUTCOME, (T_real)(this->_outcome_map[status.outcome])));
     }
 
     if(this->_outcome_map.count(status.outcome)>0)
@@ -375,6 +389,10 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = status.nfev;
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, static_cast<T_real>(status.nfev)));
     }
     if (fit_params->contains(STR_RESIDUAL))
     {
@@ -419,13 +437,32 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(STR_NUM_ITR) )
+    if (fit_params->contains(STR_NUM_ITR))
     {
         (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(status.nfev);
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, static_cast<T_real>(status.nfev)));
+    }
+
     if (fit_params->contains(STR_RESIDUAL))
     {
         (*fit_params)[STR_RESIDUAL].value = status.fnorm;
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_RESIDUAL, status.fnorm));
+    }
+
+    if (fit_params->contains(STR_OUTCOME))
+    {
+        if (this->_outcome_map.count(status.outcome) > 0)
+            (*fit_params)[STR_OUTCOME].value = (T_real)(this->_outcome_map[status.outcome]);
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_OUTCOME, (T_real)(this->_outcome_map[status.outcome])));
     }
 
     if (this->_outcome_map.count(status.outcome) > 0)

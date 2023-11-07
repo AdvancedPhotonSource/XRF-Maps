@@ -715,10 +715,23 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
             for (size_t detector_num : analysis_job.detector_num_arr)
             {
                 if (detector_num != -1)
-                {
+                { 
+                    search_filename = "";
                     std::string str_detector_num = std::to_string(detector_num);
-                    
-                    search_filename = base_file_name + ".mda.h5" + str_detector_num;
+                    // search for detector in list of int specs loaded
+                    for (const auto& spec_itr : int_specs)
+                    {
+                        int slen = spec_itr.first.length();
+                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0])
+                        {
+                            search_filename = spec_itr.first;
+                            break;
+                        }
+                    }
+                    if (search_filename.length() == 0)
+                    {
+                        search_filename = base_file_name + ".mda.h5" + str_detector_num;
+                    }
                     find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
                 }
             }
