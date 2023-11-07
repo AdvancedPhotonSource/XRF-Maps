@@ -362,6 +362,8 @@ namespace csv
 
         const std::vector<std::string> p_list = { "perror_Na", "perror_Mg", "perror_Al", "perror_Si", "perror_P", "perror_S", "perror_Cl", "perror_Ar", "perror_K", "perror_Ca", "perror_Sc", "perror_Ti", "perror_V", "perror_Cr", "perror_Mn", "perror_Fe", "perror_Co", "perror_Ni", "perror_Cu", "perror_Zn", "perror_Ga", "perror_Ge", "perror_As", "perror_Se", "perror_Br", "perror_Kr", "perror_Rb", "perror_Sr", "perror_Y", "perror_Zr", "perror_Nb", "perror_Mo", "perror_Tc", "perror_Ru", "perror_Rh", "perror_Pd", "perror_Ag", "perror_Cd", "perror_In", "perror_Sn", "perror_Sb", "perror_Te", "perror_I", "perror_Mo_L", "perror_Ag_L", "perror_Sn_L", "perror_Cd_L", "perror_I_L", "perror_Cs_L", "perror_Ba_L", "perror_Eu_L", "perror_Gd_L", "perror_W_L", "perror_Pt_L", "perror_Au_L", "perror_Hg_L", "perror_Pb_L", "perror_U_L", "perror_La_L", "perror_Re_L", "perror_Pr_L", "perror_Ce_L", "perror_Zr_L", "perror_Os_L", "perror_Ru_L", "perror_Au_M", "perror_Pb_M", "perror_U_M", "perror_Bi_M", "perror_Hg_M" };
 
+        const std::vector<std::string> l_list = { "chisquare", "chisqred", "gen_pars_at_bndry", "ele_pars_at_bndry", "free_pars" };
+
         if (detector == nullptr)
         {
             logW << "standards or quants_map or detector are null. Cannot save csv " << path << ". \n";
@@ -432,7 +434,7 @@ namespace csv
                     file_stream << "calibrated using the " << norm_names[n_itr.first] << " ionchamber, fitted using "<< Fitting_Routine_To_Str.at(f_itr);
 
                     file_stream << "\n\n\n";
-                    file_stream << "name, DS_IC, ds_IC_amp_factor, US_IC, us_IC_amp_factor, live_time, real_time, roi_pixels, roi_areas, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Mo_L, Ag_L, Sn_L, Cd_L, I_L, Cs_L, Ba_L, Eu_L, Gd_L, W_L, Pt_L, Au_L, Hg_L, Pb_L, U_L, La_L, Re_L, Pr_L, Ce_L, Zr_L, Os_L, Ru_L, Au_M, Pb_M, U_M, Bi_M, Hg_M, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_Mo_L, perror_Ag_L, perror_Sn_L, perror_Cd_L, perror_I_L, perror_Cs_L, perror_Ba_L, perror_Eu_L, perror_Gd_L, perror_W_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Pb_L, perror_U_L, perror_La_L, perror_Re_L, perror_Pr_L, perror_Ce_L, perror_Zr_L, perror_Os_L, perror_Ru_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Bi_M, perror_Hg_M,\n";
+                    file_stream << "name, DS_IC, ds_IC_amp_factor, US_IC, us_IC_amp_factor, live_time, real_time, roi_pixels, roi_areas, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Mo_L, Ag_L, Sn_L, Cd_L, I_L, Cs_L, Ba_L, Eu_L, Gd_L, W_L, Pt_L, Au_L, Hg_L, Pb_L, U_L, La_L, Re_L, Pr_L, Ce_L, Zr_L, Os_L, Ru_L, Au_M, Pb_M, U_M, Bi_M, Hg_M, perror_Na, perror_Mg, perror_Al, perror_Si, perror_P, perror_S, perror_Cl, perror_Ar, perror_K, perror_Ca, perror_Sc, perror_Ti, perror_V, perror_Cr, perror_Mn, perror_Fe, perror_Co, perror_Ni, perror_Cu, perror_Zn, perror_Ga, perror_Ge, perror_As, perror_Se, perror_Br, perror_Kr, perror_Rb, perror_Sr, perror_Y, perror_Zr, perror_Nb, perror_Mo, perror_Tc, perror_Ru, perror_Rh, perror_Pd, perror_Ag, perror_Cd, perror_In, perror_Sn, perror_Sb, perror_Te, perror_I, perror_Mo_L, perror_Ag_L, perror_Sn_L, perror_Cd_L, perror_I_L, perror_Cs_L, perror_Ba_L, perror_Eu_L, perror_Gd_L, perror_W_L, perror_Pt_L, perror_Au_L, perror_Hg_L, perror_Pb_L, perror_U_L, perror_La_L, perror_Re_L, perror_Pr_L, perror_Ce_L, perror_Zr_L, perror_Os_L, perror_Ru_L, perror_Au_M, perror_Pb_M, perror_U_M, perror_Bi_M, perror_Hg_M, chisquare, chisqred, gen_pars_at_bndry, ele_pars_at_bndry, free_pars \n";
                     for (auto& itr : roi_files_fits_map)
                     {
                         if (itr.second.contains(n_itr.second))
@@ -541,6 +543,20 @@ namespace csv
                                 file_stream << "1.0e-10,";
                             }
                         }
+                        /*
+                        for (auto& l_itr : l_list)
+                        {
+                            if (itr.second.contains(l_itr))
+                            {
+                                file_stream << itr.second.at(l_itr).value << ",";
+                            }
+                            else
+                            {
+                                file_stream << "1.0e-10, ";
+                            }
+                        }
+                        */
+
                         file_stream << "\n";
                     }
 

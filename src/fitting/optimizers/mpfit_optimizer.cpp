@@ -605,6 +605,29 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
+    if (fit_params->contains(STR_CHISQRED))
+    {
+        (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
+    }
+    if (fit_params->contains(STR_FREE_PARS))
+    {
+        (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }
+    // add perror_ fit params
+    Fit_Parameters<T_real> error_params;
+    for (typename std::unordered_map<std::string, Fit_Param<T_real>>::const_iterator itr = fit_params->begin(); itr != fit_params->end(); itr++)
+    {
+        if (itr->second.opt_array_index > -1)
+        {
+            data_struct::Fit_Param<T_real> fp("perror_" + itr->first, 0.0);
+            fp.opt_array_index = itr->second.opt_array_index;
+            error_params.add_parameter(fp);
+        }
+    }
+    error_params.from_array(perror);
+
+    fit_params->append_and_update(error_params);
+
 
     if (this->_outcome_map.count(info) > 0)
         return this->_outcome_map[info];
