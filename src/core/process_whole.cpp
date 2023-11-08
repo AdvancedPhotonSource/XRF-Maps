@@ -88,9 +88,11 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         model.reset_to_default_fit_params();
         //Update fit parameters by override values
         model.update_fit_params_values(&(params_override->fit_params));
-        //set fixed/fit preset
-        model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
-
+        if (analysis_job->optimize_fit_params_preset != fitting::models::Fit_Params_Preset::NOT_SET)
+        {
+            //set fixed/fit preset
+            model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
+        }
         //Initialize the fit routine
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
