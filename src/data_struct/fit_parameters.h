@@ -222,6 +222,8 @@ public:
 
     void set_all(E_Bound_Type btype);
 
+    void set_all_except(E_Bound_Type btype, const std::vector<std::string> &exception_list);
+
     void update_values(const Fit_Parameters<T_real>  *override_fit_params);
 
     void update_and_add_values(Fit_Parameters<T_real>  *override_fit_params);
