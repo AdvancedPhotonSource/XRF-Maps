@@ -428,6 +428,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     std::vector<T_real> fitp_arr = fit_params->to_array();
     std::vector<T_real> perror(fitp_arr.size());
     std::vector<T_real> resid(energy_range.count());
+    std::vector<T_real> covar(fitp_arr.size() * fitp_arr.size());
 
     size_t total_itr = num_itr * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
@@ -474,36 +475,63 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     memset(&result,0,sizeof(result));
     result.xerror = &perror[0];
     result.resid = &resid[0];
+    result.covar = &covar[0];
 
     info = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	_print_info(info);
 
     fit_params->from_array(fitp_arr);
+
+    T_real sum_resid = 0.0;
+    for (int i = 0; i < energy_range.count(); i++)
+    {
+        sum_resid += resid[i];
+    }
+
     if (fit_params->contains(STR_NUM_ITR) )
     {
         (*fit_params)[STR_NUM_ITR].value = result.nfev;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, result.nfev));
+    }
+
     if (fit_params->contains(STR_RESIDUAL))
     {
-        T_real sum_resid = 0.0;
-        for (int i = 0; i < energy_range.count(); i++)
-        {
-            sum_resid += resid[i];
-        }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_RESIDUAL, sum_resid));
+    }
+
     if (fit_params->contains(STR_CHISQUARE))
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQUARE, result.bestnorm));
+    }
+
     if (fit_params->contains(STR_CHISQRED))
     {
         (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQRED, result.bestnorm / fitp_arr.size()));
+    }
+
     if (fit_params->contains(STR_FREE_PARS))
     {
         (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
     // add perror_ fit params
     Fit_Parameters<T_real> error_params;
@@ -517,7 +545,16 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         }
     }
     error_params.from_array(perror);
-
+    
+    logI << "Covar Matrix : \n"; 
+    for (int i = 0; i < fitp_arr.size(); ++i)
+    {
+        for (int j = 0; j < fitp_arr.size(); ++j)
+        {
+            logit_s << covar[i * fitp_arr.size() + j]<< "   ";
+        }
+        logit_s << "\n";
+    }
     fit_params->append_and_update(error_params);
 
     if (this->_outcome_map.count(info) > 0)
@@ -588,30 +625,55 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(STR_NUM_ITR) )
+    T_real sum_resid = 0.0;
+    for (int i = 0; i < energy_range.count(); i++)
     {
-        (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(result.nfev);
+        sum_resid += resid[i];
     }
+
+    if (fit_params->contains(STR_NUM_ITR))
+    {
+        (*fit_params)[STR_NUM_ITR].value = result.nfev;
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, result.nfev));
+    }
+
     if (fit_params->contains(STR_RESIDUAL))
     {
-        T_real sum_resid = 0.0;
-        for (int i = 0; i< energy_range.count(); i++)
-        {
-             sum_resid += std::abs(resid[i]);
-        }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_RESIDUAL, sum_resid));
+    }
+
     if (fit_params->contains(STR_CHISQUARE))
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQUARE, result.bestnorm));
+    }
+
     if (fit_params->contains(STR_CHISQRED))
     {
         (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQRED, result.bestnorm / fitp_arr.size()));
+    }
+
     if (fit_params->contains(STR_FREE_PARS))
     {
         (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
     // add perror_ fit params
     Fit_Parameters<T_real> error_params;
@@ -710,33 +772,56 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
     fit_params->from_array(fitp_arr);
 
-    if (fit_params->contains(STR_NUM_ITR) )
+    T_real sum_resid = 0.0;
+    for (int i = 0; i < quant_map->size(); i++)
     {
-        (*fit_params)[STR_NUM_ITR].value = static_cast<T_real>(result.nfev);
+        sum_resid += resid[i];
     }
+
+    if (fit_params->contains(STR_NUM_ITR))
+    {
+        (*fit_params)[STR_NUM_ITR].value = result.nfev;
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_NUM_ITR, result.nfev));
+    }
+
     if (fit_params->contains(STR_RESIDUAL))
     {
-        T_real sum_resid = 0.0;
-        for (int i = 0; i < quant_map->size(); i++)
-        {
-            sum_resid += resid[i];
-        }
         (*fit_params)[STR_RESIDUAL].value = sum_resid;
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_RESIDUAL, sum_resid));
+    }
+
     if (fit_params->contains(STR_CHISQUARE))
     {
         (*fit_params)[STR_CHISQUARE].value = result.bestnorm;
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQUARE, result.bestnorm));
     }
 
     if (fit_params->contains(STR_CHISQRED))
     {
         (*fit_params)[STR_CHISQRED].value = result.bestnorm / fitp_arr.size();
     }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_CHISQRED, result.bestnorm / fitp_arr.size()));
+    }
 
     if (fit_params->contains(STR_FREE_PARS))
     {
         (*fit_params)[STR_FREE_PARS].value = fitp_arr.size();
-    }    
+    }
+    else
+    {
+        fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
+    }
 
     if (this->_outcome_map.count(info) > 0)
         return this->_outcome_map[info];

@@ -227,6 +227,29 @@ void Fit_Parameters<T_real>::set_all(E_Bound_Type btype)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+void Fit_Parameters<T_real>::set_all_except(E_Bound_Type btype,const std::vector<std::string>& exception_list)
+{
+    for (auto& itr : _params)
+    {
+        bool found = false;
+        for (const auto& eitr : exception_list)
+        {
+            if (itr.first == eitr)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (false == found)
+        {
+            itr.second.bound_type = btype;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *override_fit_params)
 {
     for(auto& itr : _params)

@@ -88,9 +88,11 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         model.reset_to_default_fit_params();
         //Update fit parameters by override values
         model.update_fit_params_values(&(params_override->fit_params));
-        //set fixed/fit preset
-        model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
-
+        if (analysis_job->optimize_fit_params_preset != fitting::models::Fit_Params_Preset::NOT_SET)
+        {
+            //set fixed/fit preset
+            model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
+        }
         //Initialize the fit routine
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
@@ -715,10 +717,23 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
             for (size_t detector_num : analysis_job.detector_num_arr)
             {
                 if (detector_num != -1)
-                {
+                { 
+                    search_filename = "";
                     std::string str_detector_num = std::to_string(detector_num);
-                    
-                    search_filename = base_file_name + ".mda.h5" + str_detector_num;
+                    // search for detector in list of int specs loaded
+                    for (const auto& spec_itr : int_specs)
+                    {
+                        int slen = spec_itr.first.length();
+                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0])
+                        {
+                            search_filename = spec_itr.first;
+                            break;
+                        }
+                    }
+                    if (search_filename.length() == 0)
+                    {
+                        search_filename = base_file_name + ".mda.h5" + str_detector_num;
+                    }
                     find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
                 }
             }

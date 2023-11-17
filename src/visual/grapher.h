@@ -76,7 +76,7 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
 
     QChartView* chartView = new QChartView();
     chartView->setRenderHint(QPainter::Antialiasing);
-    chartView->resize(1024, 768);
+    chartView->resize(1920, 1080);
 
     QChart* chart = chartView->chart();
     chart->addAxis(axisX, Qt::AlignBottom);
@@ -162,8 +162,8 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
 
     QPixmap pix = chartView->grab();
     QPainter painter(&pix);
-    int h = 768;
-    int w = 1024;
+    int h = 1080;
+    int w = 1920;
     int x = 0;
     int y = 0;
     painter.drawPixmap(x, y, w, h, pix);
@@ -287,45 +287,19 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
     chartView->setRenderHint(QPainter::Antialiasing);
     chartView->resize(width_res, height_res);
 
+    QCategoryAxis* axisX = new QCategoryAxis();
+
     QChart* chart = chartView->chart();
     chart->addAxis(axisYLog10, Qt::AlignLeft);
+    chart->addAxis(axisX, Qt::AlignBottom);
     //chart->addAxis(axisY, Qt::AlignLeft);
     chart->setTitle(QString::fromStdString(quantifier_scaler_name));
 
-    QCategoryAxis* axisX = new QCategoryAxis();    
-    bool isfirst = true;
+    std::vector< QScatterSeries*> scatter_list;
+
     T_real min_y = 9999999.0;
     T_real max_y = -9999999.0;
-    for (const auto& citr : *curve_quant_map)
-    {
-        QLineSeries* series = new QLineSeries();
-        series->setName(QString::fromStdString(quantification::models::Shell_To_String.at(citr.first)));
-        for (int i = zstart-1; i <= zstop; i++)
-        {
-            T_real val = citr.second[i].calib_curve_val;
-            if (val <= 0)
-            {
-                val = 0.00000001;
-            }
-            series->append(i, val);
-            series->append(i + 1, val);
-            if (isfirst)
-            {
-                axisX->append(QString::fromStdString(citr.second[i].name), i);
-            }
-        }
-        chart->addSeries(series);
-        if (isfirst)
-        {
-            chart->addAxis(axisX, Qt::AlignBottom);
-        }
-        series->attachAxis(axisX);
-        series->attachAxis(axisYLog10);
-        
-        isfirst = false;
-    }
-    
-    
+    std::map< quantification::models::Electron_Shell, int> shell_list;
     for (auto& s_itr : detector->quantification_standards)
     {
         QScatterSeries* e_series = new QScatterSeries();
@@ -337,29 +311,78 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
             {
                 data_struct::Element_Info<T_real>* element_info = data_struct::Element_Info_Map<T_real>::inst()->get_element(itr.first);
                 quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+                if (shell_list.count(shell) == 0)
+                {
+                    shell_list[shell] = 1;
+                }
                 T_real plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
                 if (element_info != nullptr)
                 {
                     if (false == std::isfinite(plot_val) || plot_val <= 0.0)
                     {
-                        plot_val = 0.000000001;
+                        plot_val = 0.000001;
                     }
-                    e_series->append(((element_info->number - 1.5)), plot_val);
-                    min_y = std::min(min_y, plot_val);
-                    max_y = std::max(max_y, plot_val);
+                    else
+                    {
+                        min_y = std::min(min_y, plot_val);
+                        max_y = std::max(max_y, plot_val);
+                    }
+                    e_series->append(((element_info->number - 0.5)), plot_val);
                 }
             }
         }
-        chart->addSeries(e_series);
-        e_series->attachAxis(axisX);
-        e_series->attachAxis(axisYLog10);
-        //e_series->attachAxis(axisY);
+        scatter_list.push_back(e_series);
     }
 
-    T_real diff = (max_y - min_y ) / 5.0;
-    T_real diff2 = (max_y - min_y) / 100.0;
-    axisYLog10->setRange(min_y - diff2, max_y + diff);
+    bool isfirst = true;
 
+    for (const auto& sitr : shell_list)
+    {
+        const auto& citr = (*curve_quant_map)[sitr.first];
+        QLineSeries* series = new QLineSeries();
+        series->setName(QString::fromStdString(quantification::models::Shell_To_String.at(sitr.first)));
+        for (int i = zstart; i <= zstop; i++)
+        {
+            T_real val = citr[i].calib_curve_val;
+            if (val <= 0)
+            {
+                val = 0.000001;
+            }
+            else
+            {
+                if (sitr.first == Electron_Shell::K_SHELL && i <= 29) //Zn
+                {
+                    min_y = std::min(min_y, val);
+                    max_y = std::max(max_y, val);
+                }
+            }
+            series->append(i, val);
+            series->append(i + 1, val);
+            if (isfirst)
+            {
+                axisX->append(QString::fromStdString(citr[i].name), i + 1);
+            }
+        }
+        chart->addSeries(series);
+        series->attachAxis(axisX);
+        series->attachAxis(axisYLog10);
+
+        isfirst = false;
+    }
+
+    
+    for (auto& itr : scatter_list)
+    {
+        chart->addSeries(itr);
+        itr->attachAxis(axisX);
+        itr->attachAxis(axisYLog10);
+    }
+
+    //T_real diff = abs(max_y - min_y );
+    //chart->zoomIn(QRectF(axisX->min(), max_y, axisX->max() - axisX->min(), diff));
+    //axisYLog10->setRange(min_y - diff, max_y + diff);
+    //axisYLog10->setMin(min_y - diff);
+    //axisYLog10->setMax(max_y + diff);
 
     QPixmap pix = chartView->grab();
     QPainter painter(&pix);
@@ -371,7 +394,6 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
     painter.end();
     pix.save(QString(path.c_str()), "png");
-
 }
 
 // ----------------------------------------------------------------------------
