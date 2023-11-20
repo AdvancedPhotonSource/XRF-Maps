@@ -75,7 +75,7 @@ void help()
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
 //	logit_s<< "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
-               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, locked energy quadratic";
+               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, and fit energy quadratic";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
@@ -542,7 +542,7 @@ int run_optimization(Command_Line_Parser& clp)
         }
         else if (opt == "5")
         {
-            analysis_job.optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS_NO_QUAD;
+            analysis_job.optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS_E_QUAD;
         }
         else
         {
