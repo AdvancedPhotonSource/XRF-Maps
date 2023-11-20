@@ -172,8 +172,8 @@ void fill_user_data(User_Data<T_real> &ud,
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
-        */
         ud.weights = weights.segment(energy_range.min, energy_range.count());
+        */
     }
     else
     {

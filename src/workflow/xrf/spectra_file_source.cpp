@@ -134,7 +134,7 @@ void Spectra_File_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, s
         {
             _analysis_job->init_fit_routines(spectra->size());
 
-            struct data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
+            data_struct::Detector<T_real>* cp = _analysis_job->get_detector(detector_num);
 
             if(cp == nullptr)
             {

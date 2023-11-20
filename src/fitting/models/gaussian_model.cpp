@@ -98,7 +98,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_OFFSET,       (T_real)-0.2,    (T_real)0.2,    (T_real)0.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_SLOPE,        (T_real)0.001,   (T_real)10.0,    (T_real)1.0,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_QUADRATIC,    (T_real)-0.000000001, (T_real)0.00001, (T_real)0.0,    (T_real)0.000000001,   E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_ENERGY_QUADRATIC,    (T_real)-0.000000001, (T_real)0.00001, (T_real)0.0,    (T_real)0.000000001,   E_Bound_Type::FIXED));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_OFFSET,         (T_real)0.005,    (T_real)0.5,  (T_real)0.12,    (T_real)0.00001,   E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_FANOPRIME,      (T_real)0.000001, (T_real)0.05, (T_real)0.00012, (T_real)0.000001,  E_Bound_Type::LIMITED_LO_HI));
@@ -106,14 +106,14 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_ENERGY,	   (T_real)9.4, (T_real)10.4, (T_real)9.99, (T_real)0.001,  E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.00001, E_Bound_Type::FIT));
 
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_ANGLE,		 (T_real)-0.0001, (T_real)0.0001, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)-0.0001, (T_real)0.0001, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_ANGLE,		 (T_real)0.0, (T_real)359.0, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)1.0, (T_real)4.0, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)-0.0001, (T_real)0.0001, (T_real)5.0, (T_real)0.00001,  E_Bound_Type::FIT));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)-0.0001, (T_real)0.0001, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)-0.0001, (T_real)0.4, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL, (T_real)-0.0001, (T_real)0.1, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)-0.0001, (T_real)10., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL, (T_real)0.000001, (T_real)1.0, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)0.1, (T_real)3., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH,			     (T_real)0.1,   (T_real)2.828427, (T_real)0.25, (T_real)0.01,  E_Bound_Type::FIXED)); //max = 2* sqrt(2)
 
@@ -188,7 +188,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
         case Fit_Params_Preset::BATCH_FIT_NO_TAILS: // batch fit without tails
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -226,7 +226,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
         case Fit_Params_Preset::BATCH_FIT_WITH_TAILS: //batch fit with tails
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -264,7 +264,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
         case Fit_Params_Preset::BATCH_FIT_WITH_FREE_ENERGY: // batch fit with free E, everything else fixed
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
@@ -279,6 +279,44 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_STEP_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_GAMMA_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_GAMMA_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+
+            _fit_parameters[STR_KB_F_TAIL_OFFSET].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_LINEAR].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_KB_F_TAIL_QUADRATIC].bound_type = E_Bound_Type::FIXED;
+            break;
+        case Fit_Params_Preset::BATCH_FIT_NO_TAILS_E_QUAD:
+            _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_ENERGY_QUADRATIC].bound_type = E_Bound_Type::LIMITED_LO_HI;
+
+            _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
+
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+
+            _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;

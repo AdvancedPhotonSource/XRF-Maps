@@ -92,7 +92,15 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
     {
-        (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+        try
+        {
+            (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+        }
+        catch (int e)
+        {
+            logI << "Cancel fitting" << std::endl;
+            *userbreak = 1;
+        }
     }
 }
 

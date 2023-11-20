@@ -98,7 +98,15 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
     {
-        (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+        try
+        {
+            (*ud->status_callback)(ud->cur_itr, ud->total_itr);
+        }
+        catch (int e)
+        {
+            logI << "Cancel fitting" << std::endl;
+            return -1;
+        }
     }
 
 	return 0;

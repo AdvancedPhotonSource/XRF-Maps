@@ -145,10 +145,6 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
         {
             std::FILE* fptr = std::fopen(path.c_str(), "rb");
 
-            size_t cols = 1;
-            size_t rows = 1;
-            size_t samples = 1;
-
             if (fptr == nullptr)
             {
                 return false;

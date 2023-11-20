@@ -266,6 +266,8 @@ DLL_EXPORT Range get_energy_range(T_real min_energy, T_real max_energy, size_t s
 {
 
     struct Range energy_range;
+
+    //data_struct::ArrayTr<double> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (double)2.0) * energy_quad);
     energy_range.min = static_cast<size_t>(round((min_energy - energy_offset) / energy_slope));
     energy_range.max = static_cast<size_t>(round((max_energy - energy_offset) / energy_slope));
     //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
