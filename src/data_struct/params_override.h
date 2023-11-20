@@ -138,7 +138,7 @@ public:
 			el_name.erase(std::remove_if(el_name.begin(), el_name.end(), ::isspace), el_name.end());
 
 
-			for (unsigned int i = 0; i < amt; i++)
+			for (int i = 0; i < amt; i++)
 			{
 				T_real factor = 1.0;
 				std::getline(f, s, ',');

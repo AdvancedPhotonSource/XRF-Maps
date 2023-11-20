@@ -116,7 +116,7 @@ void Spectra_Net_Source<T_real>::run()
                 {
                     stream_block = _serializer.decode_spectra((char*)message.data(), message.size());
                     _analysis_job->init_fit_routines(stream_block->spectra->size());
-                    struct data_struct::Detector<T_real>* cp = _analysis_job->get_detector(stream_block->detector_number());
+                    data_struct::Detector<T_real>* cp = _analysis_job->get_detector(stream_block->detector_number());
 
                     if(cp == nullptr)
                     {

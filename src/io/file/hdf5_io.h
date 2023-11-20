@@ -91,7 +91,7 @@ using ROI_Vec = std::vector<std::pair<int, int>>;
 template<typename T_real>
 int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::string lookup_str)
 {
-    int find_idx = lookup_str.find(start_delim);
+    int find_idx = (int)lookup_str.find(start_delim);
     if (find_idx < 0)
     {
         logW << "Could not find string property start delimeter " << start_delim << "\n";
@@ -1203,13 +1203,13 @@ public:
         logI << path << " detector : " << detector_num << "\n";
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id;
-        hid_t dset_lt_id, dset_rt_id, dset_outcnt_id;
-        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_outcnt_id;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id = -1;
+        hid_t dset_lt_id, dset_rt_id, dset_outcnt_id = -1;
+        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_outcnt_id = -1;
       
-        herr_t   error;
+        herr_t   error = -1;
         std::string detector_path;
-        T_real* buffer;
+        T_real* buffer = nullptr;
         hsize_t offset_row[3] = { 0,0,0 };
         hsize_t count_row[3] = { 0,0,0 };
         hsize_t offset_meta[1] = { 0 };
@@ -1440,10 +1440,10 @@ public:
                 logI << path << " detector : " << detector_num << "\n";
             }
         }
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id, memoryspace_id2;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id, memoryspace_id2 = -1;
         //hid_t    dset_xpos_id, dset_ypos_id, dataspace_xpos_id, dataspace_ypos_id;
-        hid_t    dataspace_detectors_id;
-        hid_t    attr_detector_names_id, attr_timebase_id;
+        hid_t    dataspace_detectors_id = -1;
+        hid_t    attr_detector_names_id, attr_timebase_id = -1;
         hid_t   elt_id = -1;
         hid_t   incnt_id = -1;
         hid_t   outcnt_id = -1;
@@ -2293,14 +2293,13 @@ public:
             logI << path << " detector : " << detector_num << "\n";
         }
         hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id;
-        hid_t    dset_xypos_id, dataspace_xypos_id;
-        hid_t	 livetime_id, realtime_id, inpcounts_id, outcounts_id;
-        hid_t    livetime_dataspace_id, realtime_dataspace_id, inpcounts_dataspace_id, outcounts_dataspace_id;
+        hid_t    dataspace_xypos_id;
+        hid_t	 outcounts_id;
+        hid_t    outcounts_dataspace_id;
         herr_t   error;
         std::string detector_path;
         char* detector_names[256];
         T_real time_base = 1.0f;
-        T_real el_time = 1.0f;
         T_real* buffer;
         hsize_t offset_row[2] = { 0,0 };
         hsize_t count_row[2] = { 0,0 };
@@ -2440,7 +2439,6 @@ public:
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
         T_real live_time = 1.0;
-        T_real real_time = 1.0;
         T_real in_cnt = 1.0;
         T_real out_cnt = 1.0;
 
@@ -3887,13 +3885,9 @@ public:
 
         logI << path << "\n";
 
-        hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
+        hid_t status;
         hid_t    file_id, src_maps_grp_id;
-        hid_t    dataspace_detectors_id, dset_detectors_id;
-        hid_t   xypos_dataspace_id, xypos_id;
-        hid_t x_dataspace_id, y_dataspace_id, x_dataset_id, y_dataset_id;
-        char* detector_names[256];
-        int det_rank;
+
         hsize_t* det_dims_in = nullptr;
         hsize_t* val_dims_in = nullptr;;
         hsize_t scaler_offset[3] = { 0,0,0 };
@@ -5021,7 +5015,7 @@ public:
         hsize_t count_3d[3] = { 1, 1, 1 };
         hsize_t chunk_dims[3];
         hsize_t tmp_dims[3];
-
+        
         //fix this
         for (const auto& iter : *element_counts)
         {
@@ -7411,11 +7405,9 @@ private:
     {
 
         hid_t dataspace_id = -1, memoryspace_id = -1;
-        herr_t status;
-        hid_t filetype, memtype;
+        herr_t status = -1;
+        hid_t filetype, memtype = -1;
         hid_t dset_id = -1;
-
-        hsize_t offset[1] = { 0 };
         hsize_t count[1] = { 1 };
 
         try
@@ -7530,8 +7522,8 @@ private:
     {
 
         hid_t dataspace_values_id = -1, memoryspace_id = -1, dataspace_names_id = -1, memoryspace_str_id = -1;
-        hid_t dataspace_units_id;
-        hid_t filetype, memtype;
+        hid_t dataspace_units_id = -1;
+        hid_t filetype, memtype = -1;
         hid_t dset_names_id = -1;
         hid_t dset_units_id = -1;
         hid_t dset_values_id = -1;
@@ -7548,9 +7540,6 @@ private:
         hsize_t count_3d[3] = { 1, 1, 1 };
 
         T_real time_scaler_clock = 1.0;
-
-        bool single_row_scan = false;
-
 
         _create_memory_space(1, count, memoryspace_str_id);
 

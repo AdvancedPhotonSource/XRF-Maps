@@ -75,7 +75,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
     Quantification_Scaler_Struct(unsigned int max_z= CALIBRATION_CURVE_SIZE)
     {
         std::vector<Element_Quant<T_real>> e_quants;
-        for (int i = 0; i < max_z; i++)
+        for (unsigned int i = 0; i < max_z; i++)
         {
             e_quants.emplace_back(Element_Quant<T_real>(i + 1));
         }

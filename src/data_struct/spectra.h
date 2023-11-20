@@ -74,8 +74,8 @@ public:
      */
     Spectra() : ArrayTr<_T>()
 	{
-        _elapsed_livetime = default_time_and_io_counts;
-		_elapsed_realtime = default_time_and_io_counts;
+        _elapsed_livetime = (_T)default_time_and_io_counts;
+		_elapsed_realtime = (_T)default_time_and_io_counts;
 		_input_counts = 0.0;
 		_output_counts = 0.0;
 	}
@@ -91,8 +91,8 @@ public:
     Spectra(size_t sample_size) : ArrayTr<_T>(sample_size)
 	{
 		this->setZero();
-        _elapsed_livetime = default_time_and_io_counts;
-		_elapsed_realtime = default_time_and_io_counts;
+        _elapsed_livetime = (_T)default_time_and_io_counts;
+		_elapsed_realtime = (_T)default_time_and_io_counts;
 		_input_counts = 0.0;
 		_output_counts = 0.0;
 	}
@@ -108,8 +108,8 @@ public:
 
     Spectra(const ArrayTr<_T>& arr) : ArrayTr<_T>(arr)
     {
-        _elapsed_livetime = default_time_and_io_counts;
-        _elapsed_realtime = default_time_and_io_counts;
+        _elapsed_livetime = (_T)default_time_and_io_counts;
+        _elapsed_realtime = (_T)default_time_and_io_counts;
         _input_counts = 0.0;
         _output_counts = 0.0;
     }
@@ -124,8 +124,8 @@ public:
 
     Spectra(const ArrayTr<_T>&& arr) : ArrayTr<_T>(arr)
     {
-        _elapsed_livetime = default_time_and_io_counts;
-        _elapsed_realtime = default_time_and_io_counts;
+        _elapsed_livetime = (_T)default_time_and_io_counts;
+        _elapsed_realtime = (_T)default_time_and_io_counts;
         _input_counts = 0.0;
         _output_counts = 0.0;
     }
@@ -140,8 +140,8 @@ public:
 
     Spectra(Eigen::Index& rows, Eigen::Index& cols) : ArrayTr<_T>(rows, cols)
 	{
-        _elapsed_livetime = default_time_and_io_counts;
-        _elapsed_realtime = default_time_and_io_counts;
+        _elapsed_livetime = (_T)default_time_and_io_counts;
+        _elapsed_realtime = (_T)default_time_and_io_counts;
         _input_counts = 0.0;
         _output_counts = 0.0;
 	}

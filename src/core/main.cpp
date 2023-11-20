@@ -136,7 +136,7 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
 
     if (fx_exists || fxg_exists)
     {
-        T_real fxg_tol; 
+        T_real fxg_tol = 0.00000000000000001; 
         if (std::is_same<T_real, float>::value)
         {
             if (fxg_exists)
