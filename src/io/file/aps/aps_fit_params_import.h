@@ -745,6 +745,13 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
         }
         params_override->parse_and_gen_branching_ratios();
 
+        if (params_override->si_escape_enabled)
+        {
+            if (params_override->fit_params.contains(STR_SI_ESCAPE))
+            {
+                params_override->fit_params.at(STR_SI_ESCAPE).bound_type = E_Bound_Type::LIMITED_LO_HI;
+            }
+        }
         paramFileStream.close();
         return true;
     }

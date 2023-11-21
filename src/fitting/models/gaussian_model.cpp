@@ -133,7 +133,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_LINEAR,		 (T_real)0.0, (T_real)0.02, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.2, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
     return fit_params;
 
