@@ -110,7 +110,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)1.0, (T_real)4.0, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)-0.0001, (T_real)0.0001, (T_real)5.0, (T_real)0.00001,  E_Bound_Type::FIT));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL, (T_real)0.000001, (T_real)1.0, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)0.1, (T_real)3., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
@@ -133,7 +133,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_LINEAR,		 (T_real)0.0, (T_real)0.02, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
-    fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.0, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.2, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
     return fit_params;
 
