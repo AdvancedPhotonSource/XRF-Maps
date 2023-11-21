@@ -749,7 +749,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
         {
             if (params_override->fit_params.contains(STR_SI_ESCAPE))
             {
-                params_override->fit_params.at(STR_SI_ESCAPE).bound_type = E_Bound_Type::LIMITED_LO_HI;
+                params_override->fit_params[STR_SI_ESCAPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             }
         }
         paramFileStream.close();
