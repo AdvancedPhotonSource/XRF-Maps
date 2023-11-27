@@ -94,6 +94,8 @@ public:
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt);
 
+    virtual std::string detailed_outcome(int outcome);
+
 private:
 
     struct lm_control_struct<T_real> _options;

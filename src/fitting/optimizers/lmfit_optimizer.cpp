@@ -175,6 +175,7 @@ void quantification_residuals_lmfit( const T_real *par, int m_dat, const void *d
 template<typename T_real>
 LMFit_Optimizer<T_real>::LMFit_Optimizer() : Optimizer<T_real>()
 {
+    _last_outcome = -1;
 
     if (std::is_same<T_real, float>::value)
     {
@@ -332,7 +333,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     /* perform the fit */
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &_options, &status );
     logI<< "Outcome: "<<lm_infmsg[status.outcome]<<"\nNum iter: "<<status.nfev<<"\n Norm of the residue vector: "<<status.fnorm<<"\n";
-
+    _last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR) )
@@ -442,7 +443,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     lm_status_struct<T_real> status;
     lmmin( fitp_arr.size(), &fitp_arr[0], quant_map->size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
     logI << "\nOutcome: " << lm_infmsg[status.outcome] << "\nNum iter: " << status.nfev << "\nNorm of the residue vector: " << status.fnorm << "\n";
-
+    _last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR))
@@ -477,6 +478,18 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         return this->_outcome_map[status.outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+std::string LMFit_Optimizer<T_real>::detailed_outcome(int outcome)
+{
+    if (outcome > -1 && outcome < 13)
+    {
+        return  lm_infmsg[outcome];
+    }
+    return "Unknown";
 }
 
 // ----------------------------------------------------------------------------

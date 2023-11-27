@@ -186,6 +186,9 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
 template<typename T_real>
 MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 {
+
+    _last_outcome = -1;
+
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
     if (std::is_same<T_real, float>::value)
     {
@@ -352,7 +355,7 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 				break;
 			}
 
-			par[fit.opt_array_index].step = 0;      // 0 = auto ,Step size for finite difference
+			par[fit.opt_array_index].step = fit.step_size;      // 0 = auto ,Step size for finite difference
 			par[fit.opt_array_index].parname = 0;
 			par[fit.opt_array_index].relstep = 0;   // Relative step size for finite difference
 			par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative
@@ -382,40 +385,30 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void MPFit_Optimizer<T_real>::_print_info(int info)
+std::string MPFit_Optimizer<T_real>::detailed_outcome(int info)
 {
 	switch (info)
 	{
 	case 0:
-		logI << "> Improper input parameters." << "\n";
-		break;
+		return "Improper input parameters.";
 	case 1:
-		logI << "> Both actual and predicted relative reductions in the sum of squares are at most ftol. " << "\n";
-		break;
+        return "Both actual and predicted relative reductions in the sum of squares are at most ftol. ";
 	case 2:
-		logI << "> Relative error between two consecutive iterates is at most xtol" << "\n";
-		break;
+        return "Relative error between two consecutive iterates is at most xtol.";
 	case 3:
-		logI << "> Conditions for info = 1 and info = 2 both hold. " << "\n";
-		break;
+        return "Conditions for info = 1 and info = 2 both hold.";
 	case 4:
-		logI << "> The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value." << "\n";
-		break;
+        return "The cosine of the angle between fvec and any column of the jacobian is at most gtol in absolute value.";
 	case 5:
-		logI << "> Number of calls to fcn has reached or exceeded maxfev." << "\n";
-		break;
+        return "Number of calls to fcn has reached or exceeded maxfev.";
 	case 6:
-		logI << "> Ftol is too small. no further reduction in the sum of squares is possible." << "\n";
-		break;
+        return "Ftol is too small. no further reduction in the sum of squares is possible.";	
 	case 7:
-		logI << "> Xtol is too small. no further improvement in the approximate solution x is possible." << "\n";
-		break;
+        return "Xtol is too small. no further improvement in the approximate solution x is possible.";
 	case 8:
-		logI << "> Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision." << "\n";
-		break;
+        return "Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision.";
 	default:
-		logI << "!> Unknown info status" << "\n";
-		break;
+        return "Unknown info status";
 	}
 }
 
@@ -441,7 +434,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     size_t total_itr = num_itr * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
 
-    int info;
     /*
     /////// init config ////////////
     struct mp_config<T_real> config;
@@ -485,9 +477,9 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     result.resid = &resid[0];
     result.covar = &covar[0];
 
-    info = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    _last_outcome = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
-	_print_info(info);
+	logI<< detailed_outcome(_last_outcome);
 
     fit_params->from_array(fitp_arr);
 
@@ -565,8 +557,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     }
     fit_params->append_and_update(error_params);
 
-    if (this->_outcome_map.count(info) > 0)
-        return this->_outcome_map[info];
+    if (this->_outcome_map.count(_last_outcome) > 0)
+        return this->_outcome_map[_last_outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
@@ -728,7 +720,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     std::vector<T_real> perror(fitp_arr.size());
     std::vector<T_real> resid(quant_map->size());
 
-    int info;
     /*
     /////// init config ////////////
     struct mp_config<T_real> mp_config;
@@ -773,10 +764,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    info = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
-    logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[info]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
+    _last_outcome = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
-	_print_info(info);
+    logI << detailed_outcome(_last_outcome);
 
     fit_params->from_array(fitp_arr);
 
@@ -831,8 +822,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
 
-    if (this->_outcome_map.count(info) > 0)
-        return this->_outcome_map[info];
+    if (this->_outcome_map.count(_last_outcome) > 0)
+        return this->_outcome_map[_last_outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 

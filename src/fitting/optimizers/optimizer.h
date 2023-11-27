@@ -302,8 +302,15 @@ public:
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt) = 0;
 
+    virtual std::string detailed_outcome(int outcome) = 0;
+
+    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome);}
+
 protected:
+
     std::map<int, OPTIMIZER_OUTCOME> _outcome_map;
+
+    int _last_outcome;
 
 };
 
