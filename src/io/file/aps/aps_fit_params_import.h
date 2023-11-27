@@ -1050,7 +1050,7 @@ DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_
         }
         else if (pos < 3)
         {
-            if (itr->second.name.find("F_") == 0 || itr->second.name.find("KB_F_") == 0)
+            if (itr->second.name.find("F_") == 0 || itr->second.name.find("KB_F_") == 0 || itr->second.name.find(STR_SI_ESCAPE) == 0)
             {
                 sorted_params[itr->second.name] = itr->second.value;
             }
