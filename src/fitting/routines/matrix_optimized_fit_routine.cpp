@@ -92,31 +92,6 @@ void Matrix_Optimized_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<T
             (*spectra_model) += (pow((T_real)10.0, param.value) * itr.second);
         }
     }
-
-/*
-    if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
-    {
-        ev = this->add_matrixfit_pars[keywords.energy_pos[0]] + energy * this->add_matrixfit_pars[keywords.energy_pos[1]] + (energy)**2 * this->add_matrixfit_pars[keywords.energy_pos[2]];
-        counts_escape = counts.copy();
-        counts_escape[:] = 0.0;
-        if (this->add_matrixfit_pars[3] > 0.0)
-        {
-            T_real escape_E = 1.73998;
-            wo = np.where(ev > escape_E+ev[0]);
-
-            escape_factor = np.abs(p[len(p)-3] + p[len(p)-1] * ev);
-            if (len(wo[0]) > 0)
-            {
-                for (size_t ii=0; ii<(len(wo[0]); ii++)
-                {
-                    counts_escape[ii] = counts[wo[0][ii]]*np.amax(np.append(escape_factor[wo[0][ii]],0.0));
-                }
-            }
-            counts = counts + counts_escape;
-        }
-    }
-*/
-
 }
 
 // ----------------------------------------------------------------------------
@@ -128,11 +103,6 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
 {
     // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
     std::unordered_map<std::string, Spectra<T_real>> element_spectra;
-
-    //n_pileup = 9
-    //valarray<T_real> value(0.0, energy_range.count());
-    //T_real start_val = (T_real)0.0;
-    //Spectra counts(energy_range.count());
 
     Fit_Parameters<T_real> fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
@@ -183,23 +153,6 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
     ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::FIT;
 
-    /*
-    //int this_i = i + 2;
-        i = np.amax(keywords.mele_pos)-np.amin(keywords.kele_pos)+1+ii;
-        if (add_pars[i, j].energy <= 0.0)
-        {
-            continue;
-        }
-        delta_energy = ev.copy() - (add_pars[i, j].energy);
-        faktor = add_pars[i, j].ratio;
-        counts = faktor * this->model_gauss_peak(fit_parameters.at(STR_ENERGY_SLOPE).value, sigma[i, j], delta_energy);
-
-        //fitmatrix[:, this_i+ii] = fitmatrix[:, this_i+ii]+counts[:];
-        fitmatrix.row(this_i + ii) = fitmatrix.row(this_i + ii) + counts;
-        counts = 0.0;
-    }
-    */
-    //return fitmatrix;
     return element_spectra;
 
 }
