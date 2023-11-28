@@ -84,6 +84,11 @@ public:
                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range);
 
+    void initialize_mp(models::Base_Model<T_real>* const model,
+                        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                        const struct Range energy_range);
+
+
     virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
                         const struct Range * const energy_range,
 					    Spectra<T_real>* spectra_model);
@@ -103,6 +108,11 @@ protected:
     std::unordered_map<std::string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>* const model,
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                             struct Range energy_range);
+
+    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models_mp(models::Base_Model<T_real>* const model,
+        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+        struct Range energy_range);
+
 
 	data_struct::Spectra<T_real> _integrated_fitted_spectra;
     data_struct::Spectra<T_real> _integrated_background;

@@ -89,6 +89,10 @@ public:
                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range);
 
+    void initialize_mp(models::Base_Model<T_real>* const model,
+                        const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                        const struct Range energy_range);
+
 protected:
 
     void _generate_fitmatrix();

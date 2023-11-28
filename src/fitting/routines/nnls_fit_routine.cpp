@@ -274,6 +274,16 @@ void NNLS_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const mode
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
+void NNLS_Fit_Routine<T_real>::initialize_mp(models::Base_Model<T_real>* const model,
+    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+    const struct Range energy_range)
+{
+    Matrix_Optimized_Fit_Routine<T_real>::initialize_mp(model, elements_to_fit, energy_range);
+    _generate_fitmatrix();
+}
+// ----------------------------------------------------------------------------
+
 TEMPLATE_CLASS_DLL_EXPORT NNLS_Fit_Routine<float>;
 TEMPLATE_CLASS_DLL_EXPORT NNLS_Fit_Routine<double>;
 
