@@ -306,6 +306,16 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     visual::SavePlotSpectrasFromConsole(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
 #endif
 
+    for (const auto& eitr : *elements_to_fit)
+    {
+        if (fit_params->contains(eitr.first))
+        {
+            double val = (*fit_params)[eitr.first].value;
+            val = pow(10.0, val);
+            (*fit_params)[eitr.first].value = val;
+        }
+    }
+
     io::file::csv::save_fit_and_int_spectra(full_path, &ev, &snip_spectra, &model_spectra, &background, &labeled_spectras);
     io::file::aps::save_fit_parameters_override(fp_full_path, *fit_params, result);
     std::unordered_map<std::string, double> scaler_map;
