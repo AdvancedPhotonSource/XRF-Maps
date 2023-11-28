@@ -392,7 +392,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
     lm_status_struct<T_real> status;
 
     lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
-
+    _last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
 
     if (fit_params->contains(STR_NUM_ITR) )

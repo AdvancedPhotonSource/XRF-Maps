@@ -622,6 +622,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     result.resid = &resid[0];
 
     info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
+    
+    _last_outcome = info;
 
     fit_params->from_array(fitp_arr);
 
