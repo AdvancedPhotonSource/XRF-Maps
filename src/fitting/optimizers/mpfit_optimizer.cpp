@@ -187,7 +187,7 @@ template<typename T_real>
 MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
 {
 
-    _last_outcome = -1;
+    this->_last_outcome = -1;
 
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
     if (std::is_same<T_real, float>::value)
@@ -304,13 +304,16 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 
 			if (fit.value > fit.max_val)
 			{
-				fit.max_val = fit.value + (T_real)1.0;
-				(*fit_params)[itr->first].max_val = fit.value + (T_real)1.0;
+                logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
+                fit.value = fit.max_val;
+				(*fit_params)[itr->first].value = fit.max_val;
+
 			}
 			if (fit.value < fit.min_val)
 			{
-				fit.min_val = fit.value - (T_real)1.0;
-				(*fit_params)[itr->first].min_val = fit.value - (T_real)1.0;
+                logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
+                fit.value = fit.min_val;
+				(*fit_params)[itr->first].value = fit.min_val;
 			}
 			if (fit.bound_type == E_Bound_Type::LIMITED_HI
 				|| fit.bound_type == E_Bound_Type::LIMITED_LO
@@ -477,9 +480,9 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     result.resid = &resid[0];
     result.covar = &covar[0];
 
-    _last_outcome = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    this->_last_outcome = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
-	logI<< detailed_outcome(_last_outcome);
+	logI<< detailed_outcome(this->_last_outcome);
 
     fit_params->from_array(fitp_arr);
 
@@ -557,8 +560,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     }
     fit_params->append_and_update(error_params);
 
-    if (this->_outcome_map.count(_last_outcome) > 0)
-        return this->_outcome_map[_last_outcome];
+    if (this->_outcome_map.count(this->_last_outcome) > 0)
+        return this->_outcome_map[this->_last_outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
@@ -623,7 +626,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
     info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
     
-    _last_outcome = info;
+    this->_last_outcome = info;
 
     fit_params->from_array(fitp_arr);
 
@@ -766,10 +769,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    _last_outcome = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
-    logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
+    this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[this->_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
-    logI << detailed_outcome(_last_outcome);
+    logI << detailed_outcome(this->_last_outcome);
 
     fit_params->from_array(fitp_arr);
 
@@ -824,8 +827,8 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
 
-    if (this->_outcome_map.count(_last_outcome) > 0)
-        return this->_outcome_map[_last_outcome];
+    if (this->_outcome_map.count(this->_last_outcome) > 0)
+        return this->_outcome_map[this->_last_outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
 
