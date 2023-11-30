@@ -192,17 +192,17 @@ MPFit_Optimizer<T_real>::MPFit_Optimizer() : Optimizer<T_real>()
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
     if (std::is_same<T_real, float>::value)
     {
-        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-        _options.epsfcn = FP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+        _options.ftol = (T_real)1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = (T_real)1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = (T_real)1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = (T_real)FP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     }
     else if (std::is_same<T_real, double>::value)
     {
-        _options.ftol = 1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-        _options.xtol = 1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-        _options.gtol = 1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-        _options.epsfcn = DP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
+        _options.ftol = (T_real)1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
+        _options.xtol = (T_real)1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
+        _options.gtol = (T_real)1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
+        _options.epsfcn = (T_real)DP_MP_MACHEP0;  // Finite derivative step size                Default: MP_MACHEP0
     }
     _options.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
     _options.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
@@ -475,7 +475,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 	_fill_limits(fit_params, par);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
     result.covar = &covar[0];
@@ -620,7 +619,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 	_fill_limits(fit_params, par);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
@@ -723,7 +721,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
     std::vector<T_real> perror(fitp_arr.size());
-    std::vector<T_real> resid(quant_map->size());
+    std::vector<T_real> resid(ud.quant_map.size());
 
     /*
     /////// init config ////////////
@@ -758,7 +756,6 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 //    struct mp_par<T_real> *mp_par = nullptr;
@@ -769,7 +766,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, quant_map->size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, ud.quant_map.size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
     logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[this->_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
     logI << detailed_outcome(this->_last_outcome);

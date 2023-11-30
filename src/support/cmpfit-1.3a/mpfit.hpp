@@ -122,6 +122,22 @@ struct mp_config
 template <typename _T>
 struct mp_result
 {
+    mp_result()
+    {
+        bestnorm = (_T)0.;
+        orignorm = (_T)0.;
+        niter = 0;
+        nfev = 0;
+        status = 0;
+        npar = 0;
+        nfree = 0;
+        npegged = 0;
+        nfunc = 0;
+        resid = nullptr;;
+        xerror = nullptr;            
+        covar = nullptr;
+    }
+
   _T bestnorm;     /* Final chi^2 */
   _T orignorm;     /* Starting value of chi^2 */
   int niter;           /* Number of iterations */
@@ -434,11 +450,11 @@ int mp_fdjac2(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *pri
   _T MP_MACHEP0;
   if (std::is_same<_T, float>::value)
   {
-      MP_MACHEP0 = FP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)FP_MP_MACHEP0;
   }
   else if (std::is_same<_T, double>::value)
   {
-      MP_MACHEP0 = DP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)DP_MP_MACHEP0;
   }
 
   temp = std::max<_T>(epsfcn,MP_MACHEP0);
@@ -681,11 +697,11 @@ void mp_qrfac(int m, int n, _T *a, int lda,
   _T MP_MACHEP0;
   if (std::is_same<_T, float>::value)
   {
-      MP_MACHEP0 = FP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)FP_MP_MACHEP0;
   }
   else if (std::is_same<_T, double>::value)
   {
-      MP_MACHEP0 = DP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)DP_MP_MACHEP0;
   }
 
   lda = 0;      /* Prevent compiler warning */
@@ -1147,11 +1163,11 @@ void mp_lmpar(int n, _T *r, int ldr, int *ipvt, int *ifree, _T *diag,
   _T MP_DWARF;
   if (std::is_same<_T, float>::value)
   {
-      MP_DWARF = FP_MP_DWARF;
+      MP_DWARF = (_T)FP_MP_DWARF;
   }
   else if (std::is_same<_T, double>::value)
   {
-      MP_DWARF = DP_MP_DWARF;
+      MP_DWARF = (_T)DP_MP_DWARF;
   }
 
   /*
@@ -1747,11 +1763,11 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   _T MP_MACHEP0;
   if (std::is_same<_T, float>::value)
   {
-      MP_MACHEP0 = FP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)FP_MP_MACHEP0;
   }
   else if (std::is_same<_T, double>::value)
   {
-      MP_MACHEP0 = DP_MP_MACHEP0;
+      MP_MACHEP0 = (_T)DP_MP_MACHEP0;
   }
 
   int ij,jj,l;
@@ -1781,16 +1797,16 @@ int mpfit(int (*mp_func)(int m, int n, _T *x, _T *fvec, _T **dvec, void *private
   int ldfjac;
 
   /* Default configuration */
-  conf.ftol = 1e-10;
-  conf.xtol = 1e-10;
-  conf.gtol = 1e-10;
-  conf.stepfactor = 100.0;
+  conf.ftol = (_T)1e-10;
+  conf.xtol = (_T)1e-10;
+  conf.gtol = (_T)1e-10;
+  conf.stepfactor = (_T)100.0;
   conf.nprint = 1;
-  conf.epsfcn = MP_MACHEP0;
+  conf.epsfcn = (_T)MP_MACHEP0;
   conf.maxiter = 200;
   conf.douserscale = 0;
   conf.maxfev = 0;
-  conf.covtol = 1e-14;
+  conf.covtol = (_T)1e-14;
   conf.nofinitecheck = 0;
 
   if (config) {

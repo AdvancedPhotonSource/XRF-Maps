@@ -83,7 +83,7 @@ public:
     /**
      * @brief ~Base_Model : Destructor
      */
-    ~Base_Model() {}
+    virtual ~Base_Model() {}
 
     /**
      * @brief fit_parameters : returns Fit_Parameters class of the required fit parameters to run a fitting

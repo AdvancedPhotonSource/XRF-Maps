@@ -790,21 +790,21 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     _T LM_MACHEP;
     if (std::is_same<_T, float>::value)
     {
-        LM_DWARF = FP_LM_DWARF;
-        LM_MACHEP = FP_LM_MACHEP;
+        LM_DWARF = (_T)FP_LM_DWARF;
+        LM_MACHEP = (_T)FP_LM_MACHEP;
     }
     else if (std::is_same<_T, double>::value)
     {
-        LM_DWARF = DP_LM_DWARF;
-        LM_MACHEP = DP_LM_MACHEP;
+        LM_DWARF = (_T)DP_LM_DWARF;
+        LM_MACHEP = (_T)DP_LM_MACHEP;
     }
 
     int maxfev = C->patience * (n+1);
 
     int inner_success; /* flag for loop control */
-    _T lmpar = 0;  /* Levenberg-Marquardt parameter */
-    _T delta = 0;
-    _T xnorm = 0;
+    _T lmpar = (_T)0.;  /* Levenberg-Marquardt parameter */
+    _T delta = (_T)0.;
+    _T xnorm = (_T)0.;
     _T eps = sqrt(MAX(C->epsilon, LM_MACHEP)); /* for forward differences */
 
     int nout = C->n_maxpri == -1 ? n : MIN(C->n_maxpri, n);
