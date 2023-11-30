@@ -430,6 +430,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     size_t num_itr = _options.maxiter;
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
+    if (fitp_arr.size() == 0)
+    {
+        return OPTIMIZER_OUTCOME::STOPPED;
+    }
     std::vector<T_real> perror(fitp_arr.size());
     std::vector<T_real> resid(energy_range.count());
     std::vector<T_real> covar(fitp_arr.size() * fitp_arr.size());
@@ -579,6 +583,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func, use_weights);
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
+    if (fitp_arr.size() == 0)
+    {
+        return OPTIMIZER_OUTCOME::STOPPED;
+    }
     std::vector<T_real> perror(fitp_arr.size());
     std::vector<T_real> resid(energy_range.count());
 
@@ -720,6 +728,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     ud.fit_parameters = fit_params;
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
+    if (fitp_arr.size() == 0)
+    {
+        return OPTIMIZER_OUTCOME::STOPPED;
+    }
     std::vector<T_real> perror(fitp_arr.size());
     std::vector<T_real> resid(ud.quant_map.size());
 
