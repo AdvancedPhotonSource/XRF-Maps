@@ -475,7 +475,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 	_fill_limits(fit_params, par);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(result));
+    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
     result.covar = &covar[0];
@@ -620,7 +620,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 	_fill_limits(fit_params, par);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(result));
+    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
@@ -758,7 +758,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
 
     mp_result<T_real> result;
-    memset(&result,0,sizeof(result));
+    memset(&result,0,sizeof(mp_result<T_real>));
     result.xerror = &perror[0];
     result.resid = &resid[0];
 //    struct mp_par<T_real> *mp_par = nullptr;
