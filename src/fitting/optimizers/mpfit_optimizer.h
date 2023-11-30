@@ -66,7 +66,7 @@ class DLL_EXPORT MPFit_Optimizer: public Optimizer<T_real>
 public:
     MPFit_Optimizer();
 
-    ~MPFit_Optimizer() {}
+    virtual ~MPFit_Optimizer() {}
 
     virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real>*fit_params,
                                         const Spectra<T_real>* const spectra,

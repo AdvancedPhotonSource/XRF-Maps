@@ -96,7 +96,7 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
         {
             (*ud->status_callback)(ud->cur_itr, ud->total_itr);
         }
-        catch (int e)
+        catch (...)
         {
             logI << "Cancel fitting" << std::endl;
             *userbreak = 1;
@@ -331,7 +331,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     //control.verbosity = 3;
 
     /* perform the fit */
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, residuals_lmfit, &_options, &status );
+    lmmin( (int)fitp_arr.size(), &fitp_arr[0], (int)energy_range.count(), (const void*) &ud, residuals_lmfit, &_options, &status );
     logI<< "Outcome: "<<lm_infmsg[status.outcome]<<"\nNum iter: "<<status.nfev<<"\n Norm of the residue vector: "<<status.fnorm<<"\n";
     this->_last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
@@ -391,7 +391,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
 
     lm_status_struct<T_real> status;
 
-    lmmin( fitp_arr.size(), &fitp_arr[0], energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
+    lmmin((int)fitp_arr.size(), &fitp_arr[0], (int)energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
     this->_last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
 
@@ -441,7 +441,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     std::vector<T_real> perror(fitp_arr.size());
 
     lm_status_struct<T_real> status;
-    lmmin( fitp_arr.size(), &fitp_arr[0], ud.quant_map.size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
+    lmmin((int)fitp_arr.size(), &fitp_arr[0], (int)ud.quant_map.size(), (const void*) &ud, quantification_residuals_lmfit, &_options, &status );
     logI << "\nOutcome: " << lm_infmsg[status.outcome] << "\nNum iter: " << status.nfev << "\nNorm of the residue vector: " << status.fnorm << "\n";
     this->_last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);

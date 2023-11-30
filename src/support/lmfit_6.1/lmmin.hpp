@@ -400,11 +400,11 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     _T LM_DWARF;
     if (std::is_same<_T, float>::value)
     {
-        LM_DWARF = FP_LM_DWARF;
+        LM_DWARF = (_T)FP_LM_DWARF;
     }
     else if (std::is_same<_T, double>::value)
     {
-        LM_DWARF = DP_LM_DWARF;
+        LM_DWARF = (_T)DP_LM_DWARF;
     }
 
     /*** Compute and store in x the Gauss-Newton direction. If the Jacobian

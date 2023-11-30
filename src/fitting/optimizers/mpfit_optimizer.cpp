@@ -470,7 +470,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
 
-    _options.maxfev = _options.maxiter * (fitp_arr.size() + 1);
+    _options.maxfev = _options.maxiter * ((int)fitp_arr.size() + 1);
 
 	_fill_limits(fit_params, par);
 
@@ -479,14 +479,14 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     result.resid = &resid[0];
     result.covar = &covar[0];
 
-    this->_last_outcome = mpfit(residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    this->_last_outcome = mpfit(residuals_mpfit<T_real>, (int)energy_range.count(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
 	logI<< detailed_outcome(this->_last_outcome);
 
     fit_params->from_array(fitp_arr);
 
     T_real sum_resid = 0.0;
-    for (int i = 0; i < energy_range.count(); i++)
+    for (size_t i = 0; i < energy_range.count(); i++)
     {
         sum_resid += resid[i];
     }
@@ -622,14 +622,14 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     result.xerror = &perror[0];
     result.resid = &resid[0];
 
-    info = mpfit(gen_residuals_mpfit<T_real>, energy_range.count(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
+    info = mpfit(gen_residuals_mpfit<T_real>, (int)energy_range.count(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void*)&ud, &result);
     
     this->_last_outcome = info;
 
     fit_params->from_array(fitp_arr);
 
     T_real sum_resid = 0.0;
-    for (int i = 0; i < energy_range.count(); i++)
+    for (size_t i = 0; i < energy_range.count(); i++)
     {
         sum_resid += resid[i];
     }
@@ -766,7 +766,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	par.resize(fitp_arr.size());
 	_fill_limits(fit_params, par);
 
-    this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, ud.quant_map.size(), fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
+    this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, (int)ud.quant_map.size(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
     logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[this->_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
     logI << detailed_outcome(this->_last_outcome);
@@ -774,7 +774,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     fit_params->from_array(fitp_arr);
 
     T_real sum_resid = 0.0;
-    for (int i = 0; i < quant_map->size(); i++)
+    for (size_t i = 0; i < quant_map->size(); i++)
     {
         sum_resid += resid[i];
     }

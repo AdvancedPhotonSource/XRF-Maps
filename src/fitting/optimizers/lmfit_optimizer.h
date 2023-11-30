@@ -69,7 +69,7 @@ class DLL_EXPORT LMFit_Optimizer: public Optimizer<T_real>
 public:
     LMFit_Optimizer();
 
-    ~LMFit_Optimizer() {}
+    virtual ~LMFit_Optimizer() {}
 
     virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real>*fit_params,
                                       const Spectra<T_real>* const spectra,
