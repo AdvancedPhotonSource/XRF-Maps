@@ -47,6 +47,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "matrix_optimized_fit_routine.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace fitting
 {
@@ -92,47 +95,17 @@ void Matrix_Optimized_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<T
             (*spectra_model) += (pow((T_real)10.0, param.value) * itr.second);
         }
     }
-
-/*
-    if (np.sum(this->add_matrixfit_pars[3:6]) >= 0.)
-    {
-        ev = this->add_matrixfit_pars[keywords.energy_pos[0]] + energy * this->add_matrixfit_pars[keywords.energy_pos[1]] + (energy)**2 * this->add_matrixfit_pars[keywords.energy_pos[2]];
-        counts_escape = counts.copy();
-        counts_escape[:] = 0.0;
-        if (this->add_matrixfit_pars[3] > 0.0)
-        {
-            T_real escape_E = 1.73998;
-            wo = np.where(ev > escape_E+ev[0]);
-
-            escape_factor = np.abs(p[len(p)-3] + p[len(p)-1] * ev);
-            if (len(wo[0]) > 0)
-            {
-                for (size_t ii=0; ii<(len(wo[0]); ii++)
-                {
-                    counts_escape[ii] = counts[wo[0][ii]]*np.amax(np.append(escape_factor[wo[0][ii]],0.0));
-                }
-            }
-            counts = counts + counts_escape;
-        }
-    }
-*/
-
 }
 
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
 std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_generate_element_models(models::Base_Model<T_real>* const model,
-                                                                                      const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                                                                      struct Range energy_range)
+    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+    struct Range energy_range)
 {
     // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
     std::unordered_map<std::string, Spectra<T_real>> element_spectra;
-
-    //n_pileup = 9
-    //valarray<T_real> value(0.0, energy_range.count());
-    //T_real start_val = (T_real)0.0;
-    //Spectra counts(energy_range.count());
 
     Fit_Parameters<T_real> fit_parameters = model->fit_parameters();
     //set all fit parameters to be fixed. We only want to fit element counts
@@ -145,22 +118,22 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
     ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
 
-    for(const auto& itr : (*elements_to_fit))
+
+    for (const auto& itr : (*elements_to_fit))
     {
         Fit_Element_Map<T_real>* element = itr.second;
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
-        if( false == fit_parameters.contains(itr.first) )
+        if (false == fit_parameters.contains(itr.first))
         {
-            Fit_Param<T_real> fp(itr.first, (T_real)-100.0, std::numeric_limits<T_real>::max(), 0.0, (T_real)0.00001, E_Bound_Type::FIT);
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
             fit_parameters[itr.first] = fp;
         }
         else
         {
-            fit_parameters[itr.first].value = 0.0;
+            fit_parameters[itr.first].value = (T_real)0.0;
         }
         element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, nullptr);
     }
-
     //i = elements_to_fit->size();
     // scattering:
     // elastic peak
@@ -183,23 +156,104 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
     ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::FIT;
 
-    /*
-    //int this_i = i + 2;
-        i = np.amax(keywords.mele_pos)-np.amin(keywords.kele_pos)+1+ii;
-        if (add_pars[i, j].energy <= 0.0)
+    return element_spectra;
+
+}
+
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_real>::_generate_element_models_mp(models::Base_Model<T_real>* const model,
+                                                                                      const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                                                      struct Range energy_range)
+{
+    // fitmatrix(energy_range.count(), elements_to_fit->size()+2); //+2 for compton and elastic //n_pileup)
+    std::unordered_map<std::string, Spectra<T_real>> element_spectra;
+
+    Fit_Parameters<T_real> fit_parameters = model->fit_parameters();
+    //set all fit parameters to be fixed. We only want to fit element counts
+    fit_parameters.set_all(E_Bound_Type::FIXED);
+
+    T_real energy_offset = fit_parameters.value(STR_ENERGY_OFFSET);
+    T_real energy_slope = fit_parameters.value(STR_ENERGY_SLOPE);
+    T_real energy_quad = fit_parameters.value(STR_ENERGY_QUADRATIC);
+
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
+
+
+#ifdef _OPENMP
+    std::vector<std::string> keys;
+    for (const auto& itr : (*elements_to_fit))
+    {
+        if (false == fit_parameters.contains(itr.first))
+        {
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
+            fit_parameters[itr.first] = fp;
+        }
+        else
+        {
+            fit_parameters[itr.first].value = (T_real)0.0;
+        }
+
+        if (itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
         {
             continue;
         }
-        delta_energy = ev.copy() - (add_pars[i, j].energy);
-        faktor = add_pars[i, j].ratio;
-        counts = faktor * this->model_gauss_peak(fit_parameters.at(STR_ENERGY_SLOPE).value, sigma[i, j], delta_energy);
-
-        //fitmatrix[:, this_i+ii] = fitmatrix[:, this_i+ii]+counts[:];
-        fitmatrix.row(this_i + ii) = fitmatrix.row(this_i + ii) + counts;
-        counts = 0.0;
+        else
+        {
+            keys.push_back(itr.first);
+        }
     }
-    */
-    //return fitmatrix;
+#pragma omp parallel for
+    for (int i = 0; i < (int)keys.size(); i++)
+    {
+        Fit_Element_Map<T_real>* element = elements_to_fit->at(keys[i]);
+        // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
+        data_struct::Spectra<T_real> spec = model->model_spectrum_element(&fit_parameters, element, ev, nullptr);
+#pragma omp critical
+        element_spectra[keys[i]] = spec;
+    }
+#else
+    for(const auto& itr : (*elements_to_fit))
+    {
+        Fit_Element_Map<T_real>* element = itr.second;
+        // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
+        if( false == fit_parameters.contains(itr.first) )
+        {
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
+            fit_parameters[itr.first] = fp;
+        }
+        else
+        {
+            fit_parameters[itr.first].value = (T_real)0.0;
+        }
+        element_spectra[itr.first] = model->model_spectrum_element(&fit_parameters, element, ev, nullptr);
+    }
+#endif
+    //i = elements_to_fit->size();
+    // scattering:
+    // elastic peak
+
+    Spectra<T_real> elastic_model(energy_range.count());
+    // Set value to 0 because log10(0) = 1.0
+    fit_parameters[STR_COHERENT_SCT_AMPLITUDE].value = 0.0;
+    elastic_model += model->elastic_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
+    element_spectra[STR_COHERENT_SCT_AMPLITUDE] = elastic_model;
+    //Set it so we fit coherent amp in fit params
+    ///(*fit_params)[STR_COHERENT_SCT_AMPLITUDE].bound_type = data_struct::E_Bound_Type::FIT;
+
+
+    // compton peak
+    Spectra<T_real> compton_model(energy_range.count());
+    // Set value to 0 because log10(0) = 1.0
+    fit_parameters[STR_COMPTON_AMPLITUDE].value = 0.0;
+    compton_model += model->compton_peak(&fit_parameters, ev, fit_parameters.at(STR_ENERGY_SLOPE).value);
+    element_spectra[STR_COMPTON_AMPLITUDE] = compton_model;
+    //Set it so we fit STR_COMPTON_AMPLITUDE  in fit params
+    ///(*fit_params)[STR_COMPTON_AMPLITUDE].bound_type = data_struct::FIT;
+
     return element_spectra;
 
 }
@@ -216,6 +270,27 @@ void Matrix_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>
     _element_models.clear();
     //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
+
+    {
+        std::lock_guard<std::mutex> lock(_int_spec_mutex);
+        _integrated_fitted_spectra.setZero(energy_range.count());
+        _integrated_background.setZero(energy_range.count());
+    }
+
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Matrix_Optimized_Fit_Routine<T_real>::initialize_mp(models::Base_Model<T_real>* const model,
+    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+    const struct Range energy_range)
+{
+
+    this->_energy_range = energy_range;
+    _element_models.clear();
+    //logI<<"-------- Generating element models ---------"<<"\n";
+    _element_models = _generate_element_models_mp(model, elements_to_fit, energy_range);
 
     {
         std::lock_guard<std::mutex> lock(_int_spec_mutex);

@@ -173,7 +173,12 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
     {
         logE << "Failed to save " << path << "\n";
     }
+    
 
+    delete axisYLog10;
+    delete axisX; 
+    delete axisY;
+    delete chartView;
 }
 // ----------------------------------------------------------------------------
 
@@ -394,6 +399,10 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
     painter.end();
     pix.save(QString(path.c_str()), "png");
+
+    delete axisYLog10;
+    delete chartView;
+    delete axisX;
 }
 
 // ----------------------------------------------------------------------------

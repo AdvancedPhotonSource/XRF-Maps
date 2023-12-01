@@ -66,7 +66,7 @@ class DLL_EXPORT Gaussian_Model: public Base_Model<T_real>
 public:
     Gaussian_Model();
 
-    ~Gaussian_Model();
+    virtual ~Gaussian_Model();
 
     virtual const Fit_Parameters<T_real>& fit_parameters() const { return _fit_parameters; }
 

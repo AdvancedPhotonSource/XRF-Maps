@@ -51,10 +51,10 @@ namespace nsNNLS
 			fset = 0;
 			// convergence controlling parameters
 			M = 100;
-			beta = 1.0;
-			decay = 0.9;
-			pgtol = 1e-3;
-			sigma = .01;
+			beta = (_T)1.0;
+			decay = (_T)0.9;
+			pgtol = (_T)1e-3;
+			sigma = (_T).01;
 		}
 
         nnls(Eigen::Matrix<_T, Eigen::Dynamic, Eigen::Dynamic> *A, TArrayXr *b, TArrayXr* x0, int maxit)

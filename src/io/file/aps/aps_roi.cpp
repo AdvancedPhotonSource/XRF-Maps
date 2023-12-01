@@ -95,9 +95,9 @@ bool load_v9_rois(std::string path, std::map<std::string, std::vector<int_point>
         fileStream.open(path, std::ios::in | std::ios::binary);
         if (fileStream.is_open())
         {
-            fileStream.read((char*)&val, sizeof(val));
+            fileStream.read((char*)&val, sizeof(Num));
             width = swapOrder(val);
-            fileStream.read((char*)&val, sizeof(val));
+            fileStream.read((char*)&val, sizeof(Num));
             height = swapOrder(val);
 
             myData.resize(width * height);

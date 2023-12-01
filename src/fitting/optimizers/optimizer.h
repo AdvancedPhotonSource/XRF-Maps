@@ -93,6 +93,17 @@ DLL_EXPORT std::string optimizer_outcome_to_str(OPTIMIZER_OUTCOME outcome);
 template<typename T_real>
 struct User_Data
 {
+    User_Data()
+    {
+        fit_model = nullptr;
+        fit_parameters = nullptr;
+        elements = nullptr;
+        orig_spectra = nullptr;
+        status_callback = nullptr;
+        cur_itr = 0;
+        total_itr = 0;
+    }
+
     Base_Model<T_real>* fit_model;
     Spectra<T_real> spectra;
 	ArrayTr<T_real> weights;
@@ -110,6 +121,11 @@ struct User_Data
 template<typename T_real>
 struct Gen_User_Data
 {
+    Gen_User_Data()
+    {
+        fit_parameters = nullptr;
+    }
+
     Spectra<T_real> spectra;
 	ArrayTr<T_real> weights;
     Fit_Parameters<T_real>*fit_parameters;
@@ -122,6 +138,12 @@ struct Gen_User_Data
 template<typename T_real>
 struct Quant_User_Data
 {
+    Quant_User_Data()
+    {
+        quantification_model = nullptr;
+        fit_parameters = nullptr;
+    }
+
     quantification::models::Quantification_Model<T_real>* quantification_model;
     Fit_Parameters<T_real>* fit_parameters;
     std::unordered_map<std::string, Element_Quant<T_real>> quant_map;
@@ -274,9 +296,12 @@ template<typename T_real>
 class DLL_EXPORT Optimizer
 {
 public:
-    Optimizer(){}
+    Optimizer()
+    {
+        _last_outcome = -1;
+    }
 
-    ~Optimizer(){}
+    virtual ~Optimizer(){}
 
     virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real> *fit_params,
                           const Spectra<T_real>* const spectra,
@@ -302,8 +327,15 @@ public:
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt) = 0;
 
+    virtual std::string detailed_outcome(int outcome) = 0;
+
+    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome);}
+
 protected:
+
     std::map<int, OPTIMIZER_OUTCOME> _outcome_map;
+
+    int _last_outcome;
 
 };
 

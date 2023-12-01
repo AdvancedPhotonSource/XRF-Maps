@@ -66,7 +66,7 @@ class DLL_EXPORT MPFit_Optimizer: public Optimizer<T_real>
 public:
     MPFit_Optimizer();
 
-    ~MPFit_Optimizer() {}
+    virtual ~MPFit_Optimizer() {}
 
     virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real>*fit_params,
                                         const Spectra<T_real>* const spectra,
@@ -91,11 +91,11 @@ public:
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt);
 
+    virtual std::string detailed_outcome(int outcome);
+
 private:
 
 	void _fill_limits(Fit_Parameters<T_real> *fit_params, std::vector<struct mp_par<T_real> > &par);
-	
-    inline void _print_info(int info);
 
     struct mp_config<T_real> _options;
 

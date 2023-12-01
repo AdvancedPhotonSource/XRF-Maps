@@ -190,7 +190,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                             }
                             else
                             {
-                                eq_itr.e_cal_ratio += 1.0e-10;
+                                eq_itr.e_cal_ratio += (T_real)1.0e-10;
                             }
                         }
                     }

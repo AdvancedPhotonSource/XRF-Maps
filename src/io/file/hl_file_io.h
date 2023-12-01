@@ -359,8 +359,8 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
     std::vector<size_t> detector_num_arr{ detector_num };
-    size_t out_rows;
-    size_t out_cols;
+    size_t out_rows = 0;
+    size_t out_cols = 0;
     data_struct::IO_Callback_Func_Def<T_real>  cb_function = std::bind(&cb_load_spectra_data_helper<T_real>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 
     if (dataset_directory.back() != DIR_END_CHAR)

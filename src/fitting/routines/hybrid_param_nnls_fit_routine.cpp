@@ -92,7 +92,7 @@ void Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum(const Fit_Parameters<
     if (_model != nullptr && _elements_to_fit != nullptr)
     {
         _model->update_fit_params_values(fit_params);
-        this->initialize(_model, _elements_to_fit, *energy_range);
+        this->initialize_mp(_model, _elements_to_fit, *energy_range);
         this->fit_spectrum_model(_spectra, &_background, _elements_to_fit, spectra_model);
 
         if (status_callback != nullptr)
