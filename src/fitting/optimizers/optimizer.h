@@ -75,6 +75,7 @@ using namespace fitting::models;
 //LM
 #define STR_OPT_SCALE_DIAG "scale_diag"
 #define STR_OPT_MAXITER "maxiter"
+#define STR_OPT_VERBOSE_LEVEL "verbose_level"
 //MP
 #define STR_OPT_COVTOL "covtol"
 

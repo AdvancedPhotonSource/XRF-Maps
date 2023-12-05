@@ -229,7 +229,8 @@ std::unordered_map<std::string, T_real> LMFit_Optimizer<T_real>::get_options()
         {STR_OPT_EPSILON, _options.epsilon},
         {STR_OPT_STEP, _options.stepbound},
         {STR_OPT_SCALE_DIAG, _options.scale_diag},
-        {STR_OPT_MAXITER, _options.patience}
+        {STR_OPT_MAXITER, _options.patience},
+        {STR_OPT_VERBOSE_LEVEL, _options.verbosity}
     };
     return opts;
 }
@@ -267,6 +268,10 @@ void LMFit_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real
     {
         _options.patience = (int)opt.at(STR_OPT_MAXITER);
     }
+    if (opt.count(STR_OPT_VERBOSE_LEVEL) > 0)
+    {
+        _options.verbosity = (int)opt.at(STR_OPT_VERBOSE_LEVEL);
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -289,7 +294,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     }
     std::vector<T_real> perror(fitp_arr.size());
 
-    _options.verbosity = 2;
+    //_options.verbosity = 2;
     size_t total_itr = _options.patience * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
 
@@ -445,7 +450,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     }
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
-    _options.verbosity = 2;
+    //_options.verbosity = 2;
     std::vector<T_real> fitp_arr = fit_params->to_array();
     if (fitp_arr.size() == 0)
     {
