@@ -67,8 +67,8 @@ void lm_print_pars(int nout, const _T* par, FILE* fout)
 {
     int i;
     for (i = 0; i < nout; ++i)
-        fprintf(fout, " %16.9g", par[i]);
-    fprintf(fout, "\n");
+        logit_s << par[i] << " ";
+    logit_s<<"\n";
 }
 
 /******************************************************************************/
@@ -822,39 +822,32 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     /***  Check input parameters for errors.  ***/
 
     if (n <= 0) {
-        fprintf(stderr, "lmmin: invalid number of parameters %i\n", n);
+        logE<<"lmmin: invalid number of parameters "<<n<<"\n";
         S->outcome = 10;
         return;
     }
     if (m < n) {
-        fprintf(stderr, "lmmin: number of data points (%i) "
-                        "smaller than number of parameters (%i)\n",
-                m, n);
+        logE << "lmmin: number of data points (" << m << ") smaller than number of parameters (" << n << ")\n";
         S->outcome = 10;
         return;
     }
     if (C->ftol < 0 || C->xtol < 0 || C->gtol < 0) {
-        fprintf(stderr,
-                "lmmin: negative tolerance (at least one of %g %g %g)\n",
-                C->ftol, C->xtol, C->gtol);
+        logE << "lmmin: negative tolerance (at least one of " << C->ftol << " " << C->xtol << " " << C->gtol << ")\n";
         S->outcome = 10;
         return;
     }
     if (maxfev <= 0) {
-        fprintf(stderr, "lmmin: nonpositive function evaluations limit %i\n",
-                maxfev);
+        logE << "lmmin: nonpositive function evaluations limit " << maxfev << "\n";
         S->outcome = 10;
         return;
     }
     if (C->stepbound <= 0) {
-        fprintf(stderr, "lmmin: nonpositive stepbound %g\n", C->stepbound);
+        logE << "lmmin: nonpositive stepbound "<< C->stepbound<<"\n";
         S->outcome = 10;
         return;
     }
     if (C->scale_diag != 0 && C->scale_diag != 1) {
-        fprintf(stderr, "lmmin: logical variable scale_diag=%i, "
-                        "should be 0 or 1\n",
-                C->scale_diag);
+        logE << "lmmin: logical variable scale_diag=" << C->scale_diag << ", should be 0 or 1\n";
         S->outcome = 10;
         return;
     }
@@ -898,19 +891,19 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     /***  Evaluate function at starting point and calculate norm.  ***/
 
     if (C->verbosity) {
-        fprintf(msgfile, "lmmin start ");
+        logI<<"lmmin start \n";
         lm_print_pars(nout, x, msgfile);
     }
     (*evaluate)(x, m, data, fvec, &(S->userbreak));
     if (C->verbosity > 4)
         for (i = 0; i < m; ++i)
-            fprintf(msgfile, "    fvec[%4i] = %18.8g\n", i, fvec[i]);
+            logI << "    fvec["<<i<<"] = "<< fvec[i] <<"\n";
     S->nfev = 1;
     if (S->userbreak)
         goto terminate;
     fnorm = lm_enorm(m, fvec);
     if (C->verbosity)
-        fprintf(msgfile, "  fnorm = %18.8g\n", fnorm);
+        logI << "  fnorm = "<< fnorm<<"\n";
 
     if (!std::isfinite(fnorm)) {
         S->outcome = 12; /* nan */
@@ -1018,18 +1011,16 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                     wa3[j] = diag[j] * x[j];
                 xnorm = lm_enorm(n, wa3);
                 if (C->verbosity >= 2) {
-                    fprintf(msgfile, "lmmin diag  ");
+                    logI << "lmmin diag  ";
                     lm_print_pars(nout, x, msgfile); // xnorm
-                    fprintf(msgfile, "  xnorm = %18.8g\n", xnorm);
+                    logI<<"  xnorm = "<<xnorm<<"\n";
                 }
                 /* Only now print the header for the loop table. */
                 if (C->verbosity >= 3) {
-                    fprintf(msgfile, "  o  i     lmpar    prered"
-                                     "          ratio    dirder      delta"
-                                     "      pnorm                 fnorm");
+                    logI << "  o  i     lmpar    prered           ratio    dirder      delta      pnorm                 fnorm\n";
                     for (i = 0; i < nout; ++i)
-                        fprintf(msgfile, "               p%i", i);
-                    fprintf(msgfile, "\n");
+                        logit_s<< "               p"<<i;
+                    logit_s<<"\n";
                 }
             } else {
                 xnorm = lm_enorm(n, x);
@@ -1105,16 +1096,13 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             ratio = prered ? actred / prered : 0;
 
             if (C->verbosity == 2) {
-                fprintf(msgfile, "lmmin (%i:%i) ", outer, inner);
+                logI << "lmmin ("<<outer<<":"<< inner<<" ";
                 lm_print_pars(nout, wa2, msgfile); // fnorm1,
             } else if (C->verbosity >= 3) {
-                printf("%3i %2i %9.2g %9.2g %14.6g"
-                       " %9.2g %10.3e %10.3e %21.15e",
-                       outer, inner, lmpar, prered, ratio,
-                       dirder, delta, pnorm, fnorm1);
-                for (i = 0; i < nout; ++i)
-                    fprintf(msgfile, " %16.9g", wa2[i]);
-                fprintf(msgfile, "\n");
+                logit_s << outer << " " << inner << " " << lmpar << " " << prered << " " << ratio << " " << dirder << " " << delta << " " << pnorm << " " << fnorm1;
+                       for (i = 0; i < nout; ++i)
+                           logit_s << " " << wa2[i];
+                logit_s<< "\n";
             }
 
             /* Update the step bound. */
@@ -1200,12 +1188,11 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 terminate:
     S->fnorm = lm_enorm(m, fvec);
     if (C->verbosity >= 2)
-        printf("lmmin outcome (%i) xnorm %g ftol %g xtol %g\n", S->outcome,
-               xnorm, C->ftol, C->xtol);
+        logI << "lmmin outcome (" << S->outcome << ") xnorm " << xnorm << " ftol " << C->ftol << " xtol " << C->xtol << "\n";
     if (C->verbosity & 1) {
-        fprintf(msgfile, "lmmin final ");
+        logI << "lmmin final ";
         lm_print_pars(nout, x, msgfile); // S->fnorm,
-        fprintf(msgfile, "  fnorm = %18.8g\n", S->fnorm);
+        logI << "  fnorm = " << S->fnorm << "\n";
     }
     if (S->userbreak) /* user-requested break */
         S->outcome = 11;

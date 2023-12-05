@@ -305,14 +305,14 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 			if (fit.value > fit.max_val)
 			{
                 logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
-                fit.value = fit.max_val;
-				(*fit_params)[itr->first].value = fit.max_val;
+                fit.value = fit.max_val - fit.step_size;
+				(*fit_params)[itr->first].value = fit.value;
 
 			}
 			if (fit.value < fit.min_val)
 			{
                 logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
-                fit.value = fit.min_val;
+                fit.value = fit.min_val + fit.step_size;
 				(*fit_params)[itr->first].value = fit.min_val;
 			}
 			if (fit.bound_type == E_Bound_Type::LIMITED_HI
@@ -410,6 +410,24 @@ std::string MPFit_Optimizer<T_real>::detailed_outcome(int info)
         return "Xtol is too small. no further improvement in the approximate solution x is possible.";
 	case 8:
         return "Gtol is too small. fvec is orthogonal to the columns of the jacobian to machine precision.";
+    case MP_ERR_NAN:
+        return "User function produced non-finite values.";
+    case MP_ERR_FUNC:
+        return "No user function was supplied.";
+    case MP_ERR_NPOINTS:
+        return "No user data points were supplied.";
+    case MP_ERR_NFREE:
+        return "No free parameters.";
+    case MP_ERR_MEMORY:
+        return "Memory allocation error.";
+    case MP_ERR_INITBOUNDS:
+        return "Initial values inconsistent w constraints.";
+    case MP_ERR_BOUNDS:
+        return "Initial constraints inconsistent.";
+    case MP_ERR_PARAM:
+        return "General input parameter error.";
+    case MP_ERR_DOF:
+        return "Not enough degrees of freedom.";
 	default:
         return "Unknown info status";
 	}
@@ -485,7 +503,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 
     this->_last_outcome = mpfit(residuals_mpfit<T_real>, (int)energy_range.count(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
 
-	logI<< detailed_outcome(this->_last_outcome);
+	logI<< detailed_outcome(this->_last_outcome) << "\n";
 
     fit_params->from_array(fitp_arr);
 
@@ -781,7 +799,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, (int)ud.quant_map.size(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
     logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[this->_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
 
-    logI << detailed_outcome(this->_last_outcome);
+    logI << detailed_outcome(this->_last_outcome) << "\n";
 
     fit_params->from_array(fitp_arr);
 

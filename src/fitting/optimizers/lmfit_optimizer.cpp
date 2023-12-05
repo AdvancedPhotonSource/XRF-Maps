@@ -289,6 +289,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real> *fit_
     }
     std::vector<T_real> perror(fitp_arr.size());
 
+    _options.verbosity = 2;
     size_t total_itr = _options.patience * (fitp_arr.size() + 1);
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
 
@@ -398,7 +399,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real>*
     std::vector<T_real> perror(fitp_arr.size());
 
     lm_status_struct<T_real> status;
-
+    _options.verbosity = 0;
     lmmin((int)fitp_arr.size(), &fitp_arr[0], (int)energy_range.count(), (const void*) &ud, general_residuals_lmfit, &_options, &status );
     this->_last_outcome = status.outcome;
     fit_params->from_array(fitp_arr);
@@ -444,7 +445,7 @@ OPTIMIZER_OUTCOME LMFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     }
     ud.quantification_model = quantification_model;
     ud.fit_parameters = fit_params;
-
+    _options.verbosity = 2;
     std::vector<T_real> fitp_arr = fit_params->to_array();
     if (fitp_arr.size() == 0)
     {
