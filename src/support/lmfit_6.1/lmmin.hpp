@@ -67,8 +67,10 @@ void lm_print_pars(int nout, const _T* par, FILE* fout)
 {
     int i;
     for (i = 0; i < nout; ++i)
-        fprintf(fout, " %16.9g", par[i]);
-    fprintf(fout, "\n");
+    {
+        logit_s << par[i] << " ";
+    }
+    logit_s<<"\n";
 }
 
 /******************************************************************************/
@@ -228,7 +230,9 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
 
     for (j = 0; j < n; j++) {
         for (i = j; i < n; i++)
-            r[j*ldr+i] = r[i*ldr+j];
+        {
+            r[j * ldr + i] = r[i * ldr + j];
+        }
         x[j] = r[j*ldr+j];
         W[j] = qtb[j];
     }
@@ -242,7 +246,9 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
 
         if (diag[Pivot[j]] != 0) {
             for (k = j; k < n; k++)
+            {
                 Sdiag[k] = 0;
+            }
             Sdiag[j] = diag[Pivot[j]];
 
             /*** The transformations to eliminate the row of D modify only
@@ -300,17 +306,21 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
             W[j] = 0;
     }
 
-    for (j = nsing-1; j >= 0; j--) {
+    for (j = nsing - 1; j >= 0; j--) {
         sum = 0;
-        for (i = j+1; i < nsing; i++)
-            sum += r[j*ldr+i] * W[i];
+        for (i = j + 1; i < nsing; i++)
+        {
+            sum += r[j * ldr + i] * W[i];
+        }
         W[j] = (W[j] - sum) / Sdiag[j];
     }
 
     /*** Permute the components of z back to components of x. ***/
 
     for (j = 0; j < n; j++)
+    {
         x[Pivot[j]] = W[j];
+    }
 
 } /*** lm_qrsolv. ***/
 
@@ -426,13 +436,16 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     }
 
     for (j = 0; j < n; j++)
+    {
         x[Pivot[j]] = aux[j];
-
+    }
     /*** Initialize the iteration counter, evaluate the function at the origin,
          and test for acceptance of the Gauss-Newton direction. ***/
 
     for (j = 0; j < n; j++)
+    {
         xdi[j] = diag[j] * x[j];
+    }
     dxnorm = lm_enorm(n, xdi);
     fp = dxnorm - delta;
     if (fp <= p1 * delta) {
@@ -450,12 +463,15 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     parl = 0;
     if (nsing >= n) {
         for (j = 0; j < n; j++)
+        {
             aux[j] = diag[Pivot[j]] * xdi[Pivot[j]] / dxnorm;
-
+        }
         for (j = 0; j < n; j++) {
             sum = 0;
             for (i = 0; i < j; i++)
-                sum += r[j*ldr+i] * aux[i];
+            {
+                sum += r[j * ldr + i] * aux[i];
+            }
             aux[j] = (aux[j] - sum) / r[j+ldr*j];
         }
         temp = lm_enorm(n, aux);
@@ -467,7 +483,9 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     for (j = 0; j < n; j++) {
         sum = 0;
         for (i = 0; i <= j; i++)
-            sum += r[j*ldr+i] * qtb[i];
+        {
+            sum += r[j * ldr + i] * qtb[i];
+        }
         aux[j] = sum / diag[Pivot[j]];
     }
     gnorm = lm_enorm(n, aux);
@@ -492,13 +510,16 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
             *par = MAX(LM_DWARF, (_T)0.001 * paru);
         temp = sqrt(*par);
         for (j = 0; j < n; j++)
+        {
             aux[j] = temp * diag[j];
-
+        }
         lm_qrsolv(n, r, ldr, Pivot, aux, qtb, x, Sdiag, xdi);
         /* return values are r, x, Sdiag */
 
         for (j = 0; j < n; j++)
+        {
             xdi[j] = diag[j] * x[j]; /* used as output */
+        }
         dxnorm = lm_enorm(n, xdi);
         fp_old = fp;
         fp = dxnorm - delta;
@@ -518,12 +539,15 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
 
         /** Compute the Newton correction. **/
         for (j = 0; j < n; j++)
+        {
             aux[j] = diag[Pivot[j]] * xdi[Pivot[j]] / dxnorm;
-
+        }
         for (j = 0; j < n; j++) {
             aux[j] = aux[j] / Sdiag[j];
-            for (i = j+1; i < n; i++)
-                aux[i] -= r[j*ldr+i] * aux[j];
+            for (i = j + 1; i < n; i++)
+            {
+                aux[i] -= r[j * ldr + i] * aux[j];
+            }
         }
         temp = lm_enorm(n, aux);
         parc = fp / delta / temp / temp;
@@ -616,10 +640,13 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
 
         /** Bring the column of largest norm into the pivot position. **/
         kmax = j;
-        for (k = j+1; k < n; k++)
+        for (k = j + 1; k < n; k++)
+        {
             if (Rdiag[k] > Rdiag[kmax])
+            {
                 kmax = k;
-
+            }
+        }
         if (kmax != j) {
             /* Swap columns j and kmax. */
             k = Pivot[j];
@@ -648,7 +675,9 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
         if (A[j*m+j] < 0)
             ajnorm = -ajnorm;
         for (i = j; i < m; i++)
-            A[j*m+i] /= ajnorm;
+        {
+            A[j * m + i] /= ajnorm;
+        }
         A[j*m+j] += 1;
 
         /** Apply the Householder transformation U_w := 1 - 2*w_j.w_j/|w_j|^2
@@ -657,15 +686,17 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
             /* Compute scalar product w_j * a_j. */
             sum = 0;
             for (i = j; i < m; i++)
-                sum += A[j*m+i] * A[k*m+i];
-
+            {
+                sum += A[j * m + i] * A[k * m + i];
+            }
             /* Normalization is simplified by the coincidence |w_j|^2=2w_jj. */
             temp = sum / A[j*m+j];
 
             /* Carry out transform U_w_j * a_k. */
             for (i = j; i < m; i++)
-                A[k*m+i] -= temp * A[j*m+i];
-
+            {
+                A[k * m + i] -= temp * A[j * m + i];
+            }
             /* No idea what happens here. */
             if (Rdiag[k] != 0) {
                 temp = A[m*k+j] / Rdiag[k];
@@ -822,39 +853,32 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     /***  Check input parameters for errors.  ***/
 
     if (n <= 0) {
-        fprintf(stderr, "lmmin: invalid number of parameters %i\n", n);
+        logE<<"lmmin: invalid number of parameters "<<n<<"\n";
         S->outcome = 10;
         return;
     }
     if (m < n) {
-        fprintf(stderr, "lmmin: number of data points (%i) "
-                        "smaller than number of parameters (%i)\n",
-                m, n);
+        logE << "lmmin: number of data points (" << m << ") smaller than number of parameters (" << n << ")\n";
         S->outcome = 10;
         return;
     }
     if (C->ftol < 0 || C->xtol < 0 || C->gtol < 0) {
-        fprintf(stderr,
-                "lmmin: negative tolerance (at least one of %g %g %g)\n",
-                C->ftol, C->xtol, C->gtol);
+        logE << "lmmin: negative tolerance (at least one of " << C->ftol << " " << C->xtol << " " << C->gtol << ")\n";
         S->outcome = 10;
         return;
     }
     if (maxfev <= 0) {
-        fprintf(stderr, "lmmin: nonpositive function evaluations limit %i\n",
-                maxfev);
+        logE << "lmmin: nonpositive function evaluations limit " << maxfev << "\n";
         S->outcome = 10;
         return;
     }
     if (C->stepbound <= 0) {
-        fprintf(stderr, "lmmin: nonpositive stepbound %g\n", C->stepbound);
+        logE << "lmmin: nonpositive stepbound "<< C->stepbound<<"\n";
         S->outcome = 10;
         return;
     }
     if (C->scale_diag != 0 && C->scale_diag != 1) {
-        fprintf(stderr, "lmmin: logical variable scale_diag=%i, "
-                        "should be 0 or 1\n",
-                C->scale_diag);
+        logE << "lmmin: logical variable scale_diag=" << C->scale_diag << ", should be 0 or 1\n";
         S->outcome = 10;
         return;
     }
@@ -892,25 +916,32 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 
     /* Initialize diag. */
     if (!C->scale_diag)
+    {
         for (j = 0; j < n; j++)
+        {
             diag[j] = 1;
-
+        }
+    }
     /***  Evaluate function at starting point and calculate norm.  ***/
 
     if (C->verbosity) {
-        fprintf(msgfile, "lmmin start ");
+        logI<<"lmmin start \n";
         lm_print_pars(nout, x, msgfile);
     }
     (*evaluate)(x, m, data, fvec, &(S->userbreak));
     if (C->verbosity > 4)
+    {
         for (i = 0; i < m; ++i)
-            fprintf(msgfile, "    fvec[%4i] = %18.8g\n", i, fvec[i]);
+        {
+            logI << "    fvec[" << i << "] = " << fvec[i] << "\n";
+        }
+    }
     S->nfev = 1;
     if (S->userbreak)
         goto terminate;
     fnorm = lm_enorm(m, fvec);
     if (C->verbosity)
-        fprintf(msgfile, "  fnorm = %18.8g\n", fnorm);
+        logI << "  fnorm = "<< fnorm<<"\n";
 
     if (!std::isfinite(fnorm)) {
         S->outcome = 12; /* nan */
@@ -934,7 +965,9 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             if (S->userbreak)
                 goto terminate;
             for (i = 0; i < m; i++)
-                fjac[j*m+i] = (wf[i] - fvec[i]) / step;
+            {
+                fjac[j * m + i] = (wf[i] - fvec[i]) / step;
+            }
             x[j] = temp; /* restore */
         }
         if (C->verbosity >= 10) {
@@ -943,7 +976,9 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             for (i = 0; i < m; i++) {
                 printf("  ");
                 for (j = 0; j < n; j++)
-                    printf("%.5e ", fjac[j*m+i]);
+                {
+                    printf("%.5e ", fjac[j * m + i]);
+                }
                 printf("\n");
             }
         }
@@ -982,10 +1017,14 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             if (temp3 != 0) {
                 sum = 0;
                 for (i = j; i < m; i++)
-                    sum += fjac[j*m+i] * wf[i];
+                {
+                    sum += fjac[j * m + i] * wf[i];
+                }
                 temp = -sum / temp3;
                 for (i = j; i < m; i++)
-                    wf[i] += fjac[j*m+i] * temp;
+                {
+                    wf[i] += fjac[j * m + i] * temp;
+                }
             }
             fjac[j*m+j] = wa1[j];
             qtf[j] = wf[j];
@@ -998,7 +1037,9 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                 continue;
             sum = 0;
             for (i = 0; i <= j; i++)
-                sum += fjac[j*m+i] * qtf[i];
+            {
+                sum += fjac[j * m + i] * qtf[i];
+            }
             gnorm = MAX(gnorm, std::fabs(sum / wa2[Pivot[j]] / fnorm));
         }
 
@@ -1012,24 +1053,28 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             if (C->scale_diag) {
                 /* diag := norms of the columns of the initial Jacobian */
                 for (j = 0; j < n; j++)
+                {
                     diag[j] = wa2[j] ? wa2[j] : 1;
+                }
                 /* xnorm := || D x || */
                 for (j = 0; j < n; j++)
+                {
                     wa3[j] = diag[j] * x[j];
+                }
                 xnorm = lm_enorm(n, wa3);
                 if (C->verbosity >= 2) {
-                    fprintf(msgfile, "lmmin diag  ");
+                    logI << "lmmin diag  ";
                     lm_print_pars(nout, x, msgfile); // xnorm
-                    fprintf(msgfile, "  xnorm = %18.8g\n", xnorm);
+                    logI<<"  xnorm = "<<xnorm<<"\n";
                 }
                 /* Only now print the header for the loop table. */
                 if (C->verbosity >= 3) {
-                    fprintf(msgfile, "  o  i     lmpar    prered"
-                                     "          ratio    dirder      delta"
-                                     "      pnorm                 fnorm");
+                    logI << "  o  i     lmpar    prered           ratio    dirder      delta      pnorm                 fnorm\n";
                     for (i = 0; i < nout; ++i)
-                        fprintf(msgfile, "               p%i", i);
-                    fprintf(msgfile, "\n");
+                    {
+                        logit_s << "               p" << i;
+                    }
+                    logit_s<<"\n";
                 }
             } else {
                 xnorm = lm_enorm(n, x);
@@ -1105,16 +1150,15 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             ratio = prered ? actred / prered : 0;
 
             if (C->verbosity == 2) {
-                fprintf(msgfile, "lmmin (%i:%i) ", outer, inner);
+                logI << "lmmin ("<<outer<<":"<< inner<<" ";
                 lm_print_pars(nout, wa2, msgfile); // fnorm1,
             } else if (C->verbosity >= 3) {
-                printf("%3i %2i %9.2g %9.2g %14.6g"
-                       " %9.2g %10.3e %10.3e %21.15e",
-                       outer, inner, lmpar, prered, ratio,
-                       dirder, delta, pnorm, fnorm1);
+                logit_s << outer << " " << inner << " " << lmpar << " " << prered << " " << ratio << " " << dirder << " " << delta << " " << pnorm << " " << fnorm1;
                 for (i = 0; i < nout; ++i)
-                    fprintf(msgfile, " %16.9g", wa2[i]);
-                fprintf(msgfile, "\n");
+                {
+                    logit_s << " " << wa2[i];
+                }
+                logit_s<< "\n";
             }
 
             /* Update the step bound. */
@@ -1147,10 +1191,14 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                     }
                 } else {
                     for (j = 0; j < n; j++)
+                    {
                         x[j] = wa2[j];
+                    }
                 }
                 for (i = 0; i < m; i++)
+                {
                     fvec[i] = wf[i];
+                }
                 xnorm = lm_enorm(n, wa2);
                 if (!std::isfinite(xnorm)) {
                     S->outcome = 12; /* nan */
@@ -1200,12 +1248,11 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 terminate:
     S->fnorm = lm_enorm(m, fvec);
     if (C->verbosity >= 2)
-        printf("lmmin outcome (%i) xnorm %g ftol %g xtol %g\n", S->outcome,
-               xnorm, C->ftol, C->xtol);
+        logI << "lmmin outcome (" << S->outcome << ") xnorm " << xnorm << " ftol " << C->ftol << " xtol " << C->xtol << "\n";
     if (C->verbosity & 1) {
-        fprintf(msgfile, "lmmin final ");
+        logI << "lmmin final ";
         lm_print_pars(nout, x, msgfile); // S->fnorm,
-        fprintf(msgfile, "  fnorm = %18.8g\n", S->fnorm);
+        logI << "  fnorm = " << S->fnorm << "\n";
     }
     if (S->userbreak) /* user-requested break */
         S->outcome = 11;
