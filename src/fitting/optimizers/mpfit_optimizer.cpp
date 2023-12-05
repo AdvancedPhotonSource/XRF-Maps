@@ -84,7 +84,8 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-		dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
+		//dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
+        dy[i] = abs(ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
 			//logE << "\n\n\n";
@@ -746,7 +747,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     ud.fit_parameters = fit_params;
 
     std::vector<T_real> fitp_arr = fit_params->to_array();
-    if (fitp_arr.size() == 0)
+    if (fitp_arr.size() == 0 || ud.quant_map.size() == 0)
     {
         return OPTIMIZER_OUTCOME::STOPPED;
     }
