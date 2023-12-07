@@ -53,9 +53,9 @@ using namespace std::placeholders; //for _1, _2,
 // ----------------------------------------------------------------------------
 
 bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis_job,
-                                    data_struct::Spectra<double>& int_spectra,
+                                    const data_struct::Spectra<double>& int_spectra,
                                     size_t detector_num,
-                                    data_struct::Params_Override<double>* params_override,
+                                    const data_struct::Params_Override<double>* const params_override,
                                     std::string save_filename,
                                     data_struct::Fit_Parameters<double>& out_fitp,
                                     Callback_Func_Status_Def* status_callback)

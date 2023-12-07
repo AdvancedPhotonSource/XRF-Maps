@@ -305,7 +305,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool save_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, std::unordered_map<std::string, T_real>& pv_map)
+DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spectra<T_real>* const spectra, const std::unordered_map<std::string, T_real>& pv_map)
 {
     std::ofstream paramFileStream(path);
 

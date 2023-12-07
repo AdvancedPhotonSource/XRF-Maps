@@ -108,7 +108,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, 
 
 //DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
+DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double>* fit_params, const data_struct::Spectra<double>* const spectra, const data_struct::Fit_Element_Map_Dict<double>* const elements_to_fit);
 
 ////DLL_EXPORT void save_roi_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
