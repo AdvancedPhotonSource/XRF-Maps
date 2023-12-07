@@ -109,7 +109,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         case fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL:
         case fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED:
             // if we have a good fit, update our fit parameters so we are closer for the next fit
-            params_override->fit_params.update_values(&out_fitp);
+            //params_override->fit_params.update_values(&out_fitp);
             ret_val = true;
             break;
         case fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED:
