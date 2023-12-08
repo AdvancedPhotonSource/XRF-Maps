@@ -46,6 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 #include "core/process_whole.h"
+#include <algorithm>
 
 using namespace std::placeholders; //for _1, _2,
 
@@ -543,7 +544,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
 // ----------------------------------------------------------------------------
 
-void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
+bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             int detector_num,
                             std::map<std::string, std::vector<std::pair<int, int>>>& rois,
                             std::unordered_map<std::string, data_struct::Spectra<double> >& int_spectra_map,
@@ -607,6 +608,12 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
             if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
             {
+                std::string low_ds_ic = STR_DS_IC;
+                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), std::tolower);
+                std::string low_us_ic = STR_US_IC; 
+                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), std::tolower);
+                std::string low_sr = STR_SR_CURRENT;
+                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), std::tolower);
                 for (auto& in_itr : roi_itr.second)
                 {
                     hsize_t xoffset = in_itr.first;
@@ -615,13 +622,25 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                     {
                         ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
                     }
+                    else if (scalers_map.count(low_ds_ic) > 0)
+                    {
+                        ds_ic += scalers_map.at(low_ds_ic)(yoffset, xoffset);
+                    }
                     if (scalers_map.count(STR_US_IC) > 0)
                     {
                         us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
                     }
+                    else if (scalers_map.count(low_us_ic) > 0)
+                    {
+                        us_ic += scalers_map.at(low_us_ic)(yoffset, xoffset);
+                    }
                     if (scalers_map.count(STR_SR_CURRENT) > 0)
                     {
                         sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
+                    }
+                    else if (scalers_map.count(low_sr) > 0)
+                    {
+                        sr_current += scalers_map.at(low_sr)(yoffset, xoffset);
                     }
                 }
             }
@@ -681,11 +700,14 @@ void find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", params_override->ds_amp_sens_num));
             out_roi_fit_params[sfile_name + "_roi_" + roi_name] = out_fitp;
         }
+        return true;
     }
     else
     {
         logE << "Could not find dataset file for " << search_filename << "\n";
+        return false;
     }
+    return false;
 }
 
 // ----------------------------------------------------------------------------
@@ -734,12 +756,21 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     {
                         search_filename = base_file_name + ".mda.h5" + str_detector_num;
                     }
-                    find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
+                    if (false == find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback))
+                    {
+                        // try v9 format
+                        search_filename = base_file_name + ".h5" + str_detector_num;
+                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
+                    }
                 }
             }
             //now for the avg h5
             search_filename = base_file_name + ".mda.h5";
-            find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
+            if (false == find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback))
+            {
+                search_filename = base_file_name + ".h5";
+                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
+            }
         }
         else
         {
@@ -772,17 +803,21 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     {
                         std::string str_detector_num = std::to_string(detector_num);
                         search_filename = dataset_num + ".h5" + str_detector_num; // v9 save
-                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
-                        search_filename = dataset_num + ".mda.h5" + str_detector_num;
-                        find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
+                        if (false == find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback))
+                        {
+                            search_filename = dataset_num + ".mda.h5" + str_detector_num;
+                            find_and_optimize_roi(analysis_job, detector_num, rois, int_specs, search_filename, out_roi_fit_params[detector_num], status_callback);
+                        }
                     }
                 }
                 //now for the avg h5
                 //detector = analysis_job.get_detector(-1); 
                 search_filename = dataset_num + ".h5"; // v9 save
-                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
-                search_filename = dataset_num + ".mda.h5";
-                find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
+                if (false == find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback))
+                {
+                    search_filename = dataset_num + ".mda.h5";
+                    find_and_optimize_roi(analysis_job, -1, rois, int_specs, search_filename, out_roi_fit_params[-1], status_callback);
+                }
             }
             else
             {
