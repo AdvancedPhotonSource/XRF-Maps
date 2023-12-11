@@ -693,7 +693,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("perform_quantification", &perform_quantification);
     //m.def("average_quantification", &average_quantification);
 
-	m.def("get_energy_range", (data_struct::Range (*)(size_t, Fit_Parameters<float>*)) &data_struct::get_energy_range);
+	m.def("get_energy_range", (data_struct::Range (*)(size_t, const Fit_Parameters<float>* const)) &data_struct::get_energy_range);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;

@@ -17,7 +17,7 @@ jobs:
     - script: .\vcpkg\bootstrap-vcpkg.bat
     - task: Cache@2
       inputs:
-        key: vcpkg-cache | $(Agent.OS)
+        key: 'version2 | vcpkg-cache | "$(Agent.OS)"'
         restoreKeys: |
           vcpkg-cache | $(Agent.OS)
           vcpkg-cache
