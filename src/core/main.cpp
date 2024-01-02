@@ -386,6 +386,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 
         search_ext_mda_list.push_back(".mda");
         search_ext_mda_list.push_back(".mca");
+        search_ext_mda_list.push_back(".h5"); // added h5 for esrf datasets
         for (int i = 0; i < MAX_DETECTORS; i++)
         {
             std::string mca_str = ".mca" + std::to_string(i);

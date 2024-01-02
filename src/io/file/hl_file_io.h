@@ -906,6 +906,19 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         *is_loaded_from_analyazed_h5 = false;
     }
 
+    // try to load esrf hdf5
+    if (ends_in_h5)
+    {
+        fullpath = dataset_directory + DIR_END_CHAR + "mda" + DIR_END_CHAR + dataset_file;
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, spectra_volume))
+        {
+            logI << "Loaded spectra volume esrf.\n";
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            //// io::file::HDF5_IO::inst()->save_scan_scalers_esrf<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+            return true;
+        }
+    }
+
     //try loading emd dataset if it ends in .emd
     if (dataset_file.rfind(".emd") == dataset_file.length() - 4)
     {

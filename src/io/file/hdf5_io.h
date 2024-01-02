@@ -899,6 +899,41 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
+    bool load_spectra_vol_esrf(std::string path, data_struct::Spectra_Volume<T_real>* spec_vol, bool logerr = true)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t    file_id, root_grp_id, fluo_grp_id, title_id, scanDim1_id, scanDim2_id;
+        H5G_info_t info;
+        char root_group_name[2048] = { 0 };
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+            return false;
+
+        H5Gget_objname_by_idx(file_id, 0, &root_group_name[0], 2047);
+
+        if (false == _open_h5_object(root_grp_id, H5O_GROUP, close_map, root_group_name, file_id))
+            return false;
+
+        if (false == _open_h5_object(fluo_grp_id, H5O_GROUP, close_map, "FLUO", root_grp_id))
+            return false;
+
+        if (false == _open_h5_object(scanDim1_id, H5O_DATASET, close_map, "scanDim_1", fluo_grp_id))
+            return false;
+
+        if (false == _open_h5_object(scanDim2_id, H5O_DATASET, close_map, "scanDim_2", fluo_grp_id))
+            return false;
+
+        if (false == _open_h5_object(title_id, H5O_DATASET, close_map, "title", root_grp_id))
+            return false;
+
+        return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
     bool load_spectra_volume_emd(std::string path, size_t frame_num, data_struct::Spectra_Volume<T_real> *spec_vol, bool logerr = true)
     {
         std::lock_guard<std::mutex> lock(_mutex);

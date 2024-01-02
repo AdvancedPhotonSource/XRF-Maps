@@ -96,6 +96,8 @@ namespace io
 
             void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 
+            const std::vector<std::string>& edf_files() { return _edf_files; }
+
             const std::vector<std::string>& netcdf_files() {  return _netcdf_files; }
 
             const std::vector<std::string>& bnp_netcdf_files() { return _bnp_netcdf_files; }
@@ -112,6 +114,7 @@ namespace io
 
             static File_Scan* _this_inst;
 
+            std::vector<std::string> _edf_files;
             std::vector<std::string> _netcdf_files;
             std::vector<std::string> _bnp_netcdf_files;
             std::vector<std::string> _hdf_files;
