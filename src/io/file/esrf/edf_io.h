@@ -115,12 +115,12 @@ namespace edf
      
             logI << header << "\n";
             
-            float* val = (float*)(buffer + idx);
+            int* val = (int*)(buffer + idx);
             for (int col = 0; col < spec_line->size(); col++)
             {
                 for (int samp = 0; samp < 2048; samp++)
                 {
-                    (*spec_line)[col][samp] = *val;
+                    (*spec_line)[col][samp] = static_cast<T_real>(*val);
                     val++;
                 }
             }
