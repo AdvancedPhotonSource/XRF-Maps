@@ -937,9 +937,13 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 std::string str_r = std::to_string(r);
                 std::string str_row = std::string(4 - str_r.length(), '0') + std::to_string(r);
                 fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xia" + str_det_num + "_0001_0000_" + str_row + ".edf";
+                metafullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xiaSt_0001_0000_" + str_row + ".edf";
                 io::file::edf::load_spectra_line(fullpath, &(*spectra_volume)[r]);
+                // TODO finish loading meta data for spectra icr, ocr, elt, ert
+                io::file::edf::load_spectra_line_meta(metafullpath, &(*spectra_volume)[r]);
             }
             io::file::HDF5_IO::inst()->start_save_seq(true);
+            
             //// io::file::HDF5_IO::inst()->save_scan_scalers_esrf<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
             return true;
         }

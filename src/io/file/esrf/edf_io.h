@@ -144,6 +144,87 @@ namespace edf
     }
 
     // ----------------------------------------------------------------------------
+   
+    template<typename T_real>
+    DLL_EXPORT bool load_spectra_line_meta(std::string filename, data_struct::Spectra_Line<T_real>* spec_line)
+    {
+        std::ifstream file_stream(filename, std::ios_base::binary);
+        try
+        {
+            file_stream.seekg(0, std::ios_base::end);
+            int length = file_stream.tellg();
+
+            if (length < 256)
+            {
+                logW << "File length smaller than 256\n";
+                return false;
+            }
+
+            char* buffer = new char[length];
+            // rewind file and start reading data
+            file_stream.clear();
+            file_stream.seekg(0);
+
+            file_stream.read(buffer, length);
+
+            file_stream.close();
+            // first byte should be '{'
+            if (buffer[0] != '{')
+            {
+                logW << "File header does not start with '{'\n";
+
+                delete[] buffer;
+                return false;
+            }
+
+            std::string header = "";
+            int idx = 0;
+            // find end of header '}'
+            for (int i = 1; i < length; i++)
+            {
+                if (buffer[i] == '}')
+                {
+                    header = std::string(buffer, i + 1);
+                    idx = i + 2; // 1 char for '}' and 1 for '\n'
+                    break;
+                }
+            }
+
+            logI << header << "\n";
+
+            // chnum output icr ocr livetime deadtime 
+            double* val = (double*)(buffer + idx);
+            for (int col = 0; col < spec_line->size(); col++)
+            {
+                for (int samp = 0; samp < 2048; samp++)
+                {
+                    // TODO FINISH
+                    (*spec_line)[col].elapsed_livetime(elt);// = static_cast<T_real>(*val);
+                    (*spec_line)[col].elapsed_realtime(elt);// = static_cast<T_real>(*val);
+                    (*spec_line)[col].input_counts(elt);// = static_cast<T_real>(*val);
+                    (*spec_line)[col].output_counts(elt);// = static_cast<T_real>(*val);
+                    val++;
+                }
+            }
+
+            delete[] buffer;
+        }
+        catch (std::exception& e)
+        {
+            if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()))
+            {
+                std::cerr << "ios Exception happened: " << e.what() << "\n"
+                    << "Error bits are: "
+                    << "\nfailbit: " << file_stream.fail()
+                    << "\neofbit: " << file_stream.eof()
+                    << "\nbadbit: " << file_stream.bad() << "\n";
+            }
+            return false;
+        }
+
+        return true;
+    }
+    
     // ----------------------------------------------------------------------------
     // ----------------------------------------------------------------------------
 
