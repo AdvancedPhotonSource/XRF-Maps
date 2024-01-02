@@ -54,12 +54,15 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <dirent.h>
 #endif
 
+#include <algorithm>
+
 #include "io/file/netcdf_io.h"
 #include "io/file/mda_io.h"
 #include "io/file/mca_io.h"
 #include "io/file/hdf5_io.h"
 #include "io/file/csv_io.h"
 #include "io/file/file_scan.h"
+#include "io/file/esrf/edf_io.h"
 
 #include "data_struct/spectra_volume.h"
 
@@ -910,10 +913,33 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     if (ends_in_h5)
     {
         fullpath = dataset_directory + DIR_END_CHAR + "mda" + DIR_END_CHAR + dataset_file;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, spectra_volume))
+        std::string file_title;
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume))
         {
             logI << "Loaded spectra volume esrf.\n";
-            io::file::HDF5_IO::inst()->start_save_seq(true);
+            std::string str_det_num = "";
+            if (detector_num < 10)
+            {
+                // prepend 0 
+                str_det_num = "0" + std::to_string(detector_num);
+            }
+            else
+            {
+                str_det_num = std::to_string(detector_num);
+            }
+
+            //  COX_4_50x_400nm_05_xia00_0001_0000_0000.edf
+            //    title                 detector        row
+            //   COX_4_50x_400nm_05      xia00          0000
+           
+            for (int r = 0; r < spectra_volume->rows(); r++)
+            {
+                std::string str_r = std::to_string(r);
+                std::string str_row = std::string(4 - str_r.length(), '0') + std::to_string(r);
+                fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xia" + str_det_num + "_0001_0000_" + str_row + ".edf";
+                io::file::edf::load_spectra_line(fullpath, &(*spectra_volume)[r]);
+            }
+            //// io::file::HDF5_IO::inst()->start_save_seq(true);
             //// io::file::HDF5_IO::inst()->save_scan_scalers_esrf<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
             return true;
         }

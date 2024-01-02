@@ -899,7 +899,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_esrf(std::string path, data_struct::Spectra_Volume<T_real>* spec_vol, bool logerr = true)
+    bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, bool logerr = true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -927,6 +927,31 @@ public:
 
         if (false == _open_h5_object(title_id, H5O_DATASET, close_map, "title", root_grp_id))
             return false;
+
+        //title_ds_id = H5Dget_space(title_id);
+        //close_map.push({ title_ds_id, H5O_DATASPACE });
+
+        char tmp_name[256] = { 0 };
+        hid_t ftype = H5Dget_type(title_id);
+        close_map.push({ ftype, H5O_DATATYPE });
+        hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        herr_t error = H5Dread(title_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_name[0]);
+
+        if (error == 0)
+        {
+            title = std::string(tmp_name);
+        }
+
+        int rows = 0;
+        int cols = 0;
+
+        error = H5Dread(scanDim1_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &cols);
+        error = H5Dread(scanDim2_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &rows);
+
+
+        spec_vol->resize_and_zero(rows, cols, 2048);
+
+        _close_h5_objects(close_map);
 
         return true;
     }
