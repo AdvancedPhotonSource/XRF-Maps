@@ -76,6 +76,11 @@ public:
                                                     std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
                                                     const struct Range energy_range);
 
+    const std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>> model_spectrum_info(const Fit_Parameters<T_real>* const fit_params,
+                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                    std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
+                                                    const struct Range energy_range);
+
     // multi threaded
     virtual const Spectra<T_real> model_spectrum_mp(const Fit_Parameters<T_real>* const fit_params,
                                                         const Fit_Element_Map_Dict<T_real>* const elements_to_fit,

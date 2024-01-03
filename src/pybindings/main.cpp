@@ -81,7 +81,7 @@ auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	}
 	*/
 	//return model->model_spectrum_mp(&fit_params, elements_to_fit, energy_range);
-	return model->model_spectrum(&fit_params, elements_to_fit, nullptr, energy_range);
+    return std::tuple<std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(out_counts, fit_params);
 }
 
 PYBIND11_MODULE(pyxrfmaps, m) {
@@ -412,8 +412,30 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def(py::init<>())
 	.def("fit_parameters", &fitting::models::Gaussian_Model<float>::fit_parameters)
 	.def("model_spectrum", &fitting::models::Gaussian_Model<float>::model_spectrum)
+    .def("model_spectrum_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map_Dict<float>* const elements_to_fit,
+        const data_struct::Range energy_range)
+        {
+            return self.model_spectrum(fit_params, elements_to_fit, nullptr, energy_range);
+        })
+    .def("model_spectrum_info", &fitting::models::Gaussian_Model<float>::model_spectrum_info)
+    .def("model_spectrum_info_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map_Dict<float>* const elements_to_fit,
+        const data_struct::Range energy_range)
+        {
+            return self.model_spectrum_info(fit_params, elements_to_fit, nullptr, energy_range);
+        })
 	.def("model_spectrum_mp", &fitting::models::Gaussian_Model<float>::model_spectrum_mp)
 	.def("model_spectrum_element", &fitting::models::Gaussian_Model<float>::model_spectrum_element)
+    .def("model_spectrum_element_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map<float>* const element_to_fit,
+        const data_struct::ArrayTr<float> ev)
+        {
+            return self.model_spectrum_element(fit_params, element_to_fit, ev, nullptr);
+        })
 	.def("set_fit_params_preset", &fitting::models::Gaussian_Model<float>::set_fit_params_preset)
 	.def("reset_to_default_fit_params", &fitting::models::Gaussian_Model<float>::reset_to_default_fit_params)
 	.def("update_fit_params_values", &fitting::models::Gaussian_Model<float>::update_fit_params_values)
