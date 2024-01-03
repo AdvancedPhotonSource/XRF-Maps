@@ -609,11 +609,11 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
             {
                 std::string low_ds_ic = STR_DS_IC;
-                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), std::tolower);
+                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), ::tolower);
                 std::string low_us_ic = STR_US_IC; 
-                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), std::tolower);
+                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), ::tolower);
                 std::string low_sr = STR_SR_CURRENT;
-                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), std::tolower);
+                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), ::tolower);
                 for (auto& in_itr : roi_itr.second)
                 {
                     hsize_t xoffset = in_itr.first;
