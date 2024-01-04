@@ -67,15 +67,15 @@ namespace edf
 {
    
     // ----------------------------------------------------------------------------
-
     template<typename T_real>
-    DLL_EXPORT bool load_spectra_line(std::string filename, data_struct::Spectra_Line<T_real> *spec_line)
+    bool check_header_and_load(std::string filename, char** buffer, int& length, int& idx, std::map<std::string, std::string> &header_map)
     {
+        char *buf = nullptr;
         std::ifstream file_stream(filename, std::ios_base::binary);
         try
         {
             file_stream.seekg(0, std::ios_base::end);
-            int length = file_stream.tellg();
+            length = file_stream.tellg();
 
             if (length < 256)
             {
@@ -83,52 +83,65 @@ namespace edf
                 return false;
             }
 
-            char* buffer = new char[length];
+            buf = new char[length];
             // rewind file and start reading data
             file_stream.clear();
             file_stream.seekg(0);
 
-            file_stream.read(buffer, length);
+            file_stream.read(buf, length);
 
             file_stream.close();
             // first byte should be '{'
-            if (buffer[0] != '{')
+            if (buf[0] != '{')
             {
                 logW << "File header does not start with '{'\n";
 
-                delete[] buffer;
+                delete[] buf;
+                buffer = nullptr;
                 return false;
             }
 
             std::string header = "";
-            int idx = 0;
+            idx = 0;
+            int last_i = 0;
             // find end of header '}'
             for (int i = 1; i < length; i++)
             {
-                if (buffer[i] == '}')
+                if (buf[i] == '}')
                 {
-                    header = std::string(buffer, i+1);
+                    header = std::string(buf, i + 1);
                     idx = i + 2; // 1 char for '}' and 1 for '\n'
                     break;
                 }
-            }
-     
-            logI << header << "\n";
-            
-            int* val = (int*)(buffer + idx);
-            for (int col = 0; col < spec_line->size(); col++)
-            {
-                for (int samp = 0; samp < 2048; samp++)
+                else if (buf[i] == '\n')
                 {
-                    (*spec_line)[col][samp] = static_cast<T_real>(*val);
-                    val++;
+                    std::string entry(buf+last_i, (i - last_i) + 1);
+                    int e_idx = entry.find('=');
+                    if (e_idx >= 0)
+                    {
+                        std::string key = entry.substr(0, e_idx);
+                        key.erase(std::remove(key.begin(), key.end(), '\n'), key.end());
+                        key.erase(std::remove(key.begin(), key.end(), '\r'), key.end());
+                        key.erase(std::remove(key.begin(), key.end(), ' '), key.end());
+                        std::string value = entry.substr(e_idx + 1);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ';'), value.end());
+                        header_map[key] = value;
+                    }
+                    last_i = i+1;
                 }
             }
-
-            delete[] buffer;
         }
         catch (std::exception& e)
         {
+            if (buf != nullptr)
+            {
+                delete[] buf;
+                buffer = nullptr;
+            }
+
             if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()))
             {
                 std::cerr << "ios Exception happened: " << e.what() << "\n"
@@ -139,6 +152,49 @@ namespace edf
             }
             return false;
         }
+        *buffer = buf;
+        return true;
+    }
+
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
+    DLL_EXPORT bool load_spectra_line(std::string filename, data_struct::Spectra_Line<T_real> *spec_line)
+    {
+        char* buffer = nullptr;
+        std::map<std::string, std::string> header;
+        try
+        {
+            int length = 0;
+            int idx = 0;
+            if (false == check_header_and_load<T_real>(filename, &buffer, length, idx, header))
+            {
+                return false;
+            }
+
+            int* val = (int*)(buffer + idx);
+            for (int col = 0; col < spec_line->size(); col++)
+            {
+                for (int samp = 0; samp < 2048; samp++)
+                {
+                    (*spec_line)[col][samp] = static_cast<T_real>(*val);
+                    val++;
+                }
+            }
+            if (buffer != nullptr)
+            {
+                delete[] buffer;
+            }
+        }
+        catch (std::exception& e)
+        {
+            if (buffer != nullptr)
+            {
+                delete[] buffer;
+            }
+            logE << e.what() << "\n";
+            return false;
+        }
 
         return true;
     }
@@ -146,79 +202,106 @@ namespace edf
     // ----------------------------------------------------------------------------
    
     template<typename T_real>
-    DLL_EXPORT bool load_spectra_line_meta(std::string filename, data_struct::Spectra_Line<T_real>* spec_line)
+    DLL_EXPORT bool load_spectra_line_meta(std::string filename, int detector_num, data_struct::Spectra_Line<T_real>* spec_line)
     {
-        std::ifstream file_stream(filename, std::ios_base::binary);
+        char* buffer = nullptr;
+        std::map<std::string, std::string> header;
         try
         {
-            file_stream.seekg(0, std::ios_base::end);
-            int length = file_stream.tellg();
-
-            if (length < 256)
-            {
-                logW << "File length smaller than 256\n";
-                return false;
-            }
-
-            char* buffer = new char[length];
-            // rewind file and start reading data
-            file_stream.clear();
-            file_stream.seekg(0);
-
-            file_stream.read(buffer, length);
-
-            file_stream.close();
-            // first byte should be '{'
-            if (buffer[0] != '{')
-            {
-                logW << "File header does not start with '{'\n";
-
-                delete[] buffer;
-                return false;
-            }
-
-            std::string header = "";
+            int length = 0;
             int idx = 0;
-            // find end of header '}'
-            for (int i = 1; i < length; i++)
+            if (false == check_header_and_load<T_real>(filename, &buffer, length, idx, header))
             {
-                if (buffer[i] == '}')
-                {
-                    header = std::string(buffer, i + 1);
-                    idx = i + 2; // 1 char for '}' and 1 for '\n'
-                    break;
-                }
+                return false;
             }
-
-            logI << header << "\n";
 
             // chnum output icr ocr livetime deadtime 
             double* val = (double*)(buffer + idx);
             for (int col = 0; col < spec_line->size(); col++)
             {
-                for (int samp = 0; samp < 2048; samp++)
+                //  chnum output icr ocr livetime deadtime
+                double det = static_cast<double>(*val);
+                val++;
+                double output = static_cast<double>(*val);
+                val++;
+                double icr = static_cast<double>(*val);
+                val++;
+                double ocr = static_cast<double>(*val);
+                val++;
+                double livetime = static_cast<double>(*val);
+                val++;
+                double deadtime = static_cast<double>(*val);
+                val++;
+
+                if (detector_num == (int)det)
+                {
+                    (*spec_line)[col].elapsed_livetime(livetime);
+                    (*spec_line)[col].elapsed_realtime(livetime);
+                    (*spec_line)[col].input_counts(icr);
+                    (*spec_line)[col].output_counts(ocr);
+                }
+            }
+
+            if (buffer != nullptr)
+            {
+                delete[] buffer;
+            }
+        }
+        catch (std::exception& e)
+        {
+            if (buffer != nullptr)
+            {
+                delete[] buffer;
+            }
+            logE << e.what() << "\n";
+            return false;
+        }
+
+        return true;
+    }
+
+    // ----------------------------------------------------------------------------
+
+    template<typename T_real>
+    DLL_EXPORT bool load_scaler(std::string filename, int rows, int cols)
+    {
+        char* buffer = nullptr;
+        std::map<std::string, std::string> header;
+        try
+        {
+            int length = 0;
+            int idx = 0;
+            if (false == check_header_and_load<T_real>(filename, &buffer, length, idx, header))
+            {
+                return false;
+            }
+
+            T_real* val = (T_real*)(buffer + idx);
+            for (int col = 0; col < cols; col++)
+            {
+                for (int row = 0; row < rows; row++)
                 {
                     // TODO FINISH
-                    (*spec_line)[col].elapsed_livetime(elt);// = static_cast<T_real>(*val);
-                    (*spec_line)[col].elapsed_realtime(elt);// = static_cast<T_real>(*val);
-                    (*spec_line)[col].input_counts(elt);// = static_cast<T_real>(*val);
-                    (*spec_line)[col].output_counts(elt);// = static_cast<T_real>(*val);
+                    //(*spec_line)[col].elapsed_livetime(elt);// = static_cast<T_real>(*val);
+                    //(*spec_line)[col].elapsed_realtime(elt);// = static_cast<T_real>(*val);
+                    //(*spec_line)[col].input_counts(elt);// = static_cast<T_real>(*val);
+                    //(*spec_line)[col].output_counts(elt);// = static_cast<T_real>(*val);
                     val++;
                 }
             }
 
-            delete[] buffer;
+            if (buffer != nullptr)
+            {
+                delete[] buffer;
+            }
         }
         catch (std::exception& e)
         {
-            if (file_stream.eof() == 0 && (file_stream.bad() || file_stream.fail()))
+            if (buffer != nullptr)
             {
-                std::cerr << "ios Exception happened: " << e.what() << "\n"
-                    << "Error bits are: "
-                    << "\nfailbit: " << file_stream.fail()
-                    << "\neofbit: " << file_stream.eof()
-                    << "\nbadbit: " << file_stream.bad() << "\n";
+                delete[] buffer;
             }
+            logE << e.what() << "\n";
             return false;
         }
 
