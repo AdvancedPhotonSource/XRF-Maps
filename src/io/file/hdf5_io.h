@@ -899,12 +899,12 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, bool logerr = true)
+    bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, bool logerr = true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, root_grp_id, fluo_grp_id, title_id, scanDim1_id, scanDim2_id;
+        hid_t    file_id, root_grp_id, fluo_grp_id, title_id, scanDim1_id, scanDim2_id, start_time_id;
         H5G_info_t info;
         char root_group_name[2048] = { 0 };
 
@@ -928,9 +928,9 @@ public:
         if (false == _open_h5_object(title_id, H5O_DATASET, close_map, "title", root_grp_id))
             return false;
 
-        //title_ds_id = H5Dget_space(title_id);
-        //close_map.push({ title_ds_id, H5O_DATASPACE });
-
+        if (false == _open_h5_object(start_time_id, H5O_DATASET, close_map, "start_time", root_grp_id))
+            return false;
+        
         char tmp_name[256] = { 0 };
         hid_t ftype = H5Dget_type(title_id);
         close_map.push({ ftype, H5O_DATATYPE });
@@ -942,12 +942,31 @@ public:
             title = std::string(tmp_name);
         }
 
+        char tmp_time[256] = { 0 };
+        hid_t ftype2 = H5Dget_type(start_time_id);
+        close_map.push({ ftype2, H5O_DATATYPE });
+        hid_t type2 = H5Tget_native_type(ftype2, H5T_DIR_ASCEND);
+        error = H5Dread(start_time_id, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_time[0]);
+
+        if (error == 0)
+        {
+            scan_info_edf.meta_info.scan_time_stamp = std::string(tmp_time);
+        }
+        else
+        {
+            scan_info_edf.meta_info.scan_time_stamp = "";
+        }
+
         int rows = 0;
         int cols = 0;
 
         error = H5Dread(scanDim1_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &cols);
         error = H5Dread(scanDim2_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &rows);
 
+
+        scan_info_edf.meta_info.x_axis.resize(cols);
+        scan_info_edf.meta_info.y_axis.resize(rows);
+        scan_info_edf.meta_info.name = title;
 
         spec_vol->resize_and_zero(rows, cols, 2048);
 

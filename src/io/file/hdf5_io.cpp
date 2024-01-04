@@ -535,83 +535,84 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
         return false;
     }
 		
-
-	//save extra pv's
-	count[0] = extra_pvs->size();
-    if (false == _open_h5_dataset(STR_NAMES, filetype, extra_grp_id, 1, count, count, dset_id, dataspace_id))
+    if (extra_pvs->size() > 0)
     {
-        return false;
-    }
-        
-    if (false == _open_h5_dataset(STR_VALUES, filetype, extra_grp_id, 1, count, count, dset_val_id, dataspace_val_id))
-    {
-        return false;
-    }
-
-    if (false == _open_h5_dataset(STR_DESCRIPTION, filetype, extra_grp_id, 1, count, count, dset_desc_id, dataspace_desc_id))
-    {
-        return false;
-    }
-
-    if (false == _open_h5_dataset(STR_UNIT, filetype, extra_grp_id, 1, count, count, dset_unit_id, dataspace_unit_id))
-    {
-        return false;
-    }
-
-    count[0] = 1;
-
-	std::string str_val;
-	short* s_val;
-	int* i_val;
-	float* f_val;
-	double* d_val;
-
-	count[0] = 1;
-    _create_memory_space(1, count, memoryspace_id);
-
-	for (int16_t i = 0; i < extra_pvs->size(); i++)
-	{
-		offset[0] = i;
-		data_struct::Extra_PV pv = extra_pvs->at(i);
-            
-		H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-        H5Sselect_hyperslab(dataspace_val_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-        H5Sselect_hyperslab(dataspace_desc_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-        H5Sselect_hyperslab(dataspace_unit_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-
-        char tmp_char[255] = {0};
-        pv.name.copy(tmp_char, 254);
-        status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
-        if (status < 0)
+        //save extra pv's
+        count[0] = extra_pvs->size();
+        if (false == _open_h5_dataset(STR_NAMES, filetype, extra_grp_id, 1, count, count, dset_id, dataspace_id))
         {
-            logE << "failed to write " << STR_NAMES << "\n";
-        }
-			
-        char tmp_char2[255] = {0};
-        pv.value.copy(tmp_char2, 254);
-        status = H5Dwrite(dset_val_id, memtype, memoryspace_id, dataspace_val_id, H5P_DEFAULT, (void*)tmp_char2);
-        if (status < 0)
-        {
-            logE << "failed to write " << STR_VALUES << "\n";
-        }
-			
-        char tmp_char3[255] = {0};
-        pv.description.copy(tmp_char, 254);
-        status = H5Dwrite(dset_desc_id, memtype, memoryspace_id, dataspace_desc_id, H5P_DEFAULT, (void*)tmp_char3);
-        if (status < 0)
-        {
-            logE << "failed to write " << STR_DESCRIPTION << "\n";
+            return false;
         }
 
-        char tmp_char4[255] = {0};
-        pv.unit.copy(tmp_char, 254);
-        status = H5Dwrite(dset_unit_id, memtype, memoryspace_id, dataspace_unit_id, H5P_DEFAULT, (void*)tmp_char4);
-        if (status < 0)
+        if (false == _open_h5_dataset(STR_VALUES, filetype, extra_grp_id, 1, count, count, dset_val_id, dataspace_val_id))
         {
-            logE << "failed to write " << STR_UNIT << "\n";
+            return false;
         }
-	}
 
+        if (false == _open_h5_dataset(STR_DESCRIPTION, filetype, extra_grp_id, 1, count, count, dset_desc_id, dataspace_desc_id))
+        {
+            return false;
+        }
+
+        if (false == _open_h5_dataset(STR_UNIT, filetype, extra_grp_id, 1, count, count, dset_unit_id, dataspace_unit_id))
+        {
+            return false;
+        }
+
+        count[0] = 1;
+
+        std::string str_val;
+        short* s_val;
+        int* i_val;
+        float* f_val;
+        double* d_val;
+
+        count[0] = 1;
+        _create_memory_space(1, count, memoryspace_id);
+
+        for (int16_t i = 0; i < extra_pvs->size(); i++)
+        {
+            offset[0] = i;
+            data_struct::Extra_PV pv = extra_pvs->at(i);
+
+            H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+            H5Sselect_hyperslab(dataspace_val_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+            H5Sselect_hyperslab(dataspace_desc_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+            H5Sselect_hyperslab(dataspace_unit_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+            char tmp_char[255] = { 0 };
+            pv.name.copy(tmp_char, 254);
+            status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
+            if (status < 0)
+            {
+                logE << "failed to write " << STR_NAMES << "\n";
+            }
+
+            char tmp_char2[255] = { 0 };
+            pv.value.copy(tmp_char2, 254);
+            status = H5Dwrite(dset_val_id, memtype, memoryspace_id, dataspace_val_id, H5P_DEFAULT, (void*)tmp_char2);
+            if (status < 0)
+            {
+                logE << "failed to write " << STR_VALUES << "\n";
+            }
+
+            char tmp_char3[255] = { 0 };
+            pv.description.copy(tmp_char, 254);
+            status = H5Dwrite(dset_desc_id, memtype, memoryspace_id, dataspace_desc_id, H5P_DEFAULT, (void*)tmp_char3);
+            if (status < 0)
+            {
+                logE << "failed to write " << STR_DESCRIPTION << "\n";
+            }
+
+            char tmp_char4[255] = { 0 };
+            pv.unit.copy(tmp_char, 254);
+            status = H5Dwrite(dset_unit_id, memtype, memoryspace_id, dataspace_unit_id, H5P_DEFAULT, (void*)tmp_char4);
+            if (status < 0)
+            {
+                logE << "failed to write " << STR_UNIT << "\n";
+            }
+        }
+    }
     H5Tclose(filetype);
     H5Tclose(memtype);
     
