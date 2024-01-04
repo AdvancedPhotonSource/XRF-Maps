@@ -202,7 +202,7 @@ namespace edf
     // ----------------------------------------------------------------------------
    
     template<typename T_real>
-    DLL_EXPORT bool load_spectra_line_meta(std::string filename, int detector_num, data_struct::Spectra_Line<T_real>* spec_line)
+    DLL_EXPORT bool load_spectra_line_meta(std::string filename, int detector_num, int row, data_struct::Spectra_Line<T_real>* spec_line, data_struct::Scaler_Map<T_real> &dead_time_map, data_struct::Scaler_Map<T_real>& output_map)
     {
         char* buffer = nullptr;
         std::map<std::string, std::string> header;
@@ -215,7 +215,6 @@ namespace edf
                 return false;
             }
 
-            // chnum output icr ocr livetime deadtime 
             double* val = (double*)(buffer + idx);
             for (int col = 0; col < spec_line->size(); col++)
             {
@@ -235,6 +234,8 @@ namespace edf
 
                 if (detector_num == (int)det)
                 {
+                    output_map.values(row, col) = static_cast<T_real>(output);
+                    dead_time_map.values(row, col) = static_cast<T_real>(deadtime);
                     (*spec_line)[col].elapsed_livetime(livetime);
                     (*spec_line)[col].elapsed_realtime(livetime);
                     (*spec_line)[col].input_counts(icr);
@@ -263,7 +264,7 @@ namespace edf
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool load_scaler(std::string filename, int rows, int cols)
+    DLL_EXPORT bool load_scaler(std::string filename, data_struct::Scaler_Map<T_real>& scaler_map)
     {
         char* buffer = nullptr;
         std::map<std::string, std::string> header;
@@ -276,16 +277,12 @@ namespace edf
                 return false;
             }
 
-            T_real* val = (T_real*)(buffer + idx);
-            for (int col = 0; col < cols; col++)
+            float* val = (float*)(buffer + idx);
+            for (int col = 0; col < scaler_map.values.cols(); col++)
             {
-                for (int row = 0; row < rows; row++)
-                {
-                    // TODO FINISH
-                    //(*spec_line)[col].elapsed_livetime(elt);// = static_cast<T_real>(*val);
-                    //(*spec_line)[col].elapsed_realtime(elt);// = static_cast<T_real>(*val);
-                    //(*spec_line)[col].input_counts(elt);// = static_cast<T_real>(*val);
-                    //(*spec_line)[col].output_counts(elt);// = static_cast<T_real>(*val);
+                for (int row = 0; row < scaler_map.values.rows(); row++)
+                {   
+                    scaler_map.values(row, col) = static_cast<T_real>(*val);
                     val++;
                 }
             }

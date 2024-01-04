@@ -928,10 +928,17 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 str_det_num = std::to_string(detector_num);
             }
 
+            data_struct::Scaler_Map<T_real> dead_time_map;
+            dead_time_map.name = STR_DEAD_TIME;
+            dead_time_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
+            
+            data_struct::Scaler_Map<T_real> output_map;
+            output_map.name = "OUTPUT_MAP"; // not sure what this is?
+            output_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
+
             //  COX_4_50x_400nm_05_xia00_0001_0000_0000.edf
             //    title                 detector        row
             //   COX_4_50x_400nm_05      xia00          0000
-           
             for (int r = 0; r < spectra_volume->rows(); r++)
             {
                 std::string str_r = std::to_string(r);
@@ -939,11 +946,62 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xia" + str_det_num + "_0001_0000_" + str_row + ".edf";
                 std::string metafullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xiaSt_0001_0000_" + str_row + ".edf";
                 io::file::edf::load_spectra_line(fullpath, &(*spectra_volume)[r]);
-                // TODO finish loading meta data for spectra icr, ocr, elt, ert
-                io::file::edf::load_spectra_line_meta(metafullpath, detector_num, &(*spectra_volume)[r]);
+                // loading meta data for spectra icr, ocr, elt, ert
+                io::file::edf::load_spectra_line_meta(metafullpath, detector_num, r, &(*spectra_volume)[r], dead_time_map, output_map);
             }
-            io::file::HDF5_IO::inst()->start_save_seq(true);
+
+            data_struct::Scan_Info<T_real> scan_info_edf;
+
+            std::map<std::string, std::string> scaler_map = {
+                {STR_US_IC, "_zap_i0_0001_0000.edf"},
+                {STR_DS_IC, "_zap_i1_0001_0000.edf"},
+                {STR_SR_CURRENT, "_arr_srcur_0001_0000.edf"},
+                {"bpm4","_arr_bpm4_0001_0000.edf"},
+                {"it","_arr_it_0001_0000.edf"},
+                {"pepi1","_arr_pepu1_0001_0000.edf"},
+                {"pepi3","_arr_pepu3_0001_0000.edf"},
+                {"pepi5","_arr_pepu5_0001_0000.edf"},
+                {"atto1","_zap_atto1_0001_0000.edf"},
+                {"atto2","_zap_atto1_0002_0000.edf"},
+                {"atto3","_zap_atto1_0003_0000.edf"},
+                {"mtime","_zap_mtime_0001_0000.edf"},
+                {"mtime_diff","_zap_mtime_diff_0001_0000.edf"},
+                {"qudis1","_zap_qudis1_0001_0000.edf"},
+                {"qudis2","_zap_qudis2_0001_0000.edf"},
+                {"somega","_zap_somega_0001_0000.edf"}
+            };
+
+            // load scalers
+
+            for (auto& s_itr : scaler_map)
+            {
+                data_struct::Scaler_Map<T_real> s_map;
+                s_map.name = s_itr.first;
+                s_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
+                std::string s_fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + s_itr.second;
+                if (io::file::edf::load_scaler(s_fullpath, s_map))
+                {
+                    scan_info_edf.scaler_maps.push_back(s_map);
+                }
+            }
+
+            scan_info_edf.scaler_maps.push_back(dead_time_map);
+            scan_info_edf.scaler_maps.push_back(output_map);
             
+
+            if (save_scalers)
+            {
+                io::file::HDF5_IO::inst()->start_save_seq(true);
+                
+                // add ELT, ERT, INCNT, OUTCNT to scaler map
+                if (spectra_volume != nullptr)
+                {
+                    spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
+                }
+
+                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
+            }
+
             //// io::file::HDF5_IO::inst()->save_scan_scalers_esrf<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
             return true;
         }
