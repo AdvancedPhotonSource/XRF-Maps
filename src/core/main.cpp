@@ -64,6 +64,7 @@ void help()
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
     logit_s<<"--quantify-fit <routines,>: If you want to perform quantification without having to re-fit all datasets. See --fit for routine options \n";
     logit_s<<"--detectors : <int,..> Detectors to process, Defaults to 0,1,2,3 for 4 detector \n";
+    logit_s<<"--detector-range : <int:int> Detector range 0:3 will process 0,1,2,3 detectors \n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";

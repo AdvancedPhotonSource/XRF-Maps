@@ -1002,7 +1002,6 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
             }
 
-            //// io::file::HDF5_IO::inst()->save_scan_scalers_esrf<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
             return true;
         }
     }
