@@ -215,8 +215,10 @@ namespace edf
                 return false;
             }
 
+            int num_vals = (length - idx) / sizeof(double);
+            int col = 0;
             double* val = (double*)(buffer + idx);
-            for (int col = 0; col < spec_line->size(); col++)
+            for (int i = 0; i < num_vals; i+=6)
             {
                 //  chnum output icr ocr livetime deadtime
                 double det = static_cast<double>(*val);
@@ -236,10 +238,11 @@ namespace edf
                 {
                     output_map.values(row, col) = static_cast<T_real>(output);
                     dead_time_map.values(row, col) = static_cast<T_real>(deadtime);
-                    (*spec_line)[col].elapsed_livetime(livetime);
-                    (*spec_line)[col].elapsed_realtime(livetime);
-                    (*spec_line)[col].input_counts(icr);
-                    (*spec_line)[col].output_counts(ocr);
+                    (*spec_line)[col].elapsed_livetime(static_cast<T_real>(livetime));
+                    (*spec_line)[col].elapsed_realtime(static_cast<T_real>(livetime));
+                    (*spec_line)[col].input_counts(static_cast<T_real>(icr));
+                    (*spec_line)[col].output_counts(static_cast<T_real>(ocr));
+                    col++;
                 }
             }
 
