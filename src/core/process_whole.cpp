@@ -522,6 +522,15 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                 {
                     full_save_path += ".h5" + str_detector_num;
                 }
+                // added for esrf datasets
+                if (fn_str_len > 4 &&
+                    dataset_file[fn_str_len - 3] == '.' &&
+                    dataset_file[fn_str_len - 2] == 'h' &&
+                    dataset_file[fn_str_len - 1] == '5')
+                {
+                    full_save_path += ".h5" + str_detector_num;
+                }
+
                 if (io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true))
                 {
                     if (false == io::file::HDF5_IO::inst()->save_quantification(detector))

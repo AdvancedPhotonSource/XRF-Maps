@@ -952,11 +952,11 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             }
 
             std::map<std::string, std::string> scaler_map = {
-                {STR_US_IC, "_zap_i0_0001_0000.edf"},
-                {STR_DS_IC, "_zap_it_0001_0000.edf"}, 
+                {"zap_i0", "_zap_i0_0001_0000.edf"},
+                {"zap_it", "_zap_it_0001_0000.edf"}, 
                 {STR_SR_CURRENT, "_arr_srcur_0001_0000.edf"},
                 {"bpm4","_arr_bpm4_0001_0000.edf"},
-                {"it","_arr_it_0001_0000.edf"},
+                {"arr_it","_arr_it_0001_0000.edf"},
                 {"pepi1","_arr_pepu1_0001_0000.edf"},
                 {"pepi3","_arr_pepu3_0001_0000.edf"},
                 {"pepi5","_arr_pepu5_0001_0000.edf"},
@@ -990,7 +990,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             if (save_scalers)
             {
-                fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + std::to_string(detector_num);
+                fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
                 io::file::HDF5_IO::inst()->start_save_seq(fullpath, true);
                 
                 // add ELT, ERT, INCNT, OUTCNT to scaler map

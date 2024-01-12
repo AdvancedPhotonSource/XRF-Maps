@@ -3242,8 +3242,12 @@ public:
 
         logI << path << "\n";
 
+        std::map<std::string, data_struct::ArrayXXr<T_real>> scalers_map;
         T_real srcurrent, us_ic, ds_ic;
-        hid_t    file_id, ds_ic_id, us_ic_id, srcurrent_id;
+        hid_t    file_id = -1, ds_ic_id = -1, us_ic_id = -1, srcurrent_id = -1;
+        hid_t d_space;
+        hid_t d_type;
+        hid_t status;
         //herr_t   error;
         //hsize_t offset[1] = {0};
         hsize_t count[1] = { 1 };
@@ -3254,57 +3258,89 @@ public:
 
         if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/DS_IC", file_id, false, false))
         {
-            if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/DS_IC", file_id))
+            if (false == _open_h5_object(ds_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/DS_IC", file_id, false, false))
             {
-                return false;
+                ds_ic_id = -1;
+                override_values->DS_IC = 1.0;
             }
         }
             
-
         if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/US_IC", file_id, false, false))
         {
-            if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/US_IC", file_id))
+            if (false == _open_h5_object(us_ic_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/US_IC", file_id, false, false))
             {
-                return false;
+                us_ic_id = -1;
+                override_values->US_IC = 1.0;
             }
         }
 
         if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/SR_Current", file_id, false, false))
         {
-            if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/SR_Current", file_id))
+            if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/SR_Current", file_id, false, false))
             {
-                return false;
+                srcurrent_id = -1;
+                override_values->sr_current = 1.0;
             }
         }
 
-        //read in scaler
-        hid_t d_space = H5Dget_space(srcurrent_id);
-        close_map.push({ d_space, H5O_DATASPACE });
-        hid_t d_type = H5Dget_type(srcurrent_id);
-        close_map.push({ d_type, H5O_DATATYPE });
-        hid_t status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
-        if (status > -1)
+        if (srcurrent_id == -1 || us_ic_id == -1 || ds_ic_id == -1)
         {
-            override_values->sr_current = (srcurrent);
+            load_scalers_analyzed_h5(path, scalers_map);
         }
-        d_space = H5Dget_space(us_ic_id);
-        close_map.push({ d_space, H5O_DATASPACE });
-        d_type = H5Dget_type(us_ic_id);
-        close_map.push({ d_type, H5O_DATATYPE });
-        status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
-        if (status > -1)
+
+
+        if (srcurrent_id > -1)
         {
-            override_values->US_IC = (us_ic);
+            //read in scaler
+            d_space = H5Dget_space(srcurrent_id);
+            close_map.push({ d_space, H5O_DATASPACE });
+            d_type = H5Dget_type(srcurrent_id);
+            close_map.push({ d_type, H5O_DATATYPE });
+            status = H5Dread(srcurrent_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&srcurrent);
+            if (status > -1)
+            {
+                override_values->sr_current = (srcurrent);
+            }
         }
-        d_space = H5Dget_space(ds_ic_id);
-        close_map.push({ d_space, H5O_DATASPACE });
-        d_type = H5Dget_type(ds_ic_id);
-        close_map.push({ d_type, H5O_DATATYPE });
-        status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
-        if (status > -1)
+        else if(scalers_map.count(STR_SR_CURRENT) > 0)
         {
-            override_values->DS_IC = (ds_ic);
+            override_values->sr_current = scalers_map.at(STR_SR_CURRENT).sum();
         }
+
+        if (us_ic_id > -1)
+        {
+            d_space = H5Dget_space(us_ic_id);
+            close_map.push({ d_space, H5O_DATASPACE });
+            d_type = H5Dget_type(us_ic_id);
+            close_map.push({ d_type, H5O_DATATYPE });
+            status = H5Dread(us_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_ic);
+            if (status > -1)
+            {
+                override_values->US_IC = (us_ic);
+            }
+        }
+        else if (scalers_map.count(STR_US_IC) > 0)
+        {
+            override_values->US_IC = scalers_map.at(STR_US_IC).sum();
+        }
+
+        if (ds_ic_id > -1)
+        {
+            d_space = H5Dget_space(ds_ic_id);
+            close_map.push({ d_space, H5O_DATASPACE });
+            d_type = H5Dget_type(ds_ic_id);
+            close_map.push({ d_type, H5O_DATATYPE });
+            status = H5Dread(ds_ic_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&ds_ic);
+            if (status > -1)
+            {
+                override_values->DS_IC = (ds_ic);
+            }
+        }
+        else if (scalers_map.count(STR_DS_IC) > 0)
+        {
+            override_values->DS_IC = scalers_map.at(STR_DS_IC).sum();
+        }
+
 
         _close_h5_objects(close_map);
 
