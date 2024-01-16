@@ -952,8 +952,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             }
 
             std::map<std::string, std::string> scaler_map = {
-                {"zap_i0", "_zap_i0_0001_0000.edf"},
-                {"zap_it", "_zap_it_0001_0000.edf"}, 
+                {STR_US_IC, "_zap_i0_0001_0000.edf"},
+                {STR_DS_IC, "_zap_it_0001_0000.edf"},
                 {STR_SR_CURRENT, "_arr_srcur_0001_0000.edf"},
                 {"bpm4","_arr_bpm4_0001_0000.edf"},
                 {"arr_it","_arr_it_0001_0000.edf"},
