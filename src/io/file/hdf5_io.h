@@ -3304,7 +3304,7 @@ public:
         }
         else if(scalers_map.count(STR_SR_CURRENT) > 0)
         {
-            override_values->sr_current = scalers_map.at(STR_SR_CURRENT).sum();
+            override_values->sr_current = scalers_map.at(STR_SR_CURRENT).sum() / scalers_map.at(STR_SR_CURRENT).size();
         }
 
         if (us_ic_id > -1)
@@ -3321,7 +3321,7 @@ public:
         }
         else if (scalers_map.count(STR_US_IC) > 0)
         {
-            override_values->US_IC = scalers_map.at(STR_US_IC).sum();
+            override_values->US_IC = scalers_map.at(STR_US_IC).sum() / scalers_map.at(STR_US_IC).size();
         }
 
         if (ds_ic_id > -1)
@@ -3338,7 +3338,7 @@ public:
         }
         else if (scalers_map.count(STR_DS_IC) > 0)
         {
-            override_values->DS_IC = scalers_map.at(STR_DS_IC).sum();
+            override_values->DS_IC = scalers_map.at(STR_DS_IC).sum() / scalers_map.at(STR_DS_IC).size();
         }
 
 
