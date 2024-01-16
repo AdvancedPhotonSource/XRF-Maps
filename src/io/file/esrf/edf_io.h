@@ -234,6 +234,8 @@ namespace edf
                 double deadtime = static_cast<double>(*val);
                 val++;
 
+                livetime = livetime * .001; // convret to seconds 
+
                 if (detector_num == (int)det)
                 {
                     output_map.values(row, col) = static_cast<T_real>(output);
