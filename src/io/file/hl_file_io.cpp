@@ -459,7 +459,8 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-							const std::vector<size_t>& detector_num_arr)
+					      const std::vector<size_t>& detector_num_arr,
+                          bool append_h5_with_num)
 {
     std::vector<std::string> hdf5_filenames;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -472,7 +473,7 @@ void generate_h5_averages(std::string dataset_directory,
     }
 
     int len = dataset_file.length();
-    if (dataset_file[len - 3] == '.' && dataset_file[len - 2] == 'h' && dataset_file[len - 1] == '5')
+    if (dataset_file[len - 3] == '.' && dataset_file[len - 2] == 'h' && dataset_file[len - 1] == '5' && false == append_h5_with_num)
     {
         for (size_t detector_num : detector_num_arr)
         {

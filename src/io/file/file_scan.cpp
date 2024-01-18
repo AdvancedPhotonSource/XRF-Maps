@@ -120,7 +120,7 @@ namespace io
             }
 
             // populate edf files
-            _edf_files = find_all_dataset_files(dataset_dir + "edf" + DIR_END_CHAR, "_0000.edf");
+            ////_edf_files = find_all_dataset_files(dataset_dir + "edf" + DIR_END_CHAR, "_0000.edf");
             // populate netcdf and hdf5 files for fly scans
             _netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.nc");
             _bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
@@ -149,13 +149,22 @@ namespace io
                 /* print all the files and directories within directory */
                 while ((ent = readdir(dir)) != NULL)
                 {
-                    std::string fname(ent->d_name);
-                    // check if extension is .mda
-                    if (fname.size() > 4)
+                    /*
+                    if (de->d_type != DT_UNKNOWN && de->d_type != DT_LNK) {
+           // don't have to stat if we have d_type info, unless it's a symlink (since we stat, not lstat)
+           is_dir = (de->d_type == DT_DIR);
+                    */
+                    //DT_DIR or DT_REG
+                    if (ent->d_type == DT_REG)
                     {
-                        if (fname.rfind(search_str) == fname.size() - search_str_size)
+                        std::string fname(ent->d_name);
+                        // check if extension is .mda
+                        if (fname.size() > 4)
                         {
-                            dataset_files.push_back(fname);
+                            if (fname.rfind(search_str) == fname.size() - search_str_size)
+                            {
+                                dataset_files.push_back(fname);
+                            }
                         }
                     }
                 }
@@ -173,8 +182,9 @@ namespace io
 
         // ----------------------------------------------------------------------------
         
-        void File_Scan::find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs, std::vector<std::string>& out_dataset_files)
+        std::vector<std::string> File_Scan::find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs)
         {
+            std::vector<std::string> out_dataset_files;
             DIR* dir;
             struct dirent* ent;
             if ((dir = opendir(dataset_directory.c_str())) != NULL)
@@ -203,7 +213,7 @@ namespace io
                 /* could not open directory */
                 logW << "Could not open directory " << dataset_directory << "\n";
             }
-            
+            return out_dataset_files;
         }
 
         // ----------------------------------------------------------------------------
@@ -317,6 +327,65 @@ namespace io
         }
 
         // ----------------------------------------------------------------------------
+        std::vector<std::string> File_Scan::find_all_dirs(std::string dataset_directory, std::vector<std::string> &ign_dir_list, bool recursive)
+        {
+            std::vector<std::string> dir_list;
+            logI << dataset_directory << " searching for directories\n";
+            DIR* dir;
+            struct dirent* ent;
+            
+            if ((dir = opendir(dataset_directory.c_str())) != NULL)
+            {
+                /* print all the files and directories within directory */
+                while ((ent = readdir(dir)) != NULL)
+                {
+                    if (ent->d_type == DT_DIR)
+                    {
+                        
+                        if (ent->d_name[0] == '.' && ent->d_namlen == 1)
+                        {
+                            continue;
+                        }
+                        if (ent->d_namlen == 2 && ent->d_name[0] == '.' && ent->d_name[1] == '.')
+                        {
+                            continue;
+                        }
+                        bool b_ign = false;
+                        {
+                            for (const auto ign : ign_dir_list)
+                            {
+                                if (ign == ent->d_name)
+                                {
+                                    b_ign = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (false == b_ign)
+                        {
+                            dir_list.push_back(ent->d_name);
+                            if (recursive)
+                            {
+                                std::vector<std::string> sub_list = find_all_dirs(dataset_directory + ent->d_name, ign_dir_list, recursive);
+                                for (const auto itr : sub_list)
+                                {
+                                    dir_list.push_back(itr);
+                                }
+                            }
+                        }
+                    }
+                }
+                closedir(dir);
+            }
+            else
+            {
+                /* could not open directory */
+                logW << "Could not open directory " << dataset_directory << "\n";
+            }
+
+            logI << "found " << dir_list.size() << "\n";
+            return dir_list;
+        }
         // ----------------------------------------------------------------------------
     }// end namespace file
 }// end namespace io

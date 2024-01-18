@@ -103,7 +103,7 @@ DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
 
 //DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr);
+DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr, bool append_h5_with_num);
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
@@ -912,11 +912,19 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     // try to load esrf hdf5
     if (ends_in_h5)
     {
-        fullpath = dataset_directory + DIR_END_CHAR + "mda" + DIR_END_CHAR + dataset_file;
+        fullpath = dataset_directory + DIR_END_CHAR + dataset_file;
         std::string file_title;
         data_struct::Scan_Info<T_real> scan_info_edf;
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))
         {
+            std::string dset_folder = "";
+            std::string base_name = dataset_file;
+            int didx = dataset_file.find(DIR_END_CHAR);
+            if (didx > -1)
+            {
+                dset_folder = dataset_file.substr(0, didx + 1);
+                base_name = dataset_file.substr(didx + 1);
+            }
             logI << "Loaded spectra volume esrf.\n";
             std::string str_det_num = "";
             if (detector_num < 10)
@@ -944,8 +952,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             {
                 std::string str_r = std::to_string(r);
                 std::string str_row = std::string(4 - str_r.length(), '0') + std::to_string(r);
-                fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xia" + str_det_num + "_0001_0000_" + str_row + ".edf";
-                std::string metafullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + "_xiaSt_0001_0000_" + str_row + ".edf";
+                fullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + "_xia" + str_det_num + "_0001_0000_" + str_row + ".edf";
+                std::string metafullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + "_xiaSt_0001_0000_" + str_row + ".edf";
                 io::file::edf::load_spectra_line(fullpath, &(*spectra_volume)[r]);
                 // loading meta data for spectra icr, ocr, elt, ert
                 io::file::edf::load_spectra_line_meta(metafullpath, detector_num, r, &(*spectra_volume)[r], dead_time_map, output_map);
@@ -977,7 +985,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 data_struct::Scaler_Map<T_real> s_map;
                 s_map.name = s_itr.first;
                 s_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
-                std::string s_fullpath = dataset_directory + DIR_END_CHAR + "edf" + DIR_END_CHAR + file_title + s_itr.second;
+                std::string s_fullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + s_itr.second;
                 if (io::file::edf::load_scaler(s_fullpath, s_map))
                 {
                     scan_info_edf.scaler_maps.push_back(s_map);
@@ -990,7 +998,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             if (save_scalers)
             {
-                fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
+                fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + base_name + ".h5" + std::to_string(detector_num);
                 io::file::HDF5_IO::inst()->start_save_seq(fullpath, true);
                 
                 // add ELT, ERT, INCNT, OUTCNT to scaler map

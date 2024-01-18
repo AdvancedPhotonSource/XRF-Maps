@@ -90,9 +90,11 @@ namespace io
 
             //void check_and_create_dirs(std::string dataset_directory);
 
+            std::vector<std::string> find_all_dirs(std::string dataset_directory, std::vector<std::string>& ign_dir_list, bool recursive);
+
             std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-            void find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs, std::vector<std::string>& out_dataset_files);
+            std::vector<std::string> find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs);
 
             void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 

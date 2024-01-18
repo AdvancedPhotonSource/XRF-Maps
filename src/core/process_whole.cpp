@@ -511,6 +511,13 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                     str_detector_num = std::to_string(detector_num);
                 }
 
+                // check if esrf dataset and remove folder 
+                int didx = dataset_file.find(DIR_END_CHAR);
+                if (didx > -1)
+                {
+                    dataset_file = dataset_file.substr(didx + 1);
+                }
+
                 std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file;
 
                 size_t fn_str_len = dataset_file.length();
