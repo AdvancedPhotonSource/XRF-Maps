@@ -511,6 +511,13 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                     str_detector_num = std::to_string(detector_num);
                 }
 
+                // check if esrf dataset and remove folder 
+                int didx = dataset_file.find(DIR_END_CHAR);
+                if (didx > -1)
+                {
+                    dataset_file = dataset_file.substr(didx + 1);
+                }
+
                 std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file;
 
                 size_t fn_str_len = dataset_file.length();
@@ -522,6 +529,15 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                 {
                     full_save_path += ".h5" + str_detector_num;
                 }
+                // added for esrf datasets
+                if (fn_str_len > 4 &&
+                    dataset_file[fn_str_len - 3] == '.' &&
+                    dataset_file[fn_str_len - 2] == 'h' &&
+                    dataset_file[fn_str_len - 1] == '5')
+                {
+                    full_save_path += ".h5" + str_detector_num;
+                }
+
                 if (io::file::HDF5_IO::inst()->start_save_seq(full_save_path, false, true))
                 {
                     if (false == io::file::HDF5_IO::inst()->save_quantification(detector))
@@ -609,11 +625,11 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
             {
                 std::string low_ds_ic = STR_DS_IC;
-                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), std::tolower);
+                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), [](unsigned char c) { return std::tolower(c); });
                 std::string low_us_ic = STR_US_IC; 
-                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), std::tolower);
+                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
                 std::string low_sr = STR_SR_CURRENT;
-                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), std::tolower);
+                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
                 for (auto& in_itr : roi_itr.second)
                 {
                     hsize_t xoffset = in_itr.first;
