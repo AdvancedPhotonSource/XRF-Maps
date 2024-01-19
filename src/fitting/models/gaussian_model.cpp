@@ -419,6 +419,93 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+const std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>> Gaussian_Model<T_real>::model_spectrum_info(const Fit_Parameters<T_real> * const fit_params,
+                                             const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
+                                             std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
+                                             const struct Range energy_range)
+{
+    std::vector<ArrayTr<T_real>> comp_contrib;
+    std::vector<std::string> comp_order;
+
+    std::vector<std::string> spectra_labels = { STR_K_A_LINES, STR_K_B_LINES, STR_L_LINES, STR_M_LINES, STR_STEP_LINES, STR_TAIL_LINES, STR_ELASTIC_LINES, STR_COMPTON_LINES, STR_PILEUP_LINES, STR_ESCAPE_LINES };
+
+    if (labeled_spectras != nullptr) // if this stucture is not null then initialize
+    {
+        for (auto& itr : spectra_labels)
+        {
+            if (labeled_spectras->count(itr) > 1)
+            {
+                labeled_spectras->erase(itr);
+            }
+            labeled_spectras->insert({ itr, Spectra<T_real>(energy_range.count()) });
+        }
+    }
+
+    Spectra<T_real> agr_spectra(energy_range.count());
+
+    T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+    T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+    T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
+    comp_contrib.push_back(ev);
+    comp_order.push_back("ev");
+
+    for(const auto& itr : (*elements_to_fit))
+    {
+        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+        {
+            continue;
+        }
+        else
+        {
+            Spectra<T_real> tmp = model_spectrum_element(fit_params, itr.second, ev, labeled_spectras);
+            comp_contrib.push_back(tmp);
+            comp_order.push_back(itr.first);
+            agr_spectra += tmp;
+        }
+    }
+
+    Spectra<T_real> elastic_spec(energy_range.count());
+    Spectra<T_real> compton_spec(energy_range.count());
+    elastic_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    compton_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+    comp_contrib.push_back(elastic_spec);
+    comp_order.push_back(STR_ELASTIC_LINES);
+    comp_contrib.push_back(compton_spec);
+    comp_order.push_back(STR_COMPTON_LINES);
+    if (labeled_spectras != nullptr)
+    {
+        (*labeled_spectras)[STR_ELASTIC_LINES] += elastic_spec;
+        (*labeled_spectras)[STR_COMPTON_LINES] += compton_spec;
+    }
+    agr_spectra += elastic_spec;
+    agr_spectra += compton_spec;
+
+    if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
+    {   
+        Spectra<T_real> escape_spec(energy_range.count());
+        escape_spec = escape_peak(agr_spectra, ev, fit_params->at(STR_SI_ESCAPE).value);
+        comp_contrib.push_back(escape_spec);
+        comp_order.push_back(STR_SI_ESCAPE);
+        if (labeled_spectras != nullptr)
+        {
+            (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
+                
+        }
+        agr_spectra += escape_spec;
+    }
+
+    comp_contrib.push_back(agr_spectra);
+    comp_order.push_back("final_int_spec");
+
+    return std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>>(comp_order, comp_contrib);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parameters<T_real> * const fit_params,
                                                 const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
                                                 const struct Range energy_range)

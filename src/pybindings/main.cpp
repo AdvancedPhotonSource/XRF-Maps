@@ -81,7 +81,7 @@ auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	}
 	*/
 	//return model->model_spectrum_mp(&fit_params, elements_to_fit, energy_range);
-	return model->model_spectrum(&fit_params, elements_to_fit, nullptr, energy_range);
+    return std::tuple<std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(out_counts, fit_params);
 }
 
 PYBIND11_MODULE(pyxrfmaps, m) {
@@ -215,6 +215,35 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("transmission_through_Si_detector", &data_struct::Element_Quant<float>::transmission_through_Si_detector)
     .def_readwrite("transmission_through_air", &data_struct::Element_Quant<float>::transmission_through_air)
     .def_readwrite("e_cal_ratio", &data_struct::Element_Quant<float>::e_cal_ratio);
+
+    py::enum_<data_struct::Element_Param_Type>(m, "Element_Param_Type")
+    .value("Ka1_Line", data_struct::Element_Param_Type::Ka1_Line)
+    .value("Ka2_Line", data_struct::Element_Param_Type::Ka2_Line)
+    .value("Kb1_Line", data_struct::Element_Param_Type::Kb1_Line)
+    .value("Kb2_Line", data_struct::Element_Param_Type::Kb2_Line)
+    .value("La1_Line", data_struct::Element_Param_Type::La1_Line)
+    .value("La2_Line", data_struct::Element_Param_Type::La2_Line)
+    .value("Lb1_Line", data_struct::Element_Param_Type::Lb1_Line)
+    .value("Lb2_Line", data_struct::Element_Param_Type::Lb2_Line)
+    .value("Lb3_Line", data_struct::Element_Param_Type::Lb3_Line)
+    .value("Lb4_Line", data_struct::Element_Param_Type::Lb4_Line)
+    .value("Lg1_Line", data_struct::Element_Param_Type::Lg1_Line)
+    .value("Lg2_Line", data_struct::Element_Param_Type::Lg2_Line)
+    .value("Lg3_Line", data_struct::Element_Param_Type::Lg3_Line)
+    .value("Lg4_Line", data_struct::Element_Param_Type::Lg4_Line)
+    .value("Ll_Line", data_struct::Element_Param_Type::Ll_Line)
+    .value("Ln_Line", data_struct::Element_Param_Type::Ln_Line)
+    .value("Ma1_Line", data_struct::Element_Param_Type::Ma1_Line)
+    .value("Ma2_Line", data_struct::Element_Param_Type::Ma2_Line)
+    .value("Mb_Line", data_struct::Element_Param_Type::Mb_Line)
+    .value("Mg_Line", data_struct::Element_Param_Type::Mg_Line);
+
+    py::class_<data_struct::Element_Energy_Ratio<float>>(m, "Element_Energy_Ratio")
+    .def(py::init<float, float, float, Element_Param_Type>())
+    .def_readwrite("energy", &data_struct::Element_Energy_Ratio<float>::energy)
+    .def_readwrite("ratio", &data_struct::Element_Energy_Ratio<float>::ratio)
+    .def_readwrite("mu_fraction", &data_struct::Element_Energy_Ratio<float>::mu_fraction)
+    .def_readwrite("ptype", &data_struct::Element_Energy_Ratio<float>::ptype);
 
 	py::class_<data_struct::Fit_Element_Map<float>>(m, "Fit_Element_Map")
 	.def(py::init<std::string, Element_Info<float>*>())
@@ -410,10 +439,38 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
 	py::class_<fitting::models::Gaussian_Model<float> , fitting::models::Base_Model<float> >(fm, "GaussModel")
 	.def(py::init<>())
+    .def("peak", &fitting::models::Gaussian_Model<float>::peak)
+    .def("step", &fitting::models::Gaussian_Model<float>::step)
+    .def("tail", &fitting::models::Gaussian_Model<float>::tail)
+    .def("elastic_peak", &fitting::models::Gaussian_Model<float>::elastic_peak)
+    .def("compton_peak", &fitting::models::Gaussian_Model<float>::compton_peak)
+    .def("escape_peak", &fitting::models::Gaussian_Model<float>::escape_peak)
 	.def("fit_parameters", &fitting::models::Gaussian_Model<float>::fit_parameters)
 	.def("model_spectrum", &fitting::models::Gaussian_Model<float>::model_spectrum)
+    .def("model_spectrum_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map_Dict<float>* const elements_to_fit,
+        const data_struct::Range energy_range)
+        {
+            return self.model_spectrum(fit_params, elements_to_fit, nullptr, energy_range);
+        })
+    .def("model_spectrum_info", &fitting::models::Gaussian_Model<float>::model_spectrum_info)
+    .def("model_spectrum_info_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map_Dict<float>* const elements_to_fit,
+        const data_struct::Range energy_range)
+        {
+            return self.model_spectrum_info(fit_params, elements_to_fit, nullptr, energy_range);
+        })
 	.def("model_spectrum_mp", &fitting::models::Gaussian_Model<float>::model_spectrum_mp)
 	.def("model_spectrum_element", &fitting::models::Gaussian_Model<float>::model_spectrum_element)
+    .def("model_spectrum_element_no_label", [](fitting::models::Gaussian_Model<float>& self,
+        const Fit_Parameters<float>* const fit_params,
+        const Fit_Element_Map<float>* const element_to_fit,
+        const data_struct::ArrayTr<float> ev)
+        {
+            return self.model_spectrum_element(fit_params, element_to_fit, ev, nullptr);
+        })
 	.def("set_fit_params_preset", &fitting::models::Gaussian_Model<float>::set_fit_params_preset)
 	.def("reset_to_default_fit_params", &fitting::models::Gaussian_Model<float>::reset_to_default_fit_params)
 	.def("update_fit_params_values", &fitting::models::Gaussian_Model<float>::update_fit_params_values)
@@ -694,6 +751,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //m.def("average_quantification", &average_quantification);
 
 	m.def("get_energy_range", (data_struct::Range (*)(size_t, const Fit_Parameters<float>* const)) &data_struct::get_energy_range);
+    m.def("snip_background", (data_struct::ArrayTr<float> (*)(const data_struct::Spectra<float>* const, float, float, float, float, float, float)) &data_struct::snip_background);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;
