@@ -64,6 +64,7 @@ void help()
     logit_s<<"--quantify-with : <standard.txt> File to use as quantification standard \n";
     logit_s<<"--quantify-fit <routines,>: If you want to perform quantification without having to re-fit all datasets. See --fit for routine options \n";
     logit_s<<"--detectors : <int,..> Detectors to process, Defaults to 0,1,2,3 for 4 detector \n";
+    logit_s<<"--detector-range : <int:int> Detector range 0:3 will process 0,1,2,3 detectors \n";
     logit_s<<"--generate-avg-h5 : Generate .h5 file which is the average of all detectors .h50 - h.53 or range specified. \n";
     logit_s<<"--add-v9layout : Generate .h5 file which has v9 layout able to open in IDL MAPS software. \n";
     logit_s<<"--add-exchange : Add exchange group into hdf5 file with normalized data.\n";
@@ -348,6 +349,7 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 template <typename T_real>
 int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
+    std::vector<std::string> ignore_dir_list = { "img.dat", "mda", "output" };
     //Get the dataset directory you want to process
     std::string dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
@@ -373,16 +375,22 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //if they were not then look for them in $dataset_directory/mda
     if (dset_file.length() < 1)
     {
+        std::vector<std::string> flist;
+
         std::vector<std::string> search_ext_list;
         std::vector<std::string> search_ext_mda_list;
+        std::vector<std::string> search_ext_h5_list;
 
         search_ext_list.push_back(".hdf5");
         search_ext_list.push_back(".h5");
         search_ext_list.push_back(".emd");
         search_ext_list.push_back(".mda");
 
-        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir, search_ext_list, analysis_job.dataset_files);
-
+        flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir, search_ext_list);
+        for (const auto& fitr : flist)
+        {
+            analysis_job.dataset_files.push_back(fitr);
+        }
 
         search_ext_mda_list.push_back(".mda");
         search_ext_mda_list.push_back(".mca");
@@ -392,7 +400,25 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             search_ext_mda_list.push_back(mca_str);
         }
 
-        io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + "mda" + DIR_END_CHAR, search_ext_mda_list, analysis_job.dataset_files);
+        flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + "mda" + DIR_END_CHAR, search_ext_mda_list);
+        for (const auto& fitr : flist)
+        {
+            analysis_job.dataset_files.push_back(fitr);
+        }
+
+        // search recursivly for esrf datasets
+        std::vector<std::string> root_dir_list = io::file::File_Scan::inst()->find_all_dirs(dataset_dir + DIR_END_CHAR, ignore_dir_list, false);
+
+        search_ext_h5_list.push_back(".h5"); // added h5 for esrf datasets
+
+        for (const auto& itr : root_dir_list)
+        {
+            std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
+            for (const auto& fitr : flist)
+            {
+                analysis_job.dataset_files.push_back(itr + DIR_END_CHAR + fitr);
+            }
+        }
 
         // don't want to open h5 avg files for optimize because we optimize by detector , not avg
         for (auto& itr : analysis_job.dataset_files)

@@ -557,12 +557,20 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
 template<typename T_real>
 DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& analysis_job)
 {
-    for (const auto& dataset_file : analysis_job.dataset_files)
+    for (auto dataset_file : analysis_job.dataset_files)
     {
+        bool append_h5_with_num = false;
+        // search if we have esrf type datasets and remove first folder
+        int didx = dataset_file.find(DIR_END_CHAR);
+        if (didx > 0)
+        {
+            dataset_file = dataset_file.substr(didx + 1);
+            append_h5_with_num = true;
+        }
         //average all detectors to one files
         if (analysis_job.generate_average_h5)
         {
-            io::file::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr);
+            io::file::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, append_h5_with_num);
         }
 
         if (analysis_job.add_background)

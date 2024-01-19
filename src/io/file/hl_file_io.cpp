@@ -459,7 +459,8 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory,
 
 void generate_h5_averages(std::string dataset_directory,
                           std::string dataset_file,
-							const std::vector<size_t>& detector_num_arr)
+					      const std::vector<size_t>& detector_num_arr,
+                          bool append_h5_with_num)
 {
     std::vector<std::string> hdf5_filenames;
     std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -471,12 +472,21 @@ void generate_h5_averages(std::string dataset_directory,
         return;
     }
 
-
-    for(size_t detector_num : detector_num_arr)
+    int len = dataset_file.length();
+    if (dataset_file[len - 3] == '.' && dataset_file[len - 2] == 'h' && dataset_file[len - 1] == '5' && false == append_h5_with_num)
     {
-        hdf5_filenames.push_back(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5"+std::to_string(detector_num));
+        for (size_t detector_num : detector_num_arr)
+        {
+            hdf5_filenames.push_back(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + std::to_string(detector_num));
+        }
     }
-
+    else
+    {
+        for (size_t detector_num : detector_num_arr)
+        {
+            hdf5_filenames.push_back(dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+        }
+    }
     io::file::HDF5_IO::inst()->generate_avg(dataset_directory+"img.dat"+ DIR_END_CHAR +dataset_file+".h5", hdf5_filenames);
 
     end = std::chrono::system_clock::now();
