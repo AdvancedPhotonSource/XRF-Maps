@@ -789,13 +789,15 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor) const
 {
-    Spectra<T_real> escape_spec(spectra.count());
+    Spectra<T_real> escape_spec(ev.size());
     // Si = 1.73998
     int bins = 1.73998 / (ev(1) - ev(0));
+   
     for (int i = 0; i < ev.size() - bins; ++i)
     {
         escape_spec(i) = spectra(i + bins) * escape_factor;
     }
+    
     return escape_spec;
 }
 

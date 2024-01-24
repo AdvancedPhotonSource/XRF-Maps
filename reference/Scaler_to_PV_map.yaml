@@ -282,15 +282,27 @@ BeamLines:
       ELT2: 26idcXMAP:mca2.ELTM
       ELT3: 26idcXMAP:mca3.ELTM
       ELT4: 26idcXMAP:mca4.ELTM
+      ELT5: 26idcXMAP:mca5.ELTM
+      ELT6: 26idcXMAP:mca6.ELTM
+      ELT7: 26idcXMAP:mca7.ELTM
       ERT1: 26idcXMAP:mca1.ERTM
       ERT2: 26idcXMAP:mca2.ERTM
       ERT3: 26idcXMAP:mca3.ERTM
       ERT4: 26idcXMAP:mca4.ERTM
+      ERT5: 26idcXMAP:mca5.ERTM
+      ERT6: 26idcXMAP:mca6.ERTM
+      ERT7: 26idcXMAP:mca7.ERTM
       ICR1: 26idcXMAP:dxp1:InputCountRate
       ICR2: 26idcXMAP:dxp2:InputCountRate
       ICR3: 26idcXMAP:dxp3:InputCountRate
       ICR4: 26idcXMAP:dxp4:InputCountRate
+      ICR5: 26idcXMAP:dxp5:InputCountRate
+      ICR6: 26idcXMAP:dxp6:InputCountRate
+      ICR7: 26idcXMAP:dxp7:InputCountRate
       OCR1: 26idcXMAP:dxp1:OutputCountRate
       OCR2: 26idcXMAP:dxp2:OutputCountRate
       OCR3: 26idcXMAP:dxp3:OutputCountRate
       OCR4: 26idcXMAP:dxp4:OutputCountRate
+      OCR5: 26idcXMAP:dxp5:OutputCountRate
+      OCR6: 26idcXMAP:dxp6:OutputCountRate
+      OCR7: 26idcXMAP:dxp7:OutputCountRate
