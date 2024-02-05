@@ -568,8 +568,11 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
     T_real pre_faktor = std::pow((T_real)10.0 , fitp->at(element_to_fit->full_name()).value);
 
-    if(false == std::isfinite(pre_faktor))
+    if (false == std::isfinite(pre_faktor))
+    {
+        spectra_model =  (ArrayTr<T_real>)(spectra_model).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return spectra_model;
+    }
 
     //T_real fwhm_offset = fitp->value(STR_FWHM_OFFSET);
     const std::vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
@@ -723,6 +726,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(false == std::isfinite(sigma))
     {
+        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
 	ArrayTr<T_real>delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
@@ -754,6 +758,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)62.0) + compton_E * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
     if(false == std::isfinite(sigma))
     {
+        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
     //T_real local_sigma = (*sigma) * p[14];
