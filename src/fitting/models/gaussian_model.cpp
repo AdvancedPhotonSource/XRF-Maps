@@ -568,8 +568,11 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
     T_real pre_faktor = std::pow((T_real)10.0 , fitp->at(element_to_fit->full_name()).value);
 
-    if(false == std::isfinite(pre_faktor))
+    if (false == std::isfinite(pre_faktor))
+    {
+        spectra_model =  (ArrayTr<T_real>)(spectra_model).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return spectra_model;
+    }
 
     //T_real fwhm_offset = fitp->value(STR_FWHM_OFFSET);
     const std::vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
@@ -583,6 +586,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real value = 1.0;
+        T_real gamma = 1.0;
 
         //don't process if energy is 0
         if (er_struct.ratio == 0.0)
@@ -653,15 +657,38 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
             tmp_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
             //counts_arr->step = fit_counts.step + value;
         }
-        //  peak, tail;; use different tail for K beta vs K alpha lines
-        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-        {
-            T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
-            value = faktor * kb_f_tail;
-            tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-            //fit_counts.tail = fit_counts.tail + value;
-        }
 
+        switch (er_struct.ptype)
+        {
+            case Element_Param_Type::Kb1_Line:
+            case Element_Param_Type::Kb2_Line:
+                //  peak, tail;; use different tail for K beta vs K alpha lines
+                gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * kb_f_tail;
+                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                break;
+            case Element_Param_Type::Ka1_Line:
+            case Element_Param_Type::Ka2_Line:
+            case Element_Param_Type::La1_Line:
+            case Element_Param_Type::La2_Line:
+            case Element_Param_Type::Lb1_Line:
+            case Element_Param_Type::Lb2_Line:
+            case Element_Param_Type::Lb3_Line:
+            case Element_Param_Type::Lb4_Line:
+            case Element_Param_Type::Lg1_Line:
+            case Element_Param_Type::Lg2_Line:
+            case Element_Param_Type::Lg3_Line:
+            case Element_Param_Type::Lg4_Line:
+            case Element_Param_Type::Ll_Line:
+            case Element_Param_Type::Ln_Line:
+                gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * f_tail;
+                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                break;
+            default:
+                break;
+        }
+        
         spectra_model += tmp_spec;
         
         if (labeled_spectras != nullptr && label.length() > 0)
@@ -723,6 +750,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(false == std::isfinite(sigma))
     {
+        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
 	ArrayTr<T_real>delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
@@ -754,6 +782,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)62.0) + compton_E * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
     if(false == std::isfinite(sigma))
     {
+        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
     //T_real local_sigma = (*sigma) * p[14];
@@ -789,13 +818,15 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor) const
 {
-    Spectra<T_real> escape_spec(spectra.count());
+    Spectra<T_real> escape_spec(ev.size());
     // Si = 1.73998
     int bins = 1.73998 / (ev(1) - ev(0));
+   
     for (int i = 0; i < ev.size() - bins; ++i)
     {
         escape_spec(i) = spectra(i + bins) * escape_factor;
     }
+    
     return escape_spec;
 }
 

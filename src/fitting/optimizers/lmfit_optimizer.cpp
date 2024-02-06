@@ -74,7 +74,7 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    // ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
@@ -85,10 +85,11 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
 			//logE << "\n\n\n";
 			logE << "Spectra[i] = " << ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			//logE << "\n\n\n";
-			//fvec[i] = ud->spectra[i];
-            fvec[i] = std::numeric_limits<T_real>::quiet_NaN();
+			fvec[i] = ud->spectra[i] + ud->spectra_model[i];
+            //fvec[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
+    
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
     {
@@ -120,16 +121,18 @@ void general_residuals_lmfit( const T_real *par, int m_dat, const void *data, T_
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
 	// Used to check for nan's here but there were some cases where the optimizer would return nan found. So moved to after subract of model
-    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    // ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
         fvec[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
 		if (std::isfinite(fvec[i]) == false)
 		{
-			fvec[i] = ud->spectra[i];
+			fvec[i] = ud->spectra[i] + ud->spectra_model[i];
 		}
     }
+    
 
 }
 

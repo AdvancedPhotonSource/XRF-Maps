@@ -79,7 +79,7 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    // ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
 
     //Calculate residuals
     for (int i=0; i<m; i++)
@@ -91,7 +91,7 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
 			//logE << "\n\n\n";
 			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			//logE << "\n\n\n";
-			//dy[i] = ud->spectra[i];
+			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
             dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
@@ -129,14 +129,18 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    //ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    // 
+    
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
         dy[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
-		if (std::isfinite(dy[i]) == false)
+		
+        if (std::isfinite(dy[i]) == false)
 		{
-			dy[i] = ud->spectra[i];
+			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
+            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
 

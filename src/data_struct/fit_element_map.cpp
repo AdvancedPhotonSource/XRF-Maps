@@ -291,6 +291,7 @@ void Fit_Element_Map<T_real>::generate_energy_ratio(T_real energy, T_real ratio,
     }
     if (false == std::isfinite(mu_fraction))
     {
+        logW << "MU_FRACTION is not finite : " << mu_fraction << " : setting to 0.0\n";
         mu_fraction = 0.0f;
     }
 
