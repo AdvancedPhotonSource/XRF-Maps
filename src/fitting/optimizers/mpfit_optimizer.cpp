@@ -91,8 +91,8 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
 			//logE << "\n\n\n";
 			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			//logE << "\n\n\n";
-			//dy[i] = ud->spectra[i];
-            //dy[i] = std::numeric_limits<T_real>::quiet_NaN();
+			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
+            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
 	
@@ -136,12 +136,12 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
     for (int i=0; i<m; i++)
     {
         dy[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
-		/* leave as nan for optimizer
+		
         if (std::isfinite(dy[i]) == false)
 		{
-			dy[i] = ud->spectra[i];
+			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
+            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
-        */
     }
 
     return 0;
