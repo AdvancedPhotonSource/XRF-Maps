@@ -586,6 +586,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real value = 1.0;
+        T_real gamma = 1.0;
 
         //don't process if energy is 0
         if (er_struct.ratio == 0.0)
@@ -656,15 +657,38 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
             tmp_spec += value * this->step(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, er_struct.energy);
             //counts_arr->step = fit_counts.step + value;
         }
-        //  peak, tail;; use different tail for K beta vs K alpha lines
-        if (er_struct.ptype == Element_Param_Type::Kb1_Line || er_struct.ptype == Element_Param_Type::Kb2_Line)
-        {
-            T_real gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
-            value = faktor * kb_f_tail;
-            tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
-            //fit_counts.tail = fit_counts.tail + value;
-        }
 
+        switch (er_struct.ptype)
+        {
+            case Element_Param_Type::Kb1_Line:
+            case Element_Param_Type::Kb2_Line:
+                //  peak, tail;; use different tail for K beta vs K alpha lines
+                gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * kb_f_tail;
+                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                break;
+            case Element_Param_Type::Ka1_Line:
+            case Element_Param_Type::Ka2_Line:
+            case Element_Param_Type::La1_Line:
+            case Element_Param_Type::La2_Line:
+            case Element_Param_Type::Lb1_Line:
+            case Element_Param_Type::Lb2_Line:
+            case Element_Param_Type::Lb3_Line:
+            case Element_Param_Type::Lb4_Line:
+            case Element_Param_Type::Lg1_Line:
+            case Element_Param_Type::Lg2_Line:
+            case Element_Param_Type::Lg3_Line:
+            case Element_Param_Type::Lg4_Line:
+            case Element_Param_Type::Ll_Line:
+            case Element_Param_Type::Ln_Line:
+                gamma = std::abs(fitp->at(STR_GAMMA_OFFSET).value + fitp->at(STR_GAMMA_LINEAR).value * (er_struct.energy)) * element_to_fit->width_multi();
+                value = faktor * f_tail;
+                tmp_spec += value * this->tail(fitp->at(STR_ENERGY_SLOPE).value, sigma, delta_energy, gamma);
+                break;
+            default:
+                break;
+        }
+        
         spectra_model += tmp_spec;
         
         if (labeled_spectras != nullptr && label.length() > 0)
