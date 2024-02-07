@@ -341,12 +341,12 @@ namespace io
                 {
                     if (ent->d_type == DT_DIR)
                     {
-                        
-                        if (ent->d_name[0] == '.' && ent->d_namlen == 1)
+                        size_t d_namlen = strlen(ent->d_name);
+                        if (d_namlen == 1 && ent->d_name[0] == '.')
                         {
                             continue;
                         }
-                        if (ent->d_namlen == 2 && ent->d_name[0] == '.' && ent->d_name[1] == '.')
+                        if (d_namlen == 2 && ent->d_name[0] == '.' && ent->d_name[1] == '.')
                         {
                             continue;
                         }
