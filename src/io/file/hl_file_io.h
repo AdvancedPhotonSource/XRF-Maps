@@ -504,6 +504,18 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
     }
 
+    // ESRF datasets need to take off the directory name
+    int win_dir_idx = dataset_file.find("\\");
+    int unx_dir_idx = dataset_file.find("/");
+    if (win_dir_idx > -1)
+    {
+        dataset_file = dataset_file.substr(win_dir_idx + 1);
+    }
+    else if(unx_dir_idx > -1)
+    {
+        dataset_file = dataset_file.substr(unx_dir_idx + 1);
+    }
+
     //  try to load from a pre analyzed file because they should contain the integrated spectra
     std::string fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
     if (detector_num != -1)
