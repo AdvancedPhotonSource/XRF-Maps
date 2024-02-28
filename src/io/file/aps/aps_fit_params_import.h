@@ -354,6 +354,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::string str_value;
                         std::getline(strstream, str_value, ':');
                         float fvalue = parse_input_real<T_real>(str_value);
+                        // remove white space from str_value
+                        str_value.erase(std::remove_if(str_value.begin(), str_value.end(), ::isspace), str_value.end());
+                        // lower case str_value
+                        std::transform(str_value.begin(), str_value.end(), str_value.begin(), [](unsigned char c) { return std::tolower(c); });
 
                         if (tag.find("_MAX") != std::string::npos)
                         {
@@ -362,6 +366,34 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         else if (tag.find("_MIN") != std::string::npos)
                         {
                             params_override->fit_params[tag_name].min_val = fvalue;
+                        }
+                        else if (tag.find("_FIT") != std::string::npos)
+                        {
+                            
+                            if (str_value == STR_FIXED)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIXED;
+                            }
+                            else if (str_value == STR_LIMITED_LO_HI)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO_HI;
+                            }
+                            else if (str_value == STR_LIMITED_LO)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO;
+                            }
+                            else if (str_value == STR_LIMITED_HI)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_HI;
+                            }
+                            else if (str_value == STR_FIT)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIT;
+                            }
+                        }
+                        else if (tag.find("_STEPSIZE") != std::string::npos)
+                        {
+                            params_override->fit_params[tag_name].step_size = fvalue;
                         }
                         else
                         {
