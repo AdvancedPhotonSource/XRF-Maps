@@ -306,9 +306,10 @@ void Fit_Parameters<T_real>::update_and_add_values_gt_zero(Fit_Parameters<T_real
 template<typename T_real>
 void Fit_Parameters<T_real>::print()
 {
+    logit_s << "     Name  \t value  \t min  \t max  \t step size \t fitting\n\n";
     for(const auto& itr : _params)
     {
-        logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\n";
+        logit_s<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\n";
     }
     logit_s<<"\n";
 

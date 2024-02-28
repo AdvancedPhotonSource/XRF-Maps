@@ -94,6 +94,9 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             //set fixed/fit preset
             model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
         }
+
+        model.print_fit_params();
+
         //Initialize the fit routine
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
 
