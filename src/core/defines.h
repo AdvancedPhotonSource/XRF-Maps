@@ -235,8 +235,16 @@ const std::string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
 const std::string STR_CALIB_LABELS = "Calibration_Curve_Labels";
 
 const std::string STR_DS_IC_ELEMENT_INFO_VALUES = "DS_IC_Element_Info_Values";
+const std::string STR_DS_IC_ELEMENT_INFO_INDEX = "DS_IC_Element_Info_Index";
+const std::string STR_DS_IC_ELEMENT_INFO_NAMES = "DS_IC_Element_Info_Names";
+
 const std::string STR_US_IC_ELEMENT_INFO_VALUES = "US_IC_Element_Info_Values";
+const std::string STR_US_IC_ELEMENT_INFO_INDEX = "US_IC_Element_Info_Index";
+const std::string STR_US_IC_ELEMENT_INFO_NAMES = "US_IC_Element_Info_Names";
+
 const std::string STR_SR_CURRENT_ELEMENT_INFO_VALUES = "SR_Current_Element_Info_Values";
+const std::string STR_SR_CURRENT_ELEMENT_INFO_INDEX = "SR_Current_Element_Info_Index";
+const std::string STR_SR_CURRENT_ELEMENT_INFO_NAMES = "SR_Current_Element_Info_Names";
 
 const std::string STR_BEAMLINES = "BeamLines";
 const std::string STR_SCALERS = "Scalers";
@@ -305,6 +313,12 @@ const std::string STR_US_AMP_UNIT_UPPR = "US_AMP_UNIT";
 const std::string STR_DS_AMP_UNIT_UPPR = "DS_AMP_UNIT";
 
 const std::string STR_NBS_1832 = "nbs1832";
+
+const std::string STR_FIXED = "fixed";
+const std::string STR_LIMITED_LO_HI = "limit_lo_hi";
+const std::string STR_LIMITED_LO = "limit_lo";
+const std::string STR_LIMITED_HI = "limit_hi";
+const std::string STR_FIT = "fit";
 
 // ROI
 const std::string STR_MAPS_ROIS = "MAPS_ROIS";
