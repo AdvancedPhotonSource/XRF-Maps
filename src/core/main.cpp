@@ -76,7 +76,7 @@ void help()
     logit_s<<"--quick-and-dirty : Integrate the detector range into 1 spectra.\n";
 //	logit_s<< "--mem-limit <limit> : Limit the memory usage. Append M for megabytes or G for gigabytes\n";
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
-               "  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, and fit energy quadratic\n";
+               "  0 = use override file\n  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, and fit energy quadratic\n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
     logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
@@ -389,6 +389,10 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir, search_ext_list);
         for (const auto& fitr : flist)
         {
+            if (fitr == "flyXRF.h5") // ignore folder
+            {
+                continue;
+            }
             analysis_job.dataset_files.push_back(fitr);
         }
 
@@ -408,11 +412,15 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 
         // search recursivly for esrf datasets
         std::vector<std::string> root_dir_list = io::file::File_Scan::inst()->find_all_dirs(dataset_dir + DIR_END_CHAR, ignore_dir_list, false);
-
+        
         search_ext_h5_list.push_back(".h5"); // added h5 for esrf datasets
 
         for (const auto& itr : root_dir_list)
         {
+            if (itr == "flyXRF.h5" || itr == "rois" || itr == "output" || itr == "vlm" || itr == "flyXRF") // ignore these 
+            {
+                continue;
+            }
             std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
             for (const auto& fitr : flist)
             {
@@ -550,7 +558,11 @@ int run_optimization(Command_Line_Parser& clp)
     if (clp.option_exists("--optimize-fit-override-params"))
     {
         std::string opt = clp.get_option("--optimize-fit-override-params");
-        if (opt == "1")
+        if (opt == "0")
+        {
+            analysis_job.optimize_fit_params_preset = fitting::models::Fit_Params_Preset::NOT_SET; // use tags from override file
+        }
+        else if (opt == "1")
         {
             analysis_job.optimize_fit_params_preset = fitting::models::Fit_Params_Preset::MATRIX_BATCH_FIT;
         }

@@ -116,12 +116,6 @@ public:
                                                  const ArrayTr<T_real>  &ev,
                                                  std::unordered_map<std::string, ArrayTr<T_real> >* labeled_spectras) = 0;
 
-    virtual const ArrayTr<T_real>  peak(T_real gain, T_real sigma, const ArrayTr<T_real> & delta_energy) const = 0;
-
-    virtual const ArrayTr<T_real>  step(T_real gain, T_real sigma, const ArrayTr<T_real> & delta_energy, T_real peak_E) const = 0;
-
-    virtual const ArrayTr<T_real>  tail(T_real gain, T_real sigma, ArrayTr<T_real>  delta_energy, T_real gamma) const = 0;
-
     virtual const ArrayTr<T_real>  elastic_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
 
     virtual const ArrayTr<T_real>  compton_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real> & ev, T_real gain) const = 0;
@@ -131,6 +125,8 @@ public:
     virtual void reset_to_default_fit_params() = 0;
 
     virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) = 0;
+
+    virtual void print_fit_params() = 0;
 
 protected:
 

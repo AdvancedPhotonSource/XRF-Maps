@@ -52,6 +52,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include "data_struct/params_override.h"
 #include "data_struct/element_info.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <unordered_map>
+#include <chrono>
+#include <ctime>
 
 using namespace data_struct;
 
@@ -105,24 +113,14 @@ namespace aps
     /***
  * Translation map from APS file tags to internal tags
  */
-    const std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = {
+ const std::unordered_map<std::string, std::string> BASE_FILE_TAGS_TRANSLATION = {
         {"CAL_OFFSET_[E_OFFSET]", STR_ENERGY_OFFSET},
-        {"CAL_OFFSET_[E_OFFSET]_MAX", STR_ENERGY_OFFSET},
-        {"CAL_OFFSET_[E_OFFSET]_MIN", STR_ENERGY_OFFSET},
         {"CAL_SLOPE_[E_LINEAR]", STR_ENERGY_SLOPE},
-        {"CAL_SLOPE_[E_LINEAR]_MAX", STR_ENERGY_SLOPE},
-        {"CAL_SLOPE_[E_LINEAR]_MIN", STR_ENERGY_SLOPE},
         {"CAL_QUAD_[E_QUADRATIC]", STR_ENERGY_QUADRATIC},
-        {"CAL_QUAD_[E_QUADRATIC]_MAX", STR_ENERGY_QUADRATIC},
-        {"CAL_QUAD_[E_QUADRATIC]_MIN", STR_ENERGY_QUADRATIC},
         {"FWHM_OFFSET", STR_FWHM_OFFSET},
         {"FWHM_FANOPRIME", STR_FWHM_FANOPRIME},
         {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
-        {"COHERENT_SCT_ENERGY_MAX", STR_COHERENT_SCT_ENERGY},
-        {"COHERENT_SCT_ENERGY_MIN", STR_COHERENT_SCT_ENERGY},
         {"COMPTON_ANGLE", STR_COMPTON_ANGLE},
-        {"COMPTON_ANGLE_MAX", STR_COMPTON_ANGLE},
-        {"COMPTON_ANGLE_MIN", STR_COMPTON_ANGLE},
         {"COMPTON_FWHM_CORR", STR_COMPTON_FWHM_CORR},
         {"COMPTON_STEP", STR_COMPTON_F_STEP},
         {"COMPTON_F_TAIL", STR_COMPTON_F_TAIL},
@@ -142,13 +140,31 @@ namespace aps
         {"GAMMA_LINEAR", STR_GAMMA_LINEAR},
         {"GAMMA_QUADRATIC", STR_GAMMA_QUADRATIC},
         {"SNIP_WIDTH", STR_SNIP_WIDTH},
-        {"SI_ESCAPE_FACTOR", STR_SI_ESCAPE},
-        {"GE_ESCAPE_FACTOR", STR_GE_ESCAPE},
-        {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR},
-        {"MAX_ENERGY_TO_FIT", STR_MAX_ENERGY_TO_FIT },
-        {"MIN_ENERGY_TO_FIT", STR_MIN_ENERGY_TO_FIT }
-    };
+        {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR}
+     };
 
+ template<typename T_real>
+std::unordered_map<std::string, std::string> init_tags()
+{
+    std::unordered_map<std::string, std::string> tags;
+    for (const auto& itr : BASE_FILE_TAGS_TRANSLATION)
+    {
+        tags[itr.first] = itr.second;
+        tags[itr.first + "_MIN"] = itr.second;
+        tags[itr.first + "_MAX"] = itr.second;
+        tags[itr.first + "_STEPSIZE"] = itr.second;
+        tags[itr.first + "_FITTING"] = itr.second;
+    }
+
+    // add the rest that do not have min max step ect
+    
+    tags["SI_ESCAPE_FACTOR"] = STR_SI_ESCAPE;
+    tags["GE_ESCAPE_FACTOR"] = STR_GE_ESCAPE;
+    tags["MAX_ENERGY_TO_FIT"] = STR_MAX_ENERGY_TO_FIT;
+    tags["MIN_ENERGY_TO_FIT"] = STR_MIN_ENERGY_TO_FIT;
+
+    return tags;
+}
 
 template<typename T_real>
 T_real translate_sens_num(std::string value)
@@ -195,6 +211,8 @@ T_real translate_sens_num(std::string value)
 template<typename T_real>
 DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> *params_override)
 {
+
+    std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = init_tags<T_real>();
 
     data_struct::Element_Info_Map<T_real>* element_info_map = data_struct::Element_Info_Map<T_real>::inst();
     std::ifstream paramFileStream(path);
@@ -353,19 +371,50 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         std::string str_value;
                         std::getline(strstream, str_value, ':');
-                        float fvalue = parse_input_real<T_real>(str_value);
+                        // remove white space from str_value
+                        str_value.erase(std::remove_if(str_value.begin(), str_value.end(), ::isspace), str_value.end());
+                        // lower case str_value
+                        std::transform(str_value.begin(), str_value.end(), str_value.begin(), [](unsigned char c) { return std::tolower(c); });
 
                         if (tag.find("_MAX") != std::string::npos)
                         {
-                            params_override->fit_params[tag_name].max_val = fvalue;
+                            params_override->fit_params[tag_name].max_val = parse_input_real<T_real>(str_value);
                         }
                         else if (tag.find("_MIN") != std::string::npos)
                         {
-                            params_override->fit_params[tag_name].min_val = fvalue;
+                            params_override->fit_params[tag_name].min_val = parse_input_real<T_real>(str_value);
+                        }
+                        else if (tag.find("_FITTING") != std::string::npos)
+                        {
+                            
+                            if (str_value == STR_FIXED)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIXED;
+                            }
+                            else if (str_value == STR_LIMITED_LO_HI)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO_HI;
+                            }
+                            else if (str_value == STR_LIMITED_LO)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO;
+                            }
+                            else if (str_value == STR_LIMITED_HI)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_HI;
+                            }
+                            else if (str_value == STR_FIT)
+                            {
+                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIT;
+                            }
+                        }
+                        else if (tag.find("_STEPSIZE") != std::string::npos)
+                        {
+                            params_override->fit_params[tag_name].step_size = parse_input_real<T_real>(str_value);
                         }
                         else
                         {
-                            params_override->fit_params[tag_name].value = fvalue;
+                            params_override->fit_params[tag_name].value = parse_input_real<T_real>(str_value);
                         }
                     }
                     else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K" || tag == "BRANCHING_RATIO_ADJUSTMENT_M")
@@ -1071,6 +1120,9 @@ DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parame
 
     if (in_stream.is_open() && out_stream.is_open())
     {
+
+        std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = init_tags<T_real>();
+
         in_stream.exceptions(std::ifstream::failbit);
         //std::string line;
         std::string tag;

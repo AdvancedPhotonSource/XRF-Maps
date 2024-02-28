@@ -102,7 +102,7 @@ public:
      * @param delta_energy
      * @return
      */
-    virtual const ArrayTr<T_real> peak(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy) const;
+    const ArrayTr<T_real> peak(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy) const;
 
     /**
      * @brief gauss_step : gain / 2.0 /  peak_E * erfc(delta_energy/(M_SQRT2 * sigma));
@@ -112,9 +112,9 @@ public:
      * @param peak_E
      * @return
      */
-    virtual const ArrayTr<T_real> step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const;
+    const ArrayTr<T_real> step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const;
 
-    virtual const ArrayTr<T_real> tail(T_real gain, T_real sigma, ArrayTr<T_real> delta_energy, T_real gamma) const;
+    const ArrayTr<T_real> tail(T_real gain, T_real sigma, ArrayTr<T_real> delta_energy, T_real gamma) const;
 
     virtual const ArrayTr<T_real> elastic_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real gain) const;
 
@@ -125,6 +125,8 @@ public:
     virtual void reset_to_default_fit_params() { _fit_parameters = _generate_default_fit_parameters(); }
 
     virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) { _fit_parameters.update_values(fit_params); }
+
+    virtual void print_fit_params() { _fit_parameters.print(); }
 
     void update_and_add_fit_params_values_gt_zero(Fit_Parameters<T_real>* fit_params) { _fit_parameters.update_and_add_values_gt_zero(fit_params); }
 
