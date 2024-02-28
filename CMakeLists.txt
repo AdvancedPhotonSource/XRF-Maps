@@ -307,6 +307,7 @@ set(XRF_IO_SOURCE
 	  src/core/mem_info.cpp
     src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
+    src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
