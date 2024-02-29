@@ -1252,9 +1252,7 @@ DLL_EXPORT void save_quantification_plots(std::string path, Detector<T_real>* de
     std::string str_path = path + "/output/";
     //if(analysis_job->get_detector(detector_num))
     file::csv::save_quantification(str_path, detector);
-#ifdef _BUILD_WITH_QT
     visual::SavePlotQuantificationFromConsole(str_path, detector);
-#endif
 }
 
 }// end namespace file

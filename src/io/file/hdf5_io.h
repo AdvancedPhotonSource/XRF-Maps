@@ -4750,6 +4750,7 @@ public:
 
     void set_filename(std::string fname) {_cur_filename = fname;}
 
+    const std::string& get_filename() { return _cur_filename; }
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
