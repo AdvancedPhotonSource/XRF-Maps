@@ -79,6 +79,8 @@ enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIM
  template<typename T_real>
  using Fit_Count_Dict = std::unordered_map<std::string, ArrayXXr<T_real> >;
 
+ template<typename _T>
+ using ArrayTr = Eigen::Array<_T, Eigen::Dynamic, Eigen::RowMajor>;
  //-----------------------------------------------------------------------------
 
 /**
@@ -293,6 +295,19 @@ DLL_EXPORT Range get_energy_range(const size_t spectra_size, const Fit_Parameter
         spectra_size,
         params->value(STR_ENERGY_OFFSET),
         params->value(STR_ENERGY_SLOPE));
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+DLL_EXPORT const ArrayTr<T_real> gen_energy_vector(const Range& energy_range, const Fit_Parameters<T_real>& params)
+{
+    const T_real energy_offset = params.value(STR_ENERGY_OFFSET);
+    const T_real energy_slope = params.value(STR_ENERGY_SLOPE);
+    const T_real energy_quad = params.value(STR_ENERGY_QUADRATIC);
+    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+    return ev;
 }
 
 //-----------------------------------------------------------------------------

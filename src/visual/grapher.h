@@ -50,10 +50,10 @@ namespace visual
 
 template<typename T_real>
 DLL_EXPORT void SavePlotSpectras(std::string path,
-                      data_struct::ArrayTr<T_real> *energy,
-                      data_struct::ArrayTr<T_real> *spectra,
-                      data_struct::ArrayTr<T_real> *model,
-                      data_struct::ArrayTr<T_real> *background,
+                      const data_struct::ArrayTr<T_real>* const energy,
+                      const data_struct::ArrayTr<T_real>* const spectra,
+                      const data_struct::ArrayTr<T_real>* const model,
+                      const data_struct::ArrayTr<T_real>* const background,
                       bool log_them)
 {
     QLogValueAxis* axisYLog10 = new QLogValueAxis();
@@ -184,12 +184,13 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
 
 template<typename T_real>
 DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
-    data_struct::ArrayTr<T_real>* energy,
-    data_struct::ArrayTr<T_real>* spectra,
-    data_struct::ArrayTr<T_real>* model,
-    data_struct::ArrayTr<T_real>* background,
+    const data_struct::ArrayTr<T_real>* const energy,
+    const data_struct::ArrayTr<T_real>* const spectra,
+    const data_struct::ArrayTr<T_real>* const model,
+    const data_struct::ArrayTr<T_real>* const background,
     bool log_them)
 {
+#ifdef _BUILD_WITH_QT
     if (QCoreApplication::startingUp())
     {
         int argc = 0;
@@ -201,6 +202,7 @@ DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
     {
         SavePlotSpectras(path, energy, spectra, model, background, log_them);
     }
+#endif
 }
 // ----------------------------------------------------------------------------
 

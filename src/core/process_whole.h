@@ -295,6 +295,20 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                 matrix_fit->energy_range(),
                 matrix_fit->fitted_integrated_background(),
                 (*spectra_volume)[0][0].size());
+
+            // save png 
+            std::string dataset_fullpath = io::file::HDF5_IO::inst()->get_filename();
+            int sidx = dataset_fullpath.find("img.dat");
+            if (dataset_fullpath.length() > 0 && sidx > 0) 
+            {
+                dataset_fullpath.replace(sidx, 7, "output"); // 7 = sizeof("img.dat")
+                std::string str_path = dataset_fullpath + "_" + fit_routine->get_name() + ".png";
+                data_struct::ArrayTr<T_real> ev = data_struct::gen_energy_vector(matrix_fit->energy_range(), override_params->fit_params);
+                Spectra<T_real> int_spec = spectra_volume->integrate();
+                int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
+                visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
+            }
+
         }
         if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
         {
