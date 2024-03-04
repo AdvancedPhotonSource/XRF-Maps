@@ -302,8 +302,9 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     {
         str_path += ".png";
     }
+    #ifdef _BUILD_WITH_QT
     visual::SavePlotSpectrasFromConsole(str_path, &ev, &snip_spectra, &model_spectra, &background, true);
-
+    #endif
     for (const auto& eitr : *elements_to_fit)
     {
         if (fit_params->contains(eitr.first))
