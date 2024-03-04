@@ -673,9 +673,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("get_multiplied_dims", &io::file::mda_get_multiplied_dims)
     .def("get_rank_and_dims", &io::file::mda_get_rank_and_dims);
 
+    io_file.def("get_BASE_FILE_TAGS_TRANSLATION", []()
+        {
+            return io::file::aps::BASE_FILE_TAGS_TRANSLATION;
+        });
+
     io_file.def("get_FILE_TAGS_TRANSLATION", []()
         {
-            return io::file::aps::FILE_TAGS_TRANSLATION;
+            return io::file::aps::init_tags<float>();
         });
     
     //NetCDF_IO
