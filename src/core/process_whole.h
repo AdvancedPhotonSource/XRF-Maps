@@ -306,7 +306,9 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                 data_struct::ArrayTr<T_real> ev = data_struct::gen_energy_vector(matrix_fit->energy_range(), override_params->fit_params);
                 Spectra<T_real> int_spec = spectra_volume->integrate();
                 int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
+                #ifdef _BUILD_WITH_QT
                 visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
+                #endif
             }
 
         }

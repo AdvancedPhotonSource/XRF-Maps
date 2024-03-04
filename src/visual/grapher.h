@@ -190,7 +190,6 @@ DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
     const data_struct::ArrayTr<T_real>* const background,
     bool log_them)
 {
-#ifdef _BUILD_WITH_QT
     if (QCoreApplication::startingUp())
     {
         int argc = 0;
@@ -202,7 +201,6 @@ DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
     {
         SavePlotSpectras(path, energy, spectra, model, background, log_them);
     }
-#endif
 }
 // ----------------------------------------------------------------------------
 
