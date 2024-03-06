@@ -905,10 +905,18 @@ int main(int argc, char* argv[])
     //Performance measure
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
+    // get location of where we are running from and use it to find ref files
+    std::string exe_loc = std::string(argv[0]);
+    int prog_idx = exe_loc.find("xrf_maps");
+    if (prog_idx > 0)
+    {
+        exe_loc = exe_loc.substr(0, prog_idx);
+    }
+
     //////// HENKE and ELEMENT INFO /////////////
-    const std::string element_csv_filename = "../reference/xrf_library.csv";
-    const std::string element_henke_filename = "../reference/henke.xdr";
-    const std::string scaler_lookup_yaml = "../reference/Scaler_to_PV_map.yaml";
+    const std::string element_csv_filename = exe_loc + "../reference/xrf_library.csv";
+    const std::string element_henke_filename = exe_loc + "../reference/henke.xdr";
+    const std::string scaler_lookup_yaml = exe_loc + "../reference/Scaler_to_PV_map.yaml";
 
     start = std::chrono::system_clock::now();
 
@@ -929,7 +937,7 @@ int main(int argc, char* argv[])
         logE << "loading element information: " << "\n";
         return -1;
     }
-
+    
     Command_Line_Parser clp(argc, argv);
 
     if (clp.option_exists("-h"))

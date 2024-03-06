@@ -300,7 +300,132 @@ PYBIND11_MODULE(pyxrfmaps, m) {
             {
                 logE << "Could not find element for detector " << detector_element << "\n";
             }
-        });
+        })
+        .def("to_dict",
+            [&](data_struct::Params_Override<float>& self)
+            {
+                py::dict d;
+                py::dict dfp;
+                py::dict de;
+
+                // fit params
+                for (auto itr = self.fit_params.begin(); itr != self.fit_params.end(); itr++)
+                {
+                    py::dict fp;
+                    fp["name"] = itr->second.name;
+                    fp["min_val"] = itr->second.min_val;
+                    fp["max_val"] = itr->second.max_val;
+                    fp["value"] = itr->second.value;
+                    fp["step_size"] = itr->second.step_size;
+                    fp["bound_type"] = itr->second.bound_type_str();
+                    dfp[itr->first.c_str()] = fp;
+                }
+                d["fit_params"] = dfp;
+
+                for (auto itr : self.elements_to_fit)
+                {
+                    py::dict df;
+                    df["full_name"] = itr.second->full_name();
+                    df["shell_type"] = itr.second->shell_type_as_string();
+                    df["center"] = itr.second->center();
+                    df["width"] = itr.second->width();
+                    df["symbol"] = itr.second->symbol();
+                    df["Z"] = itr.second->Z();
+                    df["width_multi"] = itr.second->width_multi();
+                    de[itr.first.c_str()] = df;
+                }
+                d["elements_to_fit"] = de;
+
+                d["dataset_directory"] = self.dataset_directory;
+                d["detector_num"] = self.detector_num;
+                d["detector_element"] = self.detector_element;
+                d["si_escape_factor"] = self.si_escape_factor;
+                d["ge_escape_factor"] = self.ge_escape_factor;
+                d["si_escape_enabled"] = self.si_escape_enabled;
+                d["ge_escape_enabled"] = self.ge_escape_enabled;
+                d["fit_snip_width"] = self.fit_snip_width;
+                d["be_window_thickness"] = self.be_window_thickness;
+                d["det_chip_thickness"] = self.det_chip_thickness;
+                d["ge_dead_layer"] = self.ge_dead_layer;
+                d["us_amp_sens_num"] = self.us_amp_sens_num;
+                d["us_amp_sens_unit"] = self.us_amp_sens_unit;
+                d["ds_amp_sens_num"] = self.ds_amp_sens_num;
+                d["ds_amp_sens_unit"] = self.ds_amp_sens_unit;
+                d["theta_pv"] = self.theta_pv;
+                return d;
+            }
+        )
+        .def("from_dict",
+            [&](data_struct::Params_Override<float>& self, const py::dict& d)
+            {
+
+                if (d.contains("dataset_directory"))
+                {
+                    self.dataset_directory = py::cast<std::string>(d["dataset_directory"]);
+                }
+                if (d.contains("detector_num"))
+                {
+                    self.detector_num = py::cast<int>(d["detector_num"]);
+                }
+                if (d.contains("elements_to_fit"))
+                {
+                    //self.elements_to_fit = py::cast< Fit_Element_Map_Dict<float> >(d["elements_to_fit"]);
+                }
+                if (d.contains("detector_element"))
+                {
+                    self.detector_element = py::cast<std::string>(d["detector_element"]);
+                }
+                if (d.contains("si_escape_factor"))
+                {
+                    self.si_escape_factor = py::cast<float>(d["si_escape_factor"]);
+                }
+                if (d.contains("ge_escape_factor"))
+                {
+                    self.ge_escape_factor = py::cast<float>(d["ge_escape_factor"]);
+                }
+                if (d.contains("si_escape_enabled"))
+                {
+                    self.si_escape_enabled = py::cast<bool>(d["si_escape_enabled"]);
+                }
+                if (d.contains("ge_escape_enabled"))
+                {
+                    self.ge_escape_enabled = py::cast<bool>(d["ge_escape_enabled"]);
+                }
+                if (d.contains("fit_snip_width"))
+                {
+                    self.fit_snip_width = py::cast<float>(d["fit_snip_width"]);
+                }
+                if (d.contains("be_window_thickness"))
+                {
+                    self.be_window_thickness = py::cast<std::string>(d["be_window_thickness"]);
+                }
+                if (d.contains("ge_dead_layer"))
+                {
+                    self.ge_dead_layer = py::cast<float>(d["ge_dead_layer"]);
+                }
+                if (d.contains("us_amp_sens_num"))
+                {
+                    self.us_amp_sens_num = py::cast<float>(d["us_amp_sens_num"]);
+                }
+                if (d.contains("us_amp_sens_unit"))
+                {
+                    self.us_amp_sens_unit = py::cast<std::string>(d["us_amp_sens_unit"]);
+                }
+                if (d.contains("ds_amp_sens_num"))
+                {
+                    self.ds_amp_sens_num = py::cast<float>(d["ds_amp_sens_num"]);
+                }
+                if (d.contains("ds_amp_sens_unit"))
+                {
+                    self.ds_amp_sens_unit = py::cast<std::string>(d["ds_amp_sens_unit"]);
+                }
+                if (d.contains("theta_pv"))
+                {
+                    self.theta_pv = py::cast<float>(d["theta_pv"]);
+                }
+            }
+        );
+
     /*
     py::class_<data_struct::Calibration_Curve>(m, "CalibrationCurve")
     .def(py::init<>())
