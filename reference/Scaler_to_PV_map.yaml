@@ -306,3 +306,7 @@ BeamLines:
       OCR5: 26idcXMAP:dxp5:OutputCountRate
       OCR6: 26idcXMAP:dxp6:OutputCountRate
       OCR7: 26idcXMAP:dxp7:OutputCountRate
+  HXN:
+    Scalers:
+      DS_IC: sclr1_ch4
+      US_IC: sclr1_ch2

@@ -49,7 +49,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef HDF5_IO_H
 #define HDF5_IO_H
 
-
+#include <codecvt>
+#include <cstdint>
+#include <locale>
 #include <list>
 #include <mutex>
 #include <queue>
@@ -4042,8 +4044,8 @@ public:
             return false;
         }
 
-        hid_t name_type = H5Dget_type(scaler_name_id);
-        close_map.push({ name_type, H5O_DATATYPE });
+        //hid_t name_type = H5Dget_type(scaler_name_id);
+        //close_map.push({ name_type, H5O_DATATYPE });
         hid_t scaler_type = H5Dget_type(scaler_val_id);
         close_map.push({ scaler_type, H5O_DATATYPE });
         hid_t scaler_val_space = H5Dget_space(scaler_val_id);
@@ -4066,16 +4068,22 @@ public:
         close_map.push({ mem_space, H5O_DATASPACE });
         size_t scaler_cnt = val_dims_in[2];
         val_dims_in[2] = 1;
+
+        float famt = val_dims_in[0] * val_dims_in[1];
+
+        char* tmp_char_arr[255];
+        hid_t dtype2 = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype2, H5T_VARIABLE);
+        _global_close_map.push({ dtype2, H5O_DATATYPE });
+        hid_t rstatus = H5Dread(scaler_name_id, dtype2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
+
         for (hsize_t i = 0; i < scaler_cnt; i++)
         {
             single_offset[0] = i;
             scaler_offset[2] = i;
 
             H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
-            H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
-
-            status = H5Dread(scaler_name_id, name_type, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
-            if (status > -1)
+            if (rstatus > -1)
             {
                 std::string read_name = std::string(tmp_char, 255);
                 read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
@@ -4095,7 +4103,35 @@ public:
                             {
                                 override_values->DS_IC += (T_real)buffer[x];
                             }
-
+                            override_values->DS_IC /= famt;
+                        }
+                        //break;
+                    }
+                    else if (out_label == STR_US_IC)
+                    {
+                        status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
+                        override_values->US_IC = 0.0;
+                        if (status > -1)
+                        {
+                            for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
+                            {
+                                override_values->US_IC += (T_real)buffer[x];
+                            }
+                            override_values->US_IC /= famt;
+                        }
+                        //break;
+                    }
+                    else if (out_label == STR_SR_CURRENT)
+                    {
+                        status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
+                        override_values->sr_current = 0.0;
+                        if (status > -1)
+                        {
+                            for (hsize_t x = 0; x < val_dims_in[0] * val_dims_in[1]; x++)
+                            {
+                                override_values->sr_current += (T_real)buffer[x];
+                            }
+                            override_values->sr_current /= famt;
                         }
                         break;
                     }
@@ -6947,8 +6983,8 @@ public:
             return false;
         }
 
-        hid_t name_type = H5Dget_type(scaler_name_id);
-        _global_close_map.push({ name_type, H5O_DATATYPE });
+        hid_t scaler_name_space = H5Dget_space(scaler_name_id);
+        _global_close_map.push({ scaler_name_space, H5O_DATASPACE });
         hid_t scaler_type = H5Dget_type(scaler_val_id);
         _global_close_map.push({ scaler_type, H5O_DATATYPE });
         hid_t scaler_val_space = H5Dget_space(scaler_val_id);
@@ -6964,12 +7000,17 @@ public:
         //names
         hid_t mem_single_space;
         _create_memory_space(1, &single_count[0], mem_single_space);
+        _global_close_map.push({ mem_single_space, H5O_DATASPACE });
         hid_t names_id, name_space, units_id, units_space, values_id, value_space;
         single_count[0] = val_dims_in[2];
 
-        single_count[0] = 1;
+
         hid_t dtype = H5Tcopy(H5T_C_S1);
         H5Tset_size(dtype, 255);
+        _global_close_map.push({ dtype, H5O_DATATYPE });
+        hid_t dtype2 = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype2, H5T_VARIABLE);
+        _global_close_map.push({ dtype2, H5O_DATATYPE });
 
         if (false == _open_h5_dataset(STR_NAMES, dtype, scalers_grp_id, 1, &single_count[0], &single_count[0], names_id, name_space))
         {
@@ -6985,6 +7026,7 @@ public:
         }
 
         char tmp_char[255] = { 0 };
+        char *tmp_char_arr[255];
         char unit_char[255] = "cts";
         buffer = new double[val_dims_in[0] * val_dims_in[1]];
         hid_t mem_space;
@@ -6992,6 +7034,10 @@ public:
         size_t scaler_cnt = val_dims_in[2];
         val_dims_in[2] = 1;
         value_count[0] = 1;
+        single_count[0] = 1;
+
+        hid_t rstatus = H5Dread(scaler_name_id, dtype2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
+
         for (hsize_t i = 0; i < scaler_cnt; i++)
         {
             single_offset[0] = i;
@@ -7002,25 +7048,29 @@ public:
             H5Sselect_hyperslab(value_space, H5S_SELECT_SET, value_offset, NULL, value_count, NULL);
             H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
 
-            status = H5Dread(scaler_name_id, name_type, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
-            if (status > -1)
+            if (rstatus > -1)
             {
-                std::string read_name = std::string(tmp_char, 255);
+                std::string read_name = std::string(tmp_char_arr[i]);
                 read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
                 read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
                 std::string out_label = "";
                 std::string beamline = "";
                 bool tmpb;
-                if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
+                for (int j = 0; j < 255; j++)
                 {
-                    for (int j = 0; j < 255; j++)
-                    {
-                        tmp_char[j] = '\0';
-                    }
+                    tmp_char[j] = '\0';
+                }
+                if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
+                {   
                     out_label.copy(tmp_char, 255);
+                }
+                else
+                {
+                    read_name.copy(tmp_char, 255);
                 }
                 H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
             }
+
             H5Dwrite(units_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)unit_char);
             status = H5Dread(scaler_val_id, scaler_type, mem_space, scaler_val_space, H5P_DEFAULT, (void*)buffer);
             if (status > -1)
