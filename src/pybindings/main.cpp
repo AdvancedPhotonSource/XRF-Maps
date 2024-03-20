@@ -465,6 +465,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("fit_counts", &data_struct::Stream_Fitting_Block<float>::fit_counts);
 
     py::class_<data_struct::Stream_Block<float> >(m, "StreamBlock")
+    .def(py::init<>())
     .def(py::init<int, size_t, size_t, size_t, size_t>())
     .def("init_fitting_blocks", &data_struct::Stream_Block<float>::init_fitting_blocks)
     .def("row", &data_struct::Stream_Block<float>::row)
