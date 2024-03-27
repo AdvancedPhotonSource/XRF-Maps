@@ -1,0 +1,9 @@
+{
+    "redis_host": "hyrule",
+    "node_name": "invid",
+    "xrf_param_override": 
+    {
+	"dataset_dir": "/home/beams/AGLOWACKI/mdata/2idd_luxi",
+	"detector_num": 0
+    }
+}

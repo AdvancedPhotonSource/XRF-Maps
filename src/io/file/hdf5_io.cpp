@@ -1248,7 +1248,7 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 		rerror = H5Dread(extra_names, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
 
 		std::string value(tmp_char, 255);
-		value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+		value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
 		if (theta_pv_str == value)
 		{
 			for (int z = 0; z < 256; z++)
@@ -2422,7 +2422,7 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
         if (H5Dread(names_id, filetype, mem_space_1d, name_space, H5P_DEFAULT, (void*)tmp_char) > -1)
         {
             std::string scaler_name_str = std::string(tmp_char, 255);
-            scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
+            scaler_name_str.erase(std::remove_if(scaler_name_str.begin(), scaler_name_str.end(), ::isspace), scaler_name_str.end());
             int c_idx = scaler_name_str.find(':');
 
             if (c_idx < 0 && scaler_name_str.length() > 0)
@@ -2603,27 +2603,26 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             hid_t unit_single_space;
 
             hid_t chan_type = H5Dget_type(dset_id);
-            hid_t scalername_type = H5Dget_type(scaler_names_id);
+            //hid_t scalername_type = H5Dget_type(scaler_names_id);
 
             hid_t chan_space = H5Dget_space(dset_id);
             hid_t chan_name_space = H5Dget_space(chan_names_id);
             hid_t scaler_space = H5Dget_space(scaler_dset_id);
 
+            hid_t memtype = H5Tcopy(H5T_C_S1);
+            H5Tset_size(memtype, 255);
+
             H5Sget_simple_extent_dims(chan_space, &chan_dims[0], nullptr);
             H5Sget_simple_extent_dims(scaler_space, &scaler_dims[0], nullptr);
+
+            image_dims_single[0] = { 1 };
+            hid_t readwrite_single_space = H5Screate_simple(1, &image_dims_single[0], &image_dims_single[0]);
 
             image_dims_single[0] = chan_dims[0] + scaler_dims[0];
             image_dims[0] = chan_dims[0] + scaler_dims[0];
             image_dims[1] = chan_dims[1];
             image_dims[2] = chan_dims[2];
             hid_t image_dset_id, image_space, image_single_space;
-            
-
-            image_dims[0] = 1;
-            hid_t readwrite_space = H5Screate_simple(3, &image_dims[0], &image_dims[0]);
-
-            image_dims_single[0] = {1};
-            hid_t readwrite_single_space = H5Screate_simple(1, &image_dims_single[0], &image_dims_single[0]);
 
             if (false == _open_h5_dataset(exchange_images, chan_type, file_id, 3, &image_dims[0], &image_dims[0], image_dset_id, image_space))
             {
@@ -2644,6 +2643,11 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
             double *data = new double[chan_dims[1] * chan_dims[2]];
             double*ds_ic_data = new double[chan_dims[1] * chan_dims[2]];
+            for (int z = 0; z < (chan_dims[1] * chan_dims[2]); z++)
+            {
+                data[z] = 0.;
+                ds_ic_data[z] = 0.;
+            }
             std::string scaler_name_str;
             char char_data[256]={0};
             char char_ug_data[256]="ug/cm2";
@@ -2651,10 +2655,11 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
             double quant_value = 1.0;
 
-            for (std::string::size_type x=0; x<normalize_scaler.length(); ++x)
-            {
-                normalize_scaler[x] = std::tolower(normalize_scaler[x]);
-            }
+            std::transform(normalize_scaler.begin(), normalize_scaler.end(), normalize_scaler.begin(), [](unsigned char c) { return std::tolower(c); });
+
+            image_dims[0] = 1;
+            hid_t readwrite_space = H5Screate_simple(3, &image_dims[0], &image_dims[0]);
+            image_dims_single[0] = 1;
             // save scalers first
             for(hsize_t i=0; i < scaler_dims[0]; i++)
             {
@@ -2664,29 +2669,32 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 k++;
                 H5Sselect_hyperslab (image_space, H5S_SELECT_SET, offset, nullptr, image_dims, nullptr);
                 //read write values
-                hid_t status = H5Dread(scaler_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                hid_t status = H5Dread(scaler_dset_id, H5T_NATIVE_DOUBLE, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
                 if(status > -1)
                 {
-                    H5Dwrite(image_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                    status = H5Dwrite(image_dset_id, H5T_NATIVE_DOUBLE, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                    if (status == -1)
+                    {
+                        logW << "Issue saving scaler index " << offset[0] << "\n";
+                    }
                 }
 
                 //read write names
                 H5Sselect_hyperslab (image_single_space, H5S_SELECT_SET, offset_single, nullptr, image_dims_single, nullptr);
-                status = H5Dread(scaler_names_id, scalername_type, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                status = H5Dread(scaler_names_id, memtype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 if(status > -1)
                 {
-                    H5Dwrite(image_names_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                    H5Dwrite(image_names_dset_id, memtype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 }
 
 
                 scaler_name_str = std::string(char_data, 256);
-                scaler_name_str.erase(std::remove(scaler_name_str.begin(), scaler_name_str.end(), ' '), scaler_name_str.end());
+                scaler_name_str.erase(std::find(scaler_name_str.begin(), scaler_name_str.end(), '\0'), scaler_name_str.end());
+                scaler_name_str.erase(std::remove_if(scaler_name_str.begin(), scaler_name_str.end(), ::isspace), scaler_name_str.end());
                 //to lower
-                for (std::string::size_type x=0; x<scaler_name_str.length(); ++x)
-                {
-                    scaler_name_str[x] = std::tolower(scaler_name_str[x]);
-                }
-                if(scaler_name_str == normalize_scaler)
+                std::transform(scaler_name_str.begin(), scaler_name_str.end(), scaler_name_str.begin(), [](unsigned char c) { return std::tolower(c); });
+                
+                if(normalize_scaler.compare(scaler_name_str) == 0)
                 {
                     for(hsize_t z=0; z < (chan_dims[1] * chan_dims[2]); z++)
                     {
@@ -2695,10 +2703,10 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 }
 
                 //read write units
-                status = H5Dread(scaler_units_id, scalername_type, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                status = H5Dread(scaler_units_id, memtype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 if(status > -1)
                 {
-                    H5Dwrite(image_units_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                    H5Dwrite(image_units_dset_id, memtype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 }
             }
 
@@ -2712,24 +2720,25 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 // read write names
                 H5Sselect_hyperslab (chan_name_space, H5S_SELECT_SET, offset_single, nullptr, image_dims_single, nullptr);
                 H5Sselect_hyperslab (image_single_space, H5S_SELECT_SET, offset_image, nullptr, image_dims_single, nullptr);
-                hid_t status = H5Dread(chan_names_id, scalername_type, readwrite_single_space, chan_name_space, H5P_DEFAULT, (void*)&char_data[0]);
+                hid_t status = H5Dread(chan_names_id, memtype, readwrite_single_space, chan_name_space, H5P_DEFAULT, (void*)&char_data[0]);
                 if(status > -1)
                 {
-                    H5Dwrite(image_names_dset_id, filetype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
+                    H5Dwrite(image_names_dset_id, memtype, readwrite_single_space, image_single_space, H5P_DEFAULT, (void*)&char_data[0]);
                 }
 
                 // get quantification for ds_ic and store in quant_value
                 if(ds_ic_quant_id > -1)
                 {
                     std::string chan_name_str = std::string(char_data, 256);
-                    chan_name_str.erase(std::remove(chan_name_str.begin(), chan_name_str.end(), ' '), chan_name_str.end());
+                    chan_name_str.erase(std::find(chan_name_str.begin(), chan_name_str.end(), '\0'), chan_name_str.end());
+                    chan_name_str.erase(std::remove_if(chan_name_str.begin(), chan_name_str.end(), ::isspace), chan_name_str.end());
                     data_struct::Element_Info<double>* element = data_struct::Element_Info_Map<double>::inst()->get_element(chan_name_str);
                     if(element != nullptr)
                     {
                         offset_quant[1] = element->number - 1;
 
                         H5Sselect_hyperslab (quant_space, H5S_SELECT_SET, offset_quant, nullptr, count_quant, nullptr);
-                        hid_t status = H5Dread(ds_ic_quant_id, quant_type, readwrite_single_space, quant_space, H5P_DEFAULT, (void*)&quant_value);
+                        hid_t status = H5Dread(ds_ic_quant_id, H5T_NATIVE_DOUBLE, readwrite_single_space, quant_space, H5P_DEFAULT, (void*)&quant_value);
                         if(status < 0)
                         {
                             quant_value = 1.0;
@@ -2745,14 +2754,18 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                 H5Sselect_hyperslab (chan_space, H5S_SELECT_SET, offset, nullptr, image_dims, nullptr);
                 H5Sselect_hyperslab (image_space, H5S_SELECT_SET, offset_image, nullptr, image_dims, nullptr);
                 //read write values
-                status = H5Dread(dset_id, chan_type, readwrite_space, chan_space, H5P_DEFAULT, (void*)&data[0]);
+                status = H5Dread(dset_id, H5T_NATIVE_DOUBLE, readwrite_space, chan_space, H5P_DEFAULT, (void*)&data[0]);
                 if(status > -1)
                 {
                     for(hsize_t z=0; z < (chan_dims[1] * chan_dims[2]); z++)
                     {
                         data[z] = data[z] / quant_value / ds_ic_data[z];
                     }
-                    H5Dwrite(image_dset_id, chan_type, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                    status = H5Dwrite(image_dset_id, H5T_NATIVE_DOUBLE, readwrite_space, image_space, H5P_DEFAULT, (void*)&data[0]);
+                    if (status == -1)
+                    {
+                        logW << "Issue saving data index " << offset[0] << "\n";
+                    }
                 }
 
                 //read write units
