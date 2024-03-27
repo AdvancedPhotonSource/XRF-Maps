@@ -2166,26 +2166,13 @@ public:
             return false;
         }
 
-        switch (detector_num)
+        if (detector_num == (size_t)-1)
         {
-        case (size_t)-1:
             detector_path = "detsum";
-            break;
-        case 0:
-            detector_path = "det1";
-            break;
-        case 1:
-            detector_path = "det2";
-            break;
-        case 2:
-            detector_path = "det3";
-            break;
-        case 3:
-            detector_path = "det4";
-            break;
-        default:
-            detector_path = "detsum";
-            break;
+        }
+        else
+        {
+            detector_path = "det" + std::to_string(detector_num+1);
         }
 
         counts_path = detector_path + "/counts";
@@ -2403,26 +2390,13 @@ public:
             return false;
         }
 
-        switch (detector_num)
+        if (detector_num == (size_t)-1)
         {
-        case (size_t)-1:
             detector_path = "detsum";
-            break;
-        case 0:
-            detector_path = "det1";
-            break;
-        case 1:
-            detector_path = "det2";
-            break;
-        case 2:
-            detector_path = "det3";
-            break;
-        case 3:
-            detector_path = "det4";
-            break;
-        default:
-            detector_path = "detsum";
-            break;
+        }
+        else
+        {
+            detector_path = "det" + std::to_string(detector_num + 1);
         }
 
         counts_path = detector_path + "/counts";
@@ -6219,38 +6193,40 @@ public:
 
         _save_extras(scan_grp_id, &(scan_info->extra_pvs));
 
-        // if us_amps is not set in override file, search for it in extra_pvs
-        if (params_override->us_amp_sens_num == -1 || params_override->ds_amp_sens_num == -1)
+        if (params_override != nullptr)
         {
-            std::string label = "";
-            std::string beamline = "";
-            bool is_time_normalized = false;
-            for (auto& itr : scan_info->extra_pvs)
+            // if us_amps is not set in override file, search for it in extra_pvs
+            if (params_override->us_amp_sens_num == -1 || params_override->ds_amp_sens_num == -1)
             {
-                if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, label, is_time_normalized, beamline))
+                std::string label = "";
+                std::string beamline = "";
+                bool is_time_normalized = false;
+                for (auto& itr : scan_info->extra_pvs)
                 {
-                    if (label == STR_US_AMP_NUM_UPPR)
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, label, is_time_normalized, beamline))
                     {
-                        params_override->us_amp_sens_num = parse_input_real<T_real>(itr.value);
-                    }
-                    else if (label == STR_US_AMP_UNIT_UPPR)
-                    {
-                        params_override->us_amp_sens_unit = itr.value;
-                    }
-                    if (label == STR_DS_AMP_NUM_UPPR)
-                    {
-                        params_override->ds_amp_sens_num = parse_input_real<T_real>(itr.value);
-                    }
-                    else if (label == STR_DS_AMP_UNIT_UPPR)
-                    {
-                        params_override->ds_amp_sens_unit = itr.value;
+                        if (label == STR_US_AMP_NUM_UPPR)
+                        {
+                            params_override->us_amp_sens_num = parse_input_real<T_real>(itr.value);
+                        }
+                        else if (label == STR_US_AMP_UNIT_UPPR)
+                        {
+                            params_override->us_amp_sens_unit = itr.value;
+                        }
+                        if (label == STR_DS_AMP_NUM_UPPR)
+                        {
+                            params_override->ds_amp_sens_num = parse_input_real<T_real>(itr.value);
+                        }
+                        else if (label == STR_DS_AMP_UNIT_UPPR)
+                        {
+                            params_override->ds_amp_sens_unit = itr.value;
+                        }
                     }
                 }
             }
+
+            _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
         }
-
-        _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
-
         _close_h5_objects(_global_close_map);
 
         end = std::chrono::system_clock::now();
@@ -6862,7 +6838,7 @@ public:
         int col_idx_end = -1)
     {
 
-        std::lock_guard<std::mutex> lock(_mutex);
+        ////std::lock_guard<std::mutex> lock(_mutex);
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
@@ -6884,6 +6860,8 @@ public:
         hsize_t mem_count[2] = { 1,1 };
         hsize_t xy_offset[3] = { 0,0,0 };
         hsize_t xy_count[3] = { 1,1,1 };
+        hid_t metadata_id;
+        char* adata[255];
         hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         double* x_data = nullptr;
         double* y_data = nullptr;
@@ -7079,7 +7057,65 @@ public:
             }
         }
 
-        // todo: save scan meta data
+        data_struct::Scan_Info<T_real> scan_info;
+        if (_open_or_create_group(STR_SCAN_METADATA, src_maps_grp_id, metadata_id))
+        {
+            // load attributes from this folder
+            int na = H5Aget_num_attrs(metadata_id);
+
+            for (int i = 0; i < na; i++)
+            {
+                hid_t aid = H5Aopen_idx(metadata_id, (unsigned int)i);
+                hid_t atype;
+                hid_t aspace;
+                char buf[1000];
+                ssize_t len = H5Aget_name(aid, 1000, buf);
+                data_struct::Extra_PV e_pv;
+                e_pv.name = std::string(buf, len);
+
+                atype = H5Aget_type(aid);
+                hid_t ntype = H5Tget_native_type(atype, H5T_DIR_ASCEND);
+                H5T_class_t type_class =  H5Tget_class(atype);
+                //if (type_class == H5T_STRING)
+                if (H5Tis_variable_str(atype) > 0)
+                {
+                    if (H5Aread(aid, ntype, &adata) > -1)
+                    {
+                        e_pv.value = std::string(adata[0]);
+                    }
+                }
+                else if (type_class == H5T_ARRAY)
+                {
+                    int arrarr = 0;
+                }
+                else if(type_class == H5T_FLOAT)
+                {
+                    double ddata = 0;
+                    //if (H5Aread(aid, H5T_NATIVE_DOUBLE, &ddata) > -1)
+                    {
+                        e_pv.value = std::to_string(ddata);
+                    }
+                }
+                else if (type_class == H5T_INTEGER)
+                {
+                    long ldata = 0;
+                    //if (H5Aread(aid, H5T_NATIVE_LONG, &ldata) > -1)
+                    {
+                        e_pv.value = std::to_string(ldata);
+                    }
+                } 
+
+
+                scan_info.extra_pvs.push_back(e_pv);
+
+                H5Tclose(atype);
+                H5Aclose(aid);
+            }
+            save_scan_scalers<T_real>(detector_num, &scan_info, nullptr);
+
+        }
+
+        
 
         _close_h5_objects(_global_close_map);
 

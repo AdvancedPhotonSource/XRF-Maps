@@ -84,6 +84,8 @@ public:
 
     Stream_Block(int detector, size_t row, size_t col, size_t height, size_t width);
 
+    Stream_Block(int detector, size_t row, size_t col, size_t height, size_t width, std::string dir_name, std::string dset_name);
+
 	Stream_Block(const Stream_Block& stream_block);
 
 	Stream_Block& operator=(const Stream_Block&);
@@ -140,7 +142,6 @@ protected:
     size_t _width;
 
     int _detector;
-
 };
 
 } //namespace data_struct

@@ -91,6 +91,31 @@ Stream_Block<T_real>::Stream_Block(int detector,
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+Stream_Block<T_real>::Stream_Block(int detector,
+    size_t row,
+    size_t col,
+    size_t height,
+    size_t width,
+    std::string dir_name,
+    std::string dset_name)
+{
+    _row = row;
+    _col = col;
+    _height = height;
+    _width = width;
+    _detector = detector;
+    theta = 0;
+    dataset_directory = new std::string(dir_name);
+    dataset_name = new std::string(dset_name);
+    elements_to_fit = nullptr;
+    // by default we don't want to delete the string pointers becaues they are shared by stream blocks
+    del_str_ptr = true;
+    spectra = nullptr;
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 Stream_Block<T_real>::~Stream_Block()
 {
     if(del_str_ptr)
@@ -134,6 +159,7 @@ Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 	this->spectra = stream_block.spectra;
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
+    this->del_str_ptr = stream_block.del_str_ptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -152,6 +178,7 @@ Stream_Block<T_real> &Stream_Block<T_real>::operator=(const Stream_Block<T_real>
 	this->spectra = stream_block.spectra;
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
+    this->del_str_ptr = stream_block.del_str_ptr;
 	return *this;
 }
 
