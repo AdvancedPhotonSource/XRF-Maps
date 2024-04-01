@@ -2125,6 +2125,22 @@ public:
     template<typename T_real>
     bool load_spectra_volume_bnl(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, bool log_error = true)
     {
+        data_struct::Scan_Info<T_real> scan_info;
+        T_real dwell = 1.0;
+        bool has_scaninfo = get_scalers_and_metadata_bnl(path, &scan_info);
+        if (has_scaninfo)
+        {
+            // search for dwell time
+            for (auto &itr : scan_info.extra_pvs)
+            {
+                if (itr.name == STR_BNL_PARAM_DWELL)
+                {
+                    dwell = std::stof(itr.value);
+                    break;
+                }
+            }
+        }
+
         std::lock_guard<std::mutex> lock(_mutex);
 
         std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -2289,6 +2305,8 @@ public:
                     offset_meta[1] = col;
 
                     data_struct::Spectra<T_real>* spectra = &((*spec_vol)[row][col]);
+                    spectra->elapsed_livetime(dwell);
+                    spectra->elapsed_realtime(dwell);
                     /*
                     H5Sselect_hyperslab(livetime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
                     H5Sselect_hyperslab(realtime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
@@ -2322,6 +2340,7 @@ public:
                     {
                         (*spectra)[s] = buffer[(col * dims_in[2]) + s];
                     }
+                    *spectra *= dwell; // counts can be saved in counts/sec and we fit in counts
                 }
             }
             else
@@ -2350,221 +2369,13 @@ public:
     template<typename T_real>
     bool load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spec, bool log_error)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-
-        std::chrono::time_point<std::chrono::system_clock> start, end;
-        start = std::chrono::system_clock::now();
-
-        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        if (log_error)
+        data_struct::Spectra_Volume<T_real> spec_vol;
+        bool retval = load_spectra_volume_bnl(path, detector_num, &spec_vol);
+        if (retval)
         {
-            logI << path << " detector : " << detector_num << "\n";
+            *spec = spec_vol.integrate();
         }
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id;
-        hid_t    dataspace_xypos_id;
-        hid_t	 outcounts_id;
-        hid_t    outcounts_dataspace_id;
-        herr_t   error;
-        std::string detector_path;
-        char* detector_names[256];
-        T_real time_base = 1.0f;
-        T_real* buffer;
-        hsize_t offset_row[2] = { 0,0 };
-        hsize_t count_row[2] = { 0,0 };
-        hsize_t offset_meta[2] = { 0,0 };
-        hsize_t count_meta[2] = { 1,1 };
-
-        std::string counts_path;
-        std::string incnt_path;
-        std::string outcnt_path;
-        std::string livetime_path;
-        std::string realtime_path;
-
-
-        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1, log_error))
-            return false;
-
-        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "xrfmap", file_id, false, false))
-        {
-            _close_h5_objects(close_map);
-            return false;
-        }
-
-        if (detector_num == (size_t)-1)
-        {
-            detector_path = "detsum";
-        }
-        else
-        {
-            detector_path = "det" + std::to_string(detector_num + 1);
-        }
-
-        counts_path = detector_path + "/counts";
-        //incnt_path = detector_path + "/inpcounts";
-        //outcnt_path = detector_path + "/outcounts";
-        //realtime_path = detector_path + "/realtime";
-        //livetime_path = detector_path + "/livetime";
-
-        if (false == _open_h5_object(dset_id, H5O_DATASET, close_map, counts_path, maps_grp_id))
-        {
-            _close_h5_objects(close_map);
-            return false;
-        }
-        dataspace_id = H5Dget_space(dset_id);
-        close_map.push({ dataspace_id, H5O_DATASPACE });
-        /*
-        if (false == _open_h5_object(inpcounts_id, H5O_DATASET, close_map, incnt_path, maps_grp_id))
-            return false;
-        inpcounts_dataspace_id = H5Dget_space(inpcounts_id);
-        close_map.push({ inpcounts_dataspace_id, H5O_DATASPACE });
-
-        if (false == _open_h5_object(outcounts_id, H5O_DATASET, close_map, outcnt_path, maps_grp_id))
-            return false;
-        outcounts_dataspace_id = H5Dget_space(outcounts_id);
-        close_map.push({ outcounts_dataspace_id, H5O_DATASPACE });
-
-        if (false == _open_h5_object(realtime_id, H5O_DATASET, close_map, realtime_path, maps_grp_id))
-            return false;
-        realtime_dataspace_id = H5Dget_space(realtime_id);
-        close_map.push({ realtime_dataspace_id, H5O_DATASPACE });
-
-        if (false == _open_h5_object(livetime_id, H5O_DATASET, close_map, livetime_path, maps_grp_id))
-            return false;
-        livetime_dataspace_id = H5Dget_space(livetime_id);
-        close_map.push({ livetime_dataspace_id, H5O_DATASPACE });
-        */
-        int rank = H5Sget_simple_extent_ndims(dataspace_id);
-        if (rank != 3)
-        {
-            _close_h5_objects(close_map);
-            logW << "Dataset /MAPS_RAW/" << detector_path << " rank != 3. rank = " << rank << ". Can't load dataset. returning" << "\n";
-            return false;
-            //throw exception ("Dataset is not a volume");
-        }
-
-        hsize_t* dims_in = new hsize_t[rank];
-        hsize_t* offset = new hsize_t[rank];
-        hsize_t* count = new hsize_t[rank];
-
-        int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], nullptr);
-        if (status_n < 0)
-        {
-            _close_h5_objects(close_map);
-            logE << "Could not get dataset rank for MAPS_RAW/" << detector_path << "\n";
-            return false;
-        }
-
-        // width x height x samples
-        for (int i = 0; i < rank; i++)
-        {
-            //logI<<"dims ["<<i<<"] ="<<dims_in[i]<< "\n";
-            offset[i] = 0;
-            count[i] = dims_in[i];
-        }
-
-
-        //chunking is 1 x col x samples
-        buffer = new T_real[dims_in[1] * dims_in[2]]; //  cols x spectra_size
-        count_row[0] = dims_in[1];
-        count_row[1] = dims_in[2];
-
-        if (dims_in[0] == 0 && dims_in[1] == 0 && dims_in[2] == 0)
-        {
-            _close_h5_objects(close_map);
-            delete[] buffer;
-            delete[] dims_in;
-            delete[] offset;
-            delete[] count;
-            return false;
-        }
-
-        if (spec->size() < dims_in[2])
-        {
-            spec->resize(dims_in[2]);
-            spec->setZero(dims_in[2]);
-        }
-
-        count[0] = 1; //1 row
-
-        memoryspace_id = H5Screate_simple(2, count_row, nullptr);
-        close_map.push({ memoryspace_id, H5O_DATASPACE });
-        memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
-        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
-        H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
-        H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-
-        T_real live_time = 1.0;
-        T_real in_cnt = 1.0;
-        T_real out_cnt = 1.0;
-
-
-        for (size_t row = 0; row < dims_in[0]; row++)
-        {
-            offset[0] = row;
-            offset_meta[0] = row;
-
-            H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
-            error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
-
-            if (error > -1) //no error
-            {
-                for (size_t col = 0; col < dims_in[1]; col++)
-                {
-                    offset_meta[1] = col;
-                    /*
-                    H5Sselect_hyperslab(livetime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-                    H5Sselect_hyperslab(realtime_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-                    H5Sselect_hyperslab(inpcounts_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-                    H5Sselect_hyperslab(outcounts_dataspace_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
-
-                    error = H5Dread(realtime_id, H5T_NATIVE_REAL, memoryspace_meta_id, realtime_dataspace_id, H5P_DEFAULT, &real_time);
-                    if (error > -1)
-                    {
-                        spectra->elapsed_realtime(real_time);
-                    }
-                    error = H5Dread(livetime_id, H5T_NATIVE_REAL, memoryspace_meta_id, livetime_dataspace_id, H5P_DEFAULT, &live_time);
-                    if (error > -1)
-                    {
-                        spectra->elapsed_livetime(live_time);
-                    }
-                    error = H5Dread(inpcounts_id, H5T_NATIVE_REAL, memoryspace_meta_id, inpcounts_dataspace_id, H5P_DEFAULT, &in_cnt);
-                    if (error > -1)
-                    {
-                        spectra->input_counts(in_cnt);
-                    }
-                    error = H5Dread(outcounts_id, H5T_NATIVE_REAL, memoryspace_meta_id, outcounts_dataspace_id, H5P_DEFAULT, &out_cnt);
-                    if (error > -1)
-                    {
-                        spectra->output_counts(out_cnt);
-                    }
-
-                    //spectra->recalc_elapsed_livetime();
-                    */
-                    for (size_t s = 0; s < dims_in[2]; s++)
-                    {
-                        (*spec)[s] += buffer[(col * dims_in[2]) + s];
-                    }
-                }
-            }
-            else
-            {
-                logE << "Could not read row " << row << "\n";
-            }
-        }
-
-        delete[] dims_in;
-        delete[] offset;
-        delete[] count;
-        delete[] buffer;
-
-        _close_h5_objects(close_map);
-
-        end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
-        return true;
+        return retval;
     }
 
     //-----------------------------------------------------------------------------
@@ -4036,7 +3847,6 @@ public:
         hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
         single_count[0] = 1;
 
-        char tmp_char[255] = { 0 };
         buffer = new double[val_dims_in[0] * val_dims_in[1]];
         hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
         close_map.push({ mem_space, H5O_DATASPACE });
@@ -4059,12 +3869,13 @@ public:
             H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
             if (rstatus > -1)
             {
-                std::string read_name = std::string(tmp_char, 255);
+                std::string read_name = std::string(tmp_char_arr[i]);
                 read_name.erase(std::remove_if(read_name.begin(), read_name.end(), ::isspace), read_name.end());
                 read_name.erase(std::find(read_name.begin(), read_name.end(), '\0'), read_name.end());
                 std::string out_label = "";
                 std::string beamline = "";
                 bool tmpb;
+                delete tmp_char_arr[i];
                 if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
                 {
                     if (out_label == STR_DS_IC)
@@ -4630,13 +4441,20 @@ public:
         single_count[0] = val_dims_in[2];
         hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
         close_map.push({ name_space, H5O_DATASPACE });
-        single_count[0] = 1;
 
-        char tmp_char[255] = { 0 };
         hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
         close_map.push({ mem_space, H5O_DATASPACE });
         size_t scaler_cnt = val_dims_in[2];
         val_dims_in[2] = 1;
+
+        char* tmp_char_arr[255];
+        hid_t dtype2 = H5Tcopy(H5T_C_S1);
+        H5Tset_size(dtype2, H5T_VARIABLE);
+        _global_close_map.push({ dtype2, H5O_DATATYPE });
+
+        H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
+        status = H5Dread(scaler_name_id, dtype2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
+
         for (hsize_t i = 0; i < scaler_cnt; i++)
         {
             data_struct::Scaler_Map<T_real> scaler_map;
@@ -4647,14 +4465,12 @@ public:
             scaler_offset[2] = i;
 
             H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
-            H5Sselect_hyperslab(name_space, H5S_SELECT_SET, single_offset, nullptr, single_count, nullptr);
-
-            status = H5Dread(scaler_name_id, name_type, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
             if (status > -1)
             {
-                scaler_map.name = std::string(tmp_char, 255);
+                scaler_map.name = std::string(tmp_char_arr[i]);
                 scaler_map.name.erase(std::remove_if(scaler_map.name.begin(), scaler_map.name.end(), ::isspace), scaler_map.name.end());
                 scaler_map.name.erase(std::find(scaler_map.name.begin(), scaler_map.name.end(), '\0'), scaler_map.name.end());
+                delete tmp_char_arr[i];
             }
             status = _read_h5d<T_real>(scaler_val_id, mem_space, scaler_val_space, H5P_DEFAULT, scaler_map.values.data());
 
@@ -4689,40 +4505,73 @@ public:
             // load attributes from this folder
             int na = H5Aget_num_attrs(tmp_id);
 
+            double* ddata = new double[10];
+            long* ldata = new long[10];
+
             for (int i = 0; i < na; i++)
             {
+                char* adata[25];
+                for (int a = 0; a < 25; a++)
+                {
+                    adata[a] = nullptr;
+                }
                 hid_t aid = H5Aopen_idx(tmp_id, (unsigned int)i);
-                hid_t atype;
-                hid_t aspace;
+
                 char buf[1000];
                 ssize_t len = H5Aget_name(aid, 1000, buf);
                 data_struct::Extra_PV e_pv;
                 e_pv.name = std::string(buf, len);
 
-                atype = H5Aget_type(aid);
+                hid_t atype = H5Aget_type(aid);
+                hid_t ntype = H5Tget_native_type(atype, H5T_DIR_ASCEND);
+                //hid_t aspece = H5Aget_space(aid);
+                H5T_class_t type_class = H5Tget_class(atype);
+                //if (type_class == H5T_STRING)
                 if (H5Tis_variable_str(atype) > 0)
                 {
-                    //size_t alen = H5Tget_size(atype);
-                    hid_t type = H5Tget_native_type(atype, H5T_DIR_ASCEND);
-                    if (H5Aread(aid, type, &adata) > -1)
+                    if (H5Aread(aid, ntype, &adata) > -1)
                     {
-                        //e_pv.value = std::string(adata[0], alen);
                         e_pv.value = std::string(adata[0]);
                     }
-
+                    for (int q = 0; q < 25; q++)
+                    {
+                        if (adata[q] != nullptr)
+                        {
+                            delete adata[q];
+                            adata[q] = nullptr;
+                        }
+                    }
                 }
+                else if (type_class == H5T_ARRAY)
+                {
+                    int arrarr = 0;
+                }
+                else if (type_class == H5T_FLOAT)
+                {
+                    if (H5Aread(aid, H5T_NATIVE_DOUBLE, (void*)ddata) > -1)
+                    {
+                        e_pv.value = std::to_string(ddata[0]);
+                    }
+                }
+                else if (type_class == H5T_INTEGER)
+                {
+                    if (H5Aread(aid, H5T_NATIVE_LONG, (void*)ldata) > -1)
+                    {
+                        e_pv.value = std::to_string(ldata[0]);
+                    }
+                }
+
 
                 scan_info->extra_pvs.push_back(e_pv);
 
                 H5Tclose(atype);
                 H5Aclose(aid);
             }
-
+            delete[] ddata;
+            delete[] ldata;
         }
 
         _close_h5_objects(close_map);
-
-        //free(adata[0]);
 
         if (val_dims_in != nullptr)
             delete[] val_dims_in;
@@ -6861,7 +6710,7 @@ public:
         hsize_t xy_offset[3] = { 0,0,0 };
         hsize_t xy_count[3] = { 1,1,1 };
         hid_t metadata_id;
-        char* adata[255];
+        
         hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         double* x_data = nullptr;
         double* y_data = nullptr;
@@ -7039,7 +6888,7 @@ public:
                     tmp_char[j] = '\0';
                 }
                 if (data_struct::Scaler_Lookup::inst()->search_pv(read_name, out_label, tmpb, beamline))
-                {   
+                {
                     out_label.copy(tmp_char, 255);
                 }
                 else
@@ -7047,6 +6896,7 @@ public:
                     read_name.copy(tmp_char, 255);
                 }
                 H5Dwrite(names_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)tmp_char);
+                delete tmp_char_arr[i];
             }
 
             H5Dwrite(units_id, dtype, mem_single_space, name_space, H5P_DEFAULT, (void*)unit_char);
@@ -7063,18 +6913,26 @@ public:
             // load attributes from this folder
             int na = H5Aget_num_attrs(metadata_id);
 
+            double* ddata = new double[10];
+            long *ldata = new long[10];
+
             for (int i = 0; i < na; i++)
             {
+                char* adata[25];
+                for (int a = 0; a < 25; a++)
+                {
+                    adata[a] = nullptr;
+                }
                 hid_t aid = H5Aopen_idx(metadata_id, (unsigned int)i);
-                hid_t atype;
-                hid_t aspace;
+
                 char buf[1000];
                 ssize_t len = H5Aget_name(aid, 1000, buf);
                 data_struct::Extra_PV e_pv;
                 e_pv.name = std::string(buf, len);
 
-                atype = H5Aget_type(aid);
+                hid_t atype = H5Aget_type(aid);
                 hid_t ntype = H5Tget_native_type(atype, H5T_DIR_ASCEND);
+                //hid_t aspece = H5Aget_space(aid);
                 H5T_class_t type_class =  H5Tget_class(atype);
                 //if (type_class == H5T_STRING)
                 if (H5Tis_variable_str(atype) > 0)
@@ -7083,6 +6941,14 @@ public:
                     {
                         e_pv.value = std::string(adata[0]);
                     }
+                    for (int q = 0; q < 25; q++)
+                    {
+                        if (adata[q] != nullptr)
+                        {
+                            delete adata[q];
+                            adata[q] = nullptr;
+                        }
+                    }
                 }
                 else if (type_class == H5T_ARRAY)
                 {
@@ -7090,18 +6956,16 @@ public:
                 }
                 else if(type_class == H5T_FLOAT)
                 {
-                    double ddata = 0;
-                    //if (H5Aread(aid, H5T_NATIVE_DOUBLE, &ddata) > -1)
+                    if (H5Aread(aid, H5T_NATIVE_DOUBLE, (void*)ddata) > -1)
                     {
-                        e_pv.value = std::to_string(ddata);
+                        e_pv.value = std::to_string(ddata[0]);
                     }
                 }
                 else if (type_class == H5T_INTEGER)
                 {
-                    long ldata = 0;
-                    //if (H5Aread(aid, H5T_NATIVE_LONG, &ldata) > -1)
+                    if (H5Aread(aid, H5T_NATIVE_LONG, (void*)ldata) > -1)
                     {
-                        e_pv.value = std::to_string(ldata);
+                        e_pv.value = std::to_string(ldata[0]);
                     }
                 } 
 
@@ -7111,6 +6975,8 @@ public:
                 H5Tclose(atype);
                 H5Aclose(aid);
             }
+            delete [] ddata;
+            delete [] ldata;
             save_scan_scalers<T_real>(detector_num, &scan_info, nullptr);
 
         }

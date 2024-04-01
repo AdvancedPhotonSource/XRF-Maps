@@ -329,6 +329,10 @@ const std::string STR_MAP_ROI_PIXEL_LOC = "Pixel_Loc";
 const std::string STR_MAP_ROI_INT_SPEC = "Integrated_Spectras";
 const std::string STR_MAP_ROI_INT_SPEC_FILENAME = "File_Name";
 
+// BNL NSLS II
+const std::string STR_BNL_PARAM_DWELL = "param_dwell";
+const std::string STR_BNL_INCIDENT_ENERGY = "instrument_mono_incident_energy";
+
 //}
 
 //}// namespace keys
