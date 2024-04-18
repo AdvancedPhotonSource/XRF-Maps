@@ -312,5 +312,5 @@ BeamLines:
       US_IC: sclr1_ch2
   SRX:
     Scalers:
-      DS_IC: I1
-      US_IC: I0
+      DS_IC: it
+      US_IC: i0
