@@ -1308,10 +1308,16 @@ public:
 
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
             return false;
-
-        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id))
-            return false;
+        }
+        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id, false, false))
+        {
+            if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id, false, false))
+            {
+                return false;
+            }
+        }
 
         _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "/entry/instrument/NDAttributes", file_id, false, false);
             
@@ -2340,7 +2346,9 @@ public:
                     {
                         (*spectra)[s] = buffer[(col * dims_in[2]) + s];
                     }
-                    *spectra *= dwell; // counts can be saved in counts/sec and we fit in counts
+                    // The data is float 32bit . I think it is dead time corrected because it is fractional.
+                    // Initially thought it was normalized by dwell time.
+                    //*spectra *= dwell; // counts can be saved in counts/sec and we fit in counts
                 }
             }
             else
