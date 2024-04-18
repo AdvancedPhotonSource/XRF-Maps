@@ -2346,7 +2346,9 @@ public:
                     {
                         (*spectra)[s] = buffer[(col * dims_in[2]) + s];
                     }
-                    *spectra *= dwell; // counts can be saved in counts/sec and we fit in counts
+                    // The data is float 32bit . I think it is dead time corrected because it is fractional.
+                    // Initially thought it was normalized by dwell time.
+                    //*spectra *= dwell; // counts can be saved in counts/sec and we fit in counts
                 }
             }
             else
