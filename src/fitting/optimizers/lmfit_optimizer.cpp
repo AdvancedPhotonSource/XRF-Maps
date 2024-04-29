@@ -79,13 +79,16 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
-		fvec[i] = abs(ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+        T_real n_raw = ud->spectra[i] / ud->normalizer;
+        T_real n_model = ud->spectra_model[i] / ud->normalizer;
+        fvec[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+		//fvec[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
 		if (std::isfinite(fvec[i]) == false)
 		{
 			//logE << "\n\n\n";
 			logE << "Spectra[i] = " << ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			//logE << "\n\n\n";
-			fvec[i] = ud->spectra[i] + ud->spectra_model[i];
+			//fvec[i] = ud->spectra[i] + ud->spectra_model[i];
             //fvec[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
@@ -126,7 +129,7 @@ void general_residuals_lmfit( const T_real *par, int m_dat, const void *data, T_
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
-        fvec[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
+        fvec[i] = pow(( ud->spectra[i] - ud->spectra_model[i] ), (T_real)2.0) * ud->weights[i];
 		if (std::isfinite(fvec[i]) == false)
 		{
 			fvec[i] = ud->spectra[i] + ud->spectra_model[i];
@@ -166,7 +169,7 @@ void quantification_residuals_lmfit( const T_real *par, int m_dat, const void *d
 		}
 		else
 		{
-			fvec[idx] = abs(itr.second.e_cal_ratio - result_map[itr.first]);
+			fvec[idx] = pow((itr.second.e_cal_ratio - result_map[itr.first]), (T_real)2.0);
 		}
         idx++;
     }

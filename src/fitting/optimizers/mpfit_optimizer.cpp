@@ -84,15 +84,17 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-		//dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
-        dy[i] = abs(ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+        T_real n_raw = ud->spectra[i] / ud->normalizer;
+        T_real n_model = ud->spectra_model[i] / ud->normalizer;
+        dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        //dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
 			//logE << "\n\n\n";
 			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
 			//logE << "\n\n\n";
 			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
-            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
+            //dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
     }
 	
@@ -178,7 +180,7 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
 		}
 		else
 		{
-			dy[idx] = abs(itr.second.e_cal_ratio - result_map[itr.first]);
+			dy[idx] = pow((itr.second.e_cal_ratio - result_map[itr.first]), (T_real)2.0);
 		}
         idx++;
     }
