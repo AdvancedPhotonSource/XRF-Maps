@@ -67,9 +67,9 @@ namespace optimizers
 template<typename T_real>
 int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
+    bool first = true;
     // Get user passed data
     User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
-
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
     // Update background if fit_snip_width is set to fit
@@ -88,10 +88,12 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
         T_real n_model = ud->spectra_model[i] / ud->normalizer;
         dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
         //dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
-		if (std::isfinite(dy[i]) == false)
+		if (first && std::isfinite(dy[i]) == false)
 		{
+            first = false;
 			//logE << "\n\n\n";
-			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
+			logE << "Spectra["<<i<<"] = "<< ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i];
+            ud->fit_parameters->print();
 			//logE << "\n\n\n";
 			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
             //dy[i] = std::numeric_limits<T_real>::quiet_NaN();

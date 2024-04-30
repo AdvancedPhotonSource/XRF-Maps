@@ -64,8 +64,8 @@ namespace optimizers
 template<typename T_real>
 void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fvec, int *userbreak )
 {
+    bool first = true;
     User_Data<T_real>* ud = (User_Data<T_real>*)(data);
-
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     // Model spectra based on new fit parameters
@@ -83,10 +83,12 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
         T_real n_model = ud->spectra_model[i] / ud->normalizer;
         fvec[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
 		//fvec[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
-		if (std::isfinite(fvec[i]) == false)
+		if (first && std::isfinite(fvec[i]) == false)
 		{
+            first = false;
 			//logE << "\n\n\n";
-			logE << "Spectra[i] = " << ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
+			logE << "Spectra["<<i<<"] = " << ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i];
+            ud->fit_parameters->print();
 			//logE << "\n\n\n";
 			//fvec[i] = ud->spectra[i] + ud->spectra_model[i];
             //fvec[i] = std::numeric_limits<T_real>::quiet_NaN();

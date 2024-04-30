@@ -316,9 +316,10 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             //Update fit parameters by override values
             detector->model->update_fit_params_values(&(override_params->fit_params));
 
+            // Don't know spectra size
             //Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
             //Initialize model
-            //fit_routine->initialize(detector->model, elements_to_fit, energy_range);
+            //detector->fit_routines.at(proc_type)->initialize(detector->model, elements_to_fit, energy_range);
 
         }
     }
