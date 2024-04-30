@@ -232,6 +232,10 @@ public:
 
     void update_and_add_values_gt_zero(Fit_Parameters<T_real>  *override_fit_params);
 
+    void update_follow_constraints(Fit_Parameters<T_real>  *override_fit_params);
+
+    void update_value_to_constraints();
+
     void remove(Fit_Parameters* override_fit_params);
 
     void remove(std::string key);

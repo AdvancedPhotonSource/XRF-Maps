@@ -66,6 +66,10 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
 {
     bool first = true;
     User_Data<T_real>* ud = (User_Data<T_real>*)(data);
+    // Debug to find which param changed last
+    Fit_Parameters<T_real> prev_fit_p;
+    prev_fit_p.update_and_add_values(ud->fit_parameters);
+
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(par, m_dat);
     // Model spectra based on new fit parameters
@@ -79,19 +83,29 @@ void residuals_lmfit( const T_real *par, int m_dat, const void *data, T_real *fv
     // Calculate residuals
     for (int i = 0; i < m_dat; i++ )
     {
-        T_real n_raw = ud->spectra[i] / ud->normalizer;
-        T_real n_model = ud->spectra_model[i] / ud->normalizer;
+        T_real n_raw = ud->spectra[i] / ud->norm_arr[i];
+        T_real n_model = ud->spectra_model[i] / ud->norm_arr[i];
         fvec[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
 		//fvec[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
-		if (first && std::isfinite(fvec[i]) == false)
+		if (std::isfinite(fvec[i]) == false)
 		{
-            first = false;
-			//logE << "\n\n\n";
-			logE << "Spectra["<<i<<"] = " << ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i];
-            ud->fit_parameters->print();
-			//logE << "\n\n\n";
-			//fvec[i] = ud->spectra[i] + ud->spectra_model[i];
-            //fvec[i] = std::numeric_limits<T_real>::quiet_NaN();
+            if(first)
+            {
+                logE << "Spectra["<<i<<"] = " << ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i]<<"\n";
+                logE<<" \n Diff Param \n";
+                for(auto &itr : prev_fit_p)
+                {
+                    if(itr.second.value != ud->fit_parameters->at(itr.first).value)
+                    {
+                        logE<<itr.first<<" : Old = "<<itr.second.value<<" ; New = "<< ud->fit_parameters->at(itr.first).value <<"\n";
+                    }
+                }
+                logE<<" \n \n";
+                ud->fit_parameters->print_non_fixed();
+			    first = false;
+            }
+            fvec[i] = ud->normalizer;
+			
 		}
     }
     
