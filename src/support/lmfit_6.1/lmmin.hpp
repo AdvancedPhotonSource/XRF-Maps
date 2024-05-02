@@ -938,11 +938,14 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     }
     S->nfev = 1;
     if (S->userbreak)
+    {
         goto terminate;
+    }
     fnorm = lm_enorm(m, fvec);
     if (C->verbosity)
-        logI << "  fnorm = "<< fnorm<<"\n";
-
+    {
+        logI << "  fnorm = " << fnorm << "\n";
+    }
     if (!std::isfinite(fnorm)) {
         S->outcome = 12; /* nan */
         goto terminate;
@@ -1248,15 +1251,19 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 terminate:
     S->fnorm = lm_enorm(m, fvec);
     if (C->verbosity >= 2)
+    {
         logI << "lmmin outcome (" << S->outcome << ") xnorm " << xnorm << " ftol " << C->ftol << " xtol " << C->xtol << "\n";
-    if (C->verbosity & 1) {
+    }
+    if (C->verbosity & 1) 
+    {
         logI << "lmmin final ";
         lm_print_pars(nout, x, msgfile); // S->fnorm,
         logI << "  fnorm = " << S->fnorm << "\n";
     }
     if (S->userbreak) /* user-requested break */
+    {
         S->outcome = 11;
-
+    }
     /***  Deallocate the workspace.  ***/
     free(ws);
 
