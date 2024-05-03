@@ -67,8 +67,13 @@ namespace optimizers
 template<typename T_real>
 int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real **dvec, void *usr_data)
 {
+    bool first = true;
     // Get user passed data
     User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
+
+    // Debug to find which param changed last
+    Fit_Parameters<T_real> prev_fit_p;
+    prev_fit_p.update_and_add_values(ud->fit_parameters);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array(params, params_size);
@@ -84,15 +89,28 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-		//dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]),2) * ud->weights[i];
-        dy[i] = abs(ud->spectra[i] - ud->spectra_model[i]) * ud->weights[i];
+        T_real n_raw = ud->spectra[i] / ud->norm_arr[i];
+        T_real n_model = ud->spectra_model[i] / ud->norm_arr[i];
+        dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        //dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{
-			//logE << "\n\n\n";
-			logE << "Spectra[i] = "<< ud->spectra[i] << " :: spectra_model[i] = " << ud->spectra_model[i] << "  ::  weights[i] = " << ud->weights[i];
-			//logE << "\n\n\n";
-			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
-            dy[i] = std::numeric_limits<T_real>::quiet_NaN();
+            if(first)
+            {
+                first = false;
+			    logE << "Spectra["<<i<<"] = "<< ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i]<<"\n";
+                logE<<" \n Diff Param \n";
+                for(auto &itr : prev_fit_p)
+                {
+                    if(itr.second.value != ud->fit_parameters->at(itr.first).value)
+                    {
+                        logE<<itr.first<<" : Old = "<<itr.second.value<<" ; New = "<< ud->fit_parameters->at(itr.first).value <<"\n";
+                    }
+                }
+                logE<<" \n \n";
+                ud->fit_parameters->print_non_fixed();
+            }
+            dy[i] = ud->normalizer;
 		}
     }
 	
@@ -135,13 +153,17 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
-        dy[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
-		
+        //dy[i] = std::pow(( ud->spectra[i] - ud->spectra_model[i] ), 2.0) * ud->weights[i];
+		T_real n_raw = ud->spectra[i] / ud->normalizer;
+        T_real n_model = ud->spectra_model[i] / ud->normalizer;
+        dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        /*
         if (std::isfinite(dy[i]) == false)
 		{
 			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
             dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
+        */
     }
 
     return 0;
@@ -178,7 +200,7 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
 		}
 		else
 		{
-			dy[idx] = abs(itr.second.e_cal_ratio - result_map[itr.first]);
+			dy[idx] = pow((itr.second.e_cal_ratio - result_map[itr.first]), (T_real)2.0);
 		}
         idx++;
     }
@@ -309,14 +331,14 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 
 			if (fit.value > fit.max_val)
 			{
-                logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
+                //logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
                 fit.value = fit.max_val - fit.step_size;
 				(*fit_params)[itr->first].value = fit.value;
 
 			}
 			if (fit.value < fit.min_val)
 			{
-                logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
+                //logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
                 fit.value = fit.min_val + fit.step_size;
 				(*fit_params)[itr->first].value = fit.min_val;
 			}

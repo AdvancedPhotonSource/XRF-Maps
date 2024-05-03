@@ -304,6 +304,44 @@ void Fit_Parameters<T_real>::update_and_add_values_gt_zero(Fit_Parameters<T_real
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+void Fit_Parameters<T_real>::update_follow_constraints(Fit_Parameters<T_real>  *override_fit_params)
+{
+    for(auto& itr : *override_fit_params)
+    {
+        if(itr.second.value != _params.at(itr.first).value)
+        {
+            if(itr.second.value <= _params.at(itr.first).max_val && itr.second.value >= _params.at(itr.first).min_val)
+            {
+                _params[itr.first] = itr.second;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::update_value_to_constraints()
+{
+    for(auto& itr : _params)
+    {
+        if(itr.second.bound_type != E_Bound_Type::FIXED)
+        {
+            if(itr.second.value > itr.second.max_val)
+            {
+                itr.second.value = itr.second.max_val;
+            }
+            if(itr.second.value < itr.second.min_val)
+            {
+                itr.second.value = itr.second.min_val;
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 void Fit_Parameters<T_real>::print()
 {
     logit_s << "     Name  \t value  \t min  \t max  \t step size \t fitting\n\n";

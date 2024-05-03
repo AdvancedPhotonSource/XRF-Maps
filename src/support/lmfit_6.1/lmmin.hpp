@@ -122,36 +122,56 @@ _T lm_enorm(int n, const _T* x)
     agiant = LM_SQRT_GIANT / n;
 
     /** Sum squares. **/
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) 
+    {
         xabs = std::fabs(x[i]);
-        if (xabs > LM_SQRT_DWARF) {
-            if (xabs < agiant) {
+        if (xabs > LM_SQRT_DWARF) 
+        {
+            if (xabs < agiant) 
+            {
                 s2 += SQR(xabs);
-            } else if (xabs > x1max) {
+            }
+            else if (xabs > x1max) 
+            {
                 s1 = 1 + s1 * SQR(x1max / xabs);
                 x1max = xabs;
-            } else {
+            }
+            else
+            {
                 s1 += SQR(xabs / x1max);
             }
-        } else if (xabs > x3max) {
+        }
+        else if (xabs > x3max) 
+        {
             s3 = 1 + s3 * SQR(x3max / xabs);
             x3max = xabs;
-        } else if (xabs != 0) {
+        }
+        else if (xabs != 0) 
+        {
             s3 += SQR(xabs / x3max);
         }
     }
 
     /** Calculate the norm. **/
     if (s1 != 0)
+    {
         return x1max * sqrt(s1 + (s2 / x1max) / x1max);
+    }
     else if (s2 != 0)
+    {
         if (s2 >= x3max)
+        {
             return sqrt(s2 * (1 + (x3max / s2) * (x3max * s3)));
+        }
         else
+        {
             return sqrt(x3max * ((s2 / x3max) + (x3max * s3)));
+        }
+    }
     else
+    {
         return x3max * sqrt(s3);
-
+    }
 } /*** lm_enorm. ***/
 
 /******************************************************************************/
@@ -228,7 +248,8 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
     /*** Copy R and Q^T*b to preserve input and initialize S.
          In particular, save the diagonal elements of R in x. ***/
 
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
         for (i = j; i < n; i++)
         {
             r[j * ldr + i] = r[i * ldr + j];
@@ -239,12 +260,14 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
 
     /*** Eliminate the diagonal matrix D using a Givens rotation. ***/
 
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
 
         /*** Prepare the row of D to be eliminated, locating the diagonal
              element using P from the QR factorization. ***/
 
-        if (diag[Pivot[j]] != 0) {
+        if (diag[Pivot[j]] != 0) 
+        {
             for (k = j; k < n; k++)
             {
                 Sdiag[k] = 0;
@@ -256,18 +279,24 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
                  initially 0. ***/
 
             qtbpj = 0;
-            for (k = j; k < n; k++) {
+            for (k = j; k < n; k++) 
+            {
 
                 /** Determine a Givens rotation which eliminates the
                     appropriate element in the current row of D. **/
                 if (Sdiag[k] == 0)
+                {
                     continue;
+                }
                 kk = k + ldr * k;
-                if (std::fabs(r[kk]) < std::fabs(Sdiag[k])) {
+                if (std::fabs(r[kk]) < std::fabs(Sdiag[k])) 
+                {
                     _cot = r[kk] / Sdiag[k];
                     _sin = 1 / std::hypot((_T)1, _cot);
                     _cos = _sin * _cot;
-                } else {
+                }
+                else 
+                {
                     _tan = Sdiag[k] / r[kk];
                     _cos = 1 / std::hypot((_T)1, _tan);
                     _sin = _cos * _tan;
@@ -281,7 +310,8 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
                 W[k] = temp;
 
                 /** Accumulate the tranformation in the row of S. **/
-                for (i = k+1; i < n; i++) {
+                for (i = k+1; i < n; i++) 
+                {
                     temp = _cos * r[k*ldr+i] + _sin * Sdiag[i];
                     Sdiag[i] = -_sin * r[k*ldr+i] + _cos * Sdiag[i];
                     r[k*ldr+i] = temp;
@@ -299,14 +329,20 @@ void lm_qrsolv(const int n, _T* r, const int ldr, const int* Pivot,
         obtain a least-squares solution. ***/
 
     nsing = n;
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
         if (Sdiag[j] == 0 && nsing == n)
+        {
             nsing = j;
+        }
         if (nsing < n)
+        {
             W[j] = 0;
+        }
     }
 
-    for (j = nsing - 1; j >= 0; j--) {
+    for (j = nsing - 1; j >= 0; j--) 
+    {
         sum = 0;
         for (i = j + 1; i < nsing; i++)
         {
@@ -421,18 +457,26 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
          is rank-deficient, obtain a least-squares solution. ***/
 
     nsing = n;
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
         aux[j] = qtb[j];
-        if (r[j*ldr+j] == 0 && nsing == n)
+        if (r[j * ldr + j] == 0 && nsing == n)
+        {
             nsing = j;
+        }
         if (nsing < n)
+        {
             aux[j] = 0;
+        }
     }
-    for (j = nsing-1; j >= 0; j--) {
+    for (j = nsing-1; j >= 0; j--) 
+    {
         aux[j] = aux[j] / r[j+ldr*j];
         temp = aux[j];
         for (i = 0; i < j; i++)
-            aux[i] -= r[j*ldr+i] * temp;
+        {
+            aux[i] -= r[j * ldr + i] * temp;
+        }
     }
 
     for (j = 0; j < n; j++)
@@ -448,7 +492,8 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     }
     dxnorm = lm_enorm(n, xdi);
     fp = dxnorm - delta;
-    if (fp <= p1 * delta) {
+    if (fp <= p1 * delta) 
+    {
 #ifdef LMFIT_DEBUG_MESSAGES
         printf("debug lmpar nsing=%d, n=%d, terminate[fp<=p1*del]\n", nsing, n);
 #endif
@@ -461,12 +506,14 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
          bound to zero. ***/
 
     parl = 0;
-    if (nsing >= n) {
+    if (nsing >= n) 
+    {
         for (j = 0; j < n; j++)
         {
             aux[j] = diag[Pivot[j]] * xdi[Pivot[j]] / dxnorm;
         }
-        for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) 
+        {
             sum = 0;
             for (i = 0; i < j; i++)
             {
@@ -480,7 +527,8 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
 
     /*** Calculate an upper bound, paru, for the zero of the function. ***/
 
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
         sum = 0;
         for (i = 0; i <= j; i++)
         {
@@ -491,7 +539,9 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     gnorm = lm_enorm(n, aux);
     paru = gnorm / delta;
     if (paru == 0)
+    {
         paru = LM_DWARF / MIN(delta, p1);
+    }
 
     /*** If the input par lies outside of the interval (parl,paru),
          set par to the closer endpoint. ***/
@@ -499,15 +549,20 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     *par = MAX(*par, parl);
     *par = MIN(*par, paru);
     if (*par == 0)
+    {
         *par = gnorm / dxnorm;
+    }
 
     /*** Iterate. ***/
 
-    for (iter = 0;; iter++) {
+    for (iter = 0;; iter++) 
+    {
 
         /** Evaluate the function at the current value of par. **/
         if (*par == 0)
+        {
             *par = MAX(LM_DWARF, (_T)0.001 * paru);
+        }
         temp = sqrt(*par);
         for (j = 0; j < n; j++)
         {
@@ -528,7 +583,8 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
             of par. Also test for the exceptional cases where parl
             is zero or the number of iterations has reached 10. **/
         if (std::fabs(fp) <= p1 * delta ||
-            (parl == 0 && fp <= fp_old && fp_old < 0) || iter == 10) {
+            (parl == 0 && fp <= fp_old && fp_old < 0) || iter == 10) 
+        {
 #ifdef LMFIT_DEBUG_MESSAGES
             printf("debug lmpar nsing=%d, iter=%d, "
                    "par=%.4e [%.4e %.4e], delta=%.4e, fp=%.4e\n",
@@ -542,7 +598,8 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
         {
             aux[j] = diag[Pivot[j]] * xdi[Pivot[j]] / dxnorm;
         }
-        for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) 
+        {
             aux[j] = aux[j] / Sdiag[j];
             for (i = j + 1; i < n; i++)
             {
@@ -554,9 +611,13 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
 
         /** Depending on the sign of the function, update parl or paru. **/
         if (fp > 0)
+        {
             parl = MAX(parl, *par);
+        }
         else /* fp < 0 [the case fp==0 is precluded by the break condition] */
+        {
             paru = MIN(paru, *par);
+        }
 
         /** Compute an improved estimate for par. **/
         *par = MAX(parl, *par + parc);
@@ -629,14 +690,16 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
 
     /** Compute initial column norms;
         initialize Pivot with identity permutation. ***/
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
         W[j] = Rdiag[j] = Acnorm[j] = lm_enorm(m, &A[j*m]);
         Pivot[j] = j;
     }
 
     /** Loop over columns of A. **/
     assert(n <= m);
-    for (j = 0; j < n; j++) {
+    for (j = 0; j < n; j++) 
+    {
 
         /** Bring the column of largest norm into the pivot position. **/
         kmax = j;
@@ -647,12 +710,14 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
                 kmax = k;
             }
         }
-        if (kmax != j) {
+        if (kmax != j) 
+        {
             /* Swap columns j and kmax. */
             k = Pivot[j];
             Pivot[j] = Pivot[kmax];
             Pivot[kmax] = k;
-            for (i = 0; i < m; i++) {
+            for (i = 0; i < m; i++) 
+            {
                 temp = A[j*m+i];
                 A[j*m+i] = A[kmax*m+i];
                 A[kmax*m+i] = temp;
@@ -665,15 +730,18 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
         /** Compute the Householder reflection vector w_j to reduce the
             j-th column of A to a multiple of the j-th unit vector. **/
         ajnorm = lm_enorm(m-j, &A[j*m+j]);
-        if (ajnorm == 0) {
+        if (ajnorm == 0) 
+        {
             Rdiag[j] = 0;
             continue;
         }
 
         /* Let the partial column vector A[j][j:] contain w_j := e_j+-a_j/|a_j|,
            where the sign +- is chosen to avoid cancellation in w_jj. */
-        if (A[j*m+j] < 0)
+        if (A[j * m + j] < 0)
+        {
             ajnorm = -ajnorm;
+        }
         for (i = j; i < m; i++)
         {
             A[j * m + i] /= ajnorm;
@@ -682,7 +750,8 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
 
         /** Apply the Householder transformation U_w := 1 - 2*w_j.w_j/|w_j|^2
             to the remaining columns, and update the norms. **/
-        for (k = j+1; k < n; k++) {
+        for (k = j+1; k < n; k++) 
+        {
             /* Compute scalar product w_j * a_j. */
             sum = 0;
             for (i = j; i < m; i++)
@@ -698,14 +767,20 @@ void lm_qrfac(const int m, const int n, _T* A, int* Pivot, _T* Rdiag,
                 A[k * m + i] -= temp * A[j * m + i];
             }
             /* No idea what happens here. */
-            if (Rdiag[k] != 0) {
+            if (Rdiag[k] != 0) 
+            {
                 temp = A[m*k+j] / Rdiag[k];
-                if (std::fabs(temp) < 1) {
+                if (std::fabs(temp) < 1) 
+                {
                     Rdiag[k] *= sqrt(1 - SQR(temp));
                     temp = Rdiag[k] / W[k];
-                } else
+                }
+                else
+                {
                     temp = 0;
-                if (temp == 0 || 0.05 * SQR(temp) <= LM_MACHEP) {
+                }
+                if (temp == 0 || 0.05 * SQR(temp) <= LM_MACHEP) 
+                {
                     Rdiag[k] = lm_enorm(m-j-1, &A[m*k+j+1]);
                     W[k] = Rdiag[k];
                 }
@@ -852,33 +927,57 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 
     /***  Check input parameters for errors.  ***/
 
-    if (n <= 0) {
-        logE<<"lmmin: invalid number of parameters "<<n<<"\n";
+    if (n <= 0) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: invalid number of parameters " << n << "\n";
+        }
         S->outcome = 10;
         return;
     }
-    if (m < n) {
-        logE << "lmmin: number of data points (" << m << ") smaller than number of parameters (" << n << ")\n";
+    if (m < n) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: number of data points (" << m << ") smaller than number of parameters (" << n << ")\n";
+        }
         S->outcome = 10;
         return;
     }
-    if (C->ftol < 0 || C->xtol < 0 || C->gtol < 0) {
-        logE << "lmmin: negative tolerance (at least one of " << C->ftol << " " << C->xtol << " " << C->gtol << ")\n";
+    if (C->ftol < 0 || C->xtol < 0 || C->gtol < 0) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: negative tolerance (at least one of " << C->ftol << " " << C->xtol << " " << C->gtol << ")\n";
+        }
         S->outcome = 10;
         return;
     }
-    if (maxfev <= 0) {
-        logE << "lmmin: nonpositive function evaluations limit " << maxfev << "\n";
+    if (maxfev <= 0) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: nonpositive function evaluations limit " << maxfev << "\n";
+        }
         S->outcome = 10;
         return;
     }
-    if (C->stepbound <= 0) {
-        logE << "lmmin: nonpositive stepbound "<< C->stepbound<<"\n";
+    if (C->stepbound <= 0) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: nonpositive stepbound " << C->stepbound << "\n";
+        }
         S->outcome = 10;
         return;
     }
-    if (C->scale_diag != 0 && C->scale_diag != 1) {
-        logE << "lmmin: logical variable scale_diag=" << C->scale_diag << ", should be 0 or 1\n";
+    if (C->scale_diag != 0 && C->scale_diag != 1) 
+    {
+        if (C->verbosity > 0)
+        {
+            logE << "lmmin: logical variable scale_diag=" << C->scale_diag << ", should be 0 or 1\n";
+        }
         S->outcome = 10;
         return;
     }
@@ -924,7 +1023,8 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     }
     /***  Evaluate function at starting point and calculate norm.  ***/
 
-    if (C->verbosity) {
+    if (C->verbosity > 0)
+    {
         logI<<"lmmin start \n";
         lm_print_pars(nout, x, msgfile);
     }
@@ -938,42 +1038,54 @@ void lmmin(const int n, _T* x, const int m, const void* data,
     }
     S->nfev = 1;
     if (S->userbreak)
+    {
         goto terminate;
+    }
     fnorm = lm_enorm(m, fvec);
-    if (C->verbosity)
-        logI << "  fnorm = "<< fnorm<<"\n";
-
-    if (!std::isfinite(fnorm)) {
+    if (C->verbosity > 0)
+    {
+        logI << "  fnorm = " << fnorm << "\n";
+    }
+    if (!std::isfinite(fnorm)) 
+    {
         S->outcome = 12; /* nan */
         goto terminate;
-    } else if (fnorm <= LM_DWARF) {
+    }
+    else if (fnorm <= LM_DWARF) 
+    {
         S->outcome = 0; /* sum of squares almost zero, nothing to do */
         goto terminate;
     }
 
     /***  The outer loop: compute gradient, then descend.  ***/
 
-    for (int outer = 0;; ++outer) {
+    for (int outer = 0;; ++outer) 
+    {
 
         /** Calculate the Jacobian. **/
-        for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) 
+        {
             temp = x[j];
             step = MAX(eps * eps, eps * std::fabs(temp));
             x[j] += step; /* replace temporarily */
             (*evaluate)(x, m, data, wf, &(S->userbreak));
             ++(S->nfev);
             if (S->userbreak)
+            {
                 goto terminate;
+            }
             for (i = 0; i < m; i++)
             {
                 fjac[j * m + i] = (wf[i] - fvec[i]) / step;
             }
             x[j] = temp; /* restore */
         }
-        if (C->verbosity >= 10) {
+        if (C->verbosity >= 10) 
+        {
             /* print the entire matrix */
             printf("\nlmmin Jacobian\n");
-            for (i = 0; i < m; i++) {
+            for (i = 0; i < m; i++) 
+            {
                 printf("  ");
                 for (j = 0; j < n; j++)
                 {
@@ -1010,11 +1122,15 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 
         /** Form Q^T * fvec, and store first n components in qtf. **/
         for (i = 0; i < m; i++)
+        {
             wf[i] = fvec[i];
+        }
 
-        for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) 
+        {
             temp3 = fjac[j*m+j];
-            if (temp3 != 0) {
+            if (temp3 != 0) 
+            {
                 sum = 0;
                 for (i = j; i < m; i++)
                 {
@@ -1032,9 +1148,12 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 
         /**  Compute norm of scaled gradient and detect degeneracy. **/
         gnorm = 0;
-        for (j = 0; j < n; j++) {
+        for (j = 0; j < n; j++) 
+        {
             if (wa2[Pivot[j]] == 0)
+            {
                 continue;
+            }
             sum = 0;
             for (i = 0; i <= j; i++)
             {
@@ -1043,14 +1162,17 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             gnorm = MAX(gnorm, std::fabs(sum / wa2[Pivot[j]] / fnorm));
         }
 
-        if (gnorm <= C->gtol) {
+        if (gnorm <= C->gtol) 
+        {
             S->outcome = 4;
             goto terminate;
         }
 
         /** Initialize or update diag and delta. **/
-        if (!outer) { /* first iteration only */
-            if (C->scale_diag) {
+        if (!outer) 
+        { /* first iteration only */
+            if (C->scale_diag) 
+            {
                 /* diag := norms of the columns of the initial Jacobian */
                 for (j = 0; j < n; j++)
                 {
@@ -1062,13 +1184,15 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                     wa3[j] = diag[j] * x[j];
                 }
                 xnorm = lm_enorm(n, wa3);
-                if (C->verbosity >= 2) {
+                if (C->verbosity >= 2) 
+                {
                     logI << "lmmin diag  ";
                     lm_print_pars(nout, x, msgfile); // xnorm
                     logI<<"  xnorm = "<<xnorm<<"\n";
                 }
                 /* Only now print the header for the loop table. */
-                if (C->verbosity >= 3) {
+                if (C->verbosity >= 3) 
+                {
                     logI << "  o  i     lmpar    prered           ratio    dirder      delta      pnorm                 fnorm\n";
                     for (i = 0; i < nout; ++i)
                     {
@@ -1076,48 +1200,65 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                     }
                     logit_s<<"\n";
                 }
-            } else {
+            } 
+            else
+            {
                 xnorm = lm_enorm(n, x);
             }
-            if (!std::isfinite(xnorm)) {
+            if (!std::isfinite(xnorm)) 
+            {
                 S->outcome = 12; /* nan */
                 goto terminate;
             }
             /* Initialize the step bound delta. */
             if (xnorm)
+            {
                 delta = C->stepbound * xnorm;
+            }
             else
+            {
                 delta = C->stepbound;
-        } else {
-            if (C->scale_diag) {
+            }
+        } 
+        else
+        {
+            if (C->scale_diag) 
+            {
                 for (j = 0; j < n; j++)
+                {
                     diag[j] = MAX(diag[j], wa2[j]);
+                }
             }
         }
 
         /** The inner loop. **/
         int inner = 0;
-        do {
+        do 
+        {
 
             /** Determine the Levenberg-Marquardt parameter. **/
-            lm_lmpar(n, fjac, m, Pivot, diag, qtf, delta, &lmpar,
-                     wa1, wa2, wf, wa3);
+            lm_lmpar(n, fjac, m, Pivot, diag, qtf, delta, &lmpar, wa1, wa2, wf, wa3);
             /* used return values are fjac (partly), lmpar, wa1=x, wa3=diag*x */
 
             /* Predict scaled reduction. */
             pnorm = lm_enorm(n, wa3);
-            if (!std::isfinite(pnorm)) {
+            if (!std::isfinite(pnorm)) 
+            {
                 S->outcome = 12; /* nan */
                 goto terminate;
             }
             temp2 = lmpar * SQR(pnorm / fnorm);
-            for (j = 0; j < n; j++) {
+            for (j = 0; j < n; j++) 
+            {
                 wa3[j] = 0;
                 for (i = 0; i <= j; i++)
-                    wa3[i] -= fjac[j*m+i] * wa1[Pivot[j]];
+                {
+                    wa3[i] -= fjac[j * m + i] * wa1[Pivot[j]];
+                }
             }
             temp1 = SQR(lm_enorm(n, wa3) / fnorm);
-            if (!std::isfinite(temp1)) {
+            if (!std::isfinite(temp1)) 
+            {
                 S->outcome = 12; /* nan */
                 goto terminate;
             }
@@ -1126,17 +1267,25 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 
             /* At first call, adjust the initial step bound. */
             if (!outer && pnorm < delta)
+            {
                 delta = pnorm;
+            }
 
             /** Evaluate the function at x + p. **/
             for (j = 0; j < n; j++)
+            {
                 wa2[j] = x[j] - wa1[j];
+            }
+
             (*evaluate)(wa2, m, data, wf, &(S->userbreak));
             ++(S->nfev);
             if (S->userbreak)
+            {
                 goto terminate;
+            }
             fnorm1 = lm_enorm(m, wf);
-            if (!std::isfinite(fnorm1)) {
+            if (!std::isfinite(fnorm1)) 
+            {
                 S->outcome = 12; /* nan */
                 goto terminate;
             }
@@ -1149,10 +1298,13 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             /* Ratio of actual to predicted reduction. */
             ratio = prered ? actred / prered : 0;
 
-            if (C->verbosity == 2) {
+            if (C->verbosity == 2) 
+            {
                 logI << "lmmin ("<<outer<<":"<< inner<<" ";
                 lm_print_pars(nout, wa2, msgfile); // fnorm1,
-            } else if (C->verbosity >= 3) {
+            }
+            else if (C->verbosity >= 3) 
+            {
                 logit_s << outer << " " << inner << " " << lmpar << " " << prered << " " << ratio << " " << dirder << " " << delta << " " << pnorm << " " << fnorm1;
                 for (i = 0; i < nout; ++i)
                 {
@@ -1162,34 +1314,50 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             }
 
             /* Update the step bound. */
-            if (ratio <= 0.25) {
+            if (ratio <= 0.25) 
+            {
                 if (actred >= 0)
+                {
                     temp = 0.5;
+                }
                 else if (actred > -99) /* -99 = 1-1/0.1^2 */
-                    temp = MAX(dirder / ((_T)2*dirder + actred), (_T)0.1);
+                {
+                    temp = MAX(dirder / ((_T)2 * dirder + actred), (_T)0.1);
+                }
                 else
+                {
                     temp = (_T)0.1;
+                }
                 delta = temp * MIN(delta, pnorm / (_T)0.1);
                 lmpar /= temp;
-            } else if (ratio >= 0.75) {
+            } 
+            else if (ratio >= 0.75) 
+            {
                 delta = 2 * pnorm;
                 lmpar *= 0.5;
-            } else if (!lmpar) {
+            }
+            else if (!lmpar) 
+            {
                 delta = 2 * pnorm;
             }
 
             /**  On success, update solution, and test for convergence. **/
 
             inner_success = ratio >= 1e-4;
-            if (inner_success) {
+            if (inner_success)
+            {
 
                 /* Update x, fvec, and their norms. */
-                if (C->scale_diag) {
-                    for (j = 0; j < n; j++) {
+                if (C->scale_diag) 
+                {
+                    for (j = 0; j < n; j++) 
+                    {
                         x[j] = wa2[j];
                         wa2[j] = diag[j] * x[j];
                     }
-                } else {
+                } 
+                else
+                {
                     for (j = 0; j < n; j++)
                     {
                         x[j] = wa2[j];
@@ -1200,7 +1368,8 @@ void lmmin(const int n, _T* x, const int m, const void* data,
                     fvec[i] = wf[i];
                 }
                 xnorm = lm_enorm(n, wa2);
-                if (!std::isfinite(xnorm)) {
+                if (!std::isfinite(xnorm)) 
+                {
                     S->outcome = 12; /* nan */
                     goto terminate;
                 }
@@ -1210,31 +1379,41 @@ void lmmin(const int n, _T* x, const int m, const void* data,
             /* Convergence tests. */
             S->outcome = 0;
             if (fnorm <= LM_DWARF)
+            {
                 goto terminate; /* success: sum of squares almost zero */
+            }
             /* Test two criteria (both may be fulfilled). */
             if (std::fabs(actred) <= C->ftol && prered <= C->ftol && ratio <= 2)
+            {
                 S->outcome = 1; /* success: x almost stable */
+            }
             if (delta <= C->xtol * xnorm)
+            {
                 S->outcome += 2; /* success: sum of squares almost stable */
-            if (S->outcome != 0) {
+            }
+            if (S->outcome != 0) 
+            {
                 goto terminate;
             }
 
             /** Tests for termination and stringent tolerances. **/
-            if (S->nfev >= maxfev) {
+            if (S->nfev >= maxfev) 
+            {
                 S->outcome = 5;
                 goto terminate;
             }
-            if (std::fabs(actred) <= LM_MACHEP && prered <= LM_MACHEP &&
-                ratio <= 2) {
+            if (std::fabs(actred) <= LM_MACHEP && prered <= LM_MACHEP && ratio <= 2) 
+            {
                 S->outcome = 6;
                 goto terminate;
             }
-            if (delta <= LM_MACHEP * xnorm) {
+            if (delta <= LM_MACHEP * xnorm) 
+            {
                 S->outcome = 7;
                 goto terminate;
             }
-            if (gnorm <= LM_MACHEP) {
+            if (gnorm <= LM_MACHEP) 
+            {
                 S->outcome = 8;
                 goto terminate;
             }
@@ -1248,15 +1427,19 @@ void lmmin(const int n, _T* x, const int m, const void* data,
 terminate:
     S->fnorm = lm_enorm(m, fvec);
     if (C->verbosity >= 2)
+    {
         logI << "lmmin outcome (" << S->outcome << ") xnorm " << xnorm << " ftol " << C->ftol << " xtol " << C->xtol << "\n";
-    if (C->verbosity & 1) {
+    }
+    if (C->verbosity & 1) 
+    {
         logI << "lmmin final ";
         lm_print_pars(nout, x, msgfile); // S->fnorm,
         logI << "  fnorm = " << S->fnorm << "\n";
     }
     if (S->userbreak) /* user-requested break */
+    {
         S->outcome = 11;
-
+    }
     /***  Deallocate the workspace.  ***/
     free(ws);
 

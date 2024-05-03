@@ -114,6 +114,8 @@ struct User_Data
     Range energy_range;
     Spectra<T_real>  spectra_model;
     const Spectra<T_real> *orig_spectra;
+    ArrayTr<T_real> norm_arr;
+    T_real normalizer;
     Callback_Func_Status_Def* status_callback;
     size_t cur_itr;
     size_t total_itr;
@@ -134,6 +136,7 @@ struct Gen_User_Data
     Range energy_range;
 	Gen_Func_Def<T_real> func;
 	Spectra<T_real>  spectra_model;
+    T_real normalizer;
 };
 
 template<typename T_real>
@@ -167,6 +170,8 @@ void fill_user_data(User_Data<T_real> &ud,
     ud.fit_model = (Base_Model<T_real>*)model;
     // set spectra to fit
     ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    ud.norm_arr = ud.spectra.pow(2.0); // square the spectra and sum it
+    ud.normalizer = ud.norm_arr.sum();
     //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
     //new (&(ud.spectra)) Eigen::Map<const ArrayTr<T_real>>(spectra->data() + energy_range.min, energy_range.count());
     ud.orig_spectra = spectra;
@@ -234,7 +239,9 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
 {
     ud.func = gen_func;
     // set spectra to fit
-    ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());;
+    ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
+    ArrayTr<T_real> norm_arr = ud.spectra.pow(2.0); // square the spectra and sum it
+    ud.normalizer = norm_arr.sum();
     //not allocating memory. see https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
     //new (&ud.spectra) Eigen::Map<const ArrayTr<T_real>>(spectra->data() + energy_range.min, energy_range.count());
     ud.fit_parameters = fit_params;

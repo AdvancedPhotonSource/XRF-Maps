@@ -83,6 +83,7 @@ option(AVX512 "Compule with arch AVX512 on MSVC" OFF)
 option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
 option(AVX "Compule with arch AVX on MSVC" OFF)
 option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
+option(MSVC_DEBUG_INFO_REL "Compule with debug info in Release build for MSVC" OFF)
 
 # Opitons for getting YouCompleteMe plugin working with this project
 SET( CMAKE_EXPORT_COMPILE_COMMANDS ON )
@@ -183,9 +184,14 @@ ELSEIF(MSVC)
       ENDIF()
     ENDIF()
   ENDIF()
-    
+
+  IF(MSVC_DEBUG_INFO_REL)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi ")
+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /ASSEMBLYDEBUG /DEBUG:FULL")
+  ENDIF()
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_USE_MATH_DEFINES /DH5_BUILT_AS_DYNAMIC_LIB /D_HDF5USEDLL_ /DBUILDING_DLL /DXDR_HACK /DXDR_LE /DNOMINMAX /openmp")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox /Ot /Qvec-report:2 /GL /MP /bigobj")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /fp:strict /Ot /Qvec-report:2 /GL /MP /bigobj")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 ENDIF()
 

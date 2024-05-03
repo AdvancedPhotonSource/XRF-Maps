@@ -566,7 +566,12 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
         return spectra_model;
     }
 
+    // add soft limit to this value since values > 20 seem to cause nan's
+    //T_real el_val = std::min(fitp->at(element_to_fit->full_name()).value, (T_real)20.0);
+    //T_real pre_faktor = std::pow((T_real)10.0 , el_val);
+
     T_real pre_faktor = std::pow((T_real)10.0 , fitp->at(element_to_fit->full_name()).value);
+
 
     if (false == std::isfinite(pre_faktor))
     {
