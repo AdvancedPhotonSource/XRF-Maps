@@ -153,8 +153,10 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
     // Calculate residuals
     for (int i=0; i<m; i++)
     {
-        dy[i] = abs( ud->spectra[i] - ud->spectra_model[i] ) * ud->weights[i];
-		
+        //dy[i] = std::pow(( ud->spectra[i] - ud->spectra_model[i] ), 2.0) * ud->weights[i];
+		T_real n_raw = ud->spectra[i] / ud->normalizer;
+        T_real n_model = ud->spectra_model[i] / ud->normalizer;
+        dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
         if (std::isfinite(dy[i]) == false)
 		{
 			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
