@@ -157,11 +157,13 @@ int gen_residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_re
 		T_real n_raw = ud->spectra[i] / ud->normalizer;
         T_real n_model = ud->spectra_model[i] / ud->normalizer;
         dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        /*
         if (std::isfinite(dy[i]) == false)
 		{
 			//dy[i] = ud->spectra[i] + ud->spectra_model[i];
             dy[i] = std::numeric_limits<T_real>::quiet_NaN();
 		}
+        */
     }
 
     return 0;
@@ -329,14 +331,14 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 
 			if (fit.value > fit.max_val)
 			{
-                logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
+                //logW << itr->first << " value (" << fit.value << ") > max_val(" << fit.max_val << ") : setting value = max_val\n";
                 fit.value = fit.max_val - fit.step_size;
 				(*fit_params)[itr->first].value = fit.value;
 
 			}
 			if (fit.value < fit.min_val)
 			{
-                logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
+                //logW << itr->first << " value (" << fit.value << ") < min_val(" << fit.min_val << ") : setting value = min_val\n";
                 fit.value = fit.min_val + fit.step_size;
 				(*fit_params)[itr->first].value = fit.min_val;
 			}
