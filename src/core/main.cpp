@@ -349,7 +349,7 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 template <typename T_real>
 int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
-    std::vector<std::string> ignore_dir_list = { "img.dat", "mda", "output" };
+    std::vector<std::string> ignore_dir_list = { "img.dat", "rois", "mda", "output" };
     //Get the dataset directory you want to process
     std::string dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
