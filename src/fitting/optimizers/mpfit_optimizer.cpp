@@ -84,14 +84,20 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-    // ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+     ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([ud](T_real v) { return std::isfinite(v) ? v : ud->normalizer; });
 
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-        T_real n_raw = ud->spectra[i] / ud->norm_arr[i];
-        T_real n_model = ud->spectra_model[i] / ud->norm_arr[i];
+        //T_real n_raw = ud->spectra[i] / ud->norm_arr[i];
+        //T_real n_model = ud->spectra_model[i] / ud->norm_arr[i];
+        //dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        
+        T_real n_raw = ud->spectra[i] / ud->normalizer;
+        T_real n_model = ud->spectra_model[i] / ud->normalizer;
         dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
+        
+
         //dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
 		if (std::isfinite(dy[i]) == false)
 		{

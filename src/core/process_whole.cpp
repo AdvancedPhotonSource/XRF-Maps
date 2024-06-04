@@ -386,7 +386,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                 {
                     if (false == override_params->fit_params.contains(itr2.first))
                     {
-                        fit_params.add_parameter(Fit_Param<double>(itr2.first, quantification_standard->element_counts.at(fit_itr.first).at(itr2.first)));
+                        fit_params.add_parameter(Fit_Param<double>(itr2.first, 1.0e-11, 20.0, quantification_standard->element_counts.at(fit_itr.first).at(itr2.first), 0.0005, E_Bound_Type::LIMITED_LO_HI));
                     }
                 }
                 fitting::routines::Matrix_Optimized_Fit_Routine<double>* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine<double>*)fit_routine;

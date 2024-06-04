@@ -104,11 +104,11 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_FANOPRIME,      (T_real)0.000001, (T_real)0.05, (T_real)0.00012, (T_real)0.000001,  E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_ENERGY,	   (T_real)9.4, (T_real)10.4, (T_real)9.99, (T_real)0.001,  E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.00001, E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_ANGLE,		 (T_real)0.0, (T_real)359.0, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)1.0, (T_real)4.0, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)0.00001, (T_real)10.00, (T_real)5.0, (T_real)0.00001,  E_Bound_Type::FIT));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)0.00001, (T_real)10.00, (T_real)5.0, (T_real)0.0005,  E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
@@ -156,11 +156,11 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
@@ -194,11 +194,11 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
@@ -232,11 +232,11 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -270,11 +270,11 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
@@ -308,11 +308,11 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::FIT;
+            _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;

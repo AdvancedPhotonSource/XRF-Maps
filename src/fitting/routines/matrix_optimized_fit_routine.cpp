@@ -125,7 +125,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if (false == fit_parameters.contains(itr.first))
         {
-            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI);
             fit_parameters[itr.first] = fp;
         }
         else
@@ -189,7 +189,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     {
         if (false == fit_parameters.contains(itr.first))
         {
-            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI);
             fit_parameters[itr.first] = fp;
         }
         else
@@ -222,7 +222,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if( false == fit_parameters.contains(itr.first) )
         {
-            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.00001, E_Bound_Type::LIMITED_LO_HI);
+            Fit_Param<T_real> fp(itr.first, (T_real)-10.0, (T_real)20.0, (T_real)0.0, (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI);
             fit_parameters[itr.first] = fp;
         }
         else
