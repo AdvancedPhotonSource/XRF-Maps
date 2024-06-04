@@ -441,7 +441,7 @@ void lm_lmpar(const int n, _T* r, const int ldr, const int* Pivot,
     int i, iter, j, nsing;
     _T dxnorm, fp, fp_old, gnorm, parc, parl, paru;
     _T sum, temp;
-    static _T p1 = (_T)0.1;
+    const _T p1 = (_T)0.1;
 
     _T LM_DWARF;
     if (std::is_same<_T, float>::value)

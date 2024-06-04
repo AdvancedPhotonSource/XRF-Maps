@@ -106,7 +106,7 @@ void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Pa
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
             {
-                Fit_Param<T_real> fp(element->full_name(), (T_real)-11.0, 20, e_guess, (T_real)0.1, E_Bound_Type::LIMITED_LO_HI);
+                Fit_Param<T_real> fp(element->full_name(), (T_real)-11.0, 20, e_guess, (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI);
                 (*fit_params)[el_itr.first] = fp;
             }
             if(spectra != nullptr  && energies.size() > 0)
