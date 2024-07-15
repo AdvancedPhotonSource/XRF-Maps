@@ -928,7 +928,16 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         fullpath = dataset_directory + DIR_END_CHAR + dataset_file;
         std::string file_title;
         data_struct::Scan_Info<T_real> scan_info_edf;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))
+        // try new APS-U format
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(fullpath, file_title, spectra_volume, scan_info_edf))
+        {
+            // load scan rows from ./flyXRF
+
+            // load positions from ./positions
+        
+        }
+        // try ESRF dataset
+        else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))
         {
             std::string dset_folder = "";
             std::string base_name = dataset_file;
