@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include <Eigen/Core>
 #include <vector>
+#include <algorithm>
 #include <functional>
 
 namespace data_struct
@@ -254,6 +255,7 @@ private:
 TEMPLATE_CLASS_DLL_EXPORT Spectra<float>;
 TEMPLATE_CLASS_DLL_EXPORT Spectra<double>;
 
+//-----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
@@ -345,31 +347,17 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
 
     // FIRST SNIPPING
     int no_iterations = 2;
-
-    int max_of_xmin = (std::max)(xmin, (T_real)0.0);
-    int min_of_xmax = (std::min)(xmax, T_real(spectra->size() - 1));
+    
+    int lo_limit = std::max<int>(xmin, 0);
+    int up_limit = std::min<int>(xmax, (spectra->size() - 1));
     for (int j = 0; j < no_iterations; j++)
     {
         for (long int k = 0; k < background.size(); k++)
         {
-            long int lo_index = k - current_width[k];
-            long int hi_index = k + current_width[k];
-            if (lo_index < max_of_xmin)
-            {
-                lo_index = max_of_xmin;
-            }
-            if (lo_index > min_of_xmax)
-            {
-                lo_index = min_of_xmax;
-            }
-            if (hi_index > min_of_xmax)
-            {
-                hi_index = min_of_xmax;
-            }
-            if (hi_index < max_of_xmin)
-            {
-                hi_index = max_of_xmin;
-            }
+            int lo_index = std::max<int>(k - current_width[k], lo_limit);
+            lo_index = std::min<int>(lo_index, up_limit);
+            int hi_index = std::max<int>(k + current_width[k], lo_limit);
+            hi_index = std::min<int>(k + current_width[k], up_limit);
             T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
             if (background[k] > temp)
             {
@@ -382,24 +370,10 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
     {
         for (long int k = 0; k < background.size(); k++)
         {
-            long int lo_index = k - current_width[k];
-            long int hi_index = k + current_width[k];
-            if (lo_index < max_of_xmin)
-            {
-                lo_index = max_of_xmin;
-            }
-            if (lo_index > min_of_xmax)
-            {
-                lo_index = min_of_xmax;
-            }
-            if (hi_index > min_of_xmax)
-            {
-                hi_index = min_of_xmax;
-            }
-            if (hi_index < max_of_xmin)
-            {
-                hi_index = max_of_xmin;
-            }
+            int lo_index = std::max<int>(k - current_width[k], lo_limit);
+            lo_index = std::min<int>(lo_index, up_limit);
+            int hi_index = std::max<int>(k + current_width[k], lo_limit);
+            hi_index = std::min<int>(k + current_width[k], up_limit);
             T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
             if (background[k] > temp)
             {
@@ -418,6 +392,46 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
 }
 
 // ----------------------------------------------------------------------------
+/*
+template<typename T_real>
+DLL_EXPORT ArrayTr<T_real> snip_background2(const Spectra<T_real> * const spectra, T_real width)
+{
+    width = width * 100.0;
+    assert(spectra != nullptr);
+    ArrayTr<T_real> boxcar;
+    boxcar.resize(5);
+    boxcar.setConstant(5, 1.0);
+    ArrayTr<T_real> background = convolve1d(*spectra, boxcar);
+    background += 1.0;
+    background = Eigen::sqrt(background);
+    background = Eigen::log(Eigen::log(background + (T_real)1.0) + (T_real)1.0);
+
+    while (width >= 0.5)
+    {
+        for (int k = 0; k < background.size(); k++)
+        {
+            int lo = std::max<int>( k - (int)width, 0);
+            int hi = std::min<int>( k + (int)width, background.size()-1);
+            T_real temp = (background[lo] + background[hi]) / (T_real)2.0;
+            if (background[k] > temp)
+            {
+                background[k] = temp;
+            }
+        }
+        width = width / T_real(M_SQRT2); // window_rf
+    }
+
+    background = Eigen::exp(Eigen::exp(background) - (T_real)1.0) - (T_real)1.0;
+    background = Eigen::pow(background, 2.0);
+    background -= 1.0;
+    background = background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+
+    return background;
+
+}
+*/
+// ----------------------------------------------------------------------------
+
 
 template<typename T_real>
 using IO_Callback_Func_Def = std::function<void(size_t, size_t, size_t, size_t, size_t, Spectra<T_real>*, void*)>;

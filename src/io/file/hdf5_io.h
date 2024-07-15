@@ -901,6 +901,59 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
+    bool load_spectra_vol_apsu(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, bool logerr = true)
+    {
+
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t    file_id, xspres_grp_id, pos_grp_id, title_id;
+        //hid_t root_grp_id, scanDim1_id, scanDim2_id, start_time_id;
+        //H5G_info_t info;
+        //char root_group_name[2048] = { 0 };
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+            return false;
+
+        //H5Gget_objname_by_idx(file_id, 0, &root_group_name[0], 2047);
+
+        //if (false == _open_h5_object(root_grp_id, H5O_GROUP, close_map, root_group_name, file_id))
+        //   return false;
+
+        if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
+            return false;
+
+        if (false == _open_h5_object(xspres_grp_id, H5O_DATASET, close_map, "/xspress3", file_id))
+            return false;
+        /*
+        if (false == _open_h5_object(scanDim2_id, H5O_DATASET, close_map, "scanDim_2", fluo_grp_id))
+            return false;
+
+        if (false == _open_h5_object(title_id, H5O_DATASET, close_map, "title", root_grp_id))
+            return false;
+
+        if (false == _open_h5_object(start_time_id, H5O_DATASET, close_map, "start_time", root_grp_id))
+            return false;
+        
+        char tmp_name[256] = { 0 };
+        hid_t ftype = H5Dget_type(title_id);
+        close_map.push({ ftype, H5O_DATATYPE });
+        hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        herr_t error = H5Dread(title_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_name[0]);
+
+        if (error == 0)
+        {
+            title = std::string(tmp_name);
+        }
+        */
+
+        _close_h5_objects(close_map);
+        return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
     bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, bool logerr = true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
