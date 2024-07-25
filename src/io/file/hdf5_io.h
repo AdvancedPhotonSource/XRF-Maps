@@ -90,6 +90,8 @@ enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
 using ROI_Vec = std::vector<std::pair<int, int>>;
 
+//-----------------------------------------------------------------------------
+
 template<typename T_real>
 int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::string lookup_str)
 {
@@ -109,6 +111,8 @@ int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::st
     std::string str_val = leftover.substr(0, find_idx);
     return std::stoi(str_val.c_str());
 }
+
+//-----------------------------------------------------------------------------
 
 template<typename T_real>
 T_real translate_back_sens_num(int value)
@@ -152,6 +156,8 @@ T_real translate_back_sens_num(int value)
     return T_real(-1.);
 }
 
+//-----------------------------------------------------------------------------
+
 template<typename T_real>
 T_real translate_back_sens_unit(std::string value)
 {
@@ -173,6 +179,10 @@ T_real translate_back_sens_unit(std::string value)
     }
     return T_real (-1);
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 template<typename T_real>
 struct Detector_HDF5_Struct
@@ -901,53 +911,90 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_apsu(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, bool logerr = true)
+    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
     {
-
-        std::lock_guard<std::mutex> lock(_mutex);
-
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, xspres_grp_id, pos_grp_id, title_id;
-        //hid_t root_grp_id, scanDim1_id, scanDim2_id, start_time_id;
-        //H5G_info_t info;
-        //char root_group_name[2048] = { 0 };
-
-        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
-            return false;
-
-        //H5Gget_objname_by_idx(file_id, 0, &root_group_name[0], 2047);
-
-        //if (false == _open_h5_object(root_grp_id, H5O_GROUP, close_map, root_group_name, file_id))
-        //   return false;
-
-        if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
-            return false;
-
-        if (false == _open_h5_object(xspres_grp_id, H5O_DATASET, close_map, "/xspress3", file_id))
-            return false;
-        /*
-        if (false == _open_h5_object(scanDim2_id, H5O_DATASET, close_map, "scanDim_2", fluo_grp_id))
-            return false;
-
-        if (false == _open_h5_object(title_id, H5O_DATASET, close_map, "title", root_grp_id))
-            return false;
-
-        if (false == _open_h5_object(start_time_id, H5O_DATASET, close_map, "start_time", root_grp_id))
-            return false;
-        
-        char tmp_name[256] = { 0 };
-        hid_t ftype = H5Dget_type(title_id);
-        close_map.push({ ftype, H5O_DATATYPE });
-        hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
-        herr_t error = H5Dread(title_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_name[0]);
-
-        if (error == 0)
+        hid_t    file_id, xspres_grp_id, pos_grp_id, title_id, xspress_link_id, pos_file_id, enc1_id, enc2_id, space_id;
+        char xspress3_link[2048] = {0};
+        char positions_link[2048] = {0};
+        hsize_t dims[1] = { 0 };
+        herr_t err;
         {
-            title = std::string(tmp_name);
-        }
-        */
+            std::lock_guard<std::mutex> lock(_mutex);
+            if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
+                return false;
 
-        _close_h5_objects(close_map);
+            if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
+                return false;
+
+            if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/flyXRF", file_id))
+                return false;
+
+            // load spectra
+            err = H5Lget_name_by_idx(xspres_grp_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, 0, &xspress3_link[0], 2048, H5P_DEFAULT);
+            if (err < 0) 
+            {
+                logE << "Error retrieving flyXRF link value\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+            err = H5Lget_name_by_idx(pos_grp_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, 0, &positions_link[0], 2048, H5P_DEFAULT);
+            if (err < 0) 
+            {
+                logE << "Error retrieving positions link name\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+            // load positions
+            if (false == _open_h5_object(pos_file_id, H5O_FILE, close_map, path + "positions/" + positions_link, -1))
+                return false;
+
+            if (false == _open_h5_object(enc1_id, H5O_DATASET, close_map, "/stream/Encoder1", pos_file_id, -1))
+                return false;
+            if (false == _open_h5_object(enc2_id, H5O_DATASET, close_map, "/stream/Encoder2", pos_file_id, -1))
+                return false;
+
+            space_id = H5Dget_space(enc1_id);
+            close_map.push({ space_id, H5O_DATASPACE });
+
+            err = H5Sget_simple_extent_dims(space_id, &dims[0], nullptr);
+            if (err < 0)
+            {
+                logE<< "Could not read encoder dims\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            scan_info.meta_info.x_axis.resize(dims[0]);
+            scan_info.meta_info.y_axis.resize(dims[0]);
+            err = H5Dread(enc1_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, scan_info.meta_info.x_axis.data());
+            if (err < 0)
+            {
+                logE<< "Could not read encoder 1 values\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+            err = H5Dread(enc2_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, scan_info.meta_info.y_axis.data());
+            if (err < 0)
+            {
+                logE<< "Could not read encoder 2 values\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+            // read in scalers from TertraMM
+
+
+            _close_h5_objects(close_map);
+        }
+        spec_vol->resize_and_zero(1,1,1);
+        if(false == load_spectra_line_xspress3(path + "flyXRF/" + xspress3_link, detector_num, &(*spec_vol)[0]) )
+        {
+            return false;
+        }
+
         return true;
     }
 
