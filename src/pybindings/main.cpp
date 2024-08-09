@@ -65,11 +65,11 @@ auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 		float val = out_counts.at(itr.first);
 		if (val != 0.0)
 		{
-			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, 1.0e-11, 20.0 log10(val), 0.0005, E_Bound_Type::LIMITED_LO_HI);
+			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, log10(val), STEP_COUNTS_LIMIT_LOG, E_Bound_Type::LIMITED_LO_HI);
 		}
 		else
 		{
-			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, 1.0e-11, 20.0, val, 0.0005, E_Bound_Type::LIMITED_LO_HI);
+			fit_params[itr.first] = data_struct::Fit_Param<float>(itr.first, MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, val, STEP_COUNTS_LIMIT_LOG, E_Bound_Type::LIMITED_LO_HI);
 		}
         
 	}

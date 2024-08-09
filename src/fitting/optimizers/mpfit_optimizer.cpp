@@ -84,22 +84,16 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
     // Add background
     ud->spectra_model += ud->spectra_background;
     // Remove nan's and inf's
-     ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([ud](T_real v) { return std::isfinite(v) ? v : ud->normalizer; });
+    //ud->spectra_model = (ArrayTr<T_real>)ud->spectra_model.unaryExpr([ud](T_real v) { return std::isfinite(v) ? v : ud->normalizer; });
 
+     T_real sum = 0.0;
     //Calculate residuals
     for (int i=0; i<m; i++)
     {
-        //T_real n_raw = ud->spectra[i] / ud->norm_arr[i];
-        //T_real n_model = ud->spectra_model[i] / ud->norm_arr[i];
-        //dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
-        
-        T_real n_raw = ud->spectra[i] / ud->normalizer;
-        T_real n_model = ud->spectra_model[i] / ud->normalizer;
-        dy[i] = pow((n_raw - n_model), (T_real)2.0) * ud->weights[i];
-        
+        dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
+        sum += dy[i];
 
-        //dy[i] = pow((ud->spectra[i] - ud->spectra_model[i]), (T_real)2.0) * ud->weights[i];
-		if (std::isfinite(dy[i]) == false)
+    	if (std::isfinite(dy[i]) == false)
 		{
             if(first)
             {
@@ -119,7 +113,7 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
             dy[i] = ud->normalizer;
 		}
     }
-	
+    logI << "f = " << sum << "\n";
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
     {
@@ -202,7 +196,7 @@ int quantification_residuals_mpfit(int m, int params_size, T_real *params, T_rea
     {
 		if (std::isfinite(result_map[itr.first]) == false)
 		{
-			dy[idx] = itr.second.e_cal_ratio;
+			dy[idx] = itr.second.e_cal_ratio * 10.0;
 		}
 		else
 		{
@@ -391,7 +385,7 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 				break;
 			}
 
-			par[fit.opt_array_index].step = fit.step_size;      // 0 = auto ,Step size for finite difference
+			par[fit.opt_array_index].step = 0;      // 0 = auto ,Step size for finite difference
 			par[fit.opt_array_index].parname = 0;
 			par[fit.opt_array_index].relstep = 0;   // Relative step size for finite difference
 			par[fit.opt_array_index].side = 0;         // Sidedness of finite difference derivative

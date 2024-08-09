@@ -104,6 +104,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     }
                     catch (std::exception& e)
                     {
+                        logE << e.what() << ", Defaulting " << tag << " to 0.0\n";
                         pv_map[tag] = 0.;
                     }
                 }
@@ -178,6 +179,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     }
                     catch (std::exception& e)
                     {
+                        logE << e.what() << ", Defaulting " << tag << " to 0.0\n";
                         pv_map[tag] = 0.;
                     }
                 }
@@ -195,6 +197,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     }
                     catch (std::exception& e)
                     {
+                        logE << e.what() << ", Defaulting " << tag << " to 0.0\n";
                         pv_map[tag] = 0.;
                     }
                 }
@@ -212,6 +215,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     }
                     catch (std::exception& e)
                     {
+                        logE << e.what() << ", Defaulting " << tag << " to 0.0\n";
                         pv_map[tag] = 0.;
                     }
                 }
@@ -260,6 +264,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                                 }
                                 catch (std::exception& e)
                                 {
+                                    logE << e.what() << ", Defaulting " << tag << " to 0.0\n";
                                     pv_map[pv_name] = 0.;
                                 }
                             }

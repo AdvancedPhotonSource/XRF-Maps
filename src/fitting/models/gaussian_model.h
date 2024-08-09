@@ -114,7 +114,7 @@ public:
      */
     const ArrayTr<T_real> step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const;
 
-    const ArrayTr<T_real> tail(T_real gain, T_real sigma, ArrayTr<T_real> delta_energy, T_real gamma) const;
+    const ArrayTr<T_real> tail(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real gamma) const;
 
     virtual const ArrayTr<T_real> elastic_peak(const Fit_Parameters<T_real>* const fitp, const ArrayTr<T_real>& ev, T_real gain) const;
 
