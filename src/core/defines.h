@@ -111,16 +111,19 @@ T_real parse_input_real(std::string value)
     }
 }
 
-#define CALIBRATION_CURVE_SIZE 92
+constexpr auto CALIBRATION_CURVE_SIZE = 92;
 
 //namespace keys
 //{
 
-#define AVOGADRO 6.02204531e23
-#define HC_ANGSTROMS 12398.52
-#define RE 2.817938070e-13		// in cm
-#define ENERGY_RES_OFFSET 150.0
-#define ENERGY_RES_SQRT 12.0
+constexpr auto AVOGADRO = 6.02204531e23;
+constexpr auto HC_ANGSTROMS = 12398.52;
+constexpr auto RE = 2.817938070e-13;		// in cm
+constexpr auto ENERGY_RES_OFFSET = 150.0;
+constexpr auto ENERGY_RES_SQRT = 12.0;
+constexpr auto MIN_COUNTS_LIMIT_LOG = -11.0;
+constexpr auto MAX_COUNTS_LIMIT_LOG = 20.0;
+constexpr auto STEP_COUNTS_LIMIT_LOG = 0.0005;
 
 /**
 * @brief String defines for fit parameters string value pair.

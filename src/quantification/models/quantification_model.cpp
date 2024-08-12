@@ -259,6 +259,7 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
         T_real val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((T_real)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
         if(false == std::isfinite(val))
         {
+            logW << "val = " << val << ". Defaulting to 0.0\n";
             val = 0;
         }
         result_map.emplace(std::pair<std::string, T_real>(itr.first, val));
@@ -278,6 +279,7 @@ void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Qu
         T_real val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((T_real)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
         if (false == std::isfinite(val))
         {
+            logW << "val = " << val << ". Defaulting to 0.0\n";
             val = 0;
         }
         itr.calib_curve_val = val;

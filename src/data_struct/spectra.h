@@ -172,20 +172,36 @@ public:
         {
             _elapsed_livetime += val;
         }
+        else
+        {
+            logW << " Spectra _elapsed_livetime = " << val << " . Not updating!\n";
+        }
         val = spectra.elapsed_realtime();
         if(std::isfinite(val))
         {
             _elapsed_realtime += val;
+        }
+        else
+        {
+            logW << " Spectra _elapsed_realtime = " << val << " . Not updating!\n";
         }
         val = spectra.input_counts();
         if(std::isfinite(val))
         {
             _input_counts += val;
         }
+        else
+        {
+            logW << " Spectra _input_counts = " << val << " . Not updating!\n";
+        }
         val = spectra.output_counts();
         if(std::isfinite(val))
         {
             _output_counts += val;
+        }
+        else
+        {
+            logW << " Spectra _output_counts = " << val << " . Not updating!\n";
         }
     }
 
@@ -204,20 +220,36 @@ public:
             {
                 _elapsed_livetime += val;
             }
+            else
+            {
+                logW << " Spectra _elapsed_livetime = " << val << " . Not updating!\n";
+            }
             val = spectra->elapsed_realtime();
             if (std::isfinite(val))
             {
                 _elapsed_realtime += val;
+            }
+            else
+            {
+                logW << " Spectra _elapsed_realtime = " << val << " . Not updating!\n";
             }
             val = spectra->input_counts();
             if (std::isfinite(val))
             {
                 _input_counts += val;
             }
+            else
+            {
+                logW << " Spectra _input_counts = " << val << " . Not updating!\n";
+            }
             val = spectra->output_counts();
             if (std::isfinite(val))
             {
                 _output_counts += val;
+            }
+            else
+            {
+                logW << " Spectra _output_counts = " << val << " . Not updating!\n";
             }
         }
     }

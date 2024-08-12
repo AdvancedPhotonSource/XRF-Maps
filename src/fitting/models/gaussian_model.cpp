@@ -104,11 +104,11 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_FWHM_FANOPRIME,      (T_real)0.000001, (T_real)0.05, (T_real)0.00012, (T_real)0.000001,  E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_ENERGY,	   (T_real)9.4, (T_real)10.4, (T_real)9.99, (T_real)0.001,  E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, (T_real)0.000001, (T_real)10.0, (T_real)5.0,  (T_real)0.0005, E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COHERENT_SCT_AMPLITUDE, MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, (T_real)5.0, STEP_COUNTS_LIMIT_LOG, E_Bound_Type::LIMITED_LO_HI));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_ANGLE,		 (T_real)0.0, (T_real)359.0, (T_real)90.0, (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)1.0, (T_real)4.0, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    (T_real)0.00001, (T_real)10.00, (T_real)5.0, (T_real)0.0005,  E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, (T_real)5.0, STEP_COUNTS_LIMIT_LOG,  E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
@@ -575,6 +575,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
     if (false == std::isfinite(pre_faktor))
     {
+        logE << "Prefactor = " << pre_faktor << "\n";
         spectra_model =  (ArrayTr<T_real>)(spectra_model).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return spectra_model;
     }
@@ -725,13 +726,14 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::peak(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const
 {
-    //delta_energy = delta_energy.unaryExpr([sigma](T_real v) { return  (T_real)std::erfc(v  /( M_SQRT2*sigma)); } );
-    //return (gain / (T_real)2.0 / peak_E * delta_energy );
+    ArrayTr<T_real>counts = delta_energy.unaryExpr([gain, sigma, peak_E](T_real v) { return gain / (T_real)2.0 / peak_E * std::erfc(v / ((T_real)(M_SQRT2)*sigma)); });
+    /*
     ArrayTr<T_real>counts(delta_energy.size());
 	for (unsigned int i = 0; i < delta_energy.size(); i++)
 	{
         counts[i] = gain / (T_real)2.0 / peak_E * std::erfc((T_real)delta_energy[i] / ((T_real)(M_SQRT2) * sigma));
 	}
+    */
     return counts;
 
 }
@@ -739,10 +741,20 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, co
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, ArrayTr<T_real> delta_energy, T_real gamma) const
+const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, const ArrayTr<T_real> &delta_energy, T_real gamma) const
 {
-    delta_energy = delta_energy.unaryExpr([sigma,gamma](T_real v) { return  (v < (T_real)0.0) ? std::exp(v/ (gamma * sigma)) * std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2)))) : std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2)))); } );
-    return( gain / (T_real)2.0 / gamma / sigma / exp((T_real)-0.5/pow(gamma, (T_real)2.0)) * delta_energy);
+    T_real val = pow(gamma, (T_real)2.0);
+    val = exp((T_real)-0.5 / val);
+    val = sigma / val;
+    val = gamma / val;
+    val = (T_real)2.0 / val;
+    val = gain / val;
+    
+    return delta_energy.unaryExpr([val,sigma,gamma](T_real v) { return  (v < (T_real)0.0) ?
+        std::exp(v/ (gamma * sigma)) * val * std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))))
+        :
+        val * std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2)))); } );
+     
 }
 
 // ----------------------------------------------------------------------------
@@ -755,6 +767,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(false == std::isfinite(sigma))
     {
+        logE << "sigma = " << sigma << "\n";
         counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
@@ -787,6 +800,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)62.0) + compton_E * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
     if(false == std::isfinite(sigma))
     {
+        logE << "sigma = " << sigma << "\n";
         counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
