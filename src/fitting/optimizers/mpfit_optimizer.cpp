@@ -113,7 +113,7 @@ int residuals_mpfit(int m, int params_size, T_real *params, T_real *dy, T_real *
             dy[i] = ud->normalizer;
 		}
     }
-    logI << "f = " << sum << "\n";
+    //logI << "f = " << sum << "\n";
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
     {

@@ -262,7 +262,7 @@ void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *overri
             }
             else
             {
-                logW << itr.first << " value = " << itr.second.value << " . Not updating value\n";
+                logW << itr.first << "new value = " << override_fit_params->at(itr.first).value << " Reverting to original value "<< itr.second.value << " .\n";
             }
             if( std::isfinite(override_fit_params->at(itr.first).min_val) )
             {
@@ -270,7 +270,7 @@ void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *overri
             }
             else
             {
-                logW << itr.first << " min_val = " << itr.second.min_val << " . Not updating min_val\n";
+                //logW << itr.first << "new min_val = " << override_fit_params->at(itr.first).min_val << " Reverting to original min_val "<< itr.second.min_val << " . Not updating min_val\n";
             }
             if( std::isfinite(override_fit_params->at(itr.first).max_val) )
             {
@@ -278,7 +278,7 @@ void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *overri
             }
             else
             {
-                logW << itr.first << " max_val = " << itr.second.max_val << " . Not updating max_val\n";
+                //logW << itr.first << " max_val = " << itr.second.max_val << " . Not updating max_val\n";
             }
             if( override_fit_params->at(itr.first).bound_type != E_Bound_Type::NOT_INIT)
             {
@@ -286,7 +286,7 @@ void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *overri
             }
             else
             {
-                logW << itr.first << " bound_type == E_Bound_Type::NOT_INIT. Not updating bound_type\n";
+                //logW << itr.first << " bound_type == E_Bound_Type::NOT_INIT. Not updating bound_type\n";
             }
         }
     }
