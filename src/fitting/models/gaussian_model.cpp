@@ -63,7 +63,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 using namespace data_struct;
 
-
 namespace fitting
 {
 namespace models
@@ -112,7 +111,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL, (T_real)0.000001, (T_real)1.0, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL,    (T_real)0.0, (T_real)1.0, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)0.1, (T_real)3., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH,			     (T_real)0.1,   (T_real)2.828427, (T_real)0.25, (T_real)0.01,  E_Bound_Type::FIXED)); //max = 2* sqrt(2)
@@ -269,7 +268,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_FWHM_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_FWHM_FANOPRIME].bound_type = E_Bound_Type::FIXED;
 
-            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COHERENT_SCT_ENERGY].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COHERENT_SCT_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
 
             _fit_parameters[STR_COMPTON_ANGLE].bound_type = E_Bound_Type::FIXED;
@@ -584,7 +583,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     const std::vector<Element_Energy_Ratio<T_real>> energy_ratios = element_to_fit->energy_ratios();
 
     //for (const Element_Energy_Ratio& er_struct : element_to_fit->energy_ratios())
-    for (int idx = 0; idx < energy_ratios.size(); idx++)
+    for (size_t idx = 0; idx < energy_ratios.size(); idx++)
     {
         const Element_Energy_Ratio<T_real>& er_struct = energy_ratios.at(idx);
         T_real sigma = std::sqrt(std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy) * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value);
@@ -750,11 +749,12 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, co
     val = (T_real)2.0 / val;
     val = gain / val;
     
+    
     return delta_energy.unaryExpr([val,sigma,gamma](T_real v) { return  (v < (T_real)0.0) ?
-        std::exp(v/ (gamma * sigma)) * val * std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))))
+        std::exp(v/ (gamma * sigma)) * val * std::erfc(v / ( ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))) ) )
         :
-        val * std::erfc(v / ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2)))); } );
-     
+        val * std::erfc(v / ( ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))) ) ); } );
+
 }
 
 // ----------------------------------------------------------------------------
@@ -762,13 +762,13 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real>& ev, T_real gain) const
 {
-    Spectra<T_real> counts(ev.size());
+    ArrayTr<T_real> counts(ev.size());
 	counts.setZero();
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value  );
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
-        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
+        counts = counts.unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
 	ArrayTr<T_real>delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
@@ -792,9 +792,10 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<T_real> * const fitp, const ArrayTr<T_real>& ev, T_real  gain) const
 {
+    
 	ArrayTr<T_real>counts(ev.size());
 	counts.setZero();
-
+    
     T_real compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((T_real)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (T_real)511.0 ) * ((T_real)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (T_real)2.0 * (T_real)(M_PI) / (T_real)360.0 )));
 
     T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)62.0) + compton_E * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value );
@@ -804,13 +805,12 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
         counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
-    //T_real local_sigma = (*sigma) * p[14];
 
 	ArrayTr<T_real>delta_energy = ev - compton_E;
 
     // compton peak, gaussian
     T_real faktor = (T_real)1.0 / ((T_real)1.0 + fitp->at(STR_COMPTON_F_STEP).value + fitp->at(STR_COMPTON_F_TAIL).value + fitp->at(STR_COMPTON_HI_F_TAIL).value);
-
+    //T_real faktor = (T_real)1.0;
     faktor = faktor * std::pow((T_real)10.0, fitp->at(STR_COMPTON_AMPLITUDE).value) ;
 
     counts += faktor * this->peak(gain, sigma * fitp->at(STR_COMPTON_FWHM_CORR).value, delta_energy);
@@ -822,14 +822,19 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
         T_real fvalue = faktor * fitp->at(STR_COMPTON_F_STEP).value;
 		counts += fvalue * this->step(gain, sigma, delta_energy, compton_E);
     }
+    if ( fitp->at(STR_COMPTON_F_TAIL).value > 0.0 )
+    {
     // compton peak, tail on the low side
-    T_real fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
-    counts += fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
-
+        T_real fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
+        counts += fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
+    }
     // compton peak, tail on the high side
-    fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
-    delta_energy *= (T_real)-1.0;
-    counts += ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
+    if ( fitp->at(STR_COMPTON_HI_F_TAIL).value > 0.0 )
+    {
+        T_real fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
+        delta_energy *= (T_real)-1.0;
+        counts += ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
+    }
     return counts;
 }
 

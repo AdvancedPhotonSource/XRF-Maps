@@ -254,7 +254,7 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
         weights = convolve1d(weights, 5);
         weights = Eigen::abs(weights);
         weights /= weights.maxCoeff();
-        weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+        weights = weights.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)1.0; });
         ud.weights = weights.segment(energy_range.min, energy_range.count());
     }
     else
