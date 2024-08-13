@@ -128,6 +128,10 @@ constexpr auto STEP_COUNTS_LIMIT_LOG = 0.0005;
 /**
 * @brief String defines for fit parameters string value pair.
 */
+const std::string STR_FIT_SPEC_DIR = "fit_spectra";
+const std::string STR_INT_SPEC_DIR = "integrate_spectra";
+const std::string STR_FIT_PARAM_DIR = "fit_params";
+
 const std::string STR_MAX_ENERGY_TO_FIT = "MAX_ENERGY_TO_FIT";
 const std::string STR_MIN_ENERGY_TO_FIT = "MIN_ENERGY_TO_FIT";
 

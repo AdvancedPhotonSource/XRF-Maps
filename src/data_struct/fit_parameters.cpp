@@ -250,7 +250,7 @@ void Fit_Parameters<T_real>::set_all_except(E_Bound_Type btype,const std::vector
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  *override_fit_params)
+void Fit_Parameters<T_real>::update_values(const Fit_Parameters<T_real>  * const override_fit_params)
 {
     for(auto& itr : _params)
     {

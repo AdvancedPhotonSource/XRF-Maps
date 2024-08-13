@@ -117,8 +117,20 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     bool fx_exists = clp.option_exists("--optimizer-fx-tols");
     bool fxg_exists = clp.option_exists("--optimizer-fxg-tols");
 
-    analysis_job.use_weights = clp.option_exists("--optimizer-use-weights");
-
+    if(clp.option_exists("--optimizer-use-weights"))
+    {
+        std::string val = clp.get_option("--optimizer-use-weights");
+        std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) { return std::tolower(c); });
+        if(val == "on" || val == "talse")
+        {
+            analysis_job.use_weights = true;
+        }
+        if(val == "off" || val == "false")
+        {
+            analysis_job.use_weights = false;
+        }
+        logI<<" Use weights = "<<analysis_job.use_weights<<"\n";
+    }
     //Which optimizer do we want to pick. Default is lmfit
     if (clp.option_exists("--optimizer"))
     {

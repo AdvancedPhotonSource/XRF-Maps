@@ -206,9 +206,9 @@ bool load_scalers_lookup(const std::string filename)
 
 void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double> *fit_params, const data_struct::Spectra<double>* const spectra, const data_struct::Fit_Element_Map_Dict<double>* const elements_to_fit)
 {
-    std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + dataset_filename;
-    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "intspec_" + dataset_filename;
-    std::string fp_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "fit_param_" + dataset_filename;
+    std::string full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + STR_FIT_SPEC_DIR + DIR_END_CHAR + dataset_filename;
+    std::string mca_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + STR_INT_SPEC_DIR + DIR_END_CHAR + "intspec_" + dataset_filename;
+    std::string fp_full_path = dataset_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + STR_FIT_PARAM_DIR + DIR_END_CHAR + "fit_param_" + dataset_filename;
     
     if (detector_num != -1)
     {
@@ -293,7 +293,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
         background.setZero();
     }
 
-    std::string str_path = dataset_dir + "/output/fit_" + dataset_filename + "_det";
+    std::string str_path = dataset_dir + "/output/" +  STR_FIT_SPEC_DIR + "fit_" + dataset_filename + "_det";
     if (detector_num != -1)
     {
         str_path += std::to_string(detector_num) + ".png";
@@ -590,6 +590,24 @@ void check_and_create_dirs(std::string dataset_directory)
 			logE << "Could not create directory: " << cmd << " . May not be able to save results!\n";
 		}
     }
+
+    int retval = system(nullptr);
+    std::string cmd1 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_SPEC_DIR;
+    std::string cmd2 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_INT_SPEC_DIR;
+    std::string cmd3 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_PARAM_DIR;
+    
+    retval = system(cmd1.c_str());
+    logI << cmd1 << " = "<<retval<< "\n";
+    retval = system(cmd2.c_str());
+    logI << cmd2 << " = "<<retval<< "\n";
+    retval = system(cmd3.c_str());
+    logI << cmd3 << " = "<<retval<< "\n";
+    /*
+	if (retval != 0)
+	{
+		logE << "Could not create directory: " << cmd << " . May not be able to save results!\n";
+	}
+    */
     logI<<"done"<<"\n";
 
 }

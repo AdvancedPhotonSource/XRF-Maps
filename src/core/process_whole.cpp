@@ -83,7 +83,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         }
 
         fit_routine->set_optimizer(analysis_job->optimizer());
-        fit_routine->set_update_coherent_amplitude_on_fit(false);
+        fit_routine->set_update_coherent_amplitude_on_fit(true);
 
         //reset model fit parameters to defaults
         model.reset_to_default_fit_params();
@@ -94,11 +94,10 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             //set fixed/fit preset
             model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
         }
-
-        model.print_fit_params();
-
         //Initialize the fit routine
         fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
+
+        model.print_fit_params();
 
         //Fit the spectra saving the element counts in element_fit_count_dict
         fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp, status_callback);
