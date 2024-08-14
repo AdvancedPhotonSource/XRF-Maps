@@ -483,7 +483,7 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     std::vector<T_real> resid(energy_range.count());
     std::vector<T_real> covar(fitp_arr.size() * fitp_arr.size());
 
-    size_t total_itr = num_itr * (fitp_arr.size() + 1);
+    size_t total_itr = num_itr;
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
 
     /*
