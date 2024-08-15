@@ -109,7 +109,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_FWHM_CORR,    (T_real)1.0, (T_real)4.0, (T_real)1.0,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_AMPLITUDE,    MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, (T_real)5.0, STEP_COUNTS_LIMIT_LOG,  E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_STEP,		 (T_real)0.0, (T_real)1.0, (T_real)0.0,  (T_real)0.1,       E_Bound_Type::FIXED));
-    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_F_TAIL,		 (T_real)0.0, (T_real)1.0, (T_real)0.1,  (T_real)0.1,       E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_GAMMA,		 (T_real)0.1, (T_real)10., (T_real)1.0,  (T_real)0.1,       E_Bound_Type::FIXED));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_F_TAIL,    (T_real)0.0, (T_real)1.0, (T_real)0.013,  (T_real)0.0000001,    E_Bound_Type::LIMITED_LO_HI));
     fit_params.add_parameter(Fit_Param<T_real>(STR_COMPTON_HI_GAMMA,	 (T_real)0.1, (T_real)3., (T_real)1.0,  (T_real)0.01,      E_Bound_Type::FIXED));
@@ -199,7 +199,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
@@ -237,7 +237,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
@@ -313,7 +313,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_FWHM_CORR].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_AMPLITUDE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO;
+            _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;

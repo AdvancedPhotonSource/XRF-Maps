@@ -321,7 +321,7 @@ void MPFit_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real
 
 
 template<typename T_real>
-void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , std::vector<struct mp_par<T_real> > &par)
+bool MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , std::vector<struct mp_par<T_real> > &par)
 {
 	for (auto itr = fit_params->begin(); itr != fit_params->end(); itr++)
 	{
@@ -346,13 +346,11 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 				|| fit.bound_type == E_Bound_Type::LIMITED_LO
 				|| fit.bound_type == E_Bound_Type::LIMITED_LO_HI)
 			{
-				if (fit.max_val == fit.min_val)
-				{
-					fit.max_val += (T_real)1.0;
-					fit.min_val -= (T_real)1.0;
-					(*fit_params)[itr->first].max_val += (T_real)1.0;
-					(*fit_params)[itr->first].min_val -= (T_real)1.0;
-				}
+                if(fit.min_val == fit.max_val)
+                {
+                    logE<<"Fit parameter "<<fit.name<<" is limited and has min: "<<fit.min_val<<" == to max: "<<fit.max_val<<"\n";
+                    return false;
+                }
 			}
 
 
@@ -410,6 +408,7 @@ void MPFit_Optimizer<T_real>::_fill_limits(Fit_Parameters<T_real> *fit_params , 
 			par[fit.opt_array_index].deriv_abstol = (T_real)0.00001; // Absolute tolerance for derivative debug printout
 		}
 	}
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -521,7 +520,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 
     _options.maxfev = _options.maxiter * ((int)fitp_arr.size() + 1);
 
-	_fill_limits(fit_params, par);
+	if(false == _fill_limits(fit_params, par))
+    {
+        return OPTIMIZER_OUTCOME::FAILED;
+    }
 
     mp_result<T_real> result;
     result.xerror = &perror[0];
@@ -669,7 +671,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
 	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
-	_fill_limits(fit_params, par);
+	if(false == _fill_limits(fit_params, par))
+    {
+        return OPTIMIZER_OUTCOME::FAILED;
+    }
 
     mp_result<T_real> result;
     result.xerror = &perror[0];
@@ -821,7 +826,10 @@ OPTIMIZER_OUTCOME MPFit_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 	
 	std::vector<struct mp_par<T_real> > par;
 	par.resize(fitp_arr.size());
-	_fill_limits(fit_params, par);
+	if(false == _fill_limits(fit_params, par))
+    {
+        return OPTIMIZER_OUTCOME::FAILED;
+    }
 
     this->_last_outcome = mpfit(quantification_residuals_mpfit<T_real>, (int)ud.quant_map.size(), (int)fitp_arr.size(), &fitp_arr[0], &par[0], &_options, (void *) &ud, &result);
     logI << "\nOutcome: " << optimizer_outcome_to_str(this->_outcome_map[this->_last_outcome]) << "\nNum iter: " << result.niter << "\n Norm of the residue vector: " << *result.resid << "\n";
