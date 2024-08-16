@@ -95,9 +95,9 @@ public:
 
 private:
 
-	void _fill_limits(Fit_Parameters<T_real> *fit_params, std::vector<struct mp_par<T_real> > &par);
+	bool _fill_limits(Fit_Parameters<T_real> *fit_params, std::vector<struct mp_par<T_real> > &par);
 
-    struct mp_config<T_real> _options;
+  struct mp_config<T_real> _options;
 
 };
 
