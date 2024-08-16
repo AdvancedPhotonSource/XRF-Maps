@@ -1076,7 +1076,7 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool save_fit_parameters_override(std::string path, Fit_Parameters<T_real> fit_params, std::string result)
+DLL_EXPORT bool save_fit_parameters_override(const std::string& path, const Fit_Parameters<T_real>& fit_params, const std::string& result)
 {
 
     std::ofstream out_stream(path);
