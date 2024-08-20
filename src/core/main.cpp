@@ -385,7 +385,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //Look if files were specified
     std::string dset_file = clp.get_option("--files");
     //if they were not then look for them in $dataset_directory/mda
-    if (dset_file.length() < 1)
+    if (dset_file.length() < 1 || dset_file == "all")
     {
         std::vector<std::string> flist;
 
@@ -459,12 +459,14 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 
         io::file::File_Scan::inst()->sort_dataset_files_by_size(dataset_dir, &analysis_job.optimize_dataset_files);
 
-        //if no files were specified only take the 8 largest datasets
-        while (analysis_job.optimize_dataset_files.size() > 9)
+        if(dset_file != "all")
         {
-            analysis_job.optimize_dataset_files.pop_back();
+            //if no files were specified only take the 8 largest datasets
+            while (analysis_job.optimize_dataset_files.size() > 9)
+            {
+                analysis_job.optimize_dataset_files.pop_back();
+            }
         }
-
     }
     else if (dset_file.find(',') != std::string::npos)
     {

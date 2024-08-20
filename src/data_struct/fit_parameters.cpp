@@ -363,7 +363,14 @@ void Fit_Parameters<T_real>::print()
     logit_s << "     Name  \t value  \t min  \t max  \t step size \t fitting\n\n";
     for(const auto& itr : _params)
     {
-        logit_s<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\n";
+        if(itr.second.value > itr.second.max_val || itr.second.value < itr.second.min_val)
+        {
+            logit_s<<"\033[1;31m "<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\033[0;m \n";    
+        }
+        else
+        {
+            logit_s<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\n";
+        }
     }
     logit_s<<"\n";
 
@@ -378,7 +385,14 @@ void Fit_Parameters<T_real>::print_non_fixed()
     {
         if(itr.second.bound_type != E_Bound_Type::FIXED)
         {
-            logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\n";
+            if(itr.second.value > itr.second.max_val || itr.second.value < itr.second.min_val)
+            {
+                logit_s<<"\033[1;31m [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\033[0;m \n";    
+            }
+            else
+            {
+                logit_s<<" [ "<<itr.first<<" ] = "<<itr.second.value<<"  "<<itr.second.bound_type_str() << "\n";
+            }
         }
     }
     logit_s<<"\n";
