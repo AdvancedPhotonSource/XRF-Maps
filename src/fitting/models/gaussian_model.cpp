@@ -201,7 +201,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
@@ -239,10 +239,10 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
-            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
+            _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
-            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_F_STEP_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_F_STEP_LINEAR].bound_type = E_Bound_Type::FIXED;
@@ -315,7 +315,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
             _fit_parameters[STR_COMPTON_F_STEP].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
             _fit_parameters[STR_COMPTON_GAMMA].bound_type = E_Bound_Type::FIXED;
-            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            _fit_parameters[STR_COMPTON_HI_F_TAIL].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_COMPTON_HI_GAMMA].bound_type = E_Bound_Type::FIXED;
 
             _fit_parameters[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
@@ -753,14 +753,16 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, const ArrayTr<T_real> &delta_energy, T_real gamma) const
 {
+    
     T_real val = pow(gamma, (T_real)2.0);
     val = exp((T_real)-0.5 / val);
     val = sigma / val;
     val = gamma / val;
     val = (T_real)2.0 / val;
     val = gain / val;
-    
-    
+
+
+   // T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
     return delta_energy.unaryExpr([val,sigma,gamma](T_real v) { return  (v < (T_real)0.0) ?
         std::exp(v/ (gamma * sigma)) * val * std::erfc(v / ( ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))) ) )
         :
