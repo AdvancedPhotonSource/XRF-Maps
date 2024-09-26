@@ -352,12 +352,9 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
     if (labeled_spectras != nullptr) // if this stucture is not null then initialize
     {
+        labeled_spectras->clear();
         for (auto& itr : spectra_labels)
         {
-            if (labeled_spectras->count(itr) > 1)
-            {
-                labeled_spectras->erase(itr);
-            }
             labeled_spectras->insert({ itr, Spectra<T_real>(energy_range.count()) });
         }
     }
@@ -430,12 +427,9 @@ const std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>> Gaussia
 
     if (labeled_spectras != nullptr) // if this stucture is not null then initialize
     {
+        labeled_spectras->clear();
         for (auto& itr : spectra_labels)
         {
-            if (labeled_spectras->count(itr) > 1)
-            {
-                labeled_spectras->erase(itr);
-            }
             labeled_spectras->insert({ itr, Spectra<T_real>(energy_range.count()) });
         }
     }
@@ -574,7 +568,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
     if (false == std::isfinite(pre_faktor))
     {
-        logE << "Prefactor = " << pre_faktor << "\n";
+        logE << "Prefactor = " << pre_faktor << " for "<<element_to_fit->full_name()<<" . Log10 Value = "<< fitp->at(element_to_fit->full_name()).value <<"\n";
         spectra_model =  (ArrayTr<T_real>)(spectra_model).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return spectra_model;
     }
