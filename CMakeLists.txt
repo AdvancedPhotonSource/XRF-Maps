@@ -69,6 +69,7 @@ find_package(hdf5 CONFIG REQUIRED)
 find_package(netCDF CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(NLopt CONFIG REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
 # todo 
@@ -250,6 +251,7 @@ set(libxrf_fit_HEADERS
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/lmfit_optimizer.h
+    src/fitting/optimizers/nlopt_optimizer.h
     src/data_struct/detector.h
     src/stats/correlation_coefficient.h
     src/data_struct/analysis_job.h
@@ -276,6 +278,7 @@ set(libxrf_fit_SOURCE
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/lmfit_optimizer.cpp
+    src/fitting/optimizers/nlopt_optimizer.cpp
     src/data_struct/detector.cpp
     src/data_struct/analysis_job.cpp
 )
@@ -483,14 +486,13 @@ ELSEIF (UNIX)
   ENDIF()
 ENDIF()
 
-
 # Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
 ELSE()
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
 
 IF (BUILD_WITH_QT)

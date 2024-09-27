@@ -57,7 +57,7 @@ namespace data_struct
 template<typename T_real>
 Analysis_Job<T_real>::Analysis_Job()
 {
-    _optimizer = &_mpfit_optimizer;
+    _optimizer = &_nlopt_optimizer;
     optimize_fit_routine = OPTIMIZE_FIT_ROUTINE::ALL_PARAMS;
     _last_init_sample_size = 0;
 	_first_init = true;
