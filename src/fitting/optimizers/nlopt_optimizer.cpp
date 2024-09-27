@@ -521,6 +521,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     //opt.add_inequality_constraint(myvconstraint, &data[0], 1e-8);
     //opt.add_inequality_constraint(myvconstraint, &data[1], 1e-8);
     opt.set_xtol_rel(1e-14);
+    opt.set_maxeval(20000);
 
     double minf;
 
