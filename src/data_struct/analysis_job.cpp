@@ -168,10 +168,15 @@ void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
         logI << "Setting optimizer to MPFIT\n";
         _optimizer = &_mpfit_optimizer;
     }
-    else
+    else if(optimizer == "lmfit") 
     {
         logI << "Setting optimizer to LMFIT\n";
         _optimizer = &_lmfit_optimizer;
+    }
+    else
+    {
+        logI << "Setting optimizer to NLOPT\n";
+        _optimizer = &_nlopt_optimizer;
     }
 }
 

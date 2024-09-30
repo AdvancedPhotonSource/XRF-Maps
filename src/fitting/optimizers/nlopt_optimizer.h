@@ -95,11 +95,8 @@ public:
     virtual std::string detailed_outcome(int outcome);
 
 private:
-
-	//bool _fill_limits(Fit_Parameters<T_real> *fit_params, std::vector<struct mp_par<T_real> > &par);
-
   //struct mp_config<T_real> _options;
-  nlopt_opt _options;
+  
 };
 
 } //namespace optimizers

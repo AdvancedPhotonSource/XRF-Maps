@@ -173,6 +173,11 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
     ////aux_arr[mm, 0] = self.absorption(thickness, beta, 1239.852/((self.maps_conf.incident_E+0.1)*1000.), shell_factor=shell_factor)
     element_quant.absorption = absorption(thickness, beta, (T_real)1239.852 / ((incident_energy + (T_real)0.1) * (T_real)1000.0), shell_factor);
 
+    if( false == std::isfinite(element_quant.absorption) )
+    {
+        logW<<element_quant.name<<" absorption =  "<<element_quant.absorption<<"; Setting to 0.0\n";
+        element_quant.absorption = 0.0;
+    }
     if(ev > 0)
     {
         beta  = Element_Info_Map<T_real>::inst()->calc_beta("Be", (T_real)1.848, ev);
@@ -257,10 +262,17 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
     for(auto& itr : quant_map)
     {
         T_real val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((T_real)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
-        if(false == std::isfinite(val))
+        if (false == std::isfinite(val))
         {
-            logW << "val = " << val << ". Defaulting to 0.0\n";
-            val = 0;
+            logW << itr.second.name<<" val = " << val << 
+            "\np = "<<p<<
+            "\nabsorption = "<< itr.second.absorption <<
+            "\ntransmission_Be = "<<itr.second.transmission_Be <<
+            "\ntransmission_Ge = "<<itr.second.transmission_Ge <<
+            "\nyield = "<<itr.second.yield <<
+            "\ntransmission_through_Si_detector = "<<itr.second.transmission_through_Si_detector <<
+            "\ntransmission_through_air = "<<itr.second.transmission_through_air << "\n";
+            val = std::numeric_limits<T_real>::max() * .9;  // 90% of max real
         }
         result_map.emplace(std::pair<std::string, T_real>(itr.first, val));
     }
@@ -279,8 +291,15 @@ void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Qu
         T_real val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((T_real)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
         if (false == std::isfinite(val))
         {
-            logW << "val = " << val << ". Defaulting to 0.0\n";
-            val = 0;
+            logW << itr.name<<" val = " << val << 
+            "\np = "<<p<<
+            "\nabsorption = "<< itr.absorption <<
+            "\ntransmission_Be = "<<itr.transmission_Be <<
+            "\ntransmission_Ge = "<<itr.transmission_Ge <<
+            "\nyield = "<<itr.yield <<
+            "\ntransmission_through_Si_detector = "<<itr.transmission_through_Si_detector <<
+            "\ntransmission_through_air = "<<itr.transmission_through_air << "\n";
+            val = std::numeric_limits<T_real>::max() * .9;  // 90% of max real
         }
         itr.calib_curve_val = val;
     }

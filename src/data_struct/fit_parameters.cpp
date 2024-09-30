@@ -135,7 +135,7 @@ std::vector<T_real> Fit_Parameters<T_real>::to_array()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Fit_Parameters<T_real>::to_array_with_bounds(std::vector<double>& fitp, std::vector<double>&lb, std::vector<double>& ub)
+void Fit_Parameters<T_real>::to_array_with_bounds(std::vector<double>& fitp, std::vector<double>&lb, std::vector<double>& ub, std::vector<double>& step )
 {
     for(const auto& itr : _params)
     {
@@ -145,6 +145,7 @@ void Fit_Parameters<T_real>::to_array_with_bounds(std::vector<double>& fitp, std
             fitp.push_back(itr.second.value);
             lb.push_back(itr.second.min_val);
             ub.push_back(itr.second.max_val);
+            step.push_back(itr.second.step_size);
         }
     }
 }

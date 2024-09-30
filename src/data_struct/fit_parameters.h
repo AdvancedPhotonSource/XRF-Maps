@@ -214,7 +214,7 @@ public:
 
     std::vector<T_real> to_array();
 
-    void to_array_with_bounds(std::vector<double>& fitp, std::vector<double>&lb, std::vector<double>& ub);
+    void to_array_with_bounds(std::vector<double>& fitp, std::vector<double>&lb, std::vector<double>& ub, std::vector<double>& step);
 
     std::vector<std::string> names_to_array();
 
