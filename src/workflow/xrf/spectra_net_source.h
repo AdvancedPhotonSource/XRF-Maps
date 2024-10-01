@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "io/net/basic_serializer.h"
 #include "data_struct/analysis_job.h"
 #ifdef _BUILD_WITH_ZMQ
-#include "support/zmq/zmq.hpp"
+#include <zmq.hpp>
 #endif
 namespace workflow
 {

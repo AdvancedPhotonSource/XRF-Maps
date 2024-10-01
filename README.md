@@ -32,10 +32,10 @@ ZeroMQ : http://zeromq.org/area:download
 4) cd vcpkg
 5) vcpkg set Linux
    1) ./bootstrap-vcpkg.sh
-   2) ./vcpkg install hdf5 netcdf-c yaml-cpp zeromq jsoncpp
+   2) ./vcpkg install hdf5 netcdf-c yaml-cpp cppzmq nlopt jsoncpp
 6) vcpkg setup windows
    1) .\bootstrap-vcpkg.bat
-   2) .\vcpkg install hdf5 netcdf-c yaml-cpp zeromq jsoncpp --triplet x64-windows
+   2) .\vcpkg install hdf5 netcdf-c yaml-cpp cppzmq nlopt jsoncpp --triplet x64-windows
 7) cd ../build
 8) cmake `-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_WITH_ZMQ=ON ..`
 9) make
@@ -48,28 +48,12 @@ ZeroMQ : http://zeromq.org/area:download
 
 ### Streaming support with ZeroMQ
 
--DBUILD_WITH_ZMQ=ON -DZeroMQ_INCLUDE_DIR={path to include} -DZeroMQ_LIBRARY_RELEASE={path to zmq.so/zmq.dll}
+-DBUILD_WITH_ZMQ=ON 
 
 ### Python bindings (NOTE: this may interfere with QT options if QT lib version is different than python qt lib version as with anaconda python)
 
 -DBUILD_WITH_PYBIND11=ON
 -DPYTHON_EXECUTABLE={path to python.exe if not found}
-
-### Build for intel phi
-
--DBUILD_FOR_PHI=ON
-
-### Can't auto find Libraries
-
-#### HDF5
-
--DHDF5_ROOT={path to hdf5 root dir}
-
-#### NetCDF
-
--DNETCDF_INCLUDE_DIRS={path} -DNETCDF_LIBRARIES={path including .so/.dll}
-
-Libraries and executable stored in bin directory
 
 # Data Analysis
 

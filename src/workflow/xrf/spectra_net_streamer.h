@@ -56,7 +56,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/stream_block.h"
 #include "io/net/basic_serializer.h"
 #ifdef _BUILD_WITH_ZMQ
-#include "support/zmq/zmq.hpp"
+#include <zmq.hpp>
 #endif
 namespace workflow
 {

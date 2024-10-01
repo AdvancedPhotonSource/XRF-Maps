@@ -206,41 +206,7 @@ NLOPT_Optimizer<T_real>::NLOPT_Optimizer() : Optimizer<T_real>()
     this->_last_outcome = -1;
 /*
     //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    if (std::is_same<T_real, float>::value)
-    {
-        _options.ftol = (T_real)1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-        _options.xtol = (T_real)1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-        _options.gtol = (T_real)1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-        _options.epsfcn = (T_real)1.192e-14;  // Finite derivative step size                Default: MP_MACHEP0
-    }
-    else if (std::is_same<T_real, double>::value)
-    {
-        _options.ftol = (T_real)1.192e-10;       // Relative chi-square convergence criterium  Default: 1e-10
-        _options.xtol = (T_real)1.192e-10;       // Relative parameter convergence criterium   Default: 1e-10
-        _options.gtol = (T_real)1.192e-10;       // Orthogonality convergence criterium        Default: 1e-10
-        _options.epsfcn = (T_real)1.192e-14;  // Finite derivative step size                Default: MP_MACHEP0
-    }
-    _options.stepfactor = (T_real)100.0;   // Initial step bound                         Default: 100.0
-    _options.covtol = (T_real)1.0e-14;     // Range tolerance for covariance calculation Default: 1e-14
-    _options.maxiter = 1000;          //    Maximum number of iterations.  If maxiter == MP_NO_ITER,
-                                    //    then basic error checking is done, and parameter
-                                    //    errors/covariances are estimated based on input
-                                    //    parameter values, but no fitting iterations are done.
-                                    //    Default: 200
-
-    _options.maxfev = 0;
-    //_options.maxfev = 1000 *(fitp_arr.size()+1);        // Maximum number of function evaluations, or 0 for no limit
-                                       // Default: 0 (no limit)
-    _options.nprint = 0;           // Default: 1
-    _options.douserscale = 0;      // Scale variables by user values?
-                                    //    1 = yes, user scale values in diag;
-                                    //    0 = no, variables scaled internally (Default)
-    _options.nofinitecheck = 0;    // Disable check for infinite quantities from user?
-                                    //    0 = do not perform check (Default)
-                                    //    1 = perform check
-
-    _options.iterproc = 0;         // Placeholder pointer - must set to 0
-
+    _options.maxiter = 1000;        
 */
     this->_outcome_map[nlopt::FAILURE] = OPTIMIZER_OUTCOME::FAILED;
     this->_outcome_map[nlopt::INVALID_ARGS] = OPTIMIZER_OUTCOME::FAILED;
@@ -375,7 +341,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 
 //  LN_NEWUOA_BOUND
 //  LN_COBYLA
-// Best for bnp and 2ide = LN_NELDERMEAD
+// LN_NELDERMEAD
 //  LN_SBPLX
 
     nlopt::opt opt(nlopt::LN_SBPLX, fitp_arr.size());
@@ -458,11 +424,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
         return OPTIMIZER_OUTCOME::STOPPED;
     }
 
-    size_t total_itr = 20000; //num_itr
-//  LN_NEWUOA_BOUND
-//  LN_COBYLA
-// Best for bnp and 2ide = LN_NELDERMEAD
-//  LN_SBPLX
+    size_t total_itr = 20000; 
 
     nlopt::opt opt(nlopt::LN_SBPLX, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);

@@ -99,9 +99,7 @@ ENDIF()
 
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
-  IF( NOT ZeroMQ_INCLUDE_DIR AND NOT ZeroMQ_LIBRARY)
-      find_package(ZeroMQ CONFIG REQUIRED libzmq-static)
-  ENDIF()
+  find_package(cppzmq CONFIG REQUIRED)
 ENDIF()
 
 IF( NOT EIGEN3_INCLUDES )
@@ -314,7 +312,6 @@ set(XRF_IO_HEADERS
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
 	  src/core/mem_info.cpp
-    src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
@@ -441,8 +438,8 @@ IF (WIN32)
     #ELSE()
     #  string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
     #ENDIF()
-	  target_link_libraries(libxrf_io PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
-    target_link_libraries(xrf_maps PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+	  target_link_libraries(libxrf_io PRIVATE cppzmq cppzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+    target_link_libraries(xrf_maps PRIVATE cppzmq cppzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
  ENDIF()
 ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
@@ -458,8 +455,8 @@ ELSEIF (UNIX)
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
   IF (BUILD_WITH_ZMQ)
-    target_link_libraries(libxrf_io PRIVATE libzmq-static )
-    target_link_libraries(xrf_maps PRIVATE libzmq-static )
+    target_link_libraries(libxrf_io PRIVATE cppzmq cppzmq-static )
+    target_link_libraries(xrf_maps PRIVATE cppzmq cppzmq-static )
   ENDIF()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
