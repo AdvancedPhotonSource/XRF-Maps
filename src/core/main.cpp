@@ -79,8 +79,8 @@ void help()
                "  0 = use override file\n  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, and fit energy quadratic\n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
     logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
-    logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
-    logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+   // logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
+   // logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
     logit_s<<"--optimizer-use-weights : Calculate and use weights for residual error function.\n";
     logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois-with <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";

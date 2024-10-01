@@ -14,8 +14,6 @@
 #endif
 
 #include "fitting/models/gaussian_model.h"
-#include "fitting/optimizers/lmfit_optimizer.h"
-#include "fitting/optimizers/mpfit_optimizer.h"
 #include "fitting/routines/roi_fit_routine.h"
 #include "fitting/routines/svd_fit_routine.h"
 #include "fitting/routines/param_optimized_fit_routine.h"

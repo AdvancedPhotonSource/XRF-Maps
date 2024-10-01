@@ -91,8 +91,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/nnls_fit_routine.h"
 #include "fitting/routines/hybrid_param_nnls_fit_routine.h"
 
-#include "fitting/optimizers/lmfit_optimizer.h"
-#include "fitting/optimizers/mpfit_optimizer.h"
+#include "fitting/optimizers/optimizer.h"
 
 #include "data_struct/fit_element_map.h"
 #include "data_struct/params_override.h"

@@ -57,8 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
-#include "fitting/optimizers/lmfit_optimizer.h"
-#include "fitting/optimizers/mpfit_optimizer.h"
+#include "fitting/optimizers/optimizer.h"
 
 namespace data_struct
 {
