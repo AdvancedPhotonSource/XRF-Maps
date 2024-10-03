@@ -88,6 +88,10 @@ public:
                                                      std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
                                                      quantification::models::Quantification_Model<T_real>* quantification_model);
 
+    virtual std::vector<std::string> get_algorithm_list();
+
+    virtual void set_algorithm(std::string name);
+
     virtual std::unordered_map<std::string, T_real> get_options();
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt);
@@ -95,8 +99,12 @@ public:
     virtual std::string detailed_outcome(int outcome);
 
 private:
-  //struct mp_config<T_real> _options;
+  std::unordered_map<std::string, nlopt::algorithm> _algorithms;
   
+  std::unordered_map<std::string, T_real> _options;
+
+  nlopt::algorithm _algo;
+
 };
 
 } //namespace optimizers

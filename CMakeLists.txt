@@ -218,7 +218,6 @@ ENDIF()
 #--------------- start xrf lib -----------------
 set(libxrf_fit_HEADERS
     src/core/defines.h
-    src/support/cmpfit-1.3a/mpfit.hpp
     src/support/nnls/nnls.hpp
     src/data_struct/quantification_standard.h
     src/data_struct/element_quant.h
@@ -243,7 +242,6 @@ set(libxrf_fit_HEADERS
     src/fitting/routines/nnls_fit_routine.h
     src/fitting/routines/hybrid_param_nnls_fit_routine.h
     src/fitting/optimizers/optimizer.h
-    src/fitting/optimizers/mpfit_optimizer.h
     src/fitting/optimizers/nlopt_optimizer.h
     src/data_struct/detector.h
     src/stats/correlation_coefficient.h
@@ -269,7 +267,6 @@ set(libxrf_fit_SOURCE
     src/fitting/routines/nnls_fit_routine.cpp
     src/fitting/routines/hybrid_param_nnls_fit_routine.cpp
     src/fitting/optimizers/optimizer.cpp
-    src/fitting/optimizers/mpfit_optimizer.cpp
     src/fitting/optimizers/nlopt_optimizer.cpp
     src/data_struct/detector.cpp
     src/data_struct/analysis_job.cpp

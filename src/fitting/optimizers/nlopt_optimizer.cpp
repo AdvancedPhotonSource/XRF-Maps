@@ -204,10 +204,35 @@ NLOPT_Optimizer<T_real>::NLOPT_Optimizer() : Optimizer<T_real>()
 {
 
     this->_last_outcome = -1;
-/*
-    //_options { 1e-10, 1e-10, 1e-10, MP_MACHEP0, 100.0, 1.0e-14, 2000, 0, 0, 0, 0, 0 };
-    _options.maxiter = 1000;        
-*/
+    _algo = nlopt::LN_SBPLX;
+
+    _algorithms["LN_SBPLX"] = nlopt::LN_SBPLX;
+    _algorithms["LN_NELDERMEAD"] = nlopt::LN_NELDERMEAD;
+    _algorithms["LN_BOBYQA"] = nlopt::LN_BOBYQA;
+    _algorithms["LN_COBYLA"] = nlopt::LN_COBYLA;
+    _algorithms["GN_CRS2_LM"] = nlopt::GN_CRS2_LM; // bad fit with general, ok with hybrid
+    _algorithms["GN_ESCH"] = nlopt::GN_ESCH;
+    _algorithms["GN_ISRES"] = nlopt::GN_ISRES;
+    //_algorithms["LN_AUGLAG"] = nlopt::LN_AUGLAG; // causes segfault macos
+    //_algorithms["LN_AUGLAG_EQ"] = nlopt::LN_AUGLAG_EQ; // causes segfault macos
+    //_algorithms["G_MLSL"] = nlopt::G_MLSL; // causes segfault macos
+    //_algorithms["G_MLSL_LDS"] = nlopt::G_MLSL_LDS; // causes segfault macos
+    //_algorithms["AUGLAG"] = nlopt::AUGLAG; // returns inf
+    //_algorithms["AUGLAG_EQ"] = nlopt::AUGLAG_EQ; // returns inf
+    //_algorithms["GN_DIRECT"] = nlopt::GN_DIRECT; // really bad fit in general
+    //_algorithms["GN_DIRECT_L"] = nlopt::GN_DIRECT_L; // bad fit
+    //_algorithms["GN_DIRECT_L_NOSCAL"] = nlopt::GN_DIRECT_L_NOSCAL; //bad fit
+    //_algorithms["GN_DIRECT_L_RAND"] = nlopt::GN_DIRECT_L_RAND; // really bad fit in general
+    //_algorithms["GN_DIRECT_L_RAND_NOSCAL"] = nlopt::GN_DIRECT_L_RAND_NOSCAL; // bad fit
+    //_algorithms["GN_MLSL"] = nlopt::GN_MLSL; // returns nan
+    //_algorithms["GN_MLSL_LDS"] = nlopt::GN_MLSL_LDS; // causes segfault macos
+    //_algorithms["GN_ORIG_DIRECT"] = nlopt::GN_ORIG_DIRECT; //bad fit
+    //_algorithms["GN_ORIG_DIRECT_L"] = nlopt::GN_ORIG_DIRECT_L; // really bad fit in general
+
+
+    _options[STR_OPT_XTOL] = (T_real)1.0e-10;
+    _options[STR_OPT_MAXITER] = (T_real)20000;
+    
     this->_outcome_map[nlopt::FAILURE] = OPTIMIZER_OUTCOME::FAILED;
     this->_outcome_map[nlopt::INVALID_ARGS] = OPTIMIZER_OUTCOME::FAILED;
     this->_outcome_map[nlopt::OUT_OF_MEMORY] = OPTIMIZER_OUTCOME::FAILED;
@@ -226,19 +251,7 @@ NLOPT_Optimizer<T_real>::NLOPT_Optimizer() : Optimizer<T_real>()
 template<typename T_real>
 std::unordered_map<std::string, T_real> NLOPT_Optimizer<T_real>::get_options()
 {
-    /*
-    std::unordered_map<std::string, T_real> opts{
-    {STR_OPT_FTOL, _options.ftol},
-    {STR_OPT_XTOL, _options.xtol},
-    {STR_OPT_GTOL, _options.gtol},
-    {STR_OPT_EPSILON, _options.epsfcn},
-    {STR_OPT_STEP, _options.stepfactor},
-    {STR_OPT_COVTOL, _options.covtol},
-    {STR_OPT_MAXITER, _options.maxiter}
-    };
-*/
-std::unordered_map<std::string, T_real> opts;
-    return opts;
+    return _options;
 }
 
 // ----------------------------------------------------------------------------
@@ -246,36 +259,13 @@ std::unordered_map<std::string, T_real> opts;
 template<typename T_real>
 void NLOPT_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real> opt)
 {
-    /*
-    if (opt.count(STR_OPT_FTOL) > 0)
+    for(auto itr: opt)
     {
-        _options.ftol = opt.at(STR_OPT_FTOL);
+        if (_options.count(itr.first) > 0)
+        {
+            _options[itr.first] = itr.second;
+        }
     }
-    if (opt.count(STR_OPT_XTOL) > 0)
-    {
-        _options.xtol = opt.at(STR_OPT_XTOL);
-    }
-    if (opt.count(STR_OPT_GTOL) > 0)
-    {
-        _options.gtol = opt.at(STR_OPT_GTOL);
-    }
-    if (opt.count(STR_OPT_EPSILON) > 0)
-    {
-        _options.epsfcn = opt.at(STR_OPT_EPSILON);
-    }
-    if (opt.count(STR_OPT_STEP) > 0)
-    {
-        _options.stepfactor = opt.at(STR_OPT_STEP);
-    }
-    if (opt.count(STR_OPT_COVTOL) > 0)
-    {
-        _options.covtol = opt.at(STR_OPT_COVTOL);
-    }
-    if (opt.count(STR_OPT_MAXITER) > 0)
-    {
-        _options.maxiter = opt.at(STR_OPT_MAXITER);
-    }
-    */
 }
 
 //-----------------------------------------------------------------------------
@@ -315,6 +305,30 @@ std::string NLOPT_Optimizer<T_real>::detailed_outcome(int info)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+std::vector<std::string> NLOPT_Optimizer<T_real>::get_algorithm_list()
+{
+    std::vector<std::string> algos;
+    for(auto itr: _algorithms)
+    {
+        algos.push_back(itr.first);
+    }
+    return algos;
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void NLOPT_Optimizer<T_real>::set_algorithm(std::string name)
+{
+    if( _algorithms.count(name) > 0)
+    {
+        _algo = _algorithms.at(name);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_params,
                                             const Spectra<T_real>* const spectra,
                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
@@ -339,18 +353,13 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     size_t total_itr = 20000; //num_itr
     fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, total_itr, use_weights);
 
-//  LN_NEWUOA_BOUND
-//  LN_COBYLA
-// LN_NELDERMEAD
-//  LN_SBPLX
-
-    nlopt::opt opt(nlopt::LN_SBPLX, fitp_arr.size());
+    nlopt::opt opt(_algo, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(residuals_nlopt, (void*)&ud);
-    opt.set_xtol_rel(1e-10);
-    opt.set_maxeval(20000);
+    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
+    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
     double minf;
 
@@ -426,13 +435,13 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
 
     size_t total_itr = 20000; 
 
-    nlopt::opt opt(nlopt::LN_SBPLX, fitp_arr.size());
+    nlopt::opt opt(_algo, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(gen_residuals_nlopt, (void*)&ud);
-    opt.set_xtol_rel(1e-10);
-    opt.set_maxeval(20000);
+    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
+    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
     double minf;
     nlopt::result result;
@@ -512,13 +521,13 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         return OPTIMIZER_OUTCOME::STOPPED;
     }
     
-    nlopt::opt opt(nlopt::LN_SBPLX, fitp_arr.size());
+    nlopt::opt opt(_algo, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(quantification_residuals_nlopt, (void*)&ud);
-    opt.set_xtol_rel(1e-10);
-    opt.set_maxeval(20000);
+    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
+    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
     double minf;
     nlopt::result result;

@@ -332,6 +332,10 @@ public:
                                          quantification::models::Quantification_Model<T_real>* quantification_model) = 0;
 
     virtual std::unordered_map<std::string, T_real> get_options() = 0;
+    
+    virtual std::vector<std::string> get_algorithm_list() = 0;
+
+    virtual void set_algorithm(std::string name) = 0;
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt) = 0;
 

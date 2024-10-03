@@ -465,7 +465,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
                     logI << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first << "\n";
                     Fit_Parameters<double> fit_params;
-                    // min, and max values doen't matter because we are free fitting in mpfit and lmfit
+                    // min, and max values doen't matter because we are free fitting amplitude only
                     fit_params.add_parameter(Fit_Param<double>("quantifier", 0.0, std::numeric_limits<double>::max()/2.0, 1.0, 0.0001, E_Bound_Type::FIT));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
                     fit_params["quantifier"].value = (double)100000.0 / quant_itr.second;

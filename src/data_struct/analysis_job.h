@@ -59,7 +59,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
-#include "fitting/optimizers/mpfit_optimizer.h"
 #include "fitting/optimizers/nlopt_optimizer.h"
 
 namespace data_struct
@@ -159,9 +158,7 @@ public:
     std::vector<Quantification_Standard<T_real>> standard_element_weights;
 
 protected:
-
     //Optimizers for fitting models
-    fitting::optimizers::MPFit_Optimizer<T_real> _mpfit_optimizer;
     fitting::optimizers::NLOPT_Optimizer<T_real> _nlopt_optimizer;
     fitting::optimizers::Optimizer<T_real>*_optimizer;
 

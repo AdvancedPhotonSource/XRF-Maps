@@ -609,13 +609,13 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("minimize", &fitting::optimizers::LMFit_Optimizer<float>::minimize)
     .def("minimize_func", &fitting::optimizers::LMFit_Optimizer<float>::minimize_func)
     .def("minimize_quantification", &fitting::optimizers::LMFit_Optimizer<float>::minimize_quantification);
-
+/*
     py::class_<fitting::optimizers::MPFit_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "mpfit")
     .def(py::init<>())
     .def("minimize", &fitting::optimizers::MPFit_Optimizer<float>::minimize)
     .def("minimize_func", &fitting::optimizers::MPFit_Optimizer<float>::minimize_func)
     .def("minimize_quantification", &fitting::optimizers::MPFit_Optimizer<float>::minimize_quantification);
-
+*/
 
     //routines
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");

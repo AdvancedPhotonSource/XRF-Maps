@@ -163,16 +163,17 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force
 template<typename T_real>
 void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
 {
-    if(optimizer == "mpfit")
+    /* // todo change nlopt optimzier
+    if(optimizer == "")
     {
-        logI << "Setting optimizer to MPFIT\n";
-        _optimizer = &_mpfit_optimizer;
+        logI << "Setting optimizer to \n";
     }
     else
     {
         logI << "Setting optimizer to NLOPT\n";
         _optimizer = &_nlopt_optimizer;
     }
+    */
 }
 
 //-----------------------------------------------------------------------------

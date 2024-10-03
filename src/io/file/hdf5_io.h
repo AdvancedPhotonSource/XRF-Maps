@@ -1035,6 +1035,8 @@ public:
                 return false;
             }
 
+            // read scaler /entry/snapshots/pre_scan/energy or /entry/snapshots/post_scan/energy for incident energy
+
             // Unpack the external link value
             //err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, (const char**)&xspress3_link_name[0], (const char**)&xspress3_link[0]);
             err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, &fname, &objname);
