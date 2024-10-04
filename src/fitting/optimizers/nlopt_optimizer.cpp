@@ -138,7 +138,7 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
 double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
 {
     // Get user passed data
-    Gen_User_Data<double>* ud = static_cast<Gen_User_Data<double>*>(usr_data);
+    Gen_User_Data<float>* ud = static_cast<Gen_User_Data<float>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array_d(x);
@@ -445,8 +445,6 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     try
     {
         result = opt.optimize(fitp_arr, minf);
-        logI<<detailed_outcome(result)<< " : resid = "<<minf<<"\n\n";;
-        this->_last_outcome = result;
     }
     catch(std::exception &e) 
     {
