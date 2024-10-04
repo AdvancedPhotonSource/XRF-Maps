@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # Select fitting routine
     #fit_rout = px.fitting.routines.nnls()
     #fit_rout = px.fitting.routines.svd()
-    opt = px.fitting.optimizers.mpfit()
+  ###  opt = px.fitting.optimizers.mpfit()
     fit_rout = px.fitting.routines.matrix()
     fit_rout.set_optimizer(opt)
     #fit_rout = px.fitting.routines.roi()

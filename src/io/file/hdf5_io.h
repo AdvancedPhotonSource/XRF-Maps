@@ -922,15 +922,18 @@ public:
         {
             std::lock_guard<std::mutex> lock(_mutex);
             if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
+            {
                 return false;
-
+            }
             if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
+            {
                 return false;
-
+            }
             if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/flyXRF", file_id))
+            {
                 return false;
-
-            // load spectra
+            }
+            // load spectra link
             err = H5Lget_name_by_idx(xspres_grp_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, 0, &xspress3_link[0], 2048, H5P_DEFAULT);
             if (err < 0) 
             {
@@ -949,13 +952,17 @@ public:
 
             // load positions
             if (false == _open_h5_object(pos_file_id, H5O_FILE, close_map, path + "positions/" + positions_link, -1))
+            {
                 return false;
-
+            }
             if (false == _open_h5_object(enc1_id, H5O_DATASET, close_map, "/stream/Encoder1", pos_file_id, -1))
+            {
                 return false;
+            }
             if (false == _open_h5_object(enc2_id, H5O_DATASET, close_map, "/stream/Encoder2", pos_file_id, -1))
+            {
                 return false;
-
+            }
             space_id = H5Dget_space(enc1_id);
             close_map.push({ space_id, H5O_DATASPACE });
 
@@ -996,6 +1003,56 @@ public:
         }
 
         return true;
+    }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool load_spectra_vol_polar(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
+    {
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t    file_id;
+        std::string link_name;
+        const char* fname = nullptr;
+        const char* objname = nullptr;
+        unsigned int flags = 0;
+
+        herr_t err;
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
+            {
+                return false;
+            }
+            
+            
+            char buff[1024];
+            err = H5Lget_val(file_id, "/entry/measurement/xspress3", (void*)buff, 1024, H5P_DEFAULT);
+            if (err < 0) 
+            {
+                logE << "\n\nError retrieving xspress3 link value\n\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+            // read scaler /entry/snapshots/pre_scan/energy or /entry/snapshots/post_scan/energy for incident energy
+
+            // Unpack the external link value
+            //err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, (const char**)&xspress3_link_name[0], (const char**)&xspress3_link[0]);
+            err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, &fname, &objname);
+            if (err < 0) 
+            {
+                logE<< "\n\nError unpacking external link value\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            link_name = std::string(fname);
+            logI<<link_name<<" : "<< objname<<"\n\n";
+            //logI<<fname<<" : "<< objname<<"\n\n";
+            spec_vol->resize_and_zero(1, 1, 2000);
+            _close_h5_objects(close_map);
+        }
+        return load_spectra_line_xspress3(path + DIR_END_CHAR + link_name, detector_num, &(*spec_vol)[0]);
     }
 
     //-----------------------------------------------------------------------------
@@ -1415,7 +1472,10 @@ public:
         {
             if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id, false, false))
             {
-                return false;
+                if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/xspress3", file_id, false, true))
+                {
+                    return false;
+                }
             }
         }
 
@@ -1426,7 +1486,9 @@ public:
             
 
         if (false == _open_h5_object(dset_id, H5O_DATASET, close_map, "data", maps_grp_id))
+        {
             return false;
+        }
         dataspace_id = H5Dget_space(dset_id);
         close_map.push({ dataspace_id, H5O_DATASPACE });
 

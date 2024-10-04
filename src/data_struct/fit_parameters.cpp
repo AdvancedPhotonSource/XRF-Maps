@@ -135,6 +135,24 @@ std::vector<T_real> Fit_Parameters<T_real>::to_array()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+void Fit_Parameters<T_real>::to_array_with_bounds(std::vector<double>& fitp, std::vector<double>&lb, std::vector<double>& ub, std::vector<double>& step )
+{
+    for(const auto& itr : _params)
+    {
+        if (itr.second.bound_type != E_Bound_Type::FIXED)
+        {
+            _params[itr.first].opt_array_index = fitp.size();
+            fitp.push_back(static_cast<double>(itr.second.value));
+            lb.push_back(static_cast<double>(itr.second.min_val));
+            ub.push_back(static_cast<double>(itr.second.max_val));
+            step.push_back(static_cast<double>(itr.second.step_size));
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 std::vector<std::string> Fit_Parameters<T_real>::names_to_array()
 {
     std::vector<std::string> arr;
@@ -182,6 +200,21 @@ void Fit_Parameters<T_real>::from_array(std::vector<T_real> &arr)
 {
     from_array(&arr[0], arr.size());
 }
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Fit_Parameters<T_real>::from_array_d(const std::vector<double> &arr)
+{
+    for(auto& itr : _params)
+    {
+        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < (int)arr.size())
+        {
+            itr.second.value = arr[itr.second.opt_array_index];
+        }
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 

@@ -69,6 +69,7 @@ find_package(hdf5 CONFIG REQUIRED)
 find_package(netCDF CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(NLopt CONFIG REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
 # todo 
@@ -98,9 +99,7 @@ ENDIF()
 
 IF (BUILD_WITH_ZMQ)
   add_definitions(-D_BUILD_WITH_ZMQ)
-  IF( NOT ZeroMQ_INCLUDE_DIR AND NOT ZeroMQ_LIBRARY)
-      find_package(ZeroMQ CONFIG REQUIRED libzmq-static)
-  ENDIF()
+  find_package(cppzmq CONFIG REQUIRED)
 ENDIF()
 
 IF( NOT EIGEN3_INCLUDES )
@@ -219,11 +218,6 @@ ENDIF()
 #--------------- start xrf lib -----------------
 set(libxrf_fit_HEADERS
     src/core/defines.h
-    src/support/cmpfit-1.3a/mpfit.hpp
-    src/support/lmfit_6.1/lmstruct.hpp
-    src/support/lmfit_6.1/lmmin.hpp
-    src/support/lmfit_6.1/lmcurve_tyd.hpp
-    src/support/lmfit_6.1/lmcurve.hpp
     src/support/nnls/nnls.hpp
     src/data_struct/quantification_standard.h
     src/data_struct/element_quant.h
@@ -248,8 +242,7 @@ set(libxrf_fit_HEADERS
     src/fitting/routines/nnls_fit_routine.h
     src/fitting/routines/hybrid_param_nnls_fit_routine.h
     src/fitting/optimizers/optimizer.h
-    src/fitting/optimizers/mpfit_optimizer.h
-    src/fitting/optimizers/lmfit_optimizer.h
+    src/fitting/optimizers/nlopt_optimizer.h
     src/data_struct/detector.h
     src/stats/correlation_coefficient.h
     src/data_struct/analysis_job.h
@@ -274,8 +267,7 @@ set(libxrf_fit_SOURCE
     src/fitting/routines/nnls_fit_routine.cpp
     src/fitting/routines/hybrid_param_nnls_fit_routine.cpp
     src/fitting/optimizers/optimizer.cpp
-    src/fitting/optimizers/mpfit_optimizer.cpp
-    src/fitting/optimizers/lmfit_optimizer.cpp
+    src/fitting/optimizers/nlopt_optimizer.cpp
     src/data_struct/detector.cpp
     src/data_struct/analysis_job.cpp
 )
@@ -311,7 +303,6 @@ set(XRF_IO_HEADERS
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
 	  src/core/mem_info.cpp
-    src/support/zmq/zmq.hpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
@@ -438,8 +429,8 @@ IF (WIN32)
     #ELSE()
     #  string(REGEX REPLACE "sgd" "gd" ZeroMQ_LIBRARY "${ZeroMQ_LIBRARY}")
     #ENDIF()
-	  target_link_libraries(libxrf_io PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
-    target_link_libraries(xrf_maps PRIVATE libzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+	  target_link_libraries(libxrf_io PRIVATE cppzmq cppzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
+    target_link_libraries(xrf_maps PRIVATE cppzmq cppzmq-static ws2_32.lib rpcrt4.lib iphlpapi.lib)
  ENDIF()
 ELSEIF (UNIX)
   # It's quite common to have multiple copies of the same Python version
@@ -455,8 +446,8 @@ ELSEIF (UNIX)
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
   IF (BUILD_WITH_ZMQ)
-    target_link_libraries(libxrf_io PRIVATE libzmq-static )
-    target_link_libraries(xrf_maps PRIVATE libzmq-static )
+    target_link_libraries(libxrf_io PRIVATE cppzmq cppzmq-static )
+    target_link_libraries(xrf_maps PRIVATE cppzmq cppzmq-static )
   ENDIF()
 
   # Strip unnecessary sections of the binary on Linux/Mac OS
@@ -483,14 +474,15 @@ ELSEIF (UNIX)
   ENDIF()
 ENDIF()
 
-
 # Building on theta doesn't need hdf5 and it is empty os need a check 
 IF(${HDF5_LIB_LEN} LESS 1)
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (libxrf_fit PRIVATE NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
 ELSE()
-  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
-  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_fit PRIVATE NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries(libxrf_io PRIVATE libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
+  target_link_libraries (xrf_maps PRIVATE libxrf_io libxrf_fit netCDF::netcdf hdf5::hdf5-shared yaml-cpp::yaml-cpp JsonCpp::JsonCpp NLopt::nlopt ${CMAKE_THREAD_LIBS_INIT} )
 ENDIF()
 
 IF (BUILD_WITH_QT)

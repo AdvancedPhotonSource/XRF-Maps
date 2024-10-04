@@ -116,7 +116,14 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
     _cur_iter = 0;
-
+    if(this->_optimizer != nullptr)
+    {
+        std::unordered_map<std::string, T_real> opts =  this->_optimizer->get_options();
+        if(opts.count(STR_OPT_MAXITER) > 0)
+        {
+            this->_max_iter = opts.at(STR_OPT_MAXITER);
+        }
+    }
     Fit_Parameters<T_real> fit_params = model->fit_parameters();
     
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
