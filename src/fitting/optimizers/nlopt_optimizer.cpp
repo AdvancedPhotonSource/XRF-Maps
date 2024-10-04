@@ -64,15 +64,15 @@ namespace optimizers
 {
 
 //-----------------------------------------------------------------------------
-
+template<typename T_real>
 double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
 {
     bool first = true;
     // Get user passed data
-    User_Data<double>* ud = static_cast<User_Data<double>*>(usr_data);
+    User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
 
     // Debug to find which param changed last
-    Fit_Parameters<double> prev_fit_p;
+    Fit_Parameters<T_real> prev_fit_p;
     prev_fit_p.update_and_add_values(ud->fit_parameters);
 
     // Update fit parameters from optimizer
@@ -134,11 +134,11 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
 }
 
 //-----------------------------------------------------------------------------
-
+template<typename T_real>
 double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
 {
     // Get user passed data
-    Gen_User_Data<float>* ud = static_cast<Gen_User_Data<float>*>(usr_data);
+    Gen_User_Data<T_real>* ud = static_cast<Gen_User_Data<T_real>*>(usr_data);
 
     // Update fit parameters from optimizer
     ud->fit_parameters->from_array_d(x);
@@ -160,7 +160,7 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
 
 
 //-----------------------------------------------------------------------------
-
+template<typename T_real>
 double quantification_residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
 {
     ///(std::valarray<T_real> p, std::valarray<T_real> y, std::valarray<T_real> x)
@@ -170,13 +170,13 @@ double quantification_residuals_nlopt(const std::vector<double> &x, std::vector<
     //p is array size 2 but seems only first index is used
     ///return (y - this->fit_calibrationcurve(x, p));
 
-    Quant_User_Data<double>* ud = (Quant_User_Data<double>*)(usr_data);
+    Quant_User_Data<T_real>* ud = (Quant_User_Data<T_real>*)(usr_data);
 
     //Update fit parameters from optimizer
     ud->fit_parameters->from_array_d(x);
     
     //Calculate residuals
-    std::unordered_map<std::string, double> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, x[0]);
+    std::unordered_map<std::string, T_real> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, x[0]);
 
     double sum = 0.0;
     int idx = 0;
@@ -356,7 +356,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
-    opt.set_min_objective(residuals_nlopt, (void*)&ud);
+    opt.set_min_objective(residuals_nlopt<T_real>, (void*)&ud);
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
     opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
@@ -436,7 +436,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> 
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
-    opt.set_min_objective(gen_residuals_nlopt, (void*)&ud);
+    opt.set_min_objective(gen_residuals_nlopt<T_real>, (void*)&ud);
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
     opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
@@ -520,7 +520,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
-    opt.set_min_objective(quantification_residuals_nlopt, (void*)&ud);
+    opt.set_min_objective(quantification_residuals_nlopt<T_real>, (void*)&ud);
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
     opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 

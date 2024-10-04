@@ -142,10 +142,10 @@ void Fit_Parameters<T_real>::to_array_with_bounds(std::vector<double>& fitp, std
         if (itr.second.bound_type != E_Bound_Type::FIXED)
         {
             _params[itr.first].opt_array_index = fitp.size();
-            fitp.push_back(itr.second.value);
-            lb.push_back(itr.second.min_val);
-            ub.push_back(itr.second.max_val);
-            step.push_back(itr.second.step_size);
+            fitp.push_back(static_cast<double>(itr.second.value));
+            lb.push_back(static_cast<double>(itr.second.min_val));
+            ub.push_back(static_cast<double>(itr.second.max_val));
+            step.push_back(static_cast<double>(itr.second.step_size));
         }
     }
 }
