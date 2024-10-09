@@ -1011,8 +1011,9 @@ public:
     bool load_spectra_vol_polar(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id;
+        hid_t    file_id, dset_id, space_id;
         std::string link_name;
+        hsize_t dims[2] = { 0, 0 };
         const char* fname = nullptr;
         const char* objname = nullptr;
         unsigned int flags = 0;
@@ -1035,6 +1036,25 @@ public:
                 return false;
             }
 
+            // read this dims to get height and width  /entry/measurement/alba2/t 
+            if(false == _open_h5_object(dset_id, H5O_DATASET, close_map, "/entry/measurement/alba2/t", file_id, -1))
+            {
+                return false;
+            }
+            space_id = H5Dget_space(dset_id);
+            close_map.push({ space_id, H5O_DATASPACE });
+
+            err = H5Sget_simple_extent_dims(space_id, &dims[0], nullptr);
+            if (err < 0)
+            {
+                logE<< "Could not read /entry/measurement/alba2/t dims\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            scan_info.meta_info.x_axis.resize(dims[1]);
+            scan_info.meta_info.y_axis.resize(dims[0]);
+            spec_vol->resize_and_zero(dims[0], dims[1], 4096);
+
             // read scaler /entry/snapshots/pre_scan/energy or /entry/snapshots/post_scan/energy for incident energy
 
             // Unpack the external link value
@@ -1049,10 +1069,9 @@ public:
             link_name = std::string(fname);
             logI<<link_name<<" : "<< objname<<"\n\n";
             //logI<<fname<<" : "<< objname<<"\n\n";
-            spec_vol->resize_and_zero(1, 1, 2000);
             _close_h5_objects(close_map);
         }
-        return load_spectra_line_xspress3(path + DIR_END_CHAR + link_name, detector_num, &(*spec_vol)[0]);
+        return load_spectra_volume_xspress3(path + DIR_END_CHAR + link_name, detector_num, spec_vol);
     }
 
     //-----------------------------------------------------------------------------
@@ -1663,6 +1682,249 @@ public:
         logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
         return true;
     }
+
+    //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool load_spectra_volume_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        //_is_loaded = ERROR_LOADING;
+        std::chrono::time_point<std::chrono::system_clock> start, end;
+        start = std::chrono::system_clock::now();
+
+        logI << path << " detector : " << detector_num << "\n";
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id = -1;
+        hid_t dset_lt_id, dset_rt_id, dset_outcnt_id = -1;
+        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_outcnt_id = -1;
+      
+        herr_t   error = -1;
+        std::string detector_path;
+        T_real* buffer = nullptr;
+        hsize_t offset_row[3] = { 0,0,0 };
+        hsize_t count_row[3] = { 0,0,0 };
+        hsize_t offset_meta[1] = { 0 };
+        hsize_t count_meta[1] = { 1 };
+        int bLoadElt = 1;
+        bool bLoadErt = true;
+        bool bLoadOutCnt = true;
+
+        std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num + 1) + "SCA0";
+        std::string live_time_dataset_name2 = "TriggerLiveTime_" + std::to_string(detector_num);
+        
+        std::string real_time_dataset_name2 = "RealTime_" + std::to_string(detector_num);
+
+        std::string outcounts_dataset_name2 = "OutputCounts_" + std::to_string(detector_num);
+
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            return false;
+        }
+        if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id, false, false))
+        {
+            if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id, false, false))
+            {
+                if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/xspress3", file_id, false, true))
+                {
+                    return false;
+                }
+            }
+        }
+
+        _open_h5_object(scaler_grp_id, H5O_GROUP, close_map, "/entry/instrument/NDAttributes", file_id, false, false);
+            
+
+        _open_h5_object(scaler2_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector/NDAttributes", file_id, false, false);
+            
+
+        if (false == _open_h5_object(dset_id, H5O_DATASET, close_map, "data", maps_grp_id))
+        {
+            return false;
+        }
+        dataspace_id = H5Dget_space(dset_id);
+        close_map.push({ dataspace_id, H5O_DATASPACE });
+
+        if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler_grp_id, false, false))
+        {
+            if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name, scaler2_grp_id, false, false))
+            {
+                if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, live_time_dataset_name2, scaler_grp_id, false, false))
+                {
+                    bLoadElt = 0;
+                }
+                else
+                {
+                    bLoadElt = 2;
+                }
+            }
+        }
+        
+        if (false == _open_h5_object(dset_rt_id, H5O_DATASET, close_map, real_time_dataset_name2, scaler_grp_id, false, false))
+        {
+            bLoadErt = false;
+        }
+
+        if (false == _open_h5_object(dset_outcnt_id, H5O_DATASET, close_map, outcounts_dataset_name2, scaler_grp_id, false, false))
+        {
+            bLoadOutCnt = false;
+        }
+
+        if (bLoadElt > 0)
+        {
+            dataspace_lt_id = H5Dget_space(dset_lt_id);
+            close_map.push({ dataspace_lt_id, H5O_DATASPACE });
+        }
+        if (bLoadErt)
+        {
+            dataspace_rt_id = H5Dget_space(dset_rt_id);
+            close_map.push({ dataspace_rt_id, H5O_DATASPACE });
+        }
+        if (bLoadOutCnt)
+        {
+            dataspace_outcnt_id = H5Dget_space(bLoadOutCnt);
+            close_map.push({ dataspace_outcnt_id, H5O_DATASPACE });
+        }
+
+
+        int rank = H5Sget_simple_extent_ndims(dataspace_id);
+        if (rank != 3)
+        {
+            _close_h5_objects(close_map);
+            logW << "Dataset /MAPS_RAW/" << detector_path << " rank != 3. rank = " << rank << ". Can't load dataset. returning" << "\n";
+            return false;
+            //throw exception ("Dataset is not a volume");
+        }
+        hsize_t* dims_in = new hsize_t[rank];
+        hsize_t* offset = new hsize_t[rank];
+        hsize_t* count = new hsize_t[rank];
+        int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], nullptr);
+        if (status_n < 0)
+        {
+            _close_h5_objects(close_map);
+            logE << "Could not get dataset rank for MAPS_RAW/" << detector_path << "\n";
+            return false;
+        }
+
+        for (int i = 0; i < rank; i++)
+        {
+            offset[i] = 0;
+            count[i] = dims_in[i];
+        }
+
+        buffer = new T_real[dims_in[2]]; // cols x samples_size
+        count_row[0] = 1;
+        count_row[1] = 1;  // detector amount
+        count_row[2] = dims_in[2]; // samples_size
+
+        // can't do this because it is width * height and will always be greater
+        //size_t greater_cols = std::max(spec_row->size(), (size_t)dims_in[0]);
+        size_t greater_channels = std::max(spec_vol->samples_size(), (size_t)dims_in[2]);
+
+        //if (spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
+        if ((*spec_vol)[0][0].size() < dims_in[2])
+        {
+            spec_vol->resize_samples(greater_channels);            
+        }
+
+        memoryspace_id = H5Screate_simple(3, count_row, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
+        memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
+        H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
+        //H5Sselect_hyperslab (memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+
+        T_real live_time = 1.0;
+        T_real real_time = 1.0;
+        //T_real in_cnt = 1.0;
+        T_real out_cnt = 1.0;
+
+        //offset[1] = row;
+
+        offset_row[1] = detector_num;
+        for (size_t row = 0; row < spec_vol->rows(); row++)
+        {
+            for (size_t col = 0; col < spec_vol->cols(); col++)
+            {
+                offset_row[0] = (row * spec_vol->cols()) + col;
+                H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
+                error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
+                if (error > -1)
+                {
+                    data_struct::Spectra<T_real>* spectra = &((*spec_vol)[row][col]);
+                    /*
+                    offset_meta[0] = col;
+                    if (bLoadElt > 0)
+                    {
+                        H5Sselect_hyperslab(dataspace_lt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                        error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, &live_time);
+                        if (bLoadElt == 1)
+                        {
+                            live_time *= 0.000000125;
+                        }
+                        spectra->elapsed_livetime(live_time);
+                    }
+
+                    if (bLoadErt)
+                    {
+                        H5Sselect_hyperslab(dataspace_rt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                        error = _read_h5d<T_real>(dset_rt_id, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+                        spectra->elapsed_realtime(real_time);
+                    }
+
+                    if (bLoadOutCnt)
+                    {
+                        H5Sselect_hyperslab(dataspace_outcnt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                        error = _read_h5d<T_real>(dset_outcnt_id, memoryspace_meta_id, dataspace_outcnt_id, H5P_DEFAULT, &out_cnt);
+                        spectra->output_counts(out_cnt);
+                    }
+                    //H5Sselect_hyperslab (dataspace_rt_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                    //error = H5Dread(dset_rt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, &real_time);
+                    //spectra->elapsed_realtime(real_time);
+
+                    //H5Sselect_hyperslab (dataspace_inct_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                    //error = H5Dread(dset_incnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, &in_cnt);
+                    //spectra->input_counts(in_cnt);
+
+                    //H5Sselect_hyperslab (dataspace_outct_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
+                    //error = H5Dread(dset_outcnt_id, H5T_NATIVE_REAL, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, &out_cnt);
+                    //spectra->output_counts(out_cnt);
+
+                    //spectra->recalc_elapsed_livetime();
+                    */
+
+
+                    for (size_t s = 0; s < count_row[2]; s++) // num samples
+                    {
+                        (*spectra)[s] = buffer[s];
+                    }
+                    //logD<<"saved col "<<col<<"\n";
+                }
+                else
+                {
+                    logE<<" Could not read row "<< row <<" col "<<col<<" \n";
+                }
+            }
+        }
+
+        delete[] dims_in;
+        delete[] offset;
+        delete[] count;
+        delete[] buffer;
+
+        _close_h5_objects(close_map);
+
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+        return true;
+    }
+
 
     //-----------------------------------------------------------------------------
 

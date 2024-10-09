@@ -344,7 +344,7 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
 
     energy = energy_offset + (energy * energy_linear) + (Eigen::pow(energy, (T_real)2.0) * energy_quadratic);
 
-    ArrayTr<T_real> tmp = std::pow((energy_offset / (T_real)2.3548), (T_real)2.0) + energy * (T_real)2.96 * energy_linear;
+    ArrayTr<T_real> tmp = std::pow((energy_offset / (T_real)2.3548), (T_real)2.0) + energy * (T_real)3.58 * energy_linear;
     tmp = tmp.unaryExpr([](T_real r) { return r < 0.0 ? (T_real)0.0 : r;  });
 
     //ArrayTr<T_real> fwhm = 2.35 * std::sqrt(tmp);

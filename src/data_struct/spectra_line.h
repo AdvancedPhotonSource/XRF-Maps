@@ -73,6 +73,8 @@ public:
 
     void resize_and_zero(size_t cols, size_t samples);
 
+    void resize_samples(size_t samples);
+
     void alloc_row_size(size_t n);
 
     void recalc_elapsed_livetime();

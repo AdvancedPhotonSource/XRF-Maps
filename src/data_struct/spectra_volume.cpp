@@ -85,6 +85,17 @@ void Spectra_Volume<T_real>::resize_and_zero(size_t rows, size_t cols, size_t sa
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+void Spectra_Volume<T_real>::resize_samples(size_t samples)
+{
+    for(size_t i=0; i<_data_vol.size(); i++)
+    {
+        _data_vol[i].resize_samples(samples);
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 Spectra<T_real> Spectra_Volume<T_real>::integrate()
 {
 

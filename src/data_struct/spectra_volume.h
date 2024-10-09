@@ -72,6 +72,8 @@ public:
     const Spectra_Line<T_real>& operator [](std::size_t row) const { return _data_vol[row]; }
 
     void resize_and_zero(size_t rows, size_t cols, size_t samples);
+    
+    void resize_samples(size_t samples);
 
     Spectra<T_real> integrate();
 
