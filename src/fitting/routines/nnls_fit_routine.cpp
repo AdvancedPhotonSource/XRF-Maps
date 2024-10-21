@@ -242,6 +242,15 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
             out_counts[itr.first] = 0.;
         }
     }
+    // add escape peak
+    if (fit_params.at(STR_SI_ESCAPE).value > 0.0 && model != nullptr)
+    {
+        ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(this->_energy_range.count(), this->_energy_range.min, this->_energy_range.max);
+        ArrayTr<T_real> ev = fit_params.value(STR_ENERGY_OFFSET) + (energy * fit_params.value(STR_ENERGY_SLOPE)) + (pow(energy, (T_real)2.0) * fit_params.value(STR_ENERGY_QUADRATIC));
+
+        spectra_model += model->escape_peak(spectra_model, ev, fit_params.value(STR_SI_ESCAPE));
+    }
+
 
     out_counts[STR_NUM_ITR] = static_cast<T_real>(num_iter);
     out_counts[STR_RESIDUAL] = npg;

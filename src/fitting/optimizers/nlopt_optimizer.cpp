@@ -144,7 +144,7 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     ud->fit_parameters->from_array_d(x);
 
     // Model spectra based on new fit parameters
-    ud->func(ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    ud->func(ud->fit_model, ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
     // Add background
     ud->spectra_model += ud->spectra_background;
     
@@ -411,15 +411,16 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(Fit_Parameters<T_real> *fit_params,
-                                                const Spectra<T_real>* const spectra,
-                                                const Range energy_range,
-                                                const ArrayTr<T_real>* background,
-									            Gen_Func_Def<T_real> gen_func,
-                                                bool use_weights)
+OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real>* const model,
+                                                        Fit_Parameters<T_real> *fit_params,
+                                                        const Spectra<T_real>* const spectra,
+                                                        const Range energy_range,
+                                                        const ArrayTr<T_real>* background,
+                                                        Gen_Func_Def<T_real> gen_func,
+                                                        bool use_weights)
 {
     Gen_User_Data<T_real> ud;
-    fill_gen_user_data(ud, fit_params, spectra, energy_range, background, gen_func, use_weights);
+    fill_gen_user_data(ud, fit_params, model, spectra, energy_range, background, gen_func, use_weights);
 
     std::vector<double> fitp_arr;
     std::vector<double> lb_arr;
