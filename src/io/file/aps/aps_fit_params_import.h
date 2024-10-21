@@ -705,11 +705,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (value == "1")
                         {
-                            params_override->ge_escape_enabled = true;
+                        //    params_override->ge_escape_enabled = true;
                         }
                         else
                         {
-                            params_override->ge_escape_enabled = false;
+                        //    params_override->ge_escape_enabled = false;
                         }
                     }
                     else if (tag == "LINEAR_ESCAPE_FACTOR")
@@ -1050,13 +1050,29 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         }
 
         out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
-        out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
-        out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
+        if (params_override->fit_params.contains(STR_SI_ESCAPE) &&  params_override->fit_params.value(STR_SI_ESCAPE) > 0.0)
+        {
+            out_stream << "SI_ESCAPE_FACTOR: " << params_override->fit_params.value(STR_SI_ESCAPE)  << "\n";
+            if(params_override->fit_params.at(STR_SI_ESCAPE).bound_type != E_Bound_Type::FIXED)
+            {
+                out_stream << "SI_ESCAPE_ENABLE: 1\n";
+            }
+            else
+            {
+                out_stream << "SI_ESCAPE_ENABLE: 0\n";
+            }
+        }
+        else
+        {
+            out_stream << "SI_ESCAPE_FACTOR: 0\n";
+            out_stream << "SI_ESCAPE_ENABLE: 0\n";
+        }
+        //out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
         out_stream << "    this parameter adds a component to the escape peak that depends linear on energy\n";
         out_stream << "LINEAR_ESCAPE_FACTOR: 0.0\n";
-        out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
-        out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
-        out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";
+        //out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
+        //out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
+        //out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";
         out_stream << "    the lines below(if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file\n";
         out_stream << "    for the amps, the _NUM value should be between 0 and 8 where 0 = 1, 1 = 2, 2 = 5, 3 = 10, 4 = 20, 5 = 50, 6 = 100, 7 = 200, 8 = 500\n";
         out_stream << "    for the amps, the _UNIT value should be between 0 and 3 where 0 = pa / v, 1 = na / v, 2 = ua / v 3 = ma / v\n";

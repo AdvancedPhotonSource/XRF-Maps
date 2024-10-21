@@ -96,7 +96,7 @@ void Matrix_Optimized_Fit_Routine<T_real>::model_spectrum(const Base_Model<T_rea
             (*spectra_model) += (pow((T_real)10.0, param.value) * itr.second);
         }
     }
-    if (fit_params->at(STR_SI_ESCAPE).value > 0.0 && model != nullptr)
+    if (model != nullptr && fit_params->value(STR_SI_ESCAPE) > 0.0)
     {
         ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range->count(), energy_range->min, energy_range->max);
         ArrayTr<T_real> ev = fit_params->value(STR_ENERGY_OFFSET) + (energy * fit_params->value(STR_ENERGY_SLOPE)) + (pow(energy, (T_real)2.0) * fit_params->value(STR_ENERGY_QUADRATIC));
