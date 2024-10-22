@@ -938,7 +938,15 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             std::string base_name = dataset_file;
             base_name = dataset_file.substr(0, dataset_file.size()-3);
             fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + base_name + ".h5" + std::to_string(detector_num);
-            return io::file::HDF5_IO::inst()->start_save_seq(fullpath, true);
+            if(io::file::HDF5_IO::inst()->start_save_seq(fullpath, true))
+            {
+                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         // try ESRF dataset
         else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))

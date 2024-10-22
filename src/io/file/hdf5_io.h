@@ -1011,7 +1011,7 @@ public:
     bool load_spectra_vol_polar(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, dset_id, space_id;
+        hid_t    file_id, dset_id, space_id, x_dset_id, y_dset_id, x_space_id, y_space_id;
         std::string link_name;
         hsize_t dims[2] = { 0, 0 };
         const char* fname = nullptr;
@@ -1051,10 +1051,58 @@ public:
                 _close_h5_objects(close_map);
                 return false;
             }
-            scan_info.meta_info.x_axis.resize(dims[1]);
-            scan_info.meta_info.y_axis.resize(dims[0]);
-            spec_vol->resize_and_zero(dims[0], dims[1], 4096);
+            scan_info.meta_info.theta = 0;
+            scan_info.meta_info.name = filename;
+            scan_info.meta_info.requested_cols = dims[0];
+            scan_info.meta_info.requested_rows = dims[1];
+            scan_info.meta_info.x_axis.resize(dims[0]);
+            scan_info.meta_info.y_axis.resize(dims[1]);
+            spec_vol->resize_and_zero(dims[1], dims[0], 4096);
 
+            // x, y, and z dataset are all rows x cols size 
+            // read x motor scaler from /entry/measurement/pseudo/x
+            // read y motor scaler from /entry/measurement/pseudo/y
+            // read z motor scaler from /entry/measurement/pseudo/z
+            bool has_x = _open_h5_object(x_dset_id, H5O_DATASET, close_map, "/entry/measurement/pseudo/x", file_id, false, false);
+            x_space_id = H5Dget_space(x_dset_id);
+            close_map.push({ x_space_id, H5O_DATASPACE });
+            bool has_y = _open_h5_object(y_dset_id, H5O_DATASET, close_map, "/entry/measurement/pseudo/y", file_id, false, false);
+            y_space_id = H5Dget_space(y_dset_id);
+            close_map.push({ y_space_id, H5O_DATASPACE });
+            hsize_t frame_dims[1] = {1};
+            hsize_t c_dims[1] = {1};
+            hid_t frame_memoryspace_id = H5Screate_simple(1, frame_dims, nullptr);
+                
+            if(has_y)
+            {
+                int i =0;
+                for (int y = 0; y < dims[1]; y++)
+                {
+                    frame_dims[0] = i;
+                    H5Sselect_hyperslab(y_space_id, H5S_SELECT_SET, frame_dims, nullptr, c_dims, nullptr);    
+                    herr_t err = _read_h5d<T_real>(y_dset_id, frame_memoryspace_id, y_space_id, H5P_DEFAULT, &scan_info.meta_info.y_axis[y]);
+                    if(err > 0)
+                    {
+                        logE<< "can not read y pos "<<y<<" : "<<i<<"\n";
+                    }
+                    i++;
+                }
+            }
+            if(has_x)
+            {
+                int i =0;
+                for (int x = 0; x < dims[0]; x++)
+                {
+                    frame_dims[0] = i;
+                    H5Sselect_hyperslab(x_space_id, H5S_SELECT_SET, frame_dims, nullptr, c_dims, nullptr);
+                    herr_t err = _read_h5d<T_real>(x_dset_id, frame_memoryspace_id, x_space_id, H5P_DEFAULT, &scan_info.meta_info.x_axis[x]);
+                    if(err > 0)
+                    {
+                        logE<< "can not read x pos "<<x<<" : "<<i<<"\n";
+                    }
+                    i += dims[1];
+                }
+            }
             // read scaler /entry/snapshots/pre_scan/energy or /entry/snapshots/post_scan/energy for incident energy
 
             // Unpack the external link value
@@ -1845,11 +1893,12 @@ public:
         //offset[1] = row;
 
         offset_row[1] = detector_num;
-        for (size_t row = 0; row < spec_vol->rows(); row++)
+        
+        for (size_t col = 0; col < spec_vol->cols(); col++)
         {
-            for (size_t col = 0; col < spec_vol->cols(); col++)
+            for (size_t row = 0; row < spec_vol->rows(); row++)
             {
-                offset_row[0] = (row * spec_vol->cols()) + col;
+                offset_row[0] = (col * spec_vol->rows()) + row;
                 H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
                 error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, buffer);
                 if (error > -1)
