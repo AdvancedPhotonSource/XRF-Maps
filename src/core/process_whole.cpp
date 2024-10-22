@@ -254,16 +254,23 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         for (auto& itr : standard_itr.element_standard_weights)
         {
             data_struct::Element_Info<double>* e_info = data_struct::Element_Info_Map<double>::inst()->get_element(itr.first);
-            elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
-            elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
-
-            if (element_amt_in_all_standards.count(e_info->number) > 0)
+            if( e_info != nullptr )
             {
-                element_amt_in_all_standards[e_info->number] += 1.0;
+                elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
+                elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
+
+                if (element_amt_in_all_standards.count(e_info->number) > 0)
+                {
+                    element_amt_in_all_standards[e_info->number] += 1.0;
+                }
+                else
+                {
+                    element_amt_in_all_standards[e_info->number] = 1.0;
+                }
             }
             else
             {
-                element_amt_in_all_standards[e_info->number] = 1.0;
+                logE<<"Could not find element: "<< itr.first <<"\n";
             }
         }
 
