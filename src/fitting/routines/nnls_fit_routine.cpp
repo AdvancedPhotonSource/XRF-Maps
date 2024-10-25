@@ -57,6 +57,9 @@ namespace routines
 {
 
 template<typename T_real>
+std::mutex Matrix_Optimized_Fit_Routine<T_real>::_int_spec_mutex;
+
+template<typename T_real>
 NNLS_Fit_Routine<T_real>::NNLS_Fit_Routine() : Matrix_Optimized_Fit_Routine<T_real>()
 {
 

@@ -146,6 +146,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
 
     switch (preset)
     {
+        case Fit_Params_Preset::NOT_SET:
         case Fit_Params_Preset::MATRIX_BATCH_FIT: //matrix batch fit
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::FIXED;
