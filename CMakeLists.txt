@@ -44,7 +44,7 @@
 #POSSIBILITY OF SUCH DAMAGE.
 
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 
 project(XRF_Maps)
 
@@ -445,6 +445,11 @@ ELSEIF (UNIX)
   # link against the Python library. The resulting shared library will have
   # missing symbols, but that's perfectly fine -- they will be resolved at
   # import time.
+
+  set(CMAKE_INSTALL_RPATH $ORIGIN)
+  set_target_properties(libxrf_io PROPERTIES INSTALL_RPATH "$ORIGIN")
+  set_target_properties(xrf_maps PROPERTIES INSTALL_RPATH "$ORIGIN")
+
   IF (BUILD_WITH_ZMQ)
     target_link_libraries(libxrf_io PRIVATE cppzmq cppzmq-static )
     target_link_libraries(xrf_maps PRIVATE cppzmq cppzmq-static )
@@ -454,7 +459,7 @@ ELSEIF (UNIX)
   IF(APPLE)
     set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".dylib")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES COMPILE_FLAGS "-DDARWIN")
-    set_target_properties(libxrf_fit libxrf_io PROPERTIES MACOSX_RPATH ".")
+    set_target_properties(libxrf_fit libxrf_io PROPERTIES MACOSX_RPATH "$ORIGIN")
     set_target_properties(libxrf_fit libxrf_io PROPERTIES LINK_FLAGS "-undefined dynamic_lookup -dead_strip")
     IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
       add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.dylib)
