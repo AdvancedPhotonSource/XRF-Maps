@@ -1148,7 +1148,7 @@ void HDF5_IO::_generate_avg_analysis(hid_t src_maps_grp_id, hid_t dst_maps_grp_i
             }
         }
         H5Gclose(dst_analyzed_grp_id);
-+        H5Gclose(src_analyzed_grp_id);
+        H5Gclose(src_analyzed_grp_id);
     }
 }
 
