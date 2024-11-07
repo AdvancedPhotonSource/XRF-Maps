@@ -71,10 +71,10 @@ public:
 
     Params_Override()
     {
-        si_escape_factor = 0.0;
-        ge_escape_factor = 0.0;
+        //si_escape_factor = 0.0;
+        //ge_escape_factor = 0.0;
         si_escape_enabled = false;
-        ge_escape_enabled = false;
+        //ge_escape_enabled = false;
         fit_snip_width = 0.5;
         us_amp_sens_num = 1;
         us_amp_sens_unit = "";
@@ -97,10 +97,10 @@ public:
     Params_Override(std::string dir, int detector)
     {
 
-        si_escape_factor = 0.0;
-        ge_escape_factor = 0.0;
+        ///si_escape_factor = 0.0;
+        //ge_escape_factor = 0.0;
         si_escape_enabled = false;
-        ge_escape_enabled = false;
+        //ge_escape_enabled = false;
         fit_snip_width = 0.0;
         us_amp_sens_num = 1;
         us_amp_sens_unit = "";
@@ -211,10 +211,10 @@ public:
     Fit_Element_Map_Dict<T_real> elements_to_fit;
     std::string detector_element;
     
-    T_real si_escape_factor;
-    T_real ge_escape_factor;
+    //T_real si_escape_factor;
+    //T_real ge_escape_factor;
     bool si_escape_enabled;
-    bool ge_escape_enabled;
+    //bool ge_escape_enabled;
     T_real fit_snip_width;
 
     std::string be_window_thickness;

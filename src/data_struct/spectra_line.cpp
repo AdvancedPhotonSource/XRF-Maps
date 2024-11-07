@@ -95,6 +95,14 @@ void Spectra_Line<T_real>::resize_and_zero(size_t cols, size_t samples)
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+void Spectra_Line<T_real>::resize_samples(size_t samples)
+{
+    _alloc_spectra_size(samples);
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 void Spectra_Line<T_real>::alloc_row_size(size_t n)
 {
     _data_line.resize(n);

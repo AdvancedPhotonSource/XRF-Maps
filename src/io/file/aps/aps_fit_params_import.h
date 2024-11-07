@@ -115,32 +115,62 @@ namespace aps
  */
  const std::unordered_map<std::string, std::string> BASE_FILE_TAGS_TRANSLATION = {
         {"CAL_OFFSET_[E_OFFSET]", STR_ENERGY_OFFSET},
+        {"e_offset", STR_ENERGY_OFFSET},
         {"CAL_SLOPE_[E_LINEAR]", STR_ENERGY_SLOPE},
+        {"e_linear", STR_ENERGY_SLOPE},
         {"CAL_QUAD_[E_QUADRATIC]", STR_ENERGY_QUADRATIC},
+        {"e_quadratic", STR_ENERGY_QUADRATIC},
         {"FWHM_OFFSET", STR_FWHM_OFFSET},
+        {"fwhm_offset", STR_FWHM_OFFSET},
         {"FWHM_FANOPRIME", STR_FWHM_FANOPRIME},
+        {"fwhm_fanoprime", STR_FWHM_FANOPRIME},
         {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
+        {"coherent_sct_energy", STR_COHERENT_SCT_ENERGY},
+        {"coherent_sct_amplitude", STR_COHERENT_SCT_AMPLITUDE},
         {"COMPTON_ANGLE", STR_COMPTON_ANGLE},
+        {"compton_angle", STR_COMPTON_ANGLE},
         {"COMPTON_FWHM_CORR", STR_COMPTON_FWHM_CORR},
+        {"compton_fwhm_corr", STR_COMPTON_FWHM_CORR},
+        {"compton_amplitude", STR_COMPTON_AMPLITUDE},
         {"COMPTON_STEP", STR_COMPTON_F_STEP},
+        {"compton_f_step", STR_COMPTON_F_STEP},
         {"COMPTON_F_TAIL", STR_COMPTON_F_TAIL},
+        {"compton_f_tail", STR_COMPTON_F_TAIL},
         {"COMPTON_GAMMA", STR_COMPTON_GAMMA},
+        {"compton_gamma", STR_COMPTON_GAMMA},
         {"COMPTON_HI_F_TAIL", STR_COMPTON_HI_F_TAIL},
+        {"compton_hi_f_tail", STR_COMPTON_HI_F_TAIL},
         {"COMPTON_HI_GAMMA", STR_COMPTON_HI_GAMMA},
+        {"compton_hi_gamma", STR_COMPTON_HI_GAMMA},
         {"STEP_OFFSET", STR_F_STEP_OFFSET},
+        {"f_step_offset", STR_F_STEP_OFFSET},
         {"STEP_LINEAR", STR_F_STEP_LINEAR},
+        {"f_step_linear", STR_F_STEP_LINEAR},
         {"STEP_QUADRATIC", STR_F_STEP_QUADRATIC},
+        {"f_step_quadratic", STR_F_STEP_QUADRATIC},
         {"F_TAIL_OFFSET", STR_F_TAIL_OFFSET},
+        {"f_tail_offset", STR_F_TAIL_OFFSET},
         {"F_TAIL_LINEAR", STR_F_TAIL_LINEAR},
+        {"f_tail_linear", STR_F_TAIL_LINEAR},
         {"F_TAIL_QUADRATIC", STR_F_TAIL_QUADRATIC},
+        {"f_tail_quadratic", STR_F_TAIL_QUADRATIC},
         {"KB_F_TAIL_OFFSET", STR_KB_F_TAIL_OFFSET},
+        {"kb_f_tail_offset", STR_KB_F_TAIL_OFFSET},
         {"KB_F_TAIL_LINEAR", STR_KB_F_TAIL_LINEAR},
+        {"kb_f_tail_linear", STR_KB_F_TAIL_LINEAR},
         {"KB_F_TAIL_QUADRATIC", STR_KB_F_TAIL_QUADRATIC},
+        {"kb_f_tail_quadratic", STR_KB_F_TAIL_QUADRATIC},
         {"GAMMA_OFFSET", STR_GAMMA_OFFSET},
+        {"gamma_offset", STR_GAMMA_OFFSET},
         {"GAMMA_LINEAR", STR_GAMMA_LINEAR},
+        {"gamma_linear", STR_GAMMA_LINEAR},
         {"GAMMA_QUADRATIC", STR_GAMMA_QUADRATIC},
+        {"gamma_quadratic", STR_GAMMA_QUADRATIC},
         {"SNIP_WIDTH", STR_SNIP_WIDTH},
-        {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR}
+        {"snip_width", STR_SNIP_WIDTH},
+        {"ESCAPE_LINEAR", STR_ESCAPE_LINEAR},
+        {"linear", STR_ESCAPE_LINEAR}
+
      };
 
  template<typename T_real>
@@ -705,11 +735,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (value == "1")
                         {
-                            params_override->ge_escape_enabled = true;
+                        //    params_override->ge_escape_enabled = true;
                         }
                         else
                         {
-                            params_override->ge_escape_enabled = false;
+                        //    params_override->ge_escape_enabled = false;
                         }
                     }
                     else if (tag == "LINEAR_ESCAPE_FACTOR")
@@ -1050,13 +1080,29 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         }
 
         out_stream << "    the parameter adds the escape peaks (offset) to the fit if larger than 0. You should not enable Si and Ge at the same time, ie, one of these two values should be zero\n";
-        out_stream << "SI_ESCAPE_FACTOR: " << params_override->si_escape_factor << "\n";
-        out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
+        if (params_override->fit_params.contains(STR_SI_ESCAPE) &&  params_override->fit_params.value(STR_SI_ESCAPE) > 0.0)
+        {
+            out_stream << "SI_ESCAPE_FACTOR: " << params_override->fit_params.value(STR_SI_ESCAPE)  << "\n";
+            if(params_override->fit_params.at(STR_SI_ESCAPE).bound_type != E_Bound_Type::FIXED)
+            {
+                out_stream << "SI_ESCAPE_ENABLE: 1\n";
+            }
+            else
+            {
+                out_stream << "SI_ESCAPE_ENABLE: 0\n";
+            }
+        }
+        else
+        {
+            out_stream << "SI_ESCAPE_FACTOR: 0\n";
+            out_stream << "SI_ESCAPE_ENABLE: 0\n";
+        }
+        //out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
         out_stream << "    this parameter adds a component to the escape peak that depends linear on energy\n";
         out_stream << "LINEAR_ESCAPE_FACTOR: 0.0\n";
-        out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
-        out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
-        out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";
+        //out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
+        //out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
+        //out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";
         out_stream << "    the lines below(if any) give backup description of IC amplifier sensitivity, in case it cannot be found in the mda file\n";
         out_stream << "    for the amps, the _NUM value should be between 0 and 8 where 0 = 1, 1 = 2, 2 = 5, 3 = 10, 4 = 20, 5 = 50, 6 = 100, 7 = 200, 8 = 500\n";
         out_stream << "    for the amps, the _UNIT value should be between 0 and 3 where 0 = pa / v, 1 = na / v, 2 = ua / v 3 = ma / v\n";

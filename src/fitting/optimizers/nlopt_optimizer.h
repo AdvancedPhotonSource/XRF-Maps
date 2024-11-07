@@ -77,7 +77,8 @@ public:
                                         bool use_weights,
                                         Callback_Func_Status_Def* status_callback = nullptr);
 
-    virtual OPTIMIZER_OUTCOME minimize_func(Fit_Parameters<T_real>*fit_params,
+    virtual OPTIMIZER_OUTCOME minimize_func(const Base_Model<T_real>* const model,
+                                            Fit_Parameters<T_real>*fit_params,
                                             const Spectra<T_real>* const spectra,
                                             const Range energy_range,
                                             const ArrayTr<T_real>* background,

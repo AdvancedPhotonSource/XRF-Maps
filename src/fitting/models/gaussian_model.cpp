@@ -146,6 +146,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
 
     switch (preset)
     {
+        case Fit_Params_Preset::NOT_SET:
         case Fit_Params_Preset::MATRIX_BATCH_FIT: //matrix batch fit
             _fit_parameters[STR_ENERGY_OFFSET].bound_type = E_Bound_Type::FIXED;
             _fit_parameters[STR_ENERGY_SLOPE].bound_type = E_Bound_Type::FIXED;
@@ -580,7 +581,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     for (size_t idx = 0; idx < energy_ratios.size(); idx++)
     {
         const Element_Energy_Ratio<T_real>& er_struct = energy_ratios.at(idx);
-        T_real sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+        T_real sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
         T_real f_step =  std::abs<T_real>( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
         T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
@@ -719,27 +720,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::peak(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const
 {
-    /*
-    ArrayTr<T_real>counts = delta_energy.unaryExpr([gain, sigma, peak_E](T_real v) 
-    {
-        T_real val = ((T_real)(M_SQRT2) * sigma);
-        val =  std::erfc(v / val);
-        val = peak_E * val;
-        val = (T_real)2.0 / val;
-        return gain / val; 
-    });
-    return counts;
-    */
     return delta_energy.unaryExpr([gain, sigma, peak_E](T_real v) { return gain / (T_real)2.0 / peak_E * std::erfc(v / ((T_real)(M_SQRT2)*sigma)); });
-    
-    /*
-    ArrayTr<T_real>counts(delta_energy.size());
-	for (unsigned int i = 0; i < delta_energy.size(); i++)
-	{
-        counts[i] = gain / (T_real)2.0 / peak_E * std::erfc((T_real)delta_energy[i] / ((T_real)(M_SQRT2) * sigma));
-	}
-    */
-
 }
 
 // ----------------------------------------------------------------------------
@@ -747,16 +728,8 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, const ArrayTr<T_real> &delta_energy, T_real gamma) const
 {
-    
-    T_real val = pow(gamma, (T_real)2.0);
-    val = exp((T_real)-0.5 / val);
-    val = sigma / val;
-    val = gamma / val;
-    val = (T_real)2.0 / val;
-    val = gain / val;
 
-
-   // T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
+    T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
     return delta_energy.unaryExpr([val,sigma,gamma](T_real v) { return  (v < (T_real)0.0) ?
         std::exp(v/ (gamma * sigma)) * val * std::erfc(v / ( ((T_real)(M_SQRT2)*sigma) + ((T_real)1.0/(gamma*(T_real)(M_SQRT2))) ) )
         :
@@ -771,7 +744,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
 {
     ArrayTr<T_real> counts(ev.size());
 	counts.setZero();
-    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + (fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + (fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
@@ -786,10 +759,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
 
     fvalue = fvalue * std::pow((T_real)10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
-    //Spectra value = fvalue * this->peak(gain, *sigma, delta_energy);
-    //counts = counts + value;
     counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
-    ////counts += fvalue * (gain / ( sigma * (T_real)(SQRT_2xPI) ) * Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
 
     return counts;
 }
@@ -805,7 +775,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     
     T_real compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((T_real)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (T_real)511.0 ) * ((T_real)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (T_real)2.0 * (T_real)(M_PI) / (T_real)360.0 )));
 
-    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)2.0) +  (compton_E * (T_real)2.96 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)2.0) +  (compton_E * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";

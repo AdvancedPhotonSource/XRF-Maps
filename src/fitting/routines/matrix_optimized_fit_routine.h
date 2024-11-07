@@ -89,9 +89,10 @@ public:
                         const struct Range energy_range);
 
 
-    virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
-                        const struct Range * const energy_range,
-					    Spectra<T_real>* spectra_model);
+    virtual void model_spectrum(const Base_Model<T_real>* const model,
+                                const Fit_Parameters<T_real>* const fit_params,
+                                const struct Range * const energy_range,
+                                Spectra<T_real>* spectra_model);
 
     const Spectra<T_real>& fitted_integrated_spectra() {return _integrated_fitted_spectra;}
 

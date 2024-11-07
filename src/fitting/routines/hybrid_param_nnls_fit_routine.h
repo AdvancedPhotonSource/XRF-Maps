@@ -77,7 +77,8 @@ public:
 
     virtual std::string get_name() { return STR_FIT_GAUSS_NNLS_TAILS; }
 
-    virtual void model_spectrum(const Fit_Parameters<T_real>* const fit_params,
+    virtual void model_spectrum(const models::Base_Model<T_real>* const model,
+                                const Fit_Parameters<T_real>* const fit_params,
                                 const struct Range* const energy_range,
                                 Spectra<T_real>* spectra_model,
                                 Callback_Func_Status_Def* status_callback);

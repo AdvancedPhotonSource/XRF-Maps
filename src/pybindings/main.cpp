@@ -268,10 +268,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("fit_params", &data_struct::Params_Override<float>::fit_params)
     .def_readwrite("elements_to_fit", &data_struct::Params_Override<float>::elements_to_fit)
     .def_readwrite("detector_element", &data_struct::Params_Override<float>::detector_element)
-    .def_readwrite("si_escape_factor", &data_struct::Params_Override<float>::si_escape_factor)
-    .def_readwrite("ge_escape_factor", &data_struct::Params_Override<float>::ge_escape_factor)
+    //.def_readwrite("si_escape_factor", &data_struct::Params_Override<float>::si_escape_factor)
+    //.def_readwrite("ge_escape_factor", &data_struct::Params_Override<float>::ge_escape_factor)
     .def_readwrite("si_escape_enabled", &data_struct::Params_Override<float>::si_escape_enabled)
-    .def_readwrite("ge_escape_enabled", &data_struct::Params_Override<float>::ge_escape_enabled)
+    //.def_readwrite("ge_escape_enabled", &data_struct::Params_Override<float>::ge_escape_enabled)
     .def_readwrite("fit_snip_width", &data_struct::Params_Override<float>::fit_snip_width)
     .def_readwrite("be_window_thickness", &data_struct::Params_Override<float>::be_window_thickness)
     .def_readwrite("det_chip_thickness", &data_struct::Params_Override<float>::det_chip_thickness)
@@ -337,10 +337,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 d["dataset_directory"] = self.dataset_directory;
                 d["detector_num"] = self.detector_num;
                 d["detector_element"] = self.detector_element;
-                d["si_escape_factor"] = self.si_escape_factor;
-                d["ge_escape_factor"] = self.ge_escape_factor;
+                //d["si_escape_factor"] = self.si_escape_factor;
+                //d["ge_escape_factor"] = self.ge_escape_factor;
                 d["si_escape_enabled"] = self.si_escape_enabled;
-                d["ge_escape_enabled"] = self.ge_escape_enabled;
+                //d["ge_escape_enabled"] = self.ge_escape_enabled;
                 d["fit_snip_width"] = self.fit_snip_width;
                 d["be_window_thickness"] = self.be_window_thickness;
                 d["det_chip_thickness"] = self.det_chip_thickness;
@@ -375,11 +375,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 }
                 if (d.contains("si_escape_factor"))
                 {
-                    self.si_escape_factor = py::cast<float>(d["si_escape_factor"]);
+                //    self.si_escape_factor = py::cast<float>(d["si_escape_factor"]);
                 }
                 if (d.contains("ge_escape_factor"))
                 {
-                    self.ge_escape_factor = py::cast<float>(d["ge_escape_factor"]);
+                //    self.ge_escape_factor = py::cast<float>(d["ge_escape_factor"]);
                 }
                 if (d.contains("si_escape_enabled"))
                 {
@@ -387,7 +387,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 }
                 if (d.contains("ge_escape_enabled"))
                 {
-                    self.ge_escape_enabled = py::cast<bool>(d["ge_escape_enabled"]);
+                  //  self.ge_escape_enabled = py::cast<bool>(d["ge_escape_enabled"]);
                 }
                 if (d.contains("fit_snip_width"))
                 {
@@ -604,18 +604,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //fitting optimizers
 	py::class_<fitting::optimizers::Optimizer<float>>(fo, "Optimizer");
 
-    py::class_<fitting::optimizers::LMFit_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "lmfit")
+    py::class_<fitting::optimizers::NLOpt_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "nlopt")
     .def(py::init<>())
     .def("minimize", &fitting::optimizers::LMFit_Optimizer<float>::minimize)
     .def("minimize_func", &fitting::optimizers::LMFit_Optimizer<float>::minimize_func)
     .def("minimize_quantification", &fitting::optimizers::LMFit_Optimizer<float>::minimize_quantification);
-/*
-    py::class_<fitting::optimizers::MPFit_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "mpfit")
-    .def(py::init<>())
-    .def("minimize", &fitting::optimizers::MPFit_Optimizer<float>::minimize)
-    .def("minimize_func", &fitting::optimizers::MPFit_Optimizer<float>::minimize_func)
-    .def("minimize_quantification", &fitting::optimizers::MPFit_Optimizer<float>::minimize_quantification);
-*/
 
     //routines
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");
