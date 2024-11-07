@@ -720,27 +720,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::peak(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, const ArrayTr<T_real>& delta_energy, T_real peak_E) const
 {
-    /*
-    ArrayTr<T_real>counts = delta_energy.unaryExpr([gain, sigma, peak_E](T_real v) 
-    {
-        T_real val = ((T_real)(M_SQRT2) * sigma);
-        val =  std::erfc(v / val);
-        val = peak_E * val;
-        val = (T_real)2.0 / val;
-        return gain / val; 
-    });
-    return counts;
-    */
     return delta_energy.unaryExpr([gain, sigma, peak_E](T_real v) { return gain / (T_real)2.0 / peak_E * std::erfc(v / ((T_real)(M_SQRT2)*sigma)); });
-    
-    /*
-    ArrayTr<T_real>counts(delta_energy.size());
-	for (unsigned int i = 0; i < delta_energy.size(); i++)
-	{
-        counts[i] = gain / (T_real)2.0 / peak_E * std::erfc((T_real)delta_energy[i] / ((T_real)(M_SQRT2) * sigma));
-	}
-    */
-
 }
 
 // ----------------------------------------------------------------------------
@@ -748,14 +728,6 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, const ArrayTr<T_real> &delta_energy, T_real gamma) const
 {
-   /* 
-    T_real val = pow(gamma, (T_real)2.0);
-    val = exp((T_real)-0.5 / val);
-    val = sigma / val;
-    val = gamma / val;
-    val = (T_real)2.0 / val;
-    val = gain / val;
-*/
 
     T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
     return delta_energy.unaryExpr([val,sigma,gamma](T_real v) { return  (v < (T_real)0.0) ?
@@ -787,10 +759,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
 
     fvalue = fvalue * std::pow((T_real)10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
-    //Spectra value = fvalue * this->peak(gain, *sigma, delta_energy);
-    //counts = counts + value;
     counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
-    ////counts += fvalue * (gain / ( sigma * (T_real)(SQRT_2xPI) ) * Eigen::exp((T_real)-0.5 * Eigen::pow((delta_energy / sigma), (T_real)2.0) ) );
 
     return counts;
 }
