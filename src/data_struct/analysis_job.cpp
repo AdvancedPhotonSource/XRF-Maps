@@ -86,6 +86,7 @@ Analysis_Job<T_real>::Analysis_Job()
 	update_ds_amps_str = "";
 	update_quant_us_amps_str = "";
 	update_quant_ds_amps_str = "";
+    output_dir = "";
 }
 
 //-----------------------------------------------------------------------------

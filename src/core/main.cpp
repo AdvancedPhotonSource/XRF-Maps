@@ -377,10 +377,32 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
     //replace / with \ for windows, won't do anything for linux
     std::replace(dataset_dir.begin(), dataset_dir.end(), '/', DIR_END_CHAR);
 
-    //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
-    io::file::check_and_create_dirs(dataset_dir);
-
     analysis_job.dataset_directory = dataset_dir;
+
+    if(clp.option_exists("--output-dir"))
+    {
+        analysis_job.output_dir = clp.get_option("--output-dir");
+        if (analysis_job.output_dir.length() < 1)
+        {
+            logE<<"Please enter a proper directory path with --output-dir option\n";
+            return -1;
+        }
+        //add a slash if missing at the end
+        if (analysis_job.output_dir.back() != DIR_END_CHAR)
+        {
+            analysis_job.output_dir += DIR_END_CHAR;
+        }
+        //replace / with \ for windows, won't do anything for linux
+        std::replace(analysis_job.output_dir.begin(), analysis_job.output_dir.end(), '/', DIR_END_CHAR);
+        logI<<"Setting output directory: "<<analysis_job.output_dir<<"\n";
+    }
+    else
+    {
+        analysis_job.output_dir = dataset_dir;
+    }
+    
+    //We save our ouput file in $dataset_directory/img.dat  Make sure we create this directory if it doesn't exist
+    io::file::check_and_create_dirs(analysis_job.output_dir);
 
     //Look if files were specified
     std::string dset_file = clp.get_option("--files");

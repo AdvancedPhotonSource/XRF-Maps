@@ -461,12 +461,12 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     {
                         str_detector_num = std::to_string(detector_num);
                     }
-                    std::string full_save_path = analysis_job->dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
+                    std::string full_save_path = analysis_job->output_dir + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
                 else
                 {
-                    std::string full_save_path = analysis_job->dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
+                    std::string full_save_path = analysis_job->output_dir + "img.dat" + DIR_END_CHAR + dataset_file;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
 
@@ -496,7 +496,7 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
 template<typename T_real>
 DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr)
 {
-    std::string full_save_path = analysis_job->dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+    std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
 
     data_struct::Detector<T_real>* detector = analysis_job->get_detector(0);
     //Spectra volume data
@@ -585,7 +585,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
         //average all detectors to one files
         if (analysis_job.generate_average_h5)
         {
-            io::file::generate_h5_averages(analysis_job.dataset_directory, dataset_file, analysis_job.detector_num_arr, append_h5_with_num);
+            io::file::generate_h5_averages(analysis_job.output_dir, dataset_file, analysis_job.detector_num_arr, append_h5_with_num);
         }
 
         if (analysis_job.add_background)
@@ -594,7 +594,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
 
             if (detector != nullptr)
             {
-                io::file::HDF5_IO::inst()->add_background(analysis_job.dataset_directory, dataset_file, detector->fit_params_override_dict);
+                io::file::HDF5_IO::inst()->add_background(analysis_job.output_dir, dataset_file, detector->fit_params_override_dict);
             }
             else
             {
@@ -609,28 +609,28 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
         {
             if (detector_num != -1)
             {
-                hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
+                hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num));
             }
         }
         size_t dlen = dataset_file.length();
         if (dlen > 6 && dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'h' && dataset_file[dlen - 3] == 'd' && dataset_file[dlen - 2] == 'f' && dataset_file[dlen - 1] == '5')
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
+            hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + dataset_file);
         }
         else if (dlen > 4 && dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file);
+            hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + dataset_file);
         }
         else
         {
-            hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
+            hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + dataset_file + ".h5");
         }
 
 
         // Can scan for all hdf5 files in img.dat but will have to do it for multiple ext and filter out by detector num and avg
-        //for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.dataset_directory + "img.dat", ".hdf5"))
+        //for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "img.dat", ".hdf5"))
         //{
-        //    hdf5_dataset_list.push_back(analysis_job.dataset_directory + "img.dat" + DIR_END_CHAR + itr);
+        //    hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + itr);
         //}
 
         for (std::string hdf5_dataset_name : hdf5_dataset_list)

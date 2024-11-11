@@ -152,6 +152,8 @@ public:
 
 	std::string update_quant_ds_amps_str;
 
+    std::string output_dir;
+
     OPTIMIZE_FIT_ROUTINE optimize_fit_routine;
 
     //list of quantification standards to use

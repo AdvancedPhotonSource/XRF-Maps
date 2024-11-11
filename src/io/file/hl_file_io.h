@@ -283,9 +283,9 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
 
-        if (false == io::file::load_override_params(analysis_job->dataset_directory, detector_num, override_params))
+        if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, override_params))
         {
-            if (false == io::file::load_override_params(analysis_job->dataset_directory, -1, override_params))
+            if (false == io::file::load_override_params(analysis_job->output_dir, -1, override_params))
             {
                 //last case, check current directory for override. This will be used for streaming
                 if (false == io::file::load_override_params("./", detector_num, override_params))
