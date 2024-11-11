@@ -213,10 +213,6 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 
     Spectra<T_real> spectra_model = background;
 
-	//Spectra spectra_model(this->_energy_range.count());
-	//ArrayTr<T_real> rhs = spectra->sub_spectra(this->_energy_range.min, this->_energy_range.count());
-	//nsNNLS::nnls<T_real> solver(&_fitmatrix, &rhs, _max_iter);
-
     solver.optimize(num_iter, npg);
     if (num_iter < 0)
     {
@@ -225,7 +221,7 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 
     result = solver.getSolution();
 
-    for(const auto& itr : *elements_to_fit)
+    for(const auto& itr : this->_element_models)
     {
         if (std::isfinite((*result)[_element_row_index[itr.first]]))
         {
