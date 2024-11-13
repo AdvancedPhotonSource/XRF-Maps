@@ -302,7 +302,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             {
                 dataset_fullpath.replace(sidx, 7, "output"); // 7 = sizeof("img.dat")
                 std::string str_path = dataset_fullpath + "_" + fit_routine->get_name() + ".png";
-                data_struct::ArrayTr<T_real> ev = data_struct::gen_energy_vector(matrix_fit->energy_range(), override_params->fit_params);
+                data_struct::ArrayTr<T_real> ev = data_struct::generate_energy_array(matrix_fit->energy_range(), &(override_params->fit_params));
                 Spectra<T_real> int_spec = spectra_volume->integrate();
                 int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
                 #ifdef _BUILD_WITH_QT

@@ -276,8 +276,6 @@ DLL_EXPORT Range get_energy_range(const T_real min_energy, const T_real max_ener
 {
 
     struct Range energy_range;
-
-    //data_struct::ArrayTr<double> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (double)2.0) * energy_quad);
     energy_range.min = static_cast<size_t>(round((min_energy - energy_offset) / energy_slope));
     energy_range.max = static_cast<size_t>(round((max_energy - energy_offset) / energy_slope));
     //if (xmax > used_chan - 1) or (xmax <= np.amin([xmin, used_chan / 20.])):
@@ -305,17 +303,57 @@ DLL_EXPORT Range get_energy_range(const size_t spectra_size, const Fit_Parameter
         params->value(STR_ENERGY_SLOPE));
 }
 
-//-----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT const ArrayTr<T_real> gen_energy_vector(const Range& energy_range, const Fit_Parameters<T_real>& params)
+ArrayTr<T_real> generate_energy_array(const Range energy_range, const T_real energy_offset, const T_real energy_slope, const T_real energy_quad)
 {
-    const T_real energy_offset = params.value(STR_ENERGY_OFFSET);
-    const T_real energy_slope = params.value(STR_ENERGY_SLOPE);
-    const T_real energy_quad = params.value(STR_ENERGY_QUADRATIC);
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+    const ArrayTr<T_real>energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
+    const ArrayTr<T_real>ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
     return ev;
+}
+
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+ArrayTr<T_real> generate_energy_array(const Range energy_range, const Fit_Parameters<T_real> * const fit_params)
+{
+    T_real energy_offset = 0.0;
+    T_real energy_slope = 0.0;
+    T_real energy_quad = 0.0;
+    if(fit_params != nullptr)
+    {
+        if (fit_params->contains(STR_ENERGY_OFFSET))
+        {
+            energy_offset = fit_params->value(STR_ENERGY_OFFSET);
+        }
+        else
+        {
+            logW<< "Missing fit parameter "<<STR_ENERGY_OFFSET<<"\n";
+        }
+        if (fit_params->contains(STR_ENERGY_SLOPE))
+        {
+            energy_slope = fit_params->value(STR_ENERGY_SLOPE);
+        }
+        else
+        {
+            logW<< "Missing fit parameter "<<STR_ENERGY_SLOPE<<"\n";
+        }
+        if (fit_params->contains(STR_ENERGY_QUADRATIC))
+        {
+            energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+        }
+        else
+        {
+            logW<< "Missing fit parameter "<<STR_ENERGY_QUADRATIC<<"\n";
+        }
+    }
+    else
+    {
+        logW<< "fit parameters is "<<STR_ENERGY_QUADRATIC<<"\n";
+    }
+    return generate_energy_array(energy_range, energy_offset, energy_slope, energy_quad);
 }
 
 //-----------------------------------------------------------------------------

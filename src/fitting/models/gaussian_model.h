@@ -75,12 +75,6 @@ public:
                                                     const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                     std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
                                                     const struct Range energy_range);
-
-    const std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>> model_spectrum_info(const Fit_Parameters<T_real>* const fit_params,
-                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                                    std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
-                                                    const struct Range energy_range);
-
     // multi threaded
     virtual const Spectra<T_real> model_spectrum_mp(const Fit_Parameters<T_real>* const fit_params,
                                                         const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
@@ -137,13 +131,6 @@ protected:
     Fit_Parameters<T_real> _fit_parameters;
 
 };
-
-
-template<typename T_real>
-DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params);
-
-template<typename T_real>
-DLL_EXPORT ArrayTr<T_real> generate_ev_array(Range energy_range, T_real energy_offset, T_real energy_slope, T_real energy_quad);
 
 } //namespace models
 

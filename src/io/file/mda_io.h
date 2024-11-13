@@ -49,7 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MDA_IO_H
 #define MDA_IO_H
 
-#include "support/mda_utils/mda-load.h"
+#include "support/mdautils-1.4.1/mda-load.h"
 #include "data_struct/element_info.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/quantification_standard.h"

@@ -47,6 +47,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "core/process_whole.h"
 #include <algorithm>
+#include <fitting/models/gaussian_model.h>
 
 using namespace std::placeholders; //for _1, _2,
 
@@ -396,12 +397,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                     }
                 }
                 fitting::routines::Matrix_Optimized_Fit_Routine<double>* f_routine = (fitting::routines::Matrix_Optimized_Fit_Routine<double>*)fit_routine;
-                double energy_offset = fit_params.value(STR_ENERGY_OFFSET);
-                double energy_slope = fit_params.value(STR_ENERGY_SLOPE);
-                double energy_quad = fit_params.value(STR_ENERGY_QUADRATIC);
-
-                data_struct::ArrayTr<double> energy = data_struct::ArrayTr<double>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-                data_struct::ArrayTr<double> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (double)2.0) * energy_quad);
+                const ArrayTr<double> ev = data_struct::generate_energy_array(energy_range, &fit_params);
                 data_struct::ArrayTr<double> sub_spectra = quantification_standard->integrated_spectra.segment(energy_range.min, energy_range.count());
 
                 std::string full_path = analysis_job->output_dir + DIR_END_CHAR + "output" + DIR_END_CHAR + "calib_" + fit_routine->get_name() + "_" + standard_itr.standard_filename;

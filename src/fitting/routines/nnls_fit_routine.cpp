@@ -161,18 +161,6 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
         }
     }
 
-    /*
-    static int i = 0;
-    string path = "c:\\temp\\debug\\img" + ::to_string(i) + ".png";
-    ArrayTr<T_real> sub_background = *background;
-    T_real energy_offset = 0;
-    T_real energy_slope = 0.01;
-    T_real energy_quad = 0;
-
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(this->_energy_range.count(), this->_energy_range.min, this->_energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
-    visual::SavePlotSpectrasFromConsole(path, &ev, &spectra_sub_background, spectra_model, &sub_background, true);
-    */
 }
 
 // ----------------------------------------------------------------------------

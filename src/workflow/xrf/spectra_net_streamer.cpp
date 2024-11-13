@@ -106,10 +106,10 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
     if(_send_counts && _send_spectra)
     {
         zmq::message_t topic("XRF-Counts-and-Spectra", 22);
-        _zmq_socket->send(topic, ZMQ_SNDMORE);
+        _zmq_socket->send(topic, zmq::send_flags::sndmore);
         data = _serializer.encode_counts_and_spectra(stream_block);
         zmq::message_t message(data.c_str(), data.length());
-        if (false == _zmq_socket->send(message, 0))
+        if (false == _zmq_socket->send(message, zmq::send_flags::none))
         {
             logE << "sending ZMQ counts and spectra message"<<"\n";
         }
@@ -119,10 +119,10 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
         if(_send_counts)
         {
             zmq::message_t topic("XRF-Counts", 10);
-            _zmq_socket->send(topic, ZMQ_SNDMORE);
+            _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_counts(stream_block);
             zmq::message_t message(data.c_str(), data.length());
-            if (false == _zmq_socket->send(message, 0))
+            if (false == _zmq_socket->send(message, zmq::send_flags::none))
             {
                 logE << "sending ZMQ counts message"<<"\n";
             }
@@ -130,10 +130,10 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
         if(_send_spectra)
         {
             zmq::message_t topic("XRF-Spectra", 11);
-            _zmq_socket->send(topic, ZMQ_SNDMORE);
+            _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_spectra(stream_block);
             zmq::message_t message(data.c_str(), data.length());
-            if (false == _zmq_socket->send(message, 0))
+            if (false == _zmq_socket->send(message, zmq::send_flags::none))
             {
                 logE << "sending ZMQ spectra message"<<"\n";
             }
