@@ -362,12 +362,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
     Spectra<T_real> agr_spectra(energy_range.count());
 
-    T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
-
-	ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
+    const ArrayTr<T_real> ev = generate_energy_array(energy_range, fit_params);
 
     for(const auto& itr : (*elements_to_fit))
     {
@@ -383,11 +378,8 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
     if (labeled_spectras != nullptr)
     {
-        Spectra<T_real> elastic_spec(energy_range.count());
-        Spectra<T_real> compton_spec(energy_range.count());
-        
-        elastic_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-        compton_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        const Spectra<T_real> elastic_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
+        const Spectra<T_real> compton_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
         (*labeled_spectras)[STR_ELASTIC_LINES] += elastic_spec;
         (*labeled_spectras)[STR_COMPTON_LINES] += compton_spec;
         agr_spectra += elastic_spec;
@@ -416,90 +408,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-const std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>> Gaussian_Model<T_real>::model_spectrum_info(const Fit_Parameters<T_real> * const fit_params,
-                                             const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
-                                             std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
-                                             const struct Range energy_range)
-{
-    std::vector<ArrayTr<T_real>> comp_contrib;
-    std::vector<std::string> comp_order;
-
-    std::vector<std::string> spectra_labels = { STR_K_A_LINES, STR_K_B_LINES, STR_L_LINES, STR_M_LINES, STR_STEP_LINES, STR_TAIL_LINES, STR_ELASTIC_LINES, STR_COMPTON_LINES, STR_PILEUP_LINES, STR_ESCAPE_LINES };
-
-    if (labeled_spectras != nullptr) // if this stucture is not null then initialize
-    {
-        labeled_spectras->clear();
-        for (auto& itr : spectra_labels)
-        {
-            labeled_spectras->insert({ itr, Spectra<T_real>(energy_range.count()) });
-        }
-    }
-
-    Spectra<T_real> agr_spectra(energy_range.count());
-
-    T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
-
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
-    comp_contrib.push_back(ev);
-    comp_order.push_back("ev");
-
-    for(const auto& itr : (*elements_to_fit))
-    {
-        if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
-        {
-            continue;
-        }
-        else
-        {
-            Spectra<T_real> tmp = model_spectrum_element(fit_params, itr.second, ev, labeled_spectras);
-            comp_contrib.push_back(tmp);
-            comp_order.push_back(itr.first);
-            agr_spectra += tmp;
-        }
-    }
-
-    Spectra<T_real> elastic_spec(energy_range.count());
-    Spectra<T_real> compton_spec(energy_range.count());
-    elastic_spec = elastic_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-    compton_spec = compton_peak(fit_params, ev, fit_params->at(STR_ENERGY_SLOPE).value);
-    comp_contrib.push_back(elastic_spec);
-    comp_order.push_back(STR_ELASTIC_LINES);
-    comp_contrib.push_back(compton_spec);
-    comp_order.push_back(STR_COMPTON_LINES);
-    if (labeled_spectras != nullptr)
-    {
-        (*labeled_spectras)[STR_ELASTIC_LINES] += elastic_spec;
-        (*labeled_spectras)[STR_COMPTON_LINES] += compton_spec;
-    }
-    agr_spectra += elastic_spec;
-    agr_spectra += compton_spec;
-
-    if (fit_params->at(STR_SI_ESCAPE).value > 0.0)
-    {   
-        Spectra<T_real> escape_spec(energy_range.count());
-        escape_spec = escape_peak(agr_spectra, ev, fit_params->at(STR_SI_ESCAPE).value);
-        comp_contrib.push_back(escape_spec);
-        comp_order.push_back(STR_SI_ESCAPE);
-        if (labeled_spectras != nullptr)
-        {
-            (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
-                
-        }
-        agr_spectra += escape_spec;
-    }
-
-    comp_contrib.push_back(agr_spectra);
-    comp_order.push_back("final_int_spec");
-
-    return std::tuple<std::vector<std::string>, std::vector<ArrayTr<T_real>>>(comp_order, comp_contrib);
-}
-
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parameters<T_real> * const fit_params,
                                                 const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
                                                 const struct Range energy_range)
@@ -507,12 +415,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
 
     Spectra<T_real> agr_spectra(energy_range.count());
 
-    T_real energy_offset = fit_params->value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_params->value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
-
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
+    const ArrayTr<T_real> ev =generate_energy_array(energy_range, fit_params);
 
     std::vector<std::string> keys;
     for (const auto& itr : (*elements_to_fit))
@@ -564,7 +467,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     //T_real el_val = std::min(fitp->at(element_to_fit->full_name()).value, (T_real)20.0);
     //T_real pre_faktor = std::pow((T_real)10.0 , el_val);
 
-    T_real pre_faktor = std::pow((T_real)10.0 , fitp->at(element_to_fit->full_name()).value);
+    const T_real pre_faktor = std::pow((T_real)10.0 , fitp->at(element_to_fit->full_name()).value);
 
 
     if (false == std::isfinite(pre_faktor))
@@ -581,10 +484,10 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     for (size_t idx = 0; idx < energy_ratios.size(); idx++)
     {
         const Element_Energy_Ratio<T_real>& er_struct = energy_ratios.at(idx);
-        T_real sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
-        T_real f_step =  std::abs<T_real>( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
-        T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
-        T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+        const T_real sigma = std::sqrt( std::pow((fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0) + (er_struct.energy * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+        const T_real f_step =  std::abs<T_real>( er_struct.mu_fraction * ( fitp->at(STR_F_STEP_OFFSET).value + (fitp->at(STR_F_STEP_LINEAR).value * er_struct.energy)));
+        const T_real f_tail = std::abs<T_real>( fitp->at(STR_F_TAIL_OFFSET).value + (fitp->at(STR_F_TAIL_LINEAR).value * er_struct.mu_fraction));
+        const T_real kb_f_tail = std::abs<T_real>(  fitp->at(STR_KB_F_TAIL_OFFSET).value + (fitp->at(STR_KB_F_TAIL_LINEAR).value * er_struct.mu_fraction));
         T_real value = 1.0;
         T_real gamma = 1.0;
 
@@ -599,7 +502,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 
         std::string label = "";
 
-        T_real incident_energy = fitp->at(STR_COHERENT_SCT_ENERGY).value;
+        const T_real incident_energy = fitp->at(STR_COHERENT_SCT_ENERGY).value;
 
         T_real faktor = T_real(er_struct.ratio * pre_faktor);
 		if (element_to_fit->check_binding_energy(incident_energy, idx))
@@ -728,10 +631,10 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::step(T_real gain, T_real sigma, co
 template<typename T_real>
 const ArrayTr<T_real> Gaussian_Model<T_real>::tail(T_real gain, T_real sigma, const ArrayTr<T_real> &delta_energy, T_real gamma) const
 {
-    T_real one_over_gamma_sqrt2 = (T_real)1.0 / (gamma * (T_real)M_SQRT2);
-    T_real sqrt2_sigma = (T_real)M_SQRT2 * sigma;
-    T_real gamma_sigma = gamma * sigma;
-    T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
+    const T_real one_over_gamma_sqrt2 = (T_real)1.0 / (gamma * (T_real)M_SQRT2);
+    const T_real sqrt2_sigma = (T_real)M_SQRT2 * sigma;
+    const T_real gamma_sigma = gamma * sigma;
+    const T_real val = gain / ( (T_real)2.0 * gamma * sigma * exp( (T_real)-0.5 / pow(gamma, (T_real)2.0)  ) );
     return delta_energy.unaryExpr([val,one_over_gamma_sqrt2,sqrt2_sigma,gamma_sigma](T_real v) 
     { 
         return  (v < (T_real)0.0) ?
@@ -748,7 +651,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
 {
     ArrayTr<T_real> counts(ev.size());
 	counts.setZero();
-    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + (fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+    const T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value / (T_real)2.3548), (T_real)2.0 ) + (fitp->at(STR_COHERENT_SCT_ENERGY).value * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
@@ -757,11 +660,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
     }
 	ArrayTr<T_real>delta_energy = ev - fitp->at(STR_COHERENT_SCT_ENERGY).value;
 
-
-    // elastic peak, gaussian
-    T_real fvalue = (T_real)1.0;
-
-    fvalue = fvalue * std::pow((T_real)10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
+    const T_real fvalue = std::pow((T_real)10.0, fitp->at(STR_COHERENT_SCT_AMPLITUDE).value);
 
     counts += ( fvalue * this->peak(gain, sigma, delta_energy) );
 
@@ -777,9 +676,9 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
 	ArrayTr<T_real>counts(ev.size());
 	counts.setZero();
     
-    T_real compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((T_real)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (T_real)511.0 ) * ((T_real)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (T_real)2.0 * (T_real)(M_PI) / (T_real)360.0 )));
+    const T_real compton_E = fitp->at(STR_COHERENT_SCT_ENERGY).value/((T_real)1.0 +(fitp->at(STR_COHERENT_SCT_ENERGY).value / (T_real)511.0 ) * ((T_real)1.0 -std::cos( fitp->at(STR_COMPTON_ANGLE).value * (T_real)2.0 * (T_real)(M_PI) / (T_real)360.0 )));
 
-    T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)2.0) +  (compton_E * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
+    const T_real sigma = std::sqrt( std::pow( (fitp->at(STR_FWHM_OFFSET).value/(T_real)2.3548), (T_real)2.0) +  (compton_E * (T_real)3.58 * fitp->at(STR_FWHM_FANOPRIME).value ) );
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
@@ -800,19 +699,19 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     // compton peak, step
     if ( fitp->at(STR_COMPTON_F_STEP).value > 0.0 )
     {
-        T_real fvalue = faktor * fitp->at(STR_COMPTON_F_STEP).value;
+        const T_real fvalue = faktor * fitp->at(STR_COMPTON_F_STEP).value;
 		counts += fvalue * this->step(gain, sigma, delta_energy, compton_E);
     }
     if ( fitp->at(STR_COMPTON_F_TAIL).value > 0.0 )
     {
     // compton peak, tail on the low side
-        T_real fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
+        const T_real fvalue = faktor * fitp->at(STR_COMPTON_F_TAIL).value;
         counts += fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_GAMMA).value);
     }
     // compton peak, tail on the high side
     if ( fitp->at(STR_COMPTON_HI_F_TAIL).value > 0.0 )
     {
-        T_real fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
+        const T_real fvalue = faktor * fitp->at(STR_COMPTON_HI_F_TAIL).value;
         delta_energy *= (T_real)-1.0;
         counts += ( fvalue * this->tail(gain, sigma, delta_energy, fitp->at(STR_COMPTON_HI_GAMMA).value) );
     }
@@ -825,7 +724,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>&
 {
     Spectra<T_real> escape_spec(ev.size());
     // Si = 1.73998
-    int bins = 1.73998 / (ev(1) - ev(0));
+    const int bins = 1.73998 / (ev(1) - ev(0));
    
     for (int i = 0; i < ev.size() - bins; ++i)
     {
@@ -837,40 +736,6 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>&
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-
-template<typename T_real>
-ArrayTr<T_real> generate_ev_array(Range energy_range, Fit_Parameters<T_real>& fit_params)
-{
-    T_real energy_offset = 0.0;
-    T_real energy_slope = 0.0;
-    T_real energy_quad = 0.0;
-    if (fit_params.contains(STR_ENERGY_OFFSET))
-    {
-        energy_offset = fit_params.at(STR_ENERGY_OFFSET).value;
-    }
-    if (fit_params.contains(STR_ENERGY_SLOPE))
-    {
-        energy_slope = fit_params.at(STR_ENERGY_SLOPE).value;
-    }
-    if (fit_params.contains(STR_ENERGY_QUADRATIC))
-    {
-        energy_quad = fit_params.at(STR_ENERGY_QUADRATIC).value;
-    }
-
-
-    return generate_ev_array(energy_range, energy_offset, energy_slope, energy_quad);
-}
-
-// ----------------------------------------------------------------------------
-
-template<typename T_real>
-ArrayTr<T_real> generate_ev_array(Range energy_range, T_real energy_offset, T_real energy_slope, T_real energy_quad)
-{
-    ArrayTr<T_real>energy = data_struct::ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real>ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
-    return ev;
-}
-
 // ----------------------------------------------------------------------------
 
 TEMPLATE_CLASS_DLL_EXPORT Gaussian_Model<float>;
