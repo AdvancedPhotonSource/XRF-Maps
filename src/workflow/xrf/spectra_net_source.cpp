@@ -66,7 +66,7 @@ Spectra_Net_Source<T_real>::Spectra_Net_Source(data_struct::Analysis_Job<T_real>
 	_context = new zmq::context_t(1);
 	_zmq_socket = new zmq::socket_t(*_context, ZMQ_SUB);
     _zmq_socket->connect(_conn_str);
-    _zmq_socket->set(zmq::sockopt::subscribe, "XRF-Spectra", 11);
+    _zmq_socket->set(zmq::sockopt::subscribe, "XRF-Spectra");
     //_zmq_socket->setsockopt(ZMQ_RCVTIMEO, 1000); //set timeout to 1000ms
 #else
     logE<<"Spectra_Net_Source needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
@@ -106,29 +106,33 @@ void Spectra_Net_Source<T_real>::run()
     data_struct::Stream_Block<T_real> *stream_block;
     while (_running)
     {
-        _zmq_socket->recv(&token, zmq::recv_flags::none);
-        std::string s1 ((char*)token.data(), token.size());
-        if(s1 == "XRF-Spectra")
+        zmq::recv_result_t result = _zmq_socket->recv(token, zmq::recv_flags::none);
+        if (result.has_value())
         {
-            if(_zmq_socket->recv(&message, zmq::recv_flags::none, 0))
+            std::string s1 (static_cast<char*>(token.data()), token.size()); 
+            if(s1 == "XRF-Spectra")
             {
-                if(this->_output_callback_func != nullptr && _analysis_job != nullptr)
+                zmq::recv_result_t result2 = _zmq_socket->recv(message, zmq::recv_flags::none);
+                if (result2.has_value())
                 {
-                    stream_block = _serializer.decode_spectra((char*)message.data(), message.size());
-                    _analysis_job->init_fit_routines(stream_block->spectra->size());
-                    data_struct::Detector<T_real>* cp = _analysis_job->get_detector(stream_block->detector_number());
-
-                    if(cp == nullptr)
+                    if(this->_output_callback_func != nullptr && _analysis_job != nullptr)
                     {
-                        cp = _analysis_job->get_first_detector();
-                    }
-                    if(cp != nullptr)
-                    {
-                        stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-                        stream_block->model = cp->model;
-                    }
+                        stream_block = _serializer.decode_spectra((char*)message.data(), message.size());
+                        _analysis_job->init_fit_routines(stream_block->spectra->size());
+                        data_struct::Detector<T_real>* cp = _analysis_job->get_detector(stream_block->detector_number());
 
-                    this->_output_callback_func(stream_block);
+                        if(cp == nullptr)
+                        {
+                            cp = _analysis_job->get_first_detector();
+                        }
+                        if(cp != nullptr)
+                        {
+                            stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
+                            stream_block->model = cp->model;
+                        }
+
+                        this->_output_callback_func(stream_block);
+                    }
                 }
             }
         }
