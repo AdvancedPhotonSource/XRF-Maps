@@ -263,10 +263,9 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
     double energy_offset = fit_params->value(STR_ENERGY_OFFSET);
     double energy_slope = fit_params->value(STR_ENERGY_SLOPE);
     double energy_quad = fit_params->value(STR_ENERGY_QUADRATIC);
+    const data_struct::ArrayTr<double> ev = data_struct::generate_energy_array(energy_range, energy_offset, energy_slope, energy_quad);
 
-    data_struct::ArrayTr<double> energy = data_struct::ArrayTr<double>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    data_struct::ArrayTr<double> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (double)2.0) * energy_quad);
-    
+
     if (fit_params->contains(STR_SNIP_WIDTH))
 	{
         data_struct::ArrayTr<double> s_background = data_struct::snip_background<double>(spectra,

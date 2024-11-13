@@ -1075,8 +1075,8 @@ public:
                 
             if(has_y)
             {
-                int i =0;
-                for (int y = 0; y < dims[1]; y++)
+                hsize_t i =0;
+                for (hsize_t y = 0; y < dims[1]; y++)
                 {
                     frame_dims[0] = i;
                     H5Sselect_hyperslab(y_space_id, H5S_SELECT_SET, frame_dims, nullptr, c_dims, nullptr);    
@@ -1090,8 +1090,8 @@ public:
             }
             if(has_x)
             {
-                int i =0;
-                for (int x = 0; x < dims[0]; x++)
+                hsize_t i =0;
+                for (hsize_t x = 0; x < dims[0]; x++)
                 {
                     frame_dims[0] = i;
                     H5Sselect_hyperslab(x_space_id, H5S_SELECT_SET, frame_dims, nullptr, c_dims, nullptr);
@@ -5373,9 +5373,8 @@ public:
         hsize_t offset[1] = { 0 };
         hsize_t count[1] = { 1 };
 
-        //save energy vector
-        data_struct::ArrayTr<T_real> energy = data_struct::ArrayTr<T_real>::LinSpaced(spectra_size, 0, spectra_size - 1);
-        data_struct::ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (Eigen::pow(energy, (T_real)2.0) * energy_quad);
+        data_struct::Range energy_range(0, spectra_size - 1);
+        const data_struct::ArrayTr<T_real> ev = data_struct::generate_energy_array(energy_range, energy_offset, energy_slope, energy_quad);
 
         if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
         {
@@ -5663,7 +5662,7 @@ public:
         save_background.setZero(save_spectra_size);
 
         int j = 0;
-        for (int i = range.min; i <= range.max; i++)
+        for (size_t i = range.min; i <= range.max; i++)
         {
             if (std::isfinite(spectra[j]))
             {

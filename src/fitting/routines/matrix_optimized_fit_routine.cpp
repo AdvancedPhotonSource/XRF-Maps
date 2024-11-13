@@ -119,13 +119,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    T_real energy_offset = fit_parameters.value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_parameters.value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_parameters.value(STR_ENERGY_QUADRATIC);
-
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
-
+    const ArrayTr<T_real> ev =generate_energy_array(energy_range, &fit_parameters);
 
     for (const auto& itr : (*elements_to_fit))
     {
@@ -183,13 +177,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
     //set all fit parameters to be fixed. We only want to fit element counts
     fit_parameters.set_all(E_Bound_Type::FIXED);
 
-    T_real energy_offset = fit_parameters.value(STR_ENERGY_OFFSET);
-    T_real energy_slope = fit_parameters.value(STR_ENERGY_SLOPE);
-    T_real energy_quad = fit_parameters.value(STR_ENERGY_QUADRATIC);
-
-    ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range.count(), energy_range.min, energy_range.max);
-    ArrayTr<T_real> ev = energy_offset + (energy * energy_slope) + (pow(energy, (T_real)2.0) * energy_quad);
-
+    const ArrayTr<T_real> ev =generate_energy_array(energy_range, &fit_parameters);
 
 #ifdef _OPENMP
     std::vector<std::string> keys;
