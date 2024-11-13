@@ -110,7 +110,7 @@ data_struct::Stream_Block<T_real>* Basic_Serializer<T_real>::_decode_meta(char* 
     size_t col = 0;
     size_t height = 0;
     size_t width = 0;
-    float theta = 0;
+    T_real theta = 0;
     char tmp_char_arr[4096] = {0};
 
 	size_t first_header_size = (sizeof(size_t) * 4) + sizeof(T_real) + sizeof(unsigned int);
