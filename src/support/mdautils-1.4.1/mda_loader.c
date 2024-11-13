@@ -877,8 +877,8 @@ static struct mda_scan *scan_check( XDR *xdrs, int rank,
       strcmp( scan->name, orig_scan->name) ||
       strcmp( scan->time, orig_scan->time) ||
       (scan->number_positioners != orig_scan->number_positioners) ||
-      (scan->number_detectors != scan->number_detectors) ||
-      (scan->number_triggers != scan->number_triggers) )
+      (scan->number_detectors != orig_scan->number_detectors) ||
+      (scan->number_triggers != orig_scan->number_triggers) )
     goto Scan_And_Go;
 
   // steal the scans from original scan
