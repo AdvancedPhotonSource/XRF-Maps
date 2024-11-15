@@ -89,8 +89,8 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
     //Calculate residuals
     for (int i=0; i<ud->spectra.size(); i++)
     {
-        dy += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-
+        sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        /*
     	if (std::isfinite(dy) == false)
 		{
             if(first)
@@ -108,12 +108,8 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
                 logE<<" \n \n";
                 ud->fit_parameters->print_non_fixed();
             }
-            sum += ud->normalizer;
 		}
-        else
-        {
-            sum += dy;
-        }
+        */
     }
     //logI << "f = " << sum << "\n";
     ud->cur_itr++;
@@ -182,16 +178,14 @@ double quantification_residuals_nlopt(const std::vector<double> &x, std::vector<
     int idx = 0;
     for(auto& itr : ud->quant_map)
     {
+        sum += pow((itr.second.e_cal_ratio - result_map[itr.first]), 2.0);
+        /*
 		if (std::isfinite(result_map[itr.first]) == false)
 		{
-            logE<<"Quantification reuslted in NaN or Inf! "<< itr.first<<" : "<<result_map[itr.first]<<"\n";
-			sum += itr.second.e_cal_ratio * 100.0;
-		}
-		else
-		{
-			sum += pow((itr.second.e_cal_ratio - result_map[itr.first]), 2.0);
+            logE<<"Quantification reuslted in NaN or Inf! "<< itr.first<<" : "<<result_map[itr.first]<<"\n";		
 		}
         idx++;
+        */
     }
 
     return sum;
@@ -318,12 +312,14 @@ std::vector<std::string> NLOPT_Optimizer<T_real>::get_algorithm_list()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void NLOPT_Optimizer<T_real>::set_algorithm(std::string name)
+bool NLOPT_Optimizer<T_real>::set_algorithm(std::string name)
 {
     if( _algorithms.count(name) > 0)
     {
         _algo = _algorithms.at(name);
+        return true;
     }
+    return false;
 }
 
 //-----------------------------------------------------------------------------

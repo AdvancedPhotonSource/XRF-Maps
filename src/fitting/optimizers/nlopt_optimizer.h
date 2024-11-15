@@ -91,7 +91,7 @@ public:
 
     virtual std::vector<std::string> get_algorithm_list();
 
-    virtual void set_algorithm(std::string name);
+    virtual bool set_algorithm(std::string name);
 
     virtual std::unordered_map<std::string, T_real> get_options();
 
