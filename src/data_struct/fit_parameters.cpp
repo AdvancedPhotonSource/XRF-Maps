@@ -393,16 +393,32 @@ void Fit_Parameters<T_real>::update_value_to_constraints()
 template<typename T_real>
 void Fit_Parameters<T_real>::print()
 {
-    logit_s << "     Name  \t value  \t min  \t max  \t step size \t fitting\n\n";
+    logit_s << "     Name                   value                min                max  \t step size \t fitting\n\n";
     for(const auto& itr : _params)
     {
+        // 22 is len of longest name COHERENT_SCT_AMPLITUDE 
+        int spaces = 24 - itr.first.length();
+        std::string name = itr.first;
+        name.append(spaces, ' ');
+        std::string value = std::to_string(itr.second.value);
+        spaces = 10 - value.length();
+        value.append(spaces, ' ');
+        std::string smin = std::to_string(itr.second.min_val);
+        spaces = 10 - smin.length();
+        smin.append(spaces, ' ');
+        std::string smax = std::to_string(itr.second.max_val);
+        spaces = 10 - smax.length();
+        smax.append(spaces, ' ');
+        std::string step = std::to_string(itr.second.step_size);
+        spaces = 10 - step.length();
+        step.append(spaces, ' ');
         if(itr.second.value > itr.second.max_val || itr.second.value < itr.second.min_val)
         {
-            logit_s<<"\033[1;31m "<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\033[0;m \n";    
+            logit_s<<"\033[1;31m "<<" "<<name<<" "<<value<<"\t\t" <<smin << " \t " << smax << " \t " << step << " \t " <<itr.second.bound_type_str() << "\033[0;m \n";    
         }
         else
         {
-            logit_s<<" "<<itr.first<<" \t "<<itr.second.value<<" \t " << itr.second.min_val << " \t " << itr.second.max_val << " \t " << itr.second.step_size << " \t " <<itr.second.bound_type_str() << "\n";
+            logit_s<<" "<<name<<" "<<value<<"\t\t" << smin << " \t " << smax << " \t " << step << " \t " <<itr.second.bound_type_str() << "\n";
         }
     }
     logit_s<<"\n";
