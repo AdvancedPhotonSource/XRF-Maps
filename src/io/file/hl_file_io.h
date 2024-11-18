@@ -282,6 +282,10 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
 
         override_params->dataset_directory = analysis_job->dataset_directory;
         override_params->detector_num = detector_num;
+        if(analysis_job->output_dir.length() == 0)
+        {
+            analysis_job->output_dir = analysis_job->dataset_directory;
+        }
 
         if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, override_params))
         {
