@@ -78,10 +78,10 @@ void help()
     logit_s<<"--optimize-fit-override-params : <int> Integrate the 8 largest mda datasets and fit with multiple params.\n"<<
                "  0 = use override file\n  1 = matrix batch fit\n  2 = batch fit without tails\n  3 = batch fit with tails\n  4 = batch fit with free E, everything else fixed \n  5 = batch fit without tails, and fit energy quadratic\n";
     logit_s<<"--optimize-fit-routine : <general,hybrid> General (default): passes elements amplitudes as fit parameters. Hybrid only passes fit parameters and fits element amplitudes using NNLS\n";
-    //logit_s<<"--optimizer <lmfit, mpfit> : Choose which optimizer to use for --optimize-fit-override-params or matrix fit routine \n";
-   // logit_s<<"--optimizer-fx-tols <tol_override_val> : F_TOL, X_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
-   // logit_s<<"--optimizer-fxg-tols <tol_override_val> : F_TOL, X_TOL, G_TOL, Default is LM_FIT = " << DP_LM_USERTOL << " , MP_FIT = " << 1.192e-10 << "\n";
-    logit_s<<"--optimizer-use-weights : Calculate and use weights for residual error function.\n";
+    logit_s<<"--optimizer <LN_SBPLX, LN_NELDERMEAD, LN_BOBYQA, LN_COBYLA, GN_CRS2_LM, GN_ESCH, GN_ISRES> : Optimizer algorithm. Default is LN_SBPLX \n";
+    logit_s<<"--optimizer-x-tols <tol_override_val> : X_TOL, Default is 1.0e-10\n";
+    logit_s<<"--optimizer-num-iter <num iter> : Max number of iterations for the optimizer. Default 20000\n";
+    logit_s<<"--optimizer-use-weights <1, 0>: 1 = true. 0 = false. Default is 1.\n";
     logit_s<<"--optimize-rois : Looks in 'rois' directory and performs --optimize-fit-override-params on each roi separately. Needs to have --quantify-rois-with <maps_standardinfo.txt> and --quantify-fit <routines,>  \n";
     logit_s<<"Fitting Routines: \n";
 	logit_s<< "--fit <routines,> comma seperated \n";
@@ -114,18 +114,17 @@ void help()
 template <typename T_real>
 void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
-    bool fx_exists = clp.option_exists("--optimizer-fx-tols");
-    bool fxg_exists = clp.option_exists("--optimizer-fxg-tols");
-
+    T_real x_tol = (T_real)1.0e-10;
+    T_real num_iter = (T_real)20000.0;
     if(clp.option_exists("--optimizer-use-weights"))
     {
         std::string val = clp.get_option("--optimizer-use-weights");
         std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) { return std::tolower(c); });
-        if(val == "on" || val == "talse")
+        if(val == "on" || val == "talse" || val == "1")
         {
             analysis_job.use_weights = true;
         }
-        if(val == "off" || val == "false")
+        if(val == "off" || val == "false" || val == "0")
         {
             analysis_job.use_weights = false;
         }
@@ -147,46 +146,34 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
         }
     }
 
-    if (fx_exists || fxg_exists)
+    if (clp.option_exists("--optimizer-num-iter"))
     {
-        T_real fxg_tol = 0.00000000000000001; 
         if (std::is_same<T_real, float>::value)
         {
-            if (fxg_exists)
-            {
-                fxg_tol = std::stof(clp.get_option("--optimizer-fxg-tols"));
-            }
-            else if (fx_exists)
-            {
-                fxg_tol = std::stof(clp.get_option("--optimizer-fx-tols"));
-            }
+            num_iter = std::stof(clp.get_option("--optimizer-num-iter"));
         }
         else if (std::is_same<T_real, double>::value)
         {
-            if (fxg_exists)
-            {
-                fxg_tol = std::stod(clp.get_option("--optimizer-fxg-tols"));
-            }
-            else if (fx_exists)
-            {
-                fxg_tol = std::stod(clp.get_option("--optimizer-fx-tols"));
-            }
+            num_iter = std::stod(clp.get_option("--optimizer-num-iter"));
         }
-        
-        std::unordered_map<std::string, T_real> opt_map;
-        opt_map[STR_OPT_FTOL] = fxg_tol;
-        opt_map[STR_OPT_XTOL] = fxg_tol;
-        if (fxg_exists)
-        {
-            opt_map[STR_OPT_GTOL] = fxg_tol;
-            logI << "Setting FTOL, XTOL, GTOL to " << fxg_tol << "\n";
-        }
-        else
-        {
-            logI << "Setting FTOL, XTOL to " << fxg_tol << "\n";
-        }
-        analysis_job.optimizer()->set_options(opt_map);
     }
+
+    if (clp.option_exists("--optimizer-x-tols"))
+    {
+        
+        if (std::is_same<T_real, float>::value)
+        {
+            x_tol = std::stof(clp.get_option("--optimizer-x-tols"));
+        }
+        else if (std::is_same<T_real, double>::value)
+        {
+            x_tol = std::stod(clp.get_option("--optimizer-x-tols"));
+        }
+    }
+    std::unordered_map<std::string, T_real> opt_map;
+    opt_map[STR_OPT_XTOL] = x_tol;
+    opt_map[STR_OPT_MAXITER] = num_iter;
+    analysis_job.optimizer()->set_options(opt_map);
 }
 
 // ----------------------------------------------------------------------------

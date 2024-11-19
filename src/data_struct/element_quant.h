@@ -73,7 +73,6 @@ struct DLL_EXPORT Element_Quant
     }
 
     Element_Quant(const Element_Quant<T_real>& e) :
-        name(e.name),
         weight(e.weight),
         absorption(e.absorption),
         transmission_Be(e.transmission_Be),
@@ -81,15 +80,14 @@ struct DLL_EXPORT Element_Quant
         yield(e.yield),
         transmission_through_Si_detector(e.transmission_through_Si_detector),
         transmission_through_air(e.transmission_through_air),
-        e_cal_ratio(e.e_cal_ratio),
         Z(e.Z),
-        calib_curve_val(e.calib_curve_val)
+        e_cal_ratio(e.e_cal_ratio),
+        calib_curve_val(e.calib_curve_val),
+        name(e.name)
     {
-        
     }
 
     Element_Quant(Element_Quant<T_real>&& e) noexcept:
-        name(std::move(e.name)),
         weight(std::exchange(e.weight, 0.0)),
         absorption(std::exchange(e.absorption, 0.0)),
         transmission_Be(std::exchange(e.transmission_Be, 0.0)),
@@ -97,9 +95,10 @@ struct DLL_EXPORT Element_Quant
         yield(std::exchange(e.yield, 0.0)),
         transmission_through_Si_detector(std::exchange(e.transmission_through_Si_detector, 0.0)),
         transmission_through_air(std::exchange(e.transmission_through_air, 0.0)),
-        e_cal_ratio(std::exchange(e.e_cal_ratio, 0.0)),
         Z(std::exchange(e.Z, 0)),
-        calib_curve_val(std::exchange(e.calib_curve_val, 0.0))
+        e_cal_ratio(std::exchange(e.e_cal_ratio, 0.0)),
+        calib_curve_val(std::exchange(e.calib_curve_val, 0.0)),
+        name(std::move(e.name))
     {
     }
 

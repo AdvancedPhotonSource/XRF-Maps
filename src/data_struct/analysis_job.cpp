@@ -164,17 +164,15 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force
 template<typename T_real>
 void Analysis_Job<T_real>::set_optimizer(std::string optimizer)
 {
-    /* // todo change nlopt optimzier
-    if(optimizer == "")
+    std::transform(optimizer.begin(), optimizer.end(), optimizer.begin(), [](unsigned char c) { return std::toupper(c); }); 
+    if(_optimizer->set_algorithm(optimizer))
     {
-        logI << "Setting optimizer to \n";
+        logI << "Setting optimizer to "<<optimizer<<"\n";
     }
     else
     {
-        logI << "Setting optimizer to NLOPT\n";
-        _optimizer = &_nlopt_optimizer;
+        logI << "Setting optimizer to LN_SBPLX\n";
     }
-    */
 }
 
 //-----------------------------------------------------------------------------

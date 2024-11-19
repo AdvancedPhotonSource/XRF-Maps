@@ -339,7 +339,7 @@ public:
     
     virtual std::vector<std::string> get_algorithm_list() = 0;
 
-    virtual void set_algorithm(std::string name) = 0;
+    virtual bool set_algorithm(std::string name) = 0;
 
     virtual void set_options(std::unordered_map<std::string, T_real> opt) = 0;
 
