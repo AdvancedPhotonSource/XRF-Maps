@@ -104,9 +104,9 @@ public:
 
     const int& detector_number() { return _detector; }
 
-    inline bool is_end_of_row() { return (_col == _width-1); }
+    inline bool is_end_of_row() { return (_col == _width - (size_t)1); }
 
-	inline bool is_end_block() { return (_detector == -1 && _row == -1 && _height == -1 && _col == -1 && _width == -1); }
+	inline bool is_end_block() { return (_detector == (int)-1 && _row == (size_t)-1 && _height == (size_t)-1 && _col == (size_t)-1 && _width == (size_t)-1); }
 
 
     //by Fitting_Routines
