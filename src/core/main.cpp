@@ -1003,4 +1003,6 @@ int main(int argc, char* argv[])
     data_struct::Element_Info_Map<float>::inst()->clear();
     data_struct::Element_Info_Map<double>::inst()->clear();
 
+    return 0;
+
 }
