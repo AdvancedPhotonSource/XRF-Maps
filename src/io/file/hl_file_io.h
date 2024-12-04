@@ -103,7 +103,7 @@ DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
 
 //DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr, bool append_h5_with_num);
+DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
