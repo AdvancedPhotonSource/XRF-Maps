@@ -570,7 +570,7 @@ void check_and_create_dirs(std::string dataset_directory)
     if (false == found_img_dat)
     {
 		int retval = system(nullptr);
-        std::string cmd = "mkdir "+dataset_directory+"img.dat";
+        std::string cmd = "mkdir -p "+dataset_directory+"img.dat";
         logI << cmd << "\n";
         retval = system(cmd.c_str());
 		if (retval != 0)
@@ -581,7 +581,7 @@ void check_and_create_dirs(std::string dataset_directory)
     if (false == found_output)
     {
 		int retval = system(nullptr);
-        std::string cmd = "mkdir "+dataset_directory+"output";
+        std::string cmd = "mkdir -p "+dataset_directory+"output";
         logI << cmd << "\n";
         retval = system(cmd.c_str());
 		if (retval != 0)
@@ -591,9 +591,9 @@ void check_and_create_dirs(std::string dataset_directory)
     }
 
     int retval = system(nullptr);
-    std::string cmd1 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_SPEC_DIR;
-    std::string cmd2 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_INT_SPEC_DIR;
-    std::string cmd3 = "mkdir "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_PARAM_DIR;
+    std::string cmd1 = "mkdir -p "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_SPEC_DIR;
+    std::string cmd2 = "mkdir -p "+dataset_directory+"output"+DIR_END_CHAR+STR_INT_SPEC_DIR;
+    std::string cmd3 = "mkdir -p "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_PARAM_DIR;
     
     retval = system(cmd1.c_str());
     logI << cmd1 << " = "<<retval<< "\n";
