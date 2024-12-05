@@ -1031,7 +1031,7 @@ public:
             err = H5Lget_val(file_id, "/entry/measurement/xspress3", (void*)buff, 1024, H5P_DEFAULT);
             if (err < 0) 
             {
-                logE << "\n\nError retrieving xspress3 link value\n\n";
+                logW << "\n\nError retrieving xspress3 link value\n\n";
                 _close_h5_objects(close_map);
                 return false;
             }

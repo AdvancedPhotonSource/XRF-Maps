@@ -510,7 +510,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
             {
                 data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
                 std::string str_detector_num = "";
-                if (detector_num != -1)
+                if (detector_num != (size_t)-1)
                 {
                     str_detector_num = std::to_string(detector_num);
                 }

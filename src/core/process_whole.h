@@ -466,6 +466,11 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     std::string full_save_path = analysis_job->output_dir + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
+                else if(detector_num == (size_t)-1)
+                {
+                    std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
                 else
                 {
                     std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
