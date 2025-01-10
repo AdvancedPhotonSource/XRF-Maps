@@ -103,7 +103,7 @@ DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
 
 //DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
-DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr, bool append_h5_with_num);
+DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
 
@@ -939,10 +939,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         }
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
         {
-            std::string base_name = dataset_file;
-            base_name = dataset_file.substr(0, dataset_file.size()-3);
-            fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + base_name + ".h5" + std::to_string(detector_num);
-            if(io::file::HDF5_IO::inst()->start_save_seq(fullpath, true))
+            if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {
                 io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
                 return true;
@@ -1036,8 +1033,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             if (save_scalers)
             {
-                fullpath = dataset_directory + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + base_name + ".h5" + std::to_string(detector_num);
-                io::file::HDF5_IO::inst()->start_save_seq(fullpath, true);
+                io::file::HDF5_IO::inst()->start_save_seq(true);
                 
                 // add ELT, ERT, INCNT, OUTCNT to scaler map
                 if (spectra_volume != nullptr)

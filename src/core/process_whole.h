@@ -454,6 +454,8 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                 bool is_mda = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a');
                 bool is_mca = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a');
                 bool is_mcad = (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a');
+                //bool is_h5 = (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5');
+                //bool is_hdf5 = (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'h' && dataset_file[dlen - 3] == 'd' && dataset_file[dlen - 2] == 'f' && dataset_file[dlen - 1] == '5');
                 if (is_mda || is_mca || is_mcad)
                 {
                     std::string str_detector_num = "";
@@ -464,9 +466,14 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     std::string full_save_path = analysis_job->output_dir + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + str_detector_num;
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
+                else if(detector_num == (size_t)-1)
+                {
+                    std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
+                    io::file::HDF5_IO::inst()->set_filename(full_save_path);
+                }
                 else
                 {
-                    std::string full_save_path = analysis_job->output_dir + "img.dat" + DIR_END_CHAR + dataset_file;
+                    std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5" + std::to_string(detector_num);
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
 
@@ -574,18 +581,10 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
 {
     for (auto dataset_file : analysis_job.dataset_files)
     {
-        bool append_h5_with_num = false;
-        // search if we have esrf type datasets and remove first folder
-        int didx = dataset_file.find(DIR_END_CHAR);
-        if (didx > 0)
-        {
-            dataset_file = dataset_file.substr(didx + 1);
-            append_h5_with_num = true;
-        }
         //average all detectors to one files
         if (analysis_job.generate_average_h5)
         {
-            io::file::generate_h5_averages(analysis_job.output_dir, dataset_file, analysis_job.detector_num_arr, append_h5_with_num);
+            io::file::generate_h5_averages(analysis_job.output_dir, dataset_file, analysis_job.detector_num_arr);
         }
 
         if (analysis_job.add_background)
