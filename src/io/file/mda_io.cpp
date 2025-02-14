@@ -320,13 +320,37 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             if(hasNetCDF)
             {
                 if(_mda_file->scan->last_point == 0)
-                    rows = 1;
+                {
+                    if(_mda_file->scan->requested_points == 0)
+                    {
+                        logW<<"mda_file->scan->last_point == 0 and mda_file->scan->requested_points == 0, Settign rows = 1\n";
+                        rows = 1;
+                    }
+                    else
+                    {
+                        rows = _mda_file->scan->requested_points;
+                    }
+                }
                 else
+                {
                     rows = _mda_file->scan->last_point;
+                }
                 if(_mda_file->scan->sub_scans[0]->last_point == 0)
-                    cols = 1;
+                {
+                    if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+                    {
+                        logW<<"mda_file->scan->>sub_scans[0]->last_point == 0 and mda_file->scan->>sub_scans[0]->requested_points == 0, Settign cols = 1\n";
+                        cols = 1;
+                    }
+                    else
+                    {
+                        cols = _mda_file->scan->sub_scans[0]->requested_points;
+                    }
+                }
                 else
+                {
                     cols = _mda_file->scan->sub_scans[0]->last_point;
+                }
                 vol->resize_and_zero(rows, cols, 2048);
                 return true;
             }
