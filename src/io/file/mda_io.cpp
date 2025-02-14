@@ -311,8 +311,28 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
     }
     else if (_mda_file->header->data_rank == 3)
     {
+        // if num_detectors == 0 them it is new fly scan with tetram
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors == 0)
+        {
+            logI<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+            " acquired rows "<< _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
-        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+            if(hasNetCDF)
+            {
+                if(_mda_file->scan->last_point == 0)
+                    rows = 1;
+                else
+                    rows = _mda_file->scan->last_point;
+                if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                    cols = 1;
+                else
+                    cols = _mda_file->scan->sub_scans[0]->last_point;
+                vol->resize_and_zero(rows, cols, 2048);
+                return true;
+            }
+            // TODO: might need to check if is XANES like above 
+        }
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < (int)detector_num)
         {
             logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
