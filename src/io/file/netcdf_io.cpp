@@ -673,6 +673,100 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
 }
 
 //-----------------------------------------------------------------------------
+ 
+template<typename T_real>
+size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    size_t header_size = 256;
+    int ncid, varid, retval;
+    size_t start[] = {0, 0, 0};
+    size_t count[] = {1, 1, 1};
+    ptrdiff_t stride[] = {1, 1, 1};
+    //T_real data_in[10000][1][11];
+    T_real *data_in;
+    size_t dim2size[NC_MAX_VAR_DIMS] = {0};
+    size_t col_size;
+    size_t scalers_size;
+    nc_type rh_type;
+    int rh_ndims;
+    int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
+    int rh_natts;
+
+    if(scan_info == nullptr)
+    {
+        logW<<"Scan info is null. Stopping load : "<<path<<"\n";
+        return 0;
+    }
+
+    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
+    {
+        logE<<path<<" :: "<< nc_strerror(retval)<<"\n";
+        return 0;
+    }
+
+    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
+    {
+        logE<< path << " :: " << nc_strerror(retval)<<"\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    if( (retval = nc_inq_var (ncid, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
+    {
+        logE<< path << " :: " << nc_strerror(retval)<<"\n";
+        nc_close(ncid);
+        return 0;
+    }
+
+    for (int i=0; i <  rh_ndims; i++)
+    {
+        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
+        {
+            logE<< path << " :: " << nc_strerror(retval)<<"\n";
+            nc_close(ncid);
+            return 0;
+        }
+    }
+
+
+    count[0] = dim2size[0]; // num cols
+    count[2] = 1;
+    data_in = new T_real[dim2size[0]];
+
+    //count[2] = dim2size[2]; // num scalers
+    //data_in = new T_real[dim2size[0] * dim2size[1] * dim2size[2]];
+
+    for(size_t i=0; i < dim2size[2]; i++)
+    {
+        start[2] = i;
+        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, data_in) ) != 0)
+        {
+            delete []data_in;
+            logE<< path << " :: " << nc_strerror(retval)<<"\n";
+            nc_close(ncid);
+            return 0;
+        }
+        std::string search_name = tag+std::to_string(i);
+        for(auto& scaler_map : scan_info->scaler_maps)
+        {
+            if(scaler_map.name == search_name)
+            {
+                for(size_t j=0; j < dim2size[0]; j++)
+                {
+                    scaler_map.values(row,j) = data_in[j];
+                }
+                break;
+            }
+        }
+    }
+
+    delete []data_in;
+    return count[0];
+}
+
+//-----------------------------------------------------------------------------
 
 TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<float>;
 TEMPLATE_CLASS_DLL_EXPORT NetCDF_IO<double>;
