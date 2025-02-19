@@ -110,6 +110,8 @@ namespace io
 
             const std::vector<std::string>& hdf_emd_files() { return _hdf_emd_files; }
 
+            const std::vector<std::string>& netcdf_tetramm_files() { return _netcdf_tetramm_files; }
+
         private:
 
             File_Scan();
@@ -123,6 +125,7 @@ namespace io
             std::vector<std::string> _hdf_xspress_files;
             //std::vector<std::string> _hdf_confocal_files;
             std::vector<std::string> _hdf_emd_files;
+            std::vector<std::string> _netcdf_tetramm_files;
         };
 
 

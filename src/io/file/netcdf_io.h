@@ -89,6 +89,9 @@ public:
 
     size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra);
 
+    // tetramm scalers netcdf file
+    size_t load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info);
+
 private:
     NetCDF_IO();
 

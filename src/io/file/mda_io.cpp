@@ -311,8 +311,52 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
     }
     else if (_mda_file->header->data_rank == 3)
     {
+        // if num_detectors == 0 them it is new fly scan with tetram
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors == 0)
+        {
+            logI<<" requested rows "<< _mda_file->header->dimensions[0] << " requested cols " << _mda_file->header->dimensions[1] <<
+            " acquired rows "<< _mda_file->scan->last_point << " acquired cols " << _mda_file->scan->sub_scans[0]->last_point <<"\n";
 
-        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < detector_num)
+            if(hasNetCDF)
+            {
+                if(_mda_file->scan->last_point == 0)
+                {
+                    if(_mda_file->scan->requested_points == 0)
+                    {
+                        logW<<"mda_file->scan->last_point == 0 and mda_file->scan->requested_points == 0, Settign rows = 1\n";
+                        rows = 1;
+                    }
+                    else
+                    {
+                        rows = _mda_file->scan->requested_points;
+                    }
+                }
+                else
+                {
+                    rows = _mda_file->scan->last_point;
+                }
+                if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                {
+                    if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+                    {
+                        logW<<"mda_file->scan->>sub_scans[0]->last_point == 0 and mda_file->scan->>sub_scans[0]->requested_points == 0, Settign cols = 1\n";
+                        cols = 1;
+                    }
+                    else
+                    {
+                        cols = _mda_file->scan->sub_scans[0]->requested_points;
+                    }
+                }
+                else
+                {
+                    cols = _mda_file->scan->sub_scans[0]->last_point;
+                }
+                vol->resize_and_zero(rows, cols, 2048);
+                return true;
+            }
+            // TODO: might need to check if is XANES like above 
+        }
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < (int)detector_num)
         {
             logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
@@ -1085,20 +1129,30 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
     }
     else
     {
-        if (_mda_file->scan->last_point == 0)
-            rows = 1;
-        else
-            rows = _mda_file->scan->last_point;
-        if (_mda_file->scan->sub_scans[0]->last_point == 0)
-            cols = 1;
-        else
-            cols = _mda_file->scan->sub_scans[0]->last_point;
-
-
-
-        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+        if (_mda_file->scan->requested_points == 0)
         {
-            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
+            rows = 1;
+        }
+        else
+        {
+            rows = _mda_file->scan->requested_points;
+        }
+        if (_mda_file->scan->sub_scans[0]->requested_points == 0)
+        {
+            cols = 1;
+        }
+        else
+        {
+            cols = _mda_file->scan->sub_scans[0]->requested_points;
+        }
+
+
+
+        //for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+        for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+        {
+            //for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
+            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->requested_points; j++)
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
@@ -1254,6 +1308,18 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 			{
 				e_pv.name = std::string(pv->name);
 			}
+            
+            // check for tetramm column names and append to scaler_maps
+            if(e_pv.name.find("tetra1_") != std::string::npos || e_pv.name.find("tetra2_") != std::string::npos)
+            {
+                auto o_map = _scan_info.scaler_maps.at(0);
+                data_struct::Scaler_Map<T_real> s_map;
+                s_map.values.resize(o_map.values.rows(), o_map.values.cols());
+                s_map.values.setZero(o_map.values.rows(), o_map.values.cols());
+                s_map.name = e_pv.name;
+                s_map.unit = e_pv.unit;
+                _scan_info.scaler_maps.push_back(s_map);
+            }
 
 			if (pv->description != nullptr)
 			{

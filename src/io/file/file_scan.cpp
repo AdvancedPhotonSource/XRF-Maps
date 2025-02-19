@@ -98,6 +98,7 @@ namespace io
             _hdf_files.clear();
             _hdf_xspress_files.clear();
             _hdf_emd_files.clear();
+            _netcdf_tetramm_files.clear();
         }
 
 
@@ -133,6 +134,7 @@ namespace io
             _hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
             //_hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
             _hdf_emd_files = find_all_dataset_files(dataset_dir, ".emd");
+            _netcdf_tetramm_files = find_all_dataset_files(dataset_dir + "tetramm" + DIR_END_CHAR, "_0.nc");
         }
 
         // ----------------------------------------------------------------------------

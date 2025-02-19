@@ -388,6 +388,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     bool hasBnpNetcdf = false;
     bool hasHdf = false;
     bool hasXspress = false;
+    bool hasTetraMM = false;
     std::string file_middle = ""; //_2xfm3_ or dxpM...
     std::string bnp_netcdf_base_name = "bnp_fly_";
     for (auto& itr : io::file::File_Scan::inst()->netcdf_files())
@@ -397,6 +398,14 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             size_t slen = (itr.length() - 4) - tmp_dataset_file.length();
             file_middle = itr.substr(tmp_dataset_file.length(), slen);
             hasNetcdf = true;
+            break;
+        }
+    }
+    for (auto& itr : io::file::File_Scan::inst()->netcdf_tetramm_files())
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            hasTetraMM = true;
             break;
         }
     }
@@ -737,6 +746,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     bool hasBnpNetcdf = false;
     bool hasHdf = false;
     bool hasXspress = false;
+    bool hasTetraMM = false;
     std::string file_middle = ""; //_2xfm3_, dxpM, or file index in case of bnp...
     std::string bnp_netcdf_base_name = "bnp_fly_";
     std::vector<int> bad_rows;
@@ -747,6 +757,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             size_t slen = (itr.length() - 4) - tmp_dataset_file.length();
             file_middle = itr.substr(tmp_dataset_file.length(), slen);
             hasNetcdf = true;
+            break;
+        }
+    }
+    for (auto& itr : io::file::File_Scan::inst()->netcdf_tetramm_files())
+    {
+        if (itr.find(tmp_dataset_file) == 0)
+        {
+            hasTetraMM = true;
             break;
         }
     }
@@ -1105,6 +1123,37 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
     else
     {
+        // tetramm is scalers only
+        if(hasTetraMM)
+        {
+            // tetramm has 2 files it can save scalers. filename_tetra1_0.nc or filename_tetra2_0.nc
+            std::ifstream file_io(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
+            if (file_io.is_open())
+            {
+                file_io.close();
+                std::string full_filename;
+                for (size_t i = 0; i < spectra_volume->rows(); i++)
+                {
+                    full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_" + std::to_string(i) + ".nc";
+                    //todo: add verbose option
+                    //logI<<"Loading file "<<full_filename<<"\n";
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                }
+            }
+            std::ifstream file_io2(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_0.nc");
+            if (file_io2.is_open())
+            {
+                file_io2.close();
+                std::string full_filename;
+                for (size_t i = 0; i < spectra_volume->rows(); i++)
+                {
+                    full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_" + std::to_string(i) + ".nc";
+                    //todo: add verbose option
+                    //logI<<"Loading file "<<full_filename<<"\n";
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info());
+                }
+            }
+        }
         if (hasNetcdf)
         {
             std::ifstream file_io(dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc");
