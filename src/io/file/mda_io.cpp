@@ -268,14 +268,14 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
         if(hasNetCDF)
         {
-            if(_mda_file->scan->last_point == 0)
+            if(_mda_file->scan->requested_points == 0)
                 rows = 1;
             else
-                rows = _mda_file->scan->last_point;
-            if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                rows = _mda_file->scan->requested_points;
+            if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 cols = 1;
             else
-                cols = _mda_file->scan->sub_scans[0]->last_point;
+                cols = _mda_file->scan->sub_scans[0]->requested_points;
             vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
@@ -292,10 +292,14 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
 
                 rows = 1;
-                if(_mda_file->scan->last_point == 0)
+                if(_mda_file->scan->requested_points == 0)
+                {
                     cols = 1;
+                }
                 else
-                cols = _mda_file->scan->last_point;
+                {
+                    cols = _mda_file->scan->requested_points;
+                }
                 samples = _mda_file->header->dimensions[1];
                 vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
                 is_single_row = true;
@@ -319,38 +323,26 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
             if(hasNetCDF)
             {
-                if(_mda_file->scan->last_point == 0)
+                if(_mda_file->scan->requested_points == 0)
                 {
-                    if(_mda_file->scan->requested_points == 0)
-                    {
-                        logW<<"mda_file->scan->last_point == 0 and mda_file->scan->requested_points == 0, Settign rows = 1\n";
-                        rows = 1;
-                    }
-                    else
-                    {
-                        rows = _mda_file->scan->requested_points;
-                    }
+                    logW<<"mda_file->scan->requested_points == 0, Settign rows = 1\n";
+                    rows = 1;
                 }
                 else
                 {
-                    rows = _mda_file->scan->last_point;
+                    rows = _mda_file->scan->requested_points;
                 }
-                if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                
+                if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 {
-                    if(_mda_file->scan->sub_scans[0]->requested_points == 0)
-                    {
-                        logW<<"mda_file->scan->>sub_scans[0]->last_point == 0 and mda_file->scan->>sub_scans[0]->requested_points == 0, Settign cols = 1\n";
-                        cols = 1;
-                    }
-                    else
-                    {
-                        cols = _mda_file->scan->sub_scans[0]->requested_points;
-                    }
+                    logW<<"mda_file->scan->>sub_scans[0]->requested_points == 0, Settign cols = 1\n";
+                    cols = 1;
                 }
                 else
                 {
-                    cols = _mda_file->scan->sub_scans[0]->last_point;
+                    cols = _mda_file->scan->sub_scans[0]->requested_points;
                 }
+                
                 vol->resize_and_zero(rows, cols, 2048);
                 return true;
             }
@@ -363,14 +355,22 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             return false;
         }
 
-        if(_mda_file->scan->last_point == 0)
+        if(_mda_file->scan->requested_points == 0)
+        {
             rows = 1;
+        }
         else
-            rows = _mda_file->scan->last_point;
-        if(_mda_file->scan->sub_scans[0]->last_point == 0)
+        {
+            rows = _mda_file->scan->requested_points;
+        }
+        if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+        {
             cols = 1;
+        }
         else
-            cols = _mda_file->scan->sub_scans[0]->last_point;
+        {
+            cols = _mda_file->scan->sub_scans[0]->requested_points;
+        }
         samples = _mda_file->header->dimensions[2];
         if(_mda_file->header->dimensions[2] == 2000)
         {
@@ -378,7 +378,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else if(_mda_file->header->dimensions[2] > 4096) // there can be a bug in mda files that the header has incorrect dimensions
         {
-            samples = _mda_file->scan->sub_scans[0]->sub_scans[0]->last_point;
+            samples = _mda_file->scan->sub_scans[0]->sub_scans[0]->requested_points;
             vol->resize_and_zero(rows, cols, samples);
         }
         else
@@ -402,44 +402,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
     try
     {
-        if( is_single_row )
-        {
-            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
-            {
-                cols = _mda_file->scan->last_point;
-            }
-        }
-        else
-        {
-            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
-            {
-                rows = _mda_file->scan->last_point;
-                //TODO: set a flag to return to tell that this is a bad scan
-            }
-        }
-
         for(size_t i=0; i<rows; i++)
         {
-            // update num rows if header is incorrect and not single row scan
-
-            if(false == is_single_row)
-            {
-                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
-                {
-                    cols = _mda_file->scan->sub_scans[i]->last_point;
-                    //TODO: set a flag to return to tell that this is a bad scan
-                }
-            }
             for(size_t j=0; j<cols; j++)
             {
-// TODO: we might need to do the same check for samples size
-//                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
-//                {
-//                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
-//                }
-//
-
-
                 if (is_single_row)
                 {
                     if(elt_arr)
@@ -573,14 +539,14 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
         if(hasNetCDF)
         {
-            if(_mda_file->scan->last_point == 0)
+            if(_mda_file->scan->requested_points == 0)
                 out_rows = 1;
             else
-                out_rows = _mda_file->scan->last_point;
-            if(_mda_file->scan->sub_scans[0]->last_point == 0)
+                out_rows = _mda_file->scan->requested_points;
+            if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 out_cols = 1;
             else
-                out_cols = _mda_file->scan->sub_scans[0]->last_point;
+                out_cols = _mda_file->scan->sub_scans[0]->requested_points;
             return true;
         }
         else
@@ -595,13 +561,13 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                 }
 
                 out_rows = 1;
-                if (_mda_file->scan->last_point == 0)
+                if (_mda_file->scan->requested_points == 0)
                 {
                     out_cols = 1;
                 }
                 else
                 {
-                    out_cols = _mda_file->scan->last_point;
+                    out_cols = _mda_file->scan->requested_points;
                 }
                 samples = _mda_file->header->dimensions[1];
                 is_single_row = true;
@@ -624,14 +590,14 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
             return false;
         }
 
-        if(_mda_file->scan->last_point == 0)
+        if(_mda_file->scan->requested_points == 0)
             out_rows = 1;
         else
-            out_rows = _mda_file->scan->last_point;
-        if(_mda_file->scan->sub_scans[0]->last_point == 0)
+            out_rows = _mda_file->scan->requested_points;
+        if(_mda_file->scan->sub_scans[0]->requested_points == 0)
             out_cols = 1;
         else
-            out_cols = _mda_file->scan->sub_scans[0]->last_point;
+            out_cols = _mda_file->scan->sub_scans[0]->requested_points;
         samples = _mda_file->header->dimensions[2];
     }
     else
@@ -670,41 +636,10 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
     try
     {
-        if(is_single_row )
-        {
-            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
-            {
-                out_cols = _mda_file->scan->last_point;
-            }
-        }
-        else
-        {
-            if(_mda_file->scan->last_point < _mda_file->scan->requested_points)
-            {
-                out_rows = _mda_file->scan->last_point;
-            }
-        }
-
         for(int i=0; i< out_rows; i++)
         {
-            // update num rows if header is incorrect and not single row scan
-
-            if(false == is_single_row)
-            {
-                if(_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
-                {
-                    out_cols = _mda_file->scan->sub_scans[i]->last_point;
-                }
-            }
             for(int j=0; j< out_cols; j++)
             {
-/* TODO: we might need to do the same check for samples size
-                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
-                {
-                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
-                }
-*/
-
                 for(size_t detector_num : detector_num_arr)
                 {
                     data_struct::Spectra<T_real>* spectra = new data_struct::Spectra<T_real>(samples);
@@ -830,14 +765,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 		if (hasNetCDF)
 		{
-			if (_mda_file->scan->last_point == 0)
+			if (_mda_file->scan->requested_points == 0)
 				rows = 1;
 			else
-				rows = _mda_file->scan->last_point;
-			if (_mda_file->scan->sub_scans[0]->last_point == 0)
+				rows = _mda_file->scan->requested_points;
+			if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 				cols = 1;
 			else
-				cols = _mda_file->scan->sub_scans[0]->last_point;
+				cols = _mda_file->scan->sub_scans[0]->requested_points;
 			out_integrated_spectra->resize(2048);
 			return true;
 		}
@@ -853,10 +788,10 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				}
 
 				rows = 1;
-				if (_mda_file->scan->last_point == 0)
+				if (_mda_file->scan->requested_points == 0)
 					cols = 1;
 				else
-					cols = _mda_file->scan->last_point;
+					cols = _mda_file->scan->requested_points;
 				samples = _mda_file->header->dimensions[1];
 				out_integrated_spectra->resize(2048); //default to 2048 since it is only 2000 saved
 				is_single_row = true;
@@ -879,14 +814,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			return false;
 		}
 
-		if (_mda_file->scan->last_point == 0)
+		if (_mda_file->scan->requested_points == 0)
 			rows = 1;
 		else
-			rows = _mda_file->scan->last_point;
-		if (_mda_file->scan->sub_scans[0]->last_point == 0)
+			rows = _mda_file->scan->requested_points;
+		if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 			cols = 1;
 		else
-			cols = _mda_file->scan->sub_scans[0]->last_point;
+			cols = _mda_file->scan->sub_scans[0]->requested_points;
 		samples = _mda_file->header->dimensions[2];
 		if (_mda_file->header->dimensions[2] == 2000)
 		{
@@ -894,7 +829,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		}
 		else if (_mda_file->header->dimensions[2] > 4096) // there can be a bug in mda files that the header has incorrect dimensions
 		{
-			samples = _mda_file->scan->sub_scans[0]->sub_scans[0]->last_point;
+			samples = _mda_file->scan->sub_scans[0]->sub_scans[0]->requested_points;
 			out_integrated_spectra->resize(samples);
 		}
 		else
@@ -920,49 +855,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 	try
 	{
-		if (is_single_row)
-		{
-			if (_mda_file->scan->last_point < _mda_file->scan->requested_points)
-			{
-				cols = _mda_file->scan->last_point;
-			}
-		}
-		else
-		{
-			if (_mda_file->scan->last_point < _mda_file->scan->requested_points)
-			{
-				rows = _mda_file->scan->last_point;
-				//TODO: set a flag to return to tell that this is a bad scan
-			}
-		}
-
 		for (size_t i = 0; i < rows; i++)
 		{
-			// update num rows if header is incorrect and not single row scan
-
-			if (false == is_single_row)
-			{
-				if (_mda_file->scan->sub_scans[i]->last_point < _mda_file->scan->sub_scans[i]->requested_points)
-				{
-					cols = _mda_file->scan->sub_scans[i]->last_point;
-					//TODO: set a flag to return to tell that this is a bad scan
-				}
-			}
 			for (size_t j = 0; j < cols; j++)
 			{
-				// TODO: we might need to do the same check for samples size
-				//                if(_mda_file->scan->sub_scans[i]->sub_scan[j]->last_point < _mda_file->scan->sub_scans[i]->sub_scan[j]->requested_points)
-				//                {
-				//                    samples = _mda_file->scan->sub_scans[i]->sub_scan[j]->last_point;
-				//                }
-				//
-
-
 				if (is_single_row)
 				{
 					for (size_t k = 0; k < samples; k++)
 					{
-
 						(*out_integrated_spectra)[k] += (_mda_file->scan->sub_scans[j]->detectors_data[detector_num][k]);
 					}
 				}
@@ -1069,13 +969,13 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
     if (single_row_scan)
     {
         rows = 1;
-        if (_mda_file->scan->last_point == 0)
+        if (_mda_file->scan->requested_points == 0)
             rows = 1;
         else
-            cols = _mda_file->scan->last_point;
+            cols = _mda_file->scan->requested_points;
 
 
-        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+        for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
         {
             for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
@@ -1111,14 +1011,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                     {
                         // if this is the first one then zero it out
                         int_spec = &(_integrated_spectra_map[d]);
-                        int_spec->resize(_mda_file->scan->sub_scans[i]->last_point);
-                        int_spec->setZero(_mda_file->scan->sub_scans[i]->last_point);
+                        int_spec->resize(_mda_file->scan->sub_scans[i]->requested_points);
+                        int_spec->setZero(_mda_file->scan->sub_scans[i]->requested_points);
                     }
                     else
                     {
                         int_spec = &(_integrated_spectra_map[d]);
                     }
-                    for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->last_point; m++)
+                    for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->requested_points; m++)
                     {
                         (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->detectors_data[d][m]);
                     }
@@ -1146,12 +1046,8 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
             cols = _mda_file->scan->sub_scans[0]->requested_points;
         }
 
-
-
-        //for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
         {
-            //for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
             for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->requested_points; j++)
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
@@ -1187,14 +1083,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                         {
                             // if this is the first one then zero it out
                             int_spec = &(_integrated_spectra_map[d]);
-                            int_spec->resize(_mda_file->scan->sub_scans[i]->sub_scans[j]->last_point);
-                            int_spec->setZero(_mda_file->scan->sub_scans[i]->sub_scans[j]->last_point);
+                            int_spec->resize(_mda_file->scan->sub_scans[i]->sub_scans[j]->requested_points);
+                            int_spec->setZero(_mda_file->scan->sub_scans[i]->sub_scans[j]->requested_points);
                         }
                         else
                         {
                             int_spec = &(_integrated_spectra_map[d]);
                         }
-                        for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->sub_scans[j]->last_point; m++)
+                        for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->sub_scans[j]->requested_points; m++)
                         {
                             (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[d][m]);
                         }
@@ -1254,7 +1150,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
 template<typename T_real>
 void MDA_IO<T_real>::_load_extra_pvs_vector()
 {
-
+    std::map<std::string, std::string> name_hash;
     if (_mda_file == nullptr)
     {
         return;
@@ -1310,15 +1206,52 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 			}
             
             // check for tetramm column names and append to scaler_maps
-            if(e_pv.name.find("tetra1_") != std::string::npos || e_pv.name.find("tetra2_") != std::string::npos)
+            int t1idx = e_pv.name.find("tmm1:");
+            int t2idx = e_pv.name.find("tmm2:");
+            int ndidx = e_pv.name.find("NDArrayAddress");
+            int nameidx = e_pv.name.find("Name");
+            if((t1idx != std::string::npos || t2idx != std::string::npos) && nameidx != std::string::npos)
             {
-                auto o_map = _scan_info.scaler_maps.at(0);
-                data_struct::Scaler_Map<T_real> s_map;
-                s_map.values.resize(o_map.values.rows(), o_map.values.cols());
-                s_map.values.setZero(o_map.values.rows(), o_map.values.cols());
-                s_map.name = e_pv.name;
-                s_map.unit = e_pv.unit;
-                _scan_info.scaler_maps.push_back(s_map);
+                std::vector<std::string> tokens;
+                std::stringstream ss(e_pv.name);
+                std::string token;
+                while (std::getline(ss, token, ':')) 
+                {
+                    tokens.push_back(token);
+                }
+                if(tokens.size() > 2)
+                {
+                    name_hash[tokens[1]] = e_pv.value;
+                }
+            }
+            if((t1idx != std::string::npos || t2idx != std::string::npos) && ndidx != std::string::npos)
+            {
+                std::vector<std::string> tokens;
+                std::stringstream ss(e_pv.name);
+                std::string token;
+                while (std::getline(ss, token, ':')) 
+                {
+                    tokens.push_back(token);
+                }
+                if(tokens.size() > 2)
+                {
+
+                    auto o_map = _scan_info.scaler_maps.at(0);
+                    data_struct::Scaler_Map<T_real> s_map;
+                    s_map.values.resize(o_map.values.rows(), o_map.values.cols());
+                    s_map.values.setZero(o_map.values.rows(), o_map.values.cols());
+                    s_map.name = tokens[1];
+                    
+                    if(t1idx != std::string::npos)
+                    {
+                        s_map.unit = "tetra1_" + e_pv.value;
+                    }
+                    else
+                    {
+                        s_map.unit = "tetra2_" + e_pv.value;
+                    }
+                    _scan_info.scaler_maps.push_back(s_map);  
+                }
             }
 
 			if (pv->description != nullptr)
@@ -1332,6 +1265,14 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 			}
 			_scan_info.extra_pvs.push_back(e_pv);
 		}
+
+        for(auto &itr : _scan_info.scaler_maps)
+        {
+            if(name_hash.count(itr.name) > 0)
+            {
+                itr.name = name_hash.at(itr.name);
+            }
+        }
 	}
 	else
 	{
@@ -1376,9 +1317,9 @@ void MDA_IO<T_real>::_load_meta_info()
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0];
                 _scan_info.meta_info.y_axis.resize(1);
                 _scan_info.meta_info.y_axis.setZero(1);
-                _scan_info.meta_info.x_axis.resize(_mda_file->scan->last_point);
-                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->last_point);
-                for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                _scan_info.meta_info.x_axis.resize(_mda_file->scan->requested_points);
+                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->requested_points);
+                for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
                 {
                     _scan_info.meta_info.x_axis(i) = _mda_file->scan->positioners_data[0][i];
                 }
@@ -1388,25 +1329,25 @@ void MDA_IO<T_real>::_load_meta_info()
                 _scan_info.meta_info.requested_rows = _mda_file->header->dimensions[0];
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1];
                 // resize and zero y axis
-                _scan_info.meta_info.y_axis.resize(_mda_file->scan->last_point);
-                _scan_info.meta_info.y_axis.setZero(_mda_file->scan->last_point);
+                _scan_info.meta_info.y_axis.resize(_scan_info.meta_info.requested_rows);
+                _scan_info.meta_info.y_axis.setZero(_scan_info.meta_info.requested_rows);
                 // if positioner exists, then read it
                 if (_mda_file->scan->number_positioners > 0)
                 {
                     // save y axis
-                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                    for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
                     {
                         _scan_info.meta_info.y_axis(i) = _mda_file->scan->positioners_data[0][i];
                     }
                 }
                 // resize and zero x axis
-                _scan_info.meta_info.x_axis.resize(_mda_file->scan->sub_scans[0]->last_point);
-                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->sub_scans[0]->last_point);
+                _scan_info.meta_info.x_axis.resize(_scan_info.meta_info.requested_cols);
+                _scan_info.meta_info.x_axis.setZero(_scan_info.meta_info.requested_cols);
                 // if positioner exists, then read it
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
                     // save x axis
-                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
+                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->requested_points; i++)
                     {
                         _scan_info.meta_info.x_axis(i) = _mda_file->scan->sub_scans[0]->positioners_data[0][i];
                     }

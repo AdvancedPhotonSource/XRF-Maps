@@ -751,7 +751,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, s
         std::string search_name = tag+std::to_string(i);
         for(auto& scaler_map : scan_info->scaler_maps)
         {
-            if(scaler_map.name == search_name)
+            if(scaler_map.unit == search_name)
             {
                 for(size_t j=0; j < dim2size[0]; j++)
                 {
