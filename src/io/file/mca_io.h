@@ -373,6 +373,7 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
         paramFileStream << "CAL_QUAD: " << quad << "\n";
         paramFileStream << "ENVIRONMENT: SRCURRENT=\"" << sr_current << "\"\n";
         paramFileStream << "ENVIRONMENT: UPSTREAM_IONCHAMBER=\"" << us_ic << "\"\n";
+        paramFileStream << "ENVIRONMENT: UPSTREAM_FLUX_MONITOR=\"" << us_fm << "\"\n";
         paramFileStream << "ENVIRONMENT: DOWNSTREAM_IONCHAMBER=\"" << ds_ic << "\"\n";
         paramFileStream << "ENVIRONMENT: UPSTREAM_FLUX_MONITOR=\"" << us_fm << "\"\n";
         paramFileStream << "DATA: \n";

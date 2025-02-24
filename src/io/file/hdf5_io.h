@@ -3657,10 +3657,10 @@ public:
         hid_t cc_id;
         hid_t cc_labels_id;
         
-        std::string str_cc_ds = "/MAPS/"+ STR_QUANTIFICATION + "/" + STR_CALIBRATION +  "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_DS_IC;
-        std::string str_cc_us = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_US_IC;
-        std::string str_cc_us_fm = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_US_FM;
-        std::string str_cc_sr = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_SR_CUR;
+        std::string str_cc_ds = "/MAPS/"+ STR_QUANTIFICATION + "/" + STR_CALIBRATION +  "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE + STR_DS_IC;
+        std::string str_cc_us = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE + STR_US_IC;
+        std::string str_cc_us_fm = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE + STR_US_FM;
+        std::string str_cc_sr = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE + STR_SR_CURRENT;
         std::string str_cc_labels = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_LABELS;
         
         if (false == _open_h5_object(cc_labels_id, H5O_DATASET, close_map, str_cc_labels, file_id))
