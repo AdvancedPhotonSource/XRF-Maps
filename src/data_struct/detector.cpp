@@ -250,10 +250,12 @@ void Detector<T_real>::generage_avg_quantification_scalers()
 {
     T_real avg_sr_current = 0.0;
     T_real avg_US_IC = 0.0;
+    T_real avg_US_FM = 0.0;
     T_real avg_DS_IC = 0.0;
 
     T_real crnt_cnt = 0.0;
     T_real us_cnt = 0.0;
+    T_real us_fm_cnt = 0.0;
     T_real ds_cnt = 0.0;
 
     //average quantification scalers
@@ -269,6 +271,11 @@ void Detector<T_real>::generage_avg_quantification_scalers()
             avg_US_IC += itr.second.US_IC;
             us_cnt += 1.0;
         }
+        if (itr.second.US_FM > 0.0)
+        {
+            avg_US_FM += itr.second.US_FM;
+            us_cnt += 1.0;
+        }
         if (itr.second.DS_IC > 0.0)
         {
             avg_DS_IC += itr.second.DS_IC;
@@ -276,9 +283,9 @@ void Detector<T_real>::generage_avg_quantification_scalers()
         }
     }
     
-    if (avg_sr_current == 0.0 && avg_US_IC == 0.0 && avg_DS_IC == 0.0)
+    if (avg_sr_current == 0.0 && avg_US_IC == 0.0 && avg_US_FM && avg_DS_IC == 0.0)
     {
-        logE << "Could not find SR_Current, US_IC, and DS_IC. Not going to perform quantification\n";
+        logE << "Could not find SR_Current, US_IC, US_FM, and DS_IC. Not going to perform quantification\n";
     }
 
     if (crnt_cnt != us_cnt && crnt_cnt != ds_cnt)
@@ -305,6 +312,15 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     {
         avg_US_IC /= us_cnt;
     }
+    if (avg_US_FM == 0.0)
+    {
+        logW"US_FM is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+        avg_US_FM = 1.0;
+    }
+    else
+    {
+        avg_US_FM /= us_fm_cnt;
+    }
     if (avg_DS_IC == 0.0)
     {
         logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
@@ -317,6 +333,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
 
     avg_quantification_scaler_map[STR_SR_CURRENT] = avg_sr_current;
     avg_quantification_scaler_map[STR_US_IC] = avg_US_IC;
+    avg_quantification_scaler_map[STR_US_FM] = avg_US_FM;
     avg_quantification_scaler_map[STR_DS_IC] = avg_DS_IC;
 }
 

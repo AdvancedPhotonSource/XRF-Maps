@@ -731,8 +731,10 @@ int run_streaming(Command_Line_Parser& clp)
     // init our job and run
     if (io::file::init_analysis_job_detectors(&analysis_job))
     {
-        io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
-        
+        if(analysis_job.network_source_ip.length() == 0)
+        {
+            io::file::File_Scan::inst()->populate_netcdf_hdf5_files(analysis_job.dataset_directory);
+        }
         // If we have fitting routines then stream the counts per sec
         if (analysis_job.fitting_routines.size() > 0)
         {

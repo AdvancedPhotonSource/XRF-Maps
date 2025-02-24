@@ -179,6 +179,7 @@ namespace csv
                 file_stream << "Standard Filename: " << itr.first << "\n";
                 file_stream << " SR_Current: " << itr.second.sr_current << "\n";
                 file_stream << " US_IC: " << itr.second.US_IC << "\n";
+                file_stream << " US_FM: " << itr.second.US_FM << "\n";
                 file_stream << " DS_IC: " << itr.second.DS_IC << "\n";
                 file_stream << "\n\n";
             }
@@ -382,6 +383,7 @@ namespace csv
                 file_stream << "livetime[s]:, " << itr.second.integrated_spectra.elapsed_livetime() << "\n";
                 file_stream << " I_[mA]:, " << itr.second.sr_current << "\n";
                 file_stream << " US_IC[cts/s]:, " << itr.second.US_IC << "\n";
+                file_stream << " US_FM[cts/s]:, " << itr.second.US_FM << "\n";
                 file_stream << " DS_IC[cts/s]:, " << itr.second.DS_IC << "\n";
                 file_stream << " US_AMPS[num,unit]:, " << detector->fit_params_override_dict.us_amp_sens_num << ","<< detector->fit_params_override_dict.us_amp_sens_unit << "\n";
                 file_stream << " DS_AMPS[num,unit]:, " << detector->fit_params_override_dict.ds_amp_sens_num << "," << detector->fit_params_override_dict.ds_amp_sens_unit << "\n";
@@ -450,6 +452,7 @@ namespace csv
                         T_real roi_pixels = 1.0e-10;
                         T_real roi_areas = 1.0e-10;
                         T_real us_ic = 1.0e-10;
+                        T_real us_fm = 1.0e-10;
                         T_real ds_ic = 1.0e-10;
                         T_real real_time = 1.0e-10;
                         T_real live_time = 1.0e-10;
@@ -466,6 +469,10 @@ namespace csv
                         if (itr.second.contains(STR_US_IC))
                         {
                             us_ic = itr.second.at(STR_US_IC).value;
+                        }
+                        if (itr.second.contains(STR_US_FM))
+                        {
+                            us_fm = itr.second.at(STR_US_FM).value;
                         }
                         if (itr.second.contains(STR_DS_IC))
                         {

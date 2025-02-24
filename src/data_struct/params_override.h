@@ -83,6 +83,7 @@ public:
         theta_pv = "";
         sr_current = 0.0;
         US_IC = 0.0;
+        US_FM = 0.0;
         DS_IC = 0.0;
         detector_element = "Si";
         dataset_directory = "";
@@ -109,6 +110,7 @@ public:
         theta_pv = "";
         sr_current = 0.0;
         US_IC = 0.0;
+        US_FM = 0.0;
         DS_IC = 0.0;
 
         dataset_directory = dir;
@@ -233,6 +235,7 @@ public:
 
     T_real sr_current;
     T_real US_IC;
+    T_real US_FM;
     T_real DS_IC;
 
     T_real us_amp_sens_num;
