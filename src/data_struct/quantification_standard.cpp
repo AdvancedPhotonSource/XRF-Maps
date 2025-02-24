@@ -113,6 +113,7 @@ void Quantification_Standard<T_real>::init_defaults()
 {
     sr_current = 0.0;
     US_IC = 0.0;
+    US_FM = 0.0;
     DS_IC = 0.0;
     disable_Ka_for_quantification = false;
     disable_La_for_quantification = false;

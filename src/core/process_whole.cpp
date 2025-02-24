@@ -311,6 +311,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                         {
                             quantification_standard->sr_current = override_params->sr_current;
                             quantification_standard->US_IC = override_params->US_IC;
+                            quantification_standard->US_FM = override_params->US_FM;
                             quantification_standard->DS_IC = override_params->DS_IC;
                         }
                     }
@@ -341,6 +342,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             {
                 quantification_standard->sr_current = override_params->sr_current;
                 quantification_standard->US_IC = override_params->US_IC;
+                quantification_standard->US_FM = override_params->US_FM;
                 quantification_standard->DS_IC = override_params->DS_IC;
             }
         }
@@ -369,6 +371,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
 
                 detector->append_element(fit_itr.first, STR_SR_CURRENT, el_itr.first, el_itr.second);
                 detector->append_element(fit_itr.first, STR_US_IC, el_itr.first, el_itr.second);
+                detector->append_element(fit_itr.first, STR_US_FM, el_itr.first, el_itr.second);
                 detector->append_element(fit_itr.first, STR_DS_IC, el_itr.first, el_itr.second);
             }
 
@@ -414,6 +417,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
 
             detector->update_element_quants(fit_itr.first, STR_SR_CURRENT, quantification_standard, &quantification_model, quantification_standard->sr_current);
             detector->update_element_quants(fit_itr.first, STR_US_IC, quantification_standard, &quantification_model, quantification_standard->US_IC);
+            detector->update_element_quants(fit_itr.first, STR_US_FM, quantification_standard, &quantification_model, quantification_standard->US_FM);
             detector->update_element_quants(fit_itr.first, STR_DS_IC, quantification_standard, &quantification_model, quantification_standard->DS_IC);
         }
 
@@ -446,7 +450,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
     logI << "Perform_quantification()"<<"\n";
 
-    std::vector<std::string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
+    std::vector<std::string> quant_scaler_name_list = { STR_SR_CURRENT, STR_US_IC, STR_US_FM, STR_DS_IC };
 
     if( io::file::load_quantification_standardinfo(analysis_job->output_dir, analysis_job->quantification_standard_filename, analysis_job->standard_element_weights) )
     {
@@ -623,6 +627,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
             double sr_current = 1.0;
             double us_ic = 1.0;
+            double us_fm = 1.0;
             double ds_ic = 1.0;
 
             std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
@@ -632,6 +637,8 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), [](unsigned char c) { return std::tolower(c); });
                 std::string low_us_ic = STR_US_IC; 
                 std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
+                std::string low_us_fm = STR_US_FM; 
+                std::transform(low_us_fm.begin(), low_us_fm.end(), low_us_fm.begin(), [](unsigned char c) { return std::tolower(c); });
                 std::string low_sr = STR_SR_CURRENT;
                 std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
                 for (auto& in_itr : roi_itr.second)
@@ -654,6 +661,14 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                     {
                         us_ic += scalers_map.at(low_us_ic)(yoffset, xoffset);
                     }
+                    if (scalers_map.count(STR_US_FM) > 0)
+                    {
+                        us_fm += scalers_map.at(STR_US_FM)(yoffset, xoffset);
+                    }
+                    else if (scalers_map.count(low_us_fm) > 0)
+                    {
+                        us_fm += scalers_map.at(low_us_fm)(yoffset, xoffset);
+                    }
                     if (scalers_map.count(STR_SR_CURRENT) > 0)
                     {
                         sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
@@ -668,6 +683,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             {
                 sr_current = detector->fit_params_override_dict.sr_current;
                 us_ic = detector->fit_params_override_dict.US_IC;
+                us_fm = detector->fit_params_override_dict.US_FM;
                 ds_ic = detector->fit_params_override_dict.DS_IC;
             }
 
@@ -703,6 +719,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
             out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
             out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
+            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_FM, us_fm));
             out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
             out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
             out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));

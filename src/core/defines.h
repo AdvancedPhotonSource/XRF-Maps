@@ -212,6 +212,7 @@ const std::string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
 
 const std::string STR_SR_CURRENT = "SR_Current";
 const std::string STR_US_IC = "US_IC";
+const std::string STR_US_FM = "US_FM";
 const std::string STR_DS_IC = "DS_IC";
 const std::string STR_CFG_2 = "CFG_2";
 const std::string STR_CFG_3 = "CFG_3";
@@ -238,6 +239,7 @@ const std::string STR_FIT_INT_BACKGROUND = "FIT_Integrated_Background";
 
 const std::string STR_CALIB_CURVE_SR_CUR = "Calibration_Curve_SR_Current";
 const std::string STR_CALIB_CURVE_US_IC = "Calibration_Curve_US_IC";
+const std::string STR_CALIB_CURVE_US_FM = "Calibration_Curve_US_FM";
 const std::string STR_CALIB_CURVE_DS_IC = "Calibration_Curve_DS_IC";
 const std::string STR_CALIB_LABELS = "Calibration_Curve_Labels";
 
@@ -248,6 +250,10 @@ const std::string STR_DS_IC_ELEMENT_INFO_NAMES = "DS_IC_Element_Info_Names";
 const std::string STR_US_IC_ELEMENT_INFO_VALUES = "US_IC_Element_Info_Values";
 const std::string STR_US_IC_ELEMENT_INFO_INDEX = "US_IC_Element_Info_Index";
 const std::string STR_US_IC_ELEMENT_INFO_NAMES = "US_IC_Element_Info_Names";
+
+const std::string STR_US_FM_ELEMENT_INFO_VALUES = "US_FM_Element_Info_Values";
+const std::string STR_US_FM_ELEMENT_INFO_INDEX = "US_FM_Element_Info_Index";
+const std::string STR_US_FM_ELEMENT_INFO_NAMES = "US_FM_Element_Info_Names";
 
 const std::string STR_SR_CURRENT_ELEMENT_INFO_VALUES = "SR_Current_Element_Info_Values";
 const std::string STR_SR_CURRENT_ELEMENT_INFO_INDEX = "SR_Current_Element_Info_Index";

@@ -316,6 +316,7 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
 
     T_real sr_current = 0.0;
     T_real us_ic = 0.0;
+    T_real us_fm = 0.0;
     T_real ds_ic = 0.0;
     T_real offset = 0.0;
     T_real slope = 0.0;
@@ -328,6 +329,10 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
     if (pv_map.count(STR_US_IC) > 0)
     {
         us_ic = pv_map.at(STR_US_IC);
+    }
+    if (pv_map.count(STR_US_FM) > 0)
+    {
+        us_fm = pv_map.at(STR_US_FM);
     }
     if (pv_map.count(STR_DS_IC) > 0)
     {
@@ -369,6 +374,7 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
         paramFileStream << "ENVIRONMENT: SRCURRENT=\"" << sr_current << "\"\n";
         paramFileStream << "ENVIRONMENT: UPSTREAM_IONCHAMBER=\"" << us_ic << "\"\n";
         paramFileStream << "ENVIRONMENT: DOWNSTREAM_IONCHAMBER=\"" << ds_ic << "\"\n";
+        paramFileStream << "ENVIRONMENT: UPSTREAM_FLUX_MONITOR=\"" << us_fm << "\"\n";
         paramFileStream << "DATA: \n";
         for (int i = 0; i < spectra->size(); i++)
         {

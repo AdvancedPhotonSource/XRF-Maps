@@ -58,19 +58,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <cctype>
 
-const std::vector<std::string> hdf5_copy_dset_names = {"Element_Weights",
-                                                       "Element_Weights_Names",
-                                                       STR_DS_IC,
-                                                       STR_US_IC,
-                                                       "Standard_Name",
-                                                       "Channel_Names",
-													   "Channel_Units",
-                                                       "Names",
-                                                       "version"
-                                                      };
-
-const std::vector<std::string> hdf5_copy_grp_names = {"Scan"
-                                                      };
 
 const std::vector<std::string> xrf_analysis_save_names = { STR_FIT_ROI,
                                                           STR_FIT_GAUSS_MATRIX,
@@ -725,12 +712,18 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
                         status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
                         chan_name_loc = analysis_grp_name + "/" + STR_US_IC_ELEMENT_INFO_NAMES;
                         status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
+                        chan_name_loc = analysis_grp_name + "/" + STR_US_FM_ELEMENT_INFO_INDEX;
+                        status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
+                        chan_name_loc = analysis_grp_name + "/" + STR_US_FM_ELEMENT_INFO_NAMES;
+                        status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_SR_CUR, STR_CALIB_CURVE_SR_CUR, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_SR_CURRENT_ELEMENT_INFO_VALUES, STR_SR_CURRENT_ELEMENT_INFO_VALUES, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_DS_IC, STR_CALIB_CURVE_DS_IC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_DS_IC_ELEMENT_INFO_VALUES, STR_DS_IC_ELEMENT_INFO_VALUES, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_US_IC, STR_CALIB_CURVE_US_IC, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_US_IC_ELEMENT_INFO_VALUES, STR_US_IC_ELEMENT_INFO_VALUES, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_CALIB_CURVE_US_FM, STR_CALIB_CURVE_US_FM, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
+                        _gen_average("MAPS/Quantification/Calibration/" + analysis_grp_name + "/" + STR_US_FM_ELEMENT_INFO_VALUES, STR_US_FM_ELEMENT_INFO_VALUES, src_fit_grp_id, dst_fit_grp_id, ocpypl_id, hdf5_file_ids);
                         H5Gclose(src_fit_grp_id);
                         H5Gclose(dst_fit_grp_id);
                     }

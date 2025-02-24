@@ -3511,8 +3511,8 @@ public:
         logI << path << "\n";
 
         std::map<std::string, data_struct::ArrayXXr<T_real>> scalers_map;
-        T_real srcurrent, us_ic, ds_ic;
-        hid_t    file_id = -1, ds_ic_id = -1, us_ic_id = -1, srcurrent_id = -1;
+        T_real srcurrent, us_ic, us_fm, ds_ic;
+        hid_t    file_id = -1, ds_ic_id = -1, us_ic_id = -1, us_fm_id = -1, srcurrent_id = -1;
         hid_t d_space;
         hid_t d_type;
         hid_t status;
@@ -3542,6 +3542,15 @@ public:
             }
         }
 
+        if (false == _open_h5_object(us_fm_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/US_FM", file_id, false, false))
+        {
+            if (false == _open_h5_object(us_fm_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/US_FM", file_id, false, false))
+            {
+                us_fm_id = -1;
+                override_values->US_FM = 1.0;
+            }
+        }
+
         if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard0/Scalers/SR_Current", file_id, false, false))
         {
             if (false == _open_h5_object(srcurrent_id, H5O_DATASET, close_map, "/MAPS/Quantification/Standard1/Scalers/SR_Current", file_id, false, false))
@@ -3551,7 +3560,7 @@ public:
             }
         }
 
-        if (srcurrent_id == -1 || us_ic_id == -1 || ds_ic_id == -1)
+        if (srcurrent_id == -1 || us_ic_id == -1 || us_fm_id == -1 || ds_ic_id == -1)
         {
             load_scalers_analyzed_h5(path, scalers_map);
         }
@@ -3590,6 +3599,23 @@ public:
         else if (scalers_map.count(STR_US_IC) > 0)
         {
             override_values->US_IC = scalers_map.at(STR_US_IC).sum() / scalers_map.at(STR_US_IC).size();
+        }
+
+        if (us_fm_id > -1)
+        {
+            d_space = H5Dget_space(us_fm_id);
+            close_map.push({ d_space, H5O_DATASPACE });
+            d_type = H5Dget_type(us_fm_id);
+            close_map.push({ d_type, H5O_DATATYPE });
+            status = H5Dread(us_fm_id, d_type, readwrite_space, d_space, H5P_DEFAULT, (void*)&us_fm);
+            if (status > -1)
+            {
+                override_values->US_FM = (us_fm);
+            }
+        }
+        else if (scalers_map.count(STR_US_FM) > 0)
+        {
+            override_values->US_FM = scalers_map.at(STR_US_FM).sum() / scalers_map.at(STR_US_FM).size();
         }
 
         if (ds_ic_id > -1)
@@ -3633,6 +3659,7 @@ public:
         
         std::string str_cc_ds = "/MAPS/"+ STR_QUANTIFICATION + "/" + STR_CALIBRATION +  "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_DS_IC;
         std::string str_cc_us = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_US_IC;
+        std::string str_cc_us_fm = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_US_FM;
         std::string str_cc_sr = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_CURVE_SR_CUR;
         std::string str_cc_labels = "/MAPS/" + STR_QUANTIFICATION + "/" + STR_CALIBRATION + "/" + Fitting_Routine_To_Str.at(fitting_routine) + "/" + STR_CALIB_LABELS;
         
@@ -3642,7 +3669,7 @@ public:
             return false;
         }
 
-        std::map <std::string, std::string> ion_chambers = { {STR_DS_IC,str_cc_ds}, {STR_US_IC,str_cc_us}, {STR_SR_CURRENT,str_cc_sr} };
+        std::map <std::string, std::string> ion_chambers = { {STR_DS_IC,str_cc_ds}, {STR_US_IC,str_cc_us}, {STR_US_FM,str_cc_us_fm}, {STR_SR_CURRENT,str_cc_sr} };
 
         // read ion chambers DS_IC, US_IC, and SR_Current
         for (auto& itr : ion_chambers)
@@ -3797,7 +3824,7 @@ public:
             detector->quantification_standards[std_name] = Quantification_Standard<T_real>();
             detector->quantification_standards[std_name].standard_filename = std_name;
 
-            std::vector <std::string> ion_chambers = { STR_DS_IC, STR_US_IC, STR_SR_CURRENT };
+            std::vector <std::string> ion_chambers = { STR_DS_IC, STR_US_IC, STR_US_FM, STR_SR_CURRENT };
 
             // read ion chambers DS_IC, US_IC, and SR_Current
             for (auto& itr : ion_chambers)
@@ -3818,6 +3845,8 @@ public:
                         val_addr = &(detector->quantification_standards[std_name].DS_IC);
                     else if (itr == STR_US_IC)
                         val_addr = &(detector->quantification_standards[std_name].US_IC);
+                    else if (itr == STR_US_FM)
+                        val_addr = &(detector->quantification_standards[std_name].US_FM);
                     else if (itr == STR_SR_CURRENT)
                         val_addr = &(detector->quantification_standards[std_name].sr_current);
                     else
@@ -5977,6 +6006,17 @@ public:
                 if (status < 0)
                 {
                     logE << "failed to write " << STR_US_IC << "\n";
+                }
+
+                //save us_fm
+                if (false == _open_h5_dataset<T_real>(STR_US_FM, scalers_grp_id, 1, count, count, dset_id, dataspace_id))
+                {
+                    return false;
+                }
+                status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(quant_itr.second.US_FM));
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_US_FM << "\n";
                 }
 
                 //save ds_ic

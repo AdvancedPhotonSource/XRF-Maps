@@ -170,11 +170,14 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
     //const data_struct::ArrayXXr<T_real>* arr = nullptr;
     const data_struct::ArrayXXr<T_real>* arr_curr = _scan_info.scaler_values(STR_SR_CURRENT);
     const data_struct::ArrayXXr<T_real>* arr_us = _scan_info.scaler_values(STR_US_IC);
+    const data_struct::ArrayXXr<T_real>* arr_us_fm = _scan_info.scaler_values(STR_US_FM);
     const data_struct::ArrayXXr<T_real>* arr_ds = _scan_info.scaler_values(STR_DS_IC);
     T_real cnt_curr = 0.;
     T_real sum_curr = 0.;
     T_real cnt_us = 0.;
     T_real sum_us = 0.;
+    T_real cnt_us_fm = 0.;
+    T_real sum_us_fm = 0.;
     T_real cnt_ds = 0.;
     T_real sum_ds = 0.;
 
@@ -191,6 +194,11 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
             {
                 cnt_us += 1.0;
                 sum_us += (*arr_us)(i, j);
+            }
+            if (arr_us_fm && std::isfinite((*arr_us_fm)(i, j)) && (*arr_us_fm)(i, j) > 0.)
+            {
+                cnt_us_fm += 1.0;
+                sum_us_fm += (*arr_us_fm)(i, j);
             }
             if (arr_ds && std::isfinite((*arr_ds)(i, j)) && (*arr_ds)(i, j) > 0.)
             {
@@ -209,6 +217,10 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
     if (arr_us != nullptr)
     {
         override_values->US_IC = sum_us / cnt_us;
+    }
+    if (arr_us_fm != nullptr)
+    {
+        override_values->US_FM = sum_us_fm / cnt_us_fm;
     }
     if (arr_ds != nullptr)
     {
@@ -1204,6 +1216,15 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 			{
 				e_pv.name = std::string(pv->name);
 			}
+
+            // rename extra pv's from scaler lookup table
+            std::string beamline = "";
+            std::string label = "";
+            bool is_time_normalized = false;
+            if (data_struct::Scaler_Lookup::inst()->search_pv(e_pv.name, label, is_time_normalized, beamline))
+            {
+                e_pv.name = label;
+            }
             
             // check for tetramm column names and append to scaler_maps
             int t1idx = e_pv.name.find("tmm1:");

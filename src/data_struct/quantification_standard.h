@@ -99,7 +99,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
 {
     Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 92 (U)
     {
-        std::vector<std::string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_DS_IC };
+        std::vector<std::string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_US_FM, STR_DS_IC };
         init(quant_scalers, max_z);
     }
 
@@ -174,6 +174,8 @@ public:
     T_real sr_current;
 
     T_real US_IC;
+
+    T_real US_FM;
 
     T_real DS_IC;
 
