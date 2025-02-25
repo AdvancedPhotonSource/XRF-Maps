@@ -87,7 +87,7 @@ jobs:
         rsync -RavzP bin install
         cd install
         echo '{"branchName":"${{ github.ref }}","commitHash":"${{ github.sha }}"}' >> version.json
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: XRF-Maps_${{ matrix.os }}_x86_64
         path: ${{github.workspace}}/install/ 
