@@ -24,7 +24,7 @@ jobs:
         path: $(VCPKG_CONFIG_CACHE)
         cacheHitVar: CACHE_RESTORED
         displayName: Cache vcpkg packages
-    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq jsoncpp --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install hdf5 netcdf-c yaml-cpp zeromq jsoncpp nlopt --triplet x64-windows
       condition: ne(variables.CACHE_RESTORED, 'true')
     - script: mkdir build
     - task: CMake@1
