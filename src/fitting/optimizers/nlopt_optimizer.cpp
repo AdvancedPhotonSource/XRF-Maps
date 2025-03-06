@@ -86,10 +86,14 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
 
     double sum = 0.0;
     double dy = 0.;
+    double dt = 0.;
     //Calculate residuals
     for (int i=0; i<ud->spectra.size(); i++)
     {
-        sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        // orig
+        //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        dy += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
+        dt += pow((ud->spectra[i] - ud->spec_avg), 2.0);
         /*
     	if (std::isfinite(dy) == false)
 		{
@@ -111,6 +115,7 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
 		}
         */
     }
+    sum = dy / dt;
     //logI << "f = " << sum << "\n";
     ud->cur_itr++;
     if (ud->status_callback != nullptr)
@@ -145,11 +150,16 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     ud->spectra_model += ud->spectra_background;
     
     double sum = 0.0;
+    double dy = 0.;
+    double dt = 0.;
     // Calculate residuals
     for (int i=0; i<ud->spectra.size(); i++)
     {
-        sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        dy += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
+        dt += pow((ud->spectra[i] - ud->spec_avg), 2.0);
     }
+    sum = dy / dt;
 
     return sum;
 }
@@ -513,13 +523,17 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         return OPTIMIZER_OUTCOME::STOPPED;
     }
     
-    nlopt::opt opt(_algo, fitp_arr.size());
+    //nlopt::opt opt(nlopt::algorithm::GN_ESCH, fitp_arr.size());
+    //nlopt::opt opt(nlopt::algorithm::GN_ISRES, fitp_arr.size());
+    //nlopt::opt opt(nlopt::algorithm::LN_SBPLX, fitp_arr.size());
+    nlopt::opt opt(nlopt::algorithm::GN_CRS2_LM, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(quantification_residuals_nlopt<T_real>, (void*)&ud);
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
-    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
+    //opt.set_maxeval(_options.at(STR_OPT_MAXITER));
+    opt.set_maxeval(1000000);
 
     double minf;
     nlopt::result result;

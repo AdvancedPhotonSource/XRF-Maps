@@ -32,7 +32,7 @@ jobs:
         key: ${{ runner.os }}-vcpkg
     - name: Run vcpkg
       if: ${{ steps.cache-vcpkg-restore.outputs.cache-hit != 'true' }}
-      run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq jsoncpp
+      run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq cppzmq jsoncpp nlopt
     - name: Save vcpkg cache
       id: cache-vcpkg-save
       uses: actions/cache/save@v3
@@ -87,7 +87,7 @@ jobs:
         rsync -RavzP bin install
         cd install
         echo '{"branchName":"${{ github.ref }}","commitHash":"${{ github.sha }}"}' >> version.json
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: XRF-Maps_${{ matrix.os }}_x86_64
         path: ${{github.workspace}}/install/ 

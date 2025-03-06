@@ -57,6 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 
 
 const std::vector<std::string> xrf_analysis_save_names = { STR_FIT_ROI,
@@ -381,7 +382,23 @@ bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file, bo
     }
 
     if(false == force_new_file)
+    {
         _cur_file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    }
+    else
+    {
+        try 
+        {
+            if (std::filesystem::remove(filename))
+            {
+               logI << "file " << filename << " deleted.\n";
+            }
+        }
+        catch(const std::filesystem::filesystem_error& err) 
+        {
+            logE << "filesystem error: " << err.what() << '\n';
+        }
+    }
     if (_cur_file_id < 1)
     {
         if (open_file_only == false)
