@@ -987,7 +987,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
             cols = _mda_file->scan->requested_points;
 
 
-        for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         {
             for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
@@ -1030,7 +1030,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                     {
                         int_spec = &(_integrated_spectra_map[d]);
                     }
-                    for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->requested_points; m++)
+                    for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->last_point; m++)
                     {
                         (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->detectors_data[d][m]);
                     }
@@ -1058,9 +1058,9 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
             cols = _mda_file->scan->sub_scans[0]->requested_points;
         }
 
-        for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         {
-            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->requested_points; j++)
+            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
@@ -1102,7 +1102,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
                         {
                             int_spec = &(_integrated_spectra_map[d]);
                         }
-                        for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->sub_scans[j]->requested_points; m++)
+                        for (int32_t m = 0; m < _mda_file->scan->sub_scans[i]->sub_scans[j]->last_point; m++)
                         {
                             (*int_spec)[m] += (_mda_file->scan->sub_scans[i]->sub_scans[j]->detectors_data[d][m]);
                         }
