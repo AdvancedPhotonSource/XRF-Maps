@@ -1254,9 +1254,8 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
                 {
                     tokens.push_back(token);
                 }
-                if(tokens.size() > 2)
+                if(tokens.size() > 2 && _scan_info.scaler_maps.size() > 0)
                 {
-
                     auto o_map = _scan_info.scaler_maps.at(0);
                     data_struct::Scaler_Map<T_real> s_map;
                     s_map.values.resize(o_map.values.rows(), o_map.values.cols());
