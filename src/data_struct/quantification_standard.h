@@ -124,6 +124,17 @@ struct DLL_EXPORT Fitting_Quantification_Struct
         }
     }
 
+    void update_weight_if_greater(Electron_Shell shell, unsigned int Z, T_real weight)
+    {
+        for (auto& itr : quant_scaler_map)
+        {
+            if(weight > itr.second.curve_quant_map.at(shell).at(Z - 1).weight)
+            {
+                itr.second.curve_quant_map.at(shell).at(Z - 1).weight = weight;
+            }
+        }
+    }
+
     //            Quantifier {SR_Current, US_IC, DS_IC}
     std::unordered_map<std::string, Quantification_Scaler_Struct<T_real>> quant_scaler_map;
     // saved value from optimizer, {SR_Current, US_IC, DS_IC}

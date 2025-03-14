@@ -112,7 +112,7 @@ void Detector<T_real>::append_element(Fitting_Routines routine, std::string quan
     if (element != nullptr)
     {
         Electron_Shell shell = get_shell_by_name(name);
-        fitting_quant_map.at(routine).update_weight(shell, element->number, weight);
+        fitting_quant_map.at(routine).update_weight_if_greater(shell, element->number, weight);
 
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) > 0)
         {
@@ -274,7 +274,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
         if (itr.second.US_FM > 0.0)
         {
             avg_US_FM += itr.second.US_FM;
-            us_cnt += 1.0;
+            us_fm_cnt += 1.0;
         }
         if (itr.second.DS_IC > 0.0)
         {
