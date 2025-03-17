@@ -90,6 +90,8 @@ enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
 using ROI_Vec = std::vector<std::pair<int, int>>;
 
+extern "C" herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_info2_t *linfo, void *opdata);
+
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
@@ -925,14 +927,42 @@ public:
             {
                 return false;
             }
+            /*
             if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
             {
                 return false;
             }
             if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/flyXRF", file_id))
+            */
+            if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/detectors/XRF_ME7", file_id, false, false))
             {
+                if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/detectors/XRF_RS", file_id))
+                {
+                    return false;
+                }
                 return false;
             }
+        
+            int idx = filename.find_last_of("_master.h5") - 9;
+            if(idx > 0)
+            {
+                std::string base_name = filename.substr(0, idx);
+                std::map<std::string, hid_t> ext_links;
+                herr_t idx = H5Literate2(xspres_grp_id, H5_INDEX_NAME, H5_ITER_INC, NULL, h5_ext_file_info, &ext_links);
+                spec_vol->resize_and_zero(ext_links.size(),1,4096);
+                for(unsigned long i = 0; i<ext_links.size(); i++)
+                {
+                    std::string search_name = base_name + "_" + std::to_string(i) + ".hdf5"; 
+                    logI<< "searching "<< search_name << "\n";
+                    if(ext_links.count(search_name) > 0)
+                    {
+                        logI<< "loading "<< search_name << "\n";
+                        _load_spectra_line_xspress3(ext_links.at(search_name), detector_num, &(*spec_vol)[i]);
+                        H5Gclose(ext_links.at(search_name));
+                    }
+                }
+            }
+/*
             // load spectra link
             err = H5Lget_name_by_idx(xspres_grp_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, 0, &xspress3_link[0], 2048, H5P_DEFAULT);
             if (err < 0) 
@@ -941,7 +971,6 @@ public:
                 _close_h5_objects(close_map);
                 return false;
             }
-
             err = H5Lget_name_by_idx(pos_grp_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, 0, &positions_link[0], 2048, H5P_DEFAULT);
             if (err < 0) 
             {
@@ -993,15 +1022,18 @@ public:
 
             // read in scalers from TertraMM
 
-
+*/
+            
             _close_h5_objects(close_map);
         }
+        /*
         spec_vol->resize_and_zero(1,1,1);
         if(false == load_spectra_line_xspress3(path + "flyXRF/" + xspress3_link, detector_num, &(*spec_vol)[0]) )
+        if(false == load_spectra_line_xspress3(path + "XRF_ME7/" + xspress3_link, detector_num, &(*spec_vol)[0]) )
         {
             return false;
         }
-
+*/
         return true;
     }
 
@@ -1506,9 +1538,30 @@ public:
         start = std::chrono::system_clock::now();
 
         logI << path << " detector : " << detector_num << "\n";
-
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id = -1;
+        hid_t    file_id;
+
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            return false;
+        }
+        bool ret = _load_spectra_line_xspress3(file_id, detector_num, spec_row);
+        _close_h5_objects(close_map);
+
+        end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+
+        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+        return ret;
+    }
+
+        //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool _load_spectra_line_xspress3(hid_t file_id, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row)
+    {
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t  dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id = -1;
         hid_t dset_lt_id, dset_rt_id, dset_outcnt_id = -1;
         hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_outcnt_id = -1;
       
@@ -1530,18 +1583,16 @@ public:
 
         std::string outcounts_dataset_name2 = "OutputCounts_" + std::to_string(detector_num);
 
-
-        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
-        {
-            return false;
-        }
         if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/data", file_id, false, false))
         {
-            if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id, false, false))
+            if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/data", file_id, false, false))
             {
-                if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/xspress3", file_id, false, true))
+                if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/detector", file_id, false, false))
                 {
-                    return false;
+                    if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/entry/instrument/xspress3", file_id, false, true))
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -1723,11 +1774,6 @@ public:
 
         _close_h5_objects(close_map);
 
-        end = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
-        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
         return true;
     }
 

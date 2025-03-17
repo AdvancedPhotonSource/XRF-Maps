@@ -2926,5 +2926,31 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_info2_t *linfo, void *opdata)
+{
+    hid_t group;
+
+
+    logI<< "external link to "<< name << "\n";
+    /*
+     * Open the group using its name.
+     */
+    //hdf5_io_det_spec_line<T_real>* det_spec = (hdf5_io_det_spec_line<T_real>*)opdata;
+    std::map<std::string, hid_t>* ext_links = (std::map<std::string, hid_t>*)opdata;
+
+    if(ext_links !=  nullptr)
+    {
+        group = H5Gopen2(loc_id, name, H5P_DEFAULT);
+        if(group >= 0)
+        {
+            std::string str_name = std::string(name);
+            ext_links->insert({str_name, group});
+        }
+    }
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+
 } //end namespace file
 }// end namespace io
