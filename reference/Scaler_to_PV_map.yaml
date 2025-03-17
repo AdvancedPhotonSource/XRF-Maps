@@ -30,7 +30,9 @@ BeamLines:
       OCR3: 2iddXMAP:dxp3:OutputCountRate
       OCR4: 2iddXMAP:dxp4:OutputCountRate
       XBIC: 2idd:scaler1_cts1.D
-      US_FM: 2iddtmm1:Current3:MeanValue_RBV
+      US_FM: 
+        - 2iddtmm1:Current3:MeanValue_RBV
+        - 2iddtmm1:Current3
     TimeNormalizedScalers:
       Timing: [2idd:3820:mca1.VAL, 50000000.0]
       Scalers:
