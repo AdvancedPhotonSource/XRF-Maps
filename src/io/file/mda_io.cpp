@@ -1260,7 +1260,14 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
                     data_struct::Scaler_Map<T_real> s_map;
                     s_map.values.resize(o_map.values.rows(), o_map.values.cols());
                     s_map.values.setZero(o_map.values.rows(), o_map.values.cols());
-                    s_map.name = tokens[1];
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(tokens[0] + ":" + tokens[1], label, is_time_normalized, beamline))
+                    {
+                        s_map.name = label;
+                    }
+                    else
+                    {
+                        s_map.name = e_pv.name;
+                    }
                     
                     if(t1idx != std::string::npos)
                     {
