@@ -475,7 +475,35 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                     // min, and max values doen't matter because we are free fitting amplitude only
                     fit_params.add_parameter(Fit_Param<double>("quantifier", 0.0000000001, std::numeric_limits<double>::max()*.00001, 1.0, 0.0001, E_Bound_Type::LIMITED_LO_HI));
                     //initial guess: parinfo_value[0] = 100000.0 / factor
-                    fit_params["quantifier"].value = (double)100000.0 / quant_itr.second;
+                    std::string str_val = std::to_string( quant_itr.second );
+                    int cntr = 0;
+                    for (auto itr : str_val)
+                    {
+                        if(itr == '.')
+                        {
+                            break;
+                        }
+                        if(itr == '0' && cntr == 0) // ignore leading zero
+                        {
+                            cntr --;
+                        }
+                        cntr++;
+                    }
+
+                    double recipricle = quant_itr.second;
+                    if( cntr > 0 ) 
+                    {
+                        if(cntr == 1)
+                        {
+                            recipricle  = 1.0 / quant_itr.second;
+                        }
+                        else
+                        {
+                            recipricle = std::pow(10.0, cntr-1) / quant_itr.second;
+                        }
+                    }
+                    //fit_params["quantifier"].value = (double)100000.0 / quant_itr.second;
+                    fit_params["quantifier"].value = recipricle;
                     optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
                     double val = fit_params["quantifier"].value;
 
