@@ -90,7 +90,7 @@ enum GSE_CARS_SAVE_VER {UNKNOWN, XRFMAP, XRMMAP};
 
 using ROI_Vec = std::vector<std::pair<int, int>>;
 
-extern "C" herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_info2_t *linfo, void *opdata);
+DLL_EXPORT herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_info2_t *linfo, void *opdata);
 
 //-----------------------------------------------------------------------------
 
