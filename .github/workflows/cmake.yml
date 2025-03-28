@@ -69,7 +69,7 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
-          ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/lib
+          ls -lh ${{github.workspace}}/vcpkg/installed/arm64-osx/lib
           #export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/arm64-osx/bin
           ./xrf_maps
         else
