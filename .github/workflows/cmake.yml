@@ -24,12 +24,12 @@ jobs:
         submodules: 'recursive'
     - name: Gen vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh
-    - name: Restore cached vcpkg
-      id: cache-vcpkg-restore
-      uses: actions/cache/restore@v3
-      with:
-        path: vcpkg/installed
-        key: ${{ runner.os }}-vcpkg
+    #- name: Restore cached vcpkg
+    #  id: cache-vcpkg-restore
+    #  uses: actions/cache/restore@v3
+    #  with:
+    #    path: vcpkg/installed
+    #    key: ${{ runner.os }}-vcpkg
     - name: Run vcpkg
       if: ${{ steps.cache-vcpkg-restore.outputs.cache-hit != 'true' }}
       run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq cppzmq jsoncpp nlopt
