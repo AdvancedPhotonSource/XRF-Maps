@@ -24,12 +24,12 @@ jobs:
         submodules: 'recursive'
     - name: Gen vcpkg
       run: ./vcpkg/bootstrap-vcpkg.sh
-    #- name: Restore cached vcpkg
-    #  id: cache-vcpkg-restore
-    #  uses: actions/cache/restore@v3
-    #  with:
-    #    path: vcpkg/installed
-    #    key: ${{ runner.os }}-vcpkg
+    - name: Restore cached vcpkg
+      id: cache-vcpkg-restore
+      uses: actions/cache/restore@v3
+      with:
+        path: vcpkg/installed
+        key: ${{ runner.os }}-vcpkg
     - name: Run vcpkg
       if: ${{ steps.cache-vcpkg-restore.outputs.cache-hit != 'true' }}
       run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq cppzmq jsoncpp nlopt
@@ -70,7 +70,7 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
           ls -lh ${{github.workspace}}/vcpkg/installed/x64-osx/lib
-          #export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/x64-osx/bin
+          #export DYLD_LIBRARY_PATH=${{github.workspace}}/vcpkg/installed/arm64-osx/bin
           ./xrf_maps
         else
           ls -lh ${{github.workspace}}/vcpkg/installed/x64-linux/lib
