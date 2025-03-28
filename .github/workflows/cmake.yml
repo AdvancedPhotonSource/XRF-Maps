@@ -35,7 +35,7 @@ jobs:
       run: ./vcpkg/vcpkg install hdf5 netcdf-c yaml-cpp zeromq cppzmq jsoncpp nlopt
     - name: Install libtirpc-dev
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: sudo apt install -y llibtirpc-dev
+      run: sudo apt update && sudo apt install -y llibtirpc-dev
     - name: Save vcpkg cache
       id: cache-vcpkg-save
       uses: actions/cache/save@v3
