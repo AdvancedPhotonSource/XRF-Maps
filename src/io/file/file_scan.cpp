@@ -124,6 +124,7 @@ namespace io
             ////_edf_files = find_all_dataset_files(dataset_dir + "edf" + DIR_END_CHAR, "_0000.edf");
             // populate netcdf and hdf5 files for fly scans
             _netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.nc");
+            _netcdf_files = find_all_dataset_files(dataset_dir + "XRF" + DIR_END_CHAR, "_0.nc");
             _bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
             _hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5" + DIR_END_CHAR, "_0.h5");
             //tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.h5");

@@ -438,7 +438,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 
         for (const auto& itr : root_dir_list)
         {
-            if (itr == "flyXRF.h5" || itr == "rois" || itr == "output" || itr == "vlm" || itr == "flyXRF") // ignore these 
+            if (itr == "flyXRF.h5" || itr == "rois" || itr == "output" || itr == "vlm" || itr == "flyXRF" || itr == "XRF") // ignore these 
             {
                 continue;
             }
