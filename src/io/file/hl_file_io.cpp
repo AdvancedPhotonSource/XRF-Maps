@@ -584,11 +584,11 @@ void check_and_create_dirs(std::string dataset_directory)
     std::string cmd3 = "mkdir -p "+dataset_directory+"output"+DIR_END_CHAR+STR_FIT_PARAM_DIR;
     
     retval = system(cmd1.c_str());
-    logI << cmd1 << " = "<<retval<< "\n";
+    //logI << cmd1 << " = "<<retval<< "\n";
     retval = system(cmd2.c_str());
-    logI << cmd2 << " = "<<retval<< "\n";
+    //logI << cmd2 << " = "<<retval<< "\n";
     retval = system(cmd3.c_str());
-    logI << cmd3 << " = "<<retval<< "\n";
+    //logI << cmd3 << " = "<<retval<< "\n";
     /*
 	if (retval != 0)
 	{
