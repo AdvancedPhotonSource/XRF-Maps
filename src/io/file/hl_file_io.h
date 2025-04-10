@@ -1131,10 +1131,24 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if(hasTetraMM)
         {
             // tetramm has 2 files it can save scalers. filename_tetra1_0.nc or filename_tetra2_0.nc
-            std::ifstream file_io(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
+            std::ifstream file_io(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_0.nc");
             if (file_io.is_open())
             {
                 file_io.close();
+                std::string full_filename;
+                for (size_t i = 0; i < spectra_volume->rows(); i++)
+                {
+                    full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_" + std::to_string(i) + ".nc";
+                    //todo: add verbose option
+                    //logI<<"Loading file "<<full_filename<<"\n";
+                    // if tetramm tag is missing in file name, we assume it is tetra1
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                }
+            }
+            std::ifstream file_io1(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
+            if (file_io1.is_open())
+            {
+                file_io1.close();
                 std::string full_filename;
                 for (size_t i = 0; i < spectra_volume->rows(); i++)
                 {
