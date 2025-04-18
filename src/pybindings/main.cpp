@@ -31,6 +31,7 @@
 #include "workflow/xrf/spectra_file_source.h"
 #include "workflow/xrf/detector_sum_spectra_source.h"
 //#include "workflow/xrf/spectra_net_source.h"
+#include "fitting/optimizers/nlopt_optimizer.h"
 
 namespace py = pybind11;
 
@@ -579,14 +580,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
         {
             return self.model_spectrum(fit_params, elements_to_fit, nullptr, energy_range);
         })
-    .def("model_spectrum_info", &fitting::models::Gaussian_Model<float>::model_spectrum_info)
-    .def("model_spectrum_info_no_label", [](fitting::models::Gaussian_Model<float>& self,
-        const Fit_Parameters<float>* const fit_params,
-        const Fit_Element_Map_Dict<float>* const elements_to_fit,
-        const data_struct::Range energy_range)
-        {
-            return self.model_spectrum_info(fit_params, elements_to_fit, nullptr, energy_range);
-        })
 	.def("model_spectrum_mp", &fitting::models::Gaussian_Model<float>::model_spectrum_mp)
 	.def("model_spectrum_element", &fitting::models::Gaussian_Model<float>::model_spectrum_element)
     .def("model_spectrum_element_no_label", [](fitting::models::Gaussian_Model<float>& self,
@@ -604,11 +597,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //fitting optimizers
 	py::class_<fitting::optimizers::Optimizer<float>>(fo, "Optimizer");
 
-    py::class_<fitting::optimizers::NLOpt_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "nlopt")
+    py::class_<fitting::optimizers::NLOPT_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "nlopt")
     .def(py::init<>())
-    .def("minimize", &fitting::optimizers::LMFit_Optimizer<float>::minimize)
-    .def("minimize_func", &fitting::optimizers::LMFit_Optimizer<float>::minimize_func)
-    .def("minimize_quantification", &fitting::optimizers::LMFit_Optimizer<float>::minimize_quantification);
+    .def("minimize", &fitting::optimizers::NLOPT_Optimizer<float>::minimize)
+    .def("minimize_func", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_func)
+    .def("minimize_quantification", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_quantification);
 
     //routines
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");
