@@ -206,7 +206,8 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
     if( airpath > 0 && ev > 0)
     {
         //density = 1.0
-        T_real density = (T_real)0.00117;
+        //T_real density = (T_real)0.00117;
+        T_real density = (T_real)1.2047e-3;
         //air_ele = 'N78.08O20.95Ar0.93'
         //density = 1.2047e-3
         //f1, f2, delta, beta, graze_mrad, reflect, inverse_mu, atwt = Chenke.get_henke_single('air', density, ev)
@@ -262,6 +263,7 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
     for(auto& itr : quant_map)
     {
         T_real val = p * itr.second.absorption * itr.second.transmission_Be * itr.second.transmission_Ge * itr.second.yield * ((T_real)1. - itr.second.transmission_through_Si_detector) * itr.second.transmission_through_air;
+        
         if (false == std::isfinite(val))
         {
             logW << itr.second.name<<" val = " << val << 
@@ -274,6 +276,7 @@ std::unordered_map<std::string, T_real> Quantification_Model<T_real>::model_cali
             "\ntransmission_through_air = "<<itr.second.transmission_through_air << "\n";
             val = std::numeric_limits<T_real>::max() * .9;  // 90% of max real
         }
+        
         result_map.emplace(std::pair<std::string, T_real>(itr.first, val));
     }
 
@@ -289,6 +292,7 @@ void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Qu
     for(auto &itr : *quant_vec)
     {
         T_real val = p * itr.absorption * itr.transmission_Be * itr.transmission_Ge * itr.yield * ((T_real)1. - itr.transmission_through_Si_detector) * itr.transmission_through_air;
+        
         if (false == std::isfinite(val))
         {
             logW << itr.name<<" val = " << val << 
@@ -301,6 +305,7 @@ void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Qu
             "\ntransmission_through_air = "<<itr.transmission_through_air << "\n";
             val = std::numeric_limits<T_real>::max() * .9;  // 90% of max real
         }
+
         itr.calib_curve_val = val;
     }
 }
