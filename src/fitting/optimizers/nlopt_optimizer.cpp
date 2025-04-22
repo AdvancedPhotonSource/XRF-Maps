@@ -92,28 +92,8 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
     {
         // orig
         //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dy += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
-        dt += pow((ud->spectra[i] - ud->spec_avg), 2.0);
-        /*
-    	if (std::isfinite(dy) == false)
-		{
-            if(first)
-            {
-                first = false;
-			    logE << "Spectra["<<i<<"] = "<< ud->spectra[i] << " ::spectra_model["<<i<<"] = " << ud->spectra_model[i] << "  ::weights["<<i<<"] = " << ud->weights[i]<<"\n";
-                logE<<" \n Diff Param \n";
-                for(auto &itr : prev_fit_p)
-                {
-                    if(itr.second.value != ud->fit_parameters->at(itr.first).value)
-                    {
-                        logE<<itr.first<<" : Old = "<<itr.second.value<<" ; New = "<< ud->fit_parameters->at(itr.first).value <<"\n";
-                    }
-                }
-                logE<<" \n \n";
-                ud->fit_parameters->print_non_fixed();
-            }
-		}
-        */
+        dy += std::abs(ud->spectra[i] - ud->spectra_model[i]);
+        dt += std::abs(ud->spectra[i] - ud->spec_avg);
     }
     sum = dy / dt;
     //logI << "f = " << sum << "\n";
@@ -156,11 +136,10 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     for (int i=0; i<ud->spectra.size(); i++)
     {
         //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dy += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
-        dt += pow((ud->spectra[i] - ud->spec_avg), 2.0);
+        dy += std::abs(ud->spectra[i] - ud->spectra_model[i]);
+        dt += std::abs(ud->spectra[i] - ud->spec_avg);
     }
     sum = dy / dt;
-
     return sum;
 }
 
@@ -185,19 +164,16 @@ double quantification_residuals_nlopt(const std::vector<double> &x, std::vector<
     std::unordered_map<std::string, T_real> result_map = ud->quantification_model->model_calibrationcurve(ud->quant_map, x[0]);
 
     double sum = 0.0;
-    int idx = 0;
     for(auto& itr : ud->quant_map)
     {
         sum += pow((itr.second.e_cal_ratio - result_map[itr.first]), 2.0);
-        /*
-		if (std::isfinite(result_map[itr.first]) == false)
+        
+    	if (std::isfinite(result_map[itr.first]) == false)
 		{
             logE<<"Quantification reuslted in NaN or Inf! "<< itr.first<<" : "<<result_map[itr.first]<<"\n";		
 		}
-        idx++;
-        */
+        
     }
-
     return sum;
 }
 
@@ -526,22 +502,25 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     //nlopt::opt opt(nlopt::algorithm::GN_ESCH, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::GN_ISRES, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::LN_SBPLX, fitp_arr.size());
-    nlopt::opt opt(nlopt::algorithm::GN_CRS2_LM, fitp_arr.size());
+    nlopt::opt opt(nlopt::algorithm::LN_NELDERMEAD, fitp_arr.size());
+    //nlopt::opt opt(nlopt::algorithm::LN_COBYLA, fitp_arr.size());
+    
+    //nlopt::opt opt(nlopt::algorithm::GN_CRS2_LM, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
-    opt.set_default_initial_step(step_arr);
+    //opt.set_default_initial_step(step_arr);
     opt.set_min_objective(quantification_residuals_nlopt<T_real>, (void*)&ud);
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
-    //opt.set_maxeval(_options.at(STR_OPT_MAXITER));
-    opt.set_maxeval(1000000);
+    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
-    double minf;
+
+    double minf = 0.0;
     nlopt::result result;
 
     try
     {
         result = opt.optimize(fitp_arr, minf);
-        logI<<detailed_outcome(result)<< " : resid = "<<minf<<"\n\n";;
+        logI<<detailed_outcome(result)<< " : resid = "<<minf<<" after "<<opt.get_numevals()<< " Iterations.\n\n";;
         this->_last_outcome = result;
     }
     catch(std::exception &e) 
