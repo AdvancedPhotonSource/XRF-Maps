@@ -61,7 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "io/file/csv_io.h"
 
 #include "data_struct/spectra_volume.h"
-
+#include <regex>
 
 
 namespace io
@@ -90,7 +90,7 @@ namespace io
 
             //void check_and_create_dirs(std::string dataset_directory);
 
-            std::vector<std::string> find_all_dirs(std::string dataset_directory, std::vector<std::string>& ign_dir_list, bool recursive);
+            std::vector<std::string> find_all_dirs(std::string dataset_directory, std::vector<std::regex>& ign_dir_list, bool recursive);
 
             std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
