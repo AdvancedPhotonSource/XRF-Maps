@@ -292,7 +292,7 @@ void save_optimized_fit_params(std::string dataset_dir, std::string dataset_file
         background.setZero();
     }
 
-    std::string str_path = dataset_dir + "/output/" +  STR_FIT_SPEC_DIR + "fit_" + dataset_filename + "_det";
+    std::string str_path = dataset_dir + "/output/" +  STR_FIT_SPEC_DIR + DIR_END_CHAR + "fit_" + dataset_filename + "_det";
     if (detector_num != -1)
     {
         str_path += std::to_string(detector_num) + ".png";
