@@ -349,7 +349,7 @@ template <typename T_real>
 int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
     //TODO: load from config files so we can change without recompile
-    std::vector<std::regex> ignore_dir_list = { std::regex("img.dat*"), std::regex("rois*"), std::regex("mda*"), std::regex("output*") };
+    std::vector<std::regex> ignore_dir_list = { std::regex("img\.dat.*"), std::regex("rois.*"), std::regex("mda.*"), std::regex("output.*") };
     //Get the dataset directory you want to process
     std::string dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
@@ -443,9 +443,11 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             {
                 continue;
             }
+            logI<<dataset_dir << DIR_END_CHAR << itr << DIR_END_CHAR << "*.h5"<<"\n";
             std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
             for (const auto& fitr : flist)
             {
+                logI<<fitr<<"\n";
                 analysis_job.dataset_files.push_back(itr + DIR_END_CHAR + fitr);
             }
         }

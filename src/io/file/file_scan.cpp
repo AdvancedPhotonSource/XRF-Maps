@@ -364,6 +364,7 @@ namespace io
                             {
                                 if (std::regex_match(str_d_name, ign))
                                 {
+                                    logI<<"Skipping directory " << str_d_name << "\n";
                                     b_ign = true;
                                     break;
                                 }
