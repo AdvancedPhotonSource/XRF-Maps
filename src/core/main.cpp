@@ -458,9 +458,27 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             analysis_job.optimize_dataset_files.push_back(itr);
         }
 
+        // search for h5 files in img.dat directory but filter out and mda files associated with them.
         for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
         {
-            analysis_job.dataset_files.push_back(itr);
+            bool found = false;
+            size_t idx = itr.find(".h5");
+            if(idx != std::string::npos)
+            {
+                itr = itr.substr(0, idx);
+            }
+            for(auto &itr2 : analysis_job.dataset_files)
+            {
+                if(itr == itr2)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if(false == found)
+            {
+                analysis_job.dataset_files.push_back(itr);
+            }
         }
 
         if (analysis_job.dataset_files.size() == 0)
