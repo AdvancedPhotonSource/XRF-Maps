@@ -64,6 +64,7 @@ Stream_Block<T_real>::Stream_Block()
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = false;
 	spectra = nullptr;
+    dataset_name = nullptr;
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
@@ -86,6 +87,7 @@ Stream_Block<T_real>::Stream_Block(int detector,
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = false;
     spectra = nullptr;
+    dataset_name = nullptr;
 }
 
 //-----------------------------------------------------------------------------
