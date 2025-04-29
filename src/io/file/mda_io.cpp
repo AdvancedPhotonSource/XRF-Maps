@@ -283,11 +283,11 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             if(_mda_file->scan->requested_points == 0)
                 rows = 1;
             else
-                rows = _mda_file->scan->requested_points;
+                rows = _mda_file->scan->last_point;
             if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 cols = 1;
             else
-                cols = _mda_file->scan->sub_scans[0]->requested_points;
+                cols = _mda_file->scan->sub_scans[0]->last_point;
             vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
@@ -310,7 +310,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    cols = _mda_file->scan->requested_points;
+                    cols = _mda_file->scan->last_point;
                 }
                 samples = _mda_file->header->dimensions[1];
                 vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
@@ -342,7 +342,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    rows = _mda_file->scan->requested_points;
+                    rows = _mda_file->scan->last_point;
                 }
                 
                 if(_mda_file->scan->sub_scans[0]->requested_points == 0)
@@ -352,7 +352,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    cols = _mda_file->scan->sub_scans[0]->requested_points;
+                    cols = _mda_file->scan->sub_scans[0]->last_point;
                 }
                 
                 vol->resize_and_zero(rows, cols, 2048);
@@ -373,7 +373,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else
         {
-            rows = _mda_file->scan->requested_points;
+            rows = _mda_file->scan->last_point;
         }
         if(_mda_file->scan->sub_scans[0]->requested_points == 0)
         {
@@ -381,7 +381,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else
         {
-            cols = _mda_file->scan->sub_scans[0]->requested_points;
+            cols = _mda_file->scan->sub_scans[0]->last_point;
         }
         samples = _mda_file->header->dimensions[2];
         if(_mda_file->header->dimensions[2] == 2000)
@@ -554,11 +554,11 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
             if(_mda_file->scan->requested_points == 0)
                 out_rows = 1;
             else
-                out_rows = _mda_file->scan->requested_points;
+                out_rows = _mda_file->scan->last_point;
             if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 out_cols = 1;
             else
-                out_cols = _mda_file->scan->sub_scans[0]->requested_points;
+                out_cols = _mda_file->scan->sub_scans[0]->last_point;
             return true;
         }
         else
@@ -579,7 +579,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                 }
                 else
                 {
-                    out_cols = _mda_file->scan->requested_points;
+                    out_cols = _mda_file->scan->last_point;
                 }
                 samples = _mda_file->header->dimensions[1];
                 is_single_row = true;
@@ -605,11 +605,11 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
         if(_mda_file->scan->requested_points == 0)
             out_rows = 1;
         else
-            out_rows = _mda_file->scan->requested_points;
+            out_rows = _mda_file->scan->last_point;
         if(_mda_file->scan->sub_scans[0]->requested_points == 0)
             out_cols = 1;
         else
-            out_cols = _mda_file->scan->sub_scans[0]->requested_points;
+            out_cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
     }
     else
@@ -780,11 +780,11 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			if (_mda_file->scan->requested_points == 0)
 				rows = 1;
 			else
-				rows = _mda_file->scan->requested_points;
+				rows = _mda_file->scan->last_point;
 			if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 				cols = 1;
 			else
-				cols = _mda_file->scan->sub_scans[0]->requested_points;
+				cols = _mda_file->scan->sub_scans[0]->last_point;
 			out_integrated_spectra->resize(2048);
 			return true;
 		}
@@ -803,7 +803,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				if (_mda_file->scan->requested_points == 0)
 					cols = 1;
 				else
-					cols = _mda_file->scan->requested_points;
+					cols = _mda_file->scan->last_point;
 				samples = _mda_file->header->dimensions[1];
 				out_integrated_spectra->resize(2048); //default to 2048 since it is only 2000 saved
 				is_single_row = true;
@@ -829,11 +829,11 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		if (_mda_file->scan->requested_points == 0)
 			rows = 1;
 		else
-			rows = _mda_file->scan->requested_points;
+			rows = _mda_file->scan->last_point;
 		if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 			cols = 1;
 		else
-			cols = _mda_file->scan->sub_scans[0]->requested_points;
+			cols = _mda_file->scan->sub_scans[0]->last_point;
 		samples = _mda_file->header->dimensions[2];
 		if (_mda_file->header->dimensions[2] == 2000)
 		{
@@ -984,7 +984,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         if (_mda_file->scan->requested_points == 0)
             rows = 1;
         else
-            cols = _mda_file->scan->requested_points;
+            cols = _mda_file->scan->last_point;
 
 
         for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
@@ -1047,7 +1047,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         }
         else
         {
-            rows = _mda_file->scan->requested_points;
+            rows = _mda_file->scan->last_point;
         }
         if (_mda_file->scan->sub_scans[0]->requested_points == 0)
         {
@@ -1055,7 +1055,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         }
         else
         {
-            cols = _mda_file->scan->sub_scans[0]->requested_points;
+            cols = _mda_file->scan->sub_scans[0]->last_point;
         }
 
         for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
@@ -1346,7 +1346,7 @@ void MDA_IO<T_real>::_load_meta_info()
                 _scan_info.meta_info.y_axis.setZero(1);
                 _scan_info.meta_info.x_axis.resize(_mda_file->scan->requested_points);
                 _scan_info.meta_info.x_axis.setZero(_mda_file->scan->requested_points);
-                for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+                for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
                 {
                     _scan_info.meta_info.x_axis(i) = _mda_file->scan->positioners_data[0][i];
                 }
@@ -1362,7 +1362,7 @@ void MDA_IO<T_real>::_load_meta_info()
                 if (_mda_file->scan->number_positioners > 0)
                 {
                     // save y axis
-                    for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
                     {
                         _scan_info.meta_info.y_axis(i) = _mda_file->scan->positioners_data[0][i];
                     }
@@ -1374,7 +1374,7 @@ void MDA_IO<T_real>::_load_meta_info()
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
                     // save x axis
-                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->requested_points; i++)
+                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->last_point; i++)
                     {
                         _scan_info.meta_info.x_axis(i) = _mda_file->scan->sub_scans[0]->positioners_data[0][i];
                     }
