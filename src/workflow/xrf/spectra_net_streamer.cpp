@@ -129,6 +129,7 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
         }
         if(_send_spectra)
         {
+            logI<<"Sending spectra "<< stream_block->dataset_name <<"\n";
             zmq::message_t topic("XRF-Spectra", 11);
             _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_spectra(stream_block);
