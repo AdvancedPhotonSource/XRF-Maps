@@ -447,7 +447,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
             for (const auto& fitr : flist)
             {
-                logI<<fitr<<"\n";
+                //logI<<fitr<<"\n";
                 analysis_job.dataset_files.push_back(itr + DIR_END_CHAR + fitr);
             }
         }
