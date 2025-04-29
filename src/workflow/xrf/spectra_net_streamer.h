@@ -80,6 +80,7 @@ public:
 
     void set_send_spectra(bool val) {_send_spectra = val;}
 
+    void set_verbose(bool val) {_verbose = val;}
 protected:
 #ifdef _BUILD_WITH_ZMQ
 	zmq::context_t *_context;
@@ -92,6 +93,7 @@ protected:
 
     bool _send_spectra;
 
+    bool _verbose;
 };
 
 //-----------------------------------------------------------------------------

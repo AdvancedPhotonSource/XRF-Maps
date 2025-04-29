@@ -834,6 +834,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<std::string>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_spectra)
+    .def("set_verbose", &workflow::xrf::Spectra_Net_Streamer<float>::set_verbose)
     .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream);
 #endif
 
@@ -851,8 +852,15 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
     .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
 
+    py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
+    .def(py::init<>(int))
+    .def("setup", []()
+        {
+            this.set_function(proc_spectra_block<float>);
+        });
+
     //process_streaming
-//    m.def("proc_spectra_block", &proc_spectra_block);
+    m.def("proc_spectra_block", &proc_spectra_block<float>);
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
 
     //process_whole

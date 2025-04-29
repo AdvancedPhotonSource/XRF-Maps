@@ -62,7 +62,7 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
 #ifdef _BUILD_WITH_ZMQ
     _send_counts = true;
     _send_spectra = true;
-
+    _verbose = false;
     this->_callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
 
     std::string conn_str = "tcp://*:" + port;
@@ -118,6 +118,10 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
     {
         if(_send_counts)
         {
+            if(_verbose)
+            {
+                logI<<"Sending counts "<< stream_block->dataset_name <<"\n";
+            }
             zmq::message_t topic("XRF-Counts", 10);
             _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_counts(stream_block);
@@ -129,7 +133,10 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
         }
         if(_send_spectra)
         {
-            //logI<<"Sending spectra "<< stream_block->dataset_name <<"\n";
+            if(_verbose)
+            {
+                logI<<"Sending spectra "<< stream_block->dataset_name <<"\n";
+            }
             zmq::message_t topic("XRF-Spectra", 11);
             _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_spectra(stream_block);
