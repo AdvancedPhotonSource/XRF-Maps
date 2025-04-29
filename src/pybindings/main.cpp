@@ -25,7 +25,7 @@
 
 #include "io/file/hl_file_io.h"
 
-//#include "core/process_streaming.h"
+#include "core/process_streaming.h"
 #include "core/process_whole.h"
 #include "workflow/xrf/spectra_net_streamer.h"
 #include "workflow/xrf/spectra_file_source.h"
@@ -853,10 +853,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
 
     py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
-    .def(py::init<>(int))
-    .def("setup", []()
+    .def(py::init<int>())
+    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* > &self)
         {
-            this.set_function(proc_spectra_block<float>);
+            self.set_function(proc_spectra_block<float>);
         });
 
     //process_streaming
