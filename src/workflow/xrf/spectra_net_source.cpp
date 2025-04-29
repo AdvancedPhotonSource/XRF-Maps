@@ -129,6 +129,7 @@ void Spectra_Net_Source<T_real>::run()
                         {
                             stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
                             stream_block->model = cp->model;
+                            logI<<"Detector number "<<stream_block->detector_number()<<" is "<<cp->get_name()<<"\n";
                         }
 
                         this->_output_callback_func(stream_block);
@@ -138,6 +139,7 @@ void Spectra_Net_Source<T_real>::run()
         }
     }
     _zmq_socket->close();
+    logI<<"ZMQ socket closed\n";
 #endif
 }
 
