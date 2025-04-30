@@ -108,8 +108,9 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
         zmq::message_t topic("XRF-Counts-and-Spectra", 22);
         _zmq_socket->send(topic, zmq::send_flags::sndmore);
         data = _serializer.encode_counts_and_spectra(stream_block);
-        zmq::message_t message(data.c_str(), data.length());
-        if (false == _zmq_socket->send(message, zmq::send_flags::none))
+        zmq::message_t mymsg(data.c_str(), data.length());
+        zmq::send_result_t result = _zmq_socket->send(mymsg, zmq::send_flags::dontwait);
+        if (result.has_value() == false)
         {
             logE << "sending ZMQ counts and spectra message"<<"\n";
         }
@@ -125,8 +126,9 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
             zmq::message_t topic("XRF-Counts", 10);
             _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_counts(stream_block);
-            zmq::message_t message(data.c_str(), data.length());
-            if (false == _zmq_socket->send(message, zmq::send_flags::none))
+            zmq::message_t mymsg(data.c_str(), data.length());
+            zmq::send_result_t result = _zmq_socket->send(mymsg, zmq::send_flags::dontwait);
+            if (result.has_value() == false)
             {
                 logE << "sending ZMQ counts message"<<"\n";
             }
@@ -140,8 +142,9 @@ void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* str
             zmq::message_t topic("XRF-Spectra", 11);
             _zmq_socket->send(topic, zmq::send_flags::sndmore);
             data = _serializer.encode_spectra(stream_block);
-            zmq::message_t message(data.c_str(), data.length());
-            if (false == _zmq_socket->send(message, zmq::send_flags::none))
+            zmq::message_t mymsg(data.c_str(), data.length());
+            zmq::send_result_t result = _zmq_socket->send(mymsg, zmq::send_flags::dontwait);
+            if (result.has_value() == false)
             {
                 logE << "sending ZMQ spectra message"<<"\n";
             }
