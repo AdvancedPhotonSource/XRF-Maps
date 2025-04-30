@@ -114,7 +114,7 @@ bool Spectra_File_Source<T_real>::load_netcdf_line(std::string dirpath,
 template<typename T_real>
 data_struct::Stream_Block<T_real>* Spectra_File_Source<T_real>::_alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size)
 {
-	if (_max_num_stream_blocks == -1)
+	if (_max_num_stream_blocks == -1 && _analysis_job != nullptr)
 	{
 		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(T_real));
         logI << "Max stream blocks: " << _max_num_stream_blocks << "\n";
