@@ -210,6 +210,10 @@ void set_num_threads(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>
     {
         analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
     }
+    if (clp.option_exists("--verbose"))
+    {
+        analysis_job.verbose = std::stoi(clp.get_option("--verbose"));
+    }
 }
 
 // ----------------------------------------------------------------------------

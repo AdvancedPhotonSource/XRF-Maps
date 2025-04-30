@@ -144,6 +144,8 @@ public:
 
     bool use_weights;
 
+    unsigned int verbose;
+
 	std::string update_us_amps_str;
 
 	std::string update_ds_amps_str;
