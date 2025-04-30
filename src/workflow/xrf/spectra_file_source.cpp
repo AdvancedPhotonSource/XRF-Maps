@@ -64,6 +64,7 @@ Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_
     _analysis_job = nullptr;
     _current_dataset_directory = nullptr;
     _current_dataset_name = nullptr;
+    _init_fitting_routines = false;
 	_max_num_stream_blocks = -1;
     _cb_function = std::bind(&Spectra_File_Source<T_real>::cb_load_spectra_data, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 }
@@ -116,6 +117,7 @@ data_struct::Stream_Block<T_real>* Spectra_File_Source<T_real>::_alloc_stream_bl
 	if (_max_num_stream_blocks == -1)
 	{
 		_max_num_stream_blocks = _analysis_job->mem_limit / (spectra_size * sizeof(T_real));
+        logI << "Max stream blocks: " << _max_num_stream_blocks << "\n";
 	}
 	return new data_struct::Stream_Block<T_real>(detector, row, col, height, width);
 }
