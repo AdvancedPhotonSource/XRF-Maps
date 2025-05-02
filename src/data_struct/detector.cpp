@@ -294,7 +294,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     }
 
 
-    if (avg_sr_current == 0.0)
+    if (avg_sr_current == 0.0 || crnt_cnt == 0.)
     {
         logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_sr_current = 100.0;
@@ -303,7 +303,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     {
         avg_sr_current /= crnt_cnt;
     }
-    if (avg_US_IC == 0.0)
+    if (avg_US_IC == 0.0 || us_cnt == 0.)
     {
         logW"US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_US_IC = 1.0;
@@ -312,7 +312,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     {
         avg_US_IC /= us_cnt;
     }
-    if (avg_US_FM == 0.0)
+    if (avg_US_FM == 0.0 || us_fm_cnt == 0.)
     {
         logW"US_FM is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_US_FM = 1.0;
@@ -321,7 +321,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     {
         avg_US_FM /= us_fm_cnt;
     }
-    if (avg_DS_IC == 0.0)
+    if (avg_DS_IC == 0.0 || ds_cnt == 0.)
     {
         logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_DS_IC = 1.0;
