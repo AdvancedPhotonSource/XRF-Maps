@@ -476,7 +476,8 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
     }
 
-
+    bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
+    
     bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
     if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
@@ -554,7 +555,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         {
             if (false == io::file::HDF5_IO::inst()->load_quantification_scalers_analyzed_h5(fullpath, params_override))
             {
-                mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override);
+                mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override,  has_external_files);
             }
         }
         return true;
@@ -603,7 +604,6 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
-    bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
     //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
     if (false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files))
 
@@ -613,7 +613,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
     else
     {
-        mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override);
+        mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override, has_external_files);
 
         if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
         {
@@ -639,6 +639,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 
             if (hasNetcdf)
             {
+                dims[1] -= 2; // remove 2 for the scaler channels flys scan hardware trigger bug
                 std::ifstream file_io(dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc");
                 if (file_io.is_open())
                 {
@@ -654,6 +655,8 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                             return false;
                         }
                     }
+                    // recalculate elapsed lifetime
+                    integrated_spectra->recalc_elapsed_livetime();
                 }
                 else
                 {
@@ -839,9 +842,28 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         }
     }
 
+
+    size_t dlen = dataset_file.length();
+    if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'f')
+    {
+        // try to load polar hdf master file
+        data_struct::Scan_Info<T_real> scan_info;
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
+        {
+            if(io::file::HDF5_IO::inst()->start_save_seq(true))
+            {
+                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
     bool ends_in_h5 = false;
     bool ends_in_mca = false;
-    size_t dlen = dataset_file.length();
     if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
     {
         ends_in_h5 = true;
@@ -958,18 +980,6 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
         {
             return true;
-        }
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
-        {
-            if(io::file::HDF5_IO::inst()->start_save_seq(true))
-            {
-                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
         // try ESRF dataset
         else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))
