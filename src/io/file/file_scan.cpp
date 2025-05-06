@@ -334,7 +334,7 @@ namespace io
         }
 
         // ----------------------------------------------------------------------------
-        std::vector<std::string> File_Scan::find_all_dirs(std::string dataset_directory, std::vector<std::string> &ign_dir_list, bool recursive)
+        std::vector<std::string> File_Scan::find_all_dirs(std::string dataset_directory, std::vector<std::regex> &ign_dir_list, bool recursive)
         {
             std::vector<std::string> dir_list;
             logI << dataset_directory << " searching for directories\n";
@@ -349,6 +349,7 @@ namespace io
                     if (ent->d_type == DT_DIR)
                     {
                         size_t d_namlen = strlen(ent->d_name);
+                        std::string str_d_name(ent->d_name, d_namlen);
                         if (d_namlen == 1 && ent->d_name[0] == '.')
                         {
                             continue;
@@ -361,8 +362,9 @@ namespace io
                         {
                             for (const auto ign : ign_dir_list)
                             {
-                                if (ign == ent->d_name)
+                                if (std::regex_match(str_d_name, ign))
                                 {
+                                    logI<<"Skipping directory " << str_d_name << "\n";
                                     b_ign = true;
                                     break;
                                 }

@@ -25,12 +25,13 @@
 
 #include "io/file/hl_file_io.h"
 
-//#include "core/process_streaming.h"
+#include "core/process_streaming.h"
 #include "core/process_whole.h"
 #include "workflow/xrf/spectra_net_streamer.h"
 #include "workflow/xrf/spectra_file_source.h"
 #include "workflow/xrf/detector_sum_spectra_source.h"
 //#include "workflow/xrf/spectra_net_source.h"
+#include "fitting/optimizers/nlopt_optimizer.h"
 
 namespace py = pybind11;
 
@@ -579,14 +580,6 @@ PYBIND11_MODULE(pyxrfmaps, m) {
         {
             return self.model_spectrum(fit_params, elements_to_fit, nullptr, energy_range);
         })
-    .def("model_spectrum_info", &fitting::models::Gaussian_Model<float>::model_spectrum_info)
-    .def("model_spectrum_info_no_label", [](fitting::models::Gaussian_Model<float>& self,
-        const Fit_Parameters<float>* const fit_params,
-        const Fit_Element_Map_Dict<float>* const elements_to_fit,
-        const data_struct::Range energy_range)
-        {
-            return self.model_spectrum_info(fit_params, elements_to_fit, nullptr, energy_range);
-        })
 	.def("model_spectrum_mp", &fitting::models::Gaussian_Model<float>::model_spectrum_mp)
 	.def("model_spectrum_element", &fitting::models::Gaussian_Model<float>::model_spectrum_element)
     .def("model_spectrum_element_no_label", [](fitting::models::Gaussian_Model<float>& self,
@@ -604,11 +597,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //fitting optimizers
 	py::class_<fitting::optimizers::Optimizer<float>>(fo, "Optimizer");
 
-    py::class_<fitting::optimizers::NLOpt_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "nlopt")
+    py::class_<fitting::optimizers::NLOPT_Optimizer<float>, fitting::optimizers::Optimizer<float> >(fo, "nlopt")
     .def(py::init<>())
-    .def("minimize", &fitting::optimizers::LMFit_Optimizer<float>::minimize)
-    .def("minimize_func", &fitting::optimizers::LMFit_Optimizer<float>::minimize_func)
-    .def("minimize_quantification", &fitting::optimizers::LMFit_Optimizer<float>::minimize_quantification);
+    .def("minimize", &fitting::optimizers::NLOPT_Optimizer<float>::minimize)
+    .def("minimize_func", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_func)
+    .def("minimize_quantification", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_quantification);
 
     //routines
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");
@@ -841,6 +834,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<std::string>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_spectra)
+    .def("set_verbose", &workflow::xrf::Spectra_Net_Streamer<float>::set_verbose)
     .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream);
 #endif
 
@@ -858,8 +852,15 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
     .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
 
+    py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
+    .def(py::init<int>())
+    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* > &self)
+        {
+            self.set_function(proc_spectra_block<float>);
+        });
+
     //process_streaming
-//    m.def("proc_spectra_block", &proc_spectra_block);
+    m.def("proc_spectra_block", &proc_spectra_block<float>);
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
 
     //process_whole

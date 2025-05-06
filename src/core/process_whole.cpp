@@ -241,8 +241,6 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
 
     //Range of energy in spectra to fit
     fitting::models::Range energy_range;
-    energy_range.min = 0;
-
 
     for (Quantification_Standard<double>& standard_itr : analysis_job->standard_element_weights)
     {
@@ -358,6 +356,10 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         {
             quantification_standard->sr_current = 100.0;
         }
+        if (quantification_standard->US_FM == 0.0 )
+        {
+            quantification_standard->US_FM = 100.0;
+        }
 
         energy_range = get_energy_range(quantification_standard->integrated_spectra.size(), &(override_params->fit_params));
         //First we integrate the spectra and get the elemental counts
@@ -436,6 +438,9 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         for (auto& fit_itr : detector->fit_routines)
         {
             detector->avg_element_quants(fit_itr.first, STR_SR_CURRENT, element_amt_in_all_standards);
+            detector->avg_element_quants(fit_itr.first, STR_US_IC, element_amt_in_all_standards);
+            detector->avg_element_quants(fit_itr.first, STR_US_FM, element_amt_in_all_standards);
+            detector->avg_element_quants(fit_itr.first, STR_DS_IC, element_amt_in_all_standards);
         }
     }
 }
@@ -468,13 +473,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                fitting::optimizers::Optimizer<double>* optimizer = analysis_job->optimizer();
                for (auto& quant_itr : detector->avg_quantification_scaler_map)
                {
-                    fitting::routines::Base_Fit_Routine<double>* fit_routine = fit_itr.second;
-
                     logI << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first << "\n";
-                    Fit_Parameters<double> fit_params;
-                    // min, and max values doen't matter because we are free fitting amplitude only
-                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0.0000000001, std::numeric_limits<double>::max()*.00001, 1.0, 0.0001, E_Bound_Type::LIMITED_LO_HI));
-                    //initial guess: parinfo_value[0] = 100000.0 / factor
                     std::string str_val = std::to_string( quant_itr.second );
                     int cntr = 0;
                     for (auto itr : str_val)
@@ -502,8 +501,9 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                             recipricle = std::pow(10.0, cntr-1) / quant_itr.second;
                         }
                     }
-                    //fit_params["quantifier"].value = (double)100000.0 / quant_itr.second;
-                    fit_params["quantifier"].value = recipricle;
+                    Fit_Parameters<double> fit_params;
+                    // min, and max values doen't matter because we are free fitting amplitude only
+                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20, recipricle, .1, E_Bound_Type::LIMITED_LO_HI));
                     optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
                     double val = fit_params["quantifier"].value;
 

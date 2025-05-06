@@ -106,8 +106,8 @@ bool MDA_IO<T_real>::load_scalers(std::string path)
         return false;
     }
 
-    _load_scalers(true);
-    _load_meta_info();
+    _load_scalers(true, false); //not sure how to check if we are fly scan 
+    _load_meta_info(false);
     _load_extra_pvs_vector();
 
     return true;
@@ -133,7 +133,7 @@ void MDA_IO<T_real>::unload()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::Params_Override<T_real>* override_values)
+bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::Params_Override<T_real>* override_values, bool hasNetCDF)
 {
     if (override_values == nullptr)
     {
@@ -164,7 +164,7 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
             return false;
         }
 
-        _load_scalers(false);
+        _load_scalers(false, hasNetCDF); //not sure how to check if we are fly scan
     }
 
     //const data_struct::ArrayXXr<T_real>* arr = nullptr;
@@ -210,19 +210,19 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
 
 
 
-    if (arr_curr != nullptr)
+    if (arr_curr != nullptr && cnt_curr > 0.)
     {
         override_values->sr_current = sum_curr / cnt_curr;
     }
-    if (arr_us != nullptr)
+    if (arr_us != nullptr && cnt_us > 0.)
     {
         override_values->US_IC = sum_us / cnt_us;
     }
-    if (arr_us_fm != nullptr)
+    if (arr_us_fm != nullptr && cnt_us_fm > 0.)
     {
         override_values->US_FM = sum_us_fm / cnt_us_fm;
     }
-    if (arr_ds != nullptr)
+    if (arr_ds != nullptr && cnt_ds > 0.)
     {
         override_values->DS_IC = sum_ds / cnt_ds;
     }
@@ -269,8 +269,8 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         return false;
     }
 
-    _load_scalers(false);
-    _load_meta_info();
+    _load_scalers(false,hasNetCDF);
+    _load_meta_info(hasNetCDF);
     _load_extra_pvs_vector();
 
     if (_mda_file->header->data_rank == 2)
@@ -283,11 +283,11 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             if(_mda_file->scan->requested_points == 0)
                 rows = 1;
             else
-                rows = _mda_file->scan->requested_points;
+                rows = _mda_file->scan->last_point;
             if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 cols = 1;
             else
-                cols = _mda_file->scan->sub_scans[0]->requested_points;
+                cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
             vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
@@ -310,7 +310,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    cols = _mda_file->scan->requested_points;
+                    cols = _mda_file->scan->last_point;
                 }
                 samples = _mda_file->header->dimensions[1];
                 vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
@@ -342,7 +342,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    rows = _mda_file->scan->requested_points;
+                    rows = _mda_file->scan->last_point;
                 }
                 
                 if(_mda_file->scan->sub_scans[0]->requested_points == 0)
@@ -352,7 +352,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    cols = _mda_file->scan->sub_scans[0]->requested_points;
+                    cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
                 }
                 
                 vol->resize_and_zero(rows, cols, 2048);
@@ -373,7 +373,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else
         {
-            rows = _mda_file->scan->requested_points;
+            rows = _mda_file->scan->last_point;
         }
         if(_mda_file->scan->sub_scans[0]->requested_points == 0)
         {
@@ -381,7 +381,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         }
         else
         {
-            cols = _mda_file->scan->sub_scans[0]->requested_points;
+            cols = _mda_file->scan->sub_scans[0]->last_point;
         }
         samples = _mda_file->header->dimensions[2];
         if(_mda_file->header->dimensions[2] == 2000)
@@ -529,7 +529,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
-    _load_scalers(false);
+    _load_scalers(false, hasNetCDF);
 
     for (size_t det : detector_num_arr)
 	{
@@ -554,11 +554,11 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
             if(_mda_file->scan->requested_points == 0)
                 out_rows = 1;
             else
-                out_rows = _mda_file->scan->requested_points;
+                out_rows = _mda_file->scan->last_point;
             if(_mda_file->scan->sub_scans[0]->requested_points == 0)
                 out_cols = 1;
             else
-                out_cols = _mda_file->scan->sub_scans[0]->requested_points;
+                out_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
             return true;
         }
         else
@@ -579,7 +579,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                 }
                 else
                 {
-                    out_cols = _mda_file->scan->requested_points;
+                    out_cols = _mda_file->scan->last_point;
                 }
                 samples = _mda_file->header->dimensions[1];
                 is_single_row = true;
@@ -605,11 +605,11 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
         if(_mda_file->scan->requested_points == 0)
             out_rows = 1;
         else
-            out_rows = _mda_file->scan->requested_points;
+            out_rows = _mda_file->scan->last_point;
         if(_mda_file->scan->sub_scans[0]->requested_points == 0)
             out_cols = 1;
         else
-            out_cols = _mda_file->scan->sub_scans[0]->requested_points;
+            out_cols = _mda_file->scan->sub_scans[0]->last_point;
         samples = _mda_file->header->dimensions[2];
     }
     else
@@ -766,8 +766,8 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		return false;
 	}
 
-	_load_scalers(false);
-	_load_meta_info();
+	_load_scalers(false, hasNetCDF);
+	_load_meta_info(hasNetCDF);
 	_load_extra_pvs_vector();
 
 	if (_mda_file->header->data_rank == 2)
@@ -780,11 +780,11 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			if (_mda_file->scan->requested_points == 0)
 				rows = 1;
 			else
-				rows = _mda_file->scan->requested_points;
+				rows = _mda_file->scan->last_point;
 			if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 				cols = 1;
 			else
-				cols = _mda_file->scan->sub_scans[0]->requested_points;
+				cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
 			out_integrated_spectra->resize(2048);
 			return true;
 		}
@@ -803,7 +803,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				if (_mda_file->scan->requested_points == 0)
 					cols = 1;
 				else
-					cols = _mda_file->scan->requested_points;
+					cols = _mda_file->scan->last_point;
 				samples = _mda_file->header->dimensions[1];
 				out_integrated_spectra->resize(2048); //default to 2048 since it is only 2000 saved
 				is_single_row = true;
@@ -829,11 +829,11 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		if (_mda_file->scan->requested_points == 0)
 			rows = 1;
 		else
-			rows = _mda_file->scan->requested_points;
+			rows = _mda_file->scan->last_point;
 		if (_mda_file->scan->sub_scans[0]->requested_points == 0)
 			cols = 1;
 		else
-			cols = _mda_file->scan->sub_scans[0]->requested_points;
+			cols = _mda_file->scan->sub_scans[0]->last_point;
 		samples = _mda_file->header->dimensions[2];
 		if (_mda_file->header->dimensions[2] == 2000)
 		{
@@ -957,7 +957,7 @@ bool MDA_IO<T_real>::_find_theta(std::string pv_name, float* theta_out)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
+void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
 {
     if (_mda_file == nullptr)
     {
@@ -982,12 +982,20 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
     {
         rows = 1;
         if (_mda_file->scan->requested_points == 0)
+        {
             rows = 1;
+        }
         else
-            cols = _mda_file->scan->requested_points;
+        {
+            cols = _mda_file->scan->last_point;
+            if(hasNetCDF)
+            {
+                cols = std::max(1, _mda_file->scan->last_point - 2);
+            }
+        }
 
-
-        for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+        size_t iamt = std::min((size_t)_mda_file->scan->last_point, cols);
+        for (size_t i = 0; i < iamt; i++)
         {
             for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
@@ -1047,7 +1055,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         }
         else
         {
-            rows = _mda_file->scan->requested_points;
+            rows = _mda_file->scan->last_point;
         }
         if (_mda_file->scan->sub_scans[0]->requested_points == 0)
         {
@@ -1055,12 +1063,17 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec)
         }
         else
         {
-            cols = _mda_file->scan->sub_scans[0]->requested_points;
+            cols = _mda_file->scan->sub_scans[0]->last_point;
+            if(hasNetCDF)
+            {
+                cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point - 2);
+            }
         }
 
         for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
         {
-            for (int32_t j = 0; j < _mda_file->scan->sub_scans[i]->last_point; j++)
+            size_t jamt = std::min((size_t)_mda_file->scan->sub_scans[i]->last_point, cols);
+            for (size_t j = 0; j < jamt; j++)
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
@@ -1316,7 +1329,7 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void MDA_IO<T_real>::_load_meta_info()
+void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
 {
     bool single_row_scan = false;
 
@@ -1342,11 +1355,16 @@ void MDA_IO<T_real>::_load_meta_info()
             {
                 _scan_info.meta_info.requested_rows = 1;
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0];
+                if(hasNetCDF)
+                {
+                    _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0] - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
                 _scan_info.meta_info.y_axis.resize(1);
                 _scan_info.meta_info.y_axis.setZero(1);
                 _scan_info.meta_info.x_axis.resize(_mda_file->scan->requested_points);
                 _scan_info.meta_info.x_axis.setZero(_mda_file->scan->requested_points);
-                for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+                size_t iamt = std::min((size_t)_mda_file->scan->last_point, (size_t)_scan_info.meta_info.requested_cols);
+                for (size_t i = 0; i < iamt; i++)
                 {
                     _scan_info.meta_info.x_axis(i) = _mda_file->scan->positioners_data[0][i];
                 }
@@ -1355,6 +1373,10 @@ void MDA_IO<T_real>::_load_meta_info()
             {
                 _scan_info.meta_info.requested_rows = _mda_file->header->dimensions[0];
                 _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1];
+                if(hasNetCDF)
+                {
+                    _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1]- 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
                 // resize and zero y axis
                 _scan_info.meta_info.y_axis.resize(_scan_info.meta_info.requested_rows);
                 _scan_info.meta_info.y_axis.setZero(_scan_info.meta_info.requested_rows);
@@ -1362,7 +1384,7 @@ void MDA_IO<T_real>::_load_meta_info()
                 if (_mda_file->scan->number_positioners > 0)
                 {
                     // save y axis
-                    for (int32_t i = 0; i < _mda_file->scan->requested_points; i++)
+                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
                     {
                         _scan_info.meta_info.y_axis(i) = _mda_file->scan->positioners_data[0][i];
                     }
@@ -1373,8 +1395,9 @@ void MDA_IO<T_real>::_load_meta_info()
                 // if positioner exists, then read it
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
+                    size_t iamt = std::min((size_t)_mda_file->scan->sub_scans[0]->last_point, (size_t)_scan_info.meta_info.requested_cols);
                     // save x axis
-                    for (int32_t i = 0; i < _mda_file->scan->sub_scans[0]->requested_points; i++)
+                    for (size_t i = 0; i < iamt; i++)
                     {
                         _scan_info.meta_info.x_axis(i) = _mda_file->scan->sub_scans[0]->positioners_data[0][i];
                     }

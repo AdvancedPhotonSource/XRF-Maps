@@ -383,11 +383,10 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
         itr->attachAxis(axisYLog10);
     }
 
-    //T_real diff = abs(max_y - min_y );
-    //chart->zoomIn(QRectF(axisX->min(), max_y, axisX->max() - axisX->min(), diff));
-    //axisYLog10->setRange(min_y - diff, max_y + diff);
-    //axisYLog10->setMin(min_y - diff);
-    //axisYLog10->setMax(max_y + diff);
+    T_real diff = abs(max_y - min_y );
+    min_y -= (min_y * .1);
+    max_y += (diff * .3);
+    axisYLog10->setRange(min_y, max_y);
 
     QPixmap pix = chartView->grab();
     QPainter painter(&pix);

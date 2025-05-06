@@ -8172,6 +8172,7 @@ private:
 
         hsize_t offset_3d[3] = { 0, 0, 0 };
         hsize_t count_3d[3] = { 1, 1, 1 };
+        hsize_t chunk_3d[3] = { 1, 1, 1 };
 
         T_real time_scaler_clock = 1.0;
 
@@ -8317,7 +8318,11 @@ private:
                     break;
                 }
 
-                if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, count_3d, dset_values_id, dataspace_values_id))
+                chunk_3d[0] = 1;
+                chunk_3d[1] = count_3d[1];
+                chunk_3d[2] = count_3d[2];
+
+                if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, chunk_3d, dset_values_id, dataspace_values_id))
                 {
                     return false;
                 }

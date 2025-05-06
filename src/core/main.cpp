@@ -210,6 +210,10 @@ void set_num_threads(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>
     {
         analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
     }
+    if (clp.option_exists("--verbose"))
+    {
+        analysis_job.verbose = std::stoi(clp.get_option("--verbose"));
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -348,7 +352,8 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
 template <typename T_real>
 int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
 {
-    std::vector<std::string> ignore_dir_list = { "img.dat", "rois", "mda", "output" };
+    //TODO: load from config files so we can change without recompile
+    std::vector<std::regex> ignore_dir_list = { std::regex("img\.dat.*"), std::regex("rois.*"), std::regex("mda.*"), std::regex("output.*") };
     //Get the dataset directory you want to process
     std::string dataset_dir = clp.get_option("--dir");
     if (dataset_dir.length() < 1)
@@ -442,9 +447,11 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             {
                 continue;
             }
+            logI<<dataset_dir << DIR_END_CHAR << itr << DIR_END_CHAR << "*.h5"<<"\n";
             std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
             for (const auto& fitr : flist)
             {
+                //logI<<fitr<<"\n";
                 analysis_job.dataset_files.push_back(itr + DIR_END_CHAR + fitr);
             }
         }
@@ -455,9 +462,27 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             analysis_job.optimize_dataset_files.push_back(itr);
         }
 
+        // search for h5 files in img.dat directory but filter out and mda files associated with them.
         for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
         {
-            analysis_job.dataset_files.push_back(itr);
+            bool found = false;
+            size_t idx = itr.find(".h5");
+            if(idx != std::string::npos)
+            {
+                itr = itr.substr(0, idx);
+            }
+            for(auto &itr2 : analysis_job.dataset_files)
+            {
+                if(itr == itr2)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if(false == found)
+            {
+                analysis_job.dataset_files.push_back(itr);
+            }
         }
 
         if (analysis_job.dataset_files.size() == 0)

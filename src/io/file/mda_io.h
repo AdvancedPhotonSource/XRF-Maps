@@ -121,7 +121,8 @@ public:
 								bool hasNetCDF);
 
     bool load_quantification_scalers(std::string path,
-                                     data_struct::Params_Override<T_real>*override_values);
+                                     data_struct::Params_Override<T_real>*override_values,
+                                     bool hasNetCDF);
 
     void unload();
 	
@@ -139,11 +140,11 @@ public:
 
 private:
 
-    void _load_scalers(bool load_int_spec);
+    void _load_scalers(bool load_int_spec, bool hasNetCDF);
 
     void _load_extra_pvs_vector();
 
-    void _load_meta_info();
+    void _load_meta_info(bool hasNetCDF);
 
     bool _find_theta(std::string pv_name, float* theta_out);
 
