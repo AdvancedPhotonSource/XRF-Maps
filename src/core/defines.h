@@ -292,7 +292,7 @@ const std::string STR_REQUESTED_ROWS = "requested_rows";
 const std::string STR_REQUESTED_COLS = "requested_cols";
 const std::string STR_THETA = "theta";
 const std::string STR_SCAN_TIME_STAMP = "scan_time_stamp";
-const std::string STR_SCAN_TYPE = "scan_type";
+const std::string STR_XRF_SCAN_TYPE = "scan_type";
 const std::string STR_NAME = "name";
 const std::string STR_SCAN_METADATA = "scan_metadata";
 

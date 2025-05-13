@@ -8308,14 +8308,14 @@ private:
             }
 
             //Save scan type  
-            if ( _open_h5_dataset(STR_SCAN_TYPE, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if ( _open_h5_dataset(STR_XRF_SCAN_TYPE, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {   
                 char tmp_char[255] = { 0 };
                 meta_info->scan_type.copy(tmp_char, 254);
                 status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
                 if (status < 0)
                 {
-                    logE << "failed to write " << STR_SCAN_TYPE << "\n";
+                    logE << "failed to write " << STR_XRF_SCAN_TYPE << "\n";
                 }
             }
 
