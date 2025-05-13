@@ -1040,17 +1040,38 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_polar(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
+    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id, dset_id, space_id, x_dset_id, y_dset_id, x_space_id, y_space_id;
-        std::string link_name;
-        hsize_t dims[2] = { 0, 0 };
-        const char* fname = nullptr;
-        const char* objname = nullptr;
-        unsigned int flags = 0;
+        
+        hid_t    ert_dset_id, ert_space_id;
+        hid_t    elt_dset_id, elt_space_id;
+        hid_t    icr_dset_id, icr_space_id;
+        hid_t    ocr_dset_id, ocr_space_id;
+        hid_t    energy_dset_id, energy_space_id;
+        hid_t    i0_dset_id, i0_space_id;
+        hid_t    title_id, start_time_id;
+        hsize_t dims3[3] = { 0, 0, 0 };
+
+        hsize_t offset3[3] = { 0, 0, 0 };
+        hsize_t count3[3] = { 1, 1, 1 };
+
+        hsize_t count[1] = { 1 };
 
         herr_t err;
+        std::string str_elt_path = "/entry/externals/vortex/NDAttributes/LiveTime_"+std::to_string(detector_num);
+        std::string str_ert_path = "/entry/externals/vortex/NDAttributes/RealTime_"+std::to_string(detector_num);
+        std::string str_icr_path = "/entry/externals/vortex/NDAttributes/ICR_"+std::to_string(detector_num);
+        std::string str_ocr_path = "/entry/externals/vortex/NDAttributes/OCR_"+std::to_string(detector_num);
+
+        std::string str_energy_path = "/entry/data/energy";
+        std::string str_i0_path = "/entry/data/4idgI0";
+
+        std::string str_title_path = "/entry/title";
+        std::string str_start_time_path = "/entry/start_time";
+
+        offset3[1] = detector_num;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
@@ -1058,39 +1079,214 @@ public:
                 return false;
             }
             
-            
-            char buff[1024];
-            err = H5Lget_val(file_id, "/entry/measurement/xspress3", (void*)buff, 1024, H5P_DEFAULT);
-            if (err < 0) 
+            if(false == _open_h5_object(dset_id, H5O_DATASET, close_map, "/entry/externals/vortex/detector/data", file_id, -1))
             {
-                logW << "\n\nError retrieving xspress3 link value\n\n";
+                logW << "Tried to open /entry/externals/vortex/detector/data but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
 
-            // read this dims to get height and width  /entry/measurement/alba2/t 
-            if(false == _open_h5_object(dset_id, H5O_DATASET, close_map, "/entry/measurement/alba2/t", file_id, -1))
+            if(false == _open_h5_object(elt_dset_id, H5O_DATASET, close_map, str_elt_path, file_id, -1))
             {
+                logW << "Tried to open "<<str_elt_path<<" but failed.\n";
+                _close_h5_objects(close_map);
                 return false;
             }
+            if(false == _open_h5_object(ert_dset_id, H5O_DATASET, close_map, str_ert_path, file_id, -1))
+            {
+                logW << "Tried to open "<<str_ert_path<<" but failed.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            if(false == _open_h5_object(icr_dset_id, H5O_DATASET, close_map, str_icr_path, file_id, -1))
+            {
+                logW << "Tried to open "<<str_icr_path<<" but failed.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            if(false == _open_h5_object(ocr_dset_id, H5O_DATASET, close_map, str_ocr_path, file_id, -1))
+            {
+                logW << "Tried to open "<<str_ocr_path<<" but failed.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            if(false == _open_h5_object(energy_dset_id, H5O_DATASET, close_map, str_energy_path, file_id, -1))
+            {
+                logW << "Tried to open "<<str_energy_path<<" but failed.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            if(false == _open_h5_object(i0_dset_id, H5O_DATASET, close_map, str_i0_path, file_id, -1))
+            {
+                logW << "Tried to open "<<str_i0_path<<" but failed.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
+
             space_id = H5Dget_space(dset_id);
             close_map.push({ space_id, H5O_DATASPACE });
 
-            err = H5Sget_simple_extent_dims(space_id, &dims[0], nullptr);
+            elt_space_id = H5Dget_space(elt_dset_id);
+            close_map.push({ elt_space_id, H5O_DATASPACE });
+
+            ert_space_id = H5Dget_space(ert_dset_id);
+            close_map.push({ ert_space_id, H5O_DATASPACE });
+
+            icr_space_id = H5Dget_space(icr_dset_id);
+            close_map.push({ icr_space_id, H5O_DATASPACE });
+
+            ocr_space_id = H5Dget_space(ocr_dset_id);
+            close_map.push({ ocr_space_id, H5O_DATASPACE });
+
+            energy_space_id = H5Dget_space(energy_dset_id);
+            close_map.push({ energy_space_id, H5O_DATASPACE });
+
+            i0_space_id = H5Dget_space(i0_dset_id);
+            close_map.push({ i0_space_id, H5O_DATASPACE });
+
+            err = H5Sget_simple_extent_dims(space_id, &dims3[0], nullptr);
             if (err < 0)
             {
-                logE<< "Could not read /entry/measurement/alba2/t dims\n";
+                logE<< "Could not read spectra dims\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            scan_info.meta_info.theta = 0;
-            scan_info.meta_info.name = filename;
-            scan_info.meta_info.requested_cols = dims[0];
-            scan_info.meta_info.requested_rows = dims[1];
-            scan_info.meta_info.x_axis.resize(dims[0]);
-            scan_info.meta_info.y_axis.resize(dims[1]);
-            spec_vol->resize_and_zero(dims[1], dims[0], 4096);
 
+            count3[2] = dims3[2];
+            count[0] = dims3[2];
+
+            hid_t memoryspace_id = H5Screate_simple(1, count, nullptr);
+            close_map.push({ memoryspace_id, H5O_DATASPACE });
+
+            hid_t tid1 = H5Tcopy (H5T_C_S1);
+            H5Tset_size (tid1, H5T_VARIABLE);
+            H5Tset_cset(tid1, H5T_CSET_UTF8);
+
+            if (_open_h5_object(title_id, H5O_DATASET, close_map, str_title_path, file_id, -1))   
+            {
+                char* tmp_char_arr[255];
+                err = H5Dread(title_id, tid1, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
+                if (err == 0)
+                {
+                    scan_info.meta_info.name = std::string(*tmp_char_arr);
+                }
+            }
+
+            if (_open_h5_object(start_time_id, H5O_DATASET, close_map, str_start_time_path,  file_id, -1))
+            {
+                char* tmp_char_arr[255];
+                err = H5Dread(start_time_id, tid1, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
+
+                if (err == 0)
+                {
+                    scan_info.meta_info.scan_time_stamp = std::string(*tmp_char_arr);
+                }
+            }
+            
+            H5Tclose(tid1);
+
+            scan_info.meta_info.theta = 0;
+            scan_info.meta_info.scan_type = STR_SCAN_TYPE_POLAR_XANES;
+            // Take 1 spectra per magnetic polarization, divide them by 2 and store in each row
+            scan_info.meta_info.requested_cols = dims3[0] / 2;
+            scan_info.meta_info.requested_rows = 2; 
+            scan_info.meta_info.x_axis.resize(scan_info.meta_info.requested_cols);
+            scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
+            spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, dims3[2]);
+
+            struct data_struct::Scaler_Map<T_real> energy_map;
+            energy_map.name = "Energy";
+            energy_map.unit = "";
+            energy_map.time_normalized = false;
+            energy_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
+
+            struct data_struct::Scaler_Map<T_real> i0_map;
+            i0_map.name = "I0";
+            i0_map.unit = "counts";
+            i0_map.time_normalized = false;
+            i0_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
+
+            data_struct::ArrayTr<T_real> elt_array(dims3[0]);
+            data_struct::ArrayTr<T_real> ert_array(dims3[0]);
+            data_struct::ArrayTr<T_real> icr_array(dims3[0]);
+            data_struct::ArrayTr<T_real> ocr_array(dims3[0]);
+
+            data_struct::ArrayTr<T_real> i0_array(dims3[0]);
+            data_struct::ArrayTr<T_real> energy_array(dims3[0]);
+
+            err = _read_h5d<T_real>(elt_dset_id, H5S_ALL, elt_space_id, H5P_DEFAULT, elt_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read live time data, setting it all to 1's\n";
+                elt_array.setOnes();
+            }
+            err = _read_h5d<T_real>(ert_dset_id, H5S_ALL, ert_space_id, H5P_DEFAULT, ert_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read real time data, setting it all to 1's\n";
+                ert_array.setOnes();
+            }
+            err = _read_h5d<T_real>(icr_dset_id, H5S_ALL, icr_space_id, H5P_DEFAULT, icr_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read icr data, setting it all to 1's\n";
+                icr_array.setOnes();
+            }
+            err = _read_h5d<T_real>(ocr_dset_id, H5S_ALL, ocr_space_id, H5P_DEFAULT, ocr_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read ocr data, setting it all to 1's\n";
+                ocr_array.setOnes();
+            }
+
+            err = _read_h5d<T_real>(energy_dset_id, H5S_ALL, energy_space_id, H5P_DEFAULT, energy_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read energy data, setting it all to 1's\n";
+                energy_array.setOnes();
+            }
+            err = _read_h5d<T_real>(i0_dset_id, H5S_ALL, i0_space_id, H5P_DEFAULT, i0_array.data());
+            if(err < 0)
+            {
+                logE<< "Could not read i0 data, setting it all to 1's\n";
+                i0_array.setOnes();
+            }
+
+
+            int polarity = 0;
+            int idx = 0;
+            for(size_t i = 0; i < dims3[0]; i++)
+            {
+                offset3[0] = i;
+                H5Sselect_hyperslab(space_id, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
+                err = _read_h5d<T_real>(dset_id, memoryspace_id, space_id, H5P_DEFAULT, &(*spec_vol)[polarity][idx][0]);
+                if(err < 0)
+                {
+                    logE<< "Could not read spectra data at "<<i<<". Setting this to all 0's\n";
+                    (*spec_vol)[idx][polarity].setZero();
+                }
+                (*spec_vol)[polarity][idx].elapsed_livetime(elt_array[i]);
+                (*spec_vol)[polarity][idx].elapsed_realtime(ert_array[i]);
+                (*spec_vol)[polarity][idx].input_counts(icr_array[i]);
+                (*spec_vol)[polarity][idx].output_counts(ocr_array[i]);
+
+                energy_map.values(polarity, idx) = energy_array[i];
+                i0_map.values(polarity, idx) = i0_array[i];
+                if(polarity == 1)
+                {
+                    polarity = 0;
+                    idx++;
+                }
+                else
+                {
+                    polarity = 1;
+                }
+            }
+
+            scan_info.scaler_maps.push_back(energy_map);
+            scan_info.scaler_maps.push_back(i0_map);
+            /*
             // x, y, and z dataset are all rows x cols size 
             // read x motor scaler from /entry/measurement/pseudo/x
             // read y motor scaler from /entry/measurement/pseudo/y
@@ -1135,10 +1331,12 @@ public:
                     i += dims[1];
                 }
             }
+                */
             // read scaler /entry/snapshots/pre_scan/energy or /entry/snapshots/post_scan/energy for incident energy
 
             // Unpack the external link value
             //err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, (const char**)&xspress3_link_name[0], (const char**)&xspress3_link[0]);
+            /*
             err = H5Lunpack_elink_val((const void*)buff, 1024, &flags, &fname, &objname);
             if (err < 0) 
             {
@@ -1149,9 +1347,12 @@ public:
             link_name = std::string(fname);
             logI<<link_name<<" : "<< objname<<"\n\n";
             //logI<<fname<<" : "<< objname<<"\n\n";
+            */
             _close_h5_objects(close_map);
+            return true;
         }
-        return load_spectra_volume_xspress3(path + DIR_END_CHAR + link_name, detector_num, spec_vol);
+        //return load_spectra_volume_xspress3(path + DIR_END_CHAR + link_name, detector_num, spec_vol);
+        return false;
     }
 
     //-----------------------------------------------------------------------------
@@ -8046,7 +8247,6 @@ private:
 
         try
         {
-
             filetype = H5Tcopy(H5T_FORTRAN_S1);
             H5Tset_size(filetype, 256);
             memtype = H5Tcopy(H5T_C_S1);
@@ -8055,85 +8255,89 @@ private:
             //save y axis
             count[0] = meta_info->y_axis.size();
             _create_memory_space(1, count, memoryspace_id);
-            if (false == _open_h5_dataset<T_real>(STR_Y_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if (_open_h5_dataset<T_real>(STR_Y_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
-                return false;
-            }
-            status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->y_axis.data());
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_Y_AXIS << "\n";
+                status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->y_axis.data());
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_Y_AXIS << "\n";
+                }
             }
 
             count[0] = meta_info->x_axis.size();
             _create_memory_space(1, count, memoryspace_id);
-            if (false == _open_h5_dataset<T_real>(STR_X_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if (_open_h5_dataset<T_real>(STR_X_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
-                return false;
-            }
-            status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->x_axis.data());
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_X_AXIS << "\n";
+                status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->x_axis.data());
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_X_AXIS << "\n";
+                }
             }
 
             //save requested rows
             count[0] = 1;
             _create_memory_space(1, count, memoryspace_id);
-            if (false == _open_h5_dataset(STR_REQUESTED_ROWS, H5T_INTEL_I32, scan_grp_id, 1, count, count, dset_id, dataspace_id))
-            {
-                return false;
-            }
-            status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(meta_info->requested_rows));
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_REQUESTED_ROWS << "\n";
+            if (_open_h5_dataset(STR_REQUESTED_ROWS, H5T_INTEL_I32, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            {       
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(meta_info->requested_rows));
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_REQUESTED_ROWS << "\n";
+                }
             }
 
             //save requested cols
-            if (false == _open_h5_dataset(STR_REQUESTED_COLS, H5T_INTEL_I32, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if (_open_h5_dataset(STR_REQUESTED_COLS, H5T_INTEL_I32, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
-                return false;
-            }
-            status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(meta_info->requested_cols));
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_REQUESTED_COLS << "\n";
+                status = H5Dwrite(dset_id, H5T_NATIVE_INT, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(meta_info->requested_cols));
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_REQUESTED_COLS << "\n";
+                }
             }
 
             //Save theta
-            if (false == _open_h5_dataset<T_real>(STR_THETA, scan_grp_id, 1, count, count, dset_id, dataspace_id))
-            {
-                return false;
-            }
-            status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&meta_info->theta);
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_THETA << "\n";
-            }
-
-            if (false == _open_h5_dataset(STR_SCAN_TIME_STAMP, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
-            {
-                return false;
-            }
-            char tmp_char[255] = { 0 };
-            meta_info->scan_time_stamp.copy(tmp_char, 254);
-            status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
-            if (status < 0)
-            {
-                logE << "failed to write " << STR_SCAN_TIME_STAMP << "\n";
+            if (_open_h5_dataset<T_real>(STR_THETA, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            {   
+                status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&meta_info->theta);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_THETA << "\n";
+                }
             }
 
-            if (false == _open_h5_dataset(STR_NAME, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
-            {
-                return false;
+            //Save scan type  
+            if ( _open_h5_dataset(STR_SCAN_TYPE, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            {   
+                char tmp_char[255] = { 0 };
+                meta_info->scan_type.copy(tmp_char, 254);
+                status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_SCAN_TYPE << "\n";
+                }
             }
-            char tmp_char2[255] = { 0 };
-            meta_info->name.copy(tmp_char2, 254);
-            status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char2);
-            if (status < 0)
+
+            if (_open_h5_dataset(STR_SCAN_TIME_STAMP, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
-                logE << "failed to write " << STR_NAME << "\n";
+                char tmp_char[255] = { 0 };
+                meta_info->scan_time_stamp.copy(tmp_char, 254);
+                status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_SCAN_TIME_STAMP << "\n";
+                }
+            }
+            if (_open_h5_dataset(STR_NAME, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            {   
+                char tmp_char2[255] = { 0 };
+                meta_info->name.copy(tmp_char2, 254);
+                status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char2);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_NAME << "\n";
+                }
             }
         }
         catch (...)
