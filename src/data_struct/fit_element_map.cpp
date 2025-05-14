@@ -353,59 +353,72 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
 	T_real binding_e;
 	if (_element_info != nullptr)
 	{
-		if (_shell_type == "K")
-		{
-			if (_element_info->bindingE["K"] < incident_energy)
-			{
-				return true;
-			}
-		}
-		else if (_shell_type == "L")
-		{
-			switch (energy_ratio_idx)
-			{
-			case 4:
-			case 5:
-			case 7:
-			case 8:
-			case 9:
-				if (_element_info->bindingE["L1"] < incident_energy)
-				{
-					return true;
-				}
-				break;
-            case 2:
-            case 6:
-            case 11:
-                if (_element_info->bindingE["L2"] < incident_energy)
-                {
-                    return true;
-                }
-                break;
-            case 0:
-            case 1:
-            case 3:
-            case 10:
-                if (_element_info->bindingE["L3"] < incident_energy)
-                {
-                    return true;
-                }
-                break;
-			default:
-				break;
-			}
-		}
-        else if (_shell_type == "M")
+        if( _pileup_element_info != nullptr)
         {
-            if (_element_info->bindingE["M1"] < incident_energy)
+            if (_shell_type == "K")
             {
-                return true;
+                if (_center < incident_energy)
+                {
+                    return true;
+                }
             }
         }
-		else
-		{
+        else
+        {
+            if (_shell_type == "K")
+            {
+                if (_element_info->bindingE["K"] < incident_energy)
+                {
+                    return true;
+                }
+            }
+            else if (_shell_type == "L")
+            {
+                switch (energy_ratio_idx)
+                {
+                case 4:
+                case 5:
+                case 7:
+                case 8:
+                case 9:
+                    if (_element_info->bindingE["L1"] < incident_energy)
+                    {
+                        return true;
+                    }
+                    break;
+                case 2:
+                case 6:
+                case 11:
+                    if (_element_info->bindingE["L2"] < incident_energy)
+                    {
+                        return true;
+                    }
+                    break;
+                case 0:
+                case 1:
+                case 3:
+                case 10:
+                    if (_element_info->bindingE["L3"] < incident_energy)
+                    {
+                        return true;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            else if (_shell_type == "M")
+            {
+                if (_element_info->bindingE["M1"] < incident_energy)
+                {
+                    return true;
+                }
+            }
+            else
+            {
 
-		}
+            }
+        }
 	}
 	return false;
 }

@@ -848,7 +848,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     {
         // try to load polar hdf master file
         data_struct::Scan_Info<T_real> scan_info;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
         {
             if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {

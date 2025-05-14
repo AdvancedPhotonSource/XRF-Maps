@@ -210,6 +210,9 @@ const std::string STR_FIT_GAUSS_MATRIX = "Fitted";
 const std::string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 const std::string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
 
+const std::string STR_SCAN_TYPE_POLAR_XANES = "POLAR_XANES";
+const std::string STR_SCAN_TYPE_2D_MAP = "XRF_MAPS";
+
 const std::string STR_SR_CURRENT = "SR_Current";
 const std::string STR_US_IC = "US_IC";
 const std::string STR_US_FM = "US_FM";
@@ -289,6 +292,7 @@ const std::string STR_REQUESTED_ROWS = "requested_rows";
 const std::string STR_REQUESTED_COLS = "requested_cols";
 const std::string STR_THETA = "theta";
 const std::string STR_SCAN_TIME_STAMP = "scan_time_stamp";
+const std::string STR_XRF_SCAN_TYPE = "scan_type";
 const std::string STR_NAME = "name";
 const std::string STR_SCAN_METADATA = "scan_metadata";
 
