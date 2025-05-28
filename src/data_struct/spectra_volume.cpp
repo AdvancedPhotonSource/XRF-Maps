@@ -99,31 +99,40 @@ template<typename T_real>
 Spectra<T_real> Spectra_Volume<T_real>::integrate()
 {
 
-    Spectra<T_real> i_spectra(_data_vol[0][0].size());
-    T_real elt = 0.0;
-    T_real ert = 0.0;
-    T_real in_cnt = 0.0;
-    T_real out_cnt = 0.0;
-    for(size_t i = 0; i < _data_vol.size(); i++)
+    if(_data_vol.size() > 0)
     {
-        for(size_t j = 0; j < _data_vol[0].size(); j++)
+        Spectra<T_real> i_spectra(_data_vol[0][0].size());
+        
+        T_real elt = 0.0;
+        T_real ert = 0.0;
+        T_real in_cnt = 0.0;
+        T_real out_cnt = 0.0;
+        for(size_t i = 0; i < _data_vol.size(); i++)
         {
-            i_spectra += _data_vol[i][j];
-            elt += _data_vol[i][j].elapsed_livetime();
-            ert += _data_vol[i][j].elapsed_realtime();
-            in_cnt += _data_vol[i][j].input_counts();
-            out_cnt += _data_vol[i][j].output_counts();
+            for(size_t j = 0; j < _data_vol[0].size(); j++)
+            {
+                i_spectra += _data_vol[i][j];
+                elt += _data_vol[i][j].elapsed_livetime();
+                ert += _data_vol[i][j].elapsed_realtime();
+                in_cnt += _data_vol[i][j].input_counts();
+                out_cnt += _data_vol[i][j].output_counts();
+            }
         }
+
+        i_spectra.elapsed_livetime(elt);
+        i_spectra.elapsed_realtime(ert);
+        i_spectra.input_counts(in_cnt);
+        i_spectra.output_counts(out_cnt);
+
+        i_spectra.recalc_elapsed_livetime();
+
+        return i_spectra;
     }
-
-    i_spectra.elapsed_livetime(elt);
-    i_spectra.elapsed_realtime(ert);
-    i_spectra.input_counts(in_cnt);
-    i_spectra.output_counts(out_cnt);
-
-    i_spectra.recalc_elapsed_livetime();
-
-    return i_spectra;
+    else
+    {
+        Spectra<T_real> i_spectra(1);
+        return i_spectra;
+    }
 }
 
 // ----------------------------------------------------------------------------

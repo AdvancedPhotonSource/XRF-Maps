@@ -289,12 +289,14 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             || itr.first == data_struct::Fitting_Routines::SVD)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine<T_real>* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine;
-            io::file::HDF5_IO::inst()->save_fitted_int_spectra(fit_routine->get_name(),
-                matrix_fit->fitted_integrated_spectra(),
-                matrix_fit->energy_range(),
-                matrix_fit->fitted_integrated_background(),
-                (*spectra_volume)[0][0].size());
-
+            if(spectra_volume->samples_size() > 0)
+            {
+                io::file::HDF5_IO::inst()->save_fitted_int_spectra(fit_routine->get_name(),
+                    matrix_fit->fitted_integrated_spectra(),
+                    matrix_fit->energy_range(),
+                    matrix_fit->fitted_integrated_background(),
+                    (*spectra_volume)[0][0].size());
+            }
             // save png 
             std::string dataset_fullpath = io::file::HDF5_IO::inst()->get_filename();
             int sidx = dataset_fullpath.find("img.dat");
@@ -304,10 +306,13 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                 std::string str_path = dataset_fullpath + "_" + fit_routine->get_name() + ".png";
                 data_struct::ArrayTr<T_real> ev = data_struct::generate_energy_array(matrix_fit->energy_range(), &(override_params->fit_params));
                 Spectra<T_real> int_spec = spectra_volume->integrate();
-                int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
-                #ifdef _BUILD_WITH_QT
-                visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
-                #endif
+                if (matrix_fit->energy_range().count() < int_spec.size())
+                {
+                    int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
+                    #ifdef _BUILD_WITH_QT
+                    visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
+                    #endif
+                }
             }
 
         }
