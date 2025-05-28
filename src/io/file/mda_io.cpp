@@ -280,7 +280,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
         if(hasNetCDF)
         {
-            if(_mda_file->scan->requested_points == 0)
+            if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point)
                 rows = 1;
             else
                 rows = _mda_file->scan->last_point;
@@ -1049,7 +1049,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
     }
     else
     {
-        if (_mda_file->scan->requested_points == 0)
+        if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
         {
             rows = 1;
         }

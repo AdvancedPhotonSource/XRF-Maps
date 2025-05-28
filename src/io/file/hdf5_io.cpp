@@ -1887,9 +1887,20 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
     hid_t extra_units = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Unit", H5P_DEFAULT);
     hid_t extra_values = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Values", H5P_DEFAULT);
     hid_t extra_desc = H5Dopen(file_id, "/MAPS/Scan/Extra_PVs/Description", H5P_DEFAULT);
+
+    if (extra_names > -1)
+        _global_close_map.push({extra_names, H5O_DATASET});
+    if (extra_units > -1)
+        _global_close_map.push({extra_units, H5O_DATASET});
+    if (extra_values > -1)
+        _global_close_map.push({extra_values, H5O_DATASET});
+    if (extra_desc > -1)
+        _global_close_map.push({extra_desc, H5O_DATASET});
+
     if(extra_names > -1 && extra_units > -1 && extra_values > -1 && extra_desc > -1)
     {
         hid_t name_space = H5Dget_space(extra_names);
+        _global_close_map.push({name_space, H5O_DATASPACE});
         int rank = H5Sget_simple_extent_ndims(name_space);
         hsize_t* dims_in = new hsize_t[rank];
         H5Sget_simple_extent_dims(name_space, &dims_in[0], nullptr);
@@ -1898,19 +1909,30 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
         extra_pv_dims[1] = dims_in[0];
 
         hid_t file_space = H5Screate_simple(2, &extra_pv_dims[0], &extra_pv_dims[0]);
+        _global_close_map.push({file_space, H5O_DATASPACE});
 
         hid_t name_type = H5Dget_type(extra_names);
+        _global_close_map.push({name_type, H5O_DATATYPE});
         std::string extra_pvs_str = group_name + "/extra_pvs";
         std::string extra_pvs_as_csv_str = group_name + "/extra_pvs_as_csv";
         hid_t extra_pvs = H5Dcreate1(file_id, extra_pvs_str.c_str(), name_type, file_space, H5P_DEFAULT);
+        if(extra_pvs > -1)
+        {
+            _global_close_map.push({extra_pvs, H5O_DATASET});
+        }
         hid_t extra_pvs_as_csv = H5Dcreate1(file_id, extra_pvs_as_csv_str.c_str(), name_type, name_space, H5P_DEFAULT);
-
+        if(extra_pvs_as_csv > -1)
+        {
+            _global_close_map.push({extra_pvs_as_csv, H5O_DATASET});
+        }
         hsize_t offset_1d[1] = {0};
         hsize_t count_1d[1] = {1};
         hsize_t offset_2d[2] = {0,0};
         hsize_t count_2d[2] = {1,1};
 
         hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
+        _global_close_map.push({memoryspace_id, H5O_DATATYPE});
+
         for(hsize_t i=0; i<dims_in[0]; i++)
         {
 			for (int z = 0; z < 256; z++)
@@ -1951,21 +1973,7 @@ void HDF5_IO::_add_extra_pvs(hid_t file_id, std::string group_name)
             H5Dwrite(extra_pvs_as_csv, name_type, memoryspace_id, name_space, H5P_DEFAULT, (void*)tmp_char);
         }
         delete [] dims_in;
-
-        if (extra_pvs > -1)
-            H5Dclose(extra_pvs);
-        if (extra_pvs_as_csv > -1)
-            H5Dclose(extra_pvs_as_csv);
     }
-
-    if (extra_names > -1)
-        H5Dclose(extra_names);
-    if (extra_units > -1)
-        H5Dclose(extra_units);
-    if (extra_values > -1)
-        H5Dclose(extra_values);
-    if (extra_desc > -1)
-        H5Dclose(extra_desc);
 }
 
 //-----------------------------------------------------------------------------
@@ -1976,7 +1984,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     double* dbuf = nullptr;
     float* fbuf = nullptr;
     logI  << dataset_file << "\n";
-    hid_t saved_file_id = _cur_file_id;
 
     hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
     H5Tset_size(filetype, 256);
@@ -1989,9 +1996,10 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     hid_t file_id = H5Fopen(dataset_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 	if (file_id < 0)
 	{
-        _cur_file_id = saved_file_id;
+        logW<<"Failed to open file "<<dataset_file<<"\n";
 		return;
 	}
+    _global_close_map.push({file_id, H5O_FILE });
     //Scan
     if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) < 0)
     {
@@ -2094,9 +2102,26 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	hid_t fit_int_id = -1, max_id = -1, max_10_id = -1, nnls_id = -1, back_id = -1, max_space = -1, max_type, v9_max_id = -1, v9_space = -1;
 	
 	max_id = H5Dopen(file_id, max_name.c_str(), H5P_DEFAULT);
+    if(max_id > -1)
+    {
+        _global_close_map.push({max_id, H5O_DATASET });
+    }
     fit_int_id = H5Dopen(file_id, fit_int_name.c_str(), H5P_DEFAULT);
+    if(fit_int_id > -1)
+    {
+        _global_close_map.push({fit_int_id, H5O_DATASET });
+    }
     max_10_id = H5Dopen(file_id, max10_name.c_str(), H5P_DEFAULT);
+    if(max_10_id > -1)
+    {
+        _global_close_map.push({max_10_id, H5O_DATASET });
+    }
     nnls_id = H5Dopen(file_id, nnls_int_name.c_str(), H5P_DEFAULT);
+    if(nnls_id > -1)
+    {
+        _global_close_map.push({nnls_id, H5O_DATASET });
+    }
+
     if (fit_int_id > -1)
     {
         back_id = H5Dopen(file_id, fit_int_back_name.c_str(), H5P_DEFAULT);
@@ -2106,16 +2131,25 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         back_id = H5Dopen(file_id, nnls_int_back_name.c_str(), H5P_DEFAULT);
     }
 
+    if(back_id > -1)
+    {
+        _global_close_map.push({back_id, H5O_DATASET });
+    }
+
     if (max_id > -1)
     {
         max_space = H5Dget_space(max_id);
+        _global_close_map.push({max_space, H5O_DATASPACE });
         max_type = H5Dget_type(max_id);
+        _global_close_map.push({max_type, H5O_DATATYPE });
         H5Sget_simple_extent_dims(max_space, &count2d[0], nullptr);
     }
     else if (nnls_id > -1)
     {
         max_space = H5Dget_space(nnls_id);
+        _global_close_map.push({max_space, H5O_DATASPACE });
         max_type = H5Dget_type(nnls_id);
+        _global_close_map.push({max_type, H5O_DATATYPE });
         H5Sget_simple_extent_dims(max_space, &count2d[0], nullptr);
     }
 
@@ -2130,6 +2164,10 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 		if (v9_max_id < 0)
 		{
 			v9_max_id = H5Dcreate(file_id, v9_max_name.c_str(), max_type, v9_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if(v9_max_id > -1)
+            {
+                _global_close_map.push({v9_max_id, H5O_DATASET });
+            }
 		}
 		if (v9_max_id > -1)
 		{
@@ -2154,7 +2192,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
                     H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
                     H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
                 }
-                H5Dclose(max_id);
             }
 			if (max_10_id > -1)
 			{
@@ -2164,7 +2201,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 					H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
 					H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
 				}
-				H5Dclose(max_10_id);
 			}
 			if (fit_int_id > -1)
 			{
@@ -2174,7 +2210,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 					H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
 					H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
 				}
-				H5Dclose(fit_int_id);
 			}
             if (nnls_id > -1)
             {
@@ -2184,7 +2219,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
                     H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
                     H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
                 }
-                H5Dclose(nnls_id);
             }
             if (back_id > -1)
             {
@@ -2194,7 +2228,6 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
                     H5Sselect_hyperslab(v9_space, H5S_SELECT_SET, offset2d, nullptr, count2d, nullptr);
                     H5Dwrite(v9_max_id, max_type, max_space, v9_space, H5P_DEFAULT, (void*)buf);
                 }
-                H5Dclose(back_id);
             }
 
             if (dbuf != nullptr)
@@ -2205,10 +2238,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
             { 
                 delete [] fbuf;
             }
-			
-            H5Dclose(v9_max_id);
 		}
-		H5Sclose(v9_space);
 	}
 	
     //XRF_Analyzed
@@ -2229,145 +2259,143 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
 
     hid_t chan_names = H5Dopen(file_id, "/MAPS/channel_names", H5P_DEFAULT);
-    if (chan_names < 0)
-    {
-        _cur_file_id = saved_file_id;
-        return;
-    }
-        
-    hid_t chan_space = H5Dget_space(chan_names);
-    int num_chan;
-    if(chan_names > -1)
-    {
-        hsize_t chan_size = 1;
-        H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
-        num_chan = chan_size; //num channel names
-    }
-    //hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
-
-    //Channel Units are a 4 x channels so we can't do a hardlink
-    // the 4 are SR_current, US_IC, DS_IC, and cts/s
-    
-    
-    hsize_t unit_dims[2];
-    hsize_t offset_dims[2] = { 0,0 };
-    unit_dims[0] = 4;
-    unit_dims[1] =num_chan;
-    hid_t ch_unit_id, units_space;
-        
-    if (false == _open_h5_dataset("/MAPS/channel_units", filetype, file_id, 2, &unit_dims[0], &unit_dims[0], ch_unit_id, units_space))
-    {
-        logE << "Error creating " << "/MAPS/channel_units" << "\n";
-        return;
-    }
-    if (ch_unit_id > 0)
-    {
-        hsize_t mem_dims[1] = { 1 };
-        hsize_t count_2d[2] = { 1,1 };
-        hid_t mem_space = H5Screate_simple(1, &mem_dims[0], &mem_dims[0]);
-
-        std::string str_val = "cts/s";
-        for (int z = 0; z < 256; z++)
-        {
-            tmp_char1[z] = 0;
-        }
-        str_val.copy(tmp_char1, 256);
-        for (hsize_t i = 0; i < unit_dims[0]; i++)
-        {
-            for (hsize_t j = 0; j < unit_dims[1]; j++)
-            {
-                offset_dims[0] = i;
-                offset_dims[1] = j;
-                H5Sselect_hyperslab(units_space, H5S_SELECT_SET, offset_dims, nullptr, count_2d, nullptr);
-                H5Dwrite(ch_unit_id, filetype, mem_space, units_space, H5P_DEFAULT, (void*)&str_val[0]);
-            }
-        }
-        H5Dclose(ch_unit_id);
-    }
-    else
-    {
-        logW << "Couldn't create /MAPS/channel_units" << "\n";
-    }
-    
-
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", 0, NULL) >= 0)
-    {
-        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT);
-    }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) >= 0)
-    {
-        _add_v9_quant(file_id, chan_names, chan_space, num_chan, "ROI", "/MAPS/XRF_roi_quant");
-    }
-
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", 0, NULL) >= 0)
-    {
-        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT);
-    }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) >= 0)
-    {
-        _add_v9_quant(file_id, chan_names, chan_space, num_chan, "NNLS", "/MAPS/XRF_roi_plus_quant");
-    }
-
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", 0, NULL) >= 0)
-    {
-        H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT);
-    }
-    if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) >= 0)
-    {
-        _add_v9_quant(file_id, chan_names, chan_space, num_chan, STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
-    }
-
-	// create links /MAPS/make_maps_conf/nbs1832/us_amp and ds_amp
-	hid_t conf_id = H5Gcreate(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	if (conf_id < 0)
-	{
-		conf_id = H5Gopen(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT);
-	}
-	if (conf_id >-1)
-	{
-		hid_t e_id = H5Gcreate(conf_id, "nbs1832", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		if (e_id > -1)
-		{
-			H5Gclose(e_id);
-		}
-	}
-	if (conf_id > -1)
-	{
-		H5Gclose(conf_id);
-	}
-	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/us_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", 0, NULL) >= 0)
-	{
-		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/us_amp", H5P_DEFAULT, H5P_DEFAULT);
-	}
-	if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/ds_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", 0, NULL) >= 0)
-	{
-		H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/ds_amp", H5P_DEFAULT, H5P_DEFAULT);
-	}
-    _add_extra_pvs(file_id, "/MAPS");
-
     if (chan_names > -1)
     {
-        H5Dclose(chan_names);
+         _global_close_map.push({chan_names, H5O_DATASET });
+    
+        
+        hid_t chan_space = H5Dget_space(chan_names);
+        _global_close_map.push({chan_space, H5O_DATASPACE });
+        int num_chan;
+        if(chan_names > -1)
+        {
+            hsize_t chan_size = 1;
+            H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
+            num_chan = chan_size; //num channel names
+        }
+        //hid_t quant_space = H5Screate_simple(3, &quant_dims[0], &quant_dims[0]);
+
+        //Channel Units are a 4 x channels so we can't do a hardlink
+        // the 4 are SR_current, US_IC, DS_IC, and cts/s
+        
+        
+        hsize_t unit_dims[2];
+        hsize_t offset_dims[2] = { 0,0 };
+        unit_dims[0] = 4;
+        unit_dims[1] =num_chan;
+        hid_t ch_unit_id, units_space;
+            
+        if (false == _open_h5_dataset("/MAPS/channel_units", filetype, file_id, 2, &unit_dims[0], &unit_dims[0], ch_unit_id, units_space))
+        {
+            logE << "Error creating " << "/MAPS/channel_units" << "\n";
+        }
+        if (ch_unit_id > -1)
+        {
+            hsize_t mem_dims[1] = { 1 };
+            hsize_t count_2d[2] = { 1,1 };
+            hid_t mem_space = H5Screate_simple(1, &mem_dims[0], &mem_dims[0]);
+            _global_close_map.push({mem_space, H5O_DATASPACE });
+            std::string str_val = "cts/s";
+            for (int z = 0; z < 256; z++)
+            {
+                tmp_char1[z] = 0;
+            }
+            str_val.copy(tmp_char1, 256);
+            for (hsize_t i = 0; i < unit_dims[0]; i++)
+            {
+                for (hsize_t j = 0; j < unit_dims[1]; j++)
+                {
+                    offset_dims[0] = i;
+                    offset_dims[1] = j;
+                    H5Sselect_hyperslab(units_space, H5S_SELECT_SET, offset_dims, nullptr, count_2d, nullptr);
+                    H5Dwrite(ch_unit_id, filetype, mem_space, units_space, H5P_DEFAULT, (void*)&str_val[0]);
+                }
+            }
+        }
+        else
+        {
+            logW << "Couldn't create /MAPS/channel_units" << "\n";
+        }
+        
+
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", 0, NULL) >= 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/ROI/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi", 0, NULL) >= 0)
+        {
+            _add_v9_quant(file_id, chan_names, chan_space, num_chan, "ROI", "/MAPS/XRF_roi_quant");
+        }
+
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", 0, NULL) >= 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/NNLS/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_roi_plus", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_roi_plus", 0, NULL) >= 0)
+        {
+            _add_v9_quant(file_id, chan_names, chan_space, num_chan, "NNLS", "/MAPS/XRF_roi_plus_quant");
+        }
+
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", 0, NULL) >= 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5L_SAME_LOC, "/MAPS/XRF_fits", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        if (H5Gget_objinfo(file_id, "/MAPS/XRF_fits", 0, NULL) >= 0)
+        {
+            _add_v9_quant(file_id, chan_names, chan_space, num_chan, STR_FIT_GAUSS_MATRIX, "/MAPS/XRF_fits_quant");
+        }
+
+        // create links /MAPS/make_maps_conf/nbs1832/us_amp and ds_amp
+        hid_t conf_id = H5Gcreate(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if (conf_id < 0)
+        {
+            conf_id = H5Gopen(file_id, "/MAPS/make_maps_conf", H5P_DEFAULT);
+        }
+        if (conf_id >-1)
+        {
+            _global_close_map.push({conf_id, H5O_GROUP });
+            hid_t e_id = H5Gcreate(conf_id, "nbs1832", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);            
+            if (e_id > -1)
+            {
+                _global_close_map.push({e_id, H5O_GROUP });
+            }
+        }
+
+        if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/us_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", 0, NULL) >= 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/us_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/us_amp", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        if (H5Gget_objinfo(file_id, "/MAPS/make_maps_conf/nbs1832/ds_amp", 0, NULL) < 0 && H5Gget_objinfo(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", 0, NULL) >= 0)
+        {
+            H5Lcreate_hard(file_id, "/MAPS/Quantification/Standard0/Scalers/ds_amp", H5L_SAME_LOC, "/MAPS/make_maps_conf/nbs1832/ds_amp", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        _add_extra_pvs(file_id, "/MAPS");
     }
 
     //change version to 9
     float version = 9;
     hid_t version_id = H5Dopen(file_id, "/MAPS/version", H5P_DEFAULT);
+    if(version_id > -1)
+    {
+        _global_close_map.push({version_id, H5O_DATASET });
+    }
     hid_t ver_space = H5Dget_space(version_id);
+    if(ver_space > -1)
+    {
+        _global_close_map.push({ver_space, H5O_DATASPACE });
+    }
     hid_t ver_type = H5Dget_type(version_id);
+    if(ver_type > -1)
+    {
+        _global_close_map.push({ver_type, H5O_DATATYPE });
+    }
     H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
-    H5Dclose(version_id);
     if (H5Gget_objinfo(file_id, "/version", 0, NULL) < 0)
     {
         H5Lcreate_hard(file_id, "/MAPS/version", H5L_SAME_LOC, "/version", H5P_DEFAULT, H5P_DEFAULT);
     }
 
     _close_h5_objects(_global_close_map);
-
-    _cur_file_id = file_id;
-    end_save_seq();
-    _cur_file_id = saved_file_id;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -2544,19 +2572,21 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
     std::string full_fit_link_path = "/MAPS/XRF_Analyzed/" + fits_link;
     hid_t fits_grp = H5Gopen(file_id, full_fit_link_path.c_str(), H5P_DEFAULT);
-    if(fits_grp < 0)
+    if(fits_grp > -1)
     {
-        //if we don't find the analysis, don't make an exchange for it
-        return false;
+        _global_close_map.push({fits_grp, H5O_GROUP});
     }
 
 
 
     hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
+    _global_close_map.push({filetype, H5O_DATATYPE});
+
     H5Tset_size(filetype, 256);
     hsize_t count [1] = {1};
     hid_t dset_id;
     hid_t dataspace_id = H5Screate_simple (1, count, nullptr);
+    _global_close_map.push({dataspace_id, H5O_DATASPACE});
     hid_t exchange_id;
     if (false == _open_or_create_group(exhange_str, file_id, exchange_id))
     {
@@ -2580,22 +2610,55 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
         //Save description
         std::string norm_desc = fits_link + " normalized by " + normalize_scaler;
         hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        if(dset_id > 0)
+        if(dset_id > -1)
         {
+            _global_close_map.push({dset_id, H5O_DATASET});
             norm_desc.copy(desc, 256);
             H5Dwrite(dset_id, filetype, dataspace_id, dataspace_id, H5P_DEFAULT, (void*)&desc);
-            H5Dclose(dset_id);
         }
 
         dset_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Counts_Per_Sec", H5P_DEFAULT);
+        if(dset_id > -1)
+        {
+            _global_close_map.push({dset_id, H5O_DATASET});
+        }
         //hid_t chan_units_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Units", H5P_DEFAULT);
         hid_t chan_names_id = H5Dopen(file_id, "/MAPS/XRF_Analyzed/Fitted/Channel_Names", H5P_DEFAULT);
+        if(chan_names_id > -1)
+        {
+            _global_close_map.push({chan_names_id, H5O_DATASET});
+        }
         hid_t scaler_dset_id = H5Dopen(file_id, "/MAPS/Scalers/Values", H5P_DEFAULT);
+        if(scaler_dset_id > -1)
+        {
+            _global_close_map.push({scaler_dset_id, H5O_DATASET});
+        }
         hid_t scaler_units_id = H5Dopen(file_id, "/MAPS/Scalers/Units", H5P_DEFAULT);
+        if(scaler_units_id > -1)
+        {
+            _global_close_map.push({scaler_units_id, H5O_DATASET});
+        }
         hid_t scaler_names_id = H5Dopen(file_id, "/MAPS/Scalers/Names", H5P_DEFAULT);
+        if(scaler_names_id > -1)
+        {
+            _global_close_map.push({scaler_names_id, H5O_DATASET});
+        }
         hid_t ds_ic_quant_id = H5Dopen(file_id, "/MAPS/Quantification/Calibration/Fitted/Calibration_Curve_DS_IC", H5P_DEFAULT);
+        if(ds_ic_quant_id > -1)
+        {
+            _global_close_map.push({ds_ic_quant_id, H5O_DATASET});
+        }
+
         hid_t quant_space = H5Dget_space(ds_ic_quant_id);
+        if(quant_space > -1)
+        {
+            _global_close_map.push({quant_space, H5O_DATASPACE});
+        }
         hid_t quant_type = H5Dget_type(ds_ic_quant_id);
+        if(quant_type > -1)
+        {
+            _global_close_map.push({quant_type, H5O_DATATYPE});
+        }
         if(dset_id > 0 && chan_names_id > 0 && scaler_dset_id > 0 && scaler_units_id > 0 &&  scaler_names_id > 0)
         {
             hsize_t chan_dims[3] = {1,1,1};
@@ -2788,12 +2851,6 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
 
             delete [] data;
             delete [] ds_ic_data;
-            H5Dclose(ds_ic_quant_id);
-            H5Dclose(chan_names_id);
-            H5Dclose(scaler_units_id);
-            H5Dclose(scaler_names_id);
-            H5Dclose(scaler_dset_id);
-            H5Dclose(dset_id);
         }
 
     }
@@ -2839,19 +2896,19 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
             // Add quantification
             hsize_t quant_dims[3] = {3,1,1};
             hid_t chan_names = H5Dopen(file_id, str_image_names.c_str(), H5P_DEFAULT);
-            hid_t chan_space = H5Dget_space(chan_names);
             if(chan_names > -1)
             {
+                _global_close_map.push({chan_names, H5O_DATASET});
+                hid_t chan_space = H5Dget_space(chan_names);
+                _global_close_map.push({chan_space, H5O_DATASPACE});
                 hsize_t chan_size = 1;
                 H5Sget_simple_extent_dims(chan_space, &chan_size, nullptr);
                 quant_dims[2] = chan_size; //num channel names
-            }
-            hid_t quant_space;
-            _create_memory_space(3, &quant_dims[0], quant_space);
-            _add_v9_quant(file_id, chan_names, chan_space, quant_dims[2], fits_link, exhange_str+"/quant");
             
-            H5Sclose(chan_space);
-            H5Dclose(chan_names);
+                hid_t quant_space;
+                _create_memory_space(3, &quant_dims[0], quant_space);
+                _add_v9_quant(file_id, chan_names, chan_space, quant_dims[2], fits_link, exhange_str+"/quant");
+            }
         }
 
         //Save description

@@ -7814,6 +7814,7 @@ public:
 
 
             std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+            close_map.push( {file_id, H5O_FILE} );
 
             hid_t dset_id, dataspace_id;
             hsize_t dims_in[1] = { 0 };
@@ -7892,13 +7893,6 @@ public:
             }
             _close_h5_objects(close_map);
         }
-
-
-        hid_t saved_file_id = _cur_file_id;
-        _cur_file_id = file_id;
-        end_save_seq();
-        logI << "closing file" << "\n";
-        _cur_file_id = saved_file_id;
     }
 
     //-----------------------------------------------------------------------------

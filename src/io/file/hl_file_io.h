@@ -1291,7 +1291,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         io::file::HDF5_IO::inst()->start_save_seq(true);
         data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
         // add ELT, ERT, INCNT, OUTCNT to scaler map
-        if (spectra_volume != nullptr && scan_info != nullptr)
+        if (spectra_volume != nullptr && scan_info != nullptr && scan_info->scaler_maps.size() > 0)
         {
             spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
         }
