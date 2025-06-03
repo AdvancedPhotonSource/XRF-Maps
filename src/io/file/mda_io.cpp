@@ -280,14 +280,22 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
         if(hasNetCDF)
         {
-            if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point)
+            if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+            {
                 rows = 1;
+            }
             else
+            {
                 rows = _mda_file->scan->last_point;
-            if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+            }
+            if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+            {
                 cols = 1;
+            }
             else
+            {
                 cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+            }
             vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
@@ -304,7 +312,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
 
                 rows = 1;
-                if(_mda_file->scan->requested_points == 0)
+                if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
                 {
                     cols = 1;
                 }
@@ -335,7 +343,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
             if(hasNetCDF)
             {
-                if(_mda_file->scan->requested_points == 0)
+                if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
                 {
                     logW<<"mda_file->scan->requested_points == 0, Settign rows = 1\n";
                     rows = 1;
@@ -345,7 +353,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                     rows = _mda_file->scan->last_point;
                 }
                 
-                if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+                if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
                 {
                     logW<<"mda_file->scan->>sub_scans[0]->requested_points == 0, Settign cols = 1\n";
                     cols = 1;
@@ -367,7 +375,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             return false;
         }
 
-        if(_mda_file->scan->requested_points == 0)
+        if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
         {
             rows = 1;
         }
@@ -375,7 +383,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         {
             rows = _mda_file->scan->last_point;
         }
-        if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+        if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
         {
             cols = 1;
         }
@@ -551,14 +559,22 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
         if(hasNetCDF)
         {
-            if(_mda_file->scan->requested_points == 0)
+            if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+            {
                 out_rows = 1;
+            }
             else
+            {
                 out_rows = _mda_file->scan->last_point;
-            if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+            }
+            if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+            {
                 out_cols = 1;
+            }
             else
+            {
                 out_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+            }
             return true;
         }
         else
@@ -573,7 +589,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
                 }
 
                 out_rows = 1;
-                if (_mda_file->scan->requested_points == 0)
+                if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
                 {
                     out_cols = 1;
                 }
@@ -602,14 +618,22 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
             return false;
         }
 
-        if(_mda_file->scan->requested_points == 0)
+        if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+        {
             out_rows = 1;
+        }
         else
+        {
             out_rows = _mda_file->scan->last_point;
-        if(_mda_file->scan->sub_scans[0]->requested_points == 0)
+        }
+        if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+        {
             out_cols = 1;
+        }
         else
+        {
             out_cols = _mda_file->scan->sub_scans[0]->last_point;
+        }
         samples = _mda_file->header->dimensions[2];
     }
     else
@@ -777,14 +801,22 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 		if (hasNetCDF)
 		{
-			if (_mda_file->scan->requested_points == 0)
+			if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+            {
 				rows = 1;
+            }
 			else
+            {
 				rows = _mda_file->scan->last_point;
-			if (_mda_file->scan->sub_scans[0]->requested_points == 0)
+            }
+			if (_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+            {
 				cols = 1;
+            }
 			else
+            {
 				cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+            }
 			out_integrated_spectra->resize(2048);
 			return true;
 		}
@@ -800,10 +832,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				}
 
 				rows = 1;
-				if (_mda_file->scan->requested_points == 0)
+				if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+                {
 					cols = 1;
+                }
 				else
+                {
 					cols = _mda_file->scan->last_point;
+                }
 				samples = _mda_file->header->dimensions[1];
 				out_integrated_spectra->resize(2048); //default to 2048 since it is only 2000 saved
 				is_single_row = true;
@@ -826,14 +862,22 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			return false;
 		}
 
-		if (_mda_file->scan->requested_points == 0)
+		if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+        {
 			rows = 1;
+        }
 		else
+        {
 			rows = _mda_file->scan->last_point;
-		if (_mda_file->scan->sub_scans[0]->requested_points == 0)
+        }
+		if (_mda_file->scan->sub_scans[0]->requested_points == 0 ||  _mda_file->scan->sub_scans[0]->last_point == 0)
+        {
 			cols = 1;
+        }
 		else
+        {
 			cols = _mda_file->scan->sub_scans[0]->last_point;
+        }
 		samples = _mda_file->header->dimensions[2];
 		if (_mda_file->header->dimensions[2] == 2000)
 		{
@@ -981,7 +1025,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
     if (single_row_scan)
     {
         rows = 1;
-        if (_mda_file->scan->requested_points == 0)
+        if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
         {
             rows = 1;
         }
@@ -1057,7 +1101,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
         {
             rows = _mda_file->scan->last_point;
         }
-        if (_mda_file->scan->sub_scans[0]->requested_points == 0)
+        if (_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
         {
             cols = 1;
         }

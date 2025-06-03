@@ -92,7 +92,7 @@ double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, 
     {
         // orig
         //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
+        dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
         dt += std::pow((ud->spectra[i] - ud->spec_avg),2.0);
     }
     sum = dy / dt;
@@ -136,7 +136,7 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     for (int i=0; i<ud->spectra.size(); i++)
     {
         //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0);
+        dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
         dt += std::pow((ud->spectra[i] - ud->spec_avg), 2.0);
     }
     sum = dy / dt;
