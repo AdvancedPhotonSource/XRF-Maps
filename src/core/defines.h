@@ -212,6 +212,8 @@ const std::string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";
 
 const std::string STR_SCAN_TYPE_POLAR_XANES = "POLAR_XANES";
 const std::string STR_SCAN_TYPE_2D_MAP = "XRF_MAPS";
+const std::string STR_SCAN_TYPE_XRF_SINGLE_MCA = "XRF_SINGLE_MCA";
+const std::string STR_SCAN_TYPE_2D_EMD = "XRF_2D_EMD";
 
 const std::string STR_SR_CURRENT = "SR_Current";
 const std::string STR_US_IC = "US_IC";
@@ -271,6 +273,8 @@ const std::string STR_OUTPUT_COUNTS = "Output_Counts";
 const std::string STR_MAPS = "MAPS";
 const std::string STR_SCAN = "Scan";
 const std::string STR_SPECTRA = "Spectra";
+const std::string STR_LHCP_SPECTRA = "LHCP_Spectra";
+const std::string STR_RHCP_SPECTRA = "RHCP_Spectra";
 const std::string STR_VERSION = "version";
 const std::string STR_XRF_ANALYZED = "XRF_Analyzed";
 const std::string STR_COUNTS_PER_SEC = "Counts_Per_Sec";

@@ -138,6 +138,68 @@ Spectra<T_real> Spectra_Volume<T_real>::integrate()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+bool Spectra_Volume<T_real>::integrate_polar(Spectra<T_real> &lhs, Spectra<T_real> &rhs)
+{
+
+    if(_data_vol.size() > 0)
+    {
+        lhs.resize(_data_vol[0][0].size());
+        rhs.resize(_data_vol[0][0].size());
+        
+        T_real lhs_elt = 0.0;
+        T_real lhs_ert = 0.0;
+        T_real lhs_in_cnt = 0.0;
+        T_real lhs_out_cnt = 0.0;
+
+        T_real rhs_elt = 0.0;
+        T_real rhs_ert = 0.0;
+        T_real rhs_in_cnt = 0.0;
+        T_real rhs_out_cnt = 0.0;
+        bool lhs_now = true;
+        for(size_t i = 0; i < _data_vol.size(); i++)
+        {
+            for(size_t j = 0; j < _data_vol[0].size(); j++)
+            {
+                if(lhs_now)
+                {
+                    lhs += _data_vol[i][j];
+                    lhs_elt += _data_vol[i][j].elapsed_livetime();
+                    lhs_ert += _data_vol[i][j].elapsed_realtime();
+                    lhs_in_cnt += _data_vol[i][j].input_counts();
+                    lhs_out_cnt += _data_vol[i][j].output_counts();
+                }
+                else
+                {
+                    rhs += _data_vol[i][j];
+                    rhs_elt += _data_vol[i][j].elapsed_livetime();
+                    rhs_ert += _data_vol[i][j].elapsed_realtime();
+                    rhs_in_cnt += _data_vol[i][j].input_counts();
+                    rhs_out_cnt += _data_vol[i][j].output_counts();
+                }
+                lhs_now = !lhs_now;
+            }
+        }
+
+        lhs.elapsed_livetime(lhs_elt);
+        lhs.elapsed_realtime(lhs_ert);
+        lhs.input_counts(lhs_in_cnt);
+        lhs.output_counts(lhs_out_cnt);
+
+        rhs.elapsed_livetime(rhs_elt);
+        rhs.elapsed_realtime(rhs_ert);
+        rhs.input_counts(rhs_in_cnt);
+        rhs.output_counts(rhs_out_cnt);
+
+        lhs.recalc_elapsed_livetime();
+        rhs.recalc_elapsed_livetime();
+        return true;
+    }
+    return false;
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 {
 

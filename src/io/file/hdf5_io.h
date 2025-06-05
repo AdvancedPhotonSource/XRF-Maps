@@ -5370,7 +5370,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool save_spectra_volume(const std::string path, data_struct::Spectra_Volume<T_real>* spectra_volume, size_t row_idx_start=0, int row_idx_end=-1, size_t col_idx_start=0, int col_idx_end=-1)
+    bool save_spectra_volume(const std::string path, data_struct::Spectra_Volume<T_real>* spectra_volume, const std::string &scan_type, size_t row_idx_start=0, int row_idx_end=-1, size_t col_idx_start=0, int col_idx_end=-1)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -5543,7 +5543,7 @@ public:
             return false;
         }
 
-        //save quantification_standard integrated spectra
+        //save integrated spectra
         data_struct::Spectra<T_real> spectra = spectra_volume->integrate();
         count[0] = spectra.size();
         _create_memory_space(1, count, memoryspace_id);
@@ -5558,6 +5558,39 @@ public:
         {
             logE << " H5Dwrite failed to write " << STR_INT_SPEC << "/" << STR_SPECTRA << "\n";
         }
+
+        if(scan_type == STR_SCAN_TYPE_POLAR_XANES)
+        {
+             //save POLAR left and right polarization integrated spectra
+            data_struct::Spectra<T_real> lhcp_spectra;
+            data_struct::Spectra<T_real> rhcp_spectra;
+            if(spectra_volume->integrate_polar(lhcp_spectra, rhcp_spectra))
+            {
+                hid_t lhcp_dset_id, rhcp_dset_id;
+                hid_t lhcp_space_id, rhcp_space_id;
+                count[0] = lhcp_spectra.size();
+                _create_memory_space(1, count, memoryspace_id);
+                bool lhcp_bool = _open_h5_dataset<T_real>(STR_LHCP_SPECTRA, int_spec_grp_id, 1, count, count, lhcp_dset_id, lhcp_space_id);
+                bool rhcp_bool = _open_h5_dataset<T_real>(STR_RHCP_SPECTRA, int_spec_grp_id, 1, count, count, rhcp_dset_id, rhcp_space_id);
+                if (lhcp_bool && rhcp_bool)
+                {
+                    offset[0] = 0;
+                    H5Sselect_hyperslab(lhcp_space_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                    H5Sselect_hyperslab(rhcp_space_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                    status = _write_h5d<T_real>(lhcp_dset_id, memoryspace_id, lhcp_space_id, H5P_DEFAULT, (void*)&lhcp_spectra[0]);
+                    if (status < 0)
+                    {
+                        logE << " H5Dwrite failed to write left polarity int spectra" << STR_INT_SPEC << "/" << STR_LHCP_SPECTRA << "\n";
+                    }
+                    status = _write_h5d<T_real>(rhcp_dset_id, memoryspace_id, rhcp_space_id, H5P_DEFAULT, (void*)&rhcp_spectra[0]);
+                    if (status < 0)
+                    {
+                        logE << " H5Dwrite failed to write right polarity int spectra " << STR_INT_SPEC << "/" << STR_RHCP_SPECTRA << "\n";
+                    }
+                }
+            }
+        }
+
 
         //save real_time
         count[0] = 1;
