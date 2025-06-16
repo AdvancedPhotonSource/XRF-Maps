@@ -4143,7 +4143,7 @@ public:
     {
         hid_t file_id = -1;
         hid_t maps_grp_id = -1;
-        hid_t counts_dset_id, channels_dset_id, counts_dspace_id, channels_dspace_id, fit_int_spec_dset_id;
+        hid_t counts_dset_id, channels_dset_id, counts_dspace_id, channels_dspace_id;
         hid_t memoryspace_id, memoryspace_name_id, error;
         hsize_t offset[3] = { 0,0,0 };
         hsize_t count[3] = { 1,1,1 };

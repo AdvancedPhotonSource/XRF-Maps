@@ -1398,10 +1398,21 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
             if (single_row_scan)
             {
                 _scan_info.meta_info.requested_rows = 1;
-                _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0];
+                if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+                {
+                    _scan_info.meta_info.requested_cols = 1;
+                }
+                else
+                {
+                    _scan_info.meta_info.requested_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
                 if(hasNetCDF)
                 {
-                    _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[0] - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    if (_scan_info.meta_info.requested_cols < 1)
+                    {
+                        _scan_info.meta_info.requested_cols = 1;
+                    }
                 }
                 _scan_info.meta_info.y_axis.resize(1);
                 _scan_info.meta_info.y_axis.setZero(1);
@@ -1415,11 +1426,31 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
             }
             else
             {
-                _scan_info.meta_info.requested_rows = _mda_file->header->dimensions[0];
-                _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1];
+
+                if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
+                {
+                    _scan_info.meta_info.requested_rows = 1;
+                }
+                else
+                {
+                    _scan_info.meta_info.requested_rows = _mda_file->scan->last_point;
+                }
+                if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+                {
+                    _scan_info.meta_info.requested_cols = 1;
+                }
+                else
+                {
+                    _scan_info.meta_info.requested_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
+                
                 if(hasNetCDF)
                 {
-                    _scan_info.meta_info.requested_cols = _mda_file->header->dimensions[1]- 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    if (_scan_info.meta_info.requested_cols < 1)
+                    {
+                        _scan_info.meta_info.requested_cols = 1;
+                    }
                 }
                 // resize and zero y axis
                 _scan_info.meta_info.y_axis.resize(_scan_info.meta_info.requested_rows);
