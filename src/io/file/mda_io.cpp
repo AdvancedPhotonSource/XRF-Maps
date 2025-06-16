@@ -296,6 +296,12 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             {
                 cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
             }
+
+            if ( cols < 1)
+            {
+                cols = 1;
+            }
+
             vol->resize_and_zero(rows, cols, 2048);
             return true;
         }
@@ -319,6 +325,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 else
                 {
                     cols = _mda_file->scan->last_point;
+                }
+                if (cols < 1)
+                {
+                    cols = 1;
                 }
                 samples = _mda_file->header->dimensions[1];
                 vol->resize_and_zero(rows, cols, 2048); //default to 2048 since it is only 2000 saved
@@ -362,7 +372,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 {
                     cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
                 }
-                
+                if(cols < 1)
+                {
+                    cols = 1;
+                }
                 vol->resize_and_zero(rows, cols, 2048);
                 return true;
             }
@@ -390,6 +403,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         else
         {
             cols = _mda_file->scan->sub_scans[0]->last_point;
+        }
+        if(cols < 1)
+        {
+            cols = 1;
         }
         samples = _mda_file->header->dimensions[2];
         if(_mda_file->header->dimensions[2] == 2000)
@@ -1398,26 +1415,26 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
             if (single_row_scan)
             {
                 _scan_info.meta_info.requested_rows = 1;
-                if(_mda_file->scan->sub_scans[0]->requested_points == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+                if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
                 {
                     _scan_info.meta_info.requested_cols = 1;
                 }
                 else
                 {
-                    _scan_info.meta_info.requested_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    _scan_info.meta_info.requested_cols = _mda_file->scan->last_point;
                 }
                 if(hasNetCDF)
                 {
-                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
-                    if (_scan_info.meta_info.requested_cols < 1)
-                    {
-                        _scan_info.meta_info.requested_cols = 1;
-                    }
+                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols                    
+                }
+                if (_scan_info.meta_info.requested_cols < 1)
+                {
+                    _scan_info.meta_info.requested_cols = 1;
                 }
                 _scan_info.meta_info.y_axis.resize(1);
                 _scan_info.meta_info.y_axis.setZero(1);
-                _scan_info.meta_info.x_axis.resize(_mda_file->scan->requested_points);
-                _scan_info.meta_info.x_axis.setZero(_mda_file->scan->requested_points);
+                _scan_info.meta_info.x_axis.resize( _scan_info.meta_info.requested_cols);
+                _scan_info.meta_info.x_axis.setZero( _scan_info.meta_info.requested_cols);
                 size_t iamt = std::min((size_t)_mda_file->scan->last_point, (size_t)_scan_info.meta_info.requested_cols);
                 for (size_t i = 0; i < iamt; i++)
                 {
@@ -1441,7 +1458,7 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
                 }
                 else
                 {
-                    _scan_info.meta_info.requested_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    _scan_info.meta_info.requested_cols = _mda_file->scan->sub_scans[0]->last_point;
                 }
                 
                 if(hasNetCDF)
