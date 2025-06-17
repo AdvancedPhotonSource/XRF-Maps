@@ -82,6 +82,29 @@ const static std::map<Element_Param_Type, std::string> Element_Param_Str_Map{ {K
                                                                              {Mg_Line, "Mg"},
                                                                         };
 
+const static std::map<std::string, Element_Param_Type> Str_Element_Param_Map{ {"Ka1", Ka1_Line},
+                                                                             {"Ka2", Ka2_Line},
+                                                                             {"Kb1", Kb1_Line},
+                                                                             {"Kb2", Kb2_Line},
+                                                                             {"La1", La1_Line},
+                                                                             {"La2", La2_Line},
+                                                                             {"Lb1", Lb1_Line},
+                                                                             {"Lb2", Lb2_Line},
+                                                                             {"Lb3", Lb3_Line},
+                                                                             {"Lb4", Lb4_Line},
+                                                                             {"Lg1", Lg1_Line},
+                                                                             {"Lg2", Lg2_Line},
+                                                                             {"Lg3", Lg3_Line},
+                                                                             {"Lg4", Lg4_Line},
+                                                                             {"Ll", Ll_Line},
+                                                                             {"Ln", Ln_Line},
+                                                                             {"Ma1", Ma1_Line},
+                                                                             {"Ma2", Ma2_Line},
+                                                                             {"Mb", Mb_Line},
+                                                                             {"Mg", Mg_Line},
+                                                                        };
+
+
 const static std::map<Element_Param_Type, float> Element_Param_Percent_Map{   {Ka1_Line, 1.00},
                                                                              {Ka2_Line, 0.50},
                                                                              {Kb1_Line, 0.15},
