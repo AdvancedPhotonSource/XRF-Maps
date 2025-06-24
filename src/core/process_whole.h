@@ -213,6 +213,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                              data_struct::Detector<T_real>* detector,
                              ThreadPool* tp,
                              bool save_spec_vol,
+                             const std::string &scan_type,
                              Callback_Func_Status_Def* status_callback = nullptr)
 {
     if (detector == nullptr)
@@ -352,7 +353,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
 
     if (save_spec_vol)
     {
-        io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume);
+        io::file::HDF5_IO::inst()->save_spectra_volume("mca_arr", spectra_volume, scan_type);
     }
     
     io::file::HDF5_IO::inst()->end_save_seq();
@@ -486,9 +487,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     io::file::HDF5_IO::inst()->set_filename(full_save_path);
                 }
 
+                std::string scan_type; // 2d maps or XANES currently supported
                 bool loaded_from_analyzed_hdf5 = false;
                 //load spectra volume
-                if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &loaded_from_analyzed_hdf5, true))
+                if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &loaded_from_analyzed_hdf5, scan_type, true))
                 {
                     logW << "Skipping detector " << detector_num << "\n";
                     delete spectra_volume;
@@ -500,7 +502,7 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                 }
 
                 analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
-                proc_spectra(spectra_volume, detector, &tp, !loaded_from_analyzed_hdf5, status_callback);
+                proc_spectra(spectra_volume, detector, &tp, !loaded_from_analyzed_hdf5, scan_type, status_callback);
                 delete spectra_volume;
             }
         }
@@ -521,10 +523,11 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
 
     io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true); // force to create new file for quick and dirty
 
+    std::string scan_type;
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
     bool is_loaded_from_analyzed_h5 = false;
-    if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, true))
+    if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, scan_type, true))
     {
         logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
         delete spectra_volume;
@@ -535,11 +538,11 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
         }
         return;
     }
-
+    
     //load spectra volume
     for (int i = 1; i < analysis_job->detector_num_arr.size(); i++)
     {
-        if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, false))
+        if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, analysis_job->detector_num_arr[i], tmp_spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, scan_type, false))
         {
             logE << "Loading all detectors for " << analysis_job->dataset_directory << DIR_END_CHAR << dataset_file << "\n";
             delete spectra_volume;
@@ -579,7 +582,7 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
 
     analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
 
-    proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, status_callback);
+    proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, scan_type, status_callback);
     delete spectra_volume;
 }
 

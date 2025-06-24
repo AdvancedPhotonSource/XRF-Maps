@@ -732,6 +732,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                          data_struct::Spectra_Volume<T_real>* spectra_volume,
                          data_struct::Params_Override<T_real>* params_override,
                          bool *is_loaded_from_analyazed_h5,
+                         std::string &scan_type,
                          bool save_scalers)
 {
 
@@ -850,6 +851,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         data_struct::Scan_Info<T_real> scan_info;
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
         {
+            scan_type = STR_SCAN_TYPE_POLAR_XANES;
             if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {
                 io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
@@ -897,7 +899,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
         {
             data_struct::Scan_Info<T_real> scan_info;
-
+            scan_type = STR_SCAN_TYPE_XRF_SINGLE_MCA;
             for (auto& itr : pv_map)
             {
                 data_struct::Scaler_Map<T_real> sm;
@@ -916,6 +918,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             scan_info.meta_info.y_axis.resize(1);
             scan_info.meta_info.y_axis.setZero(1);
             scan_info.meta_info.theta = 0.0;
+            scan_info.meta_info.scan_type = STR_SCAN_TYPE_XRF_SINGLE_MCA;
 
             data_struct::Extra_PV ep;
             ep.name = "Name";
@@ -979,11 +982,13 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         // try new APS-U format
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
         {
+            scan_type = scan_info_edf.meta_info.scan_type;
             return true;
         }
         // try ESRF dataset
         else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_esrf(fullpath, file_title, spectra_volume, scan_info_edf))
         {
+            scan_type = scan_info_edf.meta_info.scan_type;
             std::string dset_folder = "";
             std::string base_name = dataset_file;
             int didx = dataset_file.find(DIR_END_CHAR);
@@ -1085,6 +1090,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     {
         if (true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume))
         {
+            scan_type = STR_SCAN_TYPE_2D_EMD;
             //*is_loaded_from_analyazed_h5 = true;//test to not save volume
             std::string str_detector_num = "";
             if (detector_num != -1)
@@ -1100,6 +1106,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     //try loading confocal dataset
     if (true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
     {
+        scan_type = STR_SCAN_TYPE_2D_MAP;
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
@@ -1111,6 +1118,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     //try loading gse cars dataset
     if (true == io::file::HDF5_IO::inst()->load_spectra_volume_gsecars<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
     {
+        scan_type = STR_SCAN_TYPE_2D_MAP;
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
@@ -1121,6 +1129,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
     if (true == io::file::HDF5_IO::inst()->load_spectra_volume_bnl<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, false))
     {
+        scan_type = STR_SCAN_TYPE_2D_MAP;
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
@@ -1132,6 +1141,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     // try to load spectra from mda file
     if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress))
     {
+        scan_type = STR_SCAN_TYPE_2D_MAP;
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";
         return false;
     }
