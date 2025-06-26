@@ -115,7 +115,11 @@ private:
                         size_t detector,
                         data_struct::Spectra_Line<T_real>* spec_line,
                         size_t line_size, 
-                        data_struct::Spectra<T_real>* spectra);
+                        data_struct::Spectra<T_real>* spectra,
+                        size_t cur_row,
+                        size_t max_rows,
+                        data_struct::IO_Callback_Func_Def<T_real> *callback_fun,
+                        void* user_data);
 
     static NetCDF_IO *_this_inst;
 
