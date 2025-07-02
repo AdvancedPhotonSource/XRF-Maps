@@ -117,7 +117,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, 1047808};
     ptrdiff_t stride[] = {1, 1, 1};
-    T_real data_in[1][1][1047808];
+    T_real data_in[1][1][1050000] = {0};
     size_t spectra_size = 0;
     nc_type rh_type;
     int rh_ndims = 0;
@@ -249,7 +249,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         // check to make sure we don't go out of bounds
         size_t tmp_l = l + header_size + (spectra_size * detector) + ( spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector));
 
-        if (j >= cols_before_inc || tmp_l >= count[2])
+        if (j >= cols_before_inc || tmp_l > count[2])
         {
             l = header_size;
             start[0]++;
@@ -493,11 +493,12 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
                                                 data_struct::IO_Callback_Func_Def<T_real> callback_fun,
                                                 void* user_data)
 {
+    bool val = true;
     for (auto &detector : detector_num_arr)
     {
-        _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
+        val &= _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
     }
-    return true;
+    return val;
 }
 
 //-----------------------------------------------------------------------------
