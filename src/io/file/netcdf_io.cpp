@@ -246,7 +246,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
         }
 
-        if (j >= cols_before_inc || l >= count[2])
+        // check to make sure we don't go out of bounds
+        size_t tmp_l = l + header_size + (spectra_size * detector) + ( spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector));
+
+        if (j >= cols_before_inc || tmp_l >= count[2])
         {
             l = header_size;
             start[0]++;
