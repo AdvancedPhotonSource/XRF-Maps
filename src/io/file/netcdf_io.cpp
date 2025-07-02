@@ -127,6 +127,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     T_real elapsed_realtime = 0.;
     T_real input_counts = 0.;
     T_real output_counts = 0.;
+    T_real sum_elapsed_livetime = 0.;
+    T_real sum_elapsed_realtime = 0.;
+    T_real sum_input_counts = 0.;
+    T_real sum_output_counts = 0.;
     size_t cols_before_inc = 124; // default is 124 but read in also
     data_struct::Spectra<T_real>* callback_spectra = nullptr;
 
@@ -273,9 +277,9 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         unsigned short i1 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
         unsigned short i2 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
         unsigned int ii = i1 | i2<<16;
+        elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if (ltype == E_load_type::LINE)
         {
-            elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (elapsed_livetime == 0)
             {
                 if (j > 0 && j < spec_cntr - 2) // copy the previous value
@@ -296,19 +300,19 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
-            elapsed_livetime += ((float)ii) * 320e-9f; 
+            sum_elapsed_livetime += elapsed_livetime; 
         }
         else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
         {
-            callback_spectra->elapsed_livetime( ((float)ii) * 320e-9f);
+            callback_spectra->elapsed_livetime(elapsed_livetime);
         }
 
         i1 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
         i2 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
+        elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
         if (ltype == E_load_type::LINE)
         {
-            elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (elapsed_realtime == 0)
             {
                 if (j > 0 && j < spec_cntr - 2) // copy the previous value
@@ -329,19 +333,19 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
-            elapsed_realtime += ((float)ii) * 320e-9f;
+            sum_elapsed_realtime += elapsed_realtime;
         }
         else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
         {
-            callback_spectra->elapsed_realtime(((float)ii) * 320e-9f);
+            callback_spectra->elapsed_realtime(elapsed_realtime);
         }
 
         i1 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
+        input_counts = ((float)ii) / elapsed_livetime;
         if (ltype == E_load_type::LINE)
         {
-            input_counts = ((float)ii) / elapsed_livetime;
             if (input_counts == 0)
             {
                 if (j > 0 && j < spec_cntr - 2) // copy the previous value
@@ -362,20 +366,20 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
-            input_counts += ((float)ii) / elapsed_livetime;
+            sum_input_counts += input_counts;
         }
         else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
         {
-            callback_spectra->input_counts(((float)ii) / elapsed_livetime);
+            callback_spectra->input_counts(input_counts);
         }
 
 
         i1 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
+        output_counts = ((float)ii) / elapsed_realtime;
         if (ltype == E_load_type::LINE)
         {
-            output_counts = ((float)ii) / elapsed_realtime;
             if (output_counts == 0)
             {
                 if (j > 0 && j < spec_cntr - 2) // copy the previous value
@@ -396,11 +400,11 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
         else if(ltype == E_load_type::INTEGRATED)
         {
-            output_counts += ((float)ii) / elapsed_realtime;
+            sum_output_counts += output_counts;
         }
         else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
         {
-            callback_spectra->output_counts(((float)ii) / elapsed_realtime);
+            callback_spectra->output_counts(output_counts);
         }
 
         l += header_size + (spectra_size * detector);
@@ -437,17 +441,17 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     {
         if(cur_row == 0) //first spectra row being loaded
         {
-            spectra->elapsed_livetime(elapsed_livetime);
-            spectra->elapsed_realtime(elapsed_realtime);
-            spectra->input_counts(input_counts);
-            spectra->output_counts(output_counts);
+            spectra->elapsed_livetime(sum_elapsed_livetime);
+            spectra->elapsed_realtime(sum_elapsed_realtime);
+            spectra->input_counts(sum_input_counts);
+            spectra->output_counts(sum_output_counts);
         }
         else
         {
-            spectra->elapsed_livetime(spectra->elapsed_livetime() + elapsed_livetime);
-            spectra->elapsed_realtime(spectra->elapsed_realtime() + elapsed_realtime);
-            spectra->input_counts(spectra->input_counts() + input_counts);
-            spectra->output_counts(spectra->output_counts() + output_counts);
+            spectra->elapsed_livetime(spectra->elapsed_livetime() + sum_elapsed_livetime);
+            spectra->elapsed_realtime(spectra->elapsed_realtime() + sum_elapsed_realtime);
+            spectra->input_counts(spectra->input_counts() + sum_input_counts);
+            spectra->output_counts(spectra->output_counts() + sum_output_counts);
         }
     }
 
