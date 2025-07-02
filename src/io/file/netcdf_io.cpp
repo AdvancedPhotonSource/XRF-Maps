@@ -229,7 +229,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     }
 
     size_t l = header_size;
-    //size_t max_spec_per_netcdf_idx = (1047808 - header_size) / (header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL))
+    //size_t cols_before_inc = (1047808 - header_size) / (header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL))
 
     for(size_t j=0; j<spec_cntr; j++)
     {
@@ -242,8 +242,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
         }
 
-        //if ( j>0 &&  (j % max_spec_per_netcdf_idx) == 0)
-        if (j > cols_before_inc || l > count[2])
+        if (j >= cols_before_inc || l >= count[2])
         {
             l = header_size;
             start[0]++;
@@ -254,7 +253,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 nc_close(ncid);
                 return j;
             }
-            cols_before_inc = data_in[0][0][8];
+            cols_before_inc += data_in[0][0][8];
         }
         if (data_in[0][0][l] != 13260 || data_in[0][0][l+1] != -13261)
         {
@@ -340,7 +339,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         i1 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
-        if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
+        if (ltype == E_load_type::LINE)
         {
             input_counts = ((float)ii) / elapsed_livetime;
             if (input_counts == 0)
@@ -374,7 +373,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         i1 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
         i2 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
-        if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
+        if (ltype == E_load_type::LINE)
         {
             output_counts = ((float)ii) / elapsed_realtime;
             if (output_counts == 0)
@@ -404,19 +403,11 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra->output_counts(((float)ii) / elapsed_realtime);
         }
 
-        if (ltype == E_load_type::LINE)
-        {
-            (*spec_line)[j].elapsed_livetime(elapsed_livetime);
-            (*spec_line)[j].elapsed_realtime(elapsed_realtime);
-            (*spec_line)[j].input_counts(input_counts);
-            (*spec_line)[j].output_counts(output_counts);
-            // recalculate elapsed lifetime
-            (*spec_line)[j].recalc_elapsed_livetime();
-        }
-
         l += header_size + (spectra_size * detector);
         if (ltype == E_load_type::LINE)
         {
+            // recalculate elapsed lifetime
+            (*spec_line)[j].recalc_elapsed_livetime();
             for (size_t k = 0; k < spectra_size; k++)
             {
                 (*spec_line)[j][k] = data_in[0][0][l+k];
@@ -432,6 +423,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
         {
             callback_spectra->recalc_elapsed_livetime();
+            for (size_t k = 0; k < spectra_size; k++)
+            {
+                (*callback_spectra)[k] = data_in[0][0][l+k];
+            }
             (*callback_fun)(cur_row, j, max_rows, line_size, detector, callback_spectra, user_data);
         }
 
@@ -440,7 +435,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
 
     if (ltype == E_load_type::INTEGRATED)
     {
-        if(spectra->elapsed_livetime() == default_time_and_io_counts) //first spectra being loaded
+        if(cur_row == 0) //first spectra row being loaded
         {
             spectra->elapsed_livetime(elapsed_livetime);
             spectra->elapsed_realtime(elapsed_realtime);
@@ -491,12 +486,11 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
                                                 data_struct::IO_Callback_Func_Def<T_real> callback_fun,
                                                 void* user_data)
 {
-    if (detector_num_arr.size() > 0)
+    for (auto &detector : detector_num_arr)
     {
-        size_t detector = detector_num_arr[0];
-        return _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
+        _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
     }
-    return false;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
