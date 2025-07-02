@@ -178,44 +178,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         start[1] = 1;
     }
 
-    if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
-    {
-        logE<< path << " :: " << nc_strerror(retval)<<"\n";
-        nc_close(ncid);
-        return 0;
-    }
-
-    if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
-    {
-        logE<<"NetCDF header [0][0][0]  not found! Stopping load : "<<path<<"\n";
-        nc_close(ncid);
-        return 0;
-    }
-
-    
-    int d_idx = 12;
-    if (detector > 3)
-    {
-        d_idx += 2 * (detector-4);
-    }
-    else
-    {
-        d_idx += 2 * detector;
-    }
-    
-    size_t dset_det = size_t(data_in[0][0][d_idx]);
-    if (dset_det != detector)
-    {
-        logE << "detector not found! "<< dset_det <<" != "<<detector<<" Stopping load : " << path << "\n";
-        nc_close(ncid);
-        return -1;
-    }
-    
-
-    header_size = data_in[0][0][2];
-    cols_before_inc = data_in[0][0][8];  //sum all across the first dim looking at value 8
-    spectra_size = data_in[0][0][20];
-
+    size_t col_idx = 0;
 
     if (detector > 3)
     {
@@ -232,213 +195,240 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         spec_cntr = line_size;
     }
 
-    size_t l = header_size;
-    //size_t cols_before_inc = (1047808 - header_size) / (header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL))
-
-    for(size_t j=0; j<spec_cntr; j++)
+    
+    for(size_t m0 = 0; m0 < dim2size[0]; m0++)
     {
-		if (ltype == E_load_type::LINE)
-		{
-			(*spec_line)[j].resize(spectra_size); // should be renames to resize
-		}
-        else if (ltype == E_load_type::CALLBACKF)
+        start[0] = m0;
+        //read header
+        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
         {
-            callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
-        }
-
-        // check to make sure we don't go out of bounds
-        size_t tmp_l = l + header_size + (spectra_size * detector) + ( spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector));
-
-        if (j >= cols_before_inc || tmp_l > count[2])
-        {
-            l = header_size;
-            start[0]++;
-            //read header
-            if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
-            {
-                logE<< nc_strerror(retval)<<"\n";
-                nc_close(ncid);
-                return j;
-            }
-            cols_before_inc += data_in[0][0][8];
-        }
-        if (data_in[0][0][l] != 13260 || data_in[0][0][l+1] != -13261)
-        {
-            if(j < spec_cntr -2)
-            {
-                logE<<"NetCDF sub header not found! Stopping load at Col: "<<j<<" path :"<<path<<"\n";
-                nc_close(ncid);
-                return j;
-            }
-            //last two may not be filled with data
-            //TODO: send end of row stream_block down pipeline
+            logE<< nc_strerror(retval)<<"\n";
             nc_close(ncid);
-            return j;
+            return col_idx;
         }
 
+        if (data_in[0][0][0] != 21930 || data_in[0][0][1] != -21931)
+        {
+            logE<<"NetCDF header [0][0][0]  not found! Stopping load : "<<path<<"\n";
+            nc_close(ncid);
+            return col_idx;
+        }
+
+        int d_idx = 12;
+        if (detector > 3)
+        {
+            d_idx += 2 * (detector-4);
+        }
+        else
+        {
+            d_idx += 2 * detector;
+        }
         
-        unsigned short i1 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
-        unsigned short i2 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
-        unsigned int ii = i1 | i2<<16;
-        elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-        if (ltype == E_load_type::LINE)
+        size_t dset_det = size_t(data_in[0][0][d_idx]);
+        if (dset_det != detector)
         {
-            if (elapsed_livetime == 0)
-            {
-                if (j > 0 && j < spec_cntr - 2) // copy the previous value
-                {
-                    logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
-                    elapsed_livetime = (*spec_line)[j - 1].elapsed_livetime();
-                }
-                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
-                {
-                    logW << "Reading in elapsed lifetime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
-                    elapsed_livetime = 1.0;
-                }
-            }
-            else
-            {
-                (*spec_line)[j].elapsed_livetime(elapsed_livetime);
-            }
-        }
-        else if (ltype == E_load_type::INTEGRATED)
-        {
-            sum_elapsed_livetime += elapsed_livetime; 
-        }
-        else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
-        {
-            callback_spectra->elapsed_livetime(elapsed_livetime);
+            logE << "detector not found! "<< dset_det <<" != "<<detector<<" Stopping load : " << path << "\n";
+            nc_close(ncid);
+            return -1;
         }
 
-        i1 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
-        i2 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
-        ii = i1 | i2<<16;
-        elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-        if (ltype == E_load_type::LINE)
-        {
-            if (elapsed_realtime == 0)
-            {
-                if (j > 0 && j < spec_cntr - 2) // copy the previous value
-                {
-                    logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
-                    elapsed_realtime = (*spec_line)[j - 1].elapsed_realtime();
-                }
-                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
-                {
-                    logW << "Reading in elapsed realtime for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
-                    elapsed_realtime = 1.0;
-                }
-            }
-            else
-            {
-                (*spec_line)[j].elapsed_realtime(elapsed_realtime);
-            }
-        }
-        else if (ltype == E_load_type::INTEGRATED)
-        {
-            sum_elapsed_realtime += elapsed_realtime;
-        }
-        else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
-        {
-            callback_spectra->elapsed_realtime(elapsed_realtime);
-        }
+        header_size = data_in[0][0][2];
+        cols_before_inc = data_in[0][0][8];  //sum all across the first dim looking at value 8
+        spectra_size = data_in[0][0][20];
+        cols_before_inc += data_in[0][0][8];
+        size_t l = header_size;    
 
-        i1 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
-        i2 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
-        ii = i1 | i2<<16;
-        input_counts = ((float)ii) / elapsed_livetime;
-        if (ltype == E_load_type::LINE)
+        for(size_t m1 = 0; m1 < cols_before_inc; m1++)
         {
-            if (input_counts == 0)
+            if (ltype == E_load_type::LINE)
             {
-                if (j > 0 && j < spec_cntr - 2) // copy the previous value
-                {
-                    logW << "Reading in elapsed input_counts for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
-                    input_counts = (*spec_line)[j - 1].input_counts();
-                }
-                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
-                {
-                    logW << "Reading in elapsed input_counts for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
-                    input_counts = 1.0;
-                }
+                (*spec_line)[col_idx].resize(spectra_size); // should be renames to resize
             }
-            else
+            else if (ltype == E_load_type::CALLBACKF)
             {
-                (*spec_line)[j].input_counts(input_counts);
+                callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
             }
-        }
-        else if (ltype == E_load_type::INTEGRATED)
-        {
-            sum_input_counts += input_counts;
-        }
-        else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
-        {
-            callback_spectra->input_counts(input_counts);
-        }
-
-
-        i1 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
-        i2 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
-        ii = i1 | i2<<16;
-        output_counts = ((float)ii) / elapsed_realtime;
-        if (ltype == E_load_type::LINE)
-        {
-            if (output_counts == 0)
+            
+            if (data_in[0][0][l] != 13260 || data_in[0][0][l+1] != -13261)
             {
-                if (j > 0 && j < spec_cntr - 2) // copy the previous value
+                if(col_idx < spec_cntr -2)
                 {
-                    logW << "Reading in elapsed output_counts for Col:" << j << " is 0. Setting it to " << j - 1 << ". path :" << path << "\n";
-                    output_counts = (*spec_line)[j - 1].output_counts();
+                    logE<<"NetCDF sub header not found! Stopping load at Col: "<<col_idx<<" path :"<<path<<"\n";
+                    nc_close(ncid);
+                    return col_idx;
                 }
-                else if (j < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                //last two may not be filled with data
+                //TODO: send end of row stream_block down pipeline
+                nc_close(ncid);
+                return col_idx;
+            }
+
+            
+            unsigned short i1 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
+            unsigned short i2 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
+            unsigned int ii = i1 | i2<<16;
+            elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            if (ltype == E_load_type::LINE)
+            {
+                if (elapsed_livetime == 0)
                 {
-                    logW << "Reading in elapsed output_counts for Col:" << j << " is 0. Setting it to 1.0. path :" << path << "\n";
-                    output_counts = 1.0;
+                    if (col_idx > 0 && col_idx < spec_cntr - 2) // copy the previous value
+                    {
+                        logW << "Reading in elapsed lifetime for Col:" << col_idx << " is 0. Setting it to " << col_idx - 1 << ". path :" << path << "\n";
+                        elapsed_livetime = (*spec_line)[col_idx - 1].elapsed_livetime();
+                    }
+                    else if (col_idx < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                    {
+                        logW << "Reading in elapsed lifetime for Col:" << col_idx << " is 0. Setting it to 1.0. path :" << path << "\n";
+                        elapsed_livetime = 1.0;
+                    }
+                }
+                else
+                {
+                    (*spec_line)[col_idx].elapsed_livetime(elapsed_livetime);
                 }
             }
-            else
+            else if (ltype == E_load_type::INTEGRATED)
             {
-                (*spec_line)[j].output_counts(output_counts);
+                sum_elapsed_livetime += elapsed_livetime; 
             }
-        }
-        else if(ltype == E_load_type::INTEGRATED)
-        {
-            sum_output_counts += output_counts;
-        }
-        else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
-        {
-            callback_spectra->output_counts(output_counts);
-        }
+            else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
+            {
+                callback_spectra->elapsed_livetime(elapsed_livetime);
+            }
 
-        l += header_size + (spectra_size * detector);
-        if (ltype == E_load_type::LINE)
-        {
-            // recalculate elapsed lifetime
-            (*spec_line)[j].recalc_elapsed_livetime();
-            for (size_t k = 0; k < spectra_size; k++)
+            i1 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
+            i2 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
+            ii = i1 | i2<<16;
+            elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            if (ltype == E_load_type::LINE)
             {
-                (*spec_line)[j][k] = data_in[0][0][l+k];
+                if (elapsed_realtime == 0)
+                {
+                    if (col_idx > 0 && col_idx < spec_cntr - 2) // copy the previous value
+                    {
+                        logW << "Reading in elapsed realtime for Col:" << col_idx << " is 0. Setting it to " << col_idx - 1 << ". path :" << path << "\n";
+                        elapsed_realtime = (*spec_line)[col_idx - 1].elapsed_realtime();
+                    }
+                    else if (col_idx < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                    {
+                        logW << "Reading in elapsed realtime for Col:" << col_idx << " is 0. Setting it to 1.0. path :" << path << "\n";
+                        elapsed_realtime = 1.0;
+                    }
+                }
+                else
+                {
+                    (*spec_line)[col_idx].elapsed_realtime(elapsed_realtime);
+                }
             }
-        }
-        else if (ltype == E_load_type::INTEGRATED)
-        {
-            for (size_t k = 0; k < spectra_size; k++)
+            else if (ltype == E_load_type::INTEGRATED)
             {
-                (*spectra)(k) += data_in[0][0][l+k];
+                sum_elapsed_realtime += elapsed_realtime;
             }
-        }
-        else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
-        {
-            callback_spectra->recalc_elapsed_livetime();
-            for (size_t k = 0; k < spectra_size; k++)
+            else if(ltype == E_load_type::CALLBACKF && callback_spectra != nullptr)
             {
-                (*callback_spectra)[k] = data_in[0][0][l+k];
+                callback_spectra->elapsed_realtime(elapsed_realtime);
             }
-            (*callback_fun)(cur_row, j, max_rows, line_size, detector, callback_spectra, user_data);
-        }
 
-        l+=spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector);
+            i1 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
+            i2 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
+            ii = i1 | i2<<16;
+            input_counts = ((float)ii) / elapsed_livetime;
+            if (ltype == E_load_type::LINE)
+            {
+                if (input_counts == 0)
+                {
+                    if (col_idx > 0 && col_idx < spec_cntr - 2) // copy the previous value
+                    {
+                        logW << "Reading in elapsed input_counts for Col:" << col_idx << " is 0. Setting it to " << col_idx - 1 << ". path :" << path << "\n";
+                        input_counts = (*spec_line)[col_idx - 1].input_counts();
+                    }
+                    else if (col_idx < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                    {
+                        logW << "Reading in elapsed input_counts for Col:" << col_idx << " is 0. Setting it to 1.0. path :" << path << "\n";
+                        input_counts = 1.0;
+                    }
+                }
+                else
+                {
+                    (*spec_line)[col_idx].input_counts(input_counts);
+                }
+            }
+            else if (ltype == E_load_type::INTEGRATED)
+            {
+                sum_input_counts += input_counts;
+            }
+            else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
+            {
+                callback_spectra->input_counts(input_counts);
+            }
+
+
+            i1 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
+            i2 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
+            ii = i1 | i2<<16;
+            output_counts = ((float)ii) / elapsed_realtime;
+            if (ltype == E_load_type::LINE)
+            {
+                if (output_counts == 0)
+                {
+                    if (col_idx > 0 && col_idx < spec_cntr - 2) // copy the previous value
+                    {
+                        logW << "Reading in elapsed output_counts for Col:" << col_idx << " is 0. Setting it to " << col_idx - 1 << ". path :" << path << "\n";
+                        output_counts = (*spec_line)[col_idx - 1].output_counts();
+                    }
+                    else if (col_idx < spec_cntr - 2) // usually the last two are missing which spams the log ouput.
+                    {
+                        logW << "Reading in elapsed output_counts for Col:" << col_idx << " is 0. Setting it to 1.0. path :" << path << "\n";
+                        output_counts = 1.0;
+                    }
+                }
+                else
+                {
+                    (*spec_line)[col_idx].output_counts(output_counts);
+                }
+            }
+            else if(ltype == E_load_type::INTEGRATED)
+            {
+                sum_output_counts += output_counts;
+            }
+            else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
+            {
+                callback_spectra->output_counts(output_counts);
+            }
+
+            l += header_size + (spectra_size * detector);
+            if (ltype == E_load_type::LINE)
+            {
+                // recalculate elapsed lifetime
+                (*spec_line)[col_idx].recalc_elapsed_livetime();
+                for (size_t k = 0; k < spectra_size; k++)
+                {
+                    (*spec_line)[col_idx][k] = data_in[0][0][l+k];
+                }
+            }
+            else if (ltype == E_load_type::INTEGRATED)
+            {
+                for (size_t k = 0; k < spectra_size; k++)
+                {
+                    (*spectra)(k) += data_in[0][0][l+k];
+                }
+            }
+            else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
+            {
+                callback_spectra->recalc_elapsed_livetime();
+                for (size_t k = 0; k < spectra_size; k++)
+                {
+                    (*callback_spectra)[k] = data_in[0][0][l+k];
+                }
+                (*callback_fun)(cur_row, col_idx, max_rows, line_size, detector, callback_spectra, user_data);
+            }
+
+            l+=spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector);
+            col_idx ++;
+        }
     }
+
 
     if (ltype == E_load_type::INTEGRATED)
     {
