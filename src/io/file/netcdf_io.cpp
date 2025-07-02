@@ -113,20 +113,21 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     std::lock_guard<std::mutex> lock(_mutex);
 
     size_t header_size = 256;
-    int ncid, varid, retval;
+    int ncid = 0, varid = 0, retval = 0;
     size_t start[] = {0, 0, 0};
-    size_t count[] = {1, 1, header_size};
+    size_t count[] = {1, 1, 1047808};
     ptrdiff_t stride[] = {1, 1, 1};
-    T_real data_in[1][1][10000];
-    size_t spectra_size;
+    T_real data_in[1][1][1047808];
+    size_t spectra_size = 0;
     nc_type rh_type;
-    int rh_ndims;
+    int rh_ndims = 0;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
-    int rh_natts;
+    int rh_natts = 0;
     T_real elapsed_livetime = 0.;
     T_real elapsed_realtime = 0.;
     T_real input_counts = 0.;
     T_real output_counts = 0.;
+    size_t cols_before_inc = 124; // default is 124 but read in also
     data_struct::Spectra<T_real>* callback_spectra = nullptr;
 
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
@@ -208,18 +209,9 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     
 
     header_size = data_in[0][0][2];
-    //num_cols = data_in[][0][8];  //sum all across the first dim looking at value 8
+    cols_before_inc = data_in[0][0][8];  //sum all across the first dim looking at value 8
     spectra_size = data_in[0][0][20];
 
-    /*
-    if( num_cols != spec_line->size() )
-    {
-        logW<<"Number of columns in NetCDF are "<<num_cols<<". Number of columns in spectra line are "<<spec_line->size()<< "\n";
-    }
-    */
-    start[2] += header_size;
-    count[2] = header_size;
-    size_t j=0;
 
     if (detector > 3)
     {
@@ -236,7 +228,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         spec_cntr = line_size;
     }
 
-    for(; j<spec_cntr; j++)
+    size_t l = header_size;
+    //size_t max_spec_per_netcdf_idx = (1047808 - header_size) / (header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL))
+
+    for(size_t j=0; j<spec_cntr; j++)
     {
 		if (ltype == E_load_type::LINE)
 		{
@@ -247,15 +242,21 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
         }
 
-        //read header
-        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+        //if ( j>0 &&  (j % max_spec_per_netcdf_idx) == 0)
+        if (j > cols_before_inc || l > count[2])
         {
-            logE<< nc_strerror(retval)<<"\n";
-            nc_close(ncid);
-            return j;
+            l = header_size;
+            start[0]++;
+            //read header
+            if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
+            {
+                logE<< nc_strerror(retval)<<"\n";
+                nc_close(ncid);
+                return j;
+            }
+            cols_before_inc = data_in[0][0][8];
         }
-
-        if (data_in[0][0][0] != 13260 || data_in[0][0][1] != -13261)
+        if (data_in[0][0][l] != 13260 || data_in[0][0][l+1] != -13261)
         {
             if(j < spec_cntr -2)
             {
@@ -270,8 +271,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
 
         
-        unsigned short i1 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector*8)];
-        unsigned short i2 = data_in[0][0][ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
+        unsigned short i1 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
+        unsigned short i2 = data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
         unsigned int ii = i1 | i2<<16;
         if (ltype == E_load_type::LINE)
         {
@@ -303,8 +304,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra->elapsed_livetime( ((float)ii) * 320e-9f);
         }
 
-        i1 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)];
-        i2 = data_in[0][0][ELAPSED_REALTIME_OFFSET+(detector*8)+1];
+        i1 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
+        i2 = data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
         if (ltype == E_load_type::LINE)
         {
@@ -336,8 +337,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             callback_spectra->elapsed_realtime(((float)ii) * 320e-9f);
         }
 
-        i1 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)];
-        i2 = data_in[0][0][INPUT_COUNTS_OFFSET+(detector*8)+1];
+        i1 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
+        i2 = data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
@@ -370,8 +371,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
 
 
-        i1 = data_in[0][0][OUTPUT_COUNTS_OFFSET+(detector*8)];
-        i2 = data_in[0][0][OUTPUT_COUNTS_OFFSET+(detector*8)+1];
+        i1 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
+        i2 = data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
         ii = i1 | i2<<16;
         if (ltype == E_load_type::LINE || ltype == E_load_type::CALLBACKF)
         {
@@ -413,28 +414,19 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             (*spec_line)[j].recalc_elapsed_livetime();
         }
 
-        start[2] += header_size + (spectra_size * detector);
-        count[2] = spectra_size;
-
-        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &data_in[0][0][0]) ) != 0)
-        {
-            logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
-            nc_close(ncid);
-            return j;
-        }
-
+        l += header_size + (spectra_size * detector);
         if (ltype == E_load_type::LINE)
         {
             for (size_t k = 0; k < spectra_size; k++)
             {
-                (*spec_line)[j][k] = data_in[0][0][k];
+                (*spec_line)[j][k] = data_in[0][0][l+k];
             }
         }
         else if (ltype == E_load_type::INTEGRATED)
         {
             for (size_t k = 0; k < spectra_size; k++)
             {
-                (*spectra)(k) += data_in[0][0][k];
+                (*spectra)(k) += data_in[0][0][l+k];
             }
         }
         else if(ltype == E_load_type::CALLBACKF && callback_fun != nullptr)
@@ -443,15 +435,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             (*callback_fun)(cur_row, j, max_rows, line_size, detector, callback_spectra, user_data);
         }
 
-        start[2] += spectra_size * (4 - detector);
-        count[2] = header_size;
-
-        if(start[2] >= dim2size[2])
-        {
-            start[0]++;
-            start[2] = header_size;
-        }
-
+        l+=spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector);
     }
 
     if (ltype == E_load_type::INTEGRATED)
@@ -475,9 +459,9 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     if ((retval = nc_close(ncid)))
     {
         logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
-        return j;
+        return spec_cntr;
     }
-    return j;
+    return spec_cntr;
 }
 
 //-----------------------------------------------------------------------------
@@ -523,19 +507,19 @@ size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, s
     std::lock_guard<std::mutex> lock(_mutex);
 
     size_t header_size = 256;
-    int ncid, varid, retval;
+    int ncid = 0, varid = 0, retval = 0;
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, 1};
     ptrdiff_t stride[] = {1, 1, 1};
     //T_real data_in[10000][1][11];
-    T_real *data_in;
+    T_real *data_in = nullptr;
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
-    size_t col_size;
-    size_t scalers_size;
+    size_t col_size = 0;
+    size_t scalers_size = 0;
     nc_type rh_type;
-    int rh_ndims;
+    int rh_ndims = 0;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};
-    int rh_natts;
+    int rh_natts = 0;
 
     if(scan_info == nullptr)
     {
