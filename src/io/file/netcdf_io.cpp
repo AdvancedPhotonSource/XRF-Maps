@@ -235,11 +235,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         header_size = data_in[0][0][2];
         cols_before_inc = data_in[0][0][8];  //sum all across the first dim looking at value 8
         spectra_size = data_in[0][0][20];
-        cols_before_inc += data_in[0][0][8];
-        size_t l = header_size;    
 
+        //size_t inc_size = ((header_size + (spectra_size * detector)) + (spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector)) );
+        size_t inc_size = header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL);
         for(size_t m1 = 0; m1 < cols_before_inc; m1++)
         {
+            size_t l = header_size +  (m1 * inc_size);
             if (ltype == E_load_type::LINE)
             {
                 (*spec_line)[col_idx].resize(spectra_size); // should be renames to resize
@@ -248,7 +249,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             {
                 callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
             }
-            
+
             if (data_in[0][0][l] != 13260 || data_in[0][0][l+1] != -13261)
             {
                 if(col_idx < spec_cntr -2)
@@ -423,8 +424,6 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 }
                 (*callback_fun)(cur_row, col_idx, max_rows, line_size, detector, callback_spectra, user_data);
             }
-
-            l+=spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector);
             col_idx ++;
         }
     }
