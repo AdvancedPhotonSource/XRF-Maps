@@ -165,6 +165,7 @@ void fill_user_data(User_Data<T_real> &ud,
                     const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                     const Base_Model<T_real>* const model,
                     const Range energy_range,
+                    const ArrayTr<T_real> * const background,
                     Callback_Func_Status_Def* status_callback,
                     size_t total_itr,
                     bool use_weights = true)
@@ -210,20 +211,28 @@ void fill_user_data(User_Data<T_real> &ud,
         ud.weights.fill(1.0);
     }
 
-    ArrayTr<T_real> background(spectra->size());
-    background.setZero(spectra->size());
-    if (fit_params->contains(STR_SNIP_WIDTH))
+    ArrayTr<T_real> snip_bk(spectra->size());
+    snip_bk.setZero(spectra->size());
+    if(background == nullptr)
     {
-        background = snip_background<T_real>(spectra,
-            fit_params->value(STR_ENERGY_OFFSET),
-            fit_params->value(STR_ENERGY_SLOPE),
-            fit_params->value(STR_ENERGY_QUADRATIC),
-            fit_params->value(STR_SNIP_WIDTH),
-            energy_range.min,
-            energy_range.max);
+        if (fit_params->contains(STR_SNIP_WIDTH))
+        {
+            snip_bk = snip_background<T_real>(spectra,
+                fit_params->value(STR_ENERGY_OFFSET),
+                fit_params->value(STR_ENERGY_SLOPE),
+                fit_params->value(STR_ENERGY_QUADRATIC),
+                fit_params->value(STR_SNIP_WIDTH),
+                energy_range.min,
+                energy_range.max);
+        }
+        ud.spectra_background = snip_bk.segment(energy_range.min, energy_range.count());
+        ud.spectra_background = ud.spectra_background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
     }
-    ud.spectra_background = background.segment(energy_range.min, energy_range.count());
-    ud.spectra_background = ud.spectra_background.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+    else
+    {
+        ud.spectra_background = background->segment(energy_range.min, energy_range.count());
+    }
+
     ud.spectra_model.resize(energy_range.count());
 }
 
@@ -320,6 +329,7 @@ public:
                           const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                           const Base_Model<T_real>* const model,
                           const Range energy_range,
+                          const ArrayTr<T_real> * const background,
                           bool use_weights,
                           Callback_Func_Status_Def* status_callback = nullptr) = 0;
 

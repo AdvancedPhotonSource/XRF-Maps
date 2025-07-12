@@ -69,7 +69,7 @@ namespace routines
 template<typename T_real>
 Param_Optimized_Fit_Routine<T_real>::Param_Optimized_Fit_Routine() : Base_Fit_Routine<T_real>()
 {
-
+    _custom_background = nullptr;
     _optimizer = nullptr;
     _energy_range.min = 0;
     _energy_range.max = 1999;
@@ -209,7 +209,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
 
     if(_optimizer != nullptr)
     {
-        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, false);
+        ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, _custom_background, false);
 
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
@@ -275,7 +275,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
     {
         if(_optimizer != nullptr)
         {
-            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, use_weights, status_callback);
+            ret_val = _optimizer->minimize(&fit_params, spectra, elements_to_fit, model, _energy_range, _custom_background,  use_weights, status_callback);
         }
     }
     out_fit_params.append_and_update(fit_params);
@@ -287,10 +287,12 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
 
 template<typename T_real>
 void Param_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
-                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                             const struct Range energy_range)
+                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                    const struct Range energy_range,
+                                                    ArrayTr<T_real>* custom_background)
 {
     _energy_range = energy_range;
+    _custom_background = custom_background;
 }
 
 // ----------------------------------------------------------------------------

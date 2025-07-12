@@ -60,6 +60,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
                                     const data_struct::Params_Override<double>* const params_override,
                                     std::string save_filename,
                                     data_struct::Fit_Parameters<double>& out_fitp,
+                                    ArrayTr<double>* custom_background,
                                     Callback_Func_Status_Def* status_callback)
 {
     fitting::models::Gaussian_Model<double> model;
@@ -96,7 +97,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
         }
         //Initialize the fit routine
-        fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range);
+        fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range, custom_background);
 
         model.print_fit_params();
 
@@ -382,7 +383,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             //Update fit parameters by override values
             model.update_fit_params_values(&(override_params->fit_params));
             //Initialize the fit routine
-            fit_routine->initialize(&model, &elements_to_fit, energy_range);
+            fit_routine->initialize(&model, &elements_to_fit, energy_range, nullptr);
             //Fit the spectra
             fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit, quantification_standard->element_counts[fit_itr.first]);
 
@@ -712,7 +713,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
             data_struct::Fit_Parameters<double> out_fitp;
             std::string roi_name = roi_itr.first;
-            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, status_callback))
+            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, nullptr, status_callback))
             {
                 logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
             }
@@ -773,8 +774,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
 void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
     std::string roi_file_name,
-    std::map<int, std::map<std::string,
-    data_struct::Fit_Parameters<double>>> & out_roi_fit_params,
+    std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> & out_roi_fit_params,
     Callback_Func_Status_Def* status_callback)
 {
     //std::map<int, std::vector<std::pair<unsigned int, unsigned int>>> rois;

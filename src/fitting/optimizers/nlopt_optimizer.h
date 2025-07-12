@@ -74,6 +74,7 @@ public:
                                         const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                         const Base_Model<T_real>* const model,
                                         const Range energy_range,
+                                        const ArrayTr<T_real> * const background,
                                         bool use_weights,
                                         Callback_Func_Status_Def* status_callback = nullptr);
 

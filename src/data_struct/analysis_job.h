@@ -88,7 +88,7 @@ public:
 
     fitting::optimizers::Optimizer<T_real>* optimizer(){return _optimizer;}
 
-    void init_fit_routines(size_t spectra_samples, bool force=false);
+    void init_fit_routines(size_t spectra_samples, ArrayTr<T_real>* custom_background = nullptr, bool force=false);
 
     std::string command_line;
 
