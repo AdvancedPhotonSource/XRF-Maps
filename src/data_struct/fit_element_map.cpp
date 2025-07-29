@@ -227,6 +227,8 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
     // _center position for peaks/rois is in keV, widths of ROIs is in eV
     _width /= 2000.0; // divide by 2 and divide by 1000
 
+    _width *= _width_multi;
+
 }
 
 //-----------------------------------------------------------------------------

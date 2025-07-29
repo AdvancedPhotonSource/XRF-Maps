@@ -447,6 +447,24 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             params_override->fit_params[tag_name].value = parse_input_real<T_real>(str_value);
                         }
                     }
+                    else if (tag == "WIDTH_MULTIPLIER")
+                    {
+                        std::string element_symb;
+                        std::string str_value;
+
+                        std::getline(strstream, element_symb, ',');
+                        element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
+
+                        Fit_Element_Map<T_real>* fit_map;
+                        if (params_override->elements_to_fit.count(element_symb) > 0)
+                        {
+                            fit_map = params_override->elements_to_fit[element_symb];
+                            T_real factor = 1.0;
+                            std::getline(strstream, str_value, ',');
+                            factor = parse_input_real<T_real>(str_value);
+                            fit_map->set_width_multi(factor);
+                        }
+                    }
                     else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K" || tag == "BRANCHING_RATIO_ADJUSTMENT_M")
                     {
                         unsigned int cnt = 0;
