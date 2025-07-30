@@ -104,15 +104,16 @@ public:
     bool load_spectra_volume(std::string path,
                             size_t detector_num,
                             data_struct::Spectra_Volume<T_real>* vol,
-                            bool hasNetCDF);
+                            bool hasNetCDF,
+                            bool subtract_two_cols);
 
     bool load_spectra_volume_with_callback(std::string path,
-										const std::vector<size_t>& detector_num_arr,
+										                    const std::vector<size_t>& detector_num_arr,
                                         bool hasNetCDF,
                                         data_struct::Analysis_Job<T_real>* analysis_job,
                                         size_t& out_rows,
                                         size_t& out_cols,
-										data_struct::IO_Callback_Func_Def<T_real> callback_func,
+										                    data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                         void *user_data);
 
 	bool load_integrated_spectra(std::string path,
@@ -140,11 +141,11 @@ public:
 
 private:
 
-    void _load_scalers(bool load_int_spec, bool hasNetCDF);
+    void _load_scalers(bool load_int_spec, bool hasNetCDF, bool subtract_two_cols);
 
     void _load_extra_pvs_vector();
 
-    void _load_meta_info(bool hasNetCDF);
+    void _load_meta_info(bool hasNetCDF, bool subtract_two_cols);
 
     bool _find_theta(std::string pv_name, float* theta_out);
 

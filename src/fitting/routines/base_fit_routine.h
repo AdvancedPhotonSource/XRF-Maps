@@ -110,7 +110,8 @@ public:
      */
     virtual void initialize(models::Base_Model<T_real>* const model,
                             const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
-                            const struct Range energy_range) = 0;
+                            const struct Range energy_range,
+                            ArrayTr<T_real>* custom_background) = 0;
 
 
 protected:

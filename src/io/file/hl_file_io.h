@@ -1139,7 +1139,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
 
     // try to load spectra from mda file
-    if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress))
+    if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, hasNetcdf))
     {
         scan_type = STR_SCAN_TYPE_2D_MAP;
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";

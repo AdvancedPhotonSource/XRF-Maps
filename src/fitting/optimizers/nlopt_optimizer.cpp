@@ -316,6 +316,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                             const Base_Model<T_real>* const model,
                                             const Range energy_range,
+                                            const ArrayTr<T_real> * const background,
                                             bool use_weights,
                                             Callback_Func_Status_Def* status_callback)
 {
@@ -332,7 +333,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         return OPTIMIZER_OUTCOME::STOPPED;
     }
 
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, status_callback, _options.at(STR_OPT_MAXITER), use_weights);
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, background, status_callback, _options.at(STR_OPT_MAXITER), use_weights);
 
     nlopt::opt opt(_algo, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);

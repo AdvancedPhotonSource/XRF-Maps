@@ -106,8 +106,8 @@ bool MDA_IO<T_real>::load_scalers(std::string path)
         return false;
     }
 
-    _load_scalers(true, false); //not sure how to check if we are fly scan 
-    _load_meta_info(false);
+    _load_scalers(true, false, false); //not sure how to check if we are fly scan 
+    _load_meta_info(false, false);
     _load_extra_pvs_vector();
 
     return true;
@@ -164,7 +164,7 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
             return false;
         }
 
-        _load_scalers(false, hasNetCDF); //not sure how to check if we are fly scan
+        _load_scalers(false, hasNetCDF, false); //not sure how to check if we are fly scan
     }
 
     //const data_struct::ArrayXXr<T_real>* arr = nullptr;
@@ -236,7 +236,8 @@ template<typename T_real>
 bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::Spectra_Volume<T_real>* vol,
-                                 bool hasNetCDF)
+                                 bool hasNetCDF,
+                                 bool subtract_two_cols)
 {
     bool is_single_row = false;
     const data_struct::ArrayXXr<T_real>* elt_arr = nullptr;
@@ -269,8 +270,8 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         return false;
     }
 
-    _load_scalers(false,hasNetCDF);
-    _load_meta_info(hasNetCDF);
+    _load_scalers(false,hasNetCDF, subtract_two_cols);
+    _load_meta_info(hasNetCDF, subtract_two_cols);
     _load_extra_pvs_vector();
 
     if (_mda_file->header->data_rank == 2)
@@ -294,7 +295,14 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             }
             else
             {
-                cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                if(subtract_two_cols)
+                {
+                    cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
+                else
+                {
+                    cols = _mda_file->scan->sub_scans[0]->last_point;
+                }
             }
 
             if ( cols < 1)
@@ -370,7 +378,14 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 }
                 else
                 {
-                    cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    if(subtract_two_cols)
+                    {
+                        cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    }
+                    else
+                    {
+                        cols = _mda_file->scan->sub_scans[0]->last_point;
+                    }
                 }
                 if(cols < 1)
                 {
@@ -554,7 +569,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
-    _load_scalers(false, hasNetCDF);
+    _load_scalers(false, hasNetCDF, false);
 
     for (size_t det : detector_num_arr)
 	{
@@ -807,8 +822,8 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		return false;
 	}
 
-	_load_scalers(false, hasNetCDF);
-	_load_meta_info(hasNetCDF);
+	_load_scalers(false, hasNetCDF, false);
+	_load_meta_info(hasNetCDF, false);
 	_load_extra_pvs_vector();
 
 	if (_mda_file->header->data_rank == 2)
@@ -1018,7 +1033,7 @@ bool MDA_IO<T_real>::_find_theta(std::string pv_name, float* theta_out)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
+void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subtract_two_cols)
 {
     if (_mda_file == nullptr)
     {
@@ -1051,7 +1066,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
             cols = _mda_file->scan->last_point;
             if(hasNetCDF)
             {
-                cols = std::max(1, _mda_file->scan->last_point - 2);
+                if(subtract_two_cols)
+                {
+                    cols = std::max(1, _mda_file->scan->last_point - 2);
+                }
+                else
+                {
+                    cols = std::max(1, _mda_file->scan->last_point);
+                }
             }
         }
 
@@ -1127,7 +1149,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF)
             cols = _mda_file->scan->sub_scans[0]->last_point;
             if(hasNetCDF)
             {
-                cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point - 2);
+                if(subtract_two_cols)
+                {
+                    cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point - 2);
+                }
+                else
+                {
+                    cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point);
+                }
             }
         }
 
@@ -1390,7 +1419,7 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
+void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF, bool subtract_two_cols)
 {
     bool single_row_scan = false;
 
@@ -1425,7 +1454,14 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
                 }
                 if(hasNetCDF)
                 {
-                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols                    
+                    if(subtract_two_cols)
+                    {
+                        _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols                    
+                    }
+                    else
+                    {
+                        _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols;
+                    }
                 }
                 if (_scan_info.meta_info.requested_cols < 1)
                 {
@@ -1463,7 +1499,15 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF)
                 
                 if(hasNetCDF)
                 {
-                    _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    if(subtract_two_cols)
+                    {
+                        _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols - 2;// subtract 2 because hardwre trigger goofs up last 2 cols                    
+                    }
+                    else
+                    {
+                        _scan_info.meta_info.requested_cols = _scan_info.meta_info.requested_cols;
+                    }
+                    
                     if (_scan_info.meta_info.requested_cols < 1)
                     {
                         _scan_info.meta_info.requested_cols = 1;

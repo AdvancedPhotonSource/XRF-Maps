@@ -258,11 +258,13 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
 
 template<typename T_real>
 void Matrix_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
-                                              const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                              const struct Range energy_range)
+                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+                                                    const struct Range energy_range,
+                                                    ArrayTr<T_real>* custom_background)
 {
 
     this->_energy_range = energy_range;
+    this->_custom_background = custom_background;
     _element_models.clear();
     //logI<<"-------- Generating element models ---------"<<"\n";
     _element_models = _generate_element_models(model, elements_to_fit, energy_range);
@@ -319,23 +321,29 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         
         ArrayTr<T_real> background;
         
-        
-        if(fit_params.contains(STR_SNIP_WIDTH))
+        if(this->_custom_background == nullptr)
         {
-            ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
-                                         fit_params.value(STR_ENERGY_OFFSET),
-                                         fit_params.value(STR_ENERGY_SLOPE),
-                                         fit_params.value(STR_ENERGY_QUADRATIC),
-                                         fit_params.value(STR_SNIP_WIDTH),
-                                         this->_energy_range.min,
-                                         this->_energy_range.max);
-            background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
+            if(fit_params.contains(STR_SNIP_WIDTH))
+            {
+                ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
+                                            fit_params.value(STR_ENERGY_OFFSET),
+                                            fit_params.value(STR_ENERGY_SLOPE),
+                                            fit_params.value(STR_ENERGY_QUADRATIC),
+                                            fit_params.value(STR_SNIP_WIDTH),
+                                            this->_energy_range.min,
+                                            this->_energy_range.max);
+                background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
+            }
+            else
+            {
+                background.setZero(this->_energy_range.count());
+            }
         }
         else
         {
-            background.setZero(this->_energy_range.count());
+            background = this->_custom_background->segment(this->_energy_range.min, this->_energy_range.count());
         }
-
+        
         std::function<void(const models::Base_Model<T_real>* const model, const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
         //set num iter to 300;

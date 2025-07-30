@@ -108,11 +108,13 @@ using namespace std::placeholders; //for _1, _2,
 
 DLL_EXPORT bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, bool save_when_done);
 
-DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>* analysis_job,
-                                                std::string  dataset_filename,
+DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis_job,
+                                                const data_struct::Spectra<double>& int_spectra,
                                                 size_t detector_num,
-                                                data_struct::Params_Override<double>* params_override,
+                                                const data_struct::Params_Override<double>* const params_override,
+                                                std::string save_filename,
                                                 data_struct::Fit_Parameters<double>& out_fitp,
+                                                ArrayTr<double>* custom_background = nullptr,
                                                 Callback_Func_Status_Def* status_callback = nullptr);
 
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job);
@@ -501,7 +503,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                     continue;
                 }
 
-                analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
+                ArrayTr<T_real>* custom_background = nullptr;
+                // if analysis_job->use_roi_background .load ()
+
+                analysis_job->init_fit_routines(spectra_volume->samples_size(), custom_background, true);
                 proc_spectra(spectra_volume, detector, &tp, !loaded_from_analyzed_hdf5, scan_type, status_callback);
                 delete spectra_volume;
             }
@@ -580,7 +585,7 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
     }
     delete tmp_spectra_volume;
 
-    analysis_job->init_fit_routines(spectra_volume->samples_size(), true);
+    analysis_job->init_fit_routines(spectra_volume->samples_size(), nullptr, true);
 
     proc_spectra(spectra_volume, detector, &tp, !is_loaded_from_analyzed_h5, scan_type, status_callback);
     delete spectra_volume;

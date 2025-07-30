@@ -187,7 +187,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
             ret_val = this->_optimizer->minimize_func(model, &fit_params, spectra, this->_energy_range, &_background, gen_func, use_weights);
 
             _model->update_fit_params_values(&fit_params);
-            this->initialize(_model, elements_to_fit, this->_energy_range);
+            this->initialize(_model, elements_to_fit, this->_energy_range, this->_custom_background);
             std::unordered_map<std::string, T_real> out_counts;
             this->fit_spectra(_model, spectra, elements_to_fit, out_counts);
 

@@ -1738,7 +1738,7 @@ public:
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
-        logI << path << " detector : " << detector_num << "\n";
+        //logI << path << " detector : " << detector_num << "\n";
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id;
 
@@ -1752,7 +1752,7 @@ public:
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
 
-        logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
+        //logI << "elapsed time: " << elapsed_seconds.count() << "s" << "\n";
         return ret;
     }
 

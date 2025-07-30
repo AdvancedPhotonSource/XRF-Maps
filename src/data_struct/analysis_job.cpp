@@ -131,7 +131,7 @@ Detector<T_real>* Analysis_Job<T_real>::get_detector(int detector_num)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force)
+void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples, ArrayTr<T_real>* custom_background, bool force)
 {
     if(_first_init || force)// && _last_init_sample_size != spectra_samples)
     {
@@ -153,7 +153,7 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples,  bool force
 
                     Fit_Element_Map_Dict<T_real>* elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
                     //Initialize model
-                    fit_routine->initialize(detector->model, elements_to_fit, energy_range);
+                    fit_routine->initialize(detector->model, elements_to_fit, energy_range, custom_background);
                 }
             }
         }

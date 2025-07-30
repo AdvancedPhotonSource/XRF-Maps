@@ -112,23 +112,30 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
 
     Fit_Parameters<T_real> fit_params = model->fit_parameters();
     VectorTr<T_real> background;
-    if (fit_params.contains(STR_SNIP_WIDTH))
-    {
-        ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
-            fit_params.value(STR_ENERGY_OFFSET),
-            fit_params.value(STR_ENERGY_SLOPE),
-            fit_params.value(STR_ENERGY_QUADRATIC),
-            fit_params.value(STR_SNIP_WIDTH),
-            this->_energy_range.min,
-            this->_energy_range.max);
 
-        background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
+    if(this->_custom_background == nullptr)
+    {
+        if (fit_params.contains(STR_SNIP_WIDTH))
+        {
+            ArrayTr<T_real> bkg = snip_background<T_real>(spectra,
+                fit_params.value(STR_ENERGY_OFFSET),
+                fit_params.value(STR_ENERGY_SLOPE),
+                fit_params.value(STR_ENERGY_QUADRATIC),
+                fit_params.value(STR_SNIP_WIDTH),
+                this->_energy_range.min,
+                this->_energy_range.max);
+
+            background = bkg.segment(this->_energy_range.min, this->_energy_range.count());
+        }
+        else
+        {
+            background.setZero(this->_energy_range.count());
+        }
     }
     else
     {
-        background.setZero(this->_energy_range.count());
+        background = this->_custom_background->segment(this->_energy_range.min, this->_energy_range.count());
     }
-    
     rhs -= background;
     rhs = rhs.unaryExpr([](T_real v) { return v > 0.0 ? v : (T_real)0.0; });
 
@@ -167,10 +174,11 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
 template<typename T_real>
 void SVD_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
                                  const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                 const struct Range energy_range)
+                                 const struct Range energy_range,
+                                 ArrayTr<T_real>* custom_background)
 {
 
-    Matrix_Optimized_Fit_Routine<T_real>::initialize(model, elements_to_fit, energy_range);
+    Matrix_Optimized_Fit_Routine<T_real>::initialize(model, elements_to_fit, energy_range, custom_background);
     _generate_fitmatrix();
 
 }

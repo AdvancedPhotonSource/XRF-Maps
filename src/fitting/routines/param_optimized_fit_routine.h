@@ -85,8 +85,9 @@ public:
     virtual std::string get_name() { return STR_FIT_GAUSS_TAILS; }
 
     virtual void initialize(models::Base_Model<T_real>* const model,
-                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                            const struct Range energy_range);
+                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit, 
+                            const struct Range energy_range,
+                            ArrayTr<T_real>* custom_background);
 
      void set_optimizer(Optimizer<T_real> *optimizer);
 
@@ -106,6 +107,8 @@ protected:
     Optimizer<T_real>* _optimizer;
 
     Range _energy_range;
+
+    ArrayTr<T_real> * _custom_background;
 
     bool _update_coherent_amplitude_on_fit;
 
