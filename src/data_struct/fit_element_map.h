@@ -183,6 +183,8 @@ public:
 
     const T_real& width_multi() const { return _width_multi; }
 
+    void set_width_multi(T_real val) {  _width_multi = val; }
+
     void set_as_pileup(std::string name, Element_Info<T_real>* element_info);
 
     const Element_Info<T_real>* pileup_element() const { return _pileup_element_info; }
