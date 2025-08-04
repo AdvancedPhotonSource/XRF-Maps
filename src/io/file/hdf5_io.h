@@ -1044,7 +1044,7 @@ public:
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id, dset_id, space_id, x_dset_id, y_dset_id, x_space_id, y_space_id;
-        
+        hid_t    pr1_order_id, pr2_order_id;
         hid_t    ert_dset_id, ert_space_id;
         hid_t    elt_dset_id, elt_space_id;
         hid_t    icr_dset_id, icr_space_id;
@@ -1053,10 +1053,13 @@ public:
         hid_t    i0_dset_id, i0_space_id;
         hid_t    title_id, start_time_id;
         hsize_t dims3[3] = { 0, 0, 0 };
-
+        data_struct::ArrayTr<T_real> pr1_array;
+        data_struct::ArrayTr<T_real> pr2_array;
         hsize_t offset3[3] = { 0, 0, 0 };
         hsize_t count3[3] = { 1, 1, 1 };
 
+        bool use_pr1 = true;
+        hsize_t dims1[1] = { 0 };
         hsize_t count[1] = { 1 };
 
         herr_t err;
@@ -1071,6 +1074,9 @@ public:
         std::string str_title_path = "/entry/title";
         std::string str_start_time_path = "/entry/start_time";
 
+        std::string str_pr1_path = "/entry/data/pr1_pzt_localdc";
+        std::string str_pr2_path = "/entry/data/pr2_pzt_localdc";
+
         offset3[1] = detector_num;
         {
             std::lock_guard<std::mutex> lock(_mutex);
@@ -1079,48 +1085,103 @@ public:
                 return false;
             }
             
-            if(false == _open_h5_object(dset_id, H5O_DATASET, close_map, "/entry/externals/vortex/detector/data", file_id, -1))
+            if(false == _open_h5_object(dset_id, H5O_DATASET, close_map, "/entry/externals/vortex/detector/data", file_id, false))
             {
                 logW << "Tried to open /entry/externals/vortex/detector/data but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
 
-            if(false == _open_h5_object(elt_dset_id, H5O_DATASET, close_map, str_elt_path, file_id, -1))
+            if(false == _open_h5_object(elt_dset_id, H5O_DATASET, close_map, str_elt_path, file_id, false))
             {
                 logW << "Tried to open "<<str_elt_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            if(false == _open_h5_object(ert_dset_id, H5O_DATASET, close_map, str_ert_path, file_id, -1))
+            if(false == _open_h5_object(ert_dset_id, H5O_DATASET, close_map, str_ert_path, file_id, false))
             {
                 logW << "Tried to open "<<str_ert_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            if(false == _open_h5_object(icr_dset_id, H5O_DATASET, close_map, str_icr_path, file_id, -1))
+            if(false == _open_h5_object(icr_dset_id, H5O_DATASET, close_map, str_icr_path, file_id, false))
             {
                 logW << "Tried to open "<<str_icr_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            if(false == _open_h5_object(ocr_dset_id, H5O_DATASET, close_map, str_ocr_path, file_id, -1))
+            if(false == _open_h5_object(ocr_dset_id, H5O_DATASET, close_map, str_ocr_path, file_id, false))
             {
                 logW << "Tried to open "<<str_ocr_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            if(false == _open_h5_object(energy_dset_id, H5O_DATASET, close_map, str_energy_path, file_id, -1))
+            if(false == _open_h5_object(energy_dset_id, H5O_DATASET, close_map, str_energy_path, file_id, false))
             {
                 logW << "Tried to open "<<str_energy_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            if(false == _open_h5_object(i0_dset_id, H5O_DATASET, close_map, str_i0_path, file_id, -1))
+            if(false == _open_h5_object(i0_dset_id, H5O_DATASET, close_map, str_i0_path, file_id, false))
             {
                 logW << "Tried to open "<<str_i0_path<<" but failed.\n";
                 _close_h5_objects(close_map);
                 return false;
+            }
+
+            if(_open_h5_object(pr1_order_id, H5O_DATASET, close_map, str_pr1_path, file_id, false, false))
+            {
+                hid_t pr_space_id = H5Dget_space(pr1_order_id);
+                close_map.push({ pr_space_id, H5O_DATASPACE });
+
+                err = H5Sget_simple_extent_dims(pr_space_id, &dims1[0], nullptr);
+                if (err >= 0)
+                {
+                    pr1_array.resize(dims1[0]);
+                    err = _read_h5d<T_real>(pr1_order_id, H5S_ALL, pr_space_id, H5P_DEFAULT, pr1_array.data());
+                    if(err < 0)
+                    {
+                        pr1_array.setOnes();
+                        use_pr1 = false;
+                    }
+                    else
+                    {
+                        if(pr1_array.size() > 2)
+                        {
+                            if(pr1_array[0] != pr1_array[1])
+                            {
+                                use_pr1 = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(_open_h5_object(pr2_order_id, H5O_DATASET, close_map, str_pr2_path, file_id, false, false))
+            {
+                hid_t pr_space_id = H5Dget_space(pr2_order_id);
+                close_map.push({ pr_space_id, H5O_DATASPACE });
+
+                err = H5Sget_simple_extent_dims(pr_space_id, &dims1[0], nullptr);
+                if (err >= 0)
+                {
+                    pr2_array.resize(dims1[0]);
+                    err = _read_h5d<T_real>(pr2_order_id, H5S_ALL, pr_space_id, H5P_DEFAULT, pr2_array.data());
+                    if(err < 0)
+                    {
+                        pr2_array.setOnes();
+                    }
+                    else
+                    {
+                        if(pr2_array.size() > 2)
+                        {
+                            if(pr2_array[0] != pr2_array[1])
+                            {
+                                use_pr1 = false;
+                            }
+                        }
+                    }
+                }
             }
 
 
@@ -1256,10 +1317,62 @@ public:
 
             int polarity = 0;
             int idx = 0;
+
+            if(use_pr1 && pr1_array.size() != dims3[0])
+            {
+                logE<<str_pr1_path<<" is not the same size as spectra data. Can not load properly.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+            else if(use_pr1 == false && pr2_array.size() != dims3[0])
+            {
+                logE<<str_pr2_path<<" is not the same size as spectra data. Can not load properly.\n";
+                _close_h5_objects(close_map);
+                return false;
+            }
+
             for(size_t i = 0; i < dims3[0]; i++)
             {
                 offset3[0] = i;
                 H5Sselect_hyperslab(space_id, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
+
+                if(i > 0)
+                {
+                    if(use_pr1)
+                    {
+                        if(pr1_array[i] != pr1_array[i-1])
+                        {
+                            if(polarity == 1)
+                            {
+                                polarity = 0;
+                                idx++;
+                            }
+                            else
+                            {
+                                polarity = 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(pr2_array[i] != pr2_array[i-1])
+                        {
+                            if(polarity == 1)
+                            {
+                                polarity = 0;      
+                            }
+                            else
+                            {
+                                polarity = 1;
+                            }
+                        }
+                        else
+                        {
+                            idx++;
+                        }
+                    }
+                }
+
                 err = _read_h5d<T_real>(dset_id, memoryspace_id, space_id, H5P_DEFAULT, &(*spec_vol)[polarity][idx][0]);
                 if(err < 0)
                 {
@@ -1273,15 +1386,6 @@ public:
 
                 energy_map.values(polarity, idx) = energy_array[i];
                 i0_map.values(polarity, idx) = i0_array[i];
-                if(polarity == 1)
-                {
-                    polarity = 0;
-                    idx++;
-                }
-                else
-                {
-                    polarity = 1;
-                }
             }
 
             scan_info.scaler_maps.push_back(energy_map);
