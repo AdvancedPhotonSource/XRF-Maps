@@ -992,15 +992,15 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
                 if (ratio != 1.0)
                 {
                     branching_ratios_updated.push_back(itr.first + ",");
-                    if (itr.second->shell_type_as_string() == "K")
+                    if (itr.second->shell_type() == data_struct::Electron_Shell::K_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_K: " << itr.first;
                     }
-                    else if (itr.second->shell_type_as_string() == "L")
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::L_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
                     }
-                    else if (itr.second->shell_type_as_string() == "M")
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::M_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_M: " << itr.first;
                     }

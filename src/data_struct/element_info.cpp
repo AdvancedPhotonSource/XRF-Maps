@@ -52,7 +52,35 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
+    
 
+// ----------------------------------------------------------------------------
+
+Electron_Shell get_shell_by_name(std::string element_name)
+{
+    int idx = element_name.find_last_of("_") + 1;
+    std::string shell_type = element_name.substr(idx);
+    if (idx == 0)
+    {
+        return data_struct::Electron_Shell::K_SHELL;
+    }
+    else
+    {
+        if (shell_type == "L")
+        {
+            return data_struct::Electron_Shell::L_SHELL;
+        }
+        if (shell_type == "M")
+        {
+            return data_struct::Electron_Shell::M_SHELL;
+        }
+    }
+
+
+    return data_struct::Electron_Shell::K_SHELL;
+}
+
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 template<typename T_real>

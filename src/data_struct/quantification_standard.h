@@ -64,7 +64,7 @@ namespace data_struct
 
 using namespace quantification::models;
 
-const static std::vector<Electron_Shell> Shells_Quant_List({ Electron_Shell::K_SHELL, Electron_Shell::L_SHELL, Electron_Shell::M_SHELL });
+const static std::vector<data_struct::Electron_Shell> Shells_Quant_List({ data_struct::Electron_Shell::K_SHELL, data_struct::Electron_Shell::L_SHELL, data_struct::Electron_Shell::M_SHELL });
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -84,7 +84,7 @@ struct DLL_EXPORT Quantification_Scaler_Struct
             curve_quant_map[itr] = e_quants;
         }
     }
-    std::unordered_map<Electron_Shell, std::vector<Element_Quant<T_real>> > curve_quant_map;
+    std::unordered_map<data_struct::Electron_Shell, std::vector<Element_Quant<T_real>> > curve_quant_map;
 };
 
 TEMPLATE_STRUCT_DLL_EXPORT Quantification_Scaler_Struct<float>;
@@ -116,7 +116,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
         }
     }
 
-    void update_weight(Electron_Shell shell, unsigned int Z, T_real weight)
+    void update_weight(data_struct::Electron_Shell shell, unsigned int Z, T_real weight)
     {
         for (auto& itr : quant_scaler_map)
         {
@@ -124,7 +124,7 @@ struct DLL_EXPORT Fitting_Quantification_Struct
         }
     }
 
-    void update_weight_if_greater(Electron_Shell shell, unsigned int Z, T_real weight)
+    void update_weight_if_greater(data_struct::Electron_Shell shell, unsigned int Z, T_real weight)
     {
         for (auto& itr : quant_scaler_map)
         {

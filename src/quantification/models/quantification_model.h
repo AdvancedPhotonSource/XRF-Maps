@@ -66,15 +66,7 @@ namespace models
 using namespace data_struct;
 
 
-enum class Electron_Shell {K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL};
 
-const static std::map<Electron_Shell, std::string> Shell_To_String = { {Electron_Shell::K_SHELL, "K"},
-                                                            {Electron_Shell::L_SHELL, "L"} ,
-                                                            {Electron_Shell::M_SHELL, "M"} ,
-                                                            {Electron_Shell::N_SHELL, "N"} ,
-                                                            {Electron_Shell::O_SHELL, "O"} ,
-                                                            {Electron_Shell::P_SHELL, "P"},
-                                                            {Electron_Shell::Q_SHELL, "Q"} };
 
 //-----------------------------------------------------------------------------
 
@@ -93,7 +85,7 @@ public:
     void init_element_quant(Element_Quant<T_real>& out_quant,
                             T_real incident_energy,
                             Element_Info<T_real>* detector_element,
-                            Electron_Shell shell,
+                            data_struct::Electron_Shell shell,
                             T_real airpath,
                             T_real detector_chip_thickness,
                             T_real beryllium_window_thickness,
@@ -114,7 +106,6 @@ protected:
 
 //-----------------------------------------------------------------------------
 
-DLL_EXPORT Electron_Shell get_shell_by_name(std::string element_name);
 
 
 } //namespace models

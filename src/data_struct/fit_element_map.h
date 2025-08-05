@@ -189,7 +189,9 @@ public:
 
     const Element_Info<T_real>* pileup_element() const { return _pileup_element_info; }
 
-	const std::string& shell_type_as_string() const { return _shell_type; }
+    Electron_Shell shell_type() const { return _shell_type; }
+
+    std::unordered_map<std::string, T_real> generate_roi_centers_per_shell();
 
 	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
 protected:
@@ -203,7 +205,7 @@ protected:
     std::vector<Element_Energy_Ratio<T_real>> _energy_ratios;
     std::vector<T_real> _energy_ratio_custom_multipliers;
 
-    std::string _shell_type;
+    Electron_Shell _shell_type;
 
     T_real _center;
     T_real _width;

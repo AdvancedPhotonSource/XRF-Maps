@@ -60,6 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <sstream>
 #include <fstream>
+#include <typeinfo>
 
 #include <stdlib.h>
 
@@ -161,6 +162,43 @@ DLL_EXPORT data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fi
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+DLL_EXPORT data_struct::Fit_Count_Dict<T_real>* generate_fit_count_by_shell_dict(const Fit_Element_Map_Dict<T_real>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
+{
+    data_struct::Fit_Count_Dict<T_real>* element_fit_counts_dict = new data_struct::Fit_Count_Dict<T_real>();
+    for (auto& e_itr : *elements_to_fit)
+    {
+        for (auto& s_itr : e_itr.second->generate_roi_centers_per_shell())
+        {
+            element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(e_itr.first + "_" + s_itr.first, data_struct::ArrayXXr<T_real>()));
+            element_fit_counts_dict->at(e_itr.first + "_" + s_itr.first).resize(height, width);
+        }
+    }
+
+    if (alloc_iter_count)
+    {
+        //Allocate memeory to save number of fit iterations
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_NUM_ITR, data_struct::ArrayXXr<T_real>()));
+        element_fit_counts_dict->at(STR_NUM_ITR).resize(height, width);
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_RESIDUAL, data_struct::ArrayXXr<T_real>()));
+        element_fit_counts_dict->at(STR_RESIDUAL).resize(height, width);
+    }
+
+    //  TOTAL_FLUORESCENCE_YIELD
+    element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_TOTAL_FLUORESCENCE_YIELD, data_struct::ArrayXXr<T_real>()));
+    element_fit_counts_dict->at(STR_TOTAL_FLUORESCENCE_YIELD).resize(height, width);
+
+    //SUM_ELASTIC_INELASTIC
+    element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_SUM_ELASTIC_INELASTIC_AMP, data_struct::ArrayXXr<T_real>()));
+    element_fit_counts_dict->at(STR_SUM_ELASTIC_INELASTIC_AMP).resize(height, width);
+
+
+    return element_fit_counts_dict;
+}
+
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* fit_routine,
                         const fitting::models::Base_Model<T_real>* const model,
                         const data_struct::Spectra<T_real>* const spectra,
@@ -236,7 +274,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra_volume->samples_size(), &(detector->fit_params_override_dict.fit_params));
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
-
+     
     for (auto& itr : detector->fit_routines)
     {
         fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
@@ -253,8 +291,17 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
         //Fit job queue
         std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
 
+        data_struct::Fit_Count_Dict<T_real>* element_fit_count_dict = nullptr;
         //Allocate memeory to save fit counts
-        data_struct::Fit_Count_Dict<T_real>* element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        if (typeid(*fit_routine) == typeid(fitting::routines::ROI_Fit_Routine<T_real>) && scan_type == STR_SCAN_TYPE_POLAR_XANES)
+        {
+            ((fitting::routines::ROI_Fit_Routine<T_real> *)fit_routine)->set_fit_separate_shells(true);
+            element_fit_count_dict = generate_fit_count_by_shell_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        }
+        else
+        {
+            element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        }
 
         for (size_t i = 0; i < spectra_volume->rows(); i++)
         {
