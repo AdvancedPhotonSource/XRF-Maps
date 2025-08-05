@@ -443,33 +443,35 @@ template<typename T_real>
 std::unordered_map<std::string, T_real> Fit_Element_Map<T_real>::generate_roi_centers_per_shell()
 {
     std::unordered_map<std::string, T_real> map;
-    if (_shell_type == Electron_Shell::K_SHELL)
+    if (_element_info != nullptr)
     {
-        map["ka1"] = _element_info->xrf["ka1"];
-        map["ka2"] = _element_info->xrf["ka2"];
-        map["kb1"] = _element_info->xrf["kb1"];
-        map["kb2"] = _element_info->xrf["kb2"];
-    }
-    else if (_shell_type == Electron_Shell::L_SHELL)
-    {
-        map["la2"] = _element_info->xrf["la2"];
-        map["lb1"] = _element_info->xrf["lb1"];
-        map["lb2"] = _element_info->xrf["lb2"];
-        map["lb3"] = _element_info->xrf["lb3"];
-        map["lb4"] = _element_info->xrf["lb4"];
-        map["lg1"] = _element_info->xrf["lg1"];
-        map["lg2"] = _element_info->xrf["lg2"];
-        map["lg3"] = _element_info->xrf["lg3"];
-        map["lg4"] = _element_info->xrf["lg4"];
-        map["ll"] = _element_info->xrf["ll"];
-        map["ln"] = _element_info->xrf["ln"];
-    }
-    else if (_shell_type == Electron_Shell::M_SHELL)
-    {
-        map["ma1"] = _element_info->xrf["ma1"];
-        map["ma2"] = _element_info->xrf["ma2"];
-        map["mb"] = _element_info->xrf["mb"];
-        map["mg"] = _element_info->xrf["mg"];
+        if (_shell_type == Electron_Shell::K_SHELL)
+        {
+            map["ka2"] = _element_info->xrf["ka2"];
+            map["kb1"] = _element_info->xrf["kb1"];
+            map["kb2"] = _element_info->xrf["kb2"];
+        }
+        else if (_shell_type == Electron_Shell::L_SHELL)
+        {
+            map["la2"] = _element_info->xrf["la2"];
+            map["lb1"] = _element_info->xrf["lb1"];
+            map["lb2"] = _element_info->xrf["lb2"];
+            map["lb3"] = _element_info->xrf["lb3"];
+            map["lb4"] = _element_info->xrf["lb4"];
+            map["lg1"] = _element_info->xrf["lg1"];
+            map["lg2"] = _element_info->xrf["lg2"];
+            map["lg3"] = _element_info->xrf["lg3"];
+            map["lg4"] = _element_info->xrf["lg4"];
+            map["ll"] = _element_info->xrf["ll"];
+            map["ln"] = _element_info->xrf["ln"];
+        }
+        else if (_shell_type == Electron_Shell::M_SHELL)
+        {
+            map["ma1"] = _element_info->xrf["ma1"];
+            map["ma2"] = _element_info->xrf["ma2"];
+            map["mb"] = _element_info->xrf["mb"];
+            map["mg"] = _element_info->xrf["mg"];
+        }
     }
     return map;
 }
