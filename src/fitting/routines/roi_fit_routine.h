@@ -80,9 +80,10 @@ public:
                             const struct Range energy_range,
                             ArrayTr<T_real>* custom_background);
 
+    void set_fit_separate_lines(bool val) {_separate_lines = val;}
 protected:
 
-
+      bool _separate_lines;
 
 
 private:
