@@ -853,7 +853,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {
                 data_struct::Params_Override<double>* null_po = nullptr;
-                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, null_po);
+                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, null_po);
                 return true;
             }
             else
