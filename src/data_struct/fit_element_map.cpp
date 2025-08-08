@@ -73,7 +73,7 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
 
     size_t num_ratios = 1;
 
-    int idx = _full_name.find_last_of("_") + 1;
+    size_t idx = _full_name.find_last_of("_") + 1;
     if(idx == 0)
     {
         _shell_type = Electron_Shell::K_SHELL;
@@ -341,7 +341,7 @@ void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_rea
 {
     if(_pileup_element_info == nullptr)
     {
-        int idx = name.find_last_of("_") + 1;
+        size_t idx = name.find_last_of("_") + 1;
         if(idx == 0)
         {
             _pileup_shell_type = "K";
@@ -364,7 +364,6 @@ void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_rea
 template<typename T_real>
 bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int energy_ratio_idx) const
 {
-	T_real binding_e;
 	if (_element_info != nullptr)
 	{
         if( _pileup_element_info != nullptr)

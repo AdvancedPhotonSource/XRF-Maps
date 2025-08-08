@@ -1223,48 +1223,48 @@ DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parame
                     OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
                     */
                     std::string str_det_num = std::to_string(detector_num + 1);
-                    int idx = line.rfind(":mca1");
-                    if (idx > -1)
+                    size_t idx = line.rfind(":mca1");
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca2");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca3");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca4");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
 
 
                     idx = line.rfind(":dxp1");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp2");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp3");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp4");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];

@@ -173,7 +173,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         {
             logE << "NetCDF dims: [" << dim2size[0] <<"]["<< dim2size[1] <<"]["<< dim2size[2] <<"] needs to be [x][2][x] for detector "<<detector<<" " << path << "\n";
             nc_close(ncid);
-            return -1;
+            return (size_t)-1;
         }
         start[1] = 1;
     }
@@ -214,7 +214,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             return col_idx;
         }
 
-        int d_idx = 12;
+        size_t d_idx = 12;
         if (detector > 3)
         {
             d_idx += 2 * (detector-4);
@@ -229,7 +229,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         {
             logE << "detector not found! "<< dset_det <<" != "<<detector<<" Stopping load : " << path << "\n";
             nc_close(ncid);
-            return -1;
+            return (size_t)-1;
         }
 
         header_size = data_in[0][0][2];
@@ -460,7 +460,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
 template<typename T_real>
 size_t NetCDF_IO<T_real>::load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line<T_real>* spec_line)
 {
-    return _load_spectra(E_load_type::LINE, path, detector, spec_line, -1, nullptr, 0, 0, nullptr, nullptr);
+    return _load_spectra(E_load_type::LINE, path, detector, spec_line, (size_t)-1, nullptr, 0, 0, nullptr, nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -480,7 +480,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
                                                 size_t max_rows,
                                                 size_t max_cols,
                                                 data_struct::IO_Callback_Func_Def<T_real> callback_fun,
-                                                void* user_data)
+                               [[maybe_unused]] void* user_data)
 {
     bool val = true;
     for (auto &detector : detector_num_arr)
@@ -497,7 +497,6 @@ size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, s
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
-    size_t header_size = 256;
     int ncid = 0, varid = 0, retval = 0;
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, 1};
@@ -505,8 +504,6 @@ size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, s
     //T_real data_in[10000][1][11];
     T_real *data_in = nullptr;
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
-    size_t col_size = 0;
-    size_t scalers_size = 0;
     nc_type rh_type;
     int rh_ndims = 0;
     int  rh_dimids[NC_MAX_VAR_DIMS] = {0};

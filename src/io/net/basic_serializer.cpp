@@ -349,7 +349,7 @@ std::string Basic_Serializer<T_real>::encode_spectra(data_struct::Stream_Block<T
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Basic_Serializer<T_real>::_decode_spectra(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block<T_real>* out_stream_block)
+void Basic_Serializer<T_real>::_decode_spectra(char* message, [[maybe_unused]] size_t message_len, size_t& idx, data_struct::Stream_Block<T_real>* out_stream_block)
 {
     T_real elt = 0;
     T_real ert = 0;

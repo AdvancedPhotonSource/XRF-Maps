@@ -439,7 +439,7 @@ bool HDF5_IO::end_save_seq(bool loginfo)
         {
             logI<<"closing forgotten datasets: "<<obj_cnt<<"\n";
             hid_t* objs = new hid_t[obj_cnt];
-            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATASET, -1, objs ) > -1)
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATASET, (size_t)-1, objs ) > -1)
             {
                 for(int i=0; i<obj_cnt; i++)
                 {
@@ -453,7 +453,7 @@ bool HDF5_IO::end_save_seq(bool loginfo)
         {
             logI<<"closing forgotten groups: "<<obj_cnt<<"\n";
             hid_t* objs = new hid_t[obj_cnt];
-            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_GROUP, -1, objs ) > -1)
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_GROUP, (size_t)-1, objs ) > -1)
             {
                 for(int i=0; i<obj_cnt; i++)
                 {
@@ -467,7 +467,7 @@ bool HDF5_IO::end_save_seq(bool loginfo)
         {
             logI<<"closing forgotten datatypes: "<<obj_cnt<<"\n";
             hid_t* objs = new hid_t[obj_cnt];
-            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATATYPE, -1, objs ) > -1)
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_DATATYPE, (size_t)-1, objs ) > -1)
             {
                 for(int i=0; i<obj_cnt; i++)
                 {
@@ -481,7 +481,7 @@ bool HDF5_IO::end_save_seq(bool loginfo)
         {
             logI<<"closing forgotten attributes: "<<obj_cnt<<"\n";
             hid_t* objs = new hid_t[obj_cnt];
-            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_ATTR, -1, objs ) > -1)
+            if( H5Fget_obj_ids( _cur_file_id, H5F_OBJ_ATTR, (size_t)-1, objs ) > -1)
             {
                 for(int i=0; i<obj_cnt; i++)
                 {
@@ -566,10 +566,6 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
         count[0] = 1;
 
         std::string str_val;
-        short* s_val;
-        int* i_val;
-        float* f_val;
-        double* d_val;
 
         count[0] = 1;
         _create_memory_space(1, count, memoryspace_id);
@@ -713,7 +709,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
                     hid_t src_fit_grp_id = H5Gopen(cablib_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT);
                     if (src_fit_grp_id > -1)
                     {
-                        hid_t dst_fit_grp_id = H5Gcreate(dst_calib_fit_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                        dst_fit_grp_id = H5Gcreate(dst_calib_fit_grp_id, analysis_grp_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                         std::string chan_name_loc = analysis_grp_name + "/" + STR_CALIB_LABELS;
                         status = H5Ocopy(cablib_grp_id, chan_name_loc.c_str(), dst_calib_fit_grp_id, chan_name_loc.c_str(), ocpypl_id, H5P_DEFAULT);
                         // copy element info index and names 
@@ -811,7 +807,7 @@ bool HDF5_IO::generate_avg(std::string avg_filename, std::vector<std::string> fi
 
 //-----------------------------------------------------------------------------
 
-void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
+void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name, hid_t src_fit_grp_id, hid_t dst_fit_grp_id, [[maybe_unused]] hid_t ocpypl_id, std::vector<hid_t> &hdf5_file_ids, bool avg)
 {
     std::vector<hid_t> analysis_ids;
 	hid_t error;
@@ -850,7 +846,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
             {
                 // ran into a bug where detectors had different dims for counts per sec. need to check the min and use that to generate avg
                 hid_t tdataspace_id = H5Dget_space(det_analysis_dset_id);
-                int status_n = H5Sget_simple_extent_dims(tdataspace_id, &tmp_dims[0], NULL);
+                status_n = H5Sget_simple_extent_dims(tdataspace_id, &tmp_dims[0], NULL);
                 if (status_n > -1)
                 {
                     for (int i = 0; i < rank; i++)
@@ -883,7 +879,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         
         if (H5Tequal(file_type, H5T_NATIVE_DOUBLE) || H5Tequal(file_type, H5T_INTEL_F64))
         {
-            if ((total * sizeof(double) * 2) > (avail_mem) && rank == 3) //mca_arr
+            if ( ( (total * (long long)sizeof(double) * 2) > (avail_mem) ) && (rank == 3) ) //mca_arr
             {
                 //read in partial dataset at a time by chunks.
                 hsize_t* offset = new hsize_t[rank];
@@ -993,7 +989,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         }
         else  //else float
         {
-            if ((total * sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
+            if ((total * (long long)sizeof(float) * 2) > (avail_mem) && rank == 3) //mca_arr
             {
                 //read in partial dataset at a time by chunks.
                 hsize_t* offset = new hsize_t[rank];
@@ -1191,8 +1187,8 @@ void HDF5_IO::_generate_avg_integrated_spectra(hid_t src_analyzed_grp_id, hid_t 
 bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
                                       std::string dataset_name,
                                       int detector_num,
-                                      size_t height,
-                                      size_t width)
+                     [[maybe_unused]] size_t height,
+                     [[maybe_unused]] size_t width)
 {
 
     std::string str_detector_num = std::to_string(detector_num);
@@ -1282,7 +1278,6 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 	std::lock_guard<std::mutex> lock(_mutex);
 	hid_t file_id, us_amp_id, us_amp_num_id, ds_amp_id, ds_amp_num_id;
 
-	hsize_t dims_in[1] = { 0 };
 	hsize_t offset_1d[1] = { 2 };
 	hsize_t count_1d[1] = { 1 };
 	hid_t rerror = 0;
@@ -1384,7 +1379,7 @@ void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str
 	std::lock_guard<std::mutex> lock(_mutex);
 	hid_t file_id, us_amp_id, ds_amp_id, num_stand_id;
 	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-	hsize_t dims_in[1] = { 0 };
+
 	hsize_t offset_1d[1] = { 2 };
 	hsize_t count_1d[1] = { 1 };
 	hid_t rerror = 0;
@@ -1790,9 +1785,9 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
             if (H5Dread(chan_names, memtype, memoryspace_id, chan_space, H5P_DEFAULT, (void*)tmp_char) > -1)
             {
                 std::string el_name_str = std::string(tmp_char);
-                unsigned long underscore_idx = el_name_str.find("_");
+                size_t underscore_idx = el_name_str.find("_");
                 //can check if > 0 instead of -1 since it shouldn't start with an '_'
-                if (underscore_idx > 0 && underscore_idx < el_name_str.length())
+                if (underscore_idx != std::string::npos && underscore_idx < el_name_str.length())
                 {
                     if(el_name_str[underscore_idx+1] == 'L')
                         offset_2d[0] = 1;
@@ -2406,7 +2401,6 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     std::map<std::string, int> scaler_map;
     hid_t filetype = H5Tcopy(H5T_FORTRAN_S1);
     H5Tset_size(filetype, 256);
-    hid_t memtype = H5Tcopy(H5T_C_S1);
 
     hid_t names_id, values_id, units_id;
     if (false == _open_h5_object(names_id, H5O_DATASET, _global_close_map, "/MAPS/Scalers/Names", file_id, true, false))
@@ -2443,7 +2437,6 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
     hsize_t new_offset_1d[1] = { 0 };
     hsize_t new_offset_3d[3] = { 0,0,0 };
 
-    hsize_t new_max_1d[1] = { name_size };
     hsize_t new_max_3d[3] = { name_size, value_size[1], value_size[2] };
 
     count_3d[1] = value_size[1];
@@ -2461,9 +2454,9 @@ void HDF5_IO::_add_v9_scalers(hid_t file_id)
         {
             std::string scaler_name_str = std::string(tmp_char, 255);
             scaler_name_str.erase(std::remove_if(scaler_name_str.begin(), scaler_name_str.end(), ::isspace), scaler_name_str.end());
-            int c_idx = scaler_name_str.find(':');
+            size_t c_idx = scaler_name_str.find(':');
 
-            if (c_idx < 0 && scaler_name_str.length() > 0)
+            if (c_idx == std::string::npos && scaler_name_str.length() > 0)
             {
                 scaler_map[scaler_name_str] = i;
             }
@@ -2609,7 +2602,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
     {
         //Save description
         std::string norm_desc = fits_link + " normalized by " + normalize_scaler;
-        hid_t dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dset_id = H5Dcreate(file_id, str_desc.c_str(), filetype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         if(dset_id > -1)
         {
             _global_close_map.push({dset_id, H5O_DATASET});
@@ -2811,7 +2804,7 @@ bool HDF5_IO::_add_exchange_meta(hid_t file_id, std::string exchange_idx, std::s
                         offset_quant[1] = element->number - 1;
 
                         H5Sselect_hyperslab (quant_space, H5S_SELECT_SET, offset_quant, nullptr, count_quant, nullptr);
-                        hid_t status = H5Dread(ds_ic_quant_id, H5T_NATIVE_DOUBLE, readwrite_single_space, quant_space, H5P_DEFAULT, (void*)&quant_value);
+                        status = H5Dread(ds_ic_quant_id, H5T_NATIVE_DOUBLE, readwrite_single_space, quant_space, H5P_DEFAULT, (void*)&quant_value);
                         if(status < 0)
                         {
                             quant_value = 1.0;
@@ -2983,7 +2976,7 @@ void HDF5_IO::add_exchange_layout(std::string dataset_file)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_info2_t *linfo, void *opdata)
+herr_t h5_ext_file_info(hid_t loc_id, const char *name, [[maybe_unused]] const H5L_info2_t *linfo, void *opdata)
 {
     hid_t group;
 

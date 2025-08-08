@@ -124,7 +124,7 @@ public:
 
     virtual void reset_to_default_fit_params() = 0;
 
-    virtual void update_fit_params_values(const Fit_Parameters<T_real> *fit_params) = 0;
+    virtual void update_fit_params_values(const Fit_Parameters<T_real> * const fit_params) = 0;
 
     virtual void print_fit_params() = 0;
 

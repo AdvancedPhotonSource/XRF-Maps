@@ -218,7 +218,7 @@ size_t Stream_Block<T_real>::dataset_hash()
     {
         return std::hash<std::string> {} ((*dataset_directory) + (*dataset_name)) + _detector;
     }
-    return -1;
+    return (size_t)-1;
 }
 
 //-----------------------------------------------------------------------------

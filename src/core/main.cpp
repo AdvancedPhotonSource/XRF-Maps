@@ -179,7 +179,7 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
 // ----------------------------------------------------------------------------
 
 template <typename T_real>
-void set_mem_limit(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& analysis_job)
+void set_mem_limit(Command_Line_Parser& clp, [[maybe_unused]] data_struct::Analysis_Job<T_real>& analysis_job)
 {
     //check if we should set a ram memory limit
     if (clp.option_exists("--mem-limit"))
@@ -448,8 +448,8 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
                 continue;
             }
             logI<<dataset_dir << DIR_END_CHAR << itr << DIR_END_CHAR << "*.h5"<<"\n";
-            std::vector<std::string> flist = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
-            for (const auto& fitr : flist)
+            std::vector<std::string> flist1 = io::file::File_Scan::inst()->find_all_dataset_files_by_list(dataset_dir + DIR_END_CHAR + itr + DIR_END_CHAR, search_ext_h5_list);
+            for (const auto& fitr : flist1)
             {
                 //logI<<fitr<<"\n";
                 analysis_job.dataset_files.push_back(itr + DIR_END_CHAR + fitr);
@@ -957,8 +957,8 @@ int main(int argc, char* argv[])
 
     // get location of where we are running from and use it to find ref files
     std::string exe_loc = std::string(argv[0]);
-    int prog_idx = exe_loc.find("xrf_maps");
-    if (prog_idx > 0)
+    size_t prog_idx = exe_loc.find("xrf_maps");
+    if (prog_idx != std::string::npos)
     {
         exe_loc = exe_loc.substr(0, prog_idx);
     }

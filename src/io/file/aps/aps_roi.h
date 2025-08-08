@@ -96,7 +96,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
     if (completeJsonData.isMember(STR_MAPS_ROIS.c_str()))
     {
         const Json::Value json_rois = completeJsonData[STR_MAPS_ROIS.c_str()];
-        for (int i = 0; i < json_rois.size(); ++i)
+        for (int i = 0; i < (int)json_rois.size(); ++i)
         {
             const Json::Value json_map_roi = json_rois[i];
             
@@ -109,7 +109,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
             logI << "Loading roi name :" << roi_name << " from file " << path << "\n";
             // load pixel locations
             const Json::Value json_pixel_locs = json_map_roi[STR_MAP_ROI_PIXEL_LOC.c_str()];
-            for (int index = 0; index < json_pixel_locs.size(); ++index)
+            for (int index = 0; index < (int)json_pixel_locs.size(); ++index)
             {
                 const Json::Value json_ppair = json_pixel_locs[index];
 
@@ -119,7 +119,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
             if (json_map_roi.isMember(STR_MAP_ROI_INT_SPEC.c_str()))
             {
                 const Json::Value json_int_specs = json_map_roi[STR_MAP_ROI_INT_SPEC.c_str()];
-                for (int j = 0; j < json_int_specs.size(); ++j)
+                for (int j = 0; j < (int)json_int_specs.size(); ++j)
                 {
                     const Json::Value json_spectra = json_int_specs[j];
                     if (json_spectra.isMember(STR_MAP_ROI_INT_SPEC_FILENAME.c_str())
@@ -137,7 +137,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
                         int_specs[filename].input_counts(json_spectra[STR_ICR.c_str()].asDouble());
                         int_specs[filename].output_counts(json_spectra[STR_OCR.c_str()].asDouble());
 
-                        for (int k = 0; k < json_spectra_values.size(); ++k)
+                        for (int k = 0; k < (int)json_spectra_values.size(); ++k)
                         {
                             int_specs[filename](k) = json_spectra_values[k].asDouble();
                         }

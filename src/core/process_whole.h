@@ -320,7 +320,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             cur_block++;
         }
 
-        std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+        end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
         logI << "Fitting [ " << fit_routine->get_name() << " ] elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
@@ -342,8 +342,8 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             }
             // save png 
             std::string dataset_fullpath = io::file::HDF5_IO::inst()->get_filename();
-            int sidx = dataset_fullpath.find("img.dat");
-            if (dataset_fullpath.length() > 0 && sidx > 0) 
+            size_t sidx = dataset_fullpath.find("img.dat");
+            if (dataset_fullpath.length() > 0 && sidx != std::string::npos) 
             {
                 dataset_fullpath.replace(sidx, 7, "output"); // 7 = sizeof("img.dat")
                 std::string str_path = dataset_fullpath + "_" + fit_routine->get_name() + ".png";
@@ -362,11 +362,10 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
         if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine<T_real>* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine;
-            io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
-                matrix_fit->energy_range(),
-                matrix_fit->max_integrated_spectra(),
-                matrix_fit->max_10_integrated_spectra(),
-                matrix_fit->fitted_integrated_background());
+            io::file::HDF5_IO::inst()->save_max_10_spectra(matrix_fit->energy_range(),
+                                                            matrix_fit->max_integrated_spectra(),
+                                                            matrix_fit->max_10_integrated_spectra(),
+                                                            matrix_fit->fitted_integrated_background());
         }
 
         delete fit_job_queue;

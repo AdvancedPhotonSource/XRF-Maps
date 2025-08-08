@@ -306,14 +306,14 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
     out.setZero(n);
     for (size_t i = 0; i < n; ++i)
     {
-        for (int j(min_v.size() - 1), k(i); j >= 0; --j)
+        for (size_t j(min_v.size() - 1), k(i); j >= 0; --j)
         {
             out[i] += min_v[j] * max_v[k];
             ++k;
         }
     }
     T_real norm = 1 / T_real(boxcar.size());
-    int j = min_v.size() / 2;
+    size_t j = min_v.size() / 2;
     for (size_t i = 0; i < n; i++)
     {
         new_background[j] = out[i] * norm;

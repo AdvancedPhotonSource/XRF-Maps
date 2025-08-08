@@ -122,8 +122,8 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
                         left_roi = right_roi - 1;
                     }
 
-                    size_t spec_size = (right_roi - left_roi) + 1;
-                    out_counts[save_name] = spectra->segment(left_roi, spec_size).sum();
+                    size_t spec_size1 = (right_roi - left_roi) + 1;
+                    out_counts[save_name] = spectra->segment(left_roi, spec_size1).sum();
                 }
             }
         }
@@ -134,10 +134,10 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T_real>
-void ROI_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
-                                 const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                 const struct Range energy_range,
-                                 ArrayTr<T_real>* custom_background)
+void ROI_Fit_Routine<T_real>::initialize([[maybe_unused]] models::Base_Model<T_real>* const model,
+    [[maybe_unused]] const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+    [[maybe_unused]] const struct Range energy_range,
+    [[maybe_unused]] ArrayTr<T_real>* custom_background)
 {
     //N/A
 }

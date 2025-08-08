@@ -185,7 +185,7 @@ void Spectra_Stream_Saver<T_real>::_finalize_dataset(Dataset_Save* dataset)
             if (detector != nullptr)
             {
                 io::file::HDF5_IO::inst()->save_itegrade_spectra(&detector->integrated_spectra);
-                ///io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, stream_block->mda_io, params_override, false);
+                ///io::file::HDF5_IO::inst()->save_scan_scalers(stream_block->mda_io, params_override, false);
                 //io::file::HDF5_IO::inst()->close_dataset(d_hash);
             }
             ///delete stream_block->mda_io;
