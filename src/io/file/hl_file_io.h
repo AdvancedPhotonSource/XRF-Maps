@@ -846,13 +846,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'f')
     {
         // try to load polar hdf master file
-        data_struct::Scan_Info<T_real> scan_info;
+        data_struct::Scan_Info<double> scan_info;
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
         {
             scan_type = STR_SCAN_TYPE_POLAR_XANES;
             if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {
-                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, params_override);
+                data_struct::Params_Override<double>* null_po = nullptr;
+                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, null_po);
                 return true;
             }
             else

@@ -1034,9 +1034,9 @@ public:
     }
 
     //-----------------------------------------------------------------------------
-
-    template<typename T_real>
-    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
+    // load spectra volume as float (T_real) but scan_info as double (T_real2)
+    template<typename T_real, typename T_real2>
+    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id, dset_id, space_id;
@@ -1252,13 +1252,13 @@ public:
             scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
             spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, dims3[2]);
 
-            struct data_struct::Scaler_Map<T_real> energy_map;
+            struct data_struct::Scaler_Map<T_real2> energy_map;
             energy_map.name = "Energy";
             energy_map.unit = "";
             energy_map.time_normalized = false;
             energy_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
 
-            struct data_struct::Scaler_Map<T_real> i0_map;
+            struct data_struct::Scaler_Map<T_real2> i0_map;
             i0_map.name = "I0";
             i0_map.unit = "counts";
             i0_map.time_normalized = false;
@@ -1269,8 +1269,8 @@ public:
             data_struct::ArrayTr<T_real> icr_array(dims3[0]);
             data_struct::ArrayTr<T_real> ocr_array(dims3[0]);
 
-            data_struct::ArrayTr<T_real> i0_array(dims3[0]);
-            data_struct::ArrayTr<T_real> energy_array(dims3[0]);
+            data_struct::ArrayTr<T_real2> i0_array(dims3[0]);
+            data_struct::ArrayTr<T_real2> energy_array(dims3[0]);
 
             err = _read_h5d<T_real>(elt_dset_id, H5S_ALL, elt_space_id, H5P_DEFAULT, elt_array.data());
             if(err < 0)
@@ -1297,13 +1297,13 @@ public:
                 ocr_array.setOnes();
             }
 
-            err = _read_h5d<T_real>(energy_dset_id, H5S_ALL, energy_space_id, H5P_DEFAULT, energy_array.data());
+            err = _read_h5d<T_real2>(energy_dset_id, H5S_ALL, energy_space_id, H5P_DEFAULT, energy_array.data());
             if(err < 0)
             {
                 logE<< "Could not read energy data, setting it all to 1's\n";
                 energy_array.setOnes();
             }
-            err = _read_h5d<T_real>(i0_dset_id, H5S_ALL, i0_space_id, H5P_DEFAULT, i0_array.data());
+            err = _read_h5d<T_real2>(i0_dset_id, H5S_ALL, i0_space_id, H5P_DEFAULT, i0_array.data());
             if(err < 0)
             {
                 logE<< "Could not read i0 data, setting it all to 1's\n";
@@ -6955,6 +6955,10 @@ public:
             }
 
             _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
+        }
+        else
+        {
+            _save_scalers(maps_grp_id, &(scan_info->scaler_maps), (T_real)0.0, "0.0", (T_real)0.0, "0.0");
         }
         _close_h5_objects(_global_close_map);
 
