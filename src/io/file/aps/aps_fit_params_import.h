@@ -805,6 +805,19 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         params_override->theta_pv = value;
                     }
+                    else if (tag == "SCALING_FACTOR")
+                    {
+                        std::string scaler_name;
+                        std::string str_value;
+
+                        std::getline(strstream, scaler_name, ',');
+                        scaler_name.erase(std::remove_if(scaler_name.begin(), scaler_name.end(), ::isspace), scaler_name.end());
+                        T_real factor = 1.0;
+                        std::getline(strstream, str_value, ',');
+                        factor = parse_input_real<T_real>(str_value);
+                        
+                        params_override->scaling_factors[scaler_name] = factor;
+                    }
                 }
                 catch (std::exception& e)
                 {

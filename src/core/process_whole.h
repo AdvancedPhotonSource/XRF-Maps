@@ -437,6 +437,17 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
         }
     }
 
+    // itr again to look for scale_factor
+    for (auto& itr : pv_map)
+    {
+        double multiplier = (T_real)1.0;
+        if(pv_map.count(itr.first+"_SCALE_FACTOR") > 0)
+        {
+            multiplier = pv_map.at(itr.first+"_SCALE_FACTOR");
+        }
+        itr.second *= multiplier;
+    }
+
     // add any summded scalers to pv_map
     const std::vector<struct Summed_Scaler>* summed_scalers = data_struct::Scaler_Lookup::inst()->get_summed_scaler_list(beamline);
     if (summed_scalers != nullptr)

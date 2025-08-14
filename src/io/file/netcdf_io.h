@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define NetCDF_IO_H
 
 #include "data_struct/spectra_volume.h"
+#include "data_struct/params_override.h"
 #include <netcdf.h>
 #include <mutex>
 
@@ -90,7 +91,7 @@ public:
     size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra);
 
     // tetramm scalers netcdf file
-    size_t load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info);
+    size_t load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info, data_struct::Params_Override<T_real> * params_override);
 
 private:
     NetCDF_IO();

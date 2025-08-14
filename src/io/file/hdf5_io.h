@@ -8141,6 +8141,7 @@ public:
             return false;
         }
         hid_t   memtype_label, filetype_label, memoryspace_id, maps_grp_id, po_grp_id;
+        hid_t br_grp_id, k_grp_id, l_grp_id, m_grp_id, l_fam_grp_id;
         hid_t fitp_names_id, fitp_values_id;
         hid_t fitp_names_space, fitp_values_space;
 
@@ -8234,6 +8235,51 @@ public:
             }
 
             i++;
+        }
+        
+        if(params_override->branching_ratios.size() > 0
+        || params_override->branching_ratio_K.size() > 0
+        || params_override->branching_ratio_L.size() > 0
+        || params_override->branching_ratio_M.size() > 0
+        || params_override->branching_family_L.size() > 0)
+        {
+            // save branching ratio's 
+            if (false == _open_or_create_group(STR_BRANCHING_RATIOS, _cur_file_id, br_grp_id))
+            {
+                return false;
+            }
+            if(params_override->branching_ratio_K.size() > 0)
+            {
+                // save K ratios 
+                if (_open_or_create_group(STR_K_SHELL, br_grp_id, k_grp_id))
+                {
+                    
+                }
+            }
+            if(params_override->branching_ratio_L.size() > 0)
+            {
+                // save l ratios 
+                if (_open_or_create_group(STR_L_SHELL, br_grp_id, l_grp_id))
+                {
+                    
+                }
+            }
+            if(params_override->branching_ratio_M.size() > 0)
+            {
+                // save K Shells 
+                if (_open_or_create_group(STR_M_SHELL, br_grp_id, m_grp_id))
+                {
+                    
+                }
+            }
+            if(params_override->branching_family_L.size() > 0)
+            {
+                // save K Shells 
+                if (_open_or_create_group(STR_L_FAMILY, br_grp_id, l_fam_grp_id))
+                {
+                    
+                }
+            }
         }
 
         return true;

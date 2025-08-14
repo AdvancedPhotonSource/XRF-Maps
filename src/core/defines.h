@@ -282,6 +282,11 @@ const std::string STR_CHANNEL_NAMES = "Channel_Names";
 const std::string STR_CHANNEL_UNITS = "Channel_Units";
 const std::string STR_FIT_PARAMETERS_OVERRIDE = "Fit_Parameters_Override";
 const std::string STR_FIT_PARAMETERS = "Fit_Parameters";
+const std::string STR_BRANCHING_RATIOS = "Brancing_Ratios";
+const std::string STR_K_SHELL = "K_Shell";
+const std::string STR_L_SHELL = "L_Shell";
+const std::string STR_M_SHELL = "M_Shell";
+const std::string STR_L_FAMILY = "L_Family";
 
 const std::string STR_QUANTIFICATION = "Quantification";
 const std::string STR_CALIBRATION = "Calibration";

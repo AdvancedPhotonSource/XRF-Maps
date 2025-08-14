@@ -493,7 +493,7 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(std::string path,
 //-----------------------------------------------------------------------------
  
 template<typename T_real>
-size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info)
+size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info, data_struct::Params_Override<T_real> * params_override)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -571,9 +571,14 @@ size_t NetCDF_IO<T_real>::load_scalers_line(std::string path, std::string tag, s
         {
             if(scaler_map.unit == search_name)
             {
+                T_real multiplier = (T_real)1.0;
+                if(params_override->scaling_factors.count(scaler_map.name) > 0)
+                {
+                    multiplier = params_override->scaling_factors.at(scaler_map.name);
+                }
                 for(size_t j=0; j < dim2size[0]; j++)
                 {
-                    scaler_map.values(row,j) = data_in[j];
+                    scaler_map.values(row,j) = data_in[j] * multiplier;
                 }
                 break;
             }

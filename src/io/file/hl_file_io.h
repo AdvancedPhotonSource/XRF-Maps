@@ -1163,7 +1163,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
                     // if tetramm tag is missing in file name, we assume it is tetra1
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
                 }
             }
             std::ifstream file_io1(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
@@ -1176,7 +1176,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_" + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
                 }
             }
             std::ifstream file_io2(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_0.nc");
@@ -1189,7 +1189,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_" + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info(), params_override);
                 }
             }
         }
