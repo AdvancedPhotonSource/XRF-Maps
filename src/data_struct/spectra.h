@@ -306,7 +306,7 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
     out.setZero(n);
     for (size_t i = 0; i < n; ++i)
     {
-        for (size_t j(min_v.size() - 1), k(i); j >= 0; --j)
+        for (int j(min_v.size() - 1), k(i); j >= 0; --j)
         {
             out[i] += min_v[j] * max_v[k];
             ++k;
