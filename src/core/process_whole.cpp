@@ -127,7 +127,7 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             ret_val = false;
             break;
         }
-        io::file::save_optimized_fit_params(analysis_job->output_dir, save_filename, detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
+        io::file::save_optimized_fit_params(analysis_job->output_dir, save_filename, (int)detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
 
         delete fit_routine;
     }
@@ -142,7 +142,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 {
     std::unordered_map<int, data_struct::Fit_Parameters<double>> fit_params_avgs;
     std::unordered_map<int, data_struct::Params_Override<double>*> params;
-    std::unordered_map<int, float> detector_file_cnt;
+    std::unordered_map<size_t, float> detector_file_cnt;
     data_struct::Params_Override<double>* params_override = nullptr;
     data_struct::Spectra<double> int_spectra;
 
@@ -463,7 +463,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
         for(size_t detector_num : analysis_job->detector_num_arr)
         {
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
-            data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
+            //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
             
             load_and_fit_quatification_datasets(analysis_job, detector_num);
@@ -549,8 +549,8 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                 }
 
                 // check if esrf dataset and remove folder 
-                int didx = dataset_file.find(DIR_END_CHAR);
-                if (didx > -1)
+                size_t didx = dataset_file.find(DIR_END_CHAR);
+                if (didx != std::string::npos)
                 {
                     dataset_file = dataset_file.substr(didx + 1);
                 }
@@ -783,7 +783,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
     // int specs loaded from v10 version
     std::unordered_map<std::string, data_struct::Spectra<double> > int_specs;
 
-    int slen = roi_file_name.size();
+    size_t slen = roi_file_name.size();
     if (slen < 6)
     {
         logE << "Roi file name too short " << roi_file_name << ". Skipping file.\n";
@@ -804,7 +804,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     // search for detector in list of int specs loaded
                     for (const auto& spec_itr : int_specs)
                     {
-                        int slen = spec_itr.first.length();
+                        slen = spec_itr.first.length();
                         if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0])
                         {
                             search_filename = spec_itr.first;

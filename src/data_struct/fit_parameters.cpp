@@ -208,7 +208,7 @@ void Fit_Parameters<T_real>::from_array_d(const std::vector<double> &arr)
 {
     for(auto& itr : _params)
     {
-        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < (int)arr.size())
+        if (itr.second.opt_array_index != -1 && itr.second.opt_array_index < (int)arr.size())
         {
             itr.second.value = arr[itr.second.opt_array_index];
         }
@@ -224,7 +224,7 @@ void Fit_Parameters<T_real>::from_array(const T_real* arr, size_t arr_size)
     //logit_s<<"\n";
     for(auto& itr : _params)
     {
-        if (itr.second.opt_array_index > -1 && itr.second.opt_array_index < (int)arr_size)
+        if (itr.second.opt_array_index != -1 && itr.second.opt_array_index < (int)arr_size)
         {
             itr.second.value = arr[itr.second.opt_array_index];
         }
@@ -397,7 +397,7 @@ void Fit_Parameters<T_real>::print()
     for(const auto& itr : _params)
     {
         // 22 is len of longest name COHERENT_SCT_AMPLITUDE 
-        int spaces = 24 - itr.first.length();
+        size_t spaces = 24 - itr.first.length();
         std::string name = itr.first;
         name.append(spaces, ' ');
         std::string value = std::to_string(itr.second.value);

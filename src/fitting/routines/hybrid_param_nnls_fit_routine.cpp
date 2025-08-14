@@ -194,7 +194,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
             out_fit_params.append_and_update(fit_params);
             for (const auto& itr : *elements_to_fit)
             {
-                out_fit_params.add_parameter(Fit_Param<T_real>(itr.first, MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, log10(out_counts[itr.first]), STEP_COUNTS_LIMIT_LOG, E_Bound_Type::LIMITED_LO_HI));
+                out_fit_params.add_parameter(Fit_Param<T_real>(itr.first, MIN_COUNTS_LIMIT_LOG, MAX_COUNTS_LIMIT_LOG, log10(out_counts[itr.first]), (T_real)STEP_COUNTS_LIMIT_LOG, E_Bound_Type::LIMITED_LO_HI));
             }
         }
     }

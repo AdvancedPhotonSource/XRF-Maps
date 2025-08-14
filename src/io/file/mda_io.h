@@ -131,7 +131,7 @@ public:
 
     data_struct::Scan_Info<T_real>* get_scan_info() { return &_scan_info; }
 
-    unsigned int get_num_integreated_spectra() { return _integrated_spectra_map.size(); }
+    size_t get_num_integreated_spectra() { return _integrated_spectra_map.size(); }
 
     data_struct::ArrayTr<T_real>* get_integrated_spectra(unsigned int detector);
 

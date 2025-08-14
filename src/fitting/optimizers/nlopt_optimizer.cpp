@@ -65,9 +65,8 @@ namespace optimizers
 
 //-----------------------------------------------------------------------------
 template<typename T_real>
-double residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
+double residuals_nlopt(const std::vector<double> &x, [[maybe_unused]] std::vector<double> &grad, void *usr_data)
 {
-    bool first = true;
     // Get user passed data
     User_Data<T_real>* ud = static_cast<User_Data<T_real>*>(usr_data);
 
@@ -146,7 +145,7 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
 
 //-----------------------------------------------------------------------------
 template<typename T_real>
-double quantification_residuals_nlopt(const std::vector<double> &x, std::vector<double> &grad, void *usr_data)
+double quantification_residuals_nlopt(const std::vector<double> &x, [[maybe_unused]] std::vector<double> &grad, void *usr_data)
 {
     ///(std::valarray<T_real> p, std::valarray<T_real> y, std::valarray<T_real> x)
 
@@ -343,7 +342,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
     opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
-    double minf;
+    double minf = -1.0;
 
     try
     {
@@ -416,7 +415,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real
         return OPTIMIZER_OUTCOME::STOPPED;
     }
 
-    nlopt::opt opt(_algo, fitp_arr.size());
+    nlopt::opt opt(_algo, (unsigned int)fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
@@ -424,8 +423,8 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real
     opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
     opt.set_maxeval(_options.at(STR_OPT_MAXITER));
 
-    double minf;
-    nlopt::result result;
+    double minf = -1.0;
+    nlopt::result result = nlopt::result::FAILURE;
     try
     {
         result = opt.optimize(fitp_arr, minf);
@@ -503,7 +502,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     //nlopt::opt opt(nlopt::algorithm::GN_ESCH, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::GN_ISRES, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::LN_SBPLX, fitp_arr.size());
-    nlopt::opt opt(nlopt::algorithm::LN_NELDERMEAD, fitp_arr.size());
+    nlopt::opt opt(nlopt::algorithm::LN_NELDERMEAD, (unsigned int)fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::LN_COBYLA, fitp_arr.size());
     
     //nlopt::opt opt(nlopt::algorithm::GN_CRS2_LM, fitp_arr.size());
@@ -516,7 +515,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
 
 
     double minf = 0.0;
-    nlopt::result result;
+    nlopt::result result = nlopt::result::FAILURE;
 
     try
     {

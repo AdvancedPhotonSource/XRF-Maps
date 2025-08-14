@@ -112,7 +112,7 @@ struct DLL_EXPORT Fit_Param
         value = std::numeric_limits<T_real>::quiet_NaN();
         step_size = std::numeric_limits<T_real>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
-        opt_array_index = -1;
+        opt_array_index = (size_t)-1;
     }
 
     Fit_Param(const Fit_Param& param)
@@ -134,7 +134,7 @@ struct DLL_EXPORT Fit_Param
         value = std::numeric_limits<T_real>::quiet_NaN();
         step_size = std::numeric_limits<T_real>::quiet_NaN();
         bound_type = E_Bound_Type::NOT_INIT;
-        opt_array_index = -1;
+        opt_array_index = (size_t)-1;
     }
 
     Fit_Param(std::string name_, T_real val_)
@@ -145,7 +145,7 @@ struct DLL_EXPORT Fit_Param
         step_size = (T_real)0.000001;
         value = val_;
         bound_type = E_Bound_Type::FIXED;
-        opt_array_index = -1;
+        opt_array_index = (size_t)-1;
     }
 
 	Fit_Param(std::string name_, T_real val_, E_Bound_Type b_type)
@@ -156,7 +156,7 @@ struct DLL_EXPORT Fit_Param
 		step_size = (T_real)0.000001;
 		value = val_;
 		bound_type = b_type;
-		opt_array_index = -1;
+		opt_array_index = (size_t)-1;
 	}
 
     Fit_Param(std::string name_, T_real min_, T_real max_, T_real val_, T_real step_size_, E_Bound_Type b_type)
@@ -167,7 +167,7 @@ struct DLL_EXPORT Fit_Param
         value = val_;
         bound_type = b_type;
         step_size = step_size_;
-        opt_array_index = -1;
+        opt_array_index = (size_t)-1;
     }
 
     const std::string bound_type_str() const; 
@@ -178,7 +178,7 @@ struct DLL_EXPORT Fit_Param
     T_real value;
     T_real step_size;
     E_Bound_Type bound_type;
-    int opt_array_index;
+    size_t opt_array_index;
 };
 
 //-----------------------------------------------------------------------------

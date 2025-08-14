@@ -73,7 +73,7 @@ Integrated_Spectra_Source<T_real>::~Integrated_Spectra_Source()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
+void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, [[maybe_unused]] void* user_data)
 {
 
     if(this->_output_callback_func == nullptr)

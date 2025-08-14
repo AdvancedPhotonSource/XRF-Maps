@@ -97,15 +97,15 @@ DLL_EXPORT herr_t h5_ext_file_info(hid_t loc_id, const char *name, const H5L_inf
 template<typename T_real>
 int parse_str_val_to_int(std::string start_delim, std::string end_delim, std::string lookup_str)
 {
-    int find_idx = (int)lookup_str.find(start_delim);
-    if (find_idx < 0)
+    size_t find_idx = (int)lookup_str.find(start_delim);
+    if (find_idx == std::string::npos)
     {
         logW << "Could not find string property start delimeter " << start_delim << "\n";
         return -1;
     }
     std::string leftover = lookup_str.substr(find_idx + start_delim.length());
     find_idx = leftover.find(end_delim); // find end double quote
-    if (find_idx < 0)
+    if (find_idx == std::string::npos)
     {
         logW << "Could not find spectra sample count end delimeter \"\n";
         return -1;
@@ -913,14 +913,10 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, bool logerr = true)
+    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, [[maybe_unused]] data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, xspres_grp_id, pos_grp_id, title_id, xspress_link_id, pos_file_id, enc1_id, enc2_id, space_id;
-        char xspress3_link[2048] = {0};
-        char positions_link[2048] = {0};
-        hsize_t dims[1] = { 0 };
-        herr_t err;
+        hid_t    file_id, xspres_grp_id;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
@@ -943,12 +939,12 @@ public:
                 return false;
             }
         
-            int idx = filename.find_last_of("_master.h5") - 9;
-            if(idx > 0)
+            size_t idx = filename.find_last_of("_master.h5") - 9;
+            if(idx != std::string::npos)
             {
                 std::string base_name = filename.substr(0, idx);
                 std::map<std::string, hid_t> ext_links;
-                herr_t idx = H5Literate2(xspres_grp_id, H5_INDEX_NAME, H5_ITER_INC, NULL, h5_ext_file_info, &ext_links);
+                H5Literate2(xspres_grp_id, H5_INDEX_NAME, H5_ITER_INC, NULL, h5_ext_file_info, &ext_links);
                 spec_vol->resize_and_zero(ext_links.size(),1,4096);
                 for(unsigned long i = 0; i<ext_links.size(); i++)
                 {
@@ -1043,7 +1039,7 @@ public:
     bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t    file_id, dset_id, space_id, x_dset_id, y_dset_id, x_space_id, y_space_id;
+        hid_t    file_id, dset_id, space_id;
         hid_t    pr1_order_id, pr2_order_id;
         hid_t    ert_dset_id, ert_space_id;
         hid_t    elt_dset_id, elt_space_id;
@@ -1224,7 +1220,7 @@ public:
             H5Tset_size (tid1, H5T_VARIABLE);
             H5Tset_cset(tid1, H5T_CSET_UTF8);
 
-            if (_open_h5_object(title_id, H5O_DATASET, close_map, str_title_path, file_id, -1))   
+            if (_open_h5_object(title_id, H5O_DATASET, close_map, str_title_path, file_id, false, false))   
             {
                 char* tmp_char_arr[255];
                 err = H5Dread(title_id, tid1, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
@@ -1234,7 +1230,7 @@ public:
                 }
             }
 
-            if (_open_h5_object(start_time_id, H5O_DATASET, close_map, str_start_time_path,  file_id, -1))
+            if (_open_h5_object(start_time_id, H5O_DATASET, close_map, str_start_time_path,  file_id, false, false))
             {
                 char* tmp_char_arr[255];
                 err = H5Dread(start_time_id, tid1, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char_arr);
@@ -1318,13 +1314,13 @@ public:
             int polarity = 0;
             int idx = 0;
 
-            if(use_pr1 && pr1_array.size() != dims3[0])
+            if(use_pr1 && (pr1_array.size() != dims3[0]))
             {
                 logE<<str_pr1_path<<" is not the same size as spectra data. Can not load properly.\n";
                 _close_h5_objects(close_map);
                 return false;
             }
-            else if(use_pr1 == false && pr2_array.size() != dims3[0])
+            else if(use_pr1 == false && (pr2_array.size() != dims3[0]))
             {
                 logE<<str_pr2_path<<" is not the same size as spectra data. Can not load properly.\n";
                 _close_h5_objects(close_map);
@@ -1462,13 +1458,12 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, bool logerr = true)
+    bool load_spectra_vol_esrf(std::string path, std::string &title, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info_edf, [[maybe_unused]] bool logerr = true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id, root_grp_id, fluo_grp_id, title_id, scanDim1_id, scanDim2_id, start_time_id;
-        H5G_info_t info;
         char root_group_name[2048] = { 0 };
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
@@ -2540,7 +2535,7 @@ public:
                 //generate lookup map
                 for (size_t z = 0; z < det_dims_in[2]; z++)
                 {
-                    detector_lookup[std::string(detector_names[z])] = z;
+                    detector_lookup[std::string(detector_names[z])] = (int)z;
                     //free(detector_names[z]);
                 }
             }
@@ -2684,15 +2679,11 @@ public:
         {
             logI << path << " detector : " << detector_num << "\n";
         }
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id;
-        hid_t    dset_xypos_id, dataspace_xypos_id;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id;
         hid_t	 livetime_id, realtime_id, inpcounts_id, outcounts_id;
         hid_t    livetime_dataspace_id, realtime_dataspace_id, inpcounts_dataspace_id, outcounts_dataspace_id;
         herr_t   error;
         std::string detector_path;
-        char* detector_names[256];
-        T_real time_base = 1.0f;
-        T_real el_time = 1.0f;
         T_real* buffer;
         hsize_t offset_row[2] = { 0,0 };
         hsize_t count_row[2] = { 0,0 };
@@ -2981,15 +2972,9 @@ public:
         {
             logI << path << " detector : " << detector_num << "\n";
         }
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_detectors_id;
-        hid_t    dset_xypos_id, dataspace_xypos_id;
-        hid_t	 livetime_id, realtime_id, inpcounts_id, outcounts_id;
-        hid_t    livetime_dataspace_id, realtime_dataspace_id, inpcounts_dataspace_id, outcounts_dataspace_id;
+        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id;
         herr_t   error;
         std::string detector_path;
-        char* detector_names[256];
-        T_real time_base = 1.0f;
-        T_real el_time = 1.0f;
         T_real* buffer;
         hsize_t offset_row[2] = { 0,0 };
         hsize_t count_row[2] = { 0,0 };
@@ -3114,10 +3099,6 @@ public:
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
-        T_real live_time = 1.0;
-        T_real real_time = 1.0;
-        T_real in_cnt = 1.0;
-        T_real out_cnt = 1.0;
 
 
         for (size_t row = 0; row < dims_in[0]; row++)
@@ -3199,7 +3180,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spec, bool log_error)
+    bool load_integrated_spectra_bnl(std::string path, size_t detector_num, data_struct::Spectra<T_real>* spec, [[maybe_unused]] bool log_error)
     {
         data_struct::Spectra_Volume<T_real> spec_vol;
         bool retval = load_spectra_volume_bnl(path, detector_num, &spec_vol);
@@ -3570,7 +3551,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<T_real>* spectra, ROI_Vec* roi = nullptr, bool log_error=true)
+    bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<T_real>* spectra, [[maybe_unused]] ROI_Vec* roi = nullptr, bool log_error=true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         hid_t    file_id;
@@ -3617,7 +3598,7 @@ public:
         hsize_t offset_1[1] = { 0 };
         hsize_t count_1[1] = { 1 };
 
-        hsize_t elt_off = -1, ert_off = -1, in_off = -1, out_off = -1;
+        hsize_t elt_off = (hsize_t)-1, ert_off = (hsize_t)-1, in_off = (hsize_t)-1, out_off = (hsize_t)-1;
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1, false))
             return false;
@@ -4655,10 +4636,8 @@ public:
         hsize_t* val_dims_in = nullptr;;
         hsize_t scaler_offset[3] = { 0,0,0 };
         hsize_t single_offset[1] = { 0 };
-        hsize_t single_count[1] = { 1 };
         hsize_t mem_offset[2] = { 0,0 };
         hsize_t mem_count[2] = { 1,1 };
-        hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         double* buffer = nullptr;
 
         if (override_values == nullptr)
@@ -4703,10 +4682,6 @@ public:
         mem_count[0] = val_dims_in[0];
         mem_count[1] = val_dims_in[1];
         //names
-        hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
-        single_count[0] = val_dims_in[2];
-        hid_t name_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
-        single_count[0] = 1;
 
         buffer = new double[val_dims_in[0] * val_dims_in[1]];
         hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
@@ -5244,10 +5219,9 @@ public:
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
         logI << path << "\n";
-        char* adata[255];
         hid_t    file_id, src_maps_grp_id;
         hid_t scaler_name_id, scaler_val_id, scaler_grp_id;
-        hid_t meta_data_id, tmp_id, status;
+        hid_t tmp_id, status;
         hsize_t* val_dims_in = nullptr;
         hsize_t mem_offset[2] = { 0,0 };
         hsize_t mem_count[2] = { 1,1 };
@@ -5405,7 +5379,7 @@ public:
                 }
                 else if (type_class == H5T_ARRAY)
                 {
-                    int arrarr = 0;
+                    //
                 }
                 else if (type_class == H5T_FLOAT)
                 {
@@ -5851,7 +5825,12 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool save_element_fits(const std::string path, const data_struct::Fit_Count_Dict<T_real>* const element_counts, size_t row_idx_start=0, int row_idx_end=-1, size_t col_idx_start=0, int col_idx_end=-1)
+    bool save_element_fits(const std::string path,
+        const data_struct::Fit_Count_Dict<T_real>* const element_counts,
+        [[maybe_unused]] size_t row_idx_start=0,
+        [[maybe_unused]] int row_idx_end=-1,
+        [[maybe_unused]] size_t col_idx_start=0,
+        [[maybe_unused]] int col_idx_end=-1)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -5870,27 +5849,28 @@ public:
         hid_t   memoryspace, dataspace_id, dataspace_ch_id, dataspace_un_id, dataspace_ch_off_id;
         hid_t   filetype, memtype;
         herr_t  status;
-        hid_t   dcpl_id;
         hid_t   xrf_grp_id, fit_grp_id, maps_grp_id;
 
         dset_id = -1;
         dset_ch_id = -1;
-        hsize_t dims_out[3];
+        hsize_t dims_out[3] = { 0, 0, 0 };
         hsize_t offset[1] = { 0 };
         hsize_t offset2[1] = { 0 };
         hsize_t offset_3d[3] = { 0, 0, 0 };
         hsize_t count[1] = { 1 };
         hsize_t count_3d[3] = { 1, 1, 1 };
         hsize_t chunk_dims[3];
-        hsize_t tmp_dims[3];
         
-        //fix this
-        for (const auto& iter : *element_counts)
+        if (element_counts != nullptr)
         {
-            dims_out[1] = iter.second.rows();
-            dims_out[2] = iter.second.cols();
-            break;
+            if (element_counts->size() > 0)
+            {
+                auto iter = element_counts->begin();
+                dims_out[1] = iter->second.rows();
+                dims_out[2] = iter->second.cols();
+            }
         }
+
         //H5T_FLOAT
 
         dims_out[0] = element_counts->size();
@@ -6064,7 +6044,6 @@ public:
         std::string dset_name = "/" + STR_MAPS + "/" + STR_XRF_ANALYZED + "/" + path + "/" + STR_FIT_INT_SPEC;
         std::string background_name = "/" + STR_MAPS + "/" + STR_XRF_ANALYZED + "/" + path + "/" + STR_FIT_INT_BACKGROUND;
 
-        hsize_t offset[1] = { 0 };
         hsize_t count[1] = { 1 };
         count[0] = save_spectra_size;
 
@@ -6126,8 +6105,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-	bool save_max_10_spectra(const std::string path,
-							const data_struct::Range& range,
+	bool save_max_10_spectra(const data_struct::Range& range,
 							const data_struct::Spectra<T_real>& max_spectra,
 							const data_struct::Spectra<T_real>& max_10_spectra,
                             const data_struct::Spectra<T_real>& fit_int_background)
@@ -6147,7 +6125,6 @@ public:
         start = std::chrono::system_clock::now();
 
 
-        hsize_t offset[1] = { 0 };
         hsize_t count[1] = { 1 };
         count[0] = max_spectra.size();
 
@@ -6273,7 +6250,7 @@ public:
             {
                 return false;
             }
-            int quant_size = detector->quantification_standards.size();
+            size_t quant_size = detector->quantification_standards.size();
             status = H5Dwrite(count_dset_id, H5T_NATIVE_INT, memoryspace1_id, count_dataspace_id, H5P_DEFAULT, (void*)&quant_size);
             if (status < 0)
             {
@@ -6904,20 +6881,19 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool save_scan_scalers(size_t detector_num,
-                           data_struct::Scan_Info<T_real>* scan_info,
+    bool save_scan_scalers(data_struct::Scan_Info<T_real>* scan_info,
                            data_struct::Params_Override<T_real> * params_override,
-                           size_t row_idx_start=0,
-                           int row_idx_end=-1,
-                           size_t col_idx_start=0,
-                           int col_idx_end=-1)
+          [[maybe_unused]] size_t row_idx_start=0,
+          [[maybe_unused]] int row_idx_end=-1,
+          [[maybe_unused]] size_t col_idx_start=0,
+          [[maybe_unused]] int col_idx_end=-1)
     {
 
         std::lock_guard<std::mutex> lock(_mutex);
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
-        hid_t scan_grp_id, maps_grp_id, po_grp_id;
+        hid_t scan_grp_id, maps_grp_id;
 
         if (scan_info == nullptr)
         {
@@ -6998,11 +6974,10 @@ public:
 
     template<typename T_real>
     bool save_scan_scalers_confocal(std::string path,
-                                    size_t detector_num,
-                                    size_t row_idx_start=0,
-                                    int row_idx_end=-1,
-                                    size_t col_idx_start=0,
-                                    int col_idx_end=-1)
+                   [[maybe_unused]] size_t row_idx_start=0,
+                   [[maybe_unused]] int row_idx_end=-1,
+                   [[maybe_unused]] size_t col_idx_start=0,
+                   [[maybe_unused]] int col_idx_end=-1)
     {
 
         std::lock_guard<std::mutex> lock(_mutex);
@@ -7299,12 +7274,11 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-	bool save_scan_scalers_gsecars(std::string path,
-								size_t detector_num,
-								size_t row_idx_start = 0,
-								int row_idx_end = -1,
-								size_t col_idx_start = 0,
-								int col_idx_end = -1)
+	bool save_scan_scalers_gsecars(std::string path,	
+               [[maybe_unused]] size_t row_idx_start = 0,
+               [[maybe_unused]] int row_idx_end = -1,
+               [[maybe_unused]] size_t col_idx_start = 0,
+               [[maybe_unused]] int col_idx_end = -1)
     {
 
         std::lock_guard<std::mutex> lock(_mutex);
@@ -7313,10 +7287,8 @@ public:
 
         hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
         hid_t    file_id, src_maps_grp_id;
-        hid_t    dataspace_detectors_id, dset_detectors_id;
         hid_t   xypos_dataspace_id, xypos_id;
         hid_t x_dataspace_id, y_dataspace_id, x_dataset_id, y_dataset_id;
-        char* detector_names[256];
         int det_rank;
         hid_t names_id, name_space, units_id, unit_space, values_id, value_space, mem_single_space;
         hid_t scalers_ds_id, scalers_names_id;
@@ -7589,10 +7561,10 @@ public:
     template<typename T_real>
     bool save_scan_scalers_bnl(std::string path,
         size_t detector_num,
-        size_t row_idx_start = 0,
-        int row_idx_end = -1,
-        size_t col_idx_start = 0,
-        int col_idx_end = -1)
+        [[maybe_unused]] size_t row_idx_start = 0,
+        [[maybe_unused]] int row_idx_end = -1,
+        [[maybe_unused]] size_t col_idx_start = 0,
+        [[maybe_unused]] int col_idx_end = -1)
     {
 
         ////std::lock_guard<std::mutex> lock(_mutex);
@@ -7601,10 +7573,8 @@ public:
 
         hid_t scan_grp_id, maps_grp_id, scalers_grp_id, status;
         hid_t    file_id, src_maps_grp_id;
-        hid_t    dataspace_detectors_id, dset_detectors_id;
         hid_t   xypos_dataspace_id, xypos_id;
         hid_t x_dataspace_id, y_dataspace_id, x_dataset_id, y_dataset_id;
-        char* detector_names[256];
         int det_rank;
         hsize_t* det_dims_in = nullptr;
         hsize_t* val_dims_in = nullptr;;
@@ -7619,7 +7589,6 @@ public:
         hsize_t xy_count[3] = { 1,1,1 };
         hid_t metadata_id;
         
-        hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
         double* x_data = nullptr;
         double* y_data = nullptr;
         double* buffer = nullptr;
@@ -7860,7 +7829,7 @@ public:
                 }
                 else if (type_class == H5T_ARRAY)
                 {
-                    int arrarr = 0;
+                   
                 }
                 else if(type_class == H5T_FLOAT)
                 {
@@ -7885,7 +7854,7 @@ public:
             }
             delete [] ddata;
             delete [] ldata;
-            save_scan_scalers<T_real>(detector_num, &scan_info, nullptr);
+            save_scan_scalers<T_real>(&scan_info, nullptr);
 
         }
 
@@ -7991,8 +7960,8 @@ public:
             for (const auto& fit_itr : exchange_fits)
             {
 
-                int s_idx = dataset_file.find("img.dat");
-                if (s_idx > 0)
+                size_t s_idx = dataset_file.find("img.dat");
+                if (s_idx != std::string::npos)
                 {
                     csv_path = dataset_file.substr(0, s_idx);
                     csv_path += "output";
@@ -8081,8 +8050,6 @@ public:
         }
 
         hid_t mca_arr_space = H5Dget_space(mca_arr_id);
-
-        int rank = H5Sget_simple_extent_ndims(mca_arr_space);
 
         hsize_t dims_in[3];
         hsize_t offset[3] = { 0,0,0 };
@@ -8177,8 +8144,6 @@ public:
             logE << " Failed to open or create datasetsl\n";
             return false;
         }
-
-        int cnt = f_count[0];
 
         f_count[0] = 1;
         _create_memory_space(1, f_count, memoryspace_id);
@@ -8559,8 +8524,6 @@ private:
         hsize_t count_3d[3] = { 1, 1, 1 };
         hsize_t chunk_3d[3] = { 1, 1, 1 };
 
-        T_real time_scaler_clock = 1.0;
-
         _create_memory_space(1, count, memoryspace_str_id);
 
         filetype = H5Tcopy(H5T_FORTRAN_S1);
@@ -8569,8 +8532,6 @@ private:
         status = H5Tset_size(memtype, 255);
 
         count[0] = 1;
-
-        T_real val;
         std::string units;
 
         if (false == _open_or_create_group(STR_SCALERS, maps_grp_id, scalers_grp_id))
