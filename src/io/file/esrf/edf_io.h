@@ -116,8 +116,8 @@ namespace edf
                 else if (buf[i] == '\n')
                 {
                     std::string entry(buf+last_i, (i - last_i) + 1);
-                    int e_idx = entry.find('=');
-                    if (e_idx >= 0)
+                    size_t e_idx = entry.find('=');
+                    if (e_idx != std::string::npos)
                     {
                         std::string key = entry.substr(0, e_idx);
                         key.erase(std::remove(key.begin(), key.end(), '\n'), key.end());

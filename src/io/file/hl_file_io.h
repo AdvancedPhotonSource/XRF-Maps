@@ -120,7 +120,7 @@ DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string d
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void cb_load_spectra_data_helper(size_t row, size_t col, size_t height, size_t width, size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
+void cb_load_spectra_data_helper([[maybe_unused]] size_t row, [[maybe_unused]] size_t col, [[maybe_unused]] size_t height, [[maybe_unused]] size_t width, [[maybe_unused]] size_t detector_num, data_struct::Spectra<T_real>* spectra, void* user_data)
 {
     data_struct::Spectra<T_real>* integrated_spectra = nullptr;
 
@@ -367,8 +367,6 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     std::string tmp_dataset_file = dataset_file;
     bool ret_val = true;
     std::vector<size_t> detector_num_arr{ detector_num };
-    size_t out_rows = 0;
-    size_t out_cols = 0;
     data_struct::IO_Callback_Func_Def<T_real>  cb_function = std::bind(&cb_load_spectra_data_helper<T_real>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7);
 
     if (dataset_directory.back() != DIR_END_CHAR)
@@ -476,7 +474,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
     }
 
-    bool has_external_files = hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress;
+    bool has_external_files = (hasNetcdf || hasBnpNetcdf || hasHdf || hasXspress);
     
     bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
@@ -524,13 +522,13 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     // ESRF datasets need to take off the directory name
-    int win_dir_idx = dataset_file.find("\\");
-    int unx_dir_idx = dataset_file.find("/");
-    if (win_dir_idx > -1)
+    size_t win_dir_idx = dataset_file.find("\\");
+    size_t unx_dir_idx = dataset_file.find("/");
+    if (win_dir_idx != std::string::npos)
     {
         dataset_file = dataset_file.substr(win_dir_idx + 1);
     }
-    else if(unx_dir_idx > -1)
+    else if(unx_dir_idx != std::string::npos)
     {
         dataset_file = dataset_file.substr(unx_dir_idx + 1);
     }
@@ -848,13 +846,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'f')
     {
         // try to load polar hdf master file
-        data_struct::Scan_Info<T_real> scan_info;
+        data_struct::Scan_Info<double> scan_info;
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info))
         {
             scan_type = STR_SCAN_TYPE_POLAR_XANES;
             if(io::file::HDF5_IO::inst()->start_save_seq(true))
             {
-                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
+                data_struct::Params_Override<double>* null_po = nullptr;
+                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, null_po);
                 return true;
             }
             else
@@ -934,7 +933,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             // add ELT, ERT, INCNT, OUTCNT to scaler map
             spectra_volume->generate_scaler_maps(&(scan_info.scaler_maps));
-            io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info, params_override);
+            io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, params_override);
             return true;
         }
     }
@@ -991,8 +990,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             scan_type = scan_info_edf.meta_info.scan_type;
             std::string dset_folder = "";
             std::string base_name = dataset_file;
-            int didx = dataset_file.find(DIR_END_CHAR);
-            if (didx > -1)
+            size_t didx = dataset_file.find(DIR_END_CHAR);
+            if (didx != std::string::npos)
             {
                 dset_folder = dataset_file.substr(0, didx + 1);
                 base_name = dataset_file.substr(didx + 1);
@@ -1078,7 +1077,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
                 }
 
-                io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, &scan_info_edf, params_override);
+                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
             }
 
             return true;
@@ -1110,7 +1109,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_confocal<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_confocal<T_real>(dataset_directory + DIR_END_CHAR + dataset_file);
         }
         return true;
     }
@@ -1122,7 +1121,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if (save_scalers)
         {
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers_gsecars<T_real>(dataset_directory + DIR_END_CHAR + dataset_file, detector_num);
+            io::file::HDF5_IO::inst()->save_scan_scalers_gsecars<T_real>(dataset_directory + DIR_END_CHAR + dataset_file);
         }
         return true;
     }
@@ -1139,7 +1138,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
 
     // try to load spectra from mda file
-    if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, hasNetcdf | hasBnpNetcdf | hasHdf | hasXspress, hasNetcdf))
+    if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, (hasNetcdf || hasBnpNetcdf || hasHdf || hasXspress), hasNetcdf))
     {
         scan_type = STR_SCAN_TYPE_2D_MAP;
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";
@@ -1162,7 +1161,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
                     // if tetramm tag is missing in file name, we assume it is tetra1
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
                 }
             }
             std::ifstream file_io1(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
@@ -1175,7 +1174,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_" + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
                 }
             }
             std::ifstream file_io2(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_0.nc");
@@ -1188,7 +1187,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_" + std::to_string(i) + ".nc";
                     //todo: add verbose option
                     //logI<<"Loading file "<<full_filename<<"\n";
-                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info());
+                    size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info(), params_override);
                 }
             }
         }
@@ -1317,7 +1316,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 }
             }
         }
-        io::file::HDF5_IO::inst()->save_scan_scalers(detector_num, scan_info, params_override);
+        io::file::HDF5_IO::inst()->save_scan_scalers(scan_info, params_override);
     }
 
     mda_io.unload();

@@ -121,7 +121,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                         pv_map[tag] = parse_input_real<T_real>(value);
 
                     }
-                    catch (std::exception& e)
+                    catch ([[maybe_unused]] std::exception& e)
                     {
                         pv_map[tag] = 0.;
                     }
@@ -227,8 +227,8 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
 
-                    int f_idx = value.find('=');
-                    if (f_idx > -1)
+                    size_t f_idx = value.find('=');
+                    if (f_idx != std::string::npos)
                     {
                         std::string pv_name = value.substr(0, f_idx);
                         std::string new_name;
@@ -244,7 +244,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                         if (value[0] == '"')
                         {
                             f_idx = value.find('"', 1);
-                            if (f_idx > -1)
+                            if (f_idx != std::string::npos)
                             {
                                 std::string pv_value = value.substr(1, f_idx - 1);
                                 try

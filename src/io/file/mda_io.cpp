@@ -1330,10 +1330,10 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
             }
             
             // check for tetramm column names and append to scaler_maps
-            int t1idx = e_pv.name.find("tmm1:");
-            int t2idx = e_pv.name.find("tmm2:");
-            int ndidx = e_pv.name.find("NDArrayAddress");
-            int nameidx = e_pv.name.find("Name");
+            size_t t1idx = e_pv.name.find("tmm1:");
+            size_t t2idx = e_pv.name.find("tmm2:");
+            size_t ndidx = e_pv.name.find("NDArrayAddress");
+            size_t nameidx = e_pv.name.find("Name");
             if((t1idx != std::string::npos || t2idx != std::string::npos) && nameidx != std::string::npos)
             {
                 std::vector<std::string> tokens;

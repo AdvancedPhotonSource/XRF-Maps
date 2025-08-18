@@ -60,6 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 #include <sstream>
 #include <fstream>
+#include <typeinfo>
 
 #include <stdlib.h>
 
@@ -119,8 +120,6 @@ DLL_EXPORT bool optimize_integrated_fit_params(data_struct::Analysis_Job<double>
 
 DLL_EXPORT void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job);
 
-void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num, std::vector<Quantification_Standard<double>>& standard_element_weights, std::unordered_map<size_t, double>& quant_map);
-
 DLL_EXPORT void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job, std::string roi_file_name, std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>>& out_roi_fit_params, Callback_Func_Status_Def* status_callback = nullptr);
 
 DLL_EXPORT void optimize_rois(data_struct::Analysis_Job<double>& analysis_job);
@@ -161,6 +160,45 @@ DLL_EXPORT data_struct::Fit_Count_Dict<T_real>* generate_fit_count_dict(const Fi
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+DLL_EXPORT data_struct::Fit_Count_Dict<T_real>* generate_fit_count_by_shell_dict(const Fit_Element_Map_Dict<T_real>* elements_to_fit, size_t height, size_t width, bool alloc_iter_count)
+{
+    data_struct::Fit_Count_Dict<T_real>* element_fit_counts_dict = new data_struct::Fit_Count_Dict<T_real>();
+    for (auto& e_itr : *elements_to_fit)
+    {
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(e_itr.first, data_struct::ArrayXXr<T_real>()));
+        element_fit_counts_dict->at(e_itr.first).resize(height, width);
+        for (auto& s_itr : e_itr.second->generate_roi_centers_per_shell())
+        {
+            element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(e_itr.first + "_" + s_itr.first, data_struct::ArrayXXr<T_real>()));
+            element_fit_counts_dict->at(e_itr.first + "_" + s_itr.first).resize(height, width);
+        }
+    }
+
+    if (alloc_iter_count)
+    {
+        //Allocate memeory to save number of fit iterations
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_NUM_ITR, data_struct::ArrayXXr<T_real>()));
+        element_fit_counts_dict->at(STR_NUM_ITR).resize(height, width);
+        element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_RESIDUAL, data_struct::ArrayXXr<T_real>()));
+        element_fit_counts_dict->at(STR_RESIDUAL).resize(height, width);
+    }
+
+    //  TOTAL_FLUORESCENCE_YIELD
+    element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_TOTAL_FLUORESCENCE_YIELD, data_struct::ArrayXXr<T_real>()));
+    element_fit_counts_dict->at(STR_TOTAL_FLUORESCENCE_YIELD).resize(height, width);
+
+    //SUM_ELASTIC_INELASTIC
+    element_fit_counts_dict->emplace(std::pair<std::string, data_struct::ArrayXXr<T_real> >(STR_SUM_ELASTIC_INELASTIC_AMP, data_struct::ArrayXXr<T_real>()));
+    element_fit_counts_dict->at(STR_SUM_ELASTIC_INELASTIC_AMP).resize(height, width);
+
+
+    return element_fit_counts_dict;
+}
+
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* fit_routine,
                         const fitting::models::Base_Model<T_real>* const model,
                         const data_struct::Spectra<T_real>* const spectra,
@@ -172,9 +210,13 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
     std::unordered_map<std::string, T_real> counts_dict;
     fit_routine->fit_spectra(model, spectra, elements_to_fit, counts_dict);
     //save count / sec
-    for (auto& el_itr : *elements_to_fit)
+    for (auto& itr : *out_fit_counts)
     {
-        (*out_fit_counts)[el_itr.first](i, j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
+        if (counts_dict.count(itr.first) > 0)
+        {
+            itr.second(i, j) = counts_dict[itr.first] / spectra->elapsed_livetime();
+        }
+        //(*out_fit_counts)[el_itr.first](i, j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
     }
     (*out_fit_counts)[STR_NUM_ITR](i, j) = counts_dict[STR_NUM_ITR];
 
@@ -182,25 +224,12 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
     // add total fluorescense yield
     if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
     {
-        (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum();
+        (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
     }
     // add sum coherent and compton
     if (out_fit_counts->count(STR_SUM_ELASTIC_INELASTIC_AMP) > 0 && counts_dict.count(STR_COHERENT_SCT_AMPLITUDE) > 0 && counts_dict.count(STR_COMPTON_AMPLITUDE) > 0)
     {
         (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) = counts_dict[STR_COHERENT_SCT_AMPLITUDE] + counts_dict[STR_COMPTON_AMPLITUDE];
-        // add total fluorescense yield
-        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
-        {                   //                                      (sum - (elastic + inelastic)) / live time
-            (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = (spectra->sum() - (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j)) / spectra->elapsed_livetime();
-        }
-    }
-    else
-    {
-        // add total fluorescense yield
-        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
-        {
-            (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
-        }
     }
 
     return true;
@@ -236,7 +265,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
     fitting::models::Range energy_range = data_struct::get_energy_range(spectra_volume->samples_size(), &(detector->fit_params_override_dict.fit_params));
 
     std::chrono::time_point<std::chrono::system_clock> start, end;
-
+     
     for (auto& itr : detector->fit_routines)
     {
         fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
@@ -253,8 +282,17 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
         //Fit job queue
         std::queue<std::future<bool> >* fit_job_queue = new std::queue<std::future<bool> >();
 
+        data_struct::Fit_Count_Dict<T_real>* element_fit_count_dict = nullptr;
         //Allocate memeory to save fit counts
-        data_struct::Fit_Count_Dict<T_real>* element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        if (typeid(*fit_routine) == typeid(fitting::routines::ROI_Fit_Routine<T_real>) && scan_type == STR_SCAN_TYPE_POLAR_XANES)
+        {
+            ((fitting::routines::ROI_Fit_Routine<T_real> *)fit_routine)->set_fit_separate_shells(true);
+            element_fit_count_dict = generate_fit_count_by_shell_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        }
+        else
+        {
+            element_fit_count_dict = generate_fit_count_dict(&override_params->elements_to_fit, spectra_volume->rows(), spectra_volume->cols(), true);
+        }
 
         for (size_t i = 0; i < spectra_volume->rows(); i++)
         {
@@ -280,7 +318,7 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             cur_block++;
         }
 
-        std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+        end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
         logI << "Fitting [ " << fit_routine->get_name() << " ] elapsed time: " << elapsed_seconds.count() << "s" << "\n";
 
@@ -302,8 +340,8 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
             }
             // save png 
             std::string dataset_fullpath = io::file::HDF5_IO::inst()->get_filename();
-            int sidx = dataset_fullpath.find("img.dat");
-            if (dataset_fullpath.length() > 0 && sidx > 0) 
+            size_t sidx = dataset_fullpath.find("img.dat");
+            if (dataset_fullpath.length() > 0 && sidx != std::string::npos) 
             {
                 dataset_fullpath.replace(sidx, 7, "output"); // 7 = sizeof("img.dat")
                 std::string str_path = dataset_fullpath + "_" + fit_routine->get_name() + ".png";
@@ -322,11 +360,10 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
         if (itr.first == data_struct::Fitting_Routines::GAUSS_MATRIX)
         {
             fitting::routines::Matrix_Optimized_Fit_Routine<T_real>* matrix_fit = (fitting::routines::Matrix_Optimized_Fit_Routine<T_real>*)fit_routine;
-            io::file::HDF5_IO::inst()->save_max_10_spectra(fit_routine->get_name(),
-                matrix_fit->energy_range(),
-                matrix_fit->max_integrated_spectra(),
-                matrix_fit->max_10_integrated_spectra(),
-                matrix_fit->fitted_integrated_background());
+            io::file::HDF5_IO::inst()->save_max_10_spectra(matrix_fit->energy_range(),
+                                                            matrix_fit->max_integrated_spectra(),
+                                                            matrix_fit->max_10_integrated_spectra(),
+                                                            matrix_fit->fitted_integrated_background());
         }
 
         delete fit_job_queue;
@@ -395,6 +432,17 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
             }
             pv_map[label] = itr.second;
         }
+    }
+
+    // itr again to look for scale_factor
+    for (auto& itr : pv_map)
+    {
+        double multiplier = (T_real)1.0;
+        if(pv_map.count(itr.first+"_SCALE_FACTOR") > 0)
+        {
+            multiplier = pv_map.at(itr.first+"_SCALE_FACTOR");
+        }
+        itr.second *= multiplier;
     }
 
     // add any summded scalers to pv_map

@@ -70,12 +70,12 @@ void swapChars(char* pChar1, char* pChar2)
     *pChar2 = temp;
 }
 
-int swapOrder(Num num)
+int swapOrder(Num num1)
 {
-    swapChars(&num.buffer[0], &num.buffer[3]);
-    swapChars(&num.buffer[1], &num.buffer[2]);
+    swapChars(&num1.buffer[0], &num1.buffer[3]);
+    swapChars(&num1.buffer[1], &num1.buffer[2]);
 
-    return num.num;
+    return num1.num;
 }
 
 bool load_v9_rois(std::string path, std::map<std::string, std::vector<int_point>>& rois)

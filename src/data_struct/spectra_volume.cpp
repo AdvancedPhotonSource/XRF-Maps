@@ -176,8 +176,8 @@ bool Spectra_Volume<T_real>::integrate_polar(Spectra<T_real> &lhs, Spectra<T_rea
                     rhs_in_cnt += _data_vol[i][j].input_counts();
                     rhs_out_cnt += _data_vol[i][j].output_counts();
                 }
-                lhs_now = !lhs_now;
             }
+            lhs_now = !lhs_now;
         }
 
         lhs.elapsed_livetime(lhs_elt);

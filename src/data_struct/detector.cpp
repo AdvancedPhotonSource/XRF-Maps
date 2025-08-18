@@ -111,7 +111,7 @@ void Detector<T_real>::append_element(Fitting_Routines routine, std::string quan
     Element_Info<T_real>* element = Element_Info_Map<T_real>::inst()->get_element(name);
     if (element != nullptr)
     {
-        Electron_Shell shell = get_shell_by_name(name);
+        data_struct::Electron_Shell shell = get_shell_by_name(name);
         fitting_quant_map.at(routine).update_weight_if_greater(shell, element->number, weight);
 
         if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) > 0)
@@ -161,11 +161,11 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                     if (eq_itr.weight > 0.0)
                     {
                         std::string name = eq_itr.name;
-                        if (shell_itr == Electron_Shell::L_SHELL)
+                        if (shell_itr == data_struct::Electron_Shell::L_SHELL)
                         {
                             name += "_L";
                         }
-                        if (shell_itr == Electron_Shell::M_SHELL)
+                        if (shell_itr == data_struct::Electron_Shell::M_SHELL)
                         {
                             name += "_M";
                         }

@@ -259,7 +259,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def("width_multi", &data_struct::Fit_Element_Map<float>::width_multi)
 	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup)
 	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element)
-	.def("shell_type_as_string", &data_struct::Fit_Element_Map<float>::shell_type_as_string)
+	.def("shell_type", &data_struct::Fit_Element_Map<float>::shell_type)
 	.def("check_binding_energy", &data_struct::Fit_Element_Map<float>::check_binding_energy);
 
     py::class_<data_struct::Params_Override<float>>(m, "ParamsOverride")
@@ -325,7 +325,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 {
                     py::dict df;
                     df["full_name"] = itr.second->full_name();
-                    df["shell_type"] = itr.second->shell_type_as_string();
+                    df["shell_type"] = itr.second->shell_type();
                     df["center"] = itr.second->center();
                     df["width"] = itr.second->width();
                     df["symbol"] = itr.second->symbol();

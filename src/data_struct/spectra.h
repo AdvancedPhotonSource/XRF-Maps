@@ -313,7 +313,7 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
         }
     }
     T_real norm = 1 / T_real(boxcar.size());
-    int j = min_v.size() / 2;
+    size_t j = min_v.size() / 2;
     for (size_t i = 0; i < n; i++)
     {
         new_background[j] = out[i] * norm;

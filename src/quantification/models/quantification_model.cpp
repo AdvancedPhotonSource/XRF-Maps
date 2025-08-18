@@ -83,7 +83,7 @@ template<typename T_real>
 void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& element_quant,
                                             T_real incident_energy,
                                             Element_Info<T_real>* detector_element,
-                                            Electron_Shell shell,
+                                            data_struct::Electron_Shell shell,
                                             T_real airpath,
                                             T_real detector_chip_thickness,
                                             T_real beryllium_window_thickness,
@@ -114,7 +114,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
 
     switch(shell)
     {
-    case Electron_Shell::K_SHELL:
+    case data_struct::Electron_Shell::K_SHELL:
         ev = element_info->xrf.at("ka1") * (T_real)1000.0;
         element_quant.yield = element_info->yieldD.at("k");
         if( incident_energy > element_info->bindingE.at("K") )
@@ -122,7 +122,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
             jump_factor = element_info->jump.at("K");
         }
         break;
-    case Electron_Shell::L_SHELL:
+    case data_struct::Electron_Shell::L_SHELL:
         ev = element_info->xrf.at("la1") * (T_real)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("la1");
         jump_factor = element_info->jump.at("L3");
@@ -135,7 +135,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
             total_jump_factor = total_jump_factor * element_info->jump.at("L1");
         }
         break;
-    case Electron_Shell::M_SHELL:
+    case data_struct::Electron_Shell::M_SHELL:
         ev = element_info->xrf.at("ma1") * (T_real)1000.0;
         element_quant.yield = element_info->xrf_abs_yield.at("ma1");
         jump_factor = element_info->jump.at("M5");
@@ -312,30 +312,6 @@ void Quantification_Model<T_real>::model_calibrationcurve(std::vector<Element_Qu
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-Electron_Shell get_shell_by_name(std::string element_name)
-{
-    int idx = element_name.find_last_of("_") + 1;
-    std::string shell_type =  element_name.substr(idx);
-    if(idx == 0)
-    {
-        return quantification::models::Electron_Shell::K_SHELL;
-    }
-    else
-    {
-        if(shell_type == "L")
-        {
-            return quantification::models::Electron_Shell::L_SHELL;
-        }
-        if(shell_type == "M")
-        {
-            return quantification::models::Electron_Shell::M_SHELL;
-        }
-    }
-
-
-    return quantification::models::Electron_Shell::K_SHELL;
-}
 
 
 TEMPLATE_CLASS_DLL_EXPORT Quantification_Model<float>;

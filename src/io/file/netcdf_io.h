@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define NetCDF_IO_H
 
 #include "data_struct/spectra_volume.h"
+#include "data_struct/params_override.h"
 #include <netcdf.h>
 #include <mutex>
 
@@ -68,7 +69,7 @@ public:
 
     static NetCDF_IO* inst();
 
-    ~NetCDF_IO();
+    ~NetCDF_IO() {};
 
     /**
      * @brief load_spectra_line
@@ -77,9 +78,9 @@ public:
      * @param spec_line
      * @return the number of spectra loaded. 0 if fail.
      */
-    size_t load_spectra_line(std::string path, size_t detector, data_struct::Spectra_Line<T_real>* spec_line);
+    size_t load_spectra_line(const std::string& path, size_t detector, data_struct::Spectra_Line<T_real>* spec_line);
 
-    bool load_spectra_line_with_callback(std::string path,
+    bool load_spectra_line_with_callback(const std::string& path,
 										const std::vector<size_t>& detector_num_arr,
                                         int row,
                                         size_t max_rows,
@@ -87,10 +88,10 @@ public:
                                         data_struct::IO_Callback_Func_Def<T_real> callback_fun,
                                         void* user_data);
 
-    size_t load_spectra_line_integrated(std::string path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra);
+    size_t load_spectra_line_integrated(const std::string& path, size_t detector, size_t line_size, data_struct::Spectra<T_real>* spectra);
 
     // tetramm scalers netcdf file
-    size_t load_scalers_line(std::string path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info);
+    size_t load_scalers_line(const std::string& path, std::string tag, size_t row, data_struct::Scan_Info<T_real>* scan_info, data_struct::Params_Override<T_real> * params_override);
 
 private:
     NetCDF_IO();
@@ -111,7 +112,7 @@ private:
     }
 
     size_t _load_spectra(E_load_type ltype,
-                        std::string path,
+                        const std::string& path,
                         size_t detector,
                         data_struct::Spectra_Line<T_real>* spec_line,
                         size_t line_size, 
@@ -124,6 +125,8 @@ private:
     static NetCDF_IO *_this_inst;
 
     static std::mutex _mutex;
+
+    T_real _data_in[1][1][1050000];
 
 };
 

@@ -52,7 +52,35 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace data_struct
 {
+    
 
+// ----------------------------------------------------------------------------
+
+Electron_Shell get_shell_by_name(std::string element_name)
+{
+    size_t idx = element_name.find_last_of("_") + 1;
+    std::string shell_type = element_name.substr(idx);
+    if (idx == 0)
+    {
+        return data_struct::Electron_Shell::K_SHELL;
+    }
+    else
+    {
+        if (shell_type == "L")
+        {
+            return data_struct::Electron_Shell::L_SHELL;
+        }
+        if (shell_type == "M")
+        {
+            return data_struct::Electron_Shell::M_SHELL;
+        }
+    }
+
+
+    return data_struct::Electron_Shell::K_SHELL;
+}
+
+// ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
@@ -429,11 +457,11 @@ T_real Element_Info_Map<T_real>::calc_compound_beta(std::string compound_name, T
     T_real atwt = 0.0;
     T_real f2 = 0;
     //"N:78.08,O:20.95,Ar:0.93"
-    int idx = compound_name.find(",");
-    while (idx > -1 || compound_name.length() > 0)
+    size_t idx = compound_name.find(",");
+    while (std::string::npos != idx || compound_name.length() > 0)
     {
         std::string sub_compound;
-        if (idx > -1)
+        if (std::string::npos != idx)
         {
             sub_compound = compound_name.substr(0, idx);
             compound_name = compound_name.substr(idx + 1);
@@ -445,8 +473,8 @@ T_real Element_Info_Map<T_real>::calc_compound_beta(std::string compound_name, T
         }
 
 
-        int idx2 = sub_compound.find(":");
-        if (idx2 > -1)
+        size_t idx2 = sub_compound.find(":");
+        if (std::string::npos != idx2)
         {
             std::string el_symb = sub_compound.substr(0, idx2);
             std::string str_amt = sub_compound.substr(idx2+1);

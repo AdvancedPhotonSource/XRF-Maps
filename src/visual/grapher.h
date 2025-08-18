@@ -205,13 +205,13 @@ DLL_EXPORT void SavePlotSpectrasFromConsole(std::string path,
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT void find_shell_Z_offset(quantification::models::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights, int& zstart, int& zstop)
+DLL_EXPORT void find_shell_Z_offset(data_struct::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights, int& zstart, int& zstop)
 {
     int low = CALIBRATION_CURVE_SIZE;
     int high = 0;
     for (const auto& itr : *all_elements_with_weights)
     {
-        quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+        data_struct::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
         if (shell == shell_idx)
         {
             if (itr.second->Z < low)
@@ -231,11 +231,11 @@ DLL_EXPORT void find_shell_Z_offset(quantification::models::Electron_Shell shell
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool contains_shell(quantification::models::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* element_quants)
+DLL_EXPORT bool contains_shell(data_struct::Electron_Shell shell_idx, std::unordered_map<std::string, Element_Quant<T_real>*>* element_quants)
 {
     for (auto& itr : *element_quants)
     {
-        quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+        data_struct::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
         if (shell == shell_idx)
         {
             return true;
@@ -304,7 +304,7 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
     T_real min_y = 9999999.0;
     T_real max_y = -9999999.0;
-    std::map< quantification::models::Electron_Shell, int> shell_list;
+    std::map< data_struct::Electron_Shell, int> shell_list;
     for (auto& s_itr : detector->quantification_standards)
     {
         QScatterSeries* e_series = new QScatterSeries();
@@ -315,7 +315,7 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
             if (all_elements_with_weights->count(itr.first) > 0)
             {
                 data_struct::Element_Info<T_real>* element_info = data_struct::Element_Info_Map<T_real>::inst()->get_element(itr.first);
-                quantification::models::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
+                data_struct::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
                 if (shell_list.count(shell) == 0)
                 {
                     shell_list[shell] = 1;

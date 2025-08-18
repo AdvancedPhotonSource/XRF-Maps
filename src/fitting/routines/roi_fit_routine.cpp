@@ -90,6 +90,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
         Fit_Element_Map<T_real>* element = e_itr.second;
         if (element != nullptr)
         {
+            
             left_roi = static_cast<unsigned int>(std::round(((element->center() - element->width()) - energy_offset) / energy_slope));
             right_roi = static_cast<unsigned int>(std::round(((element->center() + element->width()) - energy_offset) / energy_slope));
 
@@ -104,6 +105,27 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
 
             size_t spec_size = (right_roi - left_roi) + 1;
             out_counts[e_itr.first] = spectra->segment(left_roi, spec_size).sum();
+            if (_separate_shells)
+            {
+                for (auto& s_itr : element->generate_roi_centers_per_shell())
+                {
+                    std::string save_name = e_itr.first + "_" + s_itr.first;
+                    left_roi = static_cast<unsigned int>(std::round(((s_itr.second - element->width()) - energy_offset) / energy_slope));
+                    right_roi = static_cast<unsigned int>(std::round(((s_itr.second + element->width()) - energy_offset) / energy_slope));
+
+                    if (right_roi >= n_mca_channels)
+                    {
+                        right_roi = n_mca_channels - 2;
+                    }
+                    if (left_roi > right_roi)
+                    {
+                        left_roi = right_roi - 1;
+                    }
+
+                    size_t spec_size1 = (right_roi - left_roi) + 1;
+                    out_counts[save_name] = spectra->segment(left_roi, spec_size1).sum();
+                }
+            }
         }
     }
     return optimizers::OPTIMIZER_OUTCOME::CONVERGED;
@@ -112,10 +134,10 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T_real>
-void ROI_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
-                                 const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                 const struct Range energy_range,
-                                 ArrayTr<T_real>* custom_background)
+void ROI_Fit_Routine<T_real>::initialize([[maybe_unused]] models::Base_Model<T_real>* const model,
+    [[maybe_unused]] const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+    [[maybe_unused]] const struct Range energy_range,
+    [[maybe_unused]] ArrayTr<T_real>* custom_background)
 {
     //N/A
 }

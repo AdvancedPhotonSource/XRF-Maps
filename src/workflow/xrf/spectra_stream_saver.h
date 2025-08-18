@@ -76,7 +76,7 @@ public:
 
     void save_stream(data_struct::Stream_Block<T_real>* stream_block);
 
-    virtual void set_function(std::function<void (data_struct::Stream_Block<T_real>*)> func) { }
+    virtual void set_function([[maybe_unused]] std::function<void (data_struct::Stream_Block<T_real>*)> func) { }
 
 protected:
 

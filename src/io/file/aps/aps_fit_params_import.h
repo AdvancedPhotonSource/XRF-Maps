@@ -805,6 +805,19 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         params_override->theta_pv = value;
                     }
+                    else if (tag == "SCALING_FACTOR")
+                    {
+                        std::string scaler_name;
+                        std::string str_value;
+
+                        std::getline(strstream, scaler_name, ',');
+                        scaler_name.erase(std::remove_if(scaler_name.begin(), scaler_name.end(), ::isspace), scaler_name.end());
+                        T_real factor = 1.0;
+                        std::getline(strstream, str_value, ',');
+                        factor = parse_input_real<T_real>(str_value);
+                        
+                        params_override->scaling_factors[scaler_name] = factor;
+                    }
                 }
                 catch (std::exception& e)
                 {
@@ -992,15 +1005,15 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
                 if (ratio != 1.0)
                 {
                     branching_ratios_updated.push_back(itr.first + ",");
-                    if (itr.second->shell_type_as_string() == "K")
+                    if (itr.second->shell_type() == data_struct::Electron_Shell::K_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_K: " << itr.first;
                     }
-                    else if (itr.second->shell_type_as_string() == "L")
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::L_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
                     }
-                    else if (itr.second->shell_type_as_string() == "M")
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::M_SHELL)
                     {
                         out_stream << "BRANCHING_RATIO_ADJUSTMENT_M: " << itr.first;
                     }
@@ -1223,48 +1236,48 @@ DLL_EXPORT bool create_detector_fit_params_from_avg(std::string path, Fit_Parame
                     OCR1: dxpXMAP2xfm3:dxp1:OutputCountRate
                     */
                     std::string str_det_num = std::to_string(detector_num + 1);
-                    int idx = line.rfind(":mca1");
-                    if (idx > -1)
+                    size_t idx = line.rfind(":mca1");
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca2");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca3");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":mca4");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
                         line[idx + 4] = str_det_num[0];
                     }
 
 
                     idx = line.rfind(":dxp1");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp2");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp3");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];
                     }
                     idx = line.rfind(":dxp4");
-                    if (idx > -1)
+                    if (idx != std::string::npos)
                     {
 
                         line[idx + 4] = str_det_num[0];

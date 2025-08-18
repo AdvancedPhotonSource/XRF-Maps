@@ -233,6 +233,8 @@ public:
 
 	std::unordered_map< std::string, std::map<int, T_real> > branching_ratios;
 
+    std::unordered_map< std::string, T_real > scaling_factors;
+
     T_real sr_current;
     T_real US_IC;
     T_real US_FM;

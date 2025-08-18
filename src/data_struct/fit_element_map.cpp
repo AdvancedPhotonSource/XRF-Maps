@@ -73,26 +73,38 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
 
     size_t num_ratios = 1;
 
-    int idx = _full_name.find_last_of("_") + 1;
+    size_t idx = _full_name.find_last_of("_") + 1;
     if(idx == 0)
     {
-        _shell_type = "K";
+        _shell_type = Electron_Shell::K_SHELL;
     }
     else
     {
-        _shell_type = _full_name.substr(idx);
+        std::string str_shell = _full_name.substr(idx);
+        if (str_shell == "L")
+        {
+            _shell_type = Electron_Shell::L_SHELL;
+        }
+        else if (str_shell == "L")
+        {
+            _shell_type = Electron_Shell::L_SHELL;
+        }
+        else //default to K shell
+        {
+            _shell_type = Electron_Shell::K_SHELL;
+        }
     }
 
 
-    if (_shell_type == "K") // K line
+    if (_shell_type == Electron_Shell::K_SHELL) // K line
     {
         num_ratios = 4;
     }
-    else if (_shell_type == "L")
+    else if (_shell_type == Electron_Shell::L_SHELL)
     {
         num_ratios = 12;
     }
-    else if (_shell_type == "M")
+    else if (_shell_type == Electron_Shell::M_SHELL)
     {
         num_ratios = 4;
     }
@@ -131,7 +143,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
 
     _energy_ratios.clear();
 
-    if (_shell_type == "K") // K line
+    if (_shell_type == Electron_Shell::K_SHELL) // K line
     {
         if(_pileup_element_info != nullptr) // pileup's
         {
@@ -163,7 +175,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
 
 
     }
-    else if (_shell_type == "L")
+    else if (_shell_type == Electron_Shell::L_SHELL)
     {
         _center = _element_info->xrf["la1"];
         if (false == disable_La)
@@ -182,7 +194,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
         generate_energy_ratio(_element_info->xrf["ll"], (_element_info->xrf_abs_yield["ll"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[10], Element_Param_Type::Ll_Line, detector_element);
         generate_energy_ratio(_element_info->xrf["ln"], (_element_info->xrf_abs_yield["ln"] / _element_info->xrf_abs_yield["la1"]) * _energy_ratio_custom_multipliers[11], Element_Param_Type::Ln_Line, detector_element);
     }
-    else if (_shell_type == "M")
+    else if (_shell_type == Electron_Shell::M_SHELL)
     {
         // M5 - N7	
         T_real ratio = 1.0;
@@ -329,7 +341,7 @@ void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_rea
 {
     if(_pileup_element_info == nullptr)
     {
-        int idx = name.find_last_of("_") + 1;
+        size_t idx = name.find_last_of("_") + 1;
         if(idx == 0)
         {
             _pileup_shell_type = "K";
@@ -352,12 +364,11 @@ void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_rea
 template<typename T_real>
 bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int energy_ratio_idx) const
 {
-	T_real binding_e;
 	if (_element_info != nullptr)
 	{
         if( _pileup_element_info != nullptr)
         {
-            if (_shell_type == "K")
+            if (_shell_type == Electron_Shell::K_SHELL)
             {
                 if (_center < incident_energy)
                 {
@@ -367,14 +378,14 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
         }
         else
         {
-            if (_shell_type == "K")
+            if (_shell_type == Electron_Shell::K_SHELL)
             {
                 if (_element_info->bindingE["K"] < incident_energy)
                 {
                     return true;
                 }
             }
-            else if (_shell_type == "L")
+            else if (_shell_type == Electron_Shell::L_SHELL)
             {
                 switch (energy_ratio_idx)
                 {
@@ -409,7 +420,7 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
                     break;
                 }
             }
-            else if (_shell_type == "M")
+            else if (_shell_type == Electron_Shell::M_SHELL)
             {
                 if (_element_info->bindingE["M1"] < incident_energy)
                 {
@@ -423,6 +434,45 @@ bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int e
         }
 	}
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+std::unordered_map<std::string, T_real> Fit_Element_Map<T_real>::generate_roi_centers_per_shell()
+{
+    std::unordered_map<std::string, T_real> map;
+    if (_element_info != nullptr)
+    {
+        if (_shell_type == Electron_Shell::K_SHELL)
+        {
+            map["ka2"] = _element_info->xrf["ka2"];
+            map["kb1"] = _element_info->xrf["kb1"];
+            map["kb2"] = _element_info->xrf["kb2"];
+        }
+        else if (_shell_type == Electron_Shell::L_SHELL)
+        {
+            map["la2"] = _element_info->xrf["la2"];
+            map["lb1"] = _element_info->xrf["lb1"];
+            map["lb2"] = _element_info->xrf["lb2"];
+            map["lb3"] = _element_info->xrf["lb3"];
+            map["lb4"] = _element_info->xrf["lb4"];
+            map["lg1"] = _element_info->xrf["lg1"];
+            map["lg2"] = _element_info->xrf["lg2"];
+            map["lg3"] = _element_info->xrf["lg3"];
+            map["lg4"] = _element_info->xrf["lg4"];
+            map["ll"] = _element_info->xrf["ll"];
+            map["ln"] = _element_info->xrf["ln"];
+        }
+        else if (_shell_type == Electron_Shell::M_SHELL)
+        {
+            map["ma1"] = _element_info->xrf["ma1"];
+            map["ma2"] = _element_info->xrf["ma2"];
+            map["mb"] = _element_info->xrf["mb"];
+            map["mg"] = _element_info->xrf["mg"];
+        }
+    }
+    return map;
 }
 
 //-----------------------------------------------------------------------------
