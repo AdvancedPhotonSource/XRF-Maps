@@ -267,7 +267,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             unsigned short i1 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
             unsigned short i2 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
             unsigned int ii = i1 | i2<<16;
-            elapsed_livetime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            elapsed_livetime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
             {
                 if (elapsed_livetime == 0)
@@ -300,7 +300,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
             i2 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
             ii = i1 | i2<<16;
-            elapsed_realtime = ((float)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            elapsed_realtime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
             {
                 if (elapsed_realtime == 0)
@@ -333,7 +333,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
             i2 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
             ii = i1 | i2<<16;
-            input_counts = ((float)ii) / elapsed_livetime;
+            input_counts = ((T_real)ii) / elapsed_livetime;
             if (ltype == E_load_type::LINE)
             {
                 if (input_counts == 0)
@@ -367,7 +367,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
             i2 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
             ii = i1 | i2<<16;
-            output_counts = ((float)ii) / elapsed_realtime;
+            output_counts = ((T_real)ii) / elapsed_realtime;
             if (ltype == E_load_type::LINE)
             {
                 if (output_counts == 0)
