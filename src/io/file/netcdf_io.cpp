@@ -179,9 +179,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
 
     size_t col_idx = 0;
 
+    size_t idx_detector = detector;
     if (detector > 3)
     {
-        detector -= MAX_NUM_SUPPORTED_DETECOTRS_PER_COL; // 4,5,6,7 = 0,1,2,3
+        idx_detector -= MAX_NUM_SUPPORTED_DETECOTRS_PER_COL; // 4,5,6,7 = 0,1,2,3
     }
 
     size_t spec_cntr = 0;
@@ -235,7 +236,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         cols_before_inc = _data_in[0][0][8];  //sum all across the first dim looking at value 8
         spectra_size = _data_in[0][0][20];
 
-        //size_t inc_size = ((header_size + (spectra_size * detector)) + (spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - detector)) );
+        //size_t inc_size = ((header_size + (spectra_size * idx_detector)) + (spectra_size * (MAX_NUM_SUPPORTED_DETECOTRS_PER_COL - idx_detector)) );
         size_t inc_size = header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL);
         for(size_t m1 = 0; m1 < cols_before_inc; m1++)
         {
@@ -264,8 +265,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             }
 
             
-            unsigned short i1 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)];
-            unsigned short i2 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(detector*8)+1];
+            unsigned short i1 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)];
+            unsigned short i2 = _data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)+1];
             unsigned int ii = i1 | i2<<16;
             elapsed_livetime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
@@ -297,8 +298,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 callback_spectra->elapsed_livetime(elapsed_livetime);
             }
 
-            i1 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)];
-            i2 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(detector*8)+1];
+            i1 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)];
+            i2 = _data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)+1];
             ii = i1 | i2<<16;
             elapsed_realtime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
@@ -330,8 +331,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 callback_spectra->elapsed_realtime(elapsed_realtime);
             }
 
-            i1 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)];
-            i2 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(detector*8)+1];
+            i1 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)];
+            i2 = _data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)+1];
             ii = i1 | i2<<16;
             input_counts = ((T_real)ii) / elapsed_livetime;
             if (ltype == E_load_type::LINE)
@@ -364,8 +365,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             }
 
 
-            i1 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)];
-            i2 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(detector*8)+1];
+            i1 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)];
+            i2 = _data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)+1];
             ii = i1 | i2<<16;
             output_counts = ((T_real)ii) / elapsed_realtime;
             if (ltype == E_load_type::LINE)
@@ -397,7 +398,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 callback_spectra->output_counts(output_counts);
             }
 
-            l += header_size + (spectra_size * detector);
+            l += header_size + (spectra_size * idx_detector);
             if (ltype == E_load_type::LINE)
             {
                 // recalculate elapsed lifetime
