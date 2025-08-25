@@ -997,35 +997,7 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         out_stream << "    minimum energy value [keV]\n";
         out_stream << "MIN_ENERGY_TO_FIT: " << params_override->fit_params.at(STR_MIN_ENERGY_TO_FIT).value << "\n";
 
-
-        for (const auto& itr : params_override->elements_to_fit)
-        {
-            for (float ratio : itr.second->energy_ratio_multipliers())
-            {
-                if (ratio != 1.0)
-                {
-                    branching_ratios_updated.push_back(itr.first + ",");
-                    if (itr.second->shell_type() == data_struct::Electron_Shell::K_SHELL)
-                    {
-                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_K: " << itr.first;
-                    }
-                    else if (itr.second->shell_type() == data_struct::Electron_Shell::L_SHELL)
-                    {
-                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
-                    }
-                    else if (itr.second->shell_type() == data_struct::Electron_Shell::M_SHELL)
-                    {
-                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_M: " << itr.first;
-                    }
-                    for (float r : itr.second->energy_ratio_multipliers())
-                    {
-                        out_stream << "," << r;
-                    }
-                    out_stream << "\n";
-                    break;
-                }
-            }
-        }
+/*
         // we still need these to be saved if not included above
         out_stream << "    this allows manual adjustment of the branhcing ratios between the different lines of L1, L2, and L3.\n";
         out_stream << "    note, the numbers that are put in should be RELATIVE modifications, i.e., a 1 will correspond to exactly the literature value,\n";
@@ -1107,6 +1079,35 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
             if (false == found)
             {
                 out_stream << itr << "\n";
+            }
+        }
+*/
+        for (const auto& itr : params_override->elements_to_fit)
+        {
+            for (T_real ratio : itr.second->energy_ratio_multipliers())
+            {
+                if (ratio != 1.0)
+                {
+                    branching_ratios_updated.push_back(itr.first + ",");
+                    if (itr.second->shell_type() == data_struct::Electron_Shell::K_SHELL)
+                    {
+                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_K: " << itr.first;
+                    }
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::L_SHELL)
+                    {
+                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_L: " << itr.first;
+                    }
+                    else if (itr.second->shell_type() == data_struct::Electron_Shell::M_SHELL)
+                    {
+                        out_stream << "BRANCHING_RATIO_ADJUSTMENT_M: " << itr.first;
+                    }
+                    for (T_real r : itr.second->energy_ratio_multipliers())
+                    {
+                        out_stream << "," << r;
+                    }
+                    out_stream << "\n";
+                    break;
+                }
             }
         }
 
