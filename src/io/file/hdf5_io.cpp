@@ -2385,13 +2385,16 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     }
     if (H5Tget_class(ver_type) == H5T_FLOAT) 
     {
-        float version = 9.0;
-        H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
-    }
-    else
-    {
-        double version = 9.0;
-        H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
+        if (H5Tget_size(ver_type) == sizeof(float)) 
+        {
+            float version = 9.0;
+            H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
+        }
+        else
+        {
+            double version = 9.0;
+            H5Dwrite(version_id, ver_type, ver_space, ver_space, H5P_DEFAULT, (void*)&version);
+        }
     }
     if (H5Gget_objinfo(file_id, "/version", 0, NULL) < 0)
     {
