@@ -106,8 +106,6 @@ IF( NOT EIGEN3_INCLUDES )
     MESSAGE( FATAL_ERROR "Please point the environment variable EIGEN3_INCLUDES to the include directory of your Eigen3 installation.")
 ENDIF()
 
-set(CMAKE_CXX_STANDARD 17)
-
 IF (BUILD_WITH_QT)
   IF(NOT DEFINED CMAKE_PREFIX_PATH)
     set(CMAKE_PREFIX_PATH CACHE PATH "")
@@ -142,7 +140,7 @@ IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
     set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -D__APPLE__")
   ENDIF()
   # Enable C++11 mode on C++ / Clang
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -D__Unix__  -fPIC -g")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -D__Unix__  -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__  -fPIC")
   IF(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
@@ -385,6 +383,24 @@ add_executable(xrf_maps
 # Don't add a 'lib' prefix to the shared library
 set_target_properties(libxrf_fit PROPERTIES PREFIX "")
 set_target_properties(libxrf_io PROPERTIES PREFIX "")
+
+set_target_properties(libxrf_fit PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+
+set_target_properties(libxrf_io PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+
+set_target_properties(xrf_maps PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
 
 # Always write the output file directly into the 'libxrf_fit' directory (even on MSVC)
 set(CompilerFlags
