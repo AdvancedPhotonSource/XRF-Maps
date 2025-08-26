@@ -103,7 +103,7 @@ double residuals_nlopt(const std::vector<double> &x, [[maybe_unused]] std::vecto
         {
             (*ud->status_callback)(ud->cur_itr, ud->total_itr);
         }
-        catch (int e)
+        catch ([[maybe_unused]]  int e)
         {
             logI << "Cancel fitting" << std::endl;
             return -1;

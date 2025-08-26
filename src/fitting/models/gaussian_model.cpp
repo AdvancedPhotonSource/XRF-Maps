@@ -470,7 +470,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     if (false == std::isfinite(pre_faktor))
     {
         logE << "Prefactor = " << pre_faktor << " for "<<element_to_fit->full_name()<<" . Log10 Value = "<< fitp->value(element_to_fit->full_name()) <<"\n";
-        spectra_model = (ArrayTr<T_real>)(spectra_model).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
+        spectra_model = (ArrayTr<T_real>)(spectra_model).unaryExpr([]( [[maybe_unused]]  T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return spectra_model;
     }
 
@@ -655,7 +655,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::elastic_peak(const Fit_Parameters<
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
-        counts = counts.unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
+        counts = counts.unaryExpr([]( [[maybe_unused]]  T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
 	ArrayTr<T_real>delta_energy = ev - fitp->value(STR_COHERENT_SCT_ENERGY);
@@ -682,7 +682,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
     if(false == std::isfinite(sigma))
     {
         logE << "sigma = " << sigma << "\n";
-        counts = (ArrayTr<T_real>)(counts).unaryExpr([](T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
+        counts = (ArrayTr<T_real>)(counts).unaryExpr([]( [[maybe_unused]]  T_real v) { return  std::numeric_limits<T_real>::quiet_NaN(); });
         return counts;
     }
 
