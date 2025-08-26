@@ -1201,12 +1201,12 @@ bool HDF5_IO::generate_stream_dataset(std::string dataset_directory,
 
 
 //-----------------------------------------------------------------------------
-
+/*
 bool HDF5_IO::close_dataset(size_t d_hash)
 {
     return false;
 }
-
+*/
 //-----------------------------------------------------------------------------
 
 void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
@@ -2094,7 +2094,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	std::string max_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX_CHANNELS_INT_SPEC;
 	std::string max10_name = "/MAPS/Spectra/Integrated_Spectra/"+ STR_MAX10_INT_SPEC;
 	std::string v9_max_name = "/MAPS/max_chan_spec";
-	hid_t fit_int_id = -1, max_id = -1, max_10_id = -1, nnls_id = -1, back_id = -1, max_space = -1, max_type, v9_max_id = -1, v9_space = -1;
+	hid_t fit_int_id = -1, max_id = -1, max_10_id = -1, nnls_id = -1, back_id = -1, max_space = -1, max_type = -1, v9_max_id = -1, v9_space = -1;
 	
 	max_id = H5Dopen(file_id, max_name.c_str(), H5P_DEFAULT);
     if(max_id > -1)
@@ -2261,7 +2261,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         
         hid_t chan_space = H5Dget_space(chan_names);
         _global_close_map.push({chan_space, H5O_DATASPACE });
-        int num_chan;
+        int num_chan = 0;
         if(chan_names > -1)
         {
             hsize_t chan_size = 1;
@@ -2277,7 +2277,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         hsize_t unit_dims[2];
         hsize_t offset_dims[2] = { 0,0 };
         unit_dims[0] = 4;
-        unit_dims[1] =num_chan;
+        unit_dims[1] = num_chan;
         hid_t ch_unit_id, units_space;
             
         if (false == _open_h5_dataset("/MAPS/channel_units", filetype, file_id, 2, &unit_dims[0], &unit_dims[0], ch_unit_id, units_space))

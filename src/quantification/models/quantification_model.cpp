@@ -88,7 +88,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
                                             T_real detector_chip_thickness,
                                             T_real beryllium_window_thickness,
                                             T_real germanium_dead_layer,
-                                            size_t z_number)
+                                            int z_number)
 {
     //incident_E(incident_energy) == COHERENT_SCT_ENERGY: Maps_fit_params
     //fit_t_be == BE_WINDOW_THICKNESS * 1000

@@ -286,8 +286,8 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Param_Optimized_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
-                                                    const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
+void Param_Optimized_Fit_Routine<T_real>::initialize([[maybe_unused]]  models::Base_Model<T_real>* const model,
+                                                    [[maybe_unused]]  const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                     const struct Range energy_range,
                                                     ArrayTr<T_real>* custom_background)
 {

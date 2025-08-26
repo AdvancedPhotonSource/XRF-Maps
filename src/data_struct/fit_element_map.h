@@ -193,7 +193,7 @@ public:
 
     std::unordered_map<std::string, T_real> generate_roi_centers_per_shell();
 
-	bool check_binding_energy(T_real incident_energy, int energy_ratio_idx) const;
+	bool check_binding_energy(T_real incident_energy, size_t energy_ratio_idx) const;
 protected:
 
     void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element);
