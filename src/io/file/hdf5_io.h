@@ -1861,9 +1861,9 @@ public:
     bool _load_spectra_line_xspress3(hid_t file_id, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
-        hid_t  dset_id, dataspace_id, maps_grp_id, scaler_grp_id, scaler2_grp_id, memoryspace_id, memoryspace_meta_id = -1;
-        hid_t dset_lt_id, dset_rt_id, dset_outcnt_id = -1;
-        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_outcnt_id = -1;
+        hid_t  dset_id = -1, dataspace_id = -1, maps_grp_id = -1, scaler_grp_id = -1, scaler2_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1;
+        hid_t dset_lt_id = -1, dset_rt_id = -1, dset_outcnt_id = -1;
+        hid_t    dataspace_lt_id = -1, dataspace_rt_id = -1, dataspace_outcnt_id = -1;
       
         herr_t   error = -1;
         std::string detector_path;
@@ -3639,7 +3639,7 @@ public:
 
             //  read scaler names and search for elt1, ert1, incnt1, outcnt1
             hsize_t dims_out[1];
-            unsigned int status_n = H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
+            H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
             char tmp_name[256] = { 0 };
             memoryspace_1 = H5Screate_simple(1, count, nullptr);
             for (hsize_t idx = 0; idx < dims_out[0]; idx++)
@@ -4277,7 +4277,7 @@ public:
             logE << "Error getting rank for /MAPS/Scalers/Values\n";
         }
         hsize_t* dims_out = new hsize_t[rank];
-        unsigned int status_n = H5Sget_simple_extent_dims(counts_dspace_id, &dims_out[0], nullptr);
+        H5Sget_simple_extent_dims(counts_dspace_id, &dims_out[0], nullptr);
 
         filetype = H5Tcopy(H5T_C_S1);
         H5Tset_size(filetype, 256);
@@ -5419,7 +5419,7 @@ public:
     }
 
     //-----------------------------------------------------------------------------
-
+    /*
     template<typename T_real>
     bool save_stream_row(size_t d_hash, size_t detector_num, size_t row, std::vector< data_struct::Spectra<T_real>* >  *spectra_row)
     {
@@ -5433,11 +5433,11 @@ public:
     {
         return false;
     }
-
+    
     //-----------------------------------------------------------------------------
 
     bool close_dataset(size_t d_hash);
-
+    */
     bool start_save_seq(const std::string filename, bool force_new_file=false, bool open_file_only=false);
 
     bool start_save_seq(bool force_new_file=false){ return start_save_seq(_cur_filename, force_new_file, false);}

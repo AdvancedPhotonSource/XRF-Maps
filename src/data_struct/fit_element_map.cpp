@@ -362,7 +362,7 @@ void Fit_Element_Map<T_real>::set_as_pileup(std::string name, Element_Info<T_rea
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, int energy_ratio_idx) const
+bool Fit_Element_Map<T_real>::check_binding_energy(T_real incident_energy, size_t energy_ratio_idx) const
 {
 	if (_element_info != nullptr)
 	{

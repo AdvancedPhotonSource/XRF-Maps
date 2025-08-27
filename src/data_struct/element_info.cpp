@@ -335,7 +335,6 @@ template<typename T_real>
 T_real Element_Info<T_real>::get_f2(T_real energy)
 {
     T_real f2 = 0.0;
-    T_real molecules_per_cc = 0.0;
    
     size_t low_e_idx = 0, high_e_idx = 0;
     bool found_indexes = false;

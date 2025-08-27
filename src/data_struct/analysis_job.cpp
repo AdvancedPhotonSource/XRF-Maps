@@ -106,13 +106,13 @@ Analysis_Job<T_real>::~Analysis_Job()
 template<typename T_real>
 Detector<T_real>* Analysis_Job<T_real>::get_first_detector()
 {
-       Detector<T_real>* detector = nullptr;
-       for(auto &itr : detectors_meta_data)
-       {
-           detector = &(itr.second);
-           break;
-       }
-       return detector;
+    Detector<T_real>* detector = nullptr;
+    auto itr = detectors_meta_data.begin();
+    if (itr != detectors_meta_data.end())
+    {
+        detector = &(itr->second);
+    }
+    return detector;
 }
 
 //-----------------------------------------------------------------------------

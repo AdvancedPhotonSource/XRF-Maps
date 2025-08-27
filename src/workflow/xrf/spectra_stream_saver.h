@@ -74,7 +74,7 @@ public:
 
     virtual ~Spectra_Stream_Saver();
 
-    void save_stream(data_struct::Stream_Block<T_real>* stream_block);
+    //void save_stream(data_struct::Stream_Block<T_real>* stream_block);
 
     virtual void set_function([[maybe_unused]] std::function<void (data_struct::Stream_Block<T_real>*)> func) { }
 
@@ -138,7 +138,7 @@ protected:
 
     void _new_detector(Dataset_Save *dataset, data_struct::Stream_Block<T_real>* stream_block);
 
-    void _finalize_dataset(Dataset_Save *dataset);
+    //void _finalize_dataset(Dataset_Save *dataset);
 
     //by detector_dir + dataset hash
     std::map<size_t, Dataset_Save*> _dataset_map;

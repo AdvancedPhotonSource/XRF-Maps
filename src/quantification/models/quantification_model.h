@@ -90,7 +90,7 @@ public:
                             T_real detector_chip_thickness,
                             T_real beryllium_window_thickness,
                             T_real germanium_dead_layer,
-                            size_t z_number);
+                            int z_number);
 
     T_real transmission(T_real thickness, T_real beta, T_real llambda) const;
 
