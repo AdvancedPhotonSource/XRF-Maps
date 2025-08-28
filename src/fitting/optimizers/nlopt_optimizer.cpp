@@ -129,16 +129,16 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     ud->spectra_model += ud->spectra_background;
     
     double sum = 0.0;
-    double dy = 0.;
-    double dt = 0.;
+    //double dy = 0.;
+    //double dt = 0.;
     // Calculate residuals
     for (int i=0; i<ud->spectra.size(); i++)
     {
-        //sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
-        dt += std::pow((ud->spectra[i] - ud->spec_avg), 2.0);
+        sum += pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        //dy += std::pow((ud->spectra[i] - ud->spectra_model[i]), 2.0) * ud->weights[i];
+        //dt += std::pow((ud->spectra[i] - ud->spec_avg), 2.0);
     }
-    sum = dy / dt;
+    //sum = dy / dt;
     return sum;
 }
 
