@@ -79,7 +79,7 @@ namespace edf
 
             if (length < 256)
             {
-                logW << "File length smaller than 256\n";
+                logW << filename<<": File length smaller than 256\n";
                 return false;
             }
 
