@@ -1386,6 +1386,7 @@ public:
 
             scan_info.scaler_maps.push_back(energy_map);
             scan_info.scaler_maps.push_back(i0_map);
+
             /*
             // x, y, and z dataset are all rows x cols size 
             // read x motor scaler from /entry/measurement/pseudo/x
@@ -2972,8 +2973,8 @@ public:
         {
             logI << path << " detector : " << detector_num << "\n";
         }
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id;
-        herr_t   error;
+        hid_t    file_id = -1, dset_id = -1, dataspace_id = -1, maps_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1;
+        herr_t   error = -1;
         std::string detector_path;
         T_real* buffer;
         hsize_t offset_row[2] = { 0,0 };
@@ -3206,9 +3207,9 @@ public:
 
         logI << path << " detector : " << detector_num << "\n";
 
-        hid_t    file_id, dset_id, dataspace_id, maps_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
-        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
-        herr_t   error;
+        hid_t    file_id = -1, dset_id = -1, dataspace_id = -1, maps_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1, dset_incnt_id = -1, dset_outcnt_id = -1, dset_rt_id = -1, dset_lt_id = -1;
+        hid_t    dataspace_lt_id = -1, dataspace_rt_id = -1, dataspace_inct_id = -1, dataspace_outct_id = -1;
+        herr_t   error = -1;
         std::string detector_path;
         T_real* buffer;
         hsize_t offset_row[2] = { 0,0 };
@@ -3408,9 +3409,9 @@ public:
 
         logI << path << "\n";
 
-        hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id, dset_rt_id, dset_lt_id;
-        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id;
-        herr_t   error;
+        hid_t    file_id = -1, dset_id = -1, dataspace_id = -1, spec_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1, dset_incnt_id = -1, dset_outcnt_id = -1, dset_rt_id = -1, dset_lt_id = -1;
+        hid_t    dataspace_lt_id = -1, dataspace_rt_id = -1, dataspace_inct_id = -1, dataspace_outct_id = -1;
+        herr_t   error = -1;
         hsize_t dims_in[3] = { 0,0,0 };
         hsize_t offset[3] = { 0,0,0 };
         hsize_t count[3] = { 1,1,1 };
@@ -3554,7 +3555,7 @@ public:
     bool load_integrated_spectra_analyzed_h5(std::string path, data_struct::Spectra<T_real>* spectra, [[maybe_unused]] ROI_Vec* roi = nullptr, bool log_error=true)
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        hid_t    file_id;
+        hid_t    file_id = -1;
 
         file_id = H5Fopen(path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
         if (file_id < 0)
@@ -3585,11 +3586,11 @@ public:
 
         logI << path << "\n";
 
-        hid_t    file_id, dset_id, dataspace_id, spec_grp_id, memoryspace_id, memoryspace_meta_id, dset_incnt_id, dset_outcnt_id;
-        hid_t   memoryspace_1;
-        hid_t    dset_rt_id, dset_lt_id, dset_scalers, dset_scaler_names;
-        hid_t    dataspace_lt_id, dataspace_rt_id, dataspace_inct_id, dataspace_outct_id, dataspace_scalers, dataspace_scaler_names;
-        herr_t   error;
+        hid_t    file_id = -1, dset_id = -1, dataspace_id = -1, spec_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1, dset_incnt_id = -1, dset_outcnt_id = -1;
+        hid_t   memoryspace_1 = -1;
+        hid_t    dset_rt_id = -1, dset_lt_id = -1, dset_scalers = -1, dset_scaler_names = -1;
+        hid_t    dataspace_lt_id = -1, dataspace_rt_id = -1, dataspace_inct_id = -1, dataspace_outct_id = -1, dataspace_scalers = -1, dataspace_scaler_names = -1;
+        herr_t   error = -1;
         hsize_t dims_in[3] = { 0,0,0 };
         hsize_t offset[3] = { 0,0,0 };
         hsize_t count[3] = { 1,1,1 };
@@ -4851,7 +4852,6 @@ public:
             hsize_t nobj;
             int otype;
             hsize_t names_cnt[1] = { 1 };
-            char group_name[1024];
             char memb_name[1024];
 
             char acqui_data[10240];
@@ -5445,6 +5445,9 @@ public:
     void set_filename(std::string fname) {_cur_filename = fname;}
 
     const std::string& get_filename() { return _cur_filename; }
+
+    bool polar_copy_raw(const std::string filename);
+
     //-----------------------------------------------------------------------------
 
     template<typename T_real>

@@ -512,6 +512,51 @@ bool HDF5_IO::end_save_seq(bool loginfo)
 
 //-----------------------------------------------------------------------------
 
+bool HDF5_IO::polar_copy_raw(const std::string filename)
+{
+    hid_t src_file_id = -1;
+    hid_t src_grp_id = -1;
+    hid_t maps_grp_id = -1;
+    std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+    if (_cur_file_id < 1)
+    {
+        logE << "Destination file is not open. Can not copy over from "<<filename<<"\n";
+        return false;
+    }
+
+    if (false == _open_h5_object(src_file_id, H5O_FILE, close_map, filename, -1))
+    {
+        logE << "Could not open file: " << filename << " \n";
+        return false;
+    }
+
+    hid_t ocpypl_id = H5Pcreate(H5P_OBJECT_COPY);
+    close_map.push({ ocpypl_id, H5O_PROPERTY });
+
+    if (false == _open_h5_object(src_grp_id, H5O_GROUP, close_map, "/", src_file_id, false))
+    {
+        logW << "Tried to open / but failed. "<<filename<<"\n";
+        _close_h5_objects(close_map);
+        return false;
+    }
+    if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "/MAPS", _cur_file_id, false))
+    {
+        logW << "Tried to open /MAPS but failed. " << _cur_filename << "\n";
+        _close_h5_objects(close_map);
+        return false;
+    }
+    //copy /entry to /MAPS/raw
+    herr_t status = H5Ocopy(src_grp_id, "entry", maps_grp_id, "Raw", ocpypl_id, H5P_DEFAULT);
+    if (status > 0)
+    {
+        logW << "Failed to copy from /entry to /MAPS/Raw\n";
+    }
+    _close_h5_objects(close_map);
+}
+
+//-----------------------------------------------------------------------------
+
 bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs)
 {
     hid_t memoryspace_id;

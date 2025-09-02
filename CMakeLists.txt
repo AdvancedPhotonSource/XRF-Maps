@@ -48,6 +48,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(XRF_Maps)
 
+#include(CTest)
+#enable_testing()
+
 set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
 
