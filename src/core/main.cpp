@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/process_streaming.h"
 #include "core/process_whole.h"
 #include <cctype>
+#include "core/git_hash.h"
 
 
 #define MAX_DETECTORS 7
@@ -92,7 +93,7 @@ void help()
     logit_s<<"  matrix : Fit with locked parameters \n\n";
     logit_s<<"Dataset: "<<"\n";
     logit_s<<"--dir : Dataset directory \n";
-    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";
+    logit_s<<"--files : Dataset files: comma (',') separated if multiple \n";    
 #ifdef _BUILD_WITH_ZMQ
     logit_s<<"Network: \n";
     logit_s<<"--streamin [source ip] : Accept a ZMQ stream of spectra to process. Source ip defaults to localhost (must compile with -DBUILD_WITH_ZMQ option) \n";
@@ -945,6 +946,7 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 int main(int argc, char* argv[])
 {
     
+    logI << "Version: " << GIT_COMMIT_TAG << " Git Hash: " << GIT_COMMIT_HASH << "\n";
     std::string whole_command_line = "";
     for (int i = 0; i < argc; i++)
     {
