@@ -854,6 +854,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             {
                 data_struct::Params_Override<double>* null_po = nullptr;
                 io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, null_po);
+                // copy /entry to /MAPS/raw
+                io::file::HDF5_IO::inst()->polar_copy_raw(dataset_directory+dataset_file);
                 return true;
             }
             else

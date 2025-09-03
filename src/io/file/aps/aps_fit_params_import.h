@@ -1084,6 +1084,10 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
 */
         for (const auto& itr : params_override->elements_to_fit)
         {
+            if(itr.second->width_multi() != (T_real)1.0)
+            {
+                out_stream << "WIDTH_MULTIPLIER: " << itr.first<< ","<< itr.second->width_multi()<<"\n";
+            }
             for (T_real ratio : itr.second->energy_ratio_multipliers())
             {
                 if (ratio != 1.0)
