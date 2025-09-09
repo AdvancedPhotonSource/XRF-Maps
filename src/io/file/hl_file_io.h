@@ -984,6 +984,18 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
         {
             scan_type = scan_info_edf.meta_info.scan_type;
+            if (save_scalers)
+            {
+                io::file::HDF5_IO::inst()->start_save_seq(true);
+                
+                // add ELT, ERT, INCNT, OUTCNT to scaler map
+                if (spectra_volume != nullptr)
+                {
+                    spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
+                }
+
+                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+            }
             return true;
         }
         // try ESRF dataset
