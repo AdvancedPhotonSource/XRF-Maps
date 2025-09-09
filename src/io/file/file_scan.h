@@ -112,6 +112,8 @@ namespace io
 
             const std::vector<std::string>& netcdf_tetramm_files() { return _netcdf_tetramm_files; }
 
+            size_t get_total_count();
+            
         private:
 
             File_Scan();

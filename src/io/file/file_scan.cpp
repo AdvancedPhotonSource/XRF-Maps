@@ -396,5 +396,17 @@ namespace io
             return dir_list;
         }
         // ----------------------------------------------------------------------------
+
+        size_t File_Scan::get_total_count()
+        {
+            return _edf_files.size() +
+                    _netcdf_files.size() +
+                    _bnp_netcdf_files.size() +
+                    _hdf_files;.size() +
+                    _hdf_xspress_files.size() +
+                    _hdf_emd_files.size() +
+                    _netcdf_tetramm_files.size();
+        }
+
     }// end namespace file
 }// end namespace io
