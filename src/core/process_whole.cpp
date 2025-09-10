@@ -474,37 +474,12 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                fitting::optimizers::Optimizer<double>* optimizer = analysis_job->optimizer();
                for (auto& quant_itr : detector->avg_quantification_scaler_map)
                {
-                    logI << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first << "\n";
-                    std::string str_val = std::to_string( quant_itr.second );
-                    int cntr = 0;
-                    for (auto itr : str_val)
-                    {
-                        if(itr == '.')
-                        {
-                            break;
-                        }
-                        if(itr == '0' && cntr == 0) // ignore leading zero
-                        {
-                            cntr --;
-                        }
-                        cntr++;
-                    }
+                    logI << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first << "\n";                 
+                    double reciprocal  = 1.0 / quant_itr.second;
 
-                    double recipricle = quant_itr.second;
-                    if( cntr > 0 ) 
-                    {
-                        if(cntr == 1)
-                        {
-                            recipricle  = 1.0 / quant_itr.second;
-                        }
-                        else
-                        {
-                            recipricle = std::pow(10.0, cntr-1) / quant_itr.second;
-                        }
-                    }
                     Fit_Parameters<double> fit_params;
                     // min, and max values doen't matter because we are free fitting amplitude only
-                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20, recipricle, .1, E_Bound_Type::LIMITED_LO_HI));
+                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20,  reciprocal, .1, E_Bound_Type::LIMITED_LO_HI));
                     optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
                     double val = fit_params["quantifier"].value;
 
