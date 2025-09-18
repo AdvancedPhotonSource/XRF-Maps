@@ -428,23 +428,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         }
     }
 
-
     if (ltype == E_load_type::INTEGRATED)
     {
-        if(cur_row == 0) //first spectra row being loaded
-        {
-            spectra->elapsed_livetime(sum_elapsed_livetime);
-            spectra->elapsed_realtime(sum_elapsed_realtime);
-            spectra->input_counts(sum_input_counts);
-            spectra->output_counts(sum_output_counts);
-        }
-        else
-        {
-            spectra->elapsed_livetime(spectra->elapsed_livetime() + sum_elapsed_livetime);
-            spectra->elapsed_realtime(spectra->elapsed_realtime() + sum_elapsed_realtime);
-            spectra->input_counts(spectra->input_counts() + sum_input_counts);
-            spectra->output_counts(spectra->output_counts() + sum_output_counts);
-        }
+        spectra->elapsed_livetime(spectra->elapsed_livetime() + sum_elapsed_livetime);
+        spectra->elapsed_realtime(spectra->elapsed_realtime() + sum_elapsed_realtime);
+        spectra->input_counts(spectra->input_counts() + sum_input_counts);
+        spectra->output_counts(spectra->output_counts() + sum_output_counts);
     }
 
     if ((retval = nc_close(ncid)))

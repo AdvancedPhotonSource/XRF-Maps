@@ -822,7 +822,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		return false;
 	}
 
-	_load_scalers(false, hasNetCDF, false);
+	_load_scalers(false, hasNetCDF, hasNetCDF);
 	_load_meta_info(hasNetCDF, false);
 	_load_extra_pvs_vector();
 
