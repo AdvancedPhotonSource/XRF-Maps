@@ -473,24 +473,23 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
             {
                fitting::optimizers::Optimizer<double>* optimizer = analysis_job->optimizer();
                for (auto& quant_itr : detector->avg_quantification_scaler_map)
-               {
-                    logI << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first << "\n";                 
+               {      
                     double reciprocal  = 1.0 / quant_itr.second;
 
                     Fit_Parameters<double> fit_params;
                     // min, and max values doen't matter because we are free fitting amplitude only
-                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20,  reciprocal, .1, E_Bound_Type::LIMITED_LO_HI));
+                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20,  reciprocal, .01, E_Bound_Type::LIMITED_LO_HI));
                     optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
                     double val = fit_params["quantifier"].value;
 
                     if(false == std::isfinite(val))
                     {
-                        logW<<"Quantifier Value = Inf. setting it to 0.\n";
+                        logW << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<"Quantifier Value = Inf. setting it to 0.\n";
                         val = 0;
                     }
                     else
                     {
-                        logI<<"Quantifier Value = "<<val<<"\n";
+                        logI<< Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<" Quantifier Value Start = (1/"<<quant_itr.second<<") = "<<reciprocal<< " :: Optimized = "<<val<<"\n";
                     }
 
                     detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, val);
