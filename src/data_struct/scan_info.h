@@ -137,6 +137,18 @@ public:
         return nullptr;
     }
 
+    T_real scaler_avg_value(const std::string& scaler_name)
+    {
+        for (auto& itr : scaler_maps)
+        {
+            if (itr.name == scaler_name)
+            {
+                return itr.values.mean();
+            }
+        }
+        return (T_real)0.0;
+    }
+
     Scan_Meta_Info<T_real> meta_info;
     std::vector<Scaler_Map<T_real>> scaler_maps;
     std::vector<Extra_PV> extra_pvs;
