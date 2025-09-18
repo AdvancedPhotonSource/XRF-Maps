@@ -553,6 +553,7 @@ bool HDF5_IO::polar_copy_raw(const std::string filename)
         logW << "Failed to copy from /entry to /MAPS/Raw\n";
     }
     _close_h5_objects(close_map);
+    return true;
 }
 
 //-----------------------------------------------------------------------------
