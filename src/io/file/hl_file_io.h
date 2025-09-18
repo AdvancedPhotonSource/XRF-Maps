@@ -634,10 +634,79 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 integrated_spectra->setZero(2048);
             }
 
+            integrated_spectra->elapsed_livetime((T_real)0.0);
+            integrated_spectra->elapsed_realtime((T_real)0.0);
+            integrated_spectra->input_counts((T_real)0.0);
+            integrated_spectra->output_counts((T_real)0.0);
 
-            if (hasNetcdf)
+            if(hasNetcdf)
             {
                 dims[1] -= 2; // remove 2 for the scaler channels flys scan hardware trigger bug
+            }
+
+            // tetramm is scalers only
+            if(hasTetraMM)
+            {
+                // tetramm has 2 files it can save scalers. filename_tetra1_0.nc or filename_tetra2_0.nc
+                std::ifstream file_io(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_0.nc");
+                if (file_io.is_open())
+                {
+                    file_io.close();
+                    std::string full_filename;
+                    for (size_t i = 0; i < dims[0]; i++)
+                    {
+                        full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_" + std::to_string(i) + ".nc";
+                        //todo: add verbose option
+                        //logI<<"Loading file "<<full_filename<<"\n";
+                        // if tetramm tag is missing in file name, we assume it is tetra1
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
+                    }
+                }
+                std::ifstream file_io1(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_0.nc");
+                if (file_io1.is_open())
+                {
+                    file_io1.close();
+                    std::string full_filename;
+                    for (size_t i = 0; i < dims[0]; i++)
+                    {
+                        full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra1_" + std::to_string(i) + ".nc";
+                        //todo: add verbose option
+                        //logI<<"Loading file "<<full_filename<<"\n";
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra1_", i, mda_io.get_scan_info(), params_override);
+                    }
+                }
+                std::ifstream file_io2(dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_0.nc");
+                if (file_io2.is_open())
+                {
+                    file_io2.close();
+                    std::string full_filename;
+                    for (size_t i = 0; i < dims[0]; i++)
+                    {
+                        full_filename = dataset_directory + "tetramm" + DIR_END_CHAR + tmp_dataset_file + "_tetra2_" + std::to_string(i) + ".nc";
+                        //todo: add verbose option
+                        //logI<<"Loading file "<<full_filename<<"\n";
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info(), params_override);
+                    }
+                }
+                T_real val = mda_io.get_scan_info()->scaler_avg_value(STR_US_IC);
+                if(val > (T_real)0.0)
+                {
+                    params_override->US_IC = val;
+                }
+                val = mda_io.get_scan_info()->scaler_avg_value(STR_DS_IC);
+                if(val > (T_real)0.0)
+                {
+                    params_override->DS_IC = val;
+                }
+                val = mda_io.get_scan_info()->scaler_avg_value(STR_US_FM);
+                if(val > (T_real)0.0)
+                {
+                    params_override->US_FM = val;
+                }
+                
+            }
+            if (hasNetcdf)
+            {
                 std::ifstream file_io(dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.nc");
                 if (file_io.is_open())
                 {
