@@ -165,8 +165,8 @@ double quantification_residuals_nlopt(const std::vector<double> &x, [[maybe_unus
     double sum = 0.0;
     for(auto& itr : ud->quant_map)
     {
-        sum += pow((itr.second.e_cal_ratio - result_map[itr.first]), 2.0);
-        
+        //sum += pow((itr.second.e_cal_ratio - result_map[itr.first]), 2.0);
+        sum += pow(1.0 - (itr.second.e_cal_ratio / result_map[itr.first]), 2.0);        
     	if (std::isfinite(result_map[itr.first]) == false)
 		{
             logE<<"Quantification reuslted in NaN or Inf! "<< itr.first<<" : "<<result_map[itr.first]<<"\n";		
