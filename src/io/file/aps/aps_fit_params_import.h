@@ -820,6 +820,16 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         
                         params_override->scaling_factors[scaler_name] = factor;
                     }
+                    else if (tag == STR_POLARITY_PATTERN)
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->polarity_pattern = value;
+                    }
+                    
                 }
                 catch (std::exception& e)
                 {
