@@ -1036,7 +1036,7 @@ public:
     //-----------------------------------------------------------------------------
     // load spectra volume as float (T_real) but scan_info as double (T_real2)
     template<typename T_real, typename T_real2>
-    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, bool logerr = true)
+    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, data_struct::Params_Override<T_real>* params_override,  bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id, dset_id, space_id;
@@ -1247,9 +1247,10 @@ public:
             scan_info.meta_info.scan_type = STR_SCAN_TYPE_POLAR_XANES;
             // Take 1 spectra per magnetic polarization, divide them by 2 and store in each row
             scan_info.meta_info.requested_cols = dims3[0] / 2;
-            scan_info.meta_info.requested_rows = 2; 
+            scan_info.meta_info.requested_rows = 2;  // two polarities
             scan_info.meta_info.x_axis.resize(scan_info.meta_info.requested_cols);
             scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
+            scan_info.meta_info.polarity_pattern = params_override->polarity_pattern;
             spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, dims3[2]);
 
             struct data_struct::Scaler_Map<T_real2> energy_map;
@@ -1314,57 +1315,89 @@ public:
             int polarity = 0;
             int idx = 0;
 
-            if(use_pr1 && (pr1_array.size() != dims3[0]))
+            if (params_override != nullptr && params_override->polarity_pattern.size() == 0)
             {
-                logE<<str_pr1_path<<" is not the same size as spectra data. Can not load properly.\n";
-                _close_h5_objects(close_map);
-                return false;
+                if (use_pr1 && (pr1_array.size() != dims3[0]))
+                {
+                    logE << str_pr1_path << " is not the same size as spectra data. Can not load properly.\n";
+                    _close_h5_objects(close_map);
+                    return false;
+                }
+                else if (use_pr1 == false && (pr2_array.size() != dims3[0]))
+                {
+                    logE << str_pr2_path << " is not the same size as spectra data. Can not load properly.\n";
+                    _close_h5_objects(close_map);
+                    return false;
+                }
             }
-            else if(use_pr1 == false && (pr2_array.size() != dims3[0]))
-            {
-                logE<<str_pr2_path<<" is not the same size as spectra data. Can not load properly.\n";
-                _close_h5_objects(close_map);
-                return false;
-            }
+            int polarity_str_idx = 0;
+            int left_pol_idx = 0;
+            int right_pol_idx = 0;
 
             for(size_t i = 0; i < dims3[0]; i++)
             {
                 offset3[0] = i;
                 H5Sselect_hyperslab(space_id, H5S_SELECT_SET, offset3, nullptr, count3, nullptr);
 
-                if(i > 0)
+                if (params_override != nullptr && params_override->polarity_pattern.size() > 0)
                 {
-                    if(use_pr1)
+                    if (polarity_str_idx >= params_override->polarity_pattern.size())
                     {
-                        if(pr1_array[i] != pr1_array[i-1])
-                        {
-                            if(polarity == 1)
-                            {
-                                polarity = 0;
-                                idx++;
-                            }
-                            else
-                            {
-                                polarity = 1;
-                            }
-                        }
+                        polarity_str_idx = 0;
+                    }
+                    if (params_override->polarity_pattern.at(polarity_str_idx) == 'L')
+                    {
+                        polarity = 0;
+                        idx = left_pol_idx;
+                        left_pol_idx++;
+                    }
+                    else if (params_override->polarity_pattern.at(polarity_str_idx) == 'R')
+                    {
+                        polarity = 1;
+                        idx = right_pol_idx;
+                        right_pol_idx++;
                     }
                     else
                     {
-                        if(pr2_array[i] != pr2_array[i-1])
+                        logW << "Unknown polarity override " << params_override->polarity_pattern[polarity_str_idx] << " in override string : " << params_override->polarity_pattern << "\n";
+                    }
+                }
+                else
+                {
+                    if (i > 0)
+                    {
+                        if (use_pr1)
                         {
-                            if(polarity == 1)
+                            if (pr1_array[i] != pr1_array[i - 1])
                             {
-                                polarity = 0;      
-                            }
-                            else
-                            {
-                                polarity = 1;
+                                if (polarity == 1)
+                                {
+                                    polarity = 0;
+                                    idx++;
+                                }
+                                else
+                                {
+                                    polarity = 1;
+                                }
                             }
                         }
                         else
                         {
-                            idx++;
+                            if (pr2_array[i] != pr2_array[i - 1])
+                            {
+                                if (polarity == 1)
+                                {
+                                    polarity = 0;
+                                }
+                                else
+                                {
+                                    polarity = 1;
+                                }
+                            }
+                            else
+                            {
+                                idx++;
+                            }
                         }
                     }
                 }
@@ -8465,6 +8498,18 @@ private:
                 if (status < 0)
                 {
                     logE << "failed to write " << STR_XRF_SCAN_TYPE << "\n";
+                }
+            }
+
+            //Save polarity pattern
+            if (_open_h5_dataset(STR_POLARITY_PATTERN, filetype, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            {
+                char tmp_char[255] = { 0 };
+                meta_info->polarity_pattern.copy(tmp_char, 254);
+                status = H5Dwrite(dset_id, memtype, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)tmp_char);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_POLARITY_PATTERN << "\n";
                 }
             }
 
