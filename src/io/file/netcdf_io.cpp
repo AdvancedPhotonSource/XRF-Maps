@@ -476,7 +476,11 @@ bool NetCDF_IO<T_real>::load_spectra_line_with_callback(const std::string& path,
     bool val = true;
     for (auto &detector : detector_num_arr)
     {
-        val &= _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
+        size_t loaded_cols =  _load_spectra(E_load_type::CALLBACKF, path, detector, nullptr, max_cols, nullptr, row, max_rows, &callback_fun, nullptr);
+        if (loaded_cols == 0)
+        {
+            val = false;
+        }
     }
     return val;
 }

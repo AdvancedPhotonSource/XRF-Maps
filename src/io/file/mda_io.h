@@ -127,7 +127,7 @@ public:
 
     void unload();
 	
-    void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, T_real& out_us_amp, T_real& out_ds_amp);
+    //void search_and_update_amps(std::string us_amp_pv_str, std::string ds_amp_pv_str, T_real& out_us_amp, T_real& out_ds_amp);
 
     data_struct::Scan_Info<T_real>* get_scan_info() { return &_scan_info; }
 

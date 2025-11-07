@@ -93,6 +93,7 @@ public:
         ge_dead_layer = "0.0";
         airpath = "0";
         theta_pv = "";
+        polarity_pattern = "";
     }
 
     Params_Override(std::string dir, int detector)
@@ -116,6 +117,7 @@ public:
         dataset_directory = dir;
         detector_num = detector;
         detector_element = "Si";
+        polarity_pattern = "";
     }
 
     ~Params_Override()
@@ -244,6 +246,8 @@ public:
     std::string us_amp_sens_unit;
     T_real ds_amp_sens_num;
     std::string ds_amp_sens_unit;
+
+    std::string polarity_pattern;
 
 };
 

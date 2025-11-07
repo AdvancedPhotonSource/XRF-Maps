@@ -126,11 +126,13 @@ namespace aps
         {"fwhm_fanoprime", STR_FWHM_FANOPRIME},
         {"COHERENT_SCT_ENERGY", STR_COHERENT_SCT_ENERGY},
         {"coherent_sct_energy", STR_COHERENT_SCT_ENERGY},
+        {"COHERENT_SCT_AMPLITUDE", STR_COHERENT_SCT_AMPLITUDE},
         {"coherent_sct_amplitude", STR_COHERENT_SCT_AMPLITUDE},
         {"COMPTON_ANGLE", STR_COMPTON_ANGLE},
         {"compton_angle", STR_COMPTON_ANGLE},
         {"COMPTON_FWHM_CORR", STR_COMPTON_FWHM_CORR},
         {"compton_fwhm_corr", STR_COMPTON_FWHM_CORR},
+        {"COMPTON_AMPLITUDE", STR_COMPTON_AMPLITUDE},
         {"compton_amplitude", STR_COMPTON_AMPLITUDE},
         {"COMPTON_STEP", STR_COMPTON_F_STEP},
         {"compton_f_step", STR_COMPTON_F_STEP},
@@ -818,6 +820,16 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         
                         params_override->scaling_factors[scaler_name] = factor;
                     }
+                    else if (tag == STR_POLARITY_PATTERN)
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        params_override->polarity_pattern = value;
+                    }
+                    
                 }
                 catch (std::exception& e)
                 {
