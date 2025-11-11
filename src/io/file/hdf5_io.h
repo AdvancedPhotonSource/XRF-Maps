@@ -1361,6 +1361,7 @@ public:
                     {
                         logW << "Unknown polarity override " << params_override->polarity_pattern[polarity_str_idx] << " in override string : " << params_override->polarity_pattern << "\n";
                     }
+                    polarity_str_idx++;
                 }
                 else
                 {
