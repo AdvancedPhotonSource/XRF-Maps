@@ -207,31 +207,41 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
                         size_t i,
                         size_t j)
 {
-    std::unordered_map<std::string, T_real> counts_dict;
-    fit_routine->fit_spectra(model, spectra, elements_to_fit, counts_dict);
-    //save count / sec
-    for (auto& itr : *out_fit_counts)
+    if(spectra->size() == 0)
     {
-        if (counts_dict.count(itr.first) > 0)
+        for (auto& itr : *out_fit_counts)
         {
-            itr.second(i, j) = counts_dict[itr.first] / spectra->elapsed_livetime();
+            itr.second(i, j) = 0;
         }
-        //(*out_fit_counts)[el_itr.first](i, j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
+        return false;
     }
-    (*out_fit_counts)[STR_NUM_ITR](i, j) = counts_dict[STR_NUM_ITR];
-
-    (*out_fit_counts)[STR_RESIDUAL](i, j) = counts_dict[STR_RESIDUAL];
-    // add total fluorescense yield
-    if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
+    else
     {
-        (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
-    }
-    // add sum coherent and compton
-    if (out_fit_counts->count(STR_SUM_ELASTIC_INELASTIC_AMP) > 0 && counts_dict.count(STR_COHERENT_SCT_AMPLITUDE) > 0 && counts_dict.count(STR_COMPTON_AMPLITUDE) > 0)
-    {
-        (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) = counts_dict[STR_COHERENT_SCT_AMPLITUDE] + counts_dict[STR_COMPTON_AMPLITUDE];
-    }
+        std::unordered_map<std::string, T_real> counts_dict;
+        fit_routine->fit_spectra(model, spectra, elements_to_fit, counts_dict);
+        //save count / sec
+        for (auto& itr : *out_fit_counts)
+        {
+            if (counts_dict.count(itr.first) > 0)
+            {
+                itr.second(i, j) = counts_dict[itr.first] / spectra->elapsed_livetime();
+            }
+            //(*out_fit_counts)[el_itr.first](i, j) = counts_dict[el_itr.first] / spectra->elapsed_livetime();
+        }
+        (*out_fit_counts)[STR_NUM_ITR](i, j) = counts_dict[STR_NUM_ITR];
 
+        (*out_fit_counts)[STR_RESIDUAL](i, j) = counts_dict[STR_RESIDUAL];
+        // add total fluorescense yield
+        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
+        {
+            (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
+        }
+        // add sum coherent and compton
+        if (out_fit_counts->count(STR_SUM_ELASTIC_INELASTIC_AMP) > 0 && counts_dict.count(STR_COHERENT_SCT_AMPLITUDE) > 0 && counts_dict.count(STR_COMPTON_AMPLITUDE) > 0)
+        {
+            (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) = counts_dict[STR_COHERENT_SCT_AMPLITUDE] + counts_dict[STR_COMPTON_AMPLITUDE];
+        }
+    }
     return true;
 }
 
