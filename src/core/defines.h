@@ -224,6 +224,7 @@ const std::string STR_CFG_3 = "CFG_3";
 const std::string STR_CFG_4 = "CFG_4";
 const std::string STR_CFG_5 = "CFG_5";
 
+const std::string STR_POLARITY_PATTERN = "POLARITY_PATTERN";
 
 const std::string STR_K_A_LINES = "K Alpha";
 const std::string STR_K_B_LINES = "K Beta";

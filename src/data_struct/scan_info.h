@@ -92,6 +92,7 @@ struct Scan_Meta_Info
     std::string name;
     std::string scan_time_stamp;
     std::string scan_type;
+    std::string polarity_pattern;
     ArrayTr<T_real> x_axis;
     ArrayTr<T_real> y_axis;
     int requested_cols;
