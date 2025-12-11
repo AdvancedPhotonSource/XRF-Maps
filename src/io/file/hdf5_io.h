@@ -1048,16 +1048,17 @@ public:
                 scan_info.meta_info.x_axis[0] = -1;
                 scan_info.meta_info.y_axis.resize(1);
                 scan_info.meta_info.y_axis[0] = -1;
-                size_t start_idx = 0;
-                size_t end_idx = 0;
+                Eigen::Index start_idx = 0;
+                Eigen::Index end_idx = 0;
                 T_real cnt = 0.;
-                size_t cur_row = 0;
+                T_real last_cntr_val = interferometer_array(0,2);
+                Eigen::Index cur_row = 0;
                 size_t num_zeros = 0;
                 // start at 1 to check previous value is diff
-                for(size_t r=1; r<interferometer_array.rows(); r++)
+                for(Eigen::Index r=1; r<interferometer_array.rows(); r++)
                 {
                     num_zeros = 0;
-                    for(size_t c=0; c<interferometer_array.cols(); c++)
+                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
                     {
                         // first check that more than 1 col isn't just 0's for startup
                         if( interferometer_array(r,c) == 0)
@@ -1065,56 +1066,61 @@ public:
                             num_zeros++;
                         }
                     }
-                    if(interferometer_array(r,2) != interferometer_array(r-1,2))
+                    if(interferometer_array(r,2) != last_cntr_val)
                     {
                         if(num_zeros > 2)
                         {
                             continue;
                         }
 
-                        if(start_idx == end_idx)
+                        
+                        if(cur_row >= interferometer_avg->rows())
                         {
-                            start_idx = r;
+                            logI<<"Break\n";
+                            break;
                         }
                         else
                         {
-                            if(cur_row >= interferometer_avg->rows())
+                            end_idx = r;
+                            // zero out the row
+                            for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
                             {
-                                break;
+                                (*interferometer_avg)(cur_row, c) = 0.0;
                             }
-                            else
+                            
+                            cnt = 0.0;
+                            for(Eigen::Index i=start_idx; i<end_idx; i++)
                             {
-                                end_idx = r;
-                                // zero out the row
-                                for(size_t c=0; c<interferometer_array.cols(); c++)
+                                if(i == start_idx)
                                 {
-                                    (*interferometer_avg)(cur_row, c) = 0.0;
-                                }
-                                
-                                cnt = 0.0;
-                                for(size_t i=start_idx; i<end_idx; i++)
-                                {
-                                    // index 1 is counter, can be same value sometimes and we need to skip it then
-                                    if(i > start_idx && interferometer_array(i, 1) != interferometer_array(i-1, 1))
+                                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
                                     {
-                                        for(size_t c=0; c<interferometer_array.cols(); c++)
-                                        {
-                                            (*interferometer_avg)(cur_row, c) += interferometer_array(i, c);
-                                        }
-                                        cnt += 1.0;
+                                        (*interferometer_avg)(cur_row, c) = interferometer_array(i, c);
                                     }
+                                    cnt += 1.0;
                                 }
-                                
-                                if(cnt > 1.0)
+                                // index 1 is counter, can be same value sometimes and we need to skip it then
+                                else if(interferometer_array(i, 1) != interferometer_array(i-1, 1))
                                 {
-                                    // avg
-                                    for(size_t c=0; c<interferometer_array.cols(); c++)
+                                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
                                     {
-                                        (*interferometer_avg)(cur_row, c) /= cnt;
+                                        (*interferometer_avg)(cur_row, c) += interferometer_array(i, c);
                                     }
+                                    cnt += 1.0;
+                                }
+                            }
+                            //logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<(*interferometer_avg)(cur_row, 3)<<" avg val "<<(*interferometer_avg)(cur_row, 3) /cnt<<"/n";
+                            if(cnt > 1.0)
+                            {
+                                // avg
+                                for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
+                                {
+                                    (*interferometer_avg)(cur_row, c) /= cnt;
                                 }
                                 cur_row ++;
                             }
+                            start_idx = end_idx;
+                            last_cntr_val = interferometer_array(start_idx,2);
                         }
                     }
                 }
