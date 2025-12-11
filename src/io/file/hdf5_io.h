@@ -1025,6 +1025,8 @@ public:
                     i++;
                 }
             }
+            scan_info.meta_info.requested_rows = temp_vol.rows();
+            scan_info.meta_info.requested_cols = temp_vol.cols();
             unsigned int total_spectra = 0;
             for(size_t i=0; i<temp_vol.rows(); i++)
             {
