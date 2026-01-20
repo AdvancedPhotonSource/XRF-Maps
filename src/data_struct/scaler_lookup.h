@@ -81,6 +81,8 @@ public:
 
     void add_summed_scaler(const std::string& beamline, const std::string& scaler_label, const std::vector<std::string>& scaler_list);
 
+    void add_override_beamline_scaler(const std::string& beamline, const std::string& scaler_label, const std::string& scaler_pv, bool is_time_normalized);
+                                    
     bool search_for_timing_info(const std::vector<std::string>& pv_list, std::string& out_pv, double& out_clock, std::string& out_beamline);
 
     bool search_for_timing_info(const std::unordered_map<std::string, double>& pv_map, std::string& out_pv, double& out_clock, std::string& out_beamline);
