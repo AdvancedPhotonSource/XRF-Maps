@@ -227,6 +227,9 @@ const std::string STR_CFG_5 = "CFG_5";
 
 const std::string STR_POLARITY_PATTERN = "POLARITY_PATTERN";
 
+const std::string STR_SCALER_OVERRIDE = "SCALER_OVERRIDE";
+const std::string STR_TIME_NORM_SCALER_OVERRIDE = "TIME_NORMALIZED_SCALER_OVERRIDE";
+
 const std::string STR_K_A_LINES = "K Alpha";
 const std::string STR_K_B_LINES = "K Beta";
 const std::string STR_L_LINES = "L Lines";
