@@ -113,6 +113,28 @@ void Scaler_Lookup::add_beamline_scaler(const std::string& beamline, const std::
 
 // ----------------------------------------------------------------------------
 
+void Scaler_Lookup::add_override_beamline_scaler(const std::string& beamline, const std::string& scaler_label, const std::string& scaler_pv, bool is_time_normalized)
+{
+    if (is_time_normalized)
+    {
+		for(auto itr: _beamline_map[beamline].time_normalized_scaler_pv_label_map)
+		{
+			_beamline_map[beamline].time_normalized_scaler_pv_label_map.erase(scaler_label);
+		}
+		_beamline_map[beamline].time_normalized_scaler_pv_label_map[scaler_pv] = scaler_label;
+    }
+    else
+    {
+		for(auto itr: _beamline_map[beamline].time_normalized_scaler_pv_label_map)
+		{
+			_beamline_map[beamline].scaler_pv_label_map.erase(scaler_label);
+		}
+		_beamline_map[beamline].scaler_pv_label_map[scaler_pv] = scaler_label;	
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 void Scaler_Lookup::add_timing_info(const std::string& beamline, const std::string& time_pv, double clock)
 {
 	_beamline_map[beamline].timing_info[time_pv] = clock;

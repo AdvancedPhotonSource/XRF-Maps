@@ -214,6 +214,7 @@ const std::string STR_SCAN_TYPE_POLAR_XANES = "POLAR_XANES";
 const std::string STR_SCAN_TYPE_2D_MAP = "XRF_MAPS";
 const std::string STR_SCAN_TYPE_XRF_SINGLE_MCA = "XRF_SINGLE_MCA";
 const std::string STR_SCAN_TYPE_2D_EMD = "XRF_2D_EMD";
+const std::string STR_SCAN_TYPE_TIME_BASED_2D_MAP = "TIME_BASED_XRF_MAPS";
 
 const std::string STR_SR_CURRENT = "SR_Current";
 const std::string STR_US_IC = "US_IC";
@@ -225,6 +226,9 @@ const std::string STR_CFG_4 = "CFG_4";
 const std::string STR_CFG_5 = "CFG_5";
 
 const std::string STR_POLARITY_PATTERN = "POLARITY_PATTERN";
+
+const std::string STR_SCALER_OVERRIDE = "SCALER_OVERRIDE";
+const std::string STR_TIME_NORM_SCALER_OVERRIDE = "TIME_NORMALIZED_SCALER_OVERRIDE";
 
 const std::string STR_K_A_LINES = "K Alpha";
 const std::string STR_K_B_LINES = "K Beta";
@@ -273,6 +277,7 @@ const std::string STR_OUTPUT_COUNTS = "Output_Counts";
 
 const std::string STR_MAPS = "MAPS";
 const std::string STR_SCAN = "Scan";
+const std::string STR_INTERFEROMETER = "Interferometer";
 const std::string STR_SPECTRA = "Spectra";
 const std::string STR_LHCP_SPECTRA = "LHCP_Spectra";
 const std::string STR_RHCP_SPECTRA = "RHCP_Spectra";
