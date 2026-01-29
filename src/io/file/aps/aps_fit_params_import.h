@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include "data_struct/params_override.h"
 #include "data_struct/element_info.h"
+#include "data_struct/scaler_lookup.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -828,6 +829,36 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         params_override->polarity_pattern = value;
+                    }
+                    else if(tag == STR_SCALER_OVERRIDE)
+                    {
+                        std::string scaler_beamline;
+                        std::string scaler_name;
+                        std::string str_value;
+                        std::getline(strstream, scaler_beamline, ',');
+                        scaler_beamline.erase(std::remove_if(scaler_beamline.begin(), scaler_beamline.end(), ::isspace), scaler_beamline.end());
+                        std::getline(strstream, scaler_name, ',');
+                        scaler_name.erase(std::remove_if(scaler_name.begin(), scaler_name.end(), ::isspace), scaler_name.end());
+                        std::getline(strstream, str_value, ',');
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\n'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\r'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), ' '), str_value.end());                        
+                        data_struct::Scaler_Lookup::inst()->add_beamline_scaler(scaler_beamline, scaler_name, str_value, false);
+                    }
+                    else if(tag == STR_TIME_NORM_SCALER_OVERRIDE)
+                    {
+                        std::string scaler_beamline;
+                        std::string scaler_name;
+                        std::string str_value;
+                        std::getline(strstream, scaler_beamline, ',');
+                        scaler_beamline.erase(std::remove_if(scaler_beamline.begin(), scaler_beamline.end(), ::isspace), scaler_beamline.end());
+                        std::getline(strstream, scaler_name, ',');
+                        scaler_name.erase(std::remove_if(scaler_name.begin(), scaler_name.end(), ::isspace), scaler_name.end());
+                        std::getline(strstream, str_value, ',');
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\n'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), '\r'), str_value.end());
+                        str_value.erase(std::remove(str_value.begin(), str_value.end(), ' '), str_value.end());                        
+                        data_struct::Scaler_Lookup::inst()->add_beamline_scaler(scaler_beamline, scaler_name, str_value, true);
                     }
                     
                 }

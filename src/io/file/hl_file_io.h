@@ -1050,7 +1050,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         std::string file_title;
         data_struct::Scan_Info<T_real> scan_info_edf;
         // try new APS-U format
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info_edf))
+        data_struct::ArrayXXr<T_real> interferometer_avg;
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, &interferometer_avg, scan_info_edf))
         {
             scan_type = scan_info_edf.meta_info.scan_type;
             if (save_scalers)
@@ -1063,6 +1064,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
                 }
 
+                io::file::HDF5_IO::inst()->save_interferometers(&interferometer_avg);
                 io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
             }
             return true;
@@ -1364,16 +1366,26 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         {
             std::string full_filename;
             for (size_t i = 0; i < spectra_volume->rows(); i++)
-            //for (size_t i = 1; i <= spectra_volume->rows(); i++) //BNP hack of starting at 1 instead of 0
             {
                 //bnp format
-                //full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
-                //io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i - 1]);
-
-                //everyone else
-                full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
+                if(idx == 0)
+                {
+                    full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                }
+                else
+                {
+                    //everyone else
+                    full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                }
             }
+        }
+        else
+        {
+            logE<<"Could not find raw spectra data files associated with mda file. Can not process.\n";
+            return false;
         }
 
     }
