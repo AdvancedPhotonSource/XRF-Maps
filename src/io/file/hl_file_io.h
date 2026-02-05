@@ -1167,6 +1167,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             return true;
         }
+        // try sec12 dataset
+        else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_sec12(fullpath, detector_num, spectra_volume, scan_info_edf))
+        {
+            scan_type = scan_info_edf.meta_info.scan_type;
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+            return true;
+        }
     }
 
     //try loading emd dataset if it ends in .emd

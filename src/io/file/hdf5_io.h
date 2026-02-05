@@ -1204,6 +1204,137 @@ public:
     }
 
     //-----------------------------------------------------------------------------
+
+    template<typename T_real>
+    bool load_spectra_vol_sec12(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
+    {
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+        hid_t file_id = -1, xspres_grp_id = -1;
+        hid_t pos_id = -1;
+        hsize_t pos_dims_in[2];
+        hsize_t pos_offset[2];
+        hsize_t pos_count[2];
+
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+            {
+                return false;
+            }
+
+            if (false == _open_h5_object(pos_id, H5O_DATASET, close_map, "metadata/positions", file_id))
+            {
+                return false;
+            }
+            else
+            {
+                hid_t dataspace_id = H5Dget_space(pos_id);
+                close_map.push({ dataspace_id, H5O_DATASPACE });
+                int rank = H5Sget_simple_extent_ndims(dataspace_id);
+                if (rank != 2)
+                {
+                    _close_h5_objects(close_map);
+                    logE <<  "Unknown positions layout. Rank is not 2\n";
+                    return false;
+                }
+
+                // start reading in positions
+                
+                int status_n = H5Sget_simple_extent_dims(dataspace_id, &pos_dims_in[0], nullptr);
+                if (status_n < 0)
+                {
+                    _close_h5_objects(close_map);
+                    logE << "Getting dataset rank for metadata/positions\n";
+                    return false;
+                }
+
+                for (hsize_t i = 0; i < rank; i++)
+                {
+                    pos_offset[i] = 0;
+                    pos_count[i] = pos_dims_in[i];
+                }
+
+                pos_count[1] = 1;
+                T_real *temp_read_in_x = new T_real[pos_count[0]];
+                T_real *temp_read_in_y = new T_real[pos_count[0]];
+                hid_t memoryspace_meta_id = H5Screate_simple(1, pos_count, nullptr);
+                H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, pos_offset, nullptr, pos_count, nullptr);
+                herr_t error = _read_h5d<T_real>(pos_id, memoryspace_meta_id, dataspace_id, H5P_DEFAULT, (void*)temp_read_in_x);
+                if (error < 0)
+                {
+                    logW<<"Error reading in x positions\n";
+                }
+
+                pos_offset[1] = 1;
+                H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, pos_offset, nullptr, pos_count, nullptr);
+                error = _read_h5d<T_real>(pos_id, memoryspace_meta_id, dataspace_id, H5P_DEFAULT, (void*)temp_read_in_y);
+                if (error < 0)
+                {
+                    logW<<"Error reading in x positions\n";
+                }
+
+                T_real start_val = temp_read_in_y[0];
+                for(unsigned int i=1; i< pos_count[0]; i++)
+                {
+                    if( temp_read_in_y[i] != start_val)
+                    {
+                        scan_info.meta_info.requested_cols = i;
+                        break;
+                    }
+                }
+                scan_info.meta_info.requested_rows = pos_count[0] / scan_info.meta_info.requested_cols;
+                scan_info.meta_info.x_axis.resize(scan_info.meta_info.requested_cols);
+                scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
+
+                // generate hashmap for pos to index
+                std::unordered_map<T_real, int>  pos_to_idx_hash;
+
+                for(unsigned int i=0; i < scan_info.meta_info.requested_cols; i++)
+                {
+                    scan_info.meta_info.x_axis[i] = temp_read_in_x[i];
+                    pos_to_idx_hash[temp_read_in_x[i]] = i;
+                }
+                for(unsigned int i=0, j=0; i < pos_count[0]; i+= scan_info.meta_info.requested_cols, j++)
+                {
+                    scan_info.meta_info.y_axis[j] = temp_read_in_x[i];
+                }
+
+                // start reading in spectra volume
+                // read whole dataset in as spec_row , then alloc spec_vol and copy
+                data_struct::Spectra_Line<T_real> spec_row;
+                if(false == _load_spectra_line_xspress3(file_id, detector_num, &spec_row))
+                {
+                    logW<<"Failed to load spectra data.\n";
+                    _close_h5_objects(close_map);
+                    return false;
+                }
+                // copy from line to vol depending on positions
+                spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, spec_row[0].size());
+                unsigned int i = 0;
+                for(unsigned int y=0; y< scan_info.meta_info.requested_rows; y++)
+                {
+                    for(unsigned int x=0; x< scan_info.meta_info.requested_cols; x++)    
+                    {
+                        unsigned int prop_x = pos_to_idx_hash[temp_read_in_x[i]];
+                        for(unsigned int s=0; s< spec_row[0].size(); s++)
+                        {
+                            (*spec_vol)[y][prop_x][s] = spec_row[i][s];
+                        }
+                        i++;
+                    }
+                }
+
+                scan_info.meta_info.scan_type = STR_SCAN_TYPE_2D_MAP;
+                
+                delete []temp_read_in_x;
+                delete []temp_read_in_y;
+                _close_h5_objects(close_map);
+                return true;
+            }
+        }
+    }
+
+    //-----------------------------------------------------------------------------
     // load spectra volume as float (T_real) but scan_info as double (T_real2)
     template<typename T_real, typename T_real2>
     bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, data_struct::Params_Override<T_real>* params_override,  bool logerr = true)
