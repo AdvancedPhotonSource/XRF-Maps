@@ -5867,7 +5867,7 @@ public:
 
     const std::string& get_filename() { return _cur_filename; }
 
-    bool polar_copy_raw(const std::string filename);
+    bool copy_to_raw_grp(const std::string filename, const std::string src_path);
 
     //-----------------------------------------------------------------------------
 
