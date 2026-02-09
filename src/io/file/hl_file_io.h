@@ -924,7 +924,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 data_struct::Params_Override<double>* null_po = nullptr;
                 io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, null_po);
                 // copy /entry to /MAPS/raw
-                io::file::HDF5_IO::inst()->polar_copy_raw(dataset_directory+dataset_file);
+                io::file::HDF5_IO::inst()->copy_to_raw_grp(dataset_directory+dataset_file, "entry");
                 return true;
             }
             else
@@ -1165,6 +1165,15 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
             }
 
+            return true;
+        }
+        // try sec12 dataset
+        else if(true == io::file::HDF5_IO::inst()->load_spectra_vol_sec12(fullpath, detector_num, spectra_volume, scan_info_edf))
+        {
+            scan_type = scan_info_edf.meta_info.scan_type;
+            io::file::HDF5_IO::inst()->start_save_seq(true);
+            io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+            io::file::HDF5_IO::inst()->copy_to_raw_grp(dataset_directory+dataset_file, "metadata");
             return true;
         }
     }

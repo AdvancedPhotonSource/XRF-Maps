@@ -512,7 +512,7 @@ bool HDF5_IO::end_save_seq(bool loginfo)
 
 //-----------------------------------------------------------------------------
 
-bool HDF5_IO::polar_copy_raw(const std::string filename)
+bool HDF5_IO::copy_to_raw_grp(const std::string filename, const std::string src_path)
 {
     hid_t src_file_id = -1;
     hid_t src_grp_id = -1;
@@ -547,7 +547,7 @@ bool HDF5_IO::polar_copy_raw(const std::string filename)
         return false;
     }
     //copy /entry to /MAPS/raw
-    herr_t status = H5Ocopy(src_grp_id, "entry", maps_grp_id, "Raw", ocpypl_id, H5P_DEFAULT);
+    herr_t status = H5Ocopy(src_grp_id, src_path.c_str(), maps_grp_id, "Raw", ocpypl_id, H5P_DEFAULT);
     if (status > 0)
     {
         logW << "Failed to copy from /entry to /MAPS/Raw\n";
