@@ -481,15 +481,15 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::getline(strstream, energy_value, ',');
                         center = parse_input_real<T_real>(energy_value);
     
-                        T_real width = 1.0;
+                        T_real width_multi = 1.0;
                         std::getline(strstream, width_value, ',');
-                        width = parse_input_real<T_real>(width_value);
+                        width_multi = parse_input_real<T_real>(width_value);
 
                         Fit_Element_Map<T_real>* fit_map;
                         if (params_override->elements_to_fit.count(element_symb) < 1)
                         {
                             
-                            fit_map = new Fit_Element_Map<T_real>(element_symb, center, width);
+                            fit_map = new Fit_Element_Map<T_real>(element_symb, center, width_multi);
                             params_override->elements_to_fit[element_symb] = fit_map;
                         }
                     }
@@ -979,12 +979,24 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         for (const auto& itr : params_override->elements_to_fit)
         {
             // if not pileup
-            if (itr.second->pileup_element() == nullptr && (itr.first != "COHERENT_SCT_AMPLITUDE" || itr.first != "COMPTON_AMPLITUDE"))
+            if (itr.second->pileup_element() == nullptr && itr.second->has_element_info())
             {
                 out_stream << itr.first << " , ";
             }
         }
         out_stream << "\n";
+        for (const auto& itr : params_override->elements_to_fit)
+        {
+            // if not pileup
+            if (itr.second->pileup_element() == nullptr && false == itr.second->has_element_info())
+            {
+                if(itr.first == STR_COHERENT_SCT_AMPLITUDE || itr.first == STR_COMPTON_AMPLITUDE)
+                {
+                    continue;
+                }
+                out_stream << STR_CUSTOM_EL_REGION<<": "<< itr.first << "," << itr.second->center() << ","  << itr.second->width_multi() << "\n";
+            }
+        }
         out_stream << "   list the element combinations you want to fit for pileup, e.g., Si_Si, Si_Si_Si, Si_Cl, etc\n";
         out_stream << "ELEMENTS_WITH_PILEUP: ";
         for (const auto& itr : params_override->elements_to_fit)

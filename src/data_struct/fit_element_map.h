@@ -159,7 +159,7 @@ class DLL_EXPORT Fit_Element_Map
 public:
     Fit_Element_Map(std::string name, Element_Info<T_real>* element_info);
 
-    Fit_Element_Map(std::string name, T_real center, T_real width);
+    Fit_Element_Map(std::string name, T_real center, T_real width_multi);
 
     ~Fit_Element_Map();
 
@@ -196,6 +196,8 @@ public:
     std::unordered_map<std::string, T_real> generate_roi_centers_per_shell();
 
 	bool check_binding_energy(T_real incident_energy, size_t energy_ratio_idx) const;
+
+    bool has_element_info() { return !(_element_info==nullptr);}
 protected:
 
     void generate_energy_ratio(T_real energy, T_real ratio, Element_Param_Type et, const Element_Info<T_real> * const detector_element);
