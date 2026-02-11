@@ -159,6 +159,8 @@ class DLL_EXPORT Fit_Element_Map
 public:
     Fit_Element_Map(std::string name, Element_Info<T_real>* element_info);
 
+    Fit_Element_Map(std::string name, T_real center, T_real width);
+
     ~Fit_Element_Map();
 
     const T_real& center() const { return _center; }

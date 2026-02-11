@@ -119,6 +119,26 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, T_real center, T_real width)
+{
+    _full_name = name;
+
+    _element_info = nullptr;
+
+    _pileup_element_info = nullptr;
+
+    _width_multi = 1.0;
+
+    _center = center;
+
+    _width = width;
+
+    size_t num_ratios = 0;
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 Fit_Element_Map<T_real>::~Fit_Element_Map()
 {
 
