@@ -509,6 +509,21 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
         return 0;
     }
 
+    // check if we have allocated enough memory for this row
+    if(scan_info->scaler_maps.size() > 0)
+    {
+        if(scan_info->scaler_maps[0].values.rows() <= row)
+        {
+            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scaler_map.values.rows()<<". Skipping this data\n";
+            return 0;
+        }
+    }
+    else
+    {
+        logW<<"Scaler maps size is 0. Can not load data.\n";
+        return 0;
+    }
+
     if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
     {
         logE<<path<<" :: "<< nc_strerror(retval)<<"\n";
