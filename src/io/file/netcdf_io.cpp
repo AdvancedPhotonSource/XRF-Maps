@@ -514,7 +514,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
     {
         if(scan_info->scaler_maps[0].values.rows() <= row)
         {
-            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scaler_map.values.rows()<<". Skipping this data\n";
+            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scan_info->scaler_maps[0].values.rows()<<". Skipping this data\n";
             return 0;
         }
     }
