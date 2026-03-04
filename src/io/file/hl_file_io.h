@@ -688,22 +688,24 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_scalers_line(full_filename, "tetra2_", i, mda_io.get_scan_info(), params_override);
                     }
                 }
-                T_real val = mda_io.get_scan_info()->scaler_avg_value(STR_US_IC);
-                if(val > (T_real)0.0)
+                if(params_override != nullptr)
                 {
-                    params_override->US_IC = val;
+                    T_real val = mda_io.get_scan_info()->scaler_avg_value(STR_US_IC);
+                    if(val > (T_real)0.0)
+                    {
+                        params_override->US_IC = val;
+                    }
+                    val = mda_io.get_scan_info()->scaler_avg_value(STR_DS_IC);
+                    if(val > (T_real)0.0)
+                    {
+                        params_override->DS_IC = val;
+                    }
+                    val = mda_io.get_scan_info()->scaler_avg_value(STR_US_FM);
+                    if(val > (T_real)0.0)
+                    {
+                        params_override->US_FM = val;
+                    }
                 }
-                val = mda_io.get_scan_info()->scaler_avg_value(STR_DS_IC);
-                if(val > (T_real)0.0)
-                {
-                    params_override->DS_IC = val;
-                }
-                val = mda_io.get_scan_info()->scaler_avg_value(STR_US_FM);
-                if(val > (T_real)0.0)
-                {
-                    params_override->US_FM = val;
-                }
-                
             }
             if (hasNetcdf)
             {
@@ -1232,13 +1234,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
     }
 
     // try to load spectra from mda file
-    if (false == mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, (hasNetcdf || hasBnpNetcdf || hasHdf || hasXspress), hasNetcdf))
+    auto mda_ret_val = mda_io.load_spectra_volume(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, spectra_volume, (hasNetcdf || hasBnpNetcdf || hasHdf || hasXspress), hasNetcdf);
+    if (Load_Status::Failed == mda_ret_val)
     {
         scan_type = STR_SCAN_TYPE_2D_MAP;
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";
         return false;
     }
-    else
+    else if (Load_Status::Half_need_spectra == mda_ret_val)
     {
         // tetramm is scalers only
         if(hasTetraMM)

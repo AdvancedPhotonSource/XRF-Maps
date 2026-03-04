@@ -579,169 +579,174 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params,
                             Callback_Func_Status_Def* status_callback)
 {
-    int cnt = int_spectra_map.count(search_filename);
-    std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "img.dat", search_filename);
-    if (files.size() > 0 || cnt > 0)
+    std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "img.dat" + DIR_END_CHAR, search_filename);
+    int processed = 0;
+    
+    std::string sfile_name;
+    for (auto& roi_itr : rois)
     {
-        std::string sfile_name;
-        for (auto& roi_itr : rois)
+        data_struct::Spectra<double> int_spectra;
+        std::string file_path = analysis_job.output_dir + "img.dat" + DIR_END_CHAR; 
+        int cnt = int_spectra_map.count(search_filename + roi_itr.first);
+        if (cnt > 0)
         {
-            data_struct::Spectra<double> int_spectra;
-
-            std::string file_path = analysis_job.output_dir + "img.dat" + DIR_END_CHAR; 
-            if (cnt > 0)
+            int_spectra = int_spectra_map.at(search_filename + roi_itr.first);
+            sfile_name = search_filename;
+            file_path += sfile_name;
+            processed++;
+        }
+        else if (files.size() > 0 )
+        {
+            if (files.size() == 1) // v9 will find just 1, 
             {
-                int_spectra = int_spectra_map.at(search_filename);
+                sfile_name = files[0];
+            }
+            else // v10 finds more so we just use search name
+            {
                 sfile_name = search_filename;
-                file_path += sfile_name;
             }
-            else
+            file_path += sfile_name;
+            if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
             {
-                if (files.size() == 1) // v9 will find just 1, 
-                {
-                    sfile_name = files[0];
-                }
-                else // v10 finds more so we just use search name
-                {
-                    sfile_name = search_filename;
-                }
-                file_path += sfile_name;
-                if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
-                {
-                    logE << "Could not load int spectra for " << file_path << ".  skipping..\n";
-                    continue;
-                }
-            }
-
-            data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
-            if (detector == nullptr)
-            {
-                logE << "Detector " << detector_num << " is not initialized, skipping..\n";
+                logE << "Could not load int spectra for " << file_path << ".  skipping..\n";
                 continue;
             }
-                
-            data_struct::Params_Override<double>* params_override = &(detector->fit_params_override_dict);
-                
-            /// If quant is not done also, Need to save more info from Quantification first, then we can finish implementing loading quant from hdf5 instead of rerunning each time roi's are done
-            ///io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, detector);
-            // load scalers and scan info
-            data_struct::Scan_Info<double> scan_info;
-            io::file::HDF5_IO::inst()->load_scan_info_analyzed_h5(file_path, detector, scan_info);
-
-            double sr_current = 1.0;
-            double us_ic = 1.0;
-            double us_fm = 1.0;
-            double ds_ic = 1.0;
-
-            std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
-            if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
-            {
-                std::string low_ds_ic = STR_DS_IC;
-                std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), [](unsigned char c) { return std::tolower(c); });
-                std::string low_us_ic = STR_US_IC; 
-                std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
-                std::string low_sr = STR_SR_CURRENT;
-                std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
-                for (auto& in_itr : roi_itr.second)
-                {
-                    hsize_t xoffset = in_itr.first;
-                    hsize_t yoffset = in_itr.second;
-                    if (scalers_map.count(STR_DS_IC) > 0)
-                    {
-                        ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
-                    }
-                    else if (scalers_map.count(low_ds_ic) > 0)
-                    {
-                        ds_ic += scalers_map.at(low_ds_ic)(yoffset, xoffset);
-                    }
-                    if (scalers_map.count(STR_US_IC) > 0)
-                    {
-                        us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
-                    }
-                    else if (scalers_map.count(low_us_ic) > 0)
-                    {
-                        us_ic += scalers_map.at(low_us_ic)(yoffset, xoffset);
-                    }
-                    if (scalers_map.count(STR_US_FM) > 0)
-                    {
-                        us_fm += scalers_map.at(STR_US_FM)(yoffset, xoffset);
-                    }
-                    if (scalers_map.count(STR_SR_CURRENT) > 0)
-                    {
-                        sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
-                    }
-                    else if (scalers_map.count(low_sr) > 0)
-                    {
-                        sr_current += scalers_map.at(low_sr)(yoffset, xoffset);
-                    }
-                }
-            }
-            else
-            {
-                sr_current = detector->fit_params_override_dict.sr_current;
-                us_ic = detector->fit_params_override_dict.US_IC;
-                us_fm = detector->fit_params_override_dict.US_FM;
-                ds_ic = detector->fit_params_override_dict.DS_IC;
-            }
-
-
-            data_struct::Fit_Parameters<double> out_fitp;
-            std::string roi_name = roi_itr.first;
-            if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, nullptr, status_callback))
-            {
-                logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
-            }
-
-                
-            double total_counts = 0.0;
-            for (auto& itr : out_fitp)
-            {
-                if (data_struct::Element_Info_Map<double>::inst()->is_element(itr.first))
-                {
-                    total_counts += itr.second.value;
-                }
-            }
-                
-
-            double abs_err = std::abs(out_fitp.at(STR_RESIDUAL).value);
-            double rel_err = abs_err / int_spectra.sum();;
-            double roi_area = 0;
-            if (scan_info.meta_info.x_axis.rows() > 0 && scan_info.meta_info.x_axis.cols() > 0
-                && scan_info.meta_info.y_axis.rows() > 0 && scan_info.meta_info.y_axis.cols() > 0)
-            {
-                roi_area = roi_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
-            }
-            // add in other properties that will be saved to csv
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_FM, us_fm));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("total_perror", out_fitp.at(STR_RESIDUAL).value));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", abs_err));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", rel_err));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", roi_area));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", params_override->us_amp_sens_num));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_num", params_override->ds_amp_sens_num));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_unit", io::file::translate_back_sens_unit<double>(params_override->ds_amp_sens_unit)));
-            out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", params_override->ds_amp_sens_num));
-            out_roi_fit_params[sfile_name + "_roi_" + roi_name] = out_fitp;
+            processed++;
         }
+        else
+        {
+            logE << "Could not find dataset file for " << search_filename << "\n";
+            continue;
+        }
+        data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
+        if (detector == nullptr)
+        {
+            logE << "Detector " << detector_num << " is not initialized, skipping..\n";
+            continue;
+        }
+            
+        data_struct::Params_Override<double>* params_override = &(detector->fit_params_override_dict);
+            
+        /// If quant is not done also, Need to save more info from Quantification first, then we can finish implementing loading quant from hdf5 instead of rerunning each time roi's are done
+        ///io::file::HDF5_IO::inst()->load_quantification_analyzed_h5(file_path, detector);
+        // load scalers and scan info
+        data_struct::Scan_Info<double> scan_info;
+        io::file::HDF5_IO::inst()->load_scan_info_analyzed_h5(file_path, detector, scan_info);
+
+        double sr_current = 1.0;
+        double us_ic = 1.0;
+        double us_fm = 1.0;
+        double ds_ic = 1.0;
+
+        std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
+        if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
+        {
+            std::string low_ds_ic = STR_DS_IC;
+            std::transform(low_ds_ic.begin(), low_ds_ic.end(), low_ds_ic.begin(), [](unsigned char c) { return std::tolower(c); });
+            std::string low_us_ic = STR_US_IC; 
+            std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
+            std::string low_sr = STR_SR_CURRENT;
+            std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
+            for (auto& in_itr : roi_itr.second)
+            {
+                hsize_t xoffset = in_itr.first;
+                hsize_t yoffset = in_itr.second;
+                if (scalers_map.count(STR_DS_IC) > 0)
+                {
+                    ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
+                }
+                else if (scalers_map.count(low_ds_ic) > 0)
+                {
+                    ds_ic += scalers_map.at(low_ds_ic)(yoffset, xoffset);
+                }
+                if (scalers_map.count(STR_US_IC) > 0)
+                {
+                    us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
+                }
+                else if (scalers_map.count(low_us_ic) > 0)
+                {
+                    us_ic += scalers_map.at(low_us_ic)(yoffset, xoffset);
+                }
+                if (scalers_map.count(STR_US_FM) > 0)
+                {
+                    us_fm += scalers_map.at(STR_US_FM)(yoffset, xoffset);
+                }
+                if (scalers_map.count(STR_SR_CURRENT) > 0)
+                {
+                    sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
+                }
+                else if (scalers_map.count(low_sr) > 0)
+                {
+                    sr_current += scalers_map.at(low_sr)(yoffset, xoffset);
+                }
+            }
+        }
+        else
+        {
+            sr_current = detector->fit_params_override_dict.sr_current;
+            us_ic = detector->fit_params_override_dict.US_IC;
+            us_fm = detector->fit_params_override_dict.US_FM;
+            ds_ic = detector->fit_params_override_dict.DS_IC;
+        }
+
+
+        data_struct::Fit_Parameters<double> out_fitp;
+        std::string roi_name = roi_itr.first;
+        if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, nullptr, status_callback))
+        {
+            logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
+        }
+
+            
+        double total_counts = 0.0;
+        for (auto& itr : out_fitp)
+        {
+            if (data_struct::Element_Info_Map<double>::inst()->is_element(itr.first))
+            {
+                total_counts += itr.second.value;
+            }
+        }
+            
+
+        double abs_err = std::abs(out_fitp.at(STR_RESIDUAL).value);
+        double rel_err = abs_err / int_spectra.sum();;
+        double roi_area = 0;
+        if (scan_info.meta_info.x_axis.rows() > 0 && scan_info.meta_info.x_axis.cols() > 0
+            && scan_info.meta_info.y_axis.rows() > 0 && scan_info.meta_info.y_axis.cols() > 0)
+        {
+            roi_area = roi_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
+        }
+        // add in other properties that will be saved to csv
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("live_time", int_spectra.elapsed_livetime()));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("SRcurrent", sr_current));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_IC, us_ic));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_US_FM, us_fm));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_DS_IC, ds_ic));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("total_counts", total_counts));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("status", out_fitp.at(STR_OUTCOME).value));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("niter", out_fitp.at(STR_NUM_ITR).value));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("total_perror", out_fitp.at(STR_RESIDUAL).value));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", abs_err));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", rel_err));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", roi_area));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", params_override->us_amp_sens_num));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_num", params_override->ds_amp_sens_num));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_unit", io::file::translate_back_sens_unit<double>(params_override->ds_amp_sens_unit)));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("DS_sensfactor", params_override->ds_amp_sens_num));
+        out_roi_fit_params[sfile_name + "_roi_" + roi_name] = out_fitp;
+    }
+    if(processed == rois.size())
+    {
         return true;
     }
     else
     {
-        logE << "Could not find dataset file for " << search_filename << "\n";
         return false;
     }
-    return false;
 }
 
 // ----------------------------------------------------------------------------

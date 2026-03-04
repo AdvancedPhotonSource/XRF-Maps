@@ -14,8 +14,6 @@ BeamLines:
       US_IC: 2idd:scaler1_cts1.C
       DS_IC: 
         - 2idd:scaler1_cts1.B
-        - 2iddtmm1:Current4:MeanValue_RBV
-        - 2iddtmm1:Current4
       DS_IC_SCALE_FACTOR: 2iddtmm1:CurrentScale4
       ELT1: 2iddXMAP:mca1.ELTM
       ELT2: 2iddXMAP:mca2.ELTM

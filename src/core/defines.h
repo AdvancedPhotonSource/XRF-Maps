@@ -337,6 +337,8 @@ const std::string STR_LIMITED_LO = "limit_lo";
 const std::string STR_LIMITED_HI = "limit_hi";
 const std::string STR_FIT = "fit";
 
+const std::string STR_CUSTOM_EL_REGION = "CUSTOM_ELEMENT_REGION";
+
 // ROI
 const std::string STR_MAPS_ROIS = "MAPS_ROIS";
 const std::string STR_MAP_ROI_NAME = "Name";

@@ -81,9 +81,9 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
     else
     {
         std::string str_shell = _full_name.substr(idx);
-        if (str_shell == "L")
+        if (str_shell == "M")
         {
-            _shell_type = Electron_Shell::L_SHELL;
+            _shell_type = Electron_Shell::M_SHELL;
         }
         else if (str_shell == "L")
         {
@@ -119,6 +119,33 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
+Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, T_real center, T_real width_multi)
+{
+    _full_name = name;
+
+    _element_info = nullptr;
+
+    _pileup_element_info = nullptr;
+
+    _width_multi = width_multi;
+
+    _center = center;
+
+    _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );
+    _width /= 2000.0;
+    _width *= _width_multi;
+
+    size_t num_ratios = 1;
+    _energy_ratios.push_back(Element_Energy_Ratio<T_real>(_center, 1.0, 0.0, Element_Param_Type::Ka1_Line));
+    for(size_t i=0; i<num_ratios; i++)
+    {
+        _energy_ratio_custom_multipliers.push_back(1.0);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
 Fit_Element_Map<T_real>::~Fit_Element_Map()
 {
 
@@ -135,6 +162,10 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
 
     if(_element_info == nullptr)
     {
+        _width = int( std::sqrt( std::pow(ENERGY_RES_OFFSET, 2) + std::pow( (_center * ENERGY_RES_SQRT), 2)  ) );
+        _width /= 2000.0;
+        _width *= _width_multi;
+
         //Don't log because we can have non elements such as Compton that doesn't have element properties
         //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
