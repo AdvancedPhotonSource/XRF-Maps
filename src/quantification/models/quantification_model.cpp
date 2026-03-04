@@ -95,11 +95,11 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
     //fit_t_ge == GE_DEAD_LAYER * 1000 if detector is not Si
     //add_float['a'] == DET_CHIP_THICKNESS   * 1000
 
-    T_real beta;
-    T_real shell_factor = 0.0;
-    T_real ev;
-    T_real jump_factor = 0.0;
-    T_real total_jump_factor = 0.0;
+    T_real beta = (T_real)0.0;
+    T_real shell_factor = (T_real)0.0;
+    T_real ev = (T_real)0.0;
+    T_real jump_factor = (T_real)0.0;
+    T_real total_jump_factor = (T_real)0.0;
 
     
 
