@@ -129,7 +129,7 @@ DLL_EXPORT bool load_v10_rois(std::string path, std::map<std::string, std::vecto
                         && json_spectra.isMember(STR_ICR.c_str())
                         && json_spectra.isMember(STR_OCR.c_str()))
                     {
-                        std::string filename = json_spectra[STR_MAP_ROI_INT_SPEC_FILENAME.c_str()].asString();
+                        std::string filename = json_spectra[STR_MAP_ROI_INT_SPEC_FILENAME.c_str()].asString() + roi_name;
                         const Json::Value json_spectra_values = json_spectra[STR_SPECTRA.c_str()];
                         int_specs[filename].resize(json_spectra_values.size());
                         int_specs[filename].elapsed_livetime(json_spectra[STR_ELT.c_str()].asDouble());
