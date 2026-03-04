@@ -271,8 +271,6 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i2 = (i2 << 16) & 0xffff0000;
             unsigned int ii = i1 | i2;
             elapsed_livetime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
-            logE<<_data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)]<<" :: "<<ii<<"\n";
-            logW<<"i1["<<l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)<<"] : "<<i1<<"    ::  ii2 : "<<i2<<"    ::     elt : "<<elapsed_livetime<<" ---- \n";
             if (ltype == E_load_type::LINE)
             {
                 if (elapsed_livetime == 0)
