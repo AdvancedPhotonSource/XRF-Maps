@@ -210,7 +210,7 @@ void Fit_Parameters<T_real>::from_array_d(const std::vector<double> &arr)
     {
         if (itr.second.opt_array_index != -1 && itr.second.opt_array_index < arr.size())
         {
-            itr.second.value = arr[itr.second.opt_array_index];
+            itr.second.value = static_cast<T_real>(arr[itr.second.opt_array_index]);
         }
     }
 }
