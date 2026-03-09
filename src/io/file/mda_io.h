@@ -81,6 +81,8 @@ namespace io
 namespace file
 {
 
+enum class Load_Status{ Failed, Half_need_spectra, Loaded };
+
 template<typename T_real>
 class DLL_EXPORT MDA_IO
 {
@@ -101,7 +103,7 @@ public:
 
     bool load_scalers(std::string path);
 
-    bool load_spectra_volume(std::string path,
+    Load_Status load_spectra_volume(std::string path,
                             size_t detector_num,
                             data_struct::Spectra_Volume<T_real>* vol,
                             bool hasNetCDF,

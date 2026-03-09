@@ -1658,6 +1658,13 @@ public:
                     ocr_array.setOnes();
                 }
             }
+            else
+            {
+                elt_array.setOnes();
+                ert_array.setOnes();
+                icr_array.setOnes();
+                ocr_array.setOnes();
+            }
             err = _read_h5d<T_real2>(energy_dset_id, H5S_ALL, energy_space_id, H5P_DEFAULT, energy_array.data());
             if(err < 0)
             {
@@ -1694,6 +1701,9 @@ public:
             int left_pol_idx = 0;
             int right_pol_idx = 0;
 
+            int scaler_idx = 0;
+            int scaler_cntr = 0;
+            int scaler_inc = params_override->polarity_pattern.size();
             for(size_t i = 0; i < dims3[0]; i++)
             {
                 offset3[0] = i;
@@ -1774,11 +1784,21 @@ public:
                 (*spec_vol)[polarity][idx].input_counts(icr_array[i]);
                 (*spec_vol)[polarity][idx].output_counts(ocr_array[i]);
 
-                energy_map.values(polarity, idx) = energy_array[i];
-                i0_map.values(polarity, idx) = i0_array[i];
+                
+                energy_map.values(0, idx) = energy_array[scaler_idx];
+                energy_map.values(1, idx) = energy_array[scaler_idx];
+                i0_map.values(0, idx) = i0_array[scaler_idx];
+                i0_map.values(1, idx) = i0_array[scaler_idx];
 
-                dtf_map.values(polarity, idx) = dtf_array[i];
-                dtp_map.values(polarity, idx) = dtp_array[i];
+                scaler_cntr ++;
+                if(scaler_cntr > scaler_inc)
+                {
+                    scaler_cntr = 0;
+                    scaler_idx ++;
+                }   
+                
+                dtf_map.values(0, idx) = dtf_array[i];
+                dtp_map.values(0, idx) = dtp_array[i];
             }
 
             scan_info.scaler_maps.push_back(dtf_map);

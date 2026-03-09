@@ -233,7 +233,7 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool MDA_IO<T_real>::load_spectra_volume(std::string path,
+Load_Status MDA_IO<T_real>::load_spectra_volume(std::string path,
                                  size_t detector_num,
                                  data_struct::Spectra_Volume<T_real>* vol,
                                  bool hasNetCDF,
@@ -252,7 +252,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
 
     if (fptr == nullptr)
     {
-        return false;
+        return Load_Status::Failed;
     }
 
 
@@ -260,14 +260,14 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
     std::fclose(fptr);
     if (_mda_file == nullptr || vol == nullptr)
     {
-        return false;
+        return Load_Status::Failed;
     }
     logI<<"mda info ver:"<<_mda_file->header->version<<" data rank:"<<_mda_file->header->data_rank<<"\n";
 
     if (_mda_file->header->data_rank == 1)
     {
         logE << "Cannot load mda file data rank == 1" << "\n";
-        return false;
+        return Load_Status::Failed;
     }
 
     _load_scalers(false,hasNetCDF, subtract_two_cols);
@@ -311,7 +311,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
             }
 
             vol->resize_and_zero(rows, cols, 2048);
-            return true;
+            return Load_Status::Half_need_spectra;
         }
         else
         {
@@ -322,7 +322,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 {
                     logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
-                    return false;
+                    return Load_Status::Failed;
                 }
 
                 rows = 1;
@@ -347,7 +347,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                 //if not then we don't know what is dataset is.
                 logE << "Don't understand this dataset layout. Can not load it.\n";
                 unload();
-                return false;
+                return Load_Status::Failed;
             }
         }
     }
@@ -392,7 +392,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
                     cols = 1;
                 }
                 vol->resize_and_zero(rows, cols, 2048);
-                return true;
+                return Load_Status::Half_need_spectra;
             }
             // TODO: might need to check if is XANES like above 
         }
@@ -400,7 +400,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
         {
             logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
-            return false;
+            return Load_Status::Failed;
         }
 
         if(_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
@@ -442,7 +442,7 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
     {
         logE<<" No support for data rank "<< _mda_file->header->data_rank <<"\n";
         unload();
-        return false;
+        return Load_Status::Failed;
     }
 
     elt_arr = _scan_info.scaler_values(STR_ELT + std::to_string(detector_num + 1));
@@ -524,10 +524,10 @@ bool MDA_IO<T_real>::load_spectra_volume(std::string path,
     {
         logE<<"Caught exception loading mda file."<<"\n";
         std::cerr << "Exception catched : " << e.what() << "\n";
-        return false;
+        return Load_Status::Failed;
     }
 
-    return true;
+    return Load_Status::Loaded;
 }
 
 

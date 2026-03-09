@@ -186,6 +186,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                                 // e_cal_ratio defined as 0 , add this value. If we have multiple standards
                                 // then we will normalize this later .
                                 eq_itr.e_cal_ratio += (T_real)1.0 / e_cal;
+                                logI<<"Ecal : "<<eq_itr.e_cal_ratio<<"\n";
 
                             }
                             else
@@ -248,15 +249,15 @@ void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
 template<typename T_real>
 void Detector<T_real>::generage_avg_quantification_scalers()
 {
-    T_real avg_sr_current = 0.0;
-    T_real avg_US_IC = 0.0;
-    T_real avg_US_FM = 0.0;
-    T_real avg_DS_IC = 0.0;
+    T_real avg_sr_current = (T_real)0.0;
+    T_real avg_US_IC = (T_real)0.0;
+    T_real avg_US_FM = (T_real)0.0;
+    T_real avg_DS_IC = (T_real)0.0;
 
-    T_real crnt_cnt = 0.0;
-    T_real us_cnt = 0.0;
-    T_real us_fm_cnt = 0.0;
-    T_real ds_cnt = 0.0;
+    T_real crnt_cnt = (T_real)0.0;
+    T_real us_cnt = (T_real)0.0;
+    T_real us_fm_cnt = (T_real)0.0;
+    T_real ds_cnt = (T_real)0.0;
 
     //average quantification scalers
     for (const auto& itr : quantification_standards)

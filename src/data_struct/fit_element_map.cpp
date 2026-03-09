@@ -81,9 +81,9 @@ Fit_Element_Map<T_real>::Fit_Element_Map(std::string name, Element_Info<T_real>*
     else
     {
         std::string str_shell = _full_name.substr(idx);
-        if (str_shell == "L")
+        if (str_shell == "M")
         {
-            _shell_type = Electron_Shell::L_SHELL;
+            _shell_type = Electron_Shell::M_SHELL;
         }
         else if (str_shell == "L")
         {
