@@ -583,14 +583,14 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
     int processed = 0;
     
     std::string sfile_name;
-    for (auto& roi_itr : rois)
+    for (auto& roi_pixels_itr : rois)
     {
         data_struct::Spectra<double> int_spectra;
         std::string file_path = analysis_job.output_dir + "img.dat" + DIR_END_CHAR; 
-        int cnt = int_spectra_map.count(search_filename + roi_itr.first);
+        int cnt = int_spectra_map.count(search_filename + roi_pixels_itr.first);
         if (cnt > 0)
         {
-            int_spectra = int_spectra_map.at(search_filename + roi_itr.first);
+            int_spectra = int_spectra_map.at(search_filename + roi_pixels_itr.first);
             sfile_name = search_filename;
             file_path += sfile_name;
             processed++;
@@ -606,7 +606,8 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 sfile_name = search_filename;
             }
             file_path += sfile_name;
-            if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, &int_spectra, roi_itr.second))
+            std::map<std::string, double> scaler_sum_map;
+            if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, roi_pixels_itr.second, &int_spectra, scaler_sum_map))
             {
                 logE << "Could not load int spectra for " << file_path << ".  skipping..\n";
                 continue;
@@ -647,7 +648,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
             std::string low_sr = STR_SR_CURRENT;
             std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
-            for (auto& in_itr : roi_itr.second)
+            for (auto& in_itr : roi_pixels_itr.second)
             {
                 hsize_t xoffset = in_itr.first;
                 hsize_t yoffset = in_itr.second;
@@ -691,7 +692,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
 
         data_struct::Fit_Parameters<double> out_fitp;
-        std::string roi_name = roi_itr.first;
+        std::string roi_name = roi_pixels_itr.first;
         if (false == optimize_integrated_fit_params(&analysis_job, int_spectra, detector_num, params_override, sfile_name + "_roi_" + roi_name + "_det_", out_fitp, nullptr, status_callback))
         {
             logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
@@ -714,7 +715,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
         if (scan_info.meta_info.x_axis.rows() > 0 && scan_info.meta_info.x_axis.cols() > 0
             && scan_info.meta_info.y_axis.rows() > 0 && scan_info.meta_info.y_axis.cols() > 0)
         {
-            roi_area = roi_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
+            roi_area = roi_pixels_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
         }
         // add in other properties that will be saved to csv
         out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));
@@ -730,7 +731,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
         out_fitp.add_parameter(data_struct::Fit_Param<double>("abs_error", abs_err));
         out_fitp.add_parameter(data_struct::Fit_Param<double>("relative_error", rel_err));
         out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_areas", roi_area));
-        out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_itr.second.size()));
+        out_fitp.add_parameter(data_struct::Fit_Param<double>("roi_pixels", roi_pixels_itr.second.size()));
         out_fitp.add_parameter(data_struct::Fit_Param<double>("US_num", params_override->us_amp_sens_num));
         out_fitp.add_parameter(data_struct::Fit_Param<double>("US_unit", io::file::translate_back_sens_unit<double>(params_override->us_amp_sens_unit)));
         out_fitp.add_parameter(data_struct::Fit_Param<double>("US_sensfactor", params_override->us_amp_sens_num));
@@ -784,7 +785,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     for (const auto& spec_itr : int_specs)
                     {
                         slen = spec_itr.first.length();
-                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0])
+                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0] && spec_itr.first[slen - 2] == '5')
                         {
                             search_filename = spec_itr.first;
                             break;
