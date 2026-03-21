@@ -3992,7 +3992,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_integrated_spectra_analyzed_h5_roi(std::string path, data_struct::Spectra<T_real>* int_spectra, ROI_Vec& roi)
+    bool load_integrated_spectra_analyzed_h5_roi(const std::string &path, const ROI_Vec& roi_pizels, data_struct::Spectra<T_real>* int_spectra, std::map<std::string, T_real> &out_scaler_sum_map)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -4018,7 +4018,10 @@ public:
         hsize_t offset_1[1] = { 0 };
         hsize_t count_1[1] = { 1 };
 
+        
+        T_real us_ic_sum = 0.0, ds_ic_sum = 0.0, sr_curr_summ = 0.0, tmp_flt = 0.0;
         hsize_t elt_off = (hsize_t)-1, ert_off = (hsize_t)-1, in_off = (hsize_t)-1, out_off = (hsize_t)-1;
+        hsize_t us_ic_off = (hsize_t)-1, ds_ic_off = (hsize_t)-1, sr_curr_off = (hsize_t)-1;
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1, false))
             return false;
@@ -4039,57 +4042,82 @@ public:
         dataspace_id = H5Dget_space(dset_id);
         close_map.push({ dataspace_id, H5O_DATASPACE });
 
-        if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, "Elapsed_Livetime", spec_grp_id, false, false))
+        if (false == _open_h5_object(dset_scalers, H5O_DATASET, close_map, "/MAPS/Scalers/Values", file_id, false, false))
         {
             if (false == _open_h5_object(dset_scalers, H5O_DATASET, close_map, "scalers", spec_grp_id))
             {
                 return false;
             }
+        }
+        if (false == _open_h5_object(dset_scaler_names, H5O_DATASET, close_map, "/MAPS/Scalers/Names", file_id, false, false))
+        {
             if (false == _open_h5_object(dset_scaler_names, H5O_DATASET, close_map, "scaler_names", spec_grp_id))
             {
                 return false;
             }
-            dataspace_scalers = H5Dget_space(dset_scalers);
-            close_map.push({ dataspace_scalers, H5O_DATASPACE });
+        }
 
-            dataspace_scaler_names = H5Dget_space(dset_scaler_names);
-            close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
-            hid_t memtype = H5Dget_type(dset_scaler_names);
-            close_map.push({ memtype, H5O_DATATYPE });
+        dataspace_scalers = H5Dget_space(dset_scalers);
+        close_map.push({ dataspace_scalers, H5O_DATASPACE });
 
-            //  read scaler names and search for elt1, ert1, incnt1, outcnt1
-            hsize_t dims_out[1];
-            H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
-            char tmp_name[256] = { 0 };
-            memoryspace_1 = H5Screate_simple(1, count, nullptr);
-            for (hsize_t idx = 0; idx < dims_out[0]; idx++)
+        dataspace_scaler_names = H5Dget_space(dset_scaler_names);
+        close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
+        hid_t memtype = H5Dget_type(dset_scaler_names);
+        close_map.push({ memtype, H5O_DATATYPE });
+
+        //  read scaler names and search for elt1, ert1, incnt1, outcnt1
+        hsize_t dims_out[1];
+        H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
+        char tmp_name[256] = { 0 };
+        memoryspace_1 = H5Screate_simple(1, count, nullptr);
+        for (hsize_t idx = 0; idx < dims_out[0]; idx++)
+        {
+            offset_1[0] = idx;
+            memset(&tmp_name[0], 0, 255);
+            H5Sselect_hyperslab(dataspace_scaler_names, H5S_SELECT_SET, offset_1, nullptr, count_1, nullptr);
+            error = H5Dread(dset_scaler_names, memtype, memoryspace_1, dataspace_scaler_names, H5P_DEFAULT, (void*)&tmp_name[0]);
+            if (error == 0)
             {
-                offset_1[0] = idx;
-                memset(&tmp_name[0], 0, 254);
-                H5Sselect_hyperslab(dataspace_scaler_names, H5S_SELECT_SET, offset_1, nullptr, count_1, nullptr);
-                error = H5Dread(dset_scaler_names, memtype, memoryspace_1, dataspace_scaler_names, H5P_DEFAULT, (void*)&tmp_name[0]);
-                if (error == 0)
+                std::string name = std::string(tmp_name);
+                name.erase(std::remove_if(name.begin(), name.end(), ::isspace), name.end());
+                // macOS bug adds a '.' to the end . 2026/03/21
+                if(name[name.size()-1] == '.')
                 {
-                    std::string name = std::string(tmp_name);
-
-                    if (name == STR_ELT + "1")
-                    {
-                        elt_off = idx;
-                    }
-                    else if (name == STR_ERT + "1")
-                    {
-                        ert_off = idx;
-                    }
-                    else if (name == STR_ICR + "1")
-                    {
-                        in_off = idx;
-                    }
-                    else if (name == STR_OCR + "1")
-                    {
-                        out_off = idx;
-                    }
+                    name = name.substr(0, name.size()-1);
+                }
+                if (name == STR_ELT + "1")
+                {
+                    elt_off = idx;
+                }
+                else if (name == STR_ERT + "1")
+                {
+                    ert_off = idx;
+                }
+                else if (name == STR_ICR + "1")
+                {
+                    in_off = idx;
+                }
+                else if (name == STR_OCR + "1")
+                {
+                    out_off = idx;
+                }
+                else if (name == STR_US_IC)
+                {
+                    us_ic_off = idx;
+                }
+                else if (name == STR_DS_IC)
+                {
+                    ds_ic_off = idx;
+                }
+                else if (name == STR_SR_CURRENT)
+                {
+                    sr_curr_off = idx;
                 }
             }
+        }
+
+        if (false == _open_h5_object(dset_lt_id, H5O_DATASET, close_map, "Elapsed_Livetime", spec_grp_id, false, false))
+        {
             is_v9 = true;
             H5Tclose(memtype);
         }
@@ -4157,7 +4185,7 @@ public:
         T_real out_cnt = 1.0;
 
 
-        for (auto& itr : roi)
+        for (auto& itr : roi_pizels)
         {
             hsize_t xoffset = itr.first;
             hsize_t yoffset = itr.second;
@@ -4179,6 +4207,52 @@ public:
             if (error > 0)
             {
                 logW << "Counld not read row " << yoffset << " col " << xoffset << "\n";
+            }
+
+            if(us_ic_off != -1)
+            {
+                count[0] = 1;
+                offset[0] = us_ic_off;
+                H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
+                if (error > 0)
+                {   
+                    logW<<"Could not read us_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
+                }
+                else
+                {
+                    us_ic_sum += tmp_flt;
+                }
+            }
+            if(ds_ic_off != -1)
+            {
+                count[0] = 1;
+                offset[0] = ds_ic_off;
+                H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
+                if (error > 0)
+                {   
+                    logW<<"Could not read ds_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
+                }
+                else
+                {
+                    ds_ic_sum += tmp_flt;
+                }
+            }
+            if(sr_curr_off != -1)
+            {
+                count[0] = 1;
+                offset[0] = sr_curr_off;
+                H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
+                error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
+                if (error > 0)
+                {   
+                    logW<<"Could not read sr_curr_off at index "<<itr.first<<" , "<<itr.second<<"\n";
+                }
+                else
+                {
+                    sr_curr_summ += tmp_flt;
+                }
             }
 
             if (is_v9)
@@ -4230,9 +4304,13 @@ public:
             int_spectra->add(spectra);
         }
 
-        int_spectra->recalc_elapsed_livetime();
+        //int_spectra->recalc_elapsed_livetime();
 
         _close_h5_objects(close_map);
+
+        out_scaler_sum_map[STR_US_IC] = us_ic_sum;
+        out_scaler_sum_map[STR_DS_IC] = ds_ic_sum;
+        out_scaler_sum_map[STR_SR_CURRENT] = sr_curr_summ;
 
         end = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = end - start;
