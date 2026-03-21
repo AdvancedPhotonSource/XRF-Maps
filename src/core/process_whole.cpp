@@ -606,7 +606,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 sfile_name = search_filename;
             }
             file_path += sfile_name;
-            std::map<std::string, double> scaler_sum_map;
+            std::unordered_map<std::string, double> scaler_sum_map;
             if (false == io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5_roi(file_path, roi_pixels_itr.second, &int_spectra, scaler_sum_map))
             {
                 logE << "Could not load int spectra for " << file_path << ".  skipping..\n";

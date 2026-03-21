@@ -3992,7 +3992,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_integrated_spectra_analyzed_h5_roi(const std::string &path, const ROI_Vec& roi_pizels, data_struct::Spectra<T_real>* int_spectra, std::map<std::string, T_real> &out_scaler_sum_map)
+    bool load_integrated_spectra_analyzed_h5_roi(const std::string &path, const ROI_Vec& roi_pizels, data_struct::Spectra<T_real>* int_spectra, std::unordered_map<std::string, T_real> &out_scaler_sum_map)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
