@@ -479,7 +479,7 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
         {
             quantification_standard->sr_current = itr.second;
         }
-        else if (itr.first == STR_US_IC)
+        else if (itr.first == STR_US_IC || itr.first == STR_US_IC_FULL)
         {
             quantification_standard->US_IC = itr.second;
         }
@@ -487,7 +487,7 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
         {
             quantification_standard->US_FM = itr.second;
         }
-        else if (itr.first == STR_DS_IC)
+        else if (itr.first == STR_DS_IC || itr.first == STR_DS_IC_FULL)
         {
             quantification_standard->DS_IC = itr.second;
         }
