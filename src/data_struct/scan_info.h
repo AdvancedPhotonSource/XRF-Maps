@@ -138,6 +138,18 @@ public:
         return nullptr;
     }
 
+    int scaler_idx(const std::string& scaler_name) const
+    {
+        for(size_t i=0; i<scaler_maps.size(); i++)
+        {
+            if (scaler_maps[i].name == scaler_name)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     T_real scaler_avg_value(const std::string& scaler_name)
     {
         for (auto& itr : scaler_maps)
@@ -148,6 +160,14 @@ public:
             }
         }
         return (T_real)0.0;
+    }
+
+    void initialize_scaler_map(std::string name_)
+    {
+        data_struct::Scaler_Map<T_real> map;
+        map.name = name_;
+        map.values.resize(meta_info.requested_rows, meta_info.requested_cols);
+        scaler_maps.push_back(map);
     }
 
     Scan_Meta_Info<T_real> meta_info;
