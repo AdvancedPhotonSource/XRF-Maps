@@ -770,13 +770,14 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
             else if (hasXspress)
             {
+                data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
                 std::string full_filename;
                 data_struct::Spectra_Line<T_real> spectra_line;
                 spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                 for (size_t i = 0; i < dims[0]; i++)
                 {
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                    if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line))
+                    if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &spectra_line, scan_info))
                     {
                         for (size_t k = 0; k < spectra_line.size(); k++)
                         {
@@ -1362,6 +1363,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         }
         else if (hasHdf)
         {
+            data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
             if (false == io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume))
             {
                 std::string full_filename;
@@ -1369,13 +1371,26 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 {
                     //everyone else
                     full_filename = dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
                 }
 
             }
         }
         else if (hasXspress)
         {
+            data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
+            if(scan_info != nullptr)
+            {
+                scan_info->initialize_scaler_map(STR_RESET_TICKS);
+                scan_info->initialize_scaler_map(STR_RESET_COUNT);
+                scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
+                scan_info->initialize_scaler_map(STR_WINDOW0);
+                scan_info->initialize_scaler_map(STR_WINDOW1);
+                scan_info->initialize_scaler_map(STR_DEADTIME_PERC);
+                scan_info->initialize_scaler_map(STR_DEADTIME_FACT);
+                scan_info->initialize_scaler_map(STR_PILEUP_LINES);
+            }
+
             std::string full_filename;
             for (size_t i = 0; i < spectra_volume->rows(); i++)
             {
@@ -1384,13 +1399,13 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 if(idx == 0)
                 {
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
                 }
                 else
                 {
                     //everyone else
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i]);
+                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
                 }
             }
         }
