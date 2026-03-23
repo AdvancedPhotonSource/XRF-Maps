@@ -515,6 +515,10 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             {
                 params_override->US_IC = pv_map.at(STR_US_IC);
             }
+            else if (pv_map.count(STR_US_IC_FULL) > 0)
+            {
+                params_override->US_IC = pv_map.at(STR_US_IC_FULL);
+            }
             if (pv_map.count(STR_US_FM) > 0)
             {
                 params_override->US_FM = pv_map.at(STR_US_FM);
@@ -522,7 +526,11 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             if (pv_map.count(STR_DS_IC) > 0)
             {
                 params_override->DS_IC = pv_map.at(STR_DS_IC);
-            }    
+            }
+            else if (pv_map.count(STR_DS_IC_FULL) > 0)
+            {
+                params_override->DS_IC = pv_map.at(STR_DS_IC_FULL);
+            }
             return true;
         }
         else
