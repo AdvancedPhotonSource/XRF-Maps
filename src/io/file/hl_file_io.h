@@ -499,7 +499,13 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         Spectra<T_real> spec;
         std::unordered_map<std::string, T_real> pv_map;
-        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map))
+        bool loaded_mca = io::file::mca::load_integrated_spectra(dataset_directory + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map);
+        if (false == loaded_mca)
+        {
+            loaded_mca = io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map);
+        }
+        
+        if(loaded_mca)
         {
             if (pv_map.count(STR_SR_CURRENT) > 0)
             {
@@ -518,6 +524,10 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 params_override->DS_IC = pv_map.at(STR_DS_IC);
             }    
             return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
