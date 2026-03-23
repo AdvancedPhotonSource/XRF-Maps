@@ -648,6 +648,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             std::transform(low_us_ic.begin(), low_us_ic.end(), low_us_ic.begin(), [](unsigned char c) { return std::tolower(c); });
             std::string low_sr = STR_SR_CURRENT;
             std::transform(low_sr.begin(), low_sr.end(), low_sr.begin(), [](unsigned char c) { return std::tolower(c); });
+            double d_amt = 0.0; 
             for (auto& in_itr : roi_pixels_itr.second)
             {
                 hsize_t xoffset = in_itr.first;
@@ -680,7 +681,13 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                 {
                     sr_current += scalers_map.at(low_sr)(yoffset, xoffset);
                 }
+
+                d_amt += 1.0;
             }
+            ds_ic /= d_amt;
+            us_ic /= d_amt;
+            us_fm /= d_amt;
+            sr_current /= d_amt;
         }
         else
         {
