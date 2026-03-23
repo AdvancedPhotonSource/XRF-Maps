@@ -230,7 +230,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num)
+bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num)
 {
     fitting::models::Gaussian_Model<double> model;
     quantification::models::Quantification_Model<double> quantification_model;
@@ -304,7 +304,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                         if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
                         {
                             logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
-                            continue;
+                            return false;
                         }
                         else
                         {
@@ -317,7 +317,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                     else
                     {
                         logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
-                        continue;
+                        return false;
                     }
                 }
                 else
@@ -335,7 +335,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
             {
                 logE << "Could not load file " << standard_itr.standard_filename << " for detector " << detector_num << "\n";
-                continue;
+                return false;
             }
             else
             {
@@ -349,7 +349,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         if (quantification_standard->integrated_spectra.size() == 0)
         {
             logE << "Spectra size == 0! Can't process it!\n";
-            continue;
+            return false;
         }
 
         //This is what IDL MAPS DID
@@ -444,6 +444,7 @@ void load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             detector->avg_element_quants(fit_itr.first, STR_DS_IC, element_amt_in_all_standards);
         }
     }
+    return true;
 }
 
 // ----------------------------------------------------------------------------
@@ -466,39 +467,41 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
             //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
             
-            load_and_fit_quatification_datasets(analysis_job, detector_num);
-            detector->generage_avg_quantification_scalers();
-
-            for(auto &fit_itr : detector->fit_routines)
+            if(load_and_fit_quatification_datasets(analysis_job, detector_num))
             {
-               fitting::optimizers::Optimizer<double>* optimizer = analysis_job->optimizer();
-               for (auto& quant_itr : detector->avg_quantification_scaler_map)
-               {      
-                    double reciprocal  = 1.0 / quant_itr.second;
+                detector->generage_avg_quantification_scalers();
 
-                    Fit_Parameters<double> fit_params;
-                    // min, and max values doen't matter because we are free fitting amplitude only
-                    fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20,  reciprocal, .01, E_Bound_Type::LIMITED_LO_HI));
-                    optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
-                    double val = fit_params["quantifier"].value;
+                for(auto &fit_itr : detector->fit_routines)
+                {
+                fitting::optimizers::Optimizer<double>* optimizer = analysis_job->optimizer();
+                for (auto& quant_itr : detector->avg_quantification_scaler_map)
+                {      
+                        double reciprocal  = 1.0 / quant_itr.second;
 
-                    if(false == std::isfinite(val))
-                    {
-                        logW << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<"Quantifier Value = Inf. setting it to 0.\n";
-                        val = 0;
+                        Fit_Parameters<double> fit_params;
+                        // min, and max values doen't matter because we are free fitting amplitude only
+                        fit_params.add_parameter(Fit_Param<double>("quantifier", 0., 1.0e20,  reciprocal, .01, E_Bound_Type::LIMITED_LO_HI));
+                        optimizer->minimize_quantification(&fit_params, &detector->all_element_quants[fit_itr.first][quant_itr.first], &quantification_model);
+                        double val = fit_params["quantifier"].value;
+
+                        if(false == std::isfinite(val))
+                        {
+                            logW << Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<"Quantifier Value = Inf. setting it to 0.\n";
+                            val = 0;
+                        }
+                        else
+                        {
+                            logI<< Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<" Quantifier Value Start = (1/"<<quant_itr.second<<") = "<<reciprocal<< " :: Optimized = "<<val<<"\n";
+                        }
+
+                        detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, val);
                     }
-                    else
-                    {
-                        logI<< Fitting_Routine_To_Str.at(fit_itr.first) << " " << quant_itr.first <<" Quantifier Value Start = (1/"<<quant_itr.second<<") = "<<reciprocal<< " :: Optimized = "<<val<<"\n";
-                    }
-
-                    detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, val);
                 }
-            }
 
-            if (save_when_done)
-            {
-                io::file::save_quantification_plots(analysis_job->output_dir, detector);
+                if (save_when_done)
+                {
+                    io::file::save_quantification_plots(analysis_job->output_dir, detector);
+                }
             }
         }
     }
