@@ -603,19 +603,20 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
     //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
-    if (false == mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files))
-
+    auto mda_ret_val = mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files);
+    if (Load_Status::Failed == mda_ret_val)
     {
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";
         return false;
     }
-    else
+    else if (Load_Status::Half_need_spectra == mda_ret_val)
     {
         mda_io.load_quantification_scalers(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, params_override, has_external_files);
 
-        if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf)
+        if (false == hasNetcdf && false == hasBnpNetcdf && false == hasHdf && false == hasXspress)
         {
             mda_io.unload();
+            return false;
         }
         else
         {
@@ -781,7 +782,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     {
                         for (size_t k = 0; k < spectra_line.size(); k++)
                         {
-                            *integrated_spectra += spectra_line[k];
+                            integrated_spectra->add(spectra_line[k]);
                         }
                     }
                 }

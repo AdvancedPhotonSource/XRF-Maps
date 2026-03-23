@@ -783,7 +783,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
+Load_Status MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		size_t detector_num,
 		data_struct::Spectra<T_real>* out_integrated_spectra,
 		bool hasNetCDF)
@@ -803,7 +803,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 	if (fptr == nullptr)
 	{
-		return false;
+		return Load_Status::Failed;
 	}
 
 
@@ -812,14 +812,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	if (_mda_file == nullptr || out_integrated_spectra == nullptr)
 	{
 		logE << "_mda_file or out_integrated_spectra == nullptr\n";
-		return false;
+		return Load_Status::Failed;
 	}
 	logI << "mda info ver:" << _mda_file->header->version << " data rank:" << _mda_file->header->data_rank << "\n";
 
 	if (_mda_file->header->data_rank == 1)
 	{
 		logE << "Cannot load mda file data rank == 1\n";
-		return false;
+		return Load_Status::Failed;
 	}
 
 	_load_scalers(false, hasNetCDF, hasNetCDF);
@@ -850,7 +850,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
             }
 			out_integrated_spectra->resize(2048);
-			return true;
+			return Load_Status::Half_need_spectra;
 		}
 		else
 		{
@@ -860,7 +860,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				{
 					logE << "Max detectors saved = " << _mda_file->scan->sub_scans[0]->number_detectors << "\n";
 					unload();
-					return false;
+					return Load_Status::Failed;
 				}
 
 				rows = 1;
@@ -880,7 +880,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			{
 				//if not then we don't know what is dataset is.
 				unload();
-				return false;
+				return Load_Status::Failed;
 			}
 		}
 	}
@@ -891,7 +891,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		{
 			logE << "Max detectors saved = " << _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors << "\n";
 			unload();
-			return false;
+			return Load_Status::Failed;
 		}
 
 		if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
@@ -929,7 +929,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	{
 		logE << " No support for data rank " << _mda_file->header->data_rank << "\n";
 		unload();
-		return false;
+		return Load_Status::Failed;
 	}
 
 	out_integrated_spectra->setZero(samples);
@@ -968,7 +968,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	{
 		logE << "Caught exception loading mda file." << "\n";
 		std::cerr << "Exception catched : " << e.what() << "\n";
-		return false;
+		return Load_Status::Failed;
 	}
     
     if (elt_arr)
@@ -989,7 +989,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
     }
 	out_integrated_spectra->recalc_elapsed_livetime();
 	
-	return true;
+	return Load_Status::Loaded;
 }
 
 //-----------------------------------------------------------------------------
