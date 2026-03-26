@@ -1096,12 +1096,12 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                     }
                     s_map.time_normalized = is_time_normalized;
                     s_map.unit = std::string(_mda_file->scan->detectors[k]->unit);
-                    _scan_info.scaler_maps.push_back(s_map);
+                    _scan_info.scaler_maps[s_map.name] = s_map;
                 }
 
                 if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
                 {
-                    _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                    _scan_info.scaler_maps[std::string(_mda_file->scan->detectors[k]->name)].values(0, i) = _mda_file->scan->detectors_data[k][i];
                 }
             }
 
@@ -1181,12 +1181,12 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                         }
                         s_map.time_normalized = is_time_normalized;
                         s_map.unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
-                        _scan_info.scaler_maps.push_back(s_map);
+                        _scan_info.scaler_maps[s_map.name] = s_map;
                     }
 
                     if (std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
                     {
-                        _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                        _scan_info.scaler_maps[std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name)].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
                     }
                 }
                 if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
@@ -1218,7 +1218,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
     std::vector<std::string> pv_names;
     for (const auto& itr : _scan_info.scaler_maps)
     {
-        pv_names.push_back(itr.name);
+        pv_names.push_back(itr.first);
     }
     std::string time_pv = "";
     double time_clock = 0.0;
@@ -1229,10 +1229,10 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
         {
             for (auto& itr : _scan_info.scaler_maps)
             {
-                if (itr.time_normalized)
+                if (itr.second.time_normalized)
                 {
-                    itr.values = itr.values / (*time_array / time_clock);
-                    itr.values = itr.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+                    itr.second.values = itr.second.values / (*time_array / time_clock);
+                    itr.second.values = itr.second.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
                 }
             }
         }
@@ -1255,7 +1255,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                     s_map.values += (*arr);
                 }
             }
-            _scan_info.scaler_maps.push_back(s_map);
+            _scan_info.scaler_maps[s_map.name] = s_map;
         }
     }
 }
@@ -1380,7 +1380,7 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
                     {
                         s_map.unit = "tetra2_" + e_pv.value;
                     }
-                    _scan_info.scaler_maps.push_back(s_map);  
+                    _scan_info.scaler_maps[s_map.name] = s_map;  
                 }
             }
 
@@ -1398,9 +1398,9 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 
         for(auto &itr : _scan_info.scaler_maps)
         {
-            if(name_hash.count(itr.name) > 0)
+            if(name_hash.count(itr.first) > 0)
             {
-                itr.name = name_hash.at(itr.name);
+                itr.second.name = name_hash.at(itr.first);
             }
         }
 	}
