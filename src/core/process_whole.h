@@ -702,7 +702,7 @@ DLL_EXPORT void iterate_datasets_and_update(data_struct::Analysis_Job<T_real>& a
 
 
         // Can scan for all hdf5 files in img.dat but will have to do it for multiple ext and filter out by detector num and avg
-        //for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "img.dat", ".hdf5"))
+        //for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files_by_ext(analysis_job.output_dir + "img.dat", ".hdf5"))
         //{
         //    hdf5_dataset_list.push_back(analysis_job.output_dir + "img.dat" + DIR_END_CHAR + itr);
         //}

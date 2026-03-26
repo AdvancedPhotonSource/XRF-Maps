@@ -582,7 +582,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
                             std::map<std::string, data_struct::Fit_Parameters<double>>& out_roi_fit_params,
                             Callback_Func_Status_Def* status_callback)
 {
-    std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "img.dat" + DIR_END_CHAR, search_filename);
+    std::vector<std::string> files = io::file::File_Scan::inst()->find_all_dataset_files_by_ext(analysis_job.output_dir + "img.dat" + DIR_END_CHAR, search_filename);
     int processed = 0;
     
     std::string sfile_name;
@@ -888,9 +888,9 @@ void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
      //       detector_num        file_name_roi           fit_params
     std::map<int, std::map<std::string, data_struct::Fit_Parameters<double>>> roi_fit_params;
     // old v9 format
-    std::vector<std::string> files_to_proc = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "rois", ".roi");
+    std::vector<std::string> files_to_proc = io::file::File_Scan::inst()->find_all_dataset_files_by_ext(analysis_job.output_dir + "rois", ".roi");
     // new roi format
-    std::vector<std::string> r0i_files = io::file::File_Scan::inst()->find_all_dataset_files(analysis_job.output_dir + "rois", ".r0i");
+    std::vector<std::string> r0i_files = io::file::File_Scan::inst()->find_all_dataset_files_by_ext(analysis_job.output_dir + "rois", ".r0i");
 
     for (auto itr : r0i_files)
     {

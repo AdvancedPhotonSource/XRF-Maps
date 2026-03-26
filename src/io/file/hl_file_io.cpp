@@ -484,41 +484,6 @@ void generate_h5_averages(std::string dataset_directory,
 }
 
 // ----------------------------------------------------------------------------
-/*
-std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str)
-{
-    std::vector<std::string> dataset_files;
-    logI<<dataset_directory<<" searching for "<<search_str<<"\n";
-    DIR *dir;
-    struct dirent *ent;
-    size_t search_str_size = search_str.length();
-    if ((dir = opendir (dataset_directory.c_str())) != NULL)
-    {
-        // print all the files and directories within directory 
-        while ((ent = readdir (dir)) != NULL)
-        {
-            std::string fname(ent->d_name);
-            // check if extension is .mda
-            if (fname.size() > 4)
-            {
-                if (fname.rfind(search_str) == fname.size() -search_str_size)
-                {
-                    dataset_files.push_back(fname);
-                }
-            }
-        }
-        closedir (dir);
-    }
-    else
-    {
-        // could not open directory 
-        logW<<"Could not open directory "<<dataset_directory<<" using search string "<<search_str<<"\n";
-    }
-
-    logI<<"found "<<dataset_files.size()<<"\n";
-    return dataset_files;
-}
-*/
 // ----------------------------------------------------------------------------
 
 void check_and_create_dirs(std::string dataset_directory)
