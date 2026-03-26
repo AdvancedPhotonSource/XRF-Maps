@@ -101,8 +101,6 @@ namespace file
 
 DLL_EXPORT void check_and_create_dirs(std::string dataset_directory);
 
-//DLL_EXPORT std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
-
 DLL_EXPORT void generate_h5_averages(std::string dataset_directory, std::string dataset_file, const std::vector<size_t>& detector_num_arr);
 
 DLL_EXPORT bool load_scalers_lookup(const std::string filename);
@@ -790,14 +788,39 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             else if (hasXspress)
             {
                 data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
+                if(scan_info != nullptr)
+                {
+                    scan_info->initialize_scaler_map(STR_RESET_TICKS);
+                    scan_info->initialize_scaler_map(STR_RESET_COUNT);
+                    scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
+                    scan_info->initialize_scaler_map(STR_WINDOW0);
+                    scan_info->initialize_scaler_map(STR_WINDOW1);
+                    scan_info->initialize_scaler_map(STR_DEADTIME_PERC);
+                    scan_info->initialize_scaler_map(STR_DEADTIME_FACT);
+                    scan_info->initialize_scaler_map(STR_PILEUP_LINES);
+                }
                 std::string full_filename;
                 data_struct::Spectra_Line<T_real> spectra_line;
                 spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
                 for (size_t i = 0; i < dims[0]; i++)
                 {
+                    std::map<std::string, Scaler_Map<T_real>> scalers_lines;
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                    if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &spectra_line, scan_info))
+                    if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line, scalers_lines))
                     {
+                        if(scan_info != nullptr)
+                        {
+                            for(auto sitr: scan_info->scaler_maps)
+                            {
+                                if(scalers_lines.count(sitr.first) > 0)
+                                {
+                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    {
+                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                    }
+                                }
+                            }
+                        }
                         for (size_t k = 0; k < spectra_line.size(); k++)
                         {
                             integrated_spectra->add(spectra_line[k]);
@@ -1000,7 +1023,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 sm.time_normalized = false;
                 sm.values.resize(1,1);
                 sm.values(0, 0) = itr.second;
-                scan_info.scaler_maps.push_back(sm);
+                scan_info.scaler_maps[sm.name] = sm;
             }
             
             scan_info.meta_info.requested_rows = 1;
@@ -1166,12 +1189,12 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 std::string s_fullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + s_itr.second;
                 if (io::file::edf::load_scaler(s_fullpath, s_map))
                 {
-                    scan_info_edf.scaler_maps.push_back(s_map);
+                    scan_info_edf.scaler_maps[s_map.name] = s_map;
                 }
             }
 
-            scan_info_edf.scaler_maps.push_back(dead_time_map);
-            scan_info_edf.scaler_maps.push_back(output_map);
+            scan_info_edf.scaler_maps[dead_time_map.name] = dead_time_map;
+            scan_info_edf.scaler_maps[output_map.name] = output_map;
             
 
             if (save_scalers)
@@ -1385,12 +1408,39 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
             if (false == io::file::HDF5_IO::inst()->load_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, spectra_volume))
             {
+                if(scan_info != nullptr)
+                {
+                    scan_info->initialize_scaler_map(STR_RESET_TICKS);
+                    scan_info->initialize_scaler_map(STR_RESET_COUNT);
+                    scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
+                    scan_info->initialize_scaler_map(STR_WINDOW0);
+                    scan_info->initialize_scaler_map(STR_WINDOW1);
+                    scan_info->initialize_scaler_map(STR_DEADTIME_PERC);
+                    scan_info->initialize_scaler_map(STR_DEADTIME_FACT);
+                    scan_info->initialize_scaler_map(STR_PILEUP_LINES);
+                }
                 std::string full_filename;
                 for (size_t i = 0; i < spectra_volume->rows(); i++)
                 {
                     //everyone else
+                    std::map<std::string, Scaler_Map<T_real>> scalers_lines;
                     full_filename = dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
+                    if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
+                    {
+                        if(scan_info != nullptr)
+                        {
+                            for(auto sitr: scan_info->scaler_maps)
+                            {
+                                if(scalers_lines.count(sitr.first) > 0)
+                                {
+                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    {
+                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
             }
@@ -1414,17 +1464,48 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             for (size_t i = 0; i < spectra_volume->rows(); i++)
             {
                 //bnp format
+                std::map<std::string, Scaler_Map<T_real>> scalers_lines;
                 int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
                 if(idx == 0)
                 {
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
+                    if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
+                    {
+                        if(scan_info != nullptr)
+                        {
+                            for(auto sitr: scan_info->scaler_maps)
+                            {
+                                if(scalers_lines.count(sitr.first) > 0)
+                                {
+                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    {
+                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     //everyone else
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                    io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, i, &(*spectra_volume)[i], scan_info);
+                    if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
+                    {
+                        if(scan_info != nullptr)
+                        {
+                            for(auto sitr: scan_info->scaler_maps)
+                            {
+                                if(scalers_lines.count(sitr.first) > 0)
+                                {
+                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    {
+                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1448,12 +1529,12 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
         for (const auto& line : bad_rows)
         {
-            for (auto& map : scan_info->scaler_maps)
+            for (auto& mitr : scan_info->scaler_maps)
             {
                 // copy prev row
-                for (Eigen::Index col = 0; col < map.values.cols(); col++)
+                for (Eigen::Index col = 0; col < mitr.second.values.cols(); col++)
                 {
-                    map.values(line, col) = map.values(line - 1, col);
+                    mitr.second.values(line, col) = mitr.second.values(line - 1, col);
                 }
             }
         }

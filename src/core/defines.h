@@ -355,6 +355,7 @@ const std::string STR_BNL_PARAM_DWELL = "param_dwell";
 const std::string STR_BNL_INCIDENT_ENERGY = "instrument_mono_incident_energy";
 
 //Xspress3 scaler names
+const std::string STR_ARRAY_COUNTER = "array_counter";
 const std::string STR_RESET_TICKS = "reset_ticks";
 const std::string STR_RESET_COUNT = "reset_count";
 const std::string STR_EVENT_WIDTH = "event_width";
