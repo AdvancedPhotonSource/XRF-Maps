@@ -158,7 +158,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
         for (size_t detector_num : analysis_job->detector_num_arr)
         {
             //reuse previous param override if it exists
-            if (params.count(detector_num) > 0)
+            if (params.contains(detector_num))
             {
                 params_override = params[detector_num];
             }
@@ -190,7 +190,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
                 if (optimize_integrated_fit_params(analysis_job, int_spectra, detector_num, params_override, itr, out_fitp, nullptr))
                 {
                     detector_file_cnt[detector_num] += 1.0;
-                    if (fit_params_avgs.count(detector_num) > 0)
+                    if (fit_params_avgs.contains(detector_num))
                     {
                         fit_params_avgs[detector_num].sum_values(out_fitp);
                     }
@@ -216,7 +216,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 
 		io::file::aps::create_detector_fit_params_from_avg(full_path, fit_params_avgs[detector_num], detector_num);
 
-        if (params.count(detector_num) > 0)
+        if (params.contains(detector_num))
         {
             params_override = params[detector_num];
             if (params_override != nullptr)
@@ -259,7 +259,7 @@ bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                 elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
                 elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
 
-                if (element_amt_in_all_standards.count(e_info->number) > 0)
+                if (element_amt_in_all_standards.contains(e_info->number))
                 {
                     element_amt_in_all_standards[e_info->number] += 1.0;
                 }
@@ -466,7 +466,6 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
             //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
-            
             if(load_and_fit_quatification_datasets(analysis_job, detector_num))
             {
                 detector->generage_avg_quantification_scalers();
@@ -656,31 +655,31 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             {
                 hsize_t xoffset = in_itr.first;
                 hsize_t yoffset = in_itr.second;
-                if (scalers_map.count(STR_DS_IC) > 0)
+                if (scalers_map.contains(STR_DS_IC))
                 {
                     ds_ic += scalers_map.at(STR_DS_IC)(yoffset, xoffset);
                 }
-                else if (scalers_map.count(low_ds_ic) > 0)
+                else if (scalers_map.contains(low_ds_ic))
                 {
                     ds_ic += scalers_map.at(low_ds_ic)(yoffset, xoffset);
                 }
-                if (scalers_map.count(STR_US_IC) > 0)
+                if (scalers_map.contains(STR_US_IC))
                 {
                     us_ic += scalers_map.at(STR_US_IC)(yoffset, xoffset);
                 }
-                else if (scalers_map.count(low_us_ic) > 0)
+                else if (scalers_map.contains(low_us_ic))
                 {
                     us_ic += scalers_map.at(low_us_ic)(yoffset, xoffset);
                 }
-                if (scalers_map.count(STR_US_FM) > 0)
+                if (scalers_map.contains(STR_US_FM))
                 {
                     us_fm += scalers_map.at(STR_US_FM)(yoffset, xoffset);
                 }
-                if (scalers_map.count(STR_SR_CURRENT) > 0)
+                if (scalers_map.contains(STR_SR_CURRENT))
                 {
                     sr_current += scalers_map.at(STR_SR_CURRENT)(yoffset, xoffset);
                 }
-                else if (scalers_map.count(low_sr) > 0)
+                else if (scalers_map.contains(low_sr))
                 {
                     sr_current += scalers_map.at(low_sr)(yoffset, xoffset);
                 }

@@ -217,11 +217,11 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
             detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
         }
 
-        if (params_override->elements_to_fit.count(STR_COMPTON_AMPLITUDE) == 0)
+        if (params_override->elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
         {
             params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
         }
-        if (params_override->elements_to_fit.count(STR_COHERENT_SCT_AMPLITUDE) == 0)
+        if (params_override->elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
         {
             params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
@@ -266,7 +266,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
     //initialize models and fit routines for all detectors
     for (size_t detector_num : analysis_job->detector_num_arr)
     {
-        if (analysis_job->detectors_meta_data.count(detector_num) < 1)
+        if (analysis_job->detectors_meta_data.contains(detector_num) == false)
         {
             analysis_job->detectors_meta_data[detector_num] = data_struct::Detector<T_real>(detector_num);
         }
@@ -505,27 +505,27 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         
         if(loaded_mca)
         {
-            if (pv_map.count(STR_SR_CURRENT) > 0)
+            if (pv_map.contains(STR_SR_CURRENT) )
             {
                 params_override->sr_current = pv_map.at(STR_SR_CURRENT);
             }
-            if (pv_map.count(STR_US_IC) > 0)
+            if (pv_map.contains(STR_US_IC) )
             {
                 params_override->US_IC = pv_map.at(STR_US_IC);
             }
-            else if (pv_map.count(STR_US_IC_FULL) > 0)
+            else if (pv_map.contains(STR_US_IC_FULL) )
             {
                 params_override->US_IC = pv_map.at(STR_US_IC_FULL);
             }
-            if (pv_map.count(STR_US_FM) > 0)
+            if (pv_map.contains(STR_US_FM) )
             {
                 params_override->US_FM = pv_map.at(STR_US_FM);
             }
-            if (pv_map.count(STR_DS_IC) > 0)
+            if (pv_map.contains(STR_DS_IC) )
             {
                 params_override->DS_IC = pv_map.at(STR_DS_IC);
             }
-            else if (pv_map.count(STR_DS_IC_FULL) > 0)
+            else if (pv_map.contains(STR_DS_IC_FULL) )
             {
                 params_override->DS_IC = pv_map.at(STR_DS_IC_FULL);
             }
@@ -790,6 +790,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
                 if(scan_info != nullptr)
                 {
+                    scan_info->initialize_scaler_map(STR_ARRAY_COUNTER);
                     scan_info->initialize_scaler_map(STR_RESET_TICKS);
                     scan_info->initialize_scaler_map(STR_RESET_COUNT);
                     scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
@@ -810,9 +811,9 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     {
                         if(scan_info != nullptr)
                         {
-                            for(auto sitr: scan_info->scaler_maps)
+                            for(auto &sitr: scan_info->scaler_maps)
                             {
-                                if(scalers_lines.count(sitr.first) > 0)
+                                if(scalers_lines.contains(sitr.first) )
                                 {
                                     for(int col = 0; col < sitr.second.values.cols(); col++)
                                     {
@@ -1096,7 +1097,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         data_struct::Scan_Info<T_real> scan_info_edf;
         // try new APS-U format
         data_struct::ArrayXXr<T_real> interferometer_avg;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, &interferometer_avg, scan_info_edf))
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, interferometer_avg, scan_info_edf))
         {
             scan_type = scan_info_edf.meta_info.scan_type;
             if (save_scalers)
@@ -1410,6 +1411,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             {
                 if(scan_info != nullptr)
                 {
+                    scan_info->initialize_scaler_map(STR_ARRAY_COUNTER);
                     scan_info->initialize_scaler_map(STR_RESET_TICKS);
                     scan_info->initialize_scaler_map(STR_RESET_COUNT);
                     scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
@@ -1429,9 +1431,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     {
                         if(scan_info != nullptr)
                         {
-                            for(auto sitr: scan_info->scaler_maps)
+                            for(auto &sitr: scan_info->scaler_maps)
                             {
-                                if(scalers_lines.count(sitr.first) > 0)
+                                if(scalers_lines.contains(sitr.first) )
                                 {
                                     for(int col = 0; col < sitr.second.values.cols(); col++)
                                     {
@@ -1450,6 +1452,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
             if(scan_info != nullptr)
             {
+                scan_info->initialize_scaler_map(STR_ARRAY_COUNTER);
                 scan_info->initialize_scaler_map(STR_RESET_TICKS);
                 scan_info->initialize_scaler_map(STR_RESET_COUNT);
                 scan_info->initialize_scaler_map(STR_EVENT_WIDTH);
@@ -1473,9 +1476,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     {
                         if(scan_info != nullptr)
                         {
-                            for(auto sitr: scan_info->scaler_maps)
+                            for(auto &sitr: scan_info->scaler_maps)
                             {
-                                if(scalers_lines.count(sitr.first) > 0)
+                                if(scalers_lines.contains(sitr.first) )
                                 {
                                     for(int col = 0; col < sitr.second.values.cols(); col++)
                                     {
@@ -1494,9 +1497,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                     {
                         if(scan_info != nullptr)
                         {
-                            for(auto sitr: scan_info->scaler_maps)
+                            for(auto &sitr: scan_info->scaler_maps)
                             {
-                                if(scalers_lines.count(sitr.first) > 0)
+                                if(scalers_lines.contains(sitr.first) )
                                 {
                                     for(int col = 0; col < sitr.second.values.cols(); col++)
                                     {

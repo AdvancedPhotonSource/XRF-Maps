@@ -240,7 +240,7 @@ void NLOPT_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real
 {
     for(auto itr: opt)
     {
-        if (_options.count(itr.first) > 0)
+        if (_options.contains(itr.first) )
         {
             _options[itr.first] = itr.second;
         }
@@ -299,7 +299,7 @@ std::vector<std::string> NLOPT_Optimizer<T_real>::get_algorithm_list()
 template<typename T_real>
 bool NLOPT_Optimizer<T_real>::set_algorithm(std::string name)
 {
-    if( _algorithms.count(name) > 0)
+    if( _algorithms.contains(name) )
     {
         _algo = _algorithms.at(name);
         return true;
@@ -384,7 +384,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
     
-    if (this->_outcome_map.count(this->_last_outcome) > 0)
+    if (this->_outcome_map.contains(this->_last_outcome))
         return this->_outcome_map[this->_last_outcome];
 
     return OPTIMIZER_OUTCOME::FAILED;
@@ -462,7 +462,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
     
-    if (this->_outcome_map.count(result) > 0)
+    if (this->_outcome_map.contains(result) )
         return this->_outcome_map[result];
 
     return OPTIMIZER_OUTCOME::FAILED;
@@ -556,7 +556,7 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
 
-    if (this->_outcome_map.count(result) > 0)
+    if (this->_outcome_map.contains(result) )
         return this->_outcome_map[result];
 
     return OPTIMIZER_OUTCOME::FAILED;

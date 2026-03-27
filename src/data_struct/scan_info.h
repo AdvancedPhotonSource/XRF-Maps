@@ -140,18 +140,9 @@ public:
         
     }
 
-    const ArrayXXr<T_real>* scaler_values(const std::string& scaler_name) const
-    {
-        if(scaler_maps.count(scaler_name) > 0)
-        {
-            return &(scaler_maps.at(scaler_name).values);
-        }
-        return nullptr;
-    }
-
     T_real scaler_avg_value(const std::string& scaler_name)
     {
-        if(scaler_maps.count(scaler_name) > 0)
+        if(scaler_maps.contains(scaler_name) )
         {
             return scaler_maps.at(scaler_name).values.mean();
         }

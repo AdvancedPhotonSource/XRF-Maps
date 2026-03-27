@@ -162,7 +162,7 @@ bool Scaler_Lookup::search_for_timing_info(const std::vector<std::string>& pv_li
 	{
 		for (const auto& bItr : _beamline_map)
 		{
-			if (bItr.second.timing_info.count(itr) > 0)
+			if (bItr.second.timing_info.contains(itr) )
 			{
 				out_pv = itr;
 				out_clock = bItr.second.timing_info.at(itr);
@@ -182,7 +182,7 @@ bool Scaler_Lookup::search_for_timing_info(const std::unordered_map<std::string,
     {
 		for (const auto& bItr : _beamline_map)
 		{
-			if (bItr.second.timing_info.count(itr.first) > 0)
+			if (bItr.second.timing_info.contains(itr.first) )
 			{
 				out_pv = itr.first;
 				out_clock = bItr.second.timing_info.at(itr.first);
@@ -200,7 +200,7 @@ bool Scaler_Lookup::search_pv(const std::string& pv, std::string& out_label, boo
 {
 	for (const auto& bItr : _beamline_map)
 	{
-		if (bItr.second.time_normalized_scaler_pv_label_map.count(pv) > 0)
+		if (bItr.second.time_normalized_scaler_pv_label_map.contains(pv) )
 		{
 			out_is_time_normalized = true;
 			out_label = bItr.second.time_normalized_scaler_pv_label_map.at(pv);
@@ -210,7 +210,7 @@ bool Scaler_Lookup::search_pv(const std::string& pv, std::string& out_label, boo
 			}
 			return true;
 		}
-		if (bItr.second.scaler_pv_label_map.count(pv) > 0)
+		if (bItr.second.scaler_pv_label_map.contains(pv) )
 		{
 			out_is_time_normalized = false;
 			out_label = bItr.second.scaler_pv_label_map.at(pv);
@@ -228,7 +228,7 @@ bool Scaler_Lookup::search_pv(const std::string& pv, std::string& out_label, boo
 
 const std::vector<struct Summed_Scaler>* Scaler_Lookup::get_summed_scaler_list(std::string beamline) const
 {
-	if(_beamline_map.count(beamline) > 0)
+	if(_beamline_map.contains(beamline) )
 	{
         return &(_beamline_map.at(beamline).summed_scalers);
     }

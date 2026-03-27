@@ -222,7 +222,7 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
         //save count / sec
         for (auto& itr : *out_fit_counts)
         {
-            if (counts_dict.count(itr.first) > 0)
+            if (counts_dict.contains(itr.first))
             {
                 itr.second(i, j) = counts_dict[itr.first] / spectra->elapsed_livetime();
             }
@@ -232,12 +232,12 @@ DLL_EXPORT bool fit_single_spectra(fitting::routines::Base_Fit_Routine<T_real>* 
 
         (*out_fit_counts)[STR_RESIDUAL](i, j) = counts_dict[STR_RESIDUAL];
         // add total fluorescense yield
-        if (out_fit_counts->count(STR_TOTAL_FLUORESCENCE_YIELD))
+        if (out_fit_counts->contains(STR_TOTAL_FLUORESCENCE_YIELD))
         {
             (*out_fit_counts)[STR_TOTAL_FLUORESCENCE_YIELD](i, j) = spectra->sum() / spectra->elapsed_livetime();
         }
         // add sum coherent and compton
-        if (out_fit_counts->count(STR_SUM_ELASTIC_INELASTIC_AMP) > 0 && counts_dict.count(STR_COHERENT_SCT_AMPLITUDE) > 0 && counts_dict.count(STR_COMPTON_AMPLITUDE) > 0)
+        if (out_fit_counts->contains(STR_SUM_ELASTIC_INELASTIC_AMP)  && counts_dict.contains(STR_COHERENT_SCT_AMPLITUDE)  && counts_dict.contains(STR_COMPTON_AMPLITUDE) )
         {
             (*out_fit_counts)[STR_SUM_ELASTIC_INELASTIC_AMP](i, j) = counts_dict[STR_COHERENT_SCT_AMPLITUDE] + counts_dict[STR_COMPTON_AMPLITUDE];
         }
@@ -448,7 +448,7 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
     for (auto& itr : pv_map)
     {
         double multiplier = (T_real)1.0;
-        if(pv_map.count(itr.first+"_SCALE_FACTOR") > 0)
+        if(pv_map.contains(itr.first+"_SCALE_FACTOR"))
         {
             multiplier = pv_map.at(itr.first+"_SCALE_FACTOR");
         }
@@ -464,7 +464,7 @@ void find_quantifier_scalers(std::unordered_map<std::string, double>& pv_map, Qu
             T_real summed_val = 0.0;
             for (const auto& sitr : itr.scalers_to_sum)
             {
-                if (pv_map.count(sitr) > 0)
+                if (pv_map.contains(sitr))
                 {
                     summed_val += pv_map.at(sitr);
                 }

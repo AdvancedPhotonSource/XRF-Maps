@@ -592,7 +592,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
                 T_real multiplier = (T_real)1.0;
                 if(params_override != nullptr)
                 {
-                    if(params_override->scaling_factors.count(sitr.first) > 0)
+                    if(params_override->scaling_factors.contains(sitr.first))
                     {
                         multiplier = params_override->scaling_factors.at(sitr.first);
                     }

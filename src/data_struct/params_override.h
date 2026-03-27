@@ -201,7 +201,7 @@ public:
 	std::map<int, T_real> get_custom_factor(std::string el_name)
 	{
 		std::map<int, T_real> factors;
-		if (branching_ratios.count(el_name) > 0)
+		if (branching_ratios.contains(el_name) )
 		{
 			return branching_ratios.at(el_name);
 		}
