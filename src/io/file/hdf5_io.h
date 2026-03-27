@@ -914,7 +914,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::ArrayXXr<T_real>* interferometer_avg, [[maybe_unused]] data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
+    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::ArrayXXr<T_real> &interferometer_avg, [[maybe_unused]] data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id = -1, xspres_grp_id = -1;
@@ -922,27 +922,34 @@ public:
         hid_t ss_id = -1;
         bool load_ss = true;
         bool load_tetra = true;
-        bool interferometer_loaded = false;
-        data_struct::ArrayXXr<T_real> interferometer_array;
-        data_struct::Spectra_Volume<T_real> temp_vol;
+        
+        const size_t intf_ctr_idx = 1;
+        const size_t array_ctr_idx = 2;
+
         std::vector<std::string> raw_xrf_files;
         std::vector<std::string> raw_interf_files; 
         std::string base_filename = filename.substr(0, filename.length() - 3); // remove .h5
         std::string xpath = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "ME7";
         std::string ipath = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "SOCKETSERVER";
+    
+        int max_arracy_cntr = -1;
+        int max_ii_cntr = -1;
+        Eigen::Index interferometer_amt = 0;
+    
+        std::map<int, Spectra_Line<T_real>> spectra_rows;
+        std::map<int, data_struct::ArrayTr<T_real> > interferometer_rows;
+
+        scan_info.meta_info.x_axis.resize(1);
+        scan_info.meta_info.x_axis[0] = -1;
+        scan_info.meta_info.y_axis.resize(1);
+        scan_info.meta_info.y_axis[0] = -1;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
             {
                 return false;
             }
-            /*
-            if (false == _open_h5_object(pos_grp_id, H5O_GROUP, close_map, "/positions", file_id))
-            {
-                return false;
-            }
-            if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/flyXRF", file_id))
-            */
+            
             if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/detectors/XRF_ME7", file_id, false, false))
             {
                 if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/detectors/XRF_RS", file_id, false, false))
@@ -1066,24 +1073,108 @@ public:
                             logE << "Failed to get interferometer dims\n";
                             return false;
                         }
-                        // TODO load an array of these
-                        interferometer_array.resize(dims_in[0], dims_in[1]);
+
+                        data_struct::ArrayXXr<T_real> interferometer_row;
+                        interferometer_row.resize(dims_in[0], dims_in[1]);
                         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, dims_in, nullptr);
-                        interferometer_loaded = _read_h5d<T_real>(ss_id, dataspace_id, dataspace_id, H5P_DEFAULT, interferometer_array.data());
+                        if(_read_h5d<T_real>(ss_id, dataspace_id, dataspace_id, H5P_DEFAULT, interferometer_row.data()) == 0)
+                        {
+                            
+                            for(int c = 0; c < interferometer_row.rows(); c++)
+                            {
+                                data_struct::ArrayTr<T_real> irow;
+                                irow.resize(interferometer_row.cols());
+                                for(int ii = 0; ii < interferometer_row.cols(); ii++)
+                                {
+                                    irow[ii] = interferometer_row(c, ii);
+                                }
+                                interferometer_amt = interferometer_row.cols();
+                                int ii_idx = int(irow[intf_ctr_idx]);
+                                int arr_idx = int(irow[array_ctr_idx]);
+                                max_arracy_cntr = std::max(max_arracy_cntr, arr_idx);
+                                max_ii_cntr = std::max(max_ii_cntr, ii_idx);
+                                interferometer_rows[ii_idx] = irow;
+                            }
+                        }
                     }
                 }
-
             }
+
+            if(max_arracy_cntr == -1)
+            {
+                _close_h5_objects(close_map);
+                logE <<  "Could not load any interferometer data.\n";
+                return false;
+            }
+
+            interferometer_avg.resize(max_arracy_cntr, interferometer_amt);
+            
+            // average interferomerter data
+            Eigen::Index start_idx = 1;
+            Eigen::Index end_idx = 0;
+            T_real cnt = 0.;
+            Eigen::Index last_cntr_val = static_cast<int>(interferometer_rows[1][array_ctr_idx]);
+            // start at 2 to check previous value is diff
+            for(int ii = 2; ii< max_ii_cntr; ii++)
+            {
+                if(interferometer_rows.contains(ii))
+                {
+                    Eigen::Index curr_cntr_val = static_cast<int>(interferometer_rows[ii][array_ctr_idx]);
+                    if(curr_cntr_val != last_cntr_val)
+                    {
+                        end_idx = ii;
+                        // zero out the row
+                        for(Eigen::Index c=0; c<interferometer_amt; c++)
+                        {
+                            if(c < 3) // first 3 are conuters
+                            {
+                                interferometer_avg(last_cntr_val, c) = interferometer_rows.at(start_idx)[c];
+                            }
+                            else // zero out the rest
+                            {
+                                interferometer_avg(last_cntr_val, c) = 0.0;
+                            }
+                        }
+                        
+                        cnt = 0.0;
+                        for(Eigen::Index i=start_idx; i<end_idx; i++)
+                        {
+                            for(Eigen::Index c=3; c<interferometer_amt; c++)
+                            {
+                                interferometer_avg(last_cntr_val, c) += interferometer_rows.at(i)[c];
+                            }
+                            cnt += 1.0;
+                        }
+                        logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<interferometer_avg(last_cntr_val, 3)<<" avg val "<<interferometer_avg(last_cntr_val, 3) /cnt<<"/n";
+                        if(cnt > 1.0)
+                        {
+                            // avg
+                            for(Eigen::Index c=3; c<interferometer_amt; c++)
+                            {
+                                interferometer_avg(last_cntr_val, c) /= cnt;
+                            }
+                        }
+                        //logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<interferometer_avg(cur_row, 3)<<" avg val "<<(*interferometer_avg)(cur_row, 3) /cnt<<"/n";
+                        start_idx = end_idx;
+                        
+                        last_cntr_val = static_cast<int>(interferometer_rows[ii][array_ctr_idx]);
+                    }
+                }
+            }
+            interferometer_rows.clear(); 
+            /*
             if(load_tetra)
             {
-                /*
+                
                 H5Literate2(tetra_grp_id, H5_INDEX_NAME, H5_ITER_INC, NULL, h5_ext_file_info, &tetra_ext_links);
                 for(auto itr :  tetra_ext_links)
                 {
                     // load tetramm data
                 }
-                    */
+                    
             }
+            */
+            /*
             int out_num_cols = 0;
             for(auto itr :  ext_links)
             {
@@ -1095,22 +1186,11 @@ public:
                 }
                 break;
             }
-            temp_vol.resize_and_zero(ext_links.size(),out_num_cols,4096);
-            scan_info.meta_info.requested_rows = temp_vol.rows();
-            scan_info.meta_info.requested_cols = temp_vol.cols();
-            /*
-            scan_info.initialize_scaler_map(STR_RESET_TICKS);
-            scan_info.initialize_scaler_map(STR_RESET_COUNT);
-            scan_info.initialize_scaler_map(STR_EVENT_WIDTH);
-            scan_info.initialize_scaler_map(STR_WINDOW0);
-            scan_info.initialize_scaler_map(STR_WINDOW1);
-            scan_info.initialize_scaler_map(STR_DEADTIME_PERC);
-            scan_info.initialize_scaler_map(STR_DEADTIME_FACT);
-            scan_info.initialize_scaler_map(STR_PILEUP_LINES);
             */
-            int i = 0;
+            bool first = true;
             for(auto itr :  ext_links)
             {
+                int i = -1;
                 //std::string search_name = base_name + "_" + std::to_string(i) + ".hdf5"; 
                 //logI<< "searching "<< search_name << "\n";
                 //logI<< "loading "<< fname << "\n";
@@ -1129,130 +1209,60 @@ public:
                 }
                 if(i>0)
                 {
-                    std::map<std::string, Scaler_Map<T_real>> scalers_lines;
-                    if(_load_spectra_line_xspress3(itr.second, detector_num, &temp_vol[i-1], scalers_lines))
+                    std::map<std::string, Scaler_Map<T_real>> scalers_line;
+                    data_struct::Spectra_Line<T_real> spec_row;
+                    if(_load_spectra_line_xspress3(itr.second, detector_num, &spec_row, scalers_line))
                     {
-                        /*
-                        for(auto sitr: scan_info->scaler_maps)
+                        if(first)
                         {
-                            if(scalers_lines.count(sitr.first) > 0)
+                            spec_vol->resize_and_zero(1, max_arracy_cntr, spec_row.samples_size());
+                            // set this for initializeing scalers
+                            scan_info.meta_info.requested_rows = 1;
+                            scan_info.meta_info.requested_cols = max_arracy_cntr;
+                            scan_info.initialize_scaler_map(STR_ARRAY_COUNTER);
+                            scan_info.initialize_scaler_map(STR_RESET_TICKS);
+                            scan_info.initialize_scaler_map(STR_RESET_COUNT);
+                            scan_info.initialize_scaler_map(STR_EVENT_WIDTH);
+                            scan_info.initialize_scaler_map(STR_WINDOW0);
+                            scan_info.initialize_scaler_map(STR_WINDOW1);
+                            scan_info.initialize_scaler_map(STR_DEADTIME_PERC);
+                            scan_info.initialize_scaler_map(STR_DEADTIME_FACT);
+                            scan_info.initialize_scaler_map(STR_PILEUP_LINES);
+                            // now set it to how many files and cols 
+                            scan_info.meta_info.requested_rows = ext_links.size();
+                            scan_info.meta_info.requested_cols = spec_row.size();
+                            first = false;
+                        }
+                        
+                        
+                        if(scalers_line.contains(STR_ARRAY_COUNTER) )
+                        {
+                            for(size_t c=0; c< spec_row.size(); c++)
                             {
-                                for(int col = 0; col < sitr.second.values.cols(); col++)
+                                size_t spec_arr_idx = static_cast<size_t>(scalers_line.at(STR_ARRAY_COUNTER).values(0,c));
+                                spec_arr_idx -= 1; // interferometer array cntr is 0 based, xsperss3 is 1 based so subtract 1
+                                if(spec_arr_idx < spec_vol->cols())
                                 {
-                                    sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                    for(auto &sm_itr: scan_info.scaler_maps)
+                                    {
+                                        if(scalers_line.contains(sm_itr.first) )
+                                        {
+                                            sm_itr.second.values(0,spec_arr_idx) = scalers_line.at(sm_itr.first).values(0,c);
+                                        }
+                                    }
+                                    (*spec_vol)[0][spec_arr_idx] = spec_row[c];
                                 }
                             }
                         }
-                            */
                     }
                 }
                 else
                 {
-                    logW<<"Could not load row "<<i<<"\n";
+                    logW<<"Could not load row "<<i<<" for file "<<itr.first<<"\n";
                 }
                 H5Gclose(itr.second);
             }
-        
-            unsigned int total_spectra = 0;
-            for(size_t i=0; i<temp_vol.rows(); i++)
-            {
-                total_spectra += temp_vol[i].size();
-            }
-            spec_vol->resize_and_zero(1, total_spectra, temp_vol.samples_size());
-            interferometer_avg->resize(total_spectra, interferometer_array.cols());
-            size_t t = 0;
-            for(size_t r=0; r<temp_vol.rows(); r++)
-            {
-                for(size_t c=0; c<temp_vol[r].size(); c++)
-                {
-                    (*spec_vol)[0][t] = temp_vol[r][c];
-                    t++;
-                }
-            }
 
-            if(interferometer_array.rows() > 1 && interferometer_array.cols() > 2)
-            {
-                scan_info.meta_info.x_axis.resize(1);
-                scan_info.meta_info.x_axis[0] = -1;
-                scan_info.meta_info.y_axis.resize(1);
-                scan_info.meta_info.y_axis[0] = -1;
-                Eigen::Index start_idx = 0;
-                Eigen::Index end_idx = 0;
-                T_real cnt = 0.;
-                T_real last_cntr_val = interferometer_array(0,2);
-                Eigen::Index cur_row = 0;
-                size_t num_zeros = 0;
-                // start at 1 to check previous value is diff
-                for(Eigen::Index r=1; r<interferometer_array.rows(); r++)
-                {
-                    num_zeros = 0;
-                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
-                    {
-                        // first check that more than 1 col isn't just 0's for startup
-                        if( interferometer_array(r,c) == 0)
-                        {
-                            num_zeros++;
-                        }
-                    }
-                    if(interferometer_array(r,2) != last_cntr_val)
-                    {
-                        if(num_zeros > 2)
-                        {
-                            continue;
-                        }
-
-                        
-                        if(cur_row >= interferometer_avg->rows())
-                        {
-                            logI<<"Break\n";
-                            break;
-                        }
-                        else
-                        {
-                            end_idx = r;
-                            // zero out the row
-                            for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
-                            {
-                                (*interferometer_avg)(cur_row, c) = 0.0;
-                            }
-                            
-                            cnt = 0.0;
-                            for(Eigen::Index i=start_idx; i<end_idx; i++)
-                            {
-                                if(i == start_idx)
-                                {
-                                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
-                                    {
-                                        (*interferometer_avg)(cur_row, c) = interferometer_array(i, c);
-                                    }
-                                    cnt += 1.0;
-                                }
-                                // index 1 is counter, can be same value sometimes and we need to skip it then
-                                else if(interferometer_array(i, 1) != interferometer_array(i-1, 1))
-                                {
-                                    for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
-                                    {
-                                        (*interferometer_avg)(cur_row, c) += interferometer_array(i, c);
-                                    }
-                                    cnt += 1.0;
-                                }
-                            }
-                            //logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<(*interferometer_avg)(cur_row, 3)<<" avg val "<<(*interferometer_avg)(cur_row, 3) /cnt<<"/n";
-                            if(cnt > 1.0)
-                            {
-                                // avg
-                                for(Eigen::Index c=0; c<interferometer_array.cols(); c++)
-                                {
-                                    (*interferometer_avg)(cur_row, c) /= cnt;
-                                }
-                                cur_row ++;
-                            }
-                            start_idx = end_idx;
-                            last_cntr_val = interferometer_array(start_idx,2);
-                        }
-                    }
-                }
-            }
             scan_info.meta_info.scan_type = STR_SCAN_TYPE_TIME_BASED_2D_MAP;
 /*
             // load spectra link
@@ -1418,6 +1428,7 @@ public:
                     scan_info.meta_info.y_axis[j] = temp_read_in_x[i];
                 }
 
+                scan_info.initialize_scaler_map(STR_ARRAY_COUNTER);
                 scan_info.initialize_scaler_map(STR_RESET_TICKS);
                 scan_info.initialize_scaler_map(STR_RESET_COUNT);
                 scan_info.initialize_scaler_map(STR_EVENT_WIDTH);
@@ -1447,9 +1458,9 @@ public:
                     {
                         unsigned int prop_x = pos_to_idx_hash[temp_read_in_x[i]];
 
-                        for(auto sitr: scan_info.scaler_maps)
+                        for(auto &sitr: scan_info.scaler_maps)
                         {
-                            if(scalers_lines.count(sitr.first) > 0)
+                            if(scalers_lines.contains(sitr.first) )
                             {
                                 for(int col = 0; col < sitr.second.values.cols(); col++)
                                 {
@@ -4819,7 +4830,7 @@ public:
                 override_values->sr_current = (srcurrent);
             }
         }
-        else if(scalers_map.count(STR_SR_CURRENT) > 0)
+        else if(scalers_map.contains(STR_SR_CURRENT) )
         {
             override_values->sr_current = scalers_map.at(STR_SR_CURRENT).sum() / scalers_map.at(STR_SR_CURRENT).size();
         }
@@ -4836,7 +4847,7 @@ public:
                 override_values->US_IC = (us_ic);
             }
         }
-        else if (scalers_map.count(STR_US_IC) > 0)
+        else if (scalers_map.contains(STR_US_IC) )
         {
             override_values->US_IC = scalers_map.at(STR_US_IC).sum() / scalers_map.at(STR_US_IC).size();
         }
@@ -4853,7 +4864,7 @@ public:
                 override_values->US_FM = (us_fm);
             }
         }
-        else if (scalers_map.count(STR_US_FM) > 0)
+        else if (scalers_map.contains(STR_US_FM) )
         {
             override_values->US_FM = scalers_map.at(STR_US_FM).sum() / scalers_map.at(STR_US_FM).size();
         }
@@ -4870,7 +4881,7 @@ public:
                 override_values->DS_IC = (ds_ic);
             }
         }
-        else if (scalers_map.count(STR_DS_IC) > 0)
+        else if (scalers_map.contains(STR_DS_IC) )
         {
             override_values->DS_IC = scalers_map.at(STR_DS_IC).sum() / scalers_map.at(STR_DS_IC).size();
         }
@@ -6894,7 +6905,7 @@ public:
         for (std::string el_name : element_lines)
         {
             char tmp_char[256] = { 0 };
-            if (element_counts->count(el_name) < 1)
+            if (element_counts->contains(el_name) == false)
             {
                 continue;
             }
@@ -7375,7 +7386,7 @@ public:
 
                     //save quantification_standard counts
                     std::unordered_map<std::string, T_real> element_counts;
-                    if (quant_itr.second.element_counts.count(fit_itr.first) > 0)
+                    if (quant_itr.second.element_counts.contains(fit_itr.first) )
                     {
                         element_counts = quant_itr.second.element_counts.at(fit_itr.first);
                     }
@@ -7421,7 +7432,7 @@ public:
                     //save by element Z order
                     for (std::string el_name : element_lines)
                     {
-                        if (element_counts.count(el_name) < 1)
+                        if (element_counts.contains(el_name) == false)
                         {
                             continue;
                         }
@@ -8476,7 +8487,7 @@ public:
                 if (status > -1)
                 {
                     std::string sname(tmp_char);
-                    if (save_name_idx.count(sname) > 0)
+                    if (save_name_idx.contains(sname) )
                     {
                         xy_offset[0] = 0;
                         xy_offset[1] = 0;
@@ -9680,7 +9691,7 @@ private:
                     char tmp_char[255] = { 0 };
                     char tmp_char_units[255] = { 0 };
                     std::string out_label, out_beamline;
-                    if (data_struct::Scaler_Lookup::inst()->search_pv(itr.first, out_label, itr.second.time_normalized, out_beamline))
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(itr.second.name, out_label, itr.second.time_normalized, out_beamline))
                     {
                         out_label.copy(tmp_char, 254);
                     }
