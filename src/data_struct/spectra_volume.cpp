@@ -213,6 +213,17 @@ void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
+void Spectra_Volume<T_real>::set_nan_to_near_zero()
+{
+    for(size_t i=0; i<_data_vol.size(); i++)
+    {
+        _data_vol[i].set_nan_to_near_zero();
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
 void Spectra_Volume<T_real>::generate_scaler_maps(std::map<std::string, Scaler_Map<T_real>> *scaler_maps)
 {
     if (scaler_maps != nullptr)

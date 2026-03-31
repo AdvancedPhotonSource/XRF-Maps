@@ -92,6 +92,7 @@ public:
 
     int rank() { return 3; }
 
+    void set_nan_to_near_zero();
 private:
 
     std::vector<Spectra_Line<T_real> > _data_vol;
