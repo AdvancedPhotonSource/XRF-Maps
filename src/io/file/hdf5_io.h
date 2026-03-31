@@ -9323,16 +9323,46 @@ private:
         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
         error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
-
+        if (error > 0)
+        {
+            logW << "Counld not read integrated spectra \n";
+            _close_h5_objects(close_map);
+            return false;
+        }
+        spectra->set_nan_to_near_zero();
         H5Sselect_hyperslab(dataspace_lt_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
         H5Sselect_hyperslab(dataspace_rt_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
         H5Sselect_hyperslab(dataspace_inct_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
         H5Sselect_hyperslab(dataspace_outct_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
         error = _read_h5d<T_real>(dset_rt_id, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, (void*)&real_time);
+        if (error > 0)
+        {
+            logW << "Counld not read real time for spectra \n";
+            _close_h5_objects(close_map);
+            return false;
+        }
         error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, (void*)&live_time);
+        if (error > 0)
+        {
+            logW << "Counld not read elapsed live time for spectra \n";
+            _close_h5_objects(close_map);
+            return false;
+        }
         error = _read_h5d<T_real>(dset_incnt_id, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
+        if (error > 0)
+        {
+            logW << "Counld not read input counts for spectra \n";
+            _close_h5_objects(close_map);
+            return false;
+        }
         error = _read_h5d<T_real>(dset_outcnt_id, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
+        if (error > 0)
+        {
+            logW << "Counld not read output counts for spectra \n";
+            _close_h5_objects(close_map);
+            return false;
+        }
 
         spectra->elapsed_livetime(live_time);
         spectra->elapsed_realtime(real_time);
