@@ -1504,6 +1504,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                             }
                         }
                     }
+                                        else
+                    {
+                        // copy prev row
+                        if(i>0)
+                        {
+                            (*spectra_volume)[i] = (*spectra_volume)[i-1];
+                        }
+                    }
                 }
                 else
                 {
@@ -1523,6 +1531,14 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                                     }
                                 }
                             }
+                        }
+                    }
+                    else
+                    {
+                        // copy prev row
+                        if(i>0)
+                        {
+                            (*spectra_volume)[i] = (*spectra_volume)[i-1];
                         }
                     }
                 }
