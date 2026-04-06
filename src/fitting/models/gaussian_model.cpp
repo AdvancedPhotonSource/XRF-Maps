@@ -486,9 +486,9 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
     {
         const Element_Energy_Ratio<T_real>& er_struct = energy_ratios.at(idx);
         const T_real sigma = std::sqrt( std::pow((fitp->value(STR_FWHM_OFFSET) / (T_real)2.3548), (T_real)2.0) + (er_struct.energy * (T_real)3.58 * fitp->value(STR_FWHM_FANOPRIME) ) );
-        const T_real f_step =  std::abs<T_real>( er_struct.mu_fraction * ( fitp->value(STR_F_STEP_OFFSET) + (fitp->value(STR_F_STEP_LINEAR) * er_struct.energy)));
-        const T_real f_tail = std::abs<T_real>( fitp->value(STR_F_TAIL_OFFSET) + (fitp->value(STR_F_TAIL_LINEAR) * er_struct.mu_fraction));
-        const T_real kb_f_tail = std::abs<T_real>(  fitp->value(STR_KB_F_TAIL_OFFSET) + (fitp->value(STR_KB_F_TAIL_LINEAR) * er_struct.mu_fraction));
+        const T_real f_step =  std::abs( er_struct.mu_fraction * ( fitp->value(STR_F_STEP_OFFSET) + (fitp->value(STR_F_STEP_LINEAR) * er_struct.energy)));
+        const T_real f_tail = std::abs( fitp->value(STR_F_TAIL_OFFSET) + (fitp->value(STR_F_TAIL_LINEAR) * er_struct.mu_fraction));
+        const T_real kb_f_tail = std::abs(  fitp->value(STR_KB_F_TAIL_OFFSET) + (fitp->value(STR_KB_F_TAIL_LINEAR) * er_struct.mu_fraction));
         T_real value = 1.0;
         T_real gamma = 1.0;
 

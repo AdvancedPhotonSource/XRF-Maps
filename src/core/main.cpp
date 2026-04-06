@@ -464,7 +464,7 @@ int set_dir_and_files(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
         }
 
         // search for h5 files in img.dat directory but filter out and mda files associated with them.
-        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
+        for (auto& itr : io::file::File_Scan::inst()->find_all_dataset_files_by_ext(dataset_dir + "img.dat" + DIR_END_CHAR, ".h5"))
         {
             bool found = false;
             size_t idx = itr.find(".h5");

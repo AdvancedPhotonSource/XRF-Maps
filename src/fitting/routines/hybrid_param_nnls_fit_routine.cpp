@@ -127,7 +127,7 @@ OPTIMIZER_OUTCOME Hybrid_Param_NNLS_Fit_Routine<T_real>::fit_spectra_parameters(
     if(this->_optimizer != nullptr)
     {
         std::unordered_map<std::string, T_real> opts =  this->_optimizer->get_options();
-        if(opts.count(STR_OPT_MAXITER) > 0)
+        if(opts.contains(STR_OPT_MAXITER) )
         {
             this->_max_iter = opts.at(STR_OPT_MAXITER);
         }

@@ -46,6 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /// Initial Author <2017>: Arthur Glowacki
 
 #include "file_scan.h"
+#include "io/file/mda_io.h"
 
 namespace io
 {
@@ -121,30 +122,30 @@ namespace io
             }
 
             // populate edf files
-            ////_edf_files = find_all_dataset_files(dataset_dir + "edf" + DIR_END_CHAR, "_0000.edf");
+            ////_edf_files = find_all_dataset_files_by_ext(dataset_dir + "edf" + DIR_END_CHAR, "_0000.edf");
             // populate netcdf and hdf5 files for fly scans
-            _netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.nc");
-            auto extre_netcdf_files = find_all_dataset_files(dataset_dir + "XRF" + DIR_END_CHAR, "_0.nc");
+            _netcdf_files = find_all_dataset_files_by_ext(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.nc");
+            auto extre_netcdf_files = find_all_dataset_files_by_ext(dataset_dir + "XRF" + DIR_END_CHAR, "_0.nc");
             for(auto& itr : extre_netcdf_files)
             {
                 _netcdf_files.push_back(itr);
             }
-            _bnp_netcdf_files = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
-            _hdf_files = find_all_dataset_files(dataset_dir + "flyXRF.h5" + DIR_END_CHAR, "_0.h5");
-            //tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.h5");
+            _bnp_netcdf_files = find_all_dataset_files_by_ext(dataset_dir + "flyXRF" + DIR_END_CHAR, "_001.nc");
+            _hdf_files = find_all_dataset_files_by_ext(dataset_dir + "flyXRF.h5" + DIR_END_CHAR, "_0.h5");
+            //tmp_vec = find_all_dataset_files_by_ext(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.h5");
             //_hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
-            tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.hdf5");
+            tmp_vec = find_all_dataset_files_by_ext(dataset_dir + "flyXRF" + DIR_END_CHAR, "_0.hdf5");
             _hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
-            tmp_vec = find_all_dataset_files(dataset_dir + "flyXRF" + DIR_END_CHAR, "_1.hdf5");
+            tmp_vec = find_all_dataset_files_by_ext(dataset_dir + "flyXRF" + DIR_END_CHAR, "_1.hdf5");
             _hdf_xspress_files.insert(_hdf_xspress_files.end(), tmp_vec.begin(), tmp_vec.end());
-            //_hdf_confocal_files = find_all_dataset_files(dataset_dir , ".hdf5");
-            _hdf_emd_files = find_all_dataset_files(dataset_dir, ".emd");
-            _netcdf_tetramm_files = find_all_dataset_files(dataset_dir + "tetramm" + DIR_END_CHAR, "_0.nc");
+            //_hdf_confocal_files = find_all_dataset_files_by_ext(dataset_dir , ".hdf5");
+            _hdf_emd_files = find_all_dataset_files_by_ext(dataset_dir, ".emd");
+            _netcdf_tetramm_files = find_all_dataset_files_by_ext(dataset_dir + "tetramm" + DIR_END_CHAR, "_0.nc");
         }
 
         // ----------------------------------------------------------------------------
 
-        std::vector<std::string> File_Scan::find_all_dataset_files(std::string dataset_directory, std::string search_str)
+        std::vector<std::string> File_Scan::find_all_dataset_files_by_ext(std::string dataset_directory, std::string search_str)
         {
             std::vector<std::string> dataset_files;
             logI << dataset_directory << " searching for " << search_str << "\n";
@@ -222,6 +223,45 @@ namespace io
             }
             return out_dataset_files;
         }
+
+        // ----------------------------------------------------------------------------
+
+        std::vector<std::string> File_Scan::find_all_dataset_files(std::string dataset_directory, std::string search_str)
+        {
+            std::vector<std::string> dataset_files;
+            logI << dataset_directory << " searching for " << search_str << "\n";
+            DIR* dir;
+            struct dirent* ent;
+            size_t search_str_size = search_str.length();
+            if ((dir = opendir(dataset_directory.c_str())) != NULL)
+            {
+                while ((ent = readdir(dir)) != NULL)
+                {
+                    if (ent->d_type == DT_REG)
+                    {
+                        std::string fname(ent->d_name);
+                        if (fname.size() >= search_str.length())
+                        {
+                            //search for start of file to match
+                            if (fname.find(search_str) == 0)
+                            {
+                                dataset_files.push_back(fname);
+                            }
+                        }
+                    }
+                }
+                closedir(dir);
+            }
+            else
+            {
+                /* could not open directory */
+                logW << "Could not open directory " << dataset_directory << " using search string " << search_str << "\n";
+            }
+
+            logI << "found " << dataset_files.size() << "\n";
+            return dataset_files;
+        }
+
 
         // ----------------------------------------------------------------------------
 

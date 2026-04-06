@@ -218,8 +218,10 @@ const std::string STR_SCAN_TYPE_TIME_BASED_2D_MAP = "TIME_BASED_XRF_MAPS";
 
 const std::string STR_SR_CURRENT = "SR_Current";
 const std::string STR_US_IC = "US_IC";
+const std::string STR_US_IC_FULL = "UPSTREAM_IONCHAMBER";
 const std::string STR_US_FM = "US_FM";
 const std::string STR_DS_IC = "DS_IC";
+const std::string STR_DS_IC_FULL = "DOWNSTREAM_IONCHAMBER";
 const std::string STR_CFG_2 = "CFG_2";
 const std::string STR_CFG_3 = "CFG_3";
 const std::string STR_CFG_4 = "CFG_4";
@@ -351,6 +353,16 @@ const std::string STR_MAP_ROI_INT_SPEC_FILENAME = "File_Name";
 // BNL NSLS II
 const std::string STR_BNL_PARAM_DWELL = "param_dwell";
 const std::string STR_BNL_INCIDENT_ENERGY = "instrument_mono_incident_energy";
+
+//Xspress3 scaler names
+const std::string STR_ARRAY_COUNTER = "array_counter";
+const std::string STR_RESET_TICKS = "reset_ticks";
+const std::string STR_RESET_COUNT = "reset_count";
+const std::string STR_EVENT_WIDTH = "event_width";
+const std::string STR_WINDOW0 = "window0";
+const std::string STR_WINDOW1 = "window1";
+const std::string STR_DEADTIME_PERC = "dead_time_percent";
+const std::string STR_DEADTIME_FACT = "dead_time_factor";
 
 //}
 

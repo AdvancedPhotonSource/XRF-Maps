@@ -428,11 +428,11 @@ template<typename T_real>
 T_real Element_Info_Map<T_real>::calc_beta(std::string element_name, T_real density, T_real energy)
 {
     T_real beta = 0.0;
-    if (_name_element_info_map.count(element_name) > 0)
+    if (_name_element_info_map.contains(element_name))
     {
         beta = _name_element_info_map.at(element_name)->calc_beta(density, energy);
     }
-    else if(Henke_Compound_Density_Map<T_real>.count(element_name) > 0)
+    else if(Henke_Compound_Density_Map<T_real>.contains(element_name) )
     {
         beta = calc_compound_beta(element_name, density, energy);
     }
@@ -484,7 +484,7 @@ T_real Element_Info_Map<T_real>::calc_compound_beta(std::string compound_name, T
                 //beta += element_info->calc_beta(density, energy);
                 
                 T_real amt = std::atof(str_amt.c_str());
-                if (amt > 0 && Element_Weight<T_real>.count(element_info->number) > 0)
+                if (amt > 0 && Element_Weight<T_real>.contains(element_info->number) )
                 {
                     T_real weight = Element_Weight<T_real>.at(element_info->number);
                     atwt += (amt * weight);
@@ -533,7 +533,7 @@ template<typename T_real>
 bool Element_Info_Map<T_real>::is_element(std::string element_name)
 {
     bool ret = false;
-    if (_name_element_info_map.count(element_name) > 0)
+    if (_name_element_info_map.contains(element_name) )
         ret = true;
     return ret;
 }

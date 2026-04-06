@@ -81,6 +81,10 @@ public:
 
     auto size() const { return _data_line.size(); }
 
+    size_t samples_size() const { if (_data_line.size() > 0) return _data_line[0].size(); else return 0; }
+
+    void set_nan_to_near_zero();
+    
 private:
 
 

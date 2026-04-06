@@ -297,7 +297,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             else
                             {
                                 Fit_Element_Map<T_real>* fit_map;
-                                if (params_override->elements_to_fit.count(element_symb) < 1)
+                                if (params_override->elements_to_fit.contains(element_symb) == false)
                                 {
                                     fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
                                     params_override->elements_to_fit[element_symb] = fit_map;
@@ -375,7 +375,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             if (e_info1 != nullptr && e_info2 != nullptr)
                             {
                                 Fit_Element_Map<T_real>* fit_map;
-                                if (params_override->elements_to_fit.count(orig_el_symb) < 1)
+                                if (params_override->elements_to_fit.contains(orig_el_symb) == false)
                                 {
                                     fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
                                     fit_map->set_as_pileup(efull_name2, e_info2);
@@ -388,7 +388,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             }
                         }
                     }
-                    else if (FILE_TAGS_TRANSLATION.count(tag) > 0)
+                    else if (FILE_TAGS_TRANSLATION.contains(tag) )
                     {
                         //ignore quadratic min because we don't want it to be negative so we default min to 0
                         if (tag == "CAL_QUAD_[E_QUADRATIC]_MIN")
@@ -459,7 +459,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.count(element_symb) > 0)
+                        if (params_override->elements_to_fit.contains(element_symb) )
                         {
                             fit_map = params_override->elements_to_fit[element_symb];
                             T_real factor = 1.0;
@@ -486,7 +486,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         width_multi = parse_input_real<T_real>(width_value);
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.count(element_symb) < 1)
+                        if (params_override->elements_to_fit.contains(element_symb) == false)
                         {
                             
                             fit_map = new Fit_Element_Map<T_real>(element_symb, center, width_multi);
@@ -525,7 +525,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.count(element_symb) > 0)
+                        if (params_override->elements_to_fit.contains(element_symb) )
                         {
                             fit_map = params_override->elements_to_fit[element_symb];
                             if (cnt == 3) // family

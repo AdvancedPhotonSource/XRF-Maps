@@ -213,17 +213,27 @@ void Spectra_Volume<T_real>::recalc_elapsed_livetime()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Volume<T_real>::generate_scaler_maps(std::vector<Scaler_Map<T_real>> *scaler_maps)
+void Spectra_Volume<T_real>::set_nan_to_near_zero()
+{
+    for(size_t i=0; i<_data_vol.size(); i++)
+    {
+        _data_vol[i].set_nan_to_near_zero();
+    }
+}
+
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Volume<T_real>::generate_scaler_maps(std::map<std::string, Scaler_Map<T_real>> *scaler_maps)
 {
     if (scaler_maps != nullptr)
     {
-        data_struct::Scaler_Map<T_real> elt_map, ert_map, in_cnt_map, out_cnt_map, dead_time_map;
+        data_struct::Scaler_Map<T_real> elt_map(STR_ELT);
+        data_struct::Scaler_Map<T_real> ert_map(STR_ERT);
+        data_struct::Scaler_Map<T_real> in_cnt_map("INCNT");
+        data_struct::Scaler_Map<T_real> out_cnt_map("OUTCNT");
+        data_struct::Scaler_Map<T_real> dead_time_map(STR_DEAD_TIME);
 
-        elt_map.name = STR_ELT;
-        ert_map.name = STR_ERT;
-        in_cnt_map.name = "INCNT";
-        out_cnt_map.name = "OUTCNT";
-        dead_time_map.name = STR_DEAD_TIME;
         elt_map.unit = "seconds";
         ert_map.unit = "seconds";
         in_cnt_map.unit = "cts/s";
@@ -248,11 +258,11 @@ void Spectra_Volume<T_real>::generate_scaler_maps(std::vector<Scaler_Map<T_real>
             }
         }
         
-        scaler_maps->push_back(elt_map);
-        scaler_maps->push_back(ert_map);
-        scaler_maps->push_back(in_cnt_map);
-        scaler_maps->push_back(out_cnt_map);
-        scaler_maps->push_back(dead_time_map);
+        (*scaler_maps)[elt_map.name] = elt_map;
+        (*scaler_maps)[ert_map.name] = ert_map;
+        (*scaler_maps)[in_cnt_map.name] = in_cnt_map;
+        (*scaler_maps)[out_cnt_map.name] = out_cnt_map;
+        (*scaler_maps)[dead_time_map.name] = dead_time_map;
     }
 }
 

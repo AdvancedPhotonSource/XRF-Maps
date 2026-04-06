@@ -121,7 +121,7 @@ template<typename T_real>
 Detector<T_real>* Analysis_Job<T_real>::get_detector(int detector_num)
 {
        Detector<T_real>* detector = nullptr;
-       if(detectors_meta_data.count(detector_num) > 0)
+       if(detectors_meta_data.contains(detector_num))
        {
             detector = &(detectors_meta_data.at(detector_num));
        }

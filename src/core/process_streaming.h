@@ -73,11 +73,11 @@ DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::S
         {
             stream_block->fitting_blocks[itr.first].fit_counts[el_itr.first] = counts_dict[el_itr.first] / stream_block->spectra->elapsed_livetime();
         }
-        if(counts_dict.count(STR_NUM_ITR) > 0)
+        if(counts_dict.contains(STR_NUM_ITR))
         {
             stream_block->fitting_blocks[itr.first].fit_counts[STR_NUM_ITR] = counts_dict[STR_NUM_ITR];
         }
-        if(counts_dict.count(STR_RESIDUAL) > 0)
+        if(counts_dict.contains(STR_RESIDUAL))
         {
             stream_block->fitting_blocks[itr.first].fit_counts[STR_RESIDUAL] = counts_dict[STR_RESIDUAL];
         }

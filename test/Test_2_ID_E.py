@@ -31,7 +31,7 @@ def run_analysis():
     px.load_element_info(element_henke_filename, element_csv_filename)
     job = px.AnalysisJob()
     job.dataset_directory = '2_ID_E_dataset' + os_end_char
-    job.dataset_files = px.find_all_dataset_files(job.dataset_directory + "mda/", ".mda")
+    job.dataset_files = px.find_all_dataset_files_by_ext(job.dataset_directory + "mda/", ".mda")
     job.optimize_dataset_files = job.dataset_files
     job.detector_num_arr = [0,1,2,3]
     job.quick_and_dirty = False

@@ -322,31 +322,31 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
     T_real slope = 0.0;
     T_real quad = 0.0;
 
-    if (pv_map.count(STR_SR_CURRENT) > 0)
+    if (pv_map.contains(STR_SR_CURRENT) )
     {
         sr_current = pv_map.at(STR_SR_CURRENT);
     }
-    if (pv_map.count(STR_US_IC) > 0)
+    if (pv_map.contains(STR_US_IC) )
     {
         us_ic = pv_map.at(STR_US_IC);
     }
-    if (pv_map.count(STR_US_FM) > 0)
+    if (pv_map.contains(STR_US_FM) )
     {
         us_fm = pv_map.at(STR_US_FM);
     }
-    if (pv_map.count(STR_DS_IC) > 0)
+    if (pv_map.contains(STR_DS_IC) )
     {
         ds_ic = pv_map.at(STR_DS_IC);
     }
-    if (pv_map.count(STR_ENERGY_OFFSET) > 0)
+    if (pv_map.contains(STR_ENERGY_OFFSET) )
     {
         offset = pv_map.at(STR_ENERGY_OFFSET);
     }
-    if (pv_map.count(STR_ENERGY_SLOPE) > 0)
+    if (pv_map.contains(STR_ENERGY_SLOPE) )
     {
         slope = pv_map.at(STR_ENERGY_SLOPE);
     }
-    if (pv_map.count(STR_ENERGY_QUADRATIC) > 0)
+    if (pv_map.contains(STR_ENERGY_QUADRATIC) )
     {
         quad = pv_map.at(STR_ENERGY_QUADRATIC);
     }
