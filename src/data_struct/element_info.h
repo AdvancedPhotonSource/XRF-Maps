@@ -138,7 +138,7 @@ public:
 
     //void set_energies(float* energy_arr, int num_energies);
 
-    bool contains(std::string element_name) {return _name_element_info_map.count(element_name) > 0 ? true : false; }
+    bool contains(std::string element_name) {return _name_element_info_map.contains(element_name); }
 
     std::vector<float> _energies;
 

@@ -103,7 +103,7 @@ Detector<T_real>::~Detector()
 template<typename T_real>
 void Detector<T_real>::append_element(Fitting_Routines routine, std::string quant_scaler, std::string name, T_real weight)
 {
-    if (fitting_quant_map.count(routine) == 0)
+    if (fitting_quant_map.contains(routine) == false)
     {
         fitting_quant_map[routine] = Fitting_Quantification_Struct<T_real>();
     }
@@ -114,7 +114,7 @@ void Detector<T_real>::append_element(Fitting_Routines routine, std::string quan
         data_struct::Electron_Shell shell = get_shell_by_name(name);
         fitting_quant_map.at(routine).update_weight_if_greater(shell, element->number, weight);
 
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quant_scaler) > 0)
+        if (fitting_quant_map.at(routine).quant_scaler_map.contains(quant_scaler))
         {
             all_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
         }
@@ -134,9 +134,9 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                                     Quantification_Model<T_real>* quantification_model,
                                     T_real ic_quantifier)
 {
-    if (fitting_quant_map.count(routine) > 0)
+    if (fitting_quant_map.contains(routine))
     {
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        if (fitting_quant_map.at(routine).quant_scaler_map.contains(quantifier_scaler) )
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
@@ -170,7 +170,7 @@ void Detector<T_real>::update_element_quants(Fitting_Routines routine,
                             name += "_M";
                         }
                         // with 2 standards we can have weights from another standard so we have to check if we have counts
-                        if (standard->element_counts.at(routine).count(name) > 0)
+                        if (standard->element_counts.at(routine).contains(name))
                         {
                             if (ic_quantifier == 0.0)
                             {
@@ -216,9 +216,9 @@ void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
                                         std::string quantifier_scaler,
                                         std::unordered_map<int, float>& element_amt_dict)
 {
-    if (fitting_quant_map.count(routine) > 0)
+    if (fitting_quant_map.contains(routine))
     {
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        if (fitting_quant_map.at(routine).quant_scaler_map.contains(quantifier_scaler))
         {
             for (const auto& shell_itr : Shells_Quant_List)
             {
@@ -346,9 +346,9 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
                                         Quantification_Model<T_real>* quantification_model,
                                         T_real val)
 {
-    if (fitting_quant_map.count(routine) > 0)
+    if (fitting_quant_map.contains(routine))
     {
-        if (fitting_quant_map.at(routine).quant_scaler_map.count(quantifier_scaler) > 0)
+        if (fitting_quant_map.at(routine).quant_scaler_map.contains(quantifier_scaler))
         {
             fitting_quant_map.at(routine).quantifier_map[quantifier_scaler] = val;
             for (const auto& shell_itr : Shells_Quant_List)

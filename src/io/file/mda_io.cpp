@@ -168,10 +168,27 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
     }
 
     //const data_struct::ArrayXXr<T_real>* arr = nullptr;
-    const data_struct::ArrayXXr<T_real>* arr_curr = _scan_info.scaler_values(STR_SR_CURRENT);
-    const data_struct::ArrayXXr<T_real>* arr_us = _scan_info.scaler_values(STR_US_IC);
-    const data_struct::ArrayXXr<T_real>* arr_us_fm = _scan_info.scaler_values(STR_US_FM);
-    const data_struct::ArrayXXr<T_real>* arr_ds = _scan_info.scaler_values(STR_DS_IC);
+    const data_struct::ArrayXXr<T_real>* arr_curr = nullptr;
+    if(_scan_info.scaler_maps.contains(STR_SR_CURRENT) )
+    {
+        arr_curr = &_scan_info.scaler_maps.at(STR_SR_CURRENT).values;
+    }
+    const data_struct::ArrayXXr<T_real>* arr_us = nullptr;
+    if(_scan_info.scaler_maps.contains(STR_US_IC) )
+    {
+        arr_us = &_scan_info.scaler_maps.at(STR_US_IC).values;
+    }
+    const data_struct::ArrayXXr<T_real>* arr_us_fm = nullptr;
+    if(_scan_info.scaler_maps.contains(STR_US_FM) )
+    {
+        arr_us_fm = &_scan_info.scaler_maps.at(STR_US_FM).values;
+    }
+    const data_struct::ArrayXXr<T_real>* arr_ds = nullptr;
+    if(_scan_info.scaler_maps.contains(STR_DS_IC) )
+    {
+        arr_ds = &_scan_info.scaler_maps.at(STR_DS_IC).values;
+    }
+    
     T_real cnt_curr = 0.;
     T_real sum_curr = 0.;
     T_real cnt_us = 0.;
@@ -445,10 +462,26 @@ Load_Status MDA_IO<T_real>::load_spectra_volume(std::string path,
         return Load_Status::Failed;
     }
 
-    elt_arr = _scan_info.scaler_values(STR_ELT + std::to_string(detector_num + 1));
-    ert_arr = _scan_info.scaler_values(STR_ERT + std::to_string(detector_num + 1));
-    icr_arr = _scan_info.scaler_values(STR_ICR + std::to_string(detector_num + 1));
-    ocr_arr = _scan_info.scaler_values(STR_OCR + std::to_string(detector_num + 1));
+    elt_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ELT + std::to_string(detector_num + 1)) )
+    {
+        elt_arr = &(_scan_info.scaler_maps.at(STR_ELT + std::to_string(detector_num + 1)).values);
+    }
+    ert_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ERT + std::to_string(detector_num + 1)) )
+    {
+        ert_arr = &(_scan_info.scaler_maps.at(STR_ERT + std::to_string(detector_num + 1)).values);
+    }
+    icr_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ICR + std::to_string(detector_num + 1)) )
+    {
+        icr_arr = &(_scan_info.scaler_maps.at(STR_ICR + std::to_string(detector_num + 1)).values);
+    }
+    ocr_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_OCR + std::to_string(detector_num + 1)) )
+    {
+        ocr_arr = &(_scan_info.scaler_maps.at(STR_OCR + std::to_string(detector_num + 1)).values);
+    }
 
     logI<<" Found elt="<< (elt_arr != nullptr) << " ert=" << (ert_arr != nullptr) << " in cnt=" << (icr_arr != nullptr) << " out cnt="<< (ocr_arr != nullptr) <<"\n";
 
@@ -677,23 +710,39 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
 	for (size_t detector_num : detector_num_arr)
 	{
-        elt_arr_map[detector_num] = _scan_info.scaler_values(STR_ELT + std::to_string(detector_num + 1));
-        ert_arr_map[detector_num] = _scan_info.scaler_values(STR_ERT + std::to_string(detector_num + 1));
-        incnt_arr_map[detector_num] = _scan_info.scaler_values(STR_ICR + std::to_string(detector_num + 1));
-        outcnt_arr_map[detector_num] = _scan_info.scaler_values(STR_OCR + std::to_string(detector_num + 1));
 
+        elt_arr_map[detector_num] = nullptr; 
+        if(_scan_info.scaler_maps.contains(STR_ELT + std::to_string(detector_num + 1)) )
+        {
+            elt_arr_map[detector_num] = &(_scan_info.scaler_maps.at(STR_ELT + std::to_string(detector_num + 1)).values);
+        }
+        ert_arr_map[detector_num] = nullptr; 
+        if(_scan_info.scaler_maps.contains(STR_ERT + std::to_string(detector_num + 1)) )
+        {
+            ert_arr_map[detector_num] = &(_scan_info.scaler_maps.at(STR_ERT + std::to_string(detector_num + 1)).values);
+        }
+        incnt_arr_map[detector_num] = nullptr; 
+        if(_scan_info.scaler_maps.contains(STR_ICR + std::to_string(detector_num + 1)) )
+        {
+            incnt_arr_map[detector_num] = &(_scan_info.scaler_maps.at(STR_ICR + std::to_string(detector_num + 1)).values);
+        }
+        outcnt_arr_map[detector_num] = nullptr; 
+        if(_scan_info.scaler_maps.contains(STR_OCR + std::to_string(detector_num + 1)) )
+        {
+            outcnt_arr_map[detector_num] = &(_scan_info.scaler_maps.at(STR_OCR + std::to_string(detector_num + 1)).values);
+        }
 /*
-		if (detector_struct->fit_params_override_dict.scaler_pvs.count("SRCURRENT") > 0)
+		if (detector_struct->fit_params_override_dict.scaler_pvs.contains("SRCURRENT") )
 		{
 			find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at("SRCURRENT"), tmp_val, units);
 			detector_struct->quant_standard.sr_current = (tmp_val);
 		}
-		if (detector_struct->fit_params_override_dict.scaler_pvs.count(STR_US_IC) > 0)
+		if (detector_struct->fit_params_override_dict.scaler_pvs.contains(STR_US_IC) )
 		{
 			find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at(STR_US_IC), tmp_val, units);
 			detector_struct->quant_standard.US_IC = (tmp_val);
 		}
-		if (detector_struct->fit_params_override_dict.scaler_pvs.count(STR_DS_IC) > 0)
+		if (detector_struct->fit_params_override_dict.scaler_pvs.contains(STR_DS_IC) )
 		{
 			find_scaler_index(_mda_file, detector_struct->fit_params_override_dict.scaler_pvs.at(STR_DS_IC), tmp_val, units);
 			detector_struct->quant_standard.DS_IC = (tmp_val);
@@ -783,7 +832,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
+Load_Status MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		size_t detector_num,
 		data_struct::Spectra<T_real>* out_integrated_spectra,
 		bool hasNetCDF)
@@ -803,7 +852,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 	if (fptr == nullptr)
 	{
-		return false;
+		return Load_Status::Failed;
 	}
 
 
@@ -812,14 +861,14 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	if (_mda_file == nullptr || out_integrated_spectra == nullptr)
 	{
 		logE << "_mda_file or out_integrated_spectra == nullptr\n";
-		return false;
+		return Load_Status::Failed;
 	}
 	logI << "mda info ver:" << _mda_file->header->version << " data rank:" << _mda_file->header->data_rank << "\n";
 
 	if (_mda_file->header->data_rank == 1)
 	{
 		logE << "Cannot load mda file data rank == 1\n";
-		return false;
+		return Load_Status::Failed;
 	}
 
 	_load_scalers(false, hasNetCDF, hasNetCDF);
@@ -850,7 +899,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
             }
 			out_integrated_spectra->resize(2048);
-			return true;
+			return Load_Status::Half_need_spectra;
 		}
 		else
 		{
@@ -860,7 +909,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 				{
 					logE << "Max detectors saved = " << _mda_file->scan->sub_scans[0]->number_detectors << "\n";
 					unload();
-					return false;
+					return Load_Status::Failed;
 				}
 
 				rows = 1;
@@ -880,7 +929,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 			{
 				//if not then we don't know what is dataset is.
 				unload();
-				return false;
+				return Load_Status::Failed;
 			}
 		}
 	}
@@ -891,7 +940,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 		{
 			logE << "Max detectors saved = " << _mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors << "\n";
 			unload();
-			return false;
+			return Load_Status::Failed;
 		}
 
 		if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
@@ -929,15 +978,31 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	{
 		logE << " No support for data rank " << _mda_file->header->data_rank << "\n";
 		unload();
-		return false;
+		return Load_Status::Failed;
 	}
 
 	out_integrated_spectra->setZero(samples);
 
-    elt_arr = _scan_info.scaler_values(STR_ELT + std::to_string(detector_num + 1));
-    ert_arr = _scan_info.scaler_values(STR_ERT + std::to_string(detector_num + 1));
-    icr_arr = _scan_info.scaler_values(STR_ICR + std::to_string(detector_num + 1));
-    ocr_arr = _scan_info.scaler_values(STR_OCR + std::to_string(detector_num + 1));
+    elt_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ELT + std::to_string(detector_num + 1)) )
+    {
+        elt_arr = &(_scan_info.scaler_maps.at(STR_ELT + std::to_string(detector_num + 1)).values);
+    }
+    ert_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ERT + std::to_string(detector_num + 1)) )
+    {
+        ert_arr = &(_scan_info.scaler_maps.at(STR_ERT + std::to_string(detector_num + 1)).values);
+    }
+    icr_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_ICR + std::to_string(detector_num + 1)) )
+    {
+        icr_arr = &(_scan_info.scaler_maps.at(STR_ICR + std::to_string(detector_num + 1)).values);
+    }
+    ocr_arr = nullptr; 
+    if(_scan_info.scaler_maps.contains(STR_OCR + std::to_string(detector_num + 1)) )
+    {
+        ocr_arr = &(_scan_info.scaler_maps.at(STR_OCR + std::to_string(detector_num + 1)).values);
+    }
 
     logI << " Found elt=" << (elt_arr != nullptr) << " ert=" << (ert_arr != nullptr) << " in cnt=" << (icr_arr != nullptr) << " out cnt=" << (ocr_arr != nullptr) << "\n";
 
@@ -968,7 +1033,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
 	{
 		logE << "Caught exception loading mda file." << "\n";
 		std::cerr << "Exception catched : " << e.what() << "\n";
-		return false;
+		return Load_Status::Failed;
 	}
     
     if (elt_arr)
@@ -989,7 +1054,7 @@ bool MDA_IO<T_real>::load_integrated_spectra(std::string path,
     }
 	out_integrated_spectra->recalc_elapsed_livetime();
 	
-	return true;
+	return Load_Status::Loaded;
 }
 
 //-----------------------------------------------------------------------------
@@ -1082,26 +1147,27 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
         {
             for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
-                if (i == 0)
+                std::string key =std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
+                std::string label = "";
+                bool is_time_normalized = false;
+                if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
+                {
+                    key = label;
+                }
+                if(_scan_info.scaler_maps.contains(key) == false)
                 {
                     data_struct::Scaler_Map<T_real> s_map;
                     s_map.values.resize(rows, cols);
                     s_map.values.setZero(rows, cols);
-                    s_map.name = std::string(_mda_file->scan->detectors[k]->name);
-                    std::string label = "";
-                    bool is_time_normalized = false;
-                    if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized, beamline))
-                    {
-                        s_map.name = label;
-                    }
+                    s_map.name = key;
                     s_map.time_normalized = is_time_normalized;
                     s_map.unit = std::string(_mda_file->scan->detectors[k]->unit);
-                    _scan_info.scaler_maps.push_back(s_map);
+                    _scan_info.scaler_maps[s_map.name] = s_map;
                 }
 
                 if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
                 {
-                    _scan_info.scaler_maps[k].values(0, i) = _mda_file->scan->detectors_data[k][i];
+                    _scan_info.scaler_maps.at(key).values(0, i) = _mda_file->scan->detectors_data[k][i];
                 }
             }
 
@@ -1110,7 +1176,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                 for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->number_detectors; d++)
                 {
                     data_struct::ArrayTr<T_real>* int_spec;
-                    if (_integrated_spectra_map.count(d) == 0)
+                    if (_integrated_spectra_map.contains(d) == false)
                     {
                         // if this is the first one then zero it out
                         int_spec = &(_integrated_spectra_map[d]);
@@ -1167,26 +1233,27 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
-                    if (i == 0 && j == 0)
+                    std::string key =std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
+                    std::string label = "";
+                    bool is_time_normalized = false;
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
+                    {
+                        key = label;
+                    }
+                    if(_scan_info.scaler_maps.contains(key) == false)
                     {
                         data_struct::Scaler_Map<T_real> s_map;
                         s_map.values.resize(rows, cols);
                         s_map.values.setZero(rows, cols);
-                        s_map.name = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
-                        std::string label = "";
-                        bool is_time_normalized = false;
-                        if (data_struct::Scaler_Lookup::inst()->search_pv(s_map.name, label, is_time_normalized, beamline))
-                        {
-                            s_map.name = label;
-                        }
+                        s_map.name = key;
                         s_map.time_normalized = is_time_normalized;
                         s_map.unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
-                        _scan_info.scaler_maps.push_back(s_map);
+                        _scan_info.scaler_maps[s_map.name] = s_map;
                     }
 
                     if (std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
                     {
-                        _scan_info.scaler_maps[k].values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                        _scan_info.scaler_maps.at(key).values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
                     }
                 }
                 if (_mda_file->scan->sub_scans[i]->sub_scans != nullptr && load_int_spec)
@@ -1194,7 +1261,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                     for (int32_t d = 0; d < _mda_file->scan->sub_scans[i]->sub_scans[j]->number_detectors; d++)
                     {
                         data_struct::ArrayTr<T_real>* int_spec;
-                        if (_integrated_spectra_map.count(d) == 0)
+                        if (_integrated_spectra_map.contains(d) == false)
                         {
                             // if this is the first one then zero it out
                             int_spec = &(_integrated_spectra_map[d]);
@@ -1218,21 +1285,24 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
     std::vector<std::string> pv_names;
     for (const auto& itr : _scan_info.scaler_maps)
     {
-        pv_names.push_back(itr.name);
+        pv_names.push_back(itr.first);
     }
     std::string time_pv = "";
     double time_clock = 0.0;
     if (data_struct::Scaler_Lookup::inst()->search_for_timing_info(pv_names, time_pv, time_clock, beamline))
     {
-        const data_struct::ArrayXXr<T_real>* time_array = _scan_info.scaler_values(time_pv);
-        if (time_array != nullptr)
+        if(_scan_info.scaler_maps.contains(time_pv) )
         {
-            for (auto& itr : _scan_info.scaler_maps)
+            const data_struct::ArrayXXr<T_real>* time_array = &_scan_info.scaler_maps.at(time_pv).values;
+            if (time_array != nullptr)
             {
-                if (itr.time_normalized)
+                for (auto& itr : _scan_info.scaler_maps)
                 {
-                    itr.values = itr.values / (*time_array / time_clock);
-                    itr.values = itr.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+                    if (itr.second.time_normalized)
+                    {
+                        itr.second.values = itr.second.values / (*time_array / time_clock);
+                        itr.second.values = itr.second.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+                    }
                 }
             }
         }
@@ -1249,13 +1319,12 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             s_map.values.setZero(rows, cols);
             for (const auto& sitr : itr.scalers_to_sum)
             {
-                const data_struct::ArrayXXr<T_real>* arr = _scan_info.scaler_values(sitr);
-                if (arr != nullptr)
+                if(_scan_info.scaler_maps.contains(sitr) )
                 {
-                    s_map.values += (*arr);
+                    s_map.values += _scan_info.scaler_maps.at(sitr).values;
                 }
             }
-            _scan_info.scaler_maps.push_back(s_map);
+            _scan_info.scaler_maps[s_map.name] = s_map;
         }
     }
 }
@@ -1380,7 +1449,7 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
                     {
                         s_map.unit = "tetra2_" + e_pv.value;
                     }
-                    _scan_info.scaler_maps.push_back(s_map);  
+                    _scan_info.scaler_maps[s_map.name] = s_map;  
                 }
             }
 
@@ -1398,9 +1467,9 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
 
         for(auto &itr : _scan_info.scaler_maps)
         {
-            if(name_hash.count(itr.name) > 0)
+            if(name_hash.contains(itr.first) )
             {
-                itr.name = name_hash.at(itr.name);
+                itr.second.name = name_hash.at(itr.first);
             }
         }
 	}
@@ -1600,7 +1669,7 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF, bool subtract_two_cols)
 template<typename T_real>
 data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned int detector)
 {
-    if (_integrated_spectra_map.count(detector) > 0)
+    if (_integrated_spectra_map.contains(detector) )
     {
         return &(_integrated_spectra_map.at(detector));
     }

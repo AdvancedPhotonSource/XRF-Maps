@@ -306,6 +306,7 @@ set(libxrf_fit_SOURCE
 set(XRF_IO_HEADERS
 	src/core/mem_info.h
 	src/support/mdautils-1.4.1/mda-load.h
+  src/io/file/file_scan.h
 	src/io/file/mda_io.h
     src/io/file/mca_io.h
 	src/io/file/hdf5_io.h
@@ -314,7 +315,6 @@ set(XRF_IO_HEADERS
 	src/io/file/aps/aps_fit_params_import.h
     src/io/file/aps/aps_roi.h
     src/io/file/esrf/edf_io.h
-    src/io/file/file_scan.h
 	src/io/file/hl_file_io.h
 	src/io/net/basic_serializer.h
 	src/workflow/source.h
@@ -333,12 +333,12 @@ set(XRF_IO_HEADERS
 set(XRF_IO_SOURCE
     ${VISUAL_INC}
 	  src/core/mem_info.cpp
+    src/io/file/file_scan.cpp
     src/support/mdautils-1.4.1/mda_loader.c
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
     src/io/file/hdf5_io.cpp
     src/io/file/netcdf_io.cpp
-    src/io/file/file_scan.cpp
     src/io/file/hl_file_io.cpp
     src/io/file/aps/aps_roi.cpp
     src/io/net/basic_serializer.cpp

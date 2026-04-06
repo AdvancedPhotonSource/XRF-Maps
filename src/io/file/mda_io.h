@@ -118,7 +118,7 @@ public:
 										                    data_struct::IO_Callback_Func_Def<T_real> callback_func,
                                         void *user_data);
 
-	bool load_integrated_spectra(std::string path,
+	  Load_Status load_integrated_spectra(std::string path,
 								size_t detector_num,
 								data_struct::Spectra<T_real>*out_integrated_spectra,
 								bool hasNetCDF);

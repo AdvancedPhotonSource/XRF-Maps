@@ -137,7 +137,7 @@ template<typename T_real>
 void Quantification_Standard<T_real>::normalize_counts_by_time(Fitting_Routines routine)
 {
    
-    if (element_counts.count(routine) > 0)
+    if (element_counts.contains(routine) )
     {
 		for (auto& itr : element_counts.at(routine))
 		{

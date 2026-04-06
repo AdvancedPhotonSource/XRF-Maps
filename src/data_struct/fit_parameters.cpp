@@ -455,7 +455,7 @@ void Fit_Parameters<T_real>::remove(Fit_Parameters* override_fit_params)
 {
     for (auto& itr : *override_fit_params)
     {
-        if (_params.count(itr.first) > 0)
+        if (_params.contains(itr.first) )
         {
             _params.erase(itr.first);
         }
@@ -467,7 +467,7 @@ void Fit_Parameters<T_real>::remove(Fit_Parameters* override_fit_params)
 template<typename T_real>
 void Fit_Parameters<T_real>::remove(std::string key)
 {
-    if (_params.count(key) > 0)
+    if (_params.contains(key) )
     {
         _params.erase(key);
     }

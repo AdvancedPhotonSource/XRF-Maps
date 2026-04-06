@@ -136,6 +136,16 @@ void Spectra_Line<T_real>::recalc_elapsed_livetime()
         _data_line[i].recalc_elapsed_livetime();
     }
 }
+// ----------------------------------------------------------------------------
+
+template<typename T_real>
+void Spectra_Line<T_real>::set_nan_to_near_zero()
+{
+    for(size_t i=0; i<_data_line.size(); i++)
+    {
+        _data_line[i].set_nan_to_near_zero();
+    }
+}
 
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

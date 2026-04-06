@@ -190,7 +190,7 @@ namespace csv
             file_stream << "airpath : " << detector->airpath << "\n";
             file_stream << "detector_element : " << detector->detector_element->name << "\n";
 
-            if (detector->avg_quantification_scaler_map.count(quantifier_scaler_name) > 0)
+            if (detector->avg_quantification_scaler_map.contains(quantifier_scaler_name) )
             {
                 file_stream << quantifier_scaler_name << ": " << detector->avg_quantification_scaler_map.at(quantifier_scaler_name) << "\n";
             }
@@ -217,9 +217,9 @@ namespace csv
 
                     for (const auto& s_itr : *standards)
                     {
-                        if (s_itr.second.element_counts.count(routine) > 0)
+                        if (s_itr.second.element_counts.contains(routine) )
                         {
-                            if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                            if (s_itr.second.element_counts.at(routine).contains(name) )
                             {
                                 counts = s_itr.second.element_counts.at(routine).at(name);
                                 break;
@@ -417,10 +417,10 @@ namespace csv
                     const std::vector < Element_Quant<T_real> >* l_calib_curve = nullptr;
                     const std::vector < Element_Quant<T_real> >* m_calib_curve = nullptr;
 
-                    if (detector->fitting_quant_map.count(f_itr) > 0)
+                    if (detector->fitting_quant_map.contains(f_itr) )
                     {
                         const auto& quant_struct = detector->fitting_quant_map.at(f_itr);
-                        if (quant_struct.quant_scaler_map.count(n_itr.second) > 0)
+                        if (quant_struct.quant_scaler_map.contains(n_itr.second) )
                         {
                             //Quantification_Scaler_Struct
                             auto& quant_element = quant_struct.quant_scaler_map.at(n_itr.second);
@@ -602,7 +602,7 @@ namespace csv
                 }
             }
             /*
-            if (detector->avg_quantification_scaler_map.count(quantifier_scaler_name) > 0)
+            if (detector->avg_quantification_scaler_map.contains(quantifier_scaler_name) )
             {
                 file_stream << quantifier_scaler_name << ": " << detector->avg_quantification_scaler_map.at(quantifier_scaler_name) << "\n";
             }
@@ -629,7 +629,7 @@ namespace csv
 
                     for (const auto& s_itr : *standards)
                     {
-                        if (s_itr.second.element_counts.at(routine).count(name) > 0)
+                        if (s_itr.second.element_counts.at(routine).contains(name) )
                         {
                             counts = s_itr.second.element_counts.at(routine).at(name);
                             break;
@@ -729,43 +729,43 @@ namespace csv
 
         if (labeled_spectras != nullptr)
         {
-            if (labeled_spectras->count(STR_K_A_LINES) > 0)
+            if (labeled_spectras->contains(STR_K_A_LINES) )
             {
                 k_alpha = &(labeled_spectras->at(STR_K_A_LINES));
             }
-            if (labeled_spectras->count(STR_K_B_LINES) > 0)
+            if (labeled_spectras->contains(STR_K_B_LINES) )
             {
                 k_beta = &(labeled_spectras->at(STR_K_B_LINES));
             }
-            if (labeled_spectras->count(STR_L_LINES) > 0)
+            if (labeled_spectras->contains(STR_L_LINES) )
             {
                 l_line = &(labeled_spectras->at(STR_L_LINES));
             }
-            if (labeled_spectras->count(STR_M_LINES) > 0)
+            if (labeled_spectras->contains(STR_M_LINES) )
             {
                 m_line = &(labeled_spectras->at(STR_M_LINES));
             }
-            if (labeled_spectras->count(STR_STEP_LINES) > 0)
+            if (labeled_spectras->contains(STR_STEP_LINES) )
             {
                 step = &(labeled_spectras->at(STR_STEP_LINES));
             }
-            if (labeled_spectras->count(STR_TAIL_LINES) > 0)
+            if (labeled_spectras->contains(STR_TAIL_LINES) )
             {
                 tail = &(labeled_spectras->at(STR_TAIL_LINES));
             }
-            if (labeled_spectras->count(STR_ELASTIC_LINES) > 0)
+            if (labeled_spectras->contains(STR_ELASTIC_LINES) )
             {
                 elastic = &(labeled_spectras->at(STR_ELASTIC_LINES));
             }
-            if (labeled_spectras->count(STR_COMPTON_LINES) > 0)
+            if (labeled_spectras->contains(STR_COMPTON_LINES) )
             {
                 compton = &(labeled_spectras->at(STR_COMPTON_LINES));
             }
-            if (labeled_spectras->count(STR_PILEUP_LINES) > 0)
+            if (labeled_spectras->contains(STR_PILEUP_LINES) )
             {
                 pileup = &(labeled_spectras->at(STR_PILEUP_LINES));
             }
-            if (labeled_spectras->count(STR_ESCAPE_LINES) > 0)
+            if (labeled_spectras->contains(STR_ESCAPE_LINES) )
             {
                 escape = &(labeled_spectras->at(STR_ESCAPE_LINES));
             }

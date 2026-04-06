@@ -164,6 +164,18 @@ public:
         }
     }
 
+    void set_nan_to_near_zero()
+    {
+        for(Eigen::Index i = 0; i < this->size(); i++)
+        {
+            if( false == std::isfinite((*this)[i]) )
+            {
+                (*this)[i] = default_time_and_io_counts;
+            }
+        }
+       // this = this.unaryExpr([](double v) { return std::isfinite(v) ? v : default_time_and_io_counts; });
+    }
+
     void add(const Spectra<_T>& spectra)
     {
         *this += (ArrayTr<_T>)spectra;

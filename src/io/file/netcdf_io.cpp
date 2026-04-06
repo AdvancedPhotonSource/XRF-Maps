@@ -585,21 +585,21 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
             return 0;
         }
         std::string search_name = tag+std::to_string(i);
-        for(auto& scaler_map : scan_info->scaler_maps)
+        for(auto& sitr : scan_info->scaler_maps)
         {
-            if(scaler_map.unit == search_name)
+            if(sitr.second.unit == search_name)
             {
                 T_real multiplier = (T_real)1.0;
                 if(params_override != nullptr)
                 {
-                    if(params_override->scaling_factors.count(scaler_map.name) > 0)
+                    if(params_override->scaling_factors.contains(sitr.first))
                     {
-                        multiplier = params_override->scaling_factors.at(scaler_map.name);
+                        multiplier = params_override->scaling_factors.at(sitr.first);
                     }
                 }
                 for(size_t j=0; j < dim2size[0]; j++)
                 {
-                    scaler_map.values(row,j) = data_in[j] * multiplier;
+                    sitr.second.values(row,j) = data_in[j] * multiplier;
                 }
                 break;
             }

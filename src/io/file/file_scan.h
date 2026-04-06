@@ -54,13 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <dirent.h>
 #endif
 
-#include "io/file/netcdf_io.h"
-#include "io/file/mda_io.h"
-#include "io/file/mca_io.h"
-#include "io/file/hdf5_io.h"
-#include "io/file/csv_io.h"
-
-#include "data_struct/spectra_volume.h"
+#include "core/defines.h"
 #include <regex>
 
 
@@ -92,9 +86,11 @@ namespace io
 
             std::vector<std::string> find_all_dirs(std::string dataset_directory, std::vector<std::regex>& ign_dir_list, bool recursive);
 
-            std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
+            std::vector<std::string> find_all_dataset_files_by_ext(std::string dataset_directory, std::string search_str);
 
             std::vector<std::string> find_all_dataset_files_by_list(std::string dataset_directory, std::vector<std::string>& search_strs);
+
+            std::vector<std::string> find_all_dataset_files(std::string dataset_directory, std::string search_str);
 
             void sort_dataset_files_by_size(std::string dataset_directory, std::vector<std::string>* dataset_files);
 

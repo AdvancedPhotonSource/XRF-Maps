@@ -190,7 +190,7 @@ void Quantification_Model<T_real>::init_element_quant(Element_Quant<T_real>& ele
     }
  
 
-    if (detector_element->name.length() > 0 && data_struct::Henke_Compound_Density_Map<T_real>.count(detector_element->name) > 0 && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
+    if (detector_element->name.length() > 0 && data_struct::Henke_Compound_Density_Map<T_real>.contains(detector_element->name)  && detector_chip_thickness > 0.0 && ev > 0) //  (self.maps_conf.add_long['a'] == 1)
     {
         beta  = Element_Info_Map<T_real>::inst()->calc_beta(detector_element->name, data_struct::Henke_Compound_Density_Map<T_real>.at(detector_element->name), ev);
         element_quant.transmission_through_Si_detector = transmission(detector_chip_thickness, beta, (T_real)1239.852 / ev);

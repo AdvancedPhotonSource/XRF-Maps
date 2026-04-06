@@ -78,6 +78,20 @@ struct Scaler_Map
     bool time_normalized;
     //bool is_timer;
     ArrayXXr<T_real> values;
+
+    Scaler_Map()
+    {
+        name = "";
+        unit = "";
+        time_normalized = false;
+    }
+
+    Scaler_Map(std::string name_)
+    {
+        name = name_;
+        unit = "";
+        time_normalized = false;
+    }
 };
 
 TEMPLATE_STRUCT_DLL_EXPORT Scaler_Map<float>;
@@ -126,32 +140,24 @@ public:
         
     }
 
-    const ArrayXXr<T_real>* scaler_values(const std::string& scaler_name) const
-    {
-        for (const auto& itr : scaler_maps)
-        {
-            if (itr.name == scaler_name)
-            {
-                return &(itr.values);
-            }
-        }
-        return nullptr;
-    }
-
     T_real scaler_avg_value(const std::string& scaler_name)
     {
-        for (auto& itr : scaler_maps)
+        if(scaler_maps.contains(scaler_name) )
         {
-            if (itr.name == scaler_name)
-            {
-                return itr.values.mean();
-            }
+            return scaler_maps.at(scaler_name).values.mean();
         }
         return (T_real)0.0;
     }
 
+    void initialize_scaler_map(std::string name_)
+    {
+        data_struct::Scaler_Map<T_real> map(name_);
+        map.values.resize(meta_info.requested_rows, meta_info.requested_cols);
+        scaler_maps[map.name] = map;
+    }
+
     Scan_Meta_Info<T_real> meta_info;
-    std::vector<Scaler_Map<T_real>> scaler_maps;
+    std::map<std::string, Scaler_Map<T_real>> scaler_maps;
     std::vector<Extra_PV> extra_pvs;
     bool has_netcdf; 
 };
