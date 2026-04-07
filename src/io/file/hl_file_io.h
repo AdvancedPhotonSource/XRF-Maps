@@ -196,7 +196,7 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
         filename += "maps_fit_parameters_override.txt" + det_num;
     }
 
-    if (false == io::file::aps::load_parameters_override(filename, params_override))
+    if (false == io::file::aps::load_parameters_override(filename, *params_override))
     {
         logE << "Loading fit param override file: " << filename << "\n";
         return false;

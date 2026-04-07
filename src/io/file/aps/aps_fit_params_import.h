@@ -242,7 +242,7 @@ T_real translate_sens_num(std::string value)
 }
   
 template<typename T_real>
-DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> *params_override)
+DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> params_override)
 {
 
     std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = init_tags<T_real>();
@@ -257,7 +257,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
         //paramFileStream.exceptions(std::ifstream::failbit);
         //std::string line;
         std::string tag;
-        
+
         try
         {
             for (std::string line; std::getline(paramFileStream, line, '\n'); )
@@ -297,10 +297,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             else
                             {
                                 Fit_Element_Map<T_real>* fit_map;
-                                if (params_override->elements_to_fit.contains(element_symb) == false)
+                                if (params_override.elements_to_fit.contains(element_symb) == false)
                                 {
                                     fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
-                                    params_override->elements_to_fit[element_symb] = fit_map;
+                                    params_override.elements_to_fit[element_symb] = fit_map;
                                 }
                             }
                         }
@@ -375,11 +375,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             if (e_info1 != nullptr && e_info2 != nullptr)
                             {
                                 Fit_Element_Map<T_real>* fit_map;
-                                if (params_override->elements_to_fit.contains(orig_el_symb) == false)
+                                if (params_override.elements_to_fit.contains(orig_el_symb) == false)
                                 {
                                     fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
                                     fit_map->set_as_pileup(efull_name2, e_info2);
-                                    params_override->elements_to_fit[orig_el_symb] = fit_map;
+                                    params_override.elements_to_fit[orig_el_symb] = fit_map;
                                 }
                             }
                             else
@@ -397,9 +397,9 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         }
 
                         std::string tag_name = FILE_TAGS_TRANSLATION.at(tag);
-                        if (false == params_override->fit_params.contains(tag_name))
+                        if (false == params_override.fit_params.contains(tag_name))
                         {
-                            params_override->fit_params.add_parameter(Fit_Param<T_real>(tag_name));
+                            params_override.fit_params.add_parameter(Fit_Param<T_real>(tag_name));
                         }
 
                         std::string str_value;
@@ -411,43 +411,43 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (tag.find("_MAX") != std::string::npos)
                         {
-                            params_override->fit_params[tag_name].max_val = parse_input_real<T_real>(str_value);
+                            params_override.fit_params[tag_name].max_val = parse_input_real<T_real>(str_value);
                         }
                         else if (tag.find("_MIN") != std::string::npos)
                         {
-                            params_override->fit_params[tag_name].min_val = parse_input_real<T_real>(str_value);
+                            params_override.fit_params[tag_name].min_val = parse_input_real<T_real>(str_value);
                         }
                         else if (tag.find("_FITTING") != std::string::npos)
                         {
                             
                             if (str_value == STR_FIXED)
                             {
-                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIXED;
+                                params_override.fit_params[tag_name].bound_type = E_Bound_Type::FIXED;
                             }
                             else if (str_value == STR_LIMITED_LO_HI)
                             {
-                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO_HI;
+                                params_override.fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO_HI;
                             }
                             else if (str_value == STR_LIMITED_LO)
                             {
-                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO;
+                                params_override.fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_LO;
                             }
                             else if (str_value == STR_LIMITED_HI)
                             {
-                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_HI;
+                                params_override.fit_params[tag_name].bound_type = E_Bound_Type::LIMITED_HI;
                             }
                             else if (str_value == STR_FIT)
                             {
-                                params_override->fit_params[tag_name].bound_type = E_Bound_Type::FIT;
+                                params_override.fit_params[tag_name].bound_type = E_Bound_Type::FIT;
                             }
                         }
                         else if (tag.find("_STEPSIZE") != std::string::npos)
                         {
-                            params_override->fit_params[tag_name].step_size = parse_input_real<T_real>(str_value);
+                            params_override.fit_params[tag_name].step_size = parse_input_real<T_real>(str_value);
                         }
                         else
                         {
-                            params_override->fit_params[tag_name].value = parse_input_real<T_real>(str_value);
+                            params_override.fit_params[tag_name].value = parse_input_real<T_real>(str_value);
                         }
                     }
                     else if (tag == "WIDTH_MULTIPLIER")
@@ -459,9 +459,9 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.contains(element_symb) )
+                        if (params_override.elements_to_fit.contains(element_symb) )
                         {
-                            fit_map = params_override->elements_to_fit[element_symb];
+                            fit_map = params_override.elements_to_fit[element_symb];
                             T_real factor = 1.0;
                             std::getline(strstream, str_value, ',');
                             factor = parse_input_real<T_real>(str_value);
@@ -486,11 +486,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         width_multi = parse_input_real<T_real>(width_value);
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.contains(element_symb) == false)
+                        if (params_override.elements_to_fit.contains(element_symb) == false)
                         {
                             
                             fit_map = new Fit_Element_Map<T_real>(element_symb, center, width_multi);
-                            params_override->elements_to_fit[element_symb] = fit_map;
+                            params_override.elements_to_fit[element_symb] = fit_map;
                         }
                     }
                     else if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_L" || tag == "BRANCHING_RATIO_ADJUSTMENT_K" || tag == "BRANCHING_RATIO_ADJUSTMENT_M")
@@ -499,22 +499,22 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (tag == "BRANCHING_FAMILY_ADJUSTMENT_L")
                         {
-                            params_override->branching_family_L.push_back(line);
+                            params_override.branching_family_L.push_back(line);
                             cnt = 3;
                         }
                         else if (tag == "BRANCHING_RATIO_ADJUSTMENT_K")
                         {
-                            params_override->branching_ratio_K.push_back(line);
+                            params_override.branching_ratio_K.push_back(line);
                             cnt = 4;
                         }
                         else if (tag == "BRANCHING_RATIO_ADJUSTMENT_L")
                         {
-                            params_override->branching_ratio_L.push_back(line);
+                            params_override.branching_ratio_L.push_back(line);
                             cnt = 12;
                         }
                         else if (tag == "BRANCHING_RATIO_ADJUSTMENT_M")
                         {
-                            params_override->branching_ratio_M.push_back(line);
+                            params_override.branching_ratio_M.push_back(line);
                             cnt = 4;
                         }
 
@@ -525,9 +525,9 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
                         Fit_Element_Map<T_real>* fit_map;
-                        if (params_override->elements_to_fit.contains(element_symb) )
+                        if (params_override.elements_to_fit.contains(element_symb) )
                         {
-                            fit_map = params_override->elements_to_fit[element_symb];
+                            fit_map = params_override.elements_to_fit[element_symb];
                             if (cnt == 3) // family
                             {
                                 float factor = 1.0;
@@ -576,17 +576,17 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         str_value.erase(std::remove(str_value.begin(), str_value.end(), '\r'), str_value.end());
                         str_value.erase(std::remove(str_value.begin(), str_value.end(), ' '), str_value.end());
                         float fvalue = parse_input_real<T_real>(str_value);
-                        params_override->fit_snip_width = fvalue;
+                        params_override.fit_snip_width = fvalue;
 
-                        if (false == params_override->fit_params.contains(STR_SNIP_WIDTH))
+                        if (false == params_override.fit_params.contains(STR_SNIP_WIDTH))
                         {
-                            params_override->fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH));
+                            params_override.fit_params.add_parameter(Fit_Param<T_real>(STR_SNIP_WIDTH));
                         }
 
                         if (fvalue > 0.0)
-                            params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
+                            params_override.fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIT;
                         else
-                            params_override->fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
+                            params_override.fit_params[STR_SNIP_WIDTH].bound_type = E_Bound_Type::FIXED;
                     }
                     else if (tag == "DETECTOR_MATERIAL") // =  0 = Germanium, 1 = Si
                     {
@@ -598,15 +598,15 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (value == "0")
                         {
-                            params_override->detector_element = "Ge";
+                            params_override.detector_element = "Ge";
                         }
                         else if (value == "1")
                         {
-                            params_override->detector_element = "Si";
+                            params_override.detector_element = "Si";
                         }
                         else
                         {
-                            params_override->detector_element = value;
+                            params_override.detector_element = value;
                         }
                     }
                     else if (tag == "US_AMP_SENS_NUM")
@@ -617,7 +617,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                        params_override->us_amp_sens_num = translate_sens_num<T_real>(value);
+                        params_override.us_amp_sens_num = translate_sens_num<T_real>(value);
                     }
                     else if (tag == "US_AMP_SENS_UNIT")
                     {
@@ -629,19 +629,19 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
                         if (value == "0")
                         {
-                            params_override->us_amp_sens_unit = "pA/V";
+                            params_override.us_amp_sens_unit = "pA/V";
                         }
                         else if (value == "1")
                         {
-                            params_override->us_amp_sens_unit = "nA/V";
+                            params_override.us_amp_sens_unit = "nA/V";
                         }
                         else if (value == "2")
                         {
-                            params_override->us_amp_sens_unit = "uA/V";
+                            params_override.us_amp_sens_unit = "uA/V";
                         }
                         else if (value == "3")
                         {
-                            params_override->us_amp_sens_unit = "mA/V";
+                            params_override.us_amp_sens_unit = "mA/V";
                         }
                     }
                     else if (tag == "DS_AMP_SENS_NUM")
@@ -652,7 +652,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
-                        params_override->ds_amp_sens_num = translate_sens_num<T_real>(value);
+                        params_override.ds_amp_sens_num = translate_sens_num<T_real>(value);
                     }
                     else if (tag == "DS_AMP_SENS_UNIT")
                     {
@@ -664,19 +664,19 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '%'), value.end());
                         if (value == "0")
                         {
-                            params_override->ds_amp_sens_unit = "pA/V";
+                            params_override.ds_amp_sens_unit = "pA/V";
                         }
                         else if (value == "1")
                         {
-                            params_override->ds_amp_sens_unit = "nA/V";
+                            params_override.ds_amp_sens_unit = "nA/V";
                         }
                         else if (value == "2")
                         {
-                            params_override->ds_amp_sens_unit = "uA/V";
+                            params_override.ds_amp_sens_unit = "uA/V";
                         }
                         else if (value == "3")
                         {
-                            params_override->ds_amp_sens_unit = "mA/V";
+                            params_override.ds_amp_sens_unit = "mA/V";
                         }
 
                     }
@@ -687,7 +687,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->us_amp_sens_num = parse_input_real<T_real>(value);
+                        params_override.us_amp_sens_num = parse_input_real<T_real>(value);
                     }
                     else if (tag == "US_AMP_UNIT")
                     {
@@ -696,7 +696,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->us_amp_sens_unit = value;
+                        params_override.us_amp_sens_unit = value;
                     }
                     else if (tag == "DS_AMP_NUM")
                     {
@@ -705,7 +705,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->ds_amp_sens_num = parse_input_real<T_real>(value);
+                        params_override.ds_amp_sens_num = parse_input_real<T_real>(value);
                     }
                     else if (tag == "DS_AMP_UNIT")
                     {
@@ -714,7 +714,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->ds_amp_sens_unit = value;
+                        params_override.ds_amp_sens_unit = value;
                     }
                     else if (tag == "BE_WINDOW_THICKNESS")
                     {
@@ -723,7 +723,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->be_window_thickness = value;
+                        params_override.be_window_thickness = value;
                     }
                     else if (tag == "DET_CHIP_THICKNESS")
                     {
@@ -732,7 +732,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->det_chip_thickness = value;
+                        params_override.det_chip_thickness = value;
                     }
                     else if (tag == "GE_DEAD_LAYER")
                     {
@@ -741,7 +741,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->ge_dead_layer = value;
+                        params_override.ge_dead_layer = value;
                     }
                     else if (tag == "AIRPATH")
                     {
@@ -750,7 +750,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->airpath = value;
+                        params_override.airpath = value;
                     }
                     else if (tag == "SI_ESCAPE_ENABLE")
                     {
@@ -763,11 +763,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (value == "1")
                         {
-                            params_override->si_escape_enabled = true;
+                            params_override.si_escape_enabled = true;
                         }
                         else
                         {
-                            params_override->si_escape_enabled = false;
+                            params_override.si_escape_enabled = false;
                         }
                     }
                     else if (tag == "GE_ESCAPE_ENABLE")
@@ -781,11 +781,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                         if (value == "1")
                         {
-                        //    params_override->ge_escape_enabled = true;
+                        //    params_override.ge_escape_enabled = true;
                         }
                         else
                         {
-                        //    params_override->ge_escape_enabled = false;
+                        //    params_override.ge_escape_enabled = false;
                         }
                     }
                     else if (tag == "LINEAR_ESCAPE_FACTOR")
@@ -795,7 +795,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        //params_override->ge_dead_layer = std::stoi(value);
+                        //params_override.ge_dead_layer = std::stoi(value);
                     }
                     else if (tag == "TAIL_FRACTION_ADJUST_SI")
                     {
@@ -804,7 +804,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        //params_override->ge_dead_layer = std::stoi(value);
+                        //params_override.ge_dead_layer = std::stoi(value);
                     }
                     else if (tag == "TAIL_WIDTH_ADJUST_SI")
                     {
@@ -813,7 +813,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        //params_override->ge_dead_layer = std::stoi(value);
+                        //params_override.ge_dead_layer = std::stoi(value);
                     }
                     else if (tag == "IDENTIFYING_NAME_[WHATEVERE_YOU_LIKE]")
                     {
@@ -822,7 +822,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        //params_override->ge_dead_layer = std::stoi(value);
+                        //params_override.ge_dead_layer = std::stoi(value);
                     }
                     else if (tag == "THETA_PV")
                     {
@@ -831,7 +831,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->theta_pv = value;
+                        params_override.theta_pv = value;
                     }
                     else if (tag == "SCALING_FACTOR")
                     {
@@ -844,7 +844,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::getline(strstream, str_value, ',');
                         factor = parse_input_real<T_real>(str_value);
                         
-                        params_override->scaling_factors[scaler_name] = factor;
+                        params_override.scaling_factors[scaler_name] = factor;
                     }
                     else if (tag == STR_POLARITY_PATTERN)
                     {
@@ -853,7 +853,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        params_override->polarity_pattern = value;
+                        params_override.polarity_pattern = value;
                     }
                     else if(tag == STR_SCALER_OVERRIDE)
                     {
@@ -921,16 +921,22 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                 return false;
             }
         }
-        params_override->parse_and_gen_branching_ratios();
+        params_override.parse_and_gen_branching_ratios();
 
-        if (params_override->si_escape_enabled)
+        if (params_override.si_escape_enabled)
         {
-            if (params_override->fit_params.contains(STR_SI_ESCAPE))
+            if (params_override.fit_params.contains(STR_SI_ESCAPE))
             {
-                params_override->fit_params[STR_SI_ESCAPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+                params_override.fit_params[STR_SI_ESCAPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
             }
         }
         paramFileStream.close();
+
+        if(params_override.fit_params.size() == 0)
+        {
+            return false;
+        }
+
         return true;
     }
     return false;
