@@ -182,7 +182,7 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(dat
 template<typename T_real>
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
     int detector_num,
-    data_struct::Params_Override<T_real>* params_override,
+    data_struct::Params_Override<T_real> &params_override,
     bool append_file_name = true)
 {
     std::string det_num = "";
@@ -204,11 +204,11 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
     else
     {
         data_struct::Element_Info<T_real>* detector_element;
-        if (params_override->detector_element.length() > 0)
+        if (params_override.detector_element.length() > 0)
         {
             // Get the element info class                                   // detector element as string "Si" or "Ge" usually
 
-            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override->detector_element);
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override.detector_element);
         }
         else
         {
@@ -217,18 +217,18 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
             detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
         }
 
-        if (params_override->elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
+        if (params_override.elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
+            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
         }
-        if (params_override->elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
+        if (params_override.elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
+            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
 
         logI << "Elements to fit:  ";
         //Update element ratios by detector element
-        for (auto& itr : params_override->elements_to_fit)
+        for (auto& itr : params_override.elements_to_fit)
         {
             itr.second->init_energy_ratio_for_detector_element(detector_element);
             logit_s << itr.first << " ";
@@ -285,14 +285,14 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             analysis_job->output_dir = analysis_job->dataset_directory;
         }
 
-        if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, override_params))
+        if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, *override_params))
         {
-            if (false == io::file::load_override_params(analysis_job->output_dir, -1, override_params))
+            if (false == io::file::load_override_params(analysis_job->output_dir, -1, *override_params))
             {
                 //last case, check current directory for override. This will be used for streaming
-                if (false == io::file::load_override_params("./", detector_num, override_params))
+                if (false == io::file::load_override_params("./", detector_num, *override_params))
                 {
-                    if (false == io::file::load_override_params("./", -1, override_params))
+                    if (false == io::file::load_override_params("./", -1, *override_params))
                     {
                         return false;
                     }
