@@ -166,9 +166,9 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
             {
                 params_override = new data_struct::Params_Override<double>();
                 //load override parameters
-                if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, params_override))
+                if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, *params_override))
                 {
-                    if (false == io::file::load_override_params(analysis_job->output_dir, -1, params_override))
+                    if (false == io::file::load_override_params(analysis_job->output_dir, -1, *params_override))
                     {
                         logE << "Loading maps_fit_parameters_override.txt\n";
                         delete params_override;

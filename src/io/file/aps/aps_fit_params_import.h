@@ -242,7 +242,7 @@ T_real translate_sens_num(std::string value)
 }
   
 template<typename T_real>
-DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> params_override)
+DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_real> &params_override)
 {
 
     std::unordered_map<std::string, std::string> FILE_TAGS_TRANSLATION = init_tags<T_real>();
