@@ -1429,17 +1429,11 @@ void MDA_IO<T_real>::_load_extra_pvs_vector()
                 }
                 if(tokens.size() > 2 && _scan_info.scaler_maps.size() > 0)
                 {
-<<<<<<< Updated upstream
-                    auto o_map = _scan_info.scaler_maps.begin()->second;
-                    data_struct::Scaler_Map<T_real> s_map;
-                    s_map.values.resize(o_map.values.rows(), o_map.values.cols());
-                    s_map.values.setZero(o_map.values.rows(), o_map.values.cols());
-=======
                     size_t rows = _scan_info.scaler_maps.begin()->second->values.rows();
                     size_t cols = _scan_info.scaler_maps.begin()->second->values.cols();
                     std::string ename = e_pv.name;
                     std::string eunit;
->>>>>>> Stashed changes
+
                     if (data_struct::Scaler_Lookup::inst()->search_pv(tokens[0] + ":" + tokens[1], label, is_time_normalized, beamline))
                     {
                         ename = label;
