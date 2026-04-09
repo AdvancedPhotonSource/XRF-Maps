@@ -238,7 +238,7 @@ ENDIF()
 
 # Visual Studio specific include and source
 IF(MSVC)
-  set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
+  set(XDR_HACK src/support/MDA_Utilities/src/xdr_hack.c src/support/MDA_Utilities/src/xdr_hack.h )
   include_directories(src/support/direct)
   add_compile_options(/bigobj)
 ELSE()
@@ -305,7 +305,7 @@ set(libxrf_fit_SOURCE
 #--------------- start xrf io lib -----------------
 set(XRF_IO_HEADERS
 	src/core/mem_info.h
-	src/support/mdautils-1.4.1/mda-load.h
+	src/support/MDA_Utilities/src/mda-load.h
   src/io/file/file_scan.h
 	src/io/file/mda_io.h
     src/io/file/mca_io.h
@@ -334,7 +334,7 @@ set(XRF_IO_SOURCE
     ${VISUAL_INC}
 	  src/core/mem_info.cpp
     src/io/file/file_scan.cpp
-    src/support/mdautils-1.4.1/mda_loader.c
+    src/support/MDA_Utilities/src/mda_loader.c
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
     src/io/file/hdf5_io.cpp
