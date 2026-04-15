@@ -1028,8 +1028,12 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         out_stream << "CAL_QUAD_[E_QUADRATIC]_MAX:   " << params_override->fit_params.at(STR_ENERGY_QUADRATIC).max_val << "\n";
         out_stream << "    energy_resolution at 0keV\n";
         out_stream << "FWHM_OFFSET: " << params_override->fit_params.at(STR_FWHM_OFFSET).value << "\n";
+        out_stream << "FWHM_OFFSET_MIN: " << params_override->fit_params.at(STR_FWHM_OFFSET).min_val << "\n";
+        out_stream << "FWHM_OFFSET_MAX: " << params_override->fit_params.at(STR_FWHM_OFFSET).max_val << "\n";
         out_stream << "    energy dependence of the energy resolution\n";
         out_stream << "FWHM_FANOPRIME: " << params_override->fit_params.at(STR_FWHM_FANOPRIME).value << "\n";
+        out_stream << "FWHM_FANOPRIME_MIN: " << params_override->fit_params.at(STR_FWHM_FANOPRIME).min_val << "\n";
+        out_stream << "FWHM_FANOPRIME_MAX: " << params_override->fit_params.at(STR_FWHM_FANOPRIME).max_val << "\n";
         out_stream << "    incident energy\n";
         out_stream << "COHERENT_SCT_ENERGY: " << params_override->fit_params.at(STR_COHERENT_SCT_ENERGY).value << "\n";
         out_stream << "    upper contstraint for the incident energy\n";
@@ -1042,30 +1046,87 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         out_stream << "COMPTON_ANGLE_MIN: " << params_override->fit_params.at(STR_COMPTON_ANGLE).min_val << "\n";
         out_stream << "    additional width of the compton\n";
         out_stream << "COMPTON_FWHM_CORR: " << params_override->fit_params.at(STR_COMPTON_FWHM_CORR).value << "\n";
+        out_stream << "COMPTON_FWHM_CORR_MAX: " << params_override->fit_params.at(STR_COMPTON_FWHM_CORR).max_val << "\n";
+        out_stream << "COMPTON_FWHM_CORR_MIN: " << params_override->fit_params.at(STR_COMPTON_FWHM_CORR).min_val << "\n";
+
         out_stream << "COMPTON_STEP: " << params_override->fit_params.at(STR_COMPTON_F_STEP).value << "\n";
+        out_stream << "COMPTON_STEP_MAX: " << params_override->fit_params.at(STR_COMPTON_F_STEP).max_val << "\n";
+        out_stream << "COMPTON_STEP_MIN: " << params_override->fit_params.at(STR_COMPTON_F_STEP).min_val << "\n";
+
         out_stream << "COMPTON_F_TAIL: " << params_override->fit_params.at(STR_COMPTON_F_TAIL).value << "\n";
+        out_stream << "COMPTON_F_TAIL_MAX: " << params_override->fit_params.at(STR_COMPTON_F_TAIL).max_val << "\n";
+        out_stream << "COMPTON_F_TAIL_MIN: " << params_override->fit_params.at(STR_COMPTON_F_TAIL).min_val << "\n";
+
         out_stream << "COMPTON_GAMMA: " << params_override->fit_params.at(STR_COMPTON_GAMMA).value << "\n";
+        out_stream << "COMPTON_GAMMA_MAX: " << params_override->fit_params.at(STR_COMPTON_GAMMA).max_val << "\n";
+        out_stream << "COMPTON_GAMMA_MIN: " << params_override->fit_params.at(STR_COMPTON_GAMMA).min_val << "\n";
+        
         out_stream << "COMPTON_HI_F_TAIL: " << params_override->fit_params.at(STR_COMPTON_HI_F_TAIL).value << "\n";
+        out_stream << "COMPTON_HI_F_TAIL_MAX: " << params_override->fit_params.at(STR_COMPTON_HI_F_TAIL).max_val << "\n";
+        out_stream << "COMPTON_HI_F_TAIL_MIN: " << params_override->fit_params.at(STR_COMPTON_HI_F_TAIL).min_val << "\n";
+
         out_stream << "COMPTON_HI_GAMMA: " << params_override->fit_params.at(STR_COMPTON_HI_GAMMA).value << "\n";
+        out_stream << "COMPTON_HI_GAMMA_MAX: " << params_override->fit_params.at(STR_COMPTON_HI_GAMMA).max_val << "\n";
+        out_stream << "COMPTON_HI_GAMMA_MIN: " << params_override->fit_params.at(STR_COMPTON_HI_GAMMA).min_val << "\n";
         out_stream << "    tailing parameters, see also Grieken, Markowicz, Handbook of X-ray spectrometry\n";
         out_stream << "    2nd ed, van Espen spectrum evaluation page 287.  _A corresponds to f_S, _B to\n";
         out_stream << "    f_T and _C to gamma\n";
         out_stream << "STEP_OFFSET: " << params_override->fit_params.at(STR_F_STEP_OFFSET).value << "\n";
+        out_stream << "STEP_OFFSET_MAX: " << params_override->fit_params.at(STR_F_STEP_OFFSET).max_val << "\n";
+        out_stream << "STEP_OFFSET_MIN: " << params_override->fit_params.at(STR_F_STEP_OFFSET).min_val << "\n";
+
         out_stream << "STEP_LINEAR: " << params_override->fit_params.at(STR_F_STEP_LINEAR).value << "\n";
+        out_stream << "STEP_LINEAR_MAX: " << params_override->fit_params.at(STR_F_STEP_LINEAR).max_val << "\n";
+        out_stream << "STEP_LINEAR_MIN: " << params_override->fit_params.at(STR_F_STEP_LINEAR).min_val << "\n";
+
         out_stream << "STEP_QUADRATIC: " << params_override->fit_params.at(STR_F_STEP_QUADRATIC).value << "\n";
+        out_stream << "STEP_QUADRATIC_MAX: " << params_override->fit_params.at(STR_F_STEP_QUADRATIC).max_val << "\n";
+        out_stream << "STEP_QUADRATIC_MIN: " << params_override->fit_params.at(STR_F_STEP_QUADRATIC).min_val << "\n";
+
         out_stream << "F_TAIL_OFFSET: " << params_override->fit_params.at(STR_F_TAIL_OFFSET).value << "\n";
+        out_stream << "F_TAIL_OFFSET_MAX: " << params_override->fit_params.at(STR_F_TAIL_OFFSET).max_val << "\n";
+        out_stream << "F_TAIL_OFFSET_MIN: " << params_override->fit_params.at(STR_F_TAIL_OFFSET).min_val << "\n";
+
         out_stream << "F_TAIL_LINEAR: " << params_override->fit_params.at(STR_F_TAIL_LINEAR).value << "\n";
+        out_stream << "F_TAIL_LINEAR_MAX: " << params_override->fit_params.at(STR_F_TAIL_LINEAR).max_val << "\n";
+        out_stream << "F_TAIL_LINEAR_MIN: " << params_override->fit_params.at(STR_F_TAIL_LINEAR).min_val << "\n";
+
         out_stream << "F_TAIL_QUADRATIC: " << params_override->fit_params.at(STR_F_TAIL_QUADRATIC).value << "\n";
+        out_stream << "F_TAIL_QUADRATIC_MAX: " << params_override->fit_params.at(STR_F_TAIL_QUADRATIC).max_val << "\n";
+        out_stream << "F_TAIL_QUADRATIC_MIN: " << params_override->fit_params.at(STR_F_TAIL_QUADRATIC).min_val << "\n";
+
         out_stream << "KB_F_TAIL_OFFSET: " << params_override->fit_params.at(STR_KB_F_TAIL_OFFSET).value << "\n";
+        out_stream << "KB_F_TAIL_OFFSET_MAX: " << params_override->fit_params.at(STR_KB_F_TAIL_OFFSET).max_val << "\n";
+        out_stream << "KB_F_TAIL_OFFSET_MIN: " << params_override->fit_params.at(STR_KB_F_TAIL_OFFSET).min_val << "\n";
+
         out_stream << "KB_F_TAIL_LINEAR: " << params_override->fit_params.at(STR_KB_F_TAIL_LINEAR).value << "\n";
+        out_stream << "KB_F_TAIL_LINEAR_MAX: " << params_override->fit_params.at(STR_KB_F_TAIL_LINEAR).max_val << "\n";
+        out_stream << "KB_F_TAIL_LINEAR_MIN: " << params_override->fit_params.at(STR_KB_F_TAIL_LINEAR).min_val << "\n";
+
         out_stream << "KB_F_TAIL_QUADRATIC: " << params_override->fit_params.at(STR_KB_F_TAIL_QUADRATIC).value << "\n";
+        out_stream << "KB_F_TAIL_QUADRATIC_MAX: " << params_override->fit_params.at(STR_KB_F_TAIL_QUADRATIC).max_val << "\n";
+        out_stream << "KB_F_TAIL_QUADRATIC_MIN: " << params_override->fit_params.at(STR_KB_F_TAIL_QUADRATIC).min_val << "\n";
+
         out_stream << "GAMMA_OFFSET: " << params_override->fit_params.at(STR_GAMMA_OFFSET).value << "\n";
+        out_stream << "GAMMA_OFFSET_MAX: " << params_override->fit_params.at(STR_GAMMA_OFFSET).max_val << "\n";
+        out_stream << "GAMMA_OFFSET_MIN: " << params_override->fit_params.at(STR_GAMMA_OFFSET).min_val << "\n";
+
         out_stream << "GAMMA_LINEAR: " << params_override->fit_params.at(STR_GAMMA_LINEAR).value << "\n";
+        out_stream << "GAMMA_LINEAR_MAX: " << params_override->fit_params.at(STR_GAMMA_LINEAR).max_val << "\n";
+        out_stream << "GAMMA_LINEAR_MiN: " << params_override->fit_params.at(STR_GAMMA_LINEAR).min_val << "\n";
+
         out_stream << "GAMMA_QUADRATIC: " << params_override->fit_params.at(STR_GAMMA_QUADRATIC).value << "\n";
+        out_stream << "GAMMA_QUADRATIC_MAX: " << params_override->fit_params.at(STR_GAMMA_QUADRATIC).max_val << "\n";
+        out_stream << "GAMMA_QUADRATIC_MIN: " << params_override->fit_params.at(STR_GAMMA_QUADRATIC).min_val << "\n";
+
         out_stream << "    snip width is the width used for estimating background. 0.5 is typically a good start\n";
         out_stream << "SNIP_WIDTH: " << params_override->fit_params.at(STR_SNIP_WIDTH).value << "\n";
+        out_stream << "SNIP_WIDTH_MAX: " << params_override->fit_params.at(STR_SNIP_WIDTH).max_val << "\n";
+        out_stream << "SNIP_WIDTH_MIN: " << params_override->fit_params.at(STR_SNIP_WIDTH).min_val << "\n";
+
         out_stream << "    set FIT_SNIP_WIDTH to 1 to fit the width of the snipping for background estimate, set to 0 not to. Only use if you know what it is doing!\n";
         out_stream << "FIT_SNIP_WIDTH: " << params_override->fit_snip_width << "\n";
+
         out_stream << "    detector material: 0= Germanium, 1 = Si\n";
         out_stream << "DETECTOR_MATERIAL: ";
         if (params_override->detector_element == "Si")
