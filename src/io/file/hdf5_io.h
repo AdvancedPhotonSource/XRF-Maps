@@ -4459,7 +4459,8 @@ public:
 
         dataspace_scaler_names = H5Dget_space(dset_scaler_names);
         close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
-        hid_t memtype = H5Dget_type(dset_scaler_names);
+        hid_t memtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(memtype, 255);
         close_map.push({ memtype, H5O_DATATYPE });
 
         //  read scaler names and search for elt1, ert1, incnt1, outcnt1
@@ -4475,13 +4476,9 @@ public:
             error = H5Dread(dset_scaler_names, memtype, memoryspace_1, dataspace_scaler_names, H5P_DEFAULT, (void*)&tmp_name[0]);
             if (error == 0)
             {
-                std::string name = std::string(tmp_name);
-                name.erase(std::remove_if(name.begin(), name.end(), ::isspace), name.end());
-                // macOS bug adds a '.' to the end . 2026/03/21
-                if(name[name.size()-1] == '.')
-                {
-                    name = name.substr(0, name.size()-1);
-                }
+                auto end_ptr = std::find(tmp_name, tmp_name + 256, '\0');
+                std::string name(tmp_name, end_ptr);
+                
                 if (name == STR_ELT + "1")
                 {
                     elt_off = idx;
@@ -5686,18 +5683,13 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<T_real>* scan_info)
+    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<T_real>& scan_info)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         hid_t    file_id, src_maps_grp_id, detectors_grp_id, hash_grp_id, data_id, spectrumstream_grp_id, hash2_grp_id, data2_id;
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
@@ -7439,7 +7431,7 @@ public:
             //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
 
-            int element_cnt = CALIBRATION_CURVE_SIZE; // from element H to U
+            int element_cnt = CALIBRATION_CURVE_SIZE; // from element H to Fm
             q_dims_out[0] = 3;// shells K, L, and M
             q_dims_out[1] = element_cnt;
 
