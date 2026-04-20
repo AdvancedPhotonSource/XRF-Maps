@@ -1679,7 +1679,7 @@ data_struct::ArrayTr<T_real>* MDA_IO<T_real>::get_integrated_spectra(unsigned in
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-bool MDA_IO<T_real>::load_henke_from_xdr(std::string filename)
+bool MDA_IO<T_real>::load_henke_from_xdr(const std::string& filename)
 {
     data_struct::Element_Info_Map<T_real>* element_map = data_struct::Element_Info_Map<T_real>::inst();
 

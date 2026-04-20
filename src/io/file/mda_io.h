@@ -139,7 +139,7 @@ public:
 
     void unload_int_spectra() { _integrated_spectra_map.clear(); }
 
-    bool load_henke_from_xdr(std::string filename);
+    bool load_henke_from_xdr(const std::string& filename);
 
 private:
 
