@@ -202,7 +202,7 @@ namespace edf
     // ----------------------------------------------------------------------------
    
     template<typename T_real>
-    DLL_EXPORT bool load_spectra_line_meta(std::string filename, int detector_num, int row, data_struct::Spectra_Line<T_real>* spec_line, data_struct::Scaler_Map<T_real> &dead_time_map, data_struct::Scaler_Map<T_real>& output_map)
+    DLL_EXPORT bool load_spectra_line_meta(std::string filename, int detector_num, int row, data_struct::Spectra_Line<T_real>* spec_line, std::shared_ptr<data_struct::Scaler_Map<T_real>> &dead_time_map, std::shared_ptr<data_struct::Scaler_Map<T_real>>& output_map)
     {
         char* buffer = nullptr;
         std::map<std::string, std::string> header;
@@ -238,8 +238,8 @@ namespace edf
 
                 if (detector_num == (int)det)
                 {
-                    output_map.values(row, col) = static_cast<T_real>(output);
-                    dead_time_map.values(row, col) = static_cast<T_real>(deadtime);
+                    output_map->values(row, col) = static_cast<T_real>(output);
+                    dead_time_map->values(row, col) = static_cast<T_real>(deadtime);
                     (*spec_line)[col].elapsed_livetime(static_cast<T_real>(livetime));
                     (*spec_line)[col].elapsed_realtime(static_cast<T_real>(livetime));
                     (*spec_line)[col].input_counts(static_cast<T_real>(icr));
@@ -269,7 +269,7 @@ namespace edf
     // ----------------------------------------------------------------------------
 
     template<typename T_real>
-    DLL_EXPORT bool load_scaler(std::string filename, data_struct::Scaler_Map<T_real>& scaler_map)
+    DLL_EXPORT bool load_scaler(std::string filename, std::shared_ptr<data_struct::Scaler_Map<T_real>> &scaler_map)
     {
         char* buffer = nullptr;
         std::map<std::string, std::string> header;
@@ -283,11 +283,11 @@ namespace edf
             }
 
             float* val = (float*)(buffer + idx);
-            for (int col = 0; col < scaler_map.values.cols(); col++)
+            for (int col = 0; col < scaler_map->values.cols(); col++)
             {
-                for (int row = 0; row < scaler_map.values.rows(); row++)
+                for (int row = 0; row < scaler_map->values.rows(); row++)
                 {   
-                    scaler_map.values(row, col) = static_cast<T_real>(*val);
+                    scaler_map->values(row, col) = static_cast<T_real>(*val);
                     val++;
                 }
             }

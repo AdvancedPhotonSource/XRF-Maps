@@ -86,12 +86,21 @@ struct Scaler_Map
         time_normalized = false;
     }
 
-    Scaler_Map(std::string name_)
+    Scaler_Map(const std::string& name_)
     {
         name = name_;
         unit = "";
         time_normalized = false;
     }
+
+    Scaler_Map(const std::string& name_, size_t rows, size_t cols, bool time, const std::string& units)
+    {
+        name = name_;
+        unit = units;
+        time_normalized = time;
+        values.setZero(rows, cols);
+    }
+
 };
 
 TEMPLATE_STRUCT_DLL_EXPORT Scaler_Map<float>;
@@ -133,31 +142,34 @@ public:
     Scan_Info()
     {
         has_netcdf = false;
+        
     }
     
     ~Scan_Info()
     {
-        
     }
 
     T_real scaler_avg_value(const std::string& scaler_name)
     {
         if(scaler_maps.contains(scaler_name) )
         {
-            return scaler_maps.at(scaler_name).values.mean();
+            return scaler_maps[scaler_name]->values.mean();
         }
         return (T_real)0.0;
     }
 
-    void initialize_scaler_map(std::string name_)
+    void initialize_scaler_map(const std::string& name_)
+    {   
+        scaler_maps.try_emplace(name_, std::make_shared<Scaler_Map<T_real>>(name_, meta_info.requested_rows, meta_info.requested_cols, false, ""));
+    }
+
+    void initialize_scaler_map_with_dims(const std::string& name_, size_t rows, size_t cols, bool time, const std::string& units)
     {
-        data_struct::Scaler_Map<T_real> map(name_);
-        map.values.resize(meta_info.requested_rows, meta_info.requested_cols);
-        scaler_maps[map.name] = map;
+        scaler_maps.try_emplace(name_, std::make_shared<Scaler_Map<T_real>>(name_, rows, cols, time, units));
     }
 
     Scan_Meta_Info<T_real> meta_info;
-    std::map<std::string, Scaler_Map<T_real>> scaler_maps;
+    std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scaler_maps;
     std::vector<Extra_PV> extra_pvs;
     bool has_netcdf; 
 };
