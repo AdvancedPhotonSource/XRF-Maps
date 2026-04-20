@@ -111,7 +111,7 @@ T_real parse_input_real(std::string value)
     }
 }
 
-constexpr auto CALIBRATION_CURVE_SIZE = 92;
+constexpr auto CALIBRATION_CURVE_SIZE = 100;
 
 //namespace keys
 //{
