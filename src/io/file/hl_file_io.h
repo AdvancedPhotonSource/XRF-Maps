@@ -1568,7 +1568,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
 // This is for HDF5 files only
 template<typename T_real>
-DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<T_real>* scan_info)
+DLL_EXPORT bool get_scalers_and_metadata_h5(const std::string &dataset_directory, const std::string &dataset_file, data_struct::Scan_Info<T_real> &scan_info)
 {
     if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_emd(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {

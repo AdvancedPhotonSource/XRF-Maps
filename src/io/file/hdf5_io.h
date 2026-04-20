@@ -5817,12 +5817,6 @@ public:
         hsize_t y_count[2] = { 1,1 };
         char* detector_names[256];
 
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
-
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
             return false;
@@ -5970,11 +5964,6 @@ public:
         hsize_t single_offset[1] = { 0 };
         hsize_t single_count[1] = { 1 };
         hsize_t* val_dims_in = nullptr;
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
