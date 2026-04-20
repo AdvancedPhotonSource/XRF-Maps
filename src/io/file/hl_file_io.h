@@ -332,7 +332,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename)
+DLL_EXPORT bool load_element_info(const std::string& element_henke_filename, const std::string& element_csv_filename)
 {
     io::file::MDA_IO<T_real> mda_io;
     if (mda_io.load_henke_from_xdr(element_henke_filename) == false)
