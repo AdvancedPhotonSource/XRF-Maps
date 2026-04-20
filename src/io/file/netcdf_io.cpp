@@ -524,9 +524,9 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
     // check if we have allocated enough memory for this row
     if(scan_info->scaler_maps.size() > 0)
     {
-        if(scan_info->scaler_maps.begin()->second.values.rows() <= row)
+        if(scan_info->scaler_maps.begin()->second->values.rows() <= row)
         {
-            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scan_info->scaler_maps.begin()->second.values.rows()<<". Skipping this data\n";
+            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scan_info->scaler_maps.begin()->second->values.rows()<<". Skipping this data\n";
             return 0;
         }
     }
@@ -587,7 +587,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
         std::string search_name = tag+std::to_string(i);
         for(auto& sitr : scan_info->scaler_maps)
         {
-            if(sitr.second.unit == search_name)
+            if(sitr.second->unit == search_name)
             {
                 T_real multiplier = (T_real)1.0;
                 if(params_override != nullptr)
@@ -599,7 +599,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
                 }
                 for(size_t j=0; j < dim2size[0]; j++)
                 {
-                    sitr.second.values(row,j) = data_in[j] * multiplier;
+                    sitr.second->values(row,j) = data_in[j] * multiplier;
                 }
                 break;
             }

@@ -97,7 +97,7 @@ TEMPLATE_STRUCT_DLL_EXPORT Quantification_Scaler_Struct<double>;
 template<typename T_real>
 struct DLL_EXPORT Fitting_Quantification_Struct
 {
-    Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 92 (U)
+    Fitting_Quantification_Struct(unsigned int max_z = CALIBRATION_CURVE_SIZE) // 1 (H) - 100 (Fm)
     {
         std::vector<std::string> quant_scalers = { STR_SR_CURRENT, STR_US_IC, STR_US_FM, STR_DS_IC };
         init(quant_scalers, max_z);

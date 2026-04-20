@@ -111,7 +111,7 @@ T_real parse_input_real(std::string value)
     }
 }
 
-constexpr auto CALIBRATION_CURVE_SIZE = 92;
+constexpr auto CALIBRATION_CURVE_SIZE = 100;
 
 //namespace keys
 //{
@@ -340,6 +340,13 @@ const std::string STR_LIMITED_HI = "limit_hi";
 const std::string STR_FIT = "fit";
 
 const std::string STR_CUSTOM_EL_REGION = "CUSTOM_ELEMENT_REGION";
+
+const std::string STR_ABS_IC = "abs_ic";
+const std::string STR_ABS_CFG = "abs_cfg";
+const std::string STR_H_DPC_CFG = "H_dpc_cfg";
+const std::string STR_V_DPC_CFG = "V_dpc_cfg";
+const std::string STR_DIA1_DPC_CFG = "dia1_dpc_cfg";
+const std::string STR_DIA2_DPC_CFG = "dia2_dpc_cfg";
 
 // ROI
 const std::string STR_MAPS_ROIS = "MAPS_ROIS";
