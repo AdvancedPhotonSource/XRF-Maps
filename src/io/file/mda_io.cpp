@@ -62,7 +62,6 @@ MDA_IO<T_real>::MDA_IO()
 {
     _mda_file = nullptr;
     _mda_file_info = nullptr;
-    _hasNetcdf = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -198,33 +197,35 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
     T_real cnt_ds = 0.;
     T_real sum_ds = 0.;
 
-    for (int i = 0; i < arr_us->rows(); i++)
+    if(arr_us != nullptr)
     {
-        for (int j = 0; j < arr_us->cols(); j++)
+        for (int i = 0; i < arr_us->rows(); i++)
         {
-            if (arr_curr && std::isfinite((* arr_curr)(i, j)) && (*arr_curr)(i, j) > 0.)
+            for (int j = 0; j < arr_us->cols(); j++)
             {
-                cnt_curr += 1.0;
-                sum_curr += (*arr_curr)(i, j);
-            }
-            if (arr_us && std::isfinite((*arr_us)(i, j)) && (*arr_us)(i, j) > 0.)
-            {
-                cnt_us += 1.0;
-                sum_us += (*arr_us)(i, j);
-            }
-            if (arr_us_fm && std::isfinite((*arr_us_fm)(i, j)) && (*arr_us_fm)(i, j) > 0.)
-            {
-                cnt_us_fm += 1.0;
-                sum_us_fm += (*arr_us_fm)(i, j);
-            }
-            if (arr_ds && std::isfinite((*arr_ds)(i, j)) && (*arr_ds)(i, j) > 0.)
-            {
-                cnt_ds += 1.0;
-                sum_ds += (*arr_ds)(i, j);
+                if (arr_curr && std::isfinite((* arr_curr)(i, j)) && (*arr_curr)(i, j) > 0.)
+                {
+                    cnt_curr += 1.0;
+                    sum_curr += (*arr_curr)(i, j);
+                }
+                if (arr_us && std::isfinite((*arr_us)(i, j)) && (*arr_us)(i, j) > 0.)
+                {
+                    cnt_us += 1.0;
+                    sum_us += (*arr_us)(i, j);
+                }
+                if (arr_us_fm && std::isfinite((*arr_us_fm)(i, j)) && (*arr_us_fm)(i, j) > 0.)
+                {
+                    cnt_us_fm += 1.0;
+                    sum_us_fm += (*arr_us_fm)(i, j);
+                }
+                if (arr_ds && std::isfinite((*arr_ds)(i, j)) && (*arr_ds)(i, j) > 0.)
+                {
+                    cnt_ds += 1.0;
+                    sum_ds += (*arr_ds)(i, j);
+                }
             }
         }
     }
-
 
 
     if (arr_curr != nullptr && cnt_curr > 0.)
@@ -314,7 +315,15 @@ Load_Status MDA_IO<T_real>::load_spectra_volume(std::string path,
             {
                 if(subtract_two_cols)
                 {
-                    cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                    {
+                        cols = 1;
+                    }
+                    else
+                    {
+                        cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                    }
+                    
                 }
                 else
                 {
@@ -397,7 +406,14 @@ Load_Status MDA_IO<T_real>::load_spectra_volume(std::string path,
                 {
                     if(subtract_two_cols)
                     {
-                        cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                        if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                        {
+                            cols = 1;
+                        }
+                        else
+                        {
+                            cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                        }
                     }
                     else
                     {
@@ -581,7 +597,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 	std::map<size_t, const data_struct::ArrayXXr<T_real>*> ert_arr_map;
 	std::map<size_t, const data_struct::ArrayXXr<T_real>*> incnt_arr_map;
 	std::map<size_t, const data_struct::ArrayXXr<T_real>*> outcnt_arr_map;
-    size_t max_detecotr_num = 0;
+    int16_t max_detecotr_num = 0;
     bool is_single_row = false;
 
     std::FILE *fptr = std::fopen(path.c_str(), "rb");
@@ -606,7 +622,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
     for (size_t det : detector_num_arr)
 	{
-		max_detecotr_num = std::max(det, max_detecotr_num);
+		max_detecotr_num = std::max((int16_t)det, max_detecotr_num);
 	}
 
     if (analysis_job != nullptr)
@@ -638,7 +654,14 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
             }
             else
             {
-                out_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                {
+                    out_cols = 1;
+                }
+                else
+                {
+                    out_cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
             }
             return true;
         }
@@ -646,7 +669,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
         {
             if(_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048)
             {
-                if((size_t)_mda_file->scan->sub_scans[0]->number_detectors-1 < max_detecotr_num)
+                if(_mda_file->scan->sub_scans[0]->number_detectors-1 < max_detecotr_num)
                 {
                     logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->number_detectors<< "\n";
                     unload();
@@ -676,7 +699,7 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
     else if (_mda_file->header->data_rank == 3)
     {
 
-        if((size_t)_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < max_detecotr_num)
+        if(_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors-1 < max_detecotr_num)
         {
             logE<<"Max detectors saved = "<<_mda_file->scan->sub_scans[0]->sub_scans[0]->number_detectors<< "\n";
             unload();
@@ -896,7 +919,14 @@ Load_Status MDA_IO<T_real>::load_integrated_spectra(std::string path,
             }
 			else
             {
-				cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                {
+                    cols = 1;
+                }
+                else
+                {
+				    cols = _mda_file->scan->sub_scans[0]->last_point - 2; // subtract 2 because hardwre trigger goofs up last 2 cols
+                }
             }
 			out_integrated_spectra->resize(2048);
 			return Load_Status::Half_need_spectra;
@@ -1110,7 +1140,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
 
     if (_mda_file->header->data_rank == 2)
     {
-        if (_hasNetcdf == false && (_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048 || _mda_file->header->dimensions[1] == 4096))
+        if (hasNetCDF == false && (_mda_file->header->dimensions[1] == 2000 || _mda_file->header->dimensions[1] == 2048 || _mda_file->header->dimensions[1] == 4096))
         {
             single_row_scan = true;
         }
@@ -1133,7 +1163,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             {
                 if(subtract_two_cols)
                 {
-                    cols = std::max(1, _mda_file->scan->last_point - 2);
+                    if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                    {
+                        cols = 1;
+                    }
+                    else
+                    {
+                        cols = std::max(1, _mda_file->scan->last_point - 2);
+                    }
                 }
                 else
                 {
@@ -1216,7 +1253,14 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             {
                 if(subtract_two_cols)
                 {
-                    cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point - 2);
+                    if(_mda_file->scan->sub_scans[0]->last_point < 2)
+                    {
+                        cols = 1;
+                    }
+                    else
+                    {
+                        cols = std::max(1, _mda_file->scan->sub_scans[0]->last_point - 2);
+                    }
                 }
                 else
                 {
@@ -1837,40 +1881,42 @@ int mda_get_multiplied_dims(std::string path)
 
 int mda_get_rank_and_dims(std::string path, size_t* dims)
 {
-
-    std::FILE* fptr = std::fopen(path.c_str(), "rb");
-    struct mda_header* header = mda_header_load(fptr);
     int rank = -1;
-    std::fclose(fptr);
+    std::FILE* fptr = std::fopen(path.c_str(), "rb");
+    if (fptr != nullptr)
+    {
+        struct mda_header* header = mda_header_load(fptr);
+        
+        std::fclose(fptr);
 
-    if (header == nullptr)
-    {
-        logE << "Unable to open mda file " << path << "\n";
-        return -1;
-    }
-    else if (header->data_rank == 1)
-    {
-        dims[0] = header->dimensions[0];
-    }
-    else if (header->data_rank == 2)
-    {
-        dims[0] = header->dimensions[0];
-        dims[1] = header->dimensions[1];
-    }
-    else if (header->data_rank == 3)
-    {
-        dims[0] = header->dimensions[0];
-        dims[1] = header->dimensions[1];
-        dims[2] = header->dimensions[2];
-    }
-    else
-    {
-        logW << "Unsupported mda data rank " << header->data_rank << " . Skipping file " << path << "\n";
-    }
-    rank = (int)header->data_rank;
+        if (header == nullptr)
+        {
+            logE << "Unable to open mda file " << path << "\n";
+            return -1;
+        }
+        else if (header->data_rank == 1)
+        {
+            dims[0] = header->dimensions[0];
+        }
+        else if (header->data_rank == 2)
+        {
+            dims[0] = header->dimensions[0];
+            dims[1] = header->dimensions[1];
+        }
+        else if (header->data_rank == 3)
+        {
+            dims[0] = header->dimensions[0];
+            dims[1] = header->dimensions[1];
+            dims[2] = header->dimensions[2];
+        }
+        else
+        {
+            logW << "Unsupported mda data rank " << header->data_rank << " . Skipping file " << path << "\n";
+        }
+        rank = (int)header->data_rank;
 
-    mda_header_unload(header);
-
+        mda_header_unload(header);
+    }
     return rank;
 }
 

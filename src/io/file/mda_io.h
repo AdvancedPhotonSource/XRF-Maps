@@ -161,8 +161,6 @@ private:
      */
     mda_fileinfo *_mda_file_info;
 
-    bool _hasNetcdf;
-
     data_struct::Scan_Info<T_real> _scan_info;
 
     std::string _theta_pv_str;
