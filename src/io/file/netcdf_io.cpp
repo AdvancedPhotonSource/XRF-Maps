@@ -240,9 +240,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         size_t inc_size = header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL);
         for(size_t m1 = 0; m1 < cols_before_inc; m1++)
         {
-            if (col_idx >= spec_line->size())
+            if(ltype == E_load_type::LINE)
             {
-                return col_idx;
+                if (col_idx >= spec_line->size())
+                {
+                    return col_idx;
+                }
             }
             size_t l = header_size +  (m1 * inc_size);
             if (ltype == E_load_type::LINE)
