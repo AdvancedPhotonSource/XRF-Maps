@@ -123,7 +123,7 @@ public:
         _output_counts = outnt;
     }
 
-    Spectra(const ArrayTr<_T>&& arr) : ArrayTr<_T>(arr)
+    Spectra(ArrayTr<_T>&& arr) : ArrayTr<_T>(arr)
     {
         _elapsed_livetime = (_T)default_time_and_io_counts;
         _elapsed_realtime = (_T)default_time_and_io_counts;
@@ -131,7 +131,7 @@ public:
         _output_counts = 0.0;
     }
 
-    Spectra(const ArrayTr<_T>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
+    Spectra(ArrayTr<_T>&& arr, _T livetime, _T realtime, _T incnt, _T outnt) : ArrayTr<_T>(arr)
     {
         _elapsed_livetime = livetime;
         _elapsed_realtime = realtime;
@@ -176,57 +176,59 @@ public:
        // this = this.unaryExpr([](double v) { return std::isfinite(v) ? v : default_time_and_io_counts; });
     }
 
-    void add(const Spectra<_T>& spectra)
+    bool add(const Spectra<_T>& spectra)
     {
-        *this += (ArrayTr<_T>)spectra;
-        _T val = spectra.elapsed_livetime();
-        if(std::isfinite(val))
+        if(spectra.size() == this->size())
         {
-            _elapsed_livetime += val;
+            *this += (ArrayTr<_T>)spectra;
+            _T val = spectra.elapsed_livetime();
+            if(std::isfinite(val))
+            {
+                _elapsed_livetime += val;
+            }
+            else
+            {
+                logW << " Spectra _elapsed_livetime = " << val << " . Not updating!\n";
+            }
+            val = spectra.elapsed_realtime();
+            if(std::isfinite(val))
+            {
+                _elapsed_realtime += val;
+            }
+            else
+            {
+                logW << " Spectra _elapsed_realtime = " << val << " . Not updating!\n";
+            }
+            val = spectra.input_counts();
+            if(std::isfinite(val))
+            {
+                _input_counts += val;
+            }
+            else
+            {
+                logW << " Spectra _input_counts = " << val << " . Not updating!\n";
+            }
+            val = spectra.output_counts();
+            if(std::isfinite(val))
+            {
+                _output_counts += val;
+            }
+            else
+            {
+                logW << " Spectra _output_counts = " << val << " . Not updating!\n";
+            }
+            return true;
         }
-        else
-        {
-            logW << " Spectra _elapsed_livetime = " << val << " . Not updating!\n";
-        }
-        val = spectra.elapsed_realtime();
-        if(std::isfinite(val))
-        {
-            _elapsed_realtime += val;
-        }
-        else
-        {
-            logW << " Spectra _elapsed_realtime = " << val << " . Not updating!\n";
-        }
-        val = spectra.input_counts();
-        if(std::isfinite(val))
-        {
-            _input_counts += val;
-        }
-        else
-        {
-            logW << " Spectra _input_counts = " << val << " . Not updating!\n";
-        }
-        val = spectra.output_counts();
-        if(std::isfinite(val))
-        {
-            _output_counts += val;
-        }
-        else
-        {
-            logW << " Spectra _output_counts = " << val << " . Not updating!\n";
-        }
+        return false;
     }
 
     // Note: T_real is different template typename, this is to convert double to float or the other way around.
     template<typename T_real>
-    void add(const Spectra<T_real>* spectra)
+    bool add(const Spectra<T_real>* spectra)
     {
-        if (spectra != nullptr)
+        if (spectra != nullptr && spectra->size() == this->size())
         {
-            for (int i = 0; i < this->size(); i++)
-            {
-                (ArrayTr<_T>(*this))(i) += static_cast<_T>( (*spectra)(i) );
-            }
+            *this += this->template cast<_T>() + spectra->template cast<_T>();
             _T val = spectra->elapsed_livetime();
             if (std::isfinite(val))
             {
@@ -263,7 +265,9 @@ public:
             {
                 logW << " Spectra _output_counts = " << val << " . Not updating!\n";
             }
+            return true;
         }
+        return false;
     }
 
     void elapsed_livetime(_T val) { _elapsed_livetime = val; }
@@ -318,7 +322,7 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
     out.setZero(n);
     for (size_t i = 0; i < n; ++i)
     {
-        for (int j(min_v.size() - 1), k(i); j >= 0; --j)
+        for (Eigen::Index j(min_v.size() - 1), k(i); j >= 0; --j)
         {
             out[i] += min_v[j] * max_v[k];
             ++k;
@@ -390,17 +394,17 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
     background = Eigen::log(Eigen::log(background + (T_real)1.0) + (T_real)1.0);
 
     // FIRST SNIPPING
-    int no_iterations = 2;
+    size_t no_iterations = 2;
     
-    int lo_limit = std::max<int>(xmin, 0);
-    int up_limit = std::min<int>(xmax, (spectra->size() - 1));
-    for (int j = 0; j < no_iterations; j++)
+    size_t lo_limit = std::max<int>(xmin, 0);
+    size_t up_limit = std::min<int>(xmax, (spectra->size() - 1));
+    for (size_t j = 0; j < no_iterations; j++)
     {
-        for (long int k = 0; k < background.size(); k++)
+        for (Eigen::Index k = 0; k < background.size(); k++)
         {
-            int lo_index = std::max<int>(k - current_width[k], lo_limit);
+            size_t lo_index = std::max<int>(k - current_width[k], lo_limit);
             lo_index = std::min<int>(lo_index, up_limit);
-            int hi_index = std::max<int>(k + current_width[k], lo_limit);
+            size_t hi_index = std::max<int>(k + current_width[k], lo_limit);
             hi_index = std::min<int>(k + current_width[k], up_limit);
             T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
             if (background[k] > temp)
@@ -412,11 +416,11 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
 
     while (current_width.maxCoeff() >= 0.5)
     {
-        for (long int k = 0; k < background.size(); k++)
+        for (Eigen::Index k = 0; k < background.size(); k++)
         {
-            int lo_index = std::max<int>(k - current_width[k], lo_limit);
+            size_t lo_index = std::max<int>(k - current_width[k], lo_limit);
             lo_index = std::min<int>(lo_index, up_limit);
-            int hi_index = std::max<int>(k + current_width[k], lo_limit);
+            size_t hi_index = std::max<int>(k + current_width[k], lo_limit);
             hi_index = std::min<int>(k + current_width[k], up_limit);
             T_real temp = (background[lo_index] + background[hi_index]) / (T_real)2.0;
             if (background[k] > temp)
