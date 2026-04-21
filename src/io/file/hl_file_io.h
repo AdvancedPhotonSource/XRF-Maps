@@ -135,7 +135,10 @@ void cb_load_spectra_data_helper([[maybe_unused]] size_t row, [[maybe_unused]] s
         }
         else
         {
-            integrated_spectra->add(*spectra);
+            if(false == integrated_spectra->add(*spectra))
+            {
+                logW<<"Could not add spectra to int_spectra\n";
+            }
         }
     }
 
@@ -834,7 +837,10 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         }
                         for (size_t k = 0; k < spectra_line.size(); k++)
                         {
-                            integrated_spectra.add(spectra_line[k]);
+                            if(false == integrated_spectra.add(spectra_line[k]))
+                            {
+                                logW<<"Could not add spectra to int_spectra\n";
+                            }
                         }
                     }
                 }
