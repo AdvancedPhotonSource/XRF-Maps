@@ -319,13 +319,19 @@ T_real Element_Info<T_real>::calc_beta(T_real density_val, T_real energy)
     ////T_real f1_higher = f1_atomic_scattering_real[high_e_idx];
     ////T_real f1_array = f1_lower + fraction * (f1_higher - f1_lower);
 
-    T_real ln_f2_lower = std::log( std::abs(f2_atomic_scattering_imaginary[low_e_idx]) );
-    T_real ln_f2_higher = std::log( std::abs(f2_atomic_scattering_imaginary[high_e_idx]) );
-    T_real f2_array = std::exp( ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower) );
+    if(f2_atomic_scattering_imaginary.size() > low_e_idx && f2_atomic_scattering_imaginary.size() > high_e_idx)
+    {
+        T_real ln_f2_lower = std::log( std::abs(f2_atomic_scattering_imaginary[low_e_idx]) );
+        T_real ln_f2_higher = std::log( std::abs(f2_atomic_scattering_imaginary[high_e_idx]) );
+        T_real f2_array = std::exp( ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower) );
 
-    ////delta_array = constant * f1_array
-    beta = constant * f2_array;
-
+        ////delta_array = constant * f1_array
+        beta = constant * f2_array;
+    }
+    else
+    {
+        logW<<"f2_atomic_scattering_imaginary size is 0 so can not use it to calculate beta for "<< this->name <<"\n";
+    }
     return beta;
 }
 
@@ -387,7 +393,7 @@ Element_Info_Map<T_real>* Element_Info_Map<T_real>::inst()
 template<typename T_real>
 Element_Info_Map<T_real>::Element_Info_Map()
 {
-    generate_default_elements(1, 92);
+    generate_default_elements(1, CALIBRATION_CURVE_SIZE);
 }
 
 // ----------------------------------------------------------------------------
