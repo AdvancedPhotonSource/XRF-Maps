@@ -53,7 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <math.h>
 
-#include <string.h>
+#include <string>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -511,7 +511,6 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_element(const Fit_P
 			switch (er_struct.ptype)
 			{
 			case Element_Param_Type::Kb1_Line:
-				label = STR_K_A_LINES;
 			case Element_Param_Type::Kb2_Line:
 				label = STR_K_B_LINES;
 				faktor = faktor / ((T_real)1.0 + kb_f_tail + f_step);
@@ -723,7 +722,7 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>&
 {
     Spectra<T_real> escape_spec(ev.size());
     // Si = 1.73998
-    const int bins = 1.73998 / (ev(1) - ev(0));
+    const int bins = std::round(1.73998 / (ev(1) - ev(0)));
    
     for (int i = 0; i < ev.size() - bins; ++i)
     {
