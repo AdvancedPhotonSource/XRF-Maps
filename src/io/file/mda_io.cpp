@@ -1761,7 +1761,7 @@ bool MDA_IO<T_real>::load_henke_from_xdr(const std::string& filename)
 
     element_map->_energies.resize(num_energies);
     //float *energy_arr = new float[num_energies];
-    if (xdr_vector(xdrstream, (char*)&(element_map->_energies)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+    if (xdr_vector(xdrstream, (char*)&(element_map->_energies)[0], (uint16_t)num_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
     {
         std::fclose(xdr_file);
         return false;
@@ -1786,12 +1786,12 @@ bool MDA_IO<T_real>::load_henke_from_xdr(const std::string& filename)
         element->f2_atomic_scattering_imaginary.resize(num_energies);
 
         //element_information.
-        if (xdr_vector(xdrstream, (char*)&(element->f1_atomic_scattering_real)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f1_atomic_scattering_real)[0], (uint16_t)num_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if (xdr_vector(xdrstream, (char*)&(element->f2_atomic_scattering_imaginary)[0], num_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->f2_atomic_scattering_imaginary)[0], (uint16_t)num_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
         {
             std::fclose(xdr_file);
             return false;
@@ -1816,17 +1816,17 @@ bool MDA_IO<T_real>::load_henke_from_xdr(const std::string& filename)
             return false;
         }
 
-        if (xdr_vector(xdrstream, (char*)&(element->extra_energies)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_energies)[0], (uint16_t)num_extra_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if (xdr_vector(xdrstream, (char*)&(element->extra_f1)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f1)[0], (uint16_t)num_extra_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
         {
             std::fclose(xdr_file);
             return false;
         }
-        if (xdr_vector(xdrstream, (char*)&(element->extra_f2)[0], num_extra_energies, sizeof(float), (xdrproc_t)xdr_float) == false)
+        if (xdr_vector(xdrstream, (char*)&(element->extra_f2)[0], (uint16_t)num_extra_energies, (uint16_t)sizeof(float), (xdrproc_t)xdr_float) == 0)
         {
             std::fclose(xdr_file);
             return false;
