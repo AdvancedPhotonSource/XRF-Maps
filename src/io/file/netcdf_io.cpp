@@ -195,6 +195,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         spec_cntr = line_size;
     }
 
+    if(spec_cntr < 2)
+    {
+        logW<<"Need to load at least 2 spectra\n";
+        nc_close(ncid);
+        return -1;
+    }
     
     for(size_t m0 = 0; m0 < dim2size[0]; m0++)
     {
@@ -244,10 +250,18 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             {
                 if (col_idx >= spec_line->size())
                 {
+                    nc_close(ncid);
                     return col_idx;
                 }
             }
             size_t l = header_size +  (m1 * inc_size);
+            size_t max_read_in = l + header_size + (spectra_size * idx_detector);
+            if(max_read_in >= DATA_IN_MAX)
+            {
+                logW<<"Data in index max_read_in = "<<max_read_in<<" is greater than or equal to DATA_IN_MAX = "<<DATA_IN_MAX<<"\n"; 
+                nc_close(ncid);
+                return col_idx;
+            }
             if (ltype == E_load_type::LINE)
             {
                 (*spec_line)[col_idx].resize(spectra_size); // should be renames to resize
@@ -347,7 +361,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
-            input_counts = ((T_real)ii) / elapsed_livetime;
+            if(elapsed_livetime > 0.0)
+            {
+                input_counts = ((T_real)ii) / elapsed_livetime;
+            }
             if (ltype == E_load_type::LINE)
             {
                 if (input_counts == 0)
@@ -383,7 +400,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
-            output_counts = ((T_real)ii) / elapsed_realtime;
+            if(elapsed_realtime > 0.0)
+            {
+                output_counts = ((T_real)ii) / elapsed_realtime;
+            }
             if (ltype == E_load_type::LINE)
             {
                 if (output_counts == 0)

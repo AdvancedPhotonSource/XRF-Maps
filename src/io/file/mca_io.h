@@ -66,7 +66,7 @@ namespace mca
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>* spectra, std::unordered_map<std::string, T_real>& pv_map)
+DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T_real>& spectra, std::unordered_map<std::string, T_real>& pv_map)
 {
     std::ifstream paramFileStream(path);
 
@@ -125,8 +125,17 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     {
                         pv_map[tag] = 0.;
                     }
-                    spectra->resize(ivalue);
-                    spectra->Zero(ivalue);
+                    if(ivalue > 0)
+                    {
+                        spectra.resize(ivalue);
+                        spectra.Zero(ivalue);
+                    }
+                    else
+                    {
+                        logE<<"Can not load spectra with negative channels!\n";
+                        paramFileStream.close();
+                        return false;
+                    }
                 }
                 else if (tag == "DATE")
                 {
@@ -153,7 +162,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     float fvalue = parse_input_real<T_real>(value);
-                    spectra->elapsed_realtime(fvalue);
+                    spectra.elapsed_realtime(fvalue);
                 }
                 else if (tag == "LIVE_TIME")
                 {
@@ -163,7 +172,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                     value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                     value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                     float fvalue = parse_input_real<T_real>(value);
-                    spectra->elapsed_livetime(fvalue);
+                    spectra.elapsed_livetime(fvalue);
                 }
                 else if (tag == "CAL_OFFSET")
                 {
@@ -254,12 +263,12 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                                     // if starts with ICR
                                     if (pv_name.find("ICR") == 0)
                                     {
-                                        spectra->input_counts(pv_map[pv_name]);
+                                        spectra.input_counts(pv_map[pv_name]);
                                     }
                                     // if starts with OCR
                                     if (pv_name.find("OCR") == 0)
                                     {
-                                        spectra->output_counts(pv_map[pv_name]);
+                                        spectra.output_counts(pv_map[pv_name]);
                                     }
                                 }
                                 catch (std::exception& e)
@@ -273,7 +282,7 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                 }
                 else if (tag == "DATA")
                 {
-                    for (int i = 0; i < spectra->size(); i++)
+                    for (Eigen::Index i = 0; i < spectra.size(); i++)
                     {
                         std::string value;
                         std::getline(paramFileStream, value, '\n');
@@ -281,9 +290,9 @@ DLL_EXPORT bool load_integrated_spectra(std::string path, data_struct::Spectra<T
                         value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
                         value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
                         float fvalue = parse_input_real<T_real>(value);
-                        (*spectra)[i] = fvalue;
+                        spectra[i] = fvalue;
                     }
-                    spectra->recalc_elapsed_livetime();
+                    spectra.recalc_elapsed_livetime();
                 }
             }
         }
@@ -373,7 +382,7 @@ DLL_EXPORT bool save_integrated_spectra(std::string path, const data_struct::Spe
         paramFileStream << "CAL_QUAD: " << quad << "\n";
         paramFileStream << "ENVIRONMENT: SRCURRENT=\"" << sr_current << "\"\n";
         paramFileStream << "ENVIRONMENT: UPSTREAM_IONCHAMBER=\"" << us_ic << "\"\n";
-        paramFileStream << "ENVIRONMENT: UPSTREAM_FLUX_MONITOR=\"" << us_fm << "\"\n";
+        paramFileStream << "ENVIRONMENT: SR_CURRENT=\"" << sr_current << "\"\n";
         paramFileStream << "ENVIRONMENT: DOWNSTREAM_IONCHAMBER=\"" << ds_ic << "\"\n";
         paramFileStream << "ENVIRONMENT: UPSTREAM_FLUX_MONITOR=\"" << us_fm << "\"\n";
         paramFileStream << "DATA: \n";

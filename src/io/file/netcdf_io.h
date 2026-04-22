@@ -60,6 +60,8 @@ namespace io
 namespace file
 {
 
+static const size_t DATA_IN_MAX = 1050000;
+
 enum class E_load_type { LINE = 0, CALLBACKF = 1, INTEGRATED = 2 };
 
 template<typename T_real>
@@ -126,7 +128,7 @@ private:
 
     static std::mutex _mutex;
 
-    T_real _data_in[1][1][1050000];
+    T_real _data_in[1][1][DATA_IN_MAX];
 
 };
 

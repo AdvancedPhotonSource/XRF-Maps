@@ -184,7 +184,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
             }
 
             //load the int spectra from the dataset.
-            if (io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, &int_spectra, params_override))
+            if (io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, itr, detector_num, int_spectra, params_override))
             {
                 data_struct::Fit_Parameters<double> out_fitp;
                 if (optimize_integrated_fit_params(analysis_job, int_spectra, detector_num, params_override, itr, out_fitp, nullptr))
@@ -289,10 +289,10 @@ bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
             {
                 qfilepath += std::to_string(detector_num);
             }
-            if (false == io::file::mca::load_integrated_spectra(qfilepath, &quantification_standard->integrated_spectra, pv_map))
+            if (false == io::file::mca::load_integrated_spectra(qfilepath, quantification_standard->integrated_spectra, pv_map))
             {
                 //try without detector number on end 2idd
-                if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, &quantification_standard->integrated_spectra, pv_map))
+                if (false == io::file::mca::load_integrated_spectra(analysis_job->dataset_directory + quantification_standard->standard_filename, quantification_standard->integrated_spectra, pv_map))
                 {
 
                     //legacy code would load mca files, check for mca and replace with mda
@@ -301,7 +301,7 @@ bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
                     {
                         standard_itr.standard_filename[std_str_len - 2] = 'd';
                         quantification_standard->standard_filename = standard_itr.standard_filename;
-                        if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
+                        if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, quantification_standard->integrated_spectra, override_params))
                         {
                             logE << "Could not load file " << standard_itr.standard_filename << " for detector" << detector_num << "\n";
                             return false;
@@ -332,7 +332,7 @@ bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         }
         else
         {
-            if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, &quantification_standard->integrated_spectra, override_params))
+            if (false == io::file::load_and_integrate_spectra_volume(analysis_job->dataset_directory, quantification_standard->standard_filename, detector_num, quantification_standard->integrated_spectra, override_params))
             {
                 logE << "Could not load file " << standard_itr.standard_filename << " for detector " << detector_num << "\n";
                 return false;

@@ -4695,7 +4695,10 @@ public:
             spectra.input_counts(in_cnt);
             spectra.output_counts(out_cnt);
 
-            int_spectra->add(spectra);
+            if(false == int_spectra->add(spectra))
+            {
+                logW<<"Could not add spectra to int_spectra\n";
+            }
             sum_pixel += 1.0;
         }
 
