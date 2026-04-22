@@ -579,3 +579,170 @@ TEST_F(HDF5_IO_Test, LoadSpectraVolumeWithCallback_UserDataPassedThrough)
     ASSERT_NE(received_ptr, nullptr);
     EXPECT_EQ(*received_ptr, 42);
 }
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolumeWithCallback_TotalDimensionsPassedCorrectly)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 3;  p.cols = 5;  p.detector_num = 0;
+    std::string path = tmp("cb_total_dims.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    size_t obs_total_rows = 0, obs_total_cols = 0;
+    data_struct::IO_Callback_Func_Def<float> cb =
+        [&](size_t, size_t, size_t tr, size_t tc, size_t, data_struct::Spectra<float>* s, void*)
+        { obs_total_rows = tr;  obs_total_cols = tc;  delete s; };
+
+    ASSERT_TRUE(io()->load_spectra_volume_with_callback(path, {0}, cb, nullptr));
+    EXPECT_EQ(obs_total_rows, p.rows);
+    EXPECT_EQ(obs_total_cols, p.cols);
+}
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolumeWithCallback_TimingMetadataCorrect)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 1;  p.cols = 1;  p.detector_num = 0;
+    p.realtime = 0.25f;  p.input_counts = 500.0f;  p.output_counts = 500.0f;
+    std::string path = tmp("cb_timing.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    float obs_rt = -1.f;
+    data_struct::IO_Callback_Func_Def<float> cb =
+        [&](size_t, size_t, size_t, size_t, size_t, data_struct::Spectra<float>* s, void*)
+        { if (s) { obs_rt = s->elapsed_realtime(); delete s; } };
+
+    ASSERT_TRUE(io()->load_spectra_volume_with_callback(path, {0}, cb, nullptr));
+    EXPECT_NEAR(obs_rt, p.realtime, 1e-5f);
+}
+
+// ============================================================
+// load_spectra_volume — remaining detectors (2 and 3)
+// ============================================================
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolume_Detector2_LoadsData)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 2;  p.cols = 3;  p.detector_num = 2;
+    p.channel_ramp = true;
+    std::string path = tmp("maps_raw_det2.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    data_struct::Spectra_Volume<float> vol;
+    vol.resize_and_zero(p.rows, p.cols, p.spectra_size);
+    ASSERT_TRUE(io()->load_spectra_volume(path, 2, &vol));
+
+    for (size_t s = 0; s < p.spectra_size; ++s)
+        EXPECT_FLOAT_EQ(vol[0][0][s], float(s + 1)) << "s=" << s;
+}
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolume_Detector3_LoadsData)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 2;  p.cols = 3;  p.detector_num = 3;
+    p.channel_ramp = true;
+    std::string path = tmp("maps_raw_det3.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    data_struct::Spectra_Volume<float> vol;
+    vol.resize_and_zero(p.rows, p.cols, p.spectra_size);
+    ASSERT_TRUE(io()->load_spectra_volume(path, 3, &vol));
+
+    for (size_t s = 0; s < p.spectra_size; ++s)
+        EXPECT_FLOAT_EQ(vol[0][0][s], float(s + 1)) << "s=" << s;
+}
+
+// ============================================================
+// load_spectra_volume — double precision type
+// ============================================================
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolume_Double_ChannelRamp)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 2;  p.cols = 3;  p.detector_num = 0;
+    p.channel_ramp = true;
+    std::string path = tmp("maps_raw_double.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    data_struct::Spectra_Volume<double> vol;
+    vol.resize_and_zero(p.rows, p.cols, p.spectra_size);
+    ASSERT_TRUE(io()->load_spectra_volume(path, 0, &vol));
+
+    for (size_t s = 0; s < p.spectra_size; ++s)
+        EXPECT_NEAR(vol[0][0][s], double(s + 1), 1e-6) << "s=" << s;
+}
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolume_Double_NonExistentFile_ReturnsFalse)
+{
+    data_struct::Spectra_Volume<double> vol;
+    vol.resize_and_zero(2, 3, 16);
+    EXPECT_FALSE(io()->load_spectra_volume<double>("/no/such/file.h5", 0, &vol));
+}
+
+// ============================================================
+// load_spectra_volume_with_callback — double precision type
+// ============================================================
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolumeWithCallback_Double_ChannelRamp)
+{
+    MapsRawParams p;
+    p.spectra_size = 16;  p.rows = 2;  p.cols = 3;  p.detector_num = 0;
+    p.channel_ramp = true;
+    std::string path = tmp("cb_double.h5");
+    ASSERT_EQ(0, make_maps_raw_h5(path, p));
+
+    std::vector<data_struct::Spectra<double>> received;
+    data_struct::IO_Callback_Func_Def<double> cb =
+        [&](size_t, size_t, size_t, size_t, size_t, data_struct::Spectra<double>* s, void*)
+        { if (s) { received.push_back(*s); delete s; } };
+
+    ASSERT_TRUE(io()->load_spectra_volume_with_callback(path, {0}, cb, nullptr));
+    ASSERT_FALSE(received.empty());
+
+    for (auto& spec : received)
+        for (size_t s = 0; s < p.spectra_size; ++s)
+            EXPECT_NEAR(spec[s], double(s + 1), 1e-6) << "s=" << s;
+}
+
+// ============================================================
+// parse_str_val_to_int — additional edge cases
+// ============================================================
+
+TEST(ParseStrValToInt, ParsesNegativeValue)
+{
+    EXPECT_EQ((parse_str_val_to_int<float>("[", "]", "val[-7]end")), -7);
+}
+
+TEST(ParseStrValToInt, ParsesMultiDigitValue)
+{
+    EXPECT_EQ((parse_str_val_to_int<float>("<", ">", "size<2048>px")), 2048);
+}
+
+TEST(ParseStrValToInt, StartDelimiterAtEndOfString_ReturnsFalse)
+{
+    // Start delimiter found but nothing after it
+    EXPECT_EQ((parse_str_val_to_int<float>("[", "]", "value[")), -1);
+}
+
+// ============================================================
+// load_spectra_volume_emd_with_callback — error paths
+// ============================================================
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolumeEmdWithCallback_NonExistentFile_ReturnsFalse)
+{
+    data_struct::IO_Callback_Func_Def<float> cb =
+        [](size_t, size_t, size_t, size_t, size_t, data_struct::Spectra<float>* s, void*) { delete s; };
+
+    EXPECT_FALSE(io()->load_spectra_volume_emd_with_callback("/no/such/file.emd", {0}, cb, nullptr));
+}
+
+TEST_F(HDF5_IO_Test, LoadSpectraVolumeEmdWithCallback_EmptyH5File_ReturnsFalse)
+{
+    std::string path = tmp("empty_emd.h5");
+    hid_t fid = H5Fcreate(path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    H5Fclose(fid);
+
+    data_struct::IO_Callback_Func_Def<float> cb =
+        [](size_t, size_t, size_t, size_t, size_t, data_struct::Spectra<float>* s, void*) { delete s; };
+
+    EXPECT_FALSE(io()->load_spectra_volume_emd_with_callback(path, {0}, cb, nullptr));
+}
