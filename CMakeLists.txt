@@ -349,8 +349,8 @@ IF(BUILD_STATIC)
               ${libxrf_fit_SOURCE}
               )
   add_library(libxrf_io STATIC
-              ${XRF_IO_HEADERS}
               ${XDR_HACK}
+              ${XRF_IO_HEADERS}
               ${XRF_IO_SOURCE}
               )
 ELSE()
@@ -359,8 +359,8 @@ ELSE()
               ${libxrf_fit_SOURCE}
               )
   add_library(libxrf_io SHARED 
-             ${XRF_IO_HEADERS}
-             ${XDR_HACK}
+            ${XDR_HACK}           
+            ${XRF_IO_HEADERS}     
              ${XRF_IO_SOURCE}
              )
 ENDIF()
