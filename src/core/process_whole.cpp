@@ -230,7 +230,7 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 
 // ----------------------------------------------------------------------------
 
-bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num)
+bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* analysis_job, size_t detector_num)
 {
     fitting::models::Gaussian_Model<double> model;
     quantification::models::Quantification_Model<double> quantification_model;
@@ -432,9 +432,7 @@ bool load_and_fit_quatification_datasets(data_struct::Analysis_Job<double>* anal
         elements_to_fit.clear();
     }
 
-    float divisor = (float)analysis_job->standard_element_weights.size();    
-    
-    if (divisor > 1.0)
+    if (analysis_job->standard_element_weights.size() > 1.0)
     {
         for (auto& fit_itr : detector->fit_routines)
         {
@@ -466,7 +464,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
             //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
-            if(load_and_fit_quatification_datasets(analysis_job, detector_num))
+            if(load_and_fit_quantification_datasets(analysis_job, detector_num))
             {
                 detector->generate_avg_quantification_scalers();
 
@@ -636,10 +634,10 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
         data_struct::Scan_Info<double> scan_info;
         io::file::HDF5_IO::inst()->load_scan_info_analyzed_h5(file_path, detector, scan_info);
 
-        double sr_current = 1.0;
-        double us_ic = 1.0;
-        double us_fm = 1.0;
-        double ds_ic = 1.0;
+        double sr_current = 0.0;
+        double us_ic = 0.0;
+        double us_fm = 0.0;
+        double ds_ic = 0.0;
 
         std::map<std::string, data_struct::ArrayXXr<double>> scalers_map;
         if (io::file::HDF5_IO::inst()->load_scalers_analyzed_h5(file_path, scalers_map))
@@ -686,10 +684,13 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
 
                 d_amt += 1.0;
             }
-            ds_ic /= d_amt;
-            us_ic /= d_amt;
-            us_fm /= d_amt;
-            sr_current /= d_amt;
+            if(d_amt > 0)
+            {
+                ds_ic /= d_amt;
+                us_ic /= d_amt;
+                us_fm /= d_amt;
+                sr_current /= d_amt;
+            }
         }
         else
         {
@@ -719,7 +720,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             
 
         double abs_err = std::abs(out_fitp.at(STR_RESIDUAL).value);
-        double rel_err = abs_err / int_spectra.sum();;
+        double rel_err = abs_err / int_spectra.sum();
         double roi_area = 0;
         if (scan_info.meta_info.x_axis.rows() > 0 && scan_info.meta_info.x_axis.cols() > 0
             && scan_info.meta_info.y_axis.rows() > 0 && scan_info.meta_info.y_axis.cols() > 0)
