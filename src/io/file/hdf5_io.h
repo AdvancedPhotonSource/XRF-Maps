@@ -520,7 +520,9 @@ public:
         count[1] = 1; //1 row
 
         memoryspace_id = H5Screate_simple(2, count_row, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
@@ -721,6 +723,7 @@ public:
         hid_t ftype = H5Dget_type(acqui_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
         //prase bincount/samples width and height
@@ -748,6 +751,10 @@ public:
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], nullptr);
         if (status_n < 0)
         {
+            delete [] dims_in;
+            delete [] offset;
+            delete [] count;
+            delete [] chunk_dims;
             _close_h5_objects(close_map);
             logE << "getting dataset rank for MAPS_RAW/" << detector_path << "\n";
             return false;
@@ -1387,6 +1394,7 @@ public:
                 T_real *temp_read_in_x = new T_real[pos_count[0]];
                 T_real *temp_read_in_y = new T_real[pos_count[0]];
                 hid_t memoryspace_meta_id = H5Screate_simple(1, pos_count, nullptr);
+                close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
                 H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, pos_offset, nullptr, pos_count, nullptr);
                 herr_t error = _read_h5d<T_real>(pos_id, memoryspace_meta_id, dataspace_id, H5P_DEFAULT, (void*)temp_read_in_x);
                 if (error < 0)
@@ -1950,7 +1958,7 @@ public:
             hsize_t frame_dims[1] = {1};
             hsize_t c_dims[1] = {1};
             hid_t frame_memoryspace_id = H5Screate_simple(1, frame_dims, nullptr);
-                
+                close_map.push({ frame_memoryspace_id, H5O_DATASPACE });
             if(has_y)
             {
                 hsize_t i =0;
@@ -2043,6 +2051,7 @@ public:
         hid_t ftype = H5Dget_type(title_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         herr_t error = H5Dread(title_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_name[0]);
 
         if (error == 0)
@@ -2054,6 +2063,7 @@ public:
         hid_t ftype2 = H5Dget_type(start_time_id);
         close_map.push({ ftype2, H5O_DATATYPE });
         hid_t type2 = H5Tget_native_type(ftype2, H5T_DIR_ASCEND);
+        close_map.push({ type2, H5O_DATATYPE });
         error = H5Dread(start_time_id, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_time[0]);
 
         if (error == 0)
@@ -2200,6 +2210,7 @@ public:
         hid_t ftype = H5Dget_type(acqui_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
         //prase bincount/samples width and height
@@ -2638,7 +2649,7 @@ public:
         }
         if (bLoadOutCnt)
         {
-            dataspace_outcnt_id = H5Dget_space(bLoadOutCnt);
+            dataspace_outcnt_id = H5Dget_space(dset_outcnt_id);
             close_map.push({ dataspace_outcnt_id, H5O_DATASPACE });
         }
 
@@ -2996,7 +3007,7 @@ public:
         }
         if (bLoadOutCnt)
         {
-            dataspace_outcnt_id = H5Dget_space(bLoadOutCnt);
+            dataspace_outcnt_id = H5Dget_space(dset_outcnt_id);
             close_map.push({ dataspace_outcnt_id, H5O_DATASPACE });
         }
 
@@ -4125,7 +4136,9 @@ public:
         }
 
         memoryspace_id = H5Screate_simple(2, count_row, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
@@ -4308,7 +4321,9 @@ public:
         count[2] = 1;
 
         memoryspace_id = H5Screate_simple(3, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(2, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -4332,7 +4347,7 @@ public:
 
                 //error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
                 error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra->data());
-                if (error > 0)
+                if (error != 0)
                 {
                     logW << "Counld not read row " << row << " col " << col << "\n";
                 }
@@ -4468,6 +4483,7 @@ public:
         H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
         char tmp_name[256] = { 0 };
         memoryspace_1 = H5Screate_simple(1, count, nullptr);
+        close_map.push({ memoryspace_1, H5O_DATASPACE });
         for (hsize_t idx = 0; idx < dims_out[0]; idx++)
         {
             offset_1[0] = idx;
@@ -4569,7 +4585,9 @@ public:
         count[2] = 1;
 
         memoryspace_id = H5Screate_simple(3, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(2, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -4598,7 +4616,7 @@ public:
             spectra.resize(dims_in[0]);
 
             error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra.data());
-            if (error > 0)
+            if (error != 0)
             {
                 logW << "Counld not read row " << yoffset << " col " << xoffset << "\n";
             }
@@ -4609,7 +4627,7 @@ public:
                 offset[0] = us_ic_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read us_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4624,7 +4642,7 @@ public:
                 offset[0] = ds_ic_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read ds_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4639,7 +4657,7 @@ public:
                 offset[0] = sr_curr_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read sr_curr_off at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4656,25 +4674,25 @@ public:
                 offset[0] = elt_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&live_time);
-                if (error > 0)
+                if (error != 0)
                     live_time = 0;
 
                 offset[0] = ert_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&real_time);
-                if (error > 0)
+                if (error != 0)
                     real_time = 0;
 
                 offset[0] = in_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&in_cnt);
-                if (error > 0)
+                if (error != 0)
                     in_cnt = 0;
 
                 offset[0] = out_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&out_cnt);
-                if (error > 0)
+                if (error != 0)
                     out_cnt = 0;
             }
             else
@@ -4748,7 +4766,7 @@ public:
         //hsize_t offset[1] = {0};
         hsize_t count[1] = { 1 };
         hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
-
+        close_map.push({ readwrite_space, H5O_DATASPACE });
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
             return false;
 
@@ -5308,7 +5326,10 @@ public:
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
 
-        type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        hid_t ttype = H5Dget_type(amp_id);
+        close_map.push({ ttype, H5O_DATATYPE });
+        type = H5Tget_native_type(ttype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
         if (status < 0)
         {
@@ -5339,6 +5360,7 @@ public:
         close_map.push({ amp_space, H5O_DATASPACE });
 
         type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
         if (status < 0)
         {
@@ -5376,7 +5398,7 @@ public:
         hsize_t offset[1] = { 1 };
         hsize_t count[1] = { 1 };
         hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
-
+        close_map.push({ readwrite_space, H5O_DATASPACE });
         GSE_CARS_SAVE_VER version = GSE_CARS_SAVE_VER::UNKNOWN;
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
@@ -8745,7 +8767,7 @@ public:
                     {
                         if (adata[q] != nullptr)
                         {
-                            delete adata[q];
+                            H5free_memory(adata[q]);
                             adata[q] = nullptr;
                         }
                     }
@@ -8980,7 +9002,7 @@ public:
         }
         count[0] = dims_in[0];
         hid_t memoryspace_id = H5Screate_simple(1, dims_in, nullptr);
-
+        
         data_struct::ArrayTr<T_real>   buffer(count[0]);
         fitting::models::Range energy_range = data_struct::get_energy_range(dims_in[0], &(params.fit_params));
 
@@ -9257,7 +9279,9 @@ private:
         count[0] = dims_in[0];
 
         memoryspace_id = H5Screate_simple(1, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -9269,7 +9293,7 @@ private:
         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
         error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read integrated spectra \n";
             _close_h5_objects(close_map);
@@ -9282,28 +9306,28 @@ private:
         H5Sselect_hyperslab(dataspace_outct_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
         error = _read_h5d<T_real>(dset_rt_id, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, (void*)&real_time);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read real time for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, (void*)&live_time);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read elapsed live time for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_incnt_id, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read input counts for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_outcnt_id, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read output counts for spectra \n";
             _close_h5_objects(close_map);
