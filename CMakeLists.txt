@@ -545,3 +545,126 @@ install(EXPORT xrfmaps-export
         NAMESPACE XRF_Maps::
         DESTINATION lib/cmake/xrfmaps
 )
+
+# ---- Unit tests (opt-in) ----------------------------------------
+option(BUILD_TESTS "Build unit tests with Google Test" OFF)
+
+if(BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    add_executable(test_netcdf_io test/unit/test_netcdf_io.cpp)
+
+    set_target_properties(test_netcdf_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_netcdf_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_netcdf_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_netcdf_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            netCDF::netcdf
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(test_netcdf_io)
+
+    add_executable(test_hdf5_io test/unit/test_hdf5_io.cpp)
+
+    set_target_properties(test_hdf5_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_hdf5_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_hdf5_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_hdf5_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            hdf5::hdf5-shared
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_hdf5_io)
+
+    add_executable(test_hl_file_io test/unit/test_hl_file_io.cpp)
+
+    set_target_properties(test_hl_file_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_hl_file_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_hl_file_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_hl_file_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_hl_file_io)
+
+    add_executable(test_spectra test/unit/test_spectra.cpp)
+
+    set_target_properties(test_spectra PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_spectra PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_spectra PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_spectra
+        PRIVATE
+            GTest::gtest_main
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_spectra)
+endif()
