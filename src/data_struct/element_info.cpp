@@ -60,7 +60,7 @@ Electron_Shell get_shell_by_name(std::string element_name)
 {
     size_t idx = element_name.find_last_of("_") + 1;
     std::string shell_type = element_name.substr(idx);
-    if (idx == 0)
+    if (idx == 0) // if not found
     {
         return data_struct::Electron_Shell::K_SHELL;
     }
@@ -258,7 +258,7 @@ void Element_Info<T_real>::get_energies_between(T_real energy, T_real* out_low, 
             break;
         }
     }
-    for(size_t h = energies->size()-1; h > 1; h--)
+    for(size_t h = energies->size()-1; h >= 1; h--)
     {
         if(energy > (*energies)[h-1])
         {
@@ -360,14 +360,28 @@ T_real Element_Info<T_real>::get_f2(T_real energy)
         return f2;
     }
 
-    T_real ln_lower_energy = std::log((*energies)[low_e_idx]);
-    T_real ln_higher_energy = std::log((*energies)[high_e_idx]);
-    T_real fraction = (std::log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
 
-    T_real ln_f2_lower = std::log(std::abs(f2_atomic_scattering_imaginary[low_e_idx]));
-    T_real ln_f2_higher = std::log(std::abs(f2_atomic_scattering_imaginary[high_e_idx]));
-    f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
+    if( low_e_idx  < energies->size() && high_e_idx < energies->size())
+    {
+        T_real ln_lower_energy = std::log((*energies)[low_e_idx]);
+        T_real ln_higher_energy = std::log((*energies)[high_e_idx]);
+        T_real fraction = (std::log(energy) - ln_lower_energy) / (ln_higher_energy - ln_lower_energy);
 
+        if( low_e_idx  < f2_atomic_scattering_imaginary.size() && high_e_idx < f2_atomic_scattering_imaginary.size())
+        {
+            T_real ln_f2_lower = std::log(std::abs(f2_atomic_scattering_imaginary[low_e_idx]));
+            T_real ln_f2_higher = std::log(std::abs(f2_atomic_scattering_imaginary[high_e_idx]));
+            f2 = std::exp(ln_f2_lower + fraction * (ln_f2_higher - ln_f2_lower));
+        }
+        else
+        {
+            logW<<"low_e_idx: "<<low_e_idx<<" or high_e_idx: "<<high_e_idx <<"is > than f2_atomic_scattering_imaginary.size(): "<<f2_atomic_scattering_imaginary.size()<<"\n";
+        }
+    }
+    else
+    {
+        logW<<"low_e_idx: "<<low_e_idx<<" or high_e_idx: "<<high_e_idx <<"is > than energies size: "<<energies->size()<<"\n";
+    }
     return f2;
 }
 
@@ -402,6 +416,7 @@ template<typename T_real>
 Element_Info_Map<T_real>::~Element_Info_Map()
 {
     clear();
+    _this_inst = nullptr;
 }
 
 // ----------------------------------------------------------------------------
@@ -488,8 +503,15 @@ T_real Element_Info_Map<T_real>::calc_compound_beta(std::string compound_name, T
             if (element_info != nullptr)
             {
                 //beta += element_info->calc_beta(density, energy);
-                
-                T_real amt = std::atof(str_amt.c_str());
+                T_real amt = 0.0;
+                try
+                {
+                    amt = std::stof(str_amt);
+                }
+                catch(const std::exception& e)
+                {
+                    logE << e.what() << '\n';
+                }
                 if (amt > 0 && Element_Weight<T_real>.contains(element_info->number) )
                 {
                     T_real weight = Element_Weight<T_real>.at(element_info->number);
