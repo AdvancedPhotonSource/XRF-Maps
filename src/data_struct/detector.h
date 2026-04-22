@@ -93,14 +93,16 @@ public:
                                 Quantification_Model<T_real>* quantification_model,
                                 T_real val);
 
-    void update_from_fit_paramseters();
+    void update_from_fit_parameters();
 
-    void generage_avg_quantification_scalers();
+    void generate_avg_quantification_scalers();
 
     unsigned int number() { return _number; }
 
     // Fitting routines map
     std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> fit_routines;
+    // TODO: look into changing to unique_ptr
+    //std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real>> > fit_routines;
 
     // Fitting model
     fitting::models::Base_Model<T_real>* model;

@@ -147,13 +147,12 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples, ArrayTr<T_r
 
                 for(auto &proc_type : fitting_routines)
                 {
-                    //Fitting models
-                    fitting::routines::Base_Fit_Routine<T_real>* fit_routine = detector->fit_routines[proc_type];
-                    //logI << "Updating fit routine "<< fit_routine->get_name() <<" detector "<<detector_num<<"\n";
-
-                    Fit_Element_Map_Dict<T_real>* elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
-                    //Initialize model
-                    fit_routine->initialize(detector->model, elements_to_fit, energy_range, custom_background);
+                    if(detector->fit_routines.contains(proc_type))
+                    {
+                        Fit_Element_Map_Dict<T_real>* elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
+                        //Initialize model
+                        detector->fit_routines[proc_type]->initialize(detector->model, elements_to_fit, energy_range, custom_background);
+                    }
                 }
             }
         }

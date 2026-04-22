@@ -309,7 +309,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             }
         }
 
-        detector->update_from_fit_paramseters();
+        detector->update_from_fit_parameters();
 
         if (override_params->elements_to_fit.size() < 1)
         {

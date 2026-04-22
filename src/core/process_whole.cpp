@@ -468,7 +468,7 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
             if(load_and_fit_quatification_datasets(analysis_job, detector_num))
             {
-                detector->generage_avg_quantification_scalers();
+                detector->generate_avg_quantification_scalers();
 
                 for(auto &fit_itr : detector->fit_routines)
                 {
