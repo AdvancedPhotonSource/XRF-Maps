@@ -282,7 +282,7 @@ bool HDF5_IO::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t p
             if (expand)
             {
                 herr_t err = H5Dset_extent(out_id, dims);
-                if (err < 0)
+                if (err != 0)
                 {
                     logE << "Failed to extend dim [" << name << "] from " << tmp_dims << " to " << dims << " \n";
                     delete[]tmp_dims;
@@ -314,7 +314,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         if (obj.second == H5O_FILE)
         {
             err = H5Fclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW<<"Could not close h5 file id "<<obj.first<<"\n";
             }
@@ -322,7 +322,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if (obj.second == H5O_GROUP)
         {
             err = H5Gclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW<<"Could not close h5 group id "<<obj.first<<"\n";
             }
@@ -330,7 +330,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if (obj.second == H5O_DATASPACE)
         {
             err = H5Sclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW<<"Could not close h5 dataspace id "<<obj.first<<"\n";
             }
@@ -338,7 +338,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if (obj.second == H5O_DATASET)
         {
             err = H5Dclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW<<"Could not close h5 dataset id "<<obj.first<<"\n";
             }
@@ -346,7 +346,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if(obj.second == H5O_ATTRIBUTE)
         {
             err = H5Aclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW<<"Could not close h5 attribute id "<<obj.first<<"\n";
             }
@@ -354,7 +354,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if (obj.second == H5O_DATATYPE)
         {
             err = H5Tclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW << "Could not close h5 type id " << obj.first << "\n";
             }
@@ -362,7 +362,7 @@ void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &clos
         else if (obj.second == H5O_PROPERTY)
         {
             err = H5Pclose(obj.first);
-            if (err > 0)
+            if (err != 0)
             {
                 logW << "Could not close h5 property id " << obj.first << "\n";
             }
@@ -560,8 +560,8 @@ bool HDF5_IO::copy_to_raw_grp(const std::string filename, const std::string src_
 
 bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>* extra_pvs)
 {
-    hid_t memoryspace_id;
-    herr_t status;
+    hid_t memoryspace_id = -1;
+    herr_t status = -1;
     hid_t dataspace_desc_id, dataspace_unit_id, dataspace_val_id, dataspace_id;
 	hid_t filetype, memtype;
     hid_t dset_desc_id = -1, dset_unit_id = -1, dset_id = -1, dset_val_id = -1;
@@ -576,7 +576,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
 	}
 
     filetype = H5Tcopy(H5T_FORTRAN_S1);
-    H5Tset_size(filetype, 256);
+    H5Tset_size(filetype, 255);
 	memtype = H5Tcopy(H5T_C_S1);
     status = H5Tset_size(memtype, 255);
 
@@ -643,7 +643,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
             }
 
             char tmp_char3[255] = { 0 };
-            pv.description.copy(tmp_char, 254);
+            pv.description.copy(tmp_char3, 254);
             status = H5Dwrite(dset_desc_id, memtype, memoryspace_id, dataspace_desc_id, H5P_DEFAULT, (void*)tmp_char3);
             if (status < 0)
             {
@@ -651,7 +651,7 @@ bool HDF5_IO::_save_extras(hid_t scan_grp_id, std::vector<data_struct::Extra_PV>
             }
 
             char tmp_char4[255] = { 0 };
-            pv.unit.copy(tmp_char, 254);
+            pv.unit.copy(tmp_char4, 254);
             status = H5Dwrite(dset_unit_id, memtype, memoryspace_id, dataspace_unit_id, H5P_DEFAULT, (void*)tmp_char4);
             if (status < 0)
             {
@@ -912,7 +912,7 @@ void HDF5_IO::_gen_average(std::string full_hdf5_path, std::string dataset_name,
         for (int i = 0; i < rank; i++)
         {
             offset_rank[i] = 0;
-            total *= dims_in[i];
+            total *= (long long)dims_in[i];
         }
 
         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset_rank, nullptr, dims_in, nullptr);
@@ -1258,7 +1258,7 @@ bool HDF5_IO::close_dataset(size_t d_hash)
 void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-	hid_t file_id, theta_id, extra_names, extra_values;
+	hid_t file_id = -1, theta_id = -1, extra_names = -1, extra_values = -1;
 	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 	char tmp_char[256] = { 0 };
 	hsize_t dims_in[1] = { 0 };
@@ -1283,9 +1283,13 @@ void HDF5_IO::update_theta(std::string dataset_file, std::string theta_pv_str)
 	
 
 	hid_t theta_space = H5Dget_space(theta_id);
+    close_map.push({ theta_space, H5O_DATASPACE });
 	//hid_t theta_type = H5Dget_type(theta_id);
+    //close_map.push({ theta_type, H5O_DATASPACE });
 	hid_t name_space = H5Dget_space(extra_names);
+    close_map.push({ name_space, H5O_DATASPACE });
 	hid_t name_type = H5Dget_type(extra_names);
+    close_map.push({ name_type, H5O_DATASPACE });
 	H5Sget_simple_extent_dims(name_space, &dims_in[0], nullptr);
 	hid_t memoryspace_id = H5Screate_simple(1, count_1d, nullptr);
 	close_map.push({ memoryspace_id, H5O_DATASPACE });
@@ -1833,7 +1837,7 @@ void HDF5_IO::_add_v9_quant(hid_t file_id,
                 std::string el_name_str = std::string(tmp_char);
                 size_t underscore_idx = el_name_str.find("_");
                 //can check if > 0 instead of -1 since it shouldn't start with an '_'
-                if (underscore_idx != std::string::npos && underscore_idx < el_name_str.length())
+                if (underscore_idx != std::string::npos && underscore_idx+1 < el_name_str.length())
                 {
                     if(el_name_str[underscore_idx+1] == 'L')
                         offset_2d[0] = 1;

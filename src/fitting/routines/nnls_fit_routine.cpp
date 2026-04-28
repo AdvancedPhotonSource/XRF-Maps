@@ -253,8 +253,15 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 	//lock and integrate results
 	{
 		std::lock_guard<std::mutex> lock(this->_int_spec_mutex);
-		this->_integrated_fitted_spectra.add(spectra_model);
-        this->_integrated_background.add(background);
+
+		if(false == this->_integrated_fitted_spectra.add(spectra_model))
+        {
+            logW<<"Could not add model spectra to _integrated_fitted_spectra\n";
+        }
+        if(false == this->_integrated_background.add(background))
+        {
+            logW<<"Could not add background spectra to _integrated_background\n";
+        }
 	}
 
     if (num_iter == solver.getMaxit())

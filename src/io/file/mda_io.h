@@ -49,7 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef MDA_IO_H
 #define MDA_IO_H
 
-#include "support/mdautils-1.4.1/mda-load.h"
+#include "support/MDA_Utilities/src/mda-load.h"
 #include "data_struct/element_info.h"
 #include "data_struct/spectra_volume.h"
 #include "data_struct/quantification_standard.h"
@@ -69,7 +69,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef XDR_HACK
-#include "support/mdautils-1.4.1/xdr_hack.h"
+#include "support/MDA_Utilities/src/xdr_hack.h"
 #else
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -139,7 +139,7 @@ public:
 
     void unload_int_spectra() { _integrated_spectra_map.clear(); }
 
-    bool load_henke_from_xdr(std::string filename);
+    bool load_henke_from_xdr(const std::string& filename);
 
 private:
 
@@ -160,8 +160,6 @@ private:
      * @brief _mda_file_info: lazy load struct
      */
     mda_fileinfo *_mda_file_info;
-
-    bool _hasNetcdf;
 
     data_struct::Scan_Info<T_real> _scan_info;
 

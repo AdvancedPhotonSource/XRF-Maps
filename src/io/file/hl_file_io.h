@@ -109,7 +109,7 @@ DLL_EXPORT bool load_quantification_standardinfo(std::string dataset_directory, 
 
 //DLL_EXPORT void populate_netcdf_hdf5_files(std::string dataset_dir);
 
-DLL_EXPORT void save_optimized_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, std::string result, data_struct::Fit_Parameters<double>* fit_params, const data_struct::Spectra<double>* const spectra, const data_struct::Fit_Element_Map_Dict<double>* const elements_to_fit);
+DLL_EXPORT void save_optimized_fit_params(const std::string& dataset_dir, const std::string& dataset_filename, int detector_num, const std::string& result, data_struct::Fit_Parameters<double>* fit_params, const data_struct::Spectra<double>* const spectra, const data_struct::Fit_Element_Map_Dict<double>* const elements_to_fit);
 
 ////DLL_EXPORT void save_roi_fit_params(std::string dataset_dir, std::string dataset_filename, int detector_num, string result, data_struct::Fit_Parameters<double>* fit_params, data_struct::Spectra<double>* spectra, data_struct::Fit_Element_Map_Dict<double>* elements_to_fit);
 
@@ -135,7 +135,10 @@ void cb_load_spectra_data_helper([[maybe_unused]] size_t row, [[maybe_unused]] s
         }
         else
         {
-            integrated_spectra->add(*spectra);
+            if(false == integrated_spectra->add(*spectra))
+            {
+                logW<<"Could not add spectra to int_spectra\n";
+            }
         }
     }
 
@@ -182,7 +185,7 @@ DLL_EXPORT fitting::routines::Base_Fit_Routine<T_real>* generate_fit_routine(dat
 template<typename T_real>
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
     int detector_num,
-    data_struct::Params_Override<T_real>* params_override,
+    data_struct::Params_Override<T_real> &params_override,
     bool append_file_name = true)
 {
     std::string det_num = "";
@@ -204,11 +207,11 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
     else
     {
         data_struct::Element_Info<T_real>* detector_element;
-        if (params_override->detector_element.length() > 0)
+        if (params_override.detector_element.length() > 0)
         {
             // Get the element info class                                   // detector element as string "Si" or "Ge" usually
 
-            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override->detector_element);
+            detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element(params_override.detector_element);
         }
         else
         {
@@ -217,18 +220,24 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
             detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
         }
 
-        if (params_override->elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
+        if(detector_element == nullptr)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
+            logE <<"detector_element == nullptr, can not process!\n";
+            return false;
         }
-        if (params_override->elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
+
+        if (params_override.elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
         {
-            params_override->elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
+            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
+        }
+        if (params_override.elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
+        {
+            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
         }
 
         logI << "Elements to fit:  ";
         //Update element ratios by detector element
-        for (auto& itr : params_override->elements_to_fit)
+        for (auto& itr : params_override.elements_to_fit)
         {
             itr.second->init_energy_ratio_for_detector_element(detector_element);
             logit_s << itr.first << " ";
@@ -285,14 +294,14 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             analysis_job->output_dir = analysis_job->dataset_directory;
         }
 
-        if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, override_params))
+        if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, *override_params))
         {
-            if (false == io::file::load_override_params(analysis_job->output_dir, -1, override_params))
+            if (false == io::file::load_override_params(analysis_job->output_dir, -1, *override_params))
             {
                 //last case, check current directory for override. This will be used for streaming
-                if (false == io::file::load_override_params("./", detector_num, override_params))
+                if (false == io::file::load_override_params("./", detector_num, *override_params))
                 {
-                    if (false == io::file::load_override_params("./", -1, override_params))
+                    if (false == io::file::load_override_params("./", -1, *override_params))
                     {
                         return false;
                     }
@@ -300,7 +309,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             }
         }
 
-        detector->update_from_fit_paramseters();
+        detector->update_from_fit_parameters();
 
         if (override_params->elements_to_fit.size() < 1)
         {
@@ -311,8 +320,11 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
         for (auto proc_type : analysis_job->fitting_routines)
         {
             //Fitting models
-            detector->fit_routines[proc_type] = generate_fit_routine(proc_type, analysis_job->optimizer());
-
+            fitting::routines::Base_Fit_Routine<T_real>* fit_routine = generate_fit_routine(proc_type, analysis_job->optimizer());
+            if(fit_routine != nullptr)
+            {
+                detector->fit_routines[proc_type] = fit_routine;
+            }
             //reset model fit parameters to defaults
             detector->model->reset_to_default_fit_params();
             //Update fit parameters by override values
@@ -322,7 +334,6 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             //Fit_Element_Map_Dict *elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
             //Initialize model
             //detector->fit_routines.at(proc_type)->initialize(detector->model, elements_to_fit, energy_range);
-
         }
     }
 
@@ -332,7 +343,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT bool load_element_info(const std::string element_henke_filename, const std::string element_csv_filename)
+DLL_EXPORT bool load_element_info(const std::string& element_henke_filename, const std::string& element_csv_filename)
 {
     io::file::MDA_IO<T_real> mda_io;
     if (mda_io.load_henke_from_xdr(element_henke_filename) == false)
@@ -356,7 +367,7 @@ template<typename T_real>
 DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
 													std::string dataset_file,
 													size_t detector_num,
-													data_struct::Spectra<T_real>* integrated_spectra,
+													data_struct::Spectra<T_real>& integrated_spectra,
 													data_struct::Params_Override<T_real>* params_override)
 {
     //Dataset importer
@@ -476,28 +487,29 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     
     bool ends_in_mca = false;
     size_t dlen = dataset_file.length();
-    if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
+    if(dlen > 6)
     {
-        ends_in_mca = true;
-    }
-    else
-    {
-        for (int i = 0; i < 8; i++)
+        if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
         {
-            std::string s1 = std::to_string(i);
-            if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+            ends_in_mca = true;
+        }
+        else
+        {
+            for (int i = 0; i < 8; i++)
             {
-                ends_in_mca = true;
-                break;
+                std::string s1 = std::to_string(i);
+                if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+                {
+                    ends_in_mca = true;
+                    break;
+                }
             }
         }
     }
-
     if (ends_in_mca)
     {
-        Spectra<T_real> spec;
         std::unordered_map<std::string, T_real> pv_map;
-        bool loaded_mca = io::file::mca::load_integrated_spectra(dataset_directory + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map);
+        bool loaded_mca = io::file::mca::load_integrated_spectra(dataset_directory + dataset_file, integrated_spectra, pv_map);
         if (false == loaded_mca)
         {
             loaded_mca = io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, integrated_spectra, pv_map);
@@ -555,12 +567,12 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     {
         fullpath += std::to_string(detector_num);
     }
-    bool loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false);
+    bool loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, &integrated_spectra, nullptr, false);
     if (false == loaded0)
     {
         // if failed, try just the name in img.dat folder
         fullpath = dataset_directory + "img.dat" + DIR_END_CHAR + dataset_file;
-        loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, integrated_spectra, nullptr, false);
+        loaded0 = io::file::HDF5_IO::inst()->load_integrated_spectra_analyzed_h5(fullpath, &integrated_spectra, nullptr, false);
     }
     if (true == loaded0)
     {
@@ -576,7 +588,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     }
 
     //try loading emd dataset
-    if (io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(dataset_directory + DIR_END_CHAR + dataset_file, detector_num_arr, cb_function, integrated_spectra))
+    if (io::file::HDF5_IO::inst()->load_spectra_volume_emd_with_callback(dataset_directory + DIR_END_CHAR + dataset_file, detector_num_arr, cb_function, &integrated_spectra))
         //if (true == io::file::HDF5_IO::inst()->load_spectra_volume_emd(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
     {
         logI << "Loaded spectra volume confocal from h5.\n";
@@ -587,7 +599,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     if (true == io::file::HDF5_IO::inst()->load_spectra_volume_confocal(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &spectra_volume, false))
     {
         logI << "Loaded spectra volume confocal from h5.\n";
-        *integrated_spectra = spectra_volume.integrate();
+        integrated_spectra = spectra_volume.integrate();
         return true;
     }
 
@@ -601,11 +613,11 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         }
 
         logI << "Loaded spectra volume gse cars from h5.\n";
-        *integrated_spectra = spectra_volume.integrate();
+        integrated_spectra = spectra_volume.integrate();
         return true;
     }
 
-    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, false))
+    if (true == io::file::HDF5_IO::inst()->load_integrated_spectra_bnl(dataset_directory + DIR_END_CHAR + dataset_file, detector_num, &integrated_spectra, false))
     {
         fullpath = dataset_directory + DIR_END_CHAR + dataset_file;
         if (false == io::file::HDF5_IO::inst()->load_quantification_scalers_BNL(fullpath, params_override))
@@ -619,7 +631,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
     //load spectra
     // load_spectra_volume will alloc memory for the whole vol, we don't want that for integrated spec
     //if(false == mda_io.load_spectra_volume_with_callback(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num_arr, has_external_files, analysis_job, out_rows, out_cols, cb_function, integrated_spectra))
-    auto mda_ret_val = mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, integrated_spectra, has_external_files);
+    auto mda_ret_val = mda_io.load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, detector_num, &integrated_spectra, has_external_files);
     if (Load_Status::Failed == mda_ret_val)
     {
         logE << "Load spectra " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << "\n";
@@ -642,19 +654,19 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             rank = io::file::mda_get_rank_and_dims(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &dims[0]);
             if (rank == 3)
             {
-                integrated_spectra->resize(dims[2]);
-                integrated_spectra->setZero(dims[2]);
+                integrated_spectra.resize(dims[2]);
+                integrated_spectra.setZero(dims[2]);
             }
             else
             {
-                integrated_spectra->resize(2048);
-                integrated_spectra->setZero(2048);
+                integrated_spectra.resize(2048);
+                integrated_spectra.setZero(2048);
             }
 
-            integrated_spectra->elapsed_livetime((T_real)0.0);
-            integrated_spectra->elapsed_realtime((T_real)0.0);
-            integrated_spectra->input_counts((T_real)0.0);
-            integrated_spectra->output_counts((T_real)0.0);
+            integrated_spectra.elapsed_livetime((T_real)0.0);
+            integrated_spectra.elapsed_realtime((T_real)0.0);
+            integrated_spectra.input_counts((T_real)0.0);
+            integrated_spectra.output_counts((T_real)0.0);
 
             if(hasNetcdf)
             {
@@ -735,14 +747,14 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                     {
                         full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".nc";
                         //logI<<"Loading file "<<full_filename<<"\n";
-                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], &integrated_spectra);
                         if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
                         {
                             return false;
                         }
                     }
                     // recalculate elapsed lifetime
-                    integrated_spectra->recalc_elapsed_livetime();
+                    integrated_spectra.recalc_elapsed_livetime();
                 }
                 else
                 {
@@ -768,7 +780,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         }
                         row_idx_str_full += row_idx_str;
                         full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + row_idx_str_full + ".nc";
-                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], integrated_spectra);
+                        size_t spec_size = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_integrated(full_filename, detector_num, dims[1], &integrated_spectra);
                         if (detector_num > 3 && spec_size == -1) // this netcdf file only has 4 element detectors
                         {
                             return false;
@@ -783,11 +795,12 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
             else if (hasHdf)
             {
-                ret_val = io::file::HDF5_IO::inst()->load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, integrated_spectra);
+                ret_val = io::file::HDF5_IO::inst()->load_and_integrate_spectra_volume(dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + "0.h5", detector_num, &integrated_spectra);
             }
             else if (hasXspress)
             {
                 data_struct::Scan_Info<T_real>* scan_info = mda_io.get_scan_info();
+
                 if(scan_info != nullptr)
                 {
                     scan_info->initialize_scaler_map(STR_ARRAY_COUNTER);
@@ -802,29 +815,32 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                 }
                 std::string full_filename;
                 data_struct::Spectra_Line<T_real> spectra_line;
-                spectra_line.resize_and_zero(dims[1], integrated_spectra->size());
+                spectra_line.resize_and_zero(dims[1], integrated_spectra.size());
                 for (size_t i = 0; i < dims[0]; i++)
                 {
-                    std::map<std::string, Scaler_Map<T_real>> scalers_lines;
+                    std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_lines;
                     full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
                     if (io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &spectra_line, scalers_lines))
                     {
                         if(scan_info != nullptr)
                         {
-                            for(auto &sitr: scan_info->scaler_maps)
+                            for(const auto &sitr: scan_info->scaler_maps)
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    for(int col = 0; col < sitr.second->values.cols(); col++)
                                     {
-                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
                                 }
                             }
                         }
                         for (size_t k = 0; k < spectra_line.size(); k++)
                         {
-                            integrated_spectra->add(spectra_line[k]);
+                            if(false == integrated_spectra.add(spectra_line[k]))
+                            {
+                                logW<<"Could not add spectra to int_spectra\n";
+                            }
                         }
                     }
                 }
@@ -965,74 +981,72 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
 
     size_t dlen = dataset_file.length();
-    if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'f')
+    if(dlen > 5)
     {
-        // try to load polar hdf master file
-        data_struct::Scan_Info<double> scan_info;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info, params_override))
+        if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'f')
         {
-            spectra_volume->set_nan_to_near_zero();
-            scan_type = STR_SCAN_TYPE_POLAR_XANES;
-            if(io::file::HDF5_IO::inst()->start_save_seq(true))
+            // try to load polar hdf master file
+            data_struct::Scan_Info<double> scan_info;
+            if(true == io::file::HDF5_IO::inst()->load_spectra_vol_polar_energy_scan(dataset_directory, dataset_file, detector_num, spectra_volume, scan_info, params_override))
             {
-                data_struct::Params_Override<double>* null_po = nullptr;
-                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, null_po);
-                // copy /entry to /MAPS/raw
-                io::file::HDF5_IO::inst()->copy_to_raw_grp(dataset_directory+dataset_file, "entry");
-                return true;
-            }
-            else
-            {
-                return false;
+                spectra_volume->set_nan_to_near_zero();
+                scan_type = STR_SCAN_TYPE_POLAR_XANES;
+                if(io::file::HDF5_IO::inst()->start_save_seq(true))
+                {
+                    data_struct::Params_Override<double>* null_po = nullptr;
+                    io::file::HDF5_IO::inst()->save_scan_scalers(scan_info, null_po);
+                    // copy /entry to /MAPS/raw
+                    io::file::HDF5_IO::inst()->copy_to_raw_grp(dataset_directory+dataset_file, "entry");
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
     }
-
     bool ends_in_h5 = false;
     bool ends_in_mca = false;
-    if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
+    if(dlen > 6)
     {
-        ends_in_h5 = true;
-    }
-    else if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
-    {
-        ends_in_mca = true;
-    }
-    else
-    {
-        for (int i = 0; i < 8; i++)
+        if (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5')
         {
-            std::string s1 = std::to_string(i);
-            if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == s1[0])
+            ends_in_h5 = true;
+        }
+        else if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a')
+        {
+            ends_in_mca = true;
+        }
+        else
+        {
+            for (int i = 0; i < 8; i++)
             {
-                ends_in_h5 = true;
-                break;
-            }
-            else if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
-            {
-                ends_in_mca = true;
-                break;
+                std::string s1 = std::to_string(i);
+                if (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'h' && dataset_file[dlen - 2] == '5' && dataset_file[dlen - 1] == s1[0])
+                {
+                    ends_in_h5 = true;
+                    break;
+                }
+                else if (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a' && dataset_file[dlen - 1] == s1[0])
+                {
+                    ends_in_mca = true;
+                    break;
+                }
             }
         }
     }
-
     if (ends_in_mca)
     {
         Spectra<T_real> spec;
         std::unordered_map<std::string, T_real> pv_map;
-        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, &spec, pv_map))
+        if (true == io::file::mca::load_integrated_spectra(dataset_directory + "mda" + DIR_END_CHAR + dataset_file, spec, pv_map))
         {
             data_struct::Scan_Info<T_real> scan_info;
             scan_type = STR_SCAN_TYPE_XRF_SINGLE_MCA;
             for (auto& itr : pv_map)
             {
-                data_struct::Scaler_Map<T_real> sm;
-                sm.name = itr.first;
-                sm.unit = " ";
-                sm.time_normalized = false;
-                sm.values.resize(1,1);
-                sm.values(0, 0) = itr.second;
-                scan_info.scaler_maps[sm.name] = sm;
+                scan_info.scaler_maps.try_emplace(itr.first, std::make_shared<Scaler_Map<T_real>>(itr.first, 1, 1, false, ""));
             }
             
             scan_info.meta_info.requested_rows = 1;
@@ -1058,8 +1072,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             io::file::HDF5_IO::inst()->start_save_seq(true);
 
             // add ELT, ERT, INCNT, OUTCNT to scaler map
-            spectra_volume->generate_scaler_maps(&(scan_info.scaler_maps));
-            io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info, params_override);
+            spectra_volume->generate_scaler_maps(scan_info);
+            io::file::HDF5_IO::inst()->save_scan_scalers(scan_info, params_override);
             return true;
         }
     }
@@ -1118,11 +1132,11 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 // add ELT, ERT, INCNT, OUTCNT to scaler map
                 if (spectra_volume != nullptr)
                 {
-                    spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
+                    spectra_volume->generate_scaler_maps(scan_info_edf);
                 }
 
                 io::file::HDF5_IO::inst()->save_interferometers(&interferometer_avg);
-                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+                io::file::HDF5_IO::inst()->save_scan_scalers(scan_info_edf, params_override);
             }
             return true;
         }
@@ -1150,13 +1164,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 str_det_num = std::to_string(detector_num);
             }
 
-            data_struct::Scaler_Map<T_real> dead_time_map;
-            dead_time_map.name = "DEAD_TIME_0";
-            dead_time_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
-            
-            data_struct::Scaler_Map<T_real> output_map;
-            output_map.name = "OUTPUT_MAP"; // not sure what this is?
-            output_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
+            scan_info_edf.initialize_scaler_map_with_dims("DEAD_TIME_0", spectra_volume->rows(), spectra_volume->cols(), false, "");
+            scan_info_edf.initialize_scaler_map_with_dims("OUTPUT_MAP", spectra_volume->rows(), spectra_volume->cols(), false, "");
 
             //  COX_4_50x_400nm_05_xia00_0001_0000_0000.edf
             //    title                 detector        row
@@ -1169,7 +1178,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 std::string metafullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + "_xiaSt_0001_0000_" + str_row + ".edf";
                 io::file::edf::load_spectra_line(fullpath, &(*spectra_volume)[r]);
                 // loading meta data for spectra icr, ocr, elt, ert
-                io::file::edf::load_spectra_line_meta(metafullpath, detector_num, r, &(*spectra_volume)[r], dead_time_map, output_map);
+                io::file::edf::load_spectra_line_meta(metafullpath, detector_num, r, &(*spectra_volume)[r], scan_info_edf.scaler_maps["DEAD_TIME_0"], scan_info_edf.scaler_maps["OUTPUT_MAP"]);
             }
 
             std::map<std::string, std::string> scaler_map = {
@@ -1195,18 +1204,11 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
             for (auto& s_itr : scaler_map)
             {
-                data_struct::Scaler_Map<T_real> s_map;
-                s_map.name = s_itr.first;
-                s_map.values.resize(spectra_volume->rows(), spectra_volume->cols());
+                scan_info_edf.initialize_scaler_map_with_dims(s_itr.first, spectra_volume->rows(), spectra_volume->cols(), false, "");
                 std::string s_fullpath = dataset_directory + DIR_END_CHAR + dset_folder + DIR_END_CHAR + file_title + s_itr.second;
-                if (io::file::edf::load_scaler(s_fullpath, s_map))
-                {
-                    scan_info_edf.scaler_maps[s_map.name] = s_map;
-                }
-            }
+                io::file::edf::load_scaler(s_fullpath, scan_info_edf.scaler_maps.at(s_itr.first));
 
-            scan_info_edf.scaler_maps[dead_time_map.name] = dead_time_map;
-            scan_info_edf.scaler_maps[output_map.name] = output_map;
+            }
             
             spectra_volume->set_nan_to_near_zero();
             if (save_scalers)
@@ -1216,10 +1218,10 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 // add ELT, ERT, INCNT, OUTCNT to scaler map
                 if (spectra_volume != nullptr)
                 {
-                    spectra_volume->generate_scaler_maps(&(scan_info_edf.scaler_maps));
+                    spectra_volume->generate_scaler_maps(scan_info_edf);
                 }
 
-                io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+                io::file::HDF5_IO::inst()->save_scan_scalers(scan_info_edf, params_override);
             }
 
             return true;
@@ -1230,7 +1232,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             scan_type = scan_info_edf.meta_info.scan_type;
             spectra_volume->set_nan_to_near_zero();
             io::file::HDF5_IO::inst()->start_save_seq(true);
-            io::file::HDF5_IO::inst()->save_scan_scalers(&scan_info_edf, params_override);
+            io::file::HDF5_IO::inst()->save_scan_scalers(scan_info_edf, params_override);
             io::file::HDF5_IO::inst()->copy_to_raw_grp(dataset_directory+dataset_file, "metadata");
             return true;
         }
@@ -1441,7 +1443,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                 for (size_t i = 0; i < spectra_volume->rows(); i++)
                 {
                     //everyone else
-                    std::map<std::string, Scaler_Map<T_real>> scalers_lines;
+                    std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_lines;
                     full_filename = dataset_directory + "flyXRF.h5" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".h5";
                     if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
                     {
@@ -1451,9 +1453,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    for(int col = 0; col < sitr.second->values.cols(); col++)
                                     {
-                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
                                 }
                             }
@@ -1483,7 +1485,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             for (size_t i = 0; i < spectra_volume->rows(); i++)
             {
                 //bnp format
-                std::map<std::string, Scaler_Map<T_real>> scalers_lines;
+                std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_lines;
                 int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
                 if(idx == 0)
                 {
@@ -1496,9 +1498,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    for(int col = 0; col < sitr.second->values.cols(); col++)
                                     {
-                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
                                 }
                             }
@@ -1525,9 +1527,9 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second.values.cols(); col++)
+                                    for(int col = 0; col < sitr.second->values.cols(); col++)
                                     {
-                                        sitr.second.values(i, col) = scalers_lines.at(sitr.first).values(0, col);
+                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
                                 }
                             }
@@ -1559,21 +1561,24 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         // add ELT, ERT, INCNT, OUTCNT to scaler map
         if (spectra_volume != nullptr && scan_info != nullptr && scan_info->scaler_maps.size() > 0)
         {
-            spectra_volume->generate_scaler_maps(&(scan_info->scaler_maps));
+            spectra_volume->generate_scaler_maps(*scan_info);
         }
 
-        for (const auto& line : bad_rows)
+        if(scan_info != nullptr)
         {
-            for (auto& mitr : scan_info->scaler_maps)
+            for (const auto& line : bad_rows)
             {
-                // copy prev row
-                for (Eigen::Index col = 0; col < mitr.second.values.cols(); col++)
+                for (auto& mitr : scan_info->scaler_maps)
                 {
-                    mitr.second.values(line, col) = mitr.second.values(line - 1, col);
+                    // copy prev row
+                    for (Eigen::Index col = 0; col < mitr.second->values.cols(); col++)
+                    {
+                        mitr.second->values(line, col) = mitr.second->values(line - 1, col);
+                    }
                 }
             }
+            io::file::HDF5_IO::inst()->save_scan_scalers(*scan_info, params_override);
         }
-        io::file::HDF5_IO::inst()->save_scan_scalers(scan_info, params_override);
     }
 
     mda_io.unload();
@@ -1585,7 +1590,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
 
 // This is for HDF5 files only
 template<typename T_real>
-DLL_EXPORT bool get_scalers_and_metadata_h5(std::string dataset_directory, std::string dataset_file, data_struct::Scan_Info<T_real>* scan_info)
+DLL_EXPORT bool get_scalers_and_metadata_h5(const std::string &dataset_directory, const std::string &dataset_file, data_struct::Scan_Info<T_real> &scan_info)
 {
     if (true == io::file::HDF5_IO::inst()->get_scalers_and_metadata_emd(dataset_directory + DIR_END_CHAR + dataset_file, scan_info))
     {

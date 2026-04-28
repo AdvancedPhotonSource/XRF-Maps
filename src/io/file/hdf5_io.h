@@ -520,7 +520,9 @@ public:
         count[1] = 1; //1 row
 
         memoryspace_id = H5Screate_simple(2, count_row, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
@@ -721,6 +723,7 @@ public:
         hid_t ftype = H5Dget_type(acqui_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
         //prase bincount/samples width and height
@@ -748,6 +751,10 @@ public:
         int status_n = H5Sget_simple_extent_dims(dataspace_id, &dims_in[0], nullptr);
         if (status_n < 0)
         {
+            delete [] dims_in;
+            delete [] offset;
+            delete [] count;
+            delete [] chunk_dims;
             _close_h5_objects(close_map);
             logE << "getting dataset rank for MAPS_RAW/" << detector_path << "\n";
             return false;
@@ -1209,7 +1216,7 @@ public:
                 }
                 if(i>0)
                 {
-                    std::map<std::string, Scaler_Map<T_real>> scalers_line;
+                    std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_line;
                     data_struct::Spectra_Line<T_real> spec_row;
                     if(_load_spectra_line_xspress3(itr.second, detector_num, &spec_row, scalers_line))
                     {
@@ -1239,7 +1246,7 @@ public:
                         {
                             for(size_t c=0; c< spec_row.size(); c++)
                             {
-                                size_t spec_arr_idx = static_cast<size_t>(scalers_line.at(STR_ARRAY_COUNTER).values(0,c));
+                                size_t spec_arr_idx = static_cast<size_t>(scalers_line.at(STR_ARRAY_COUNTER)->values(0,c));
                                 spec_arr_idx -= 1; // interferometer array cntr is 0 based, xsperss3 is 1 based so subtract 1
                                 if(spec_arr_idx < spec_vol->cols())
                                 {
@@ -1247,7 +1254,7 @@ public:
                                     {
                                         if(scalers_line.contains(sm_itr.first) )
                                         {
-                                            sm_itr.second.values(0,spec_arr_idx) = scalers_line.at(sm_itr.first).values(0,c);
+                                            sm_itr.second->values(0,spec_arr_idx) = scalers_line.at(sm_itr.first)->values(0,c);
                                         }
                                     }
                                     (*spec_vol)[0][spec_arr_idx] = spec_row[c];
@@ -1335,7 +1342,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_sec12(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
+    bool load_spectra_vol_sec12(std::string path, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol,  data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t file_id = -1, xspres_grp_id = -1;
@@ -1387,6 +1394,7 @@ public:
                 T_real *temp_read_in_x = new T_real[pos_count[0]];
                 T_real *temp_read_in_y = new T_real[pos_count[0]];
                 hid_t memoryspace_meta_id = H5Screate_simple(1, pos_count, nullptr);
+                close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
                 H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, pos_offset, nullptr, pos_count, nullptr);
                 herr_t error = _read_h5d<T_real>(pos_id, memoryspace_meta_id, dataspace_id, H5P_DEFAULT, (void*)temp_read_in_x);
                 if (error < 0)
@@ -1441,7 +1449,7 @@ public:
                 // start reading in spectra volume
                 // read whole dataset in as spec_row , then alloc spec_vol and copy
                 data_struct::Spectra_Line<T_real> spec_row;
-                std::map<std::string, Scaler_Map<T_real>> scalers_lines;
+                std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_lines;
                 if(false == _load_spectra_line_xspress3(file_id, detector_num, &spec_row, scalers_lines))
                 {
                     logW<<"Failed to load spectra data.\n";
@@ -1458,13 +1466,13 @@ public:
                     {
                         unsigned int prop_x = pos_to_idx_hash[temp_read_in_x[i]];
 
-                        for(auto &sitr: scan_info.scaler_maps)
+                        for(const auto &sitr: scan_info.scaler_maps)
                         {
                             if(scalers_lines.contains(sitr.first) )
                             {
-                                for(int col = 0; col < sitr.second.values.cols(); col++)
+                                for(int col = 0; col < sitr.second->values.cols(); col++)
                                 {
-                                    sitr.second.values(y, prop_x) = scalers_lines.at(sitr.first).values(0, i);
+                                    sitr.second->values(y, prop_x) = scalers_lines.at(sitr.first)->values(0, i);
                                 }
                             }
                         }
@@ -1490,7 +1498,7 @@ public:
     //-----------------------------------------------------------------------------
     // load spectra volume as float (T_real) but scan_info as double (T_real2)
     template<typename T_real, typename T_real2>
-    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::Scan_Info<T_real2> &scan_info, data_struct::Params_Override<T_real>* params_override,  bool logerr = true)
+    bool load_spectra_vol_polar_energy_scan(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol,  data_struct::Scan_Info<T_real2> &scan_info, data_struct::Params_Override<T_real>* params_override,  bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id = -1,  dset_id = -1, space_id = -1;
@@ -1734,30 +1742,11 @@ public:
             scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
             scan_info.meta_info.polarity_pattern = params_override->polarity_pattern;
             spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, dims3[2]);
-
-            struct data_struct::Scaler_Map<T_real2> energy_map;
-            energy_map.name = "Energy";
-            energy_map.unit = "";
-            energy_map.time_normalized = false;
-            energy_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
-
-            struct data_struct::Scaler_Map<T_real2> i0_map;
-            i0_map.name = "I0";
-            i0_map.unit = "counts";
-            i0_map.time_normalized = false;
-            i0_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
-
-            struct data_struct::Scaler_Map<T_real2> dtf_map;
-            dtf_map.name = "DeadTime Factor";
-            dtf_map.unit = "";
-            dtf_map.time_normalized = false;
-            dtf_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
-
-            struct data_struct::Scaler_Map<T_real2> dtp_map;
-            dtp_map.name = "DeadTime Percent";
-            dtp_map.unit = "%";
-            dtp_map.time_normalized = false;
-            dtp_map.values.resize(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
+            
+            scan_info.initialize_scaler_map_with_dims(STR_ENERGY, scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, false, "");
+            scan_info.initialize_scaler_map_with_dims("I0", scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, false, "counts");
+            scan_info.initialize_scaler_map_with_dims(STR_DEADTIME_FACT, scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, false, "");
+            scan_info.initialize_scaler_map_with_dims(STR_DEADTIME_PERC, scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, false, "%");
 
             data_struct::ArrayTr<T_real> elt_array(dims3[0]);
             data_struct::ArrayTr<T_real> ert_array(dims3[0]);
@@ -1938,10 +1927,10 @@ public:
                 (*spec_vol)[polarity][idx].output_counts(ocr_array[i]);
 
                 
-                energy_map.values(0, idx) = energy_array[scaler_idx];
-                energy_map.values(1, idx) = energy_array[scaler_idx];
-                i0_map.values(0, idx) = i0_array[scaler_idx];
-                i0_map.values(1, idx) = i0_array[scaler_idx];
+                scan_info.scaler_maps.at(STR_ENERGY)->values(0, idx) = energy_array[scaler_idx];
+                scan_info.scaler_maps.at(STR_ENERGY)->values(1, idx) = energy_array[scaler_idx];
+                scan_info.scaler_maps.at("I0")->values(0, idx) = i0_array[scaler_idx];
+                scan_info.scaler_maps.at("I0")->values(1, idx) = i0_array[scaler_idx];
 
                 scaler_cntr ++;
                 if(scaler_cntr > scaler_inc)
@@ -1950,14 +1939,10 @@ public:
                     scaler_idx ++;
                 }   
                 
-                dtf_map.values(0, idx) = dtf_array[i];
-                dtp_map.values(0, idx) = dtp_array[i];
+                scan_info.scaler_maps.at(STR_DEADTIME_FACT)->values(0, idx) = dtf_array[i];
+                scan_info.scaler_maps.at(STR_DEADTIME_PERC)->values(0, idx) = dtp_array[i];
             }
 
-            scan_info.scaler_maps[dtf_map.name] = dtf_map;
-            scan_info.scaler_maps[dtp_map.name] = dtp_map;
-            scan_info.scaler_maps[energy_map.name] = energy_map;
-            scan_info.scaler_maps[i0_map.name] = i0_map;
 
             /*
             // x, y, and z dataset are all rows x cols size 
@@ -1973,7 +1958,7 @@ public:
             hsize_t frame_dims[1] = {1};
             hsize_t c_dims[1] = {1};
             hid_t frame_memoryspace_id = H5Screate_simple(1, frame_dims, nullptr);
-                
+                close_map.push({ frame_memoryspace_id, H5O_DATASPACE });
             if(has_y)
             {
                 hsize_t i =0;
@@ -2066,6 +2051,7 @@ public:
         hid_t ftype = H5Dget_type(title_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         herr_t error = H5Dread(title_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_name[0]);
 
         if (error == 0)
@@ -2077,6 +2063,7 @@ public:
         hid_t ftype2 = H5Dget_type(start_time_id);
         close_map.push({ ftype2, H5O_DATATYPE });
         hid_t type2 = H5Tget_native_type(ftype2, H5T_DIR_ASCEND);
+        close_map.push({ type2, H5O_DATATYPE });
         error = H5Dread(start_time_id, type2, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)&tmp_time[0]);
 
         if (error == 0)
@@ -2223,6 +2210,7 @@ public:
         hid_t ftype = H5Dget_type(acqui_id);
         close_map.push({ ftype, H5O_DATATYPE });
         hid_t type = H5Tget_native_type(ftype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         error = H5Dread(acqui_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, acquisition);
 
         //prase bincount/samples width and height
@@ -2452,7 +2440,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row, std::map<std::string, Scaler_Map<T_real>> &scaler_array)
+    bool load_spectra_line_xspress3(std::string path, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row, std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> &scaler_array)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -2481,7 +2469,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool _load_spectra_line_xspress3(hid_t file_id, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row, std::map<std::string, Scaler_Map<T_real>> &scaler_array )
+    bool _load_spectra_line_xspress3(hid_t file_id, size_t detector_num, data_struct::Spectra_Line<T_real>* spec_row, std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> &scaler_array )
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t  dset_id = -1, dataspace_id = -1, maps_grp_id = -1, scaler_grp_id = -1, scaler2_grp_id = -1, memoryspace_id = -1, memoryspace_meta_id = -1;
@@ -2500,15 +2488,15 @@ public:
         bool bLoadErt = true;
         bool bLoadOutCnt = true;
         int resetT_idx = -1, resetC_idx = -1, icr_idx = -1, ocr_idx = -1, win0_idx = -1, win1_idx = -1, pile_idx = -1, event_idx = -1, dtp_idx = -1, dtf_idx = -1;
-        data_struct::Scaler_Map<T_real> array_counter(STR_ARRAY_COUNTER);
-        data_struct::Scaler_Map<T_real> reset_ticks(STR_RESET_TICKS);
-        data_struct::Scaler_Map<T_real> reset_counts(STR_RESET_COUNT);
-        data_struct::Scaler_Map<T_real> event_width(STR_EVENT_WIDTH);
-        data_struct::Scaler_Map<T_real> window0(STR_WINDOW0);
-        data_struct::Scaler_Map<T_real> window1(STR_WINDOW1);
-        data_struct::Scaler_Map<T_real> deadtime_perc(STR_DEADTIME_PERC);
-        data_struct::Scaler_Map<T_real> deadtime_fact(STR_DEADTIME_FACT);
-        data_struct::Scaler_Map<T_real> pileups(STR_PILEUP_LINES);
+        auto array_counter = std::make_shared<Scaler_Map<T_real>>(STR_ARRAY_COUNTER);
+        auto reset_ticks = std::make_shared<Scaler_Map<T_real>>(STR_RESET_TICKS);
+        auto reset_counts = std::make_shared<Scaler_Map<T_real>>(STR_RESET_COUNT);
+        auto event_width = std::make_shared<Scaler_Map<T_real>>(STR_EVENT_WIDTH);
+        auto window0 = std::make_shared<Scaler_Map<T_real>>(STR_WINDOW0);
+        auto window1 = std::make_shared<Scaler_Map<T_real>>(STR_WINDOW1);
+        auto deadtime_perc = std::make_shared<Scaler_Map<T_real>>(STR_DEADTIME_PERC);
+        auto deadtime_fact = std::make_shared<Scaler_Map<T_real>>(STR_DEADTIME_FACT);
+        auto pileups = std::make_shared<Scaler_Map<T_real>>(STR_PILEUP_LINES);     
 
         const static std::string array_counter_name = "ArrayCounter";
         std::string live_time_dataset_name = "CHAN" + std::to_string(detector_num + 1) + "SCA0";
@@ -2661,7 +2649,7 @@ public:
         }
         if (bLoadOutCnt)
         {
-            dataspace_outcnt_id = H5Dget_space(bLoadOutCnt);
+            dataspace_outcnt_id = H5Dget_space(dset_outcnt_id);
             close_map.push({ dataspace_outcnt_id, H5O_DATASPACE });
         }
 
@@ -2699,15 +2687,15 @@ public:
         size_t greater_cols = std::max(spec_row->size(), (size_t)dims_in[0]);
         size_t greater_channels = std::max(spec_row[0].size(), (size_t)dims_in[2]);
 
-        array_counter.values.resize(1, dims_in[0]);
-        reset_ticks.values.resize(1, dims_in[0]);
-        reset_counts.values.resize(1, dims_in[0]);
-        event_width.values.resize(1, dims_in[0]);
-        window0.values.resize(1, dims_in[0]);
-        window1.values.resize(1, dims_in[0]);
-        deadtime_perc.values.resize(1, dims_in[0]);
-        deadtime_fact.values.resize(1, dims_in[0]);
-        pileups.values.resize(1, dims_in[0]);
+        array_counter->values.resize(1, dims_in[0]);
+        reset_ticks->values.resize(1, dims_in[0]);
+        reset_counts->values.resize(1, dims_in[0]);
+        event_width->values.resize(1, dims_in[0]);
+        window0->values.resize(1, dims_in[0]);
+        window1->values.resize(1, dims_in[0]);
+        deadtime_perc->values.resize(1, dims_in[0]);
+        deadtime_fact->values.resize(1, dims_in[0]);
+        pileups->values.resize(1, dims_in[0]);
 
         if (spec_row->size() < dims_in[0] || spec_row[0].size() < dims_in[2])
         {
@@ -2804,7 +2792,7 @@ public:
                     error = _read_h5d<T_real>(dset_array_ctr_id, memoryspace_meta_id, dsp_array_ctr_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        array_counter.values(0,col) = tmp_val;             
+                        array_counter->values(0,col) = tmp_val;             
                     }
                 }
                 
@@ -2814,7 +2802,7 @@ public:
                     error = _read_h5d<T_real>(dset_resetT_id, memoryspace_meta_id, dsp_resetT_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        reset_ticks.values(0,col) = tmp_val;
+                        reset_ticks->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2824,7 +2812,7 @@ public:
                     error = _read_h5d<T_real>(dset_resetC_id, memoryspace_meta_id, dsp_resetC_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        reset_counts.values(0,col) = tmp_val;
+                        reset_counts->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2834,7 +2822,7 @@ public:
                     error = _read_h5d<T_real>(dset_win0_id, memoryspace_meta_id, dsp_win0_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        window0.values(0,col) = tmp_val;
+                        window0->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2844,7 +2832,7 @@ public:
                     error = _read_h5d<T_real>(dset_win1_id, memoryspace_meta_id, dsp_win1_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        window1.values(0,col) = tmp_val;
+                        window1->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2854,7 +2842,7 @@ public:
                     error = _read_h5d<T_real>(dset_pile_id, memoryspace_meta_id, dsp_pile_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        pileups.values(0,col) = tmp_val;
+                        pileups->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2864,7 +2852,7 @@ public:
                     error = _read_h5d<T_real>(dset_event_id, memoryspace_meta_id, dsp_event_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        event_width.values(0,col) = tmp_val;
+                        event_width->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2874,7 +2862,7 @@ public:
                     error = _read_h5d<T_real>(dset_dtp_id, memoryspace_meta_id, dsp_dtp_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        deadtime_perc.values(0,col) = tmp_val;
+                        deadtime_perc->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2884,7 +2872,7 @@ public:
                     error = _read_h5d<T_real>(dset_dtf_id, memoryspace_meta_id, dsp_dtf_id, H5P_DEFAULT, &tmp_val);
                     if (error == 0)
                     {
-                        deadtime_fact.values(0,col) = tmp_val;
+                        deadtime_fact->values(0,col) = tmp_val;
                     }
                 }
 
@@ -2897,15 +2885,15 @@ public:
             }
         }
 
-        scaler_array[array_counter.name] = array_counter;
-        scaler_array[reset_ticks.name] = reset_ticks;
-        scaler_array[reset_counts.name] = reset_counts;
-        scaler_array[event_width.name] = event_width;
-        scaler_array[window0.name] = window0;
-        scaler_array[window1.name] = window1;
-        scaler_array[deadtime_perc.name] = deadtime_perc;
-        scaler_array[deadtime_fact.name] = deadtime_fact;
-        scaler_array[pileups.name] = pileups;
+        scaler_array.try_emplace(array_counter->name, array_counter);
+        scaler_array.try_emplace(reset_ticks->name, reset_ticks);
+        scaler_array.try_emplace(reset_counts->name, reset_counts);
+        scaler_array.try_emplace(event_width->name, event_width);
+        scaler_array.try_emplace(window0->name, window0);
+        scaler_array.try_emplace(window1->name, window1);
+        scaler_array.try_emplace(deadtime_perc->name, deadtime_perc);
+        scaler_array.try_emplace(deadtime_fact->name, deadtime_fact);
+        scaler_array.try_emplace(pileups->name, pileups);
 
         delete[] dims_in;
         delete[] offset;
@@ -3019,7 +3007,7 @@ public:
         }
         if (bLoadOutCnt)
         {
-            dataspace_outcnt_id = H5Dget_space(bLoadOutCnt);
+            dataspace_outcnt_id = H5Dget_space(dset_outcnt_id);
             close_map.push({ dataspace_outcnt_id, H5O_DATASPACE });
         }
 
@@ -3788,7 +3776,7 @@ public:
     {
         data_struct::Scan_Info<T_real> scan_info;
         T_real dwell = 1.0;
-        bool has_scaninfo = get_scalers_and_metadata_bnl(path, &scan_info);
+        bool has_scaninfo = get_scalers_and_metadata_bnl(path, scan_info);
         if (has_scaninfo)
         {
             // search for dwell time
@@ -4148,7 +4136,9 @@ public:
         }
 
         memoryspace_id = H5Screate_simple(2, count_row, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_meta, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset_row, nullptr, count_row, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_meta, nullptr, count_meta, nullptr);
 
@@ -4331,7 +4321,9 @@ public:
         count[2] = 1;
 
         memoryspace_id = H5Screate_simple(3, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(2, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -4355,7 +4347,7 @@ public:
 
                 //error = H5Dread (dset_id, H5T_NATIVE_REAL, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
                 error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra->data());
-                if (error > 0)
+                if (error != 0)
                 {
                     logW << "Counld not read row " << row << " col " << col << "\n";
                 }
@@ -4482,7 +4474,8 @@ public:
 
         dataspace_scaler_names = H5Dget_space(dset_scaler_names);
         close_map.push({ dataspace_scaler_names, H5O_DATASPACE });
-        hid_t memtype = H5Dget_type(dset_scaler_names);
+        hid_t memtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(memtype, 255);
         close_map.push({ memtype, H5O_DATATYPE });
 
         //  read scaler names and search for elt1, ert1, incnt1, outcnt1
@@ -4490,6 +4483,7 @@ public:
         H5Sget_simple_extent_dims(dataspace_scaler_names, &dims_out[0], nullptr);
         char tmp_name[256] = { 0 };
         memoryspace_1 = H5Screate_simple(1, count, nullptr);
+        close_map.push({ memoryspace_1, H5O_DATASPACE });
         for (hsize_t idx = 0; idx < dims_out[0]; idx++)
         {
             offset_1[0] = idx;
@@ -4498,13 +4492,9 @@ public:
             error = H5Dread(dset_scaler_names, memtype, memoryspace_1, dataspace_scaler_names, H5P_DEFAULT, (void*)&tmp_name[0]);
             if (error == 0)
             {
-                std::string name = std::string(tmp_name);
-                name.erase(std::remove_if(name.begin(), name.end(), ::isspace), name.end());
-                // macOS bug adds a '.' to the end . 2026/03/21
-                if(name[name.size()-1] == '.')
-                {
-                    name = name.substr(0, name.size()-1);
-                }
+                auto end_ptr = std::find(tmp_name, tmp_name + 256, '\0');
+                std::string name(tmp_name, end_ptr);
+                
                 if (name == STR_ELT + "1")
                 {
                     elt_off = idx;
@@ -4595,7 +4585,9 @@ public:
         count[2] = 1;
 
         memoryspace_id = H5Screate_simple(3, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(2, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -4624,7 +4616,7 @@ public:
             spectra.resize(dims_in[0]);
 
             error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)spectra.data());
-            if (error > 0)
+            if (error != 0)
             {
                 logW << "Counld not read row " << yoffset << " col " << xoffset << "\n";
             }
@@ -4635,7 +4627,7 @@ public:
                 offset[0] = us_ic_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read us_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4650,7 +4642,7 @@ public:
                 offset[0] = ds_ic_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read ds_ic at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4665,7 +4657,7 @@ public:
                 offset[0] = sr_curr_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&tmp_flt);
-                if (error > 0)
+                if (error != 0)
                 {   
                     logW<<"Could not read sr_curr_off at index "<<itr.first<<" , "<<itr.second<<"\n";
                 }
@@ -4682,25 +4674,25 @@ public:
                 offset[0] = elt_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&live_time);
-                if (error > 0)
+                if (error != 0)
                     live_time = 0;
 
                 offset[0] = ert_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&real_time);
-                if (error > 0)
+                if (error != 0)
                     real_time = 0;
 
                 offset[0] = in_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&in_cnt);
-                if (error > 0)
+                if (error != 0)
                     in_cnt = 0;
 
                 offset[0] = out_off;
                 H5Sselect_hyperslab(dataspace_scalers, H5S_SELECT_SET, offset, nullptr, count, nullptr);
                 error = _read_h5d<T_real>(dset_scalers, memoryspace_meta_id, dataspace_scalers, H5P_DEFAULT, (void*)&out_cnt);
-                if (error > 0)
+                if (error != 0)
                     out_cnt = 0;
             }
             else
@@ -4721,7 +4713,10 @@ public:
             spectra.input_counts(in_cnt);
             spectra.output_counts(out_cnt);
 
-            int_spectra->add(spectra);
+            if(false == int_spectra->add(spectra))
+            {
+                logW<<"Could not add spectra to int_spectra\n";
+            }
             sum_pixel += 1.0;
         }
 
@@ -4771,7 +4766,7 @@ public:
         //hsize_t offset[1] = {0};
         hsize_t count[1] = { 1 };
         hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
-
+        close_map.push({ readwrite_space, H5O_DATASPACE });
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
             return false;
 
@@ -5331,7 +5326,10 @@ public:
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
 
-        type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        hid_t ttype = H5Dget_type(amp_id);
+        close_map.push({ ttype, H5O_DATATYPE });
+        type = H5Tget_native_type(ttype, H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
         if (status < 0)
         {
@@ -5362,6 +5360,7 @@ public:
         close_map.push({ amp_space, H5O_DATASPACE });
 
         type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        close_map.push({ type, H5O_DATATYPE });
         status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
         if (status < 0)
         {
@@ -5399,7 +5398,7 @@ public:
         hsize_t offset[1] = { 1 };
         hsize_t count[1] = { 1 };
         hid_t readwrite_space = H5Screate_simple(1, &count[0], &count[0]);
-
+        close_map.push({ readwrite_space, H5O_DATASPACE });
         GSE_CARS_SAVE_VER version = GSE_CARS_SAVE_VER::UNKNOWN;
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
@@ -5709,18 +5708,13 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<T_real>* scan_info)
+    bool get_scalers_and_metadata_emd(std::string path, data_struct::Scan_Info<T_real>& scan_info)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         hid_t    file_id, src_maps_grp_id, detectors_grp_id, hash_grp_id, data_id, spectrumstream_grp_id, hash2_grp_id, data2_id;
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
@@ -5811,7 +5805,7 @@ public:
             }
         }
 
-        scan_info->meta_info.detectors.push_back(0);
+        scan_info.meta_info.detectors.push_back(0);
 
         _close_h5_objects(close_map);
         end = std::chrono::system_clock::now();
@@ -5824,7 +5818,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<T_real>* scan_info)
+    bool get_scalers_and_metadata_confocal(std::string path, data_struct::Scan_Info<T_real>& scan_info)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -5847,12 +5841,6 @@ public:
         hsize_t y_offset[2] = { 0,0 };
         hsize_t y_count[2] = { 1,1 };
         char* detector_names[256];
-
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
@@ -5898,15 +5886,14 @@ public:
                     if (first_save)
                     {
                         H5Sget_simple_extent_dims(scaler_space, &scalers_count[0], NULL);
-                        scan_info->meta_info.requested_cols = scalers_count[0];
-                        scan_info->meta_info.requested_rows = scalers_count[1];
+                        scan_info.meta_info.requested_cols = scalers_count[0];
+                        scan_info.meta_info.requested_rows = scalers_count[1];
                         first_save = false;
                     }
-                    data_struct::Scaler_Map<T_real> sm;
-                    sm.name = std::string(str_dset_name, len);
-                    sm.values.resize(scalers_count[0], scalers_count[1]);
-                    status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, sm.values.data());
-                    scan_info->scaler_maps[sm.name] = sm;
+                    
+                    std::string ename = std::string(str_dset_name, len);
+                    scan_info.initialize_scaler_map_with_dims(ename, scalers_count[0], scalers_count[1], false, "");
+                    status = H5Dread(dsid, scalers_type, scaler_space, scaler_space, H5P_DEFAULT, scan_info.scaler_maps[ename]->values.data());
                 }
             }
         }
@@ -5922,8 +5909,8 @@ public:
             scalers_count[2] = 1;
             mem_count[0] = scalers_count[0];
             mem_count[1] = scalers_count[1];
-            scan_info->meta_info.requested_cols = scalers_count[0];
-            scan_info->meta_info.requested_rows = scalers_count[1];
+            scan_info.meta_info.requested_cols = scalers_count[0];
+            scan_info.meta_info.requested_rows = scalers_count[1];
             hid_t mem_space = H5Screate_simple(2, mem_count, mem_count);
             close_map.push({ mem_space, H5O_DATASPACE });
 
@@ -5939,32 +5926,30 @@ public:
             {
                 for (hsize_t s = 0; s < scaler_amt; s++)
                 {
-                    data_struct::Scaler_Map<T_real> sm;
-                    sm.name = std::string(detector_names[s], strlen(detector_names[s]));
-                    sm.values.resize(scalers_count[0], scalers_count[1]);
+                    std::string ename = std::string(detector_names[s], strlen(detector_names[s]));
+                    scan_info.initialize_scaler_map_with_dims(ename, scalers_count[0], scalers_count[1], false, "");
                     scalers_offset[2] = s;
                     H5Sselect_hyperslab(scaler_space, H5S_SELECT_SET, scalers_offset, nullptr, scalers_count, nullptr);
-                    H5Dread(detectors_grp_id, scalers_type, mem_space, scaler_space, H5P_DEFAULT, sm.values.data());
-                    scan_info->scaler_maps[sm.name] = sm;
+                    H5Dread(detectors_grp_id, scalers_type, mem_space, scaler_space, H5P_DEFAULT, scan_info.scaler_maps[ename]->values.data());
                 }
             }
         }
 
         if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 1", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(0);
+            scan_info.meta_info.detectors.push_back(0);
         }
         if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 2", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(1);
+            scan_info.meta_info.detectors.push_back(1);
         }
         if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 3", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(2);
+            scan_info.meta_info.detectors.push_back(2);
         }
         if (_open_h5_object(x_id, H5O_DATASET, close_map, "MCA 4", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(3);
+            scan_info.meta_info.detectors.push_back(3);
         }
 
         /*
@@ -5989,7 +5974,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<T_real>* scan_info)
+    bool get_scalers_and_metadata_gsecars(std::string path, data_struct::Scan_Info<T_real>& scan_info)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -6004,11 +5989,6 @@ public:
         hsize_t single_offset[1] = { 0 };
         hsize_t single_count[1] = { 1 };
         hsize_t* val_dims_in = nullptr;
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
@@ -6048,7 +6028,7 @@ public:
                         //for (hsize_t i = 0; i < amt; i++)
                         //{
                             //Extra_PV epv;
-                            //scan_info->extra_pvs.push_back(epv);
+                            //scan_info.extra_pvs.push_back(epv);
                         //}
                     }
                 }
@@ -6062,36 +6042,36 @@ public:
 
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca1", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(0);
+            scan_info.meta_info.detectors.push_back(0);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca2", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(1);
+            scan_info.meta_info.detectors.push_back(1);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca3", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(2);
+            scan_info.meta_info.detectors.push_back(2);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "mca4", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(3);
+            scan_info.meta_info.detectors.push_back(3);
         }
 
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det1", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(0);
+            scan_info.meta_info.detectors.push_back(0);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det2", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(1);
+            scan_info.meta_info.detectors.push_back(1);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det3", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(2);
+            scan_info.meta_info.detectors.push_back(2);
         }
         if (_open_h5_object(pos_grp_id, H5O_GROUP, close_map, "det4", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(3);
+            scan_info.meta_info.detectors.push_back(3);
         }
 
         if (_open_h5_object(scalers_grp_id, H5O_GROUP, close_map, "scalers", src_maps_grp_id, false, false))
@@ -6101,7 +6081,7 @@ public:
             for (hsize_t i = 0; i < amt; i++)
             {
                 data_struct::Scaler_Map sm;
-                scan_info->scaler_maps.push_back(sm);
+                scan_info.scaler_maps.push_back(sm);
             }
             */
         }
@@ -6122,7 +6102,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<T_real>* scan_info)
+    bool get_scalers_and_metadata_bnl(std::string path, data_struct::Scan_Info<T_real>& scan_info)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         std::chrono::time_point<std::chrono::system_clock> start, end;
@@ -6141,11 +6121,6 @@ public:
         hsize_t single_offset[1] = { 0 };
         hsize_t single_count[1] = { 1 };
         hsize_t scaler_offset[3] = { 0,0,0 };
-
-        if (scan_info == nullptr)
-        {
-            return false;
-        }
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
@@ -6202,8 +6177,8 @@ public:
         mem_count[0] = val_dims_in[0];
         mem_count[1] = val_dims_in[1];
 
-        scan_info->meta_info.requested_cols = val_dims_in[0];
-        scan_info->meta_info.requested_rows = val_dims_in[1];
+        scan_info.meta_info.requested_cols = val_dims_in[0];
+        scan_info.meta_info.requested_rows = val_dims_in[1];
         //names
         hid_t mem_single_space = H5Screate_simple(1, &single_count[0], &single_count[0]);
         close_map.push({ mem_single_space, H5O_DATASPACE });
@@ -6226,46 +6201,45 @@ public:
 
         for (hsize_t i = 0; i < scaler_cnt; i++)
         {
-            data_struct::Scaler_Map<T_real> scaler_map;
-            scaler_map.values.resize(val_dims_in[1], val_dims_in[0]);
-            scaler_map.unit = "cts";
-
             single_offset[0] = i;
             scaler_offset[2] = i;
 
+            std::string ename;
             H5Sselect_hyperslab(scaler_val_space, H5S_SELECT_SET, scaler_offset, NULL, val_dims_in, NULL);
             if (status > -1)
             {
-                scaler_map.name = std::string(tmp_char_arr[i]);
-                scaler_map.name.erase(std::remove_if(scaler_map.name.begin(), scaler_map.name.end(), ::isspace), scaler_map.name.end());
-                scaler_map.name.erase(std::find(scaler_map.name.begin(), scaler_map.name.end(), '\0'), scaler_map.name.end());
+                ename = std::string(tmp_char_arr[i]);
+                ename.erase(std::remove_if(ename.begin(), ename.end(), ::isspace), ename.end());
+                ename.erase(std::find(ename.begin(), ename.end(), '\0'), ename.end());
                 delete tmp_char_arr[i];
             }
-            status = _read_h5d<T_real>(scaler_val_id, mem_space, scaler_val_space, H5P_DEFAULT, scaler_map.values.data());
-
-            scan_info->scaler_maps[scaler_map.name] = scaler_map;
+            if (ename.length() > 0)
+            {
+                scan_info.initialize_scaler_map_with_dims(ename, val_dims_in[1], val_dims_in[0], false, "cts");
+                _read_h5d<T_real>(scaler_val_id, mem_space, scaler_val_space, H5P_DEFAULT, scan_info.scaler_maps[ename]->values.data());
+            }
         }
 
 
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det1", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(0);
+            scan_info.meta_info.detectors.push_back(0);
         }
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det2", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(1);
+            scan_info.meta_info.detectors.push_back(1);
         }
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det3", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(2);
+            scan_info.meta_info.detectors.push_back(2);
         }
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "det4", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(3);
+            scan_info.meta_info.detectors.push_back(3);
         }
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "detsum", src_maps_grp_id, false, false))
         {
-            scan_info->meta_info.detectors.push_back(-1);
+            scan_info.meta_info.detectors.push_back(-1);
         }
 
         if (_open_h5_object(tmp_id, H5O_GROUP, close_map, "scan_metadata", src_maps_grp_id))
@@ -6331,7 +6305,7 @@ public:
                 }
 
 
-                scan_info->extra_pvs.push_back(e_pv);
+                scan_info.extra_pvs.push_back(e_pv);
 
                 H5Tclose(atype);
                 H5Aclose(aid);
@@ -7471,7 +7445,7 @@ public:
             //auto shell_itr = quantification_standard->_calibration_curves.begin();
 
 
-            int element_cnt = CALIBRATION_CURVE_SIZE; // from element H to U
+            int element_cnt = CALIBRATION_CURVE_SIZE; // from element H to Fm
             q_dims_out[0] = 3;// shells K, L, and M
             q_dims_out[1] = element_cnt;
 
@@ -7818,7 +7792,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool save_scan_scalers(data_struct::Scan_Info<T_real>* scan_info,
+    bool save_scan_scalers( data_struct::Scan_Info<T_real>& scan_info,
                            data_struct::Params_Override<T_real> * params_override,
           [[maybe_unused]] size_t row_idx_start=0,
           [[maybe_unused]] int row_idx_end=-1,
@@ -7831,12 +7805,6 @@ public:
         start = std::chrono::system_clock::now();
 
         hid_t scan_grp_id = -1, maps_grp_id = -1;
-
-        if (scan_info == nullptr)
-        {
-            logW << "scalers_map == nullptr. Not returning from save_scan_scalers" << "\n";
-            return false;
-        }
 
         if (_cur_file_id < 0)
         {
@@ -7855,9 +7823,9 @@ public:
             return false;
         }
         
-        _save_scan_meta_data(scan_grp_id, &(scan_info->meta_info));
+        _save_scan_meta_data(scan_grp_id, &(scan_info.meta_info));
 
-        _save_extras(scan_grp_id, &(scan_info->extra_pvs));
+        _save_extras(scan_grp_id, &(scan_info.extra_pvs));
 
         if (params_override != nullptr)
         {
@@ -7867,7 +7835,7 @@ public:
                 std::string label = "";
                 std::string beamline = "";
                 bool is_time_normalized = false;
-                for (auto& itr : scan_info->extra_pvs)
+                for (auto& itr : scan_info.extra_pvs)
                 {
                     if (data_struct::Scaler_Lookup::inst()->search_pv(itr.name, label, is_time_normalized, beamline))
                     {
@@ -7891,11 +7859,11 @@ public:
                 }
             }
 
-            _save_scalers(maps_grp_id, &(scan_info->scaler_maps), params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
+            _save_scalers(maps_grp_id, scan_info.scaler_maps, params_override->us_amp_sens_num, params_override->us_amp_sens_unit, params_override->ds_amp_sens_num, params_override->ds_amp_sens_unit);
         }
         else
         {
-            _save_scalers(maps_grp_id, &(scan_info->scaler_maps), (T_real)0.0, "0.0", (T_real)0.0, "0.0");
+            _save_scalers(maps_grp_id, scan_info.scaler_maps, (T_real)0.0, "0.0", (T_real)0.0, "0.0");
         }
         _close_h5_objects(_global_close_map);
 
@@ -8799,7 +8767,7 @@ public:
                     {
                         if (adata[q] != nullptr)
                         {
-                            delete adata[q];
+                            H5free_memory(adata[q]);
                             adata[q] = nullptr;
                         }
                     }
@@ -8831,7 +8799,7 @@ public:
             }
             delete [] ddata;
             delete [] ldata;
-            save_scan_scalers<T_real>(&scan_info, nullptr);
+            save_scan_scalers<T_real>(scan_info, nullptr);
 
         }
 
@@ -9034,7 +9002,7 @@ public:
         }
         count[0] = dims_in[0];
         hid_t memoryspace_id = H5Screate_simple(1, dims_in, nullptr);
-
+        
         data_struct::ArrayTr<T_real>   buffer(count[0]);
         fitting::models::Range energy_range = data_struct::get_energy_range(dims_in[0], &(params.fit_params));
 
@@ -9311,7 +9279,9 @@ private:
         count[0] = dims_in[0];
 
         memoryspace_id = H5Screate_simple(1, count, nullptr);
+        close_map.push({ memoryspace_id, H5O_DATASPACE });
         memoryspace_meta_id = H5Screate_simple(1, count_time, nullptr);
+        close_map.push({ memoryspace_meta_id, H5O_DATASPACE });
         H5Sselect_hyperslab(memoryspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
         H5Sselect_hyperslab(memoryspace_meta_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
@@ -9323,7 +9293,7 @@ private:
         H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, offset, nullptr, count, nullptr);
 
         error = _read_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)&(*spectra)[0]);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read integrated spectra \n";
             _close_h5_objects(close_map);
@@ -9336,28 +9306,28 @@ private:
         H5Sselect_hyperslab(dataspace_outct_id, H5S_SELECT_SET, offset_time, nullptr, count_time, nullptr);
 
         error = _read_h5d<T_real>(dset_rt_id, memoryspace_meta_id, dataspace_rt_id, H5P_DEFAULT, (void*)&real_time);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read real time for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_lt_id, memoryspace_meta_id, dataspace_lt_id, H5P_DEFAULT, (void*)&live_time);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read elapsed live time for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_incnt_id, memoryspace_meta_id, dataspace_inct_id, H5P_DEFAULT, (void*)&in_cnt);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read input counts for spectra \n";
             _close_h5_objects(close_map);
             return false;
         }
         error = _read_h5d<T_real>(dset_outcnt_id, memoryspace_meta_id, dataspace_outct_id, H5P_DEFAULT, (void*)&out_cnt);
-        if (error > 0)
+        if (error != 0)
         {
             logW << "Counld not read output counts for spectra \n";
             _close_h5_objects(close_map);
@@ -9515,7 +9485,7 @@ private:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool _save_scalers(hid_t maps_grp_id, std::map<std::string, data_struct::Scaler_Map<T_real>>*scalers_map, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, std::string ds_amps_unit)
+    bool _save_scalers(hid_t maps_grp_id, std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>>& scaler_maps, T_real us_amps_val, std::string us_amps_unit, T_real ds_amps_val, std::string ds_amps_unit)
     {
 
         hid_t dataspace_values_id = -1, memoryspace_id = -1, dataspace_names_id = -1, memoryspace_str_id = -1;
@@ -9554,201 +9524,210 @@ private:
 
         _save_amps(scalers_grp_id, us_amps_val, us_amps_unit, ds_amps_val, ds_amps_unit);
 
-        if (scalers_map != nullptr)
+        int cols = scaler_maps.begin()->second->values.cols();
+        int rows = scaler_maps.begin()->second->values.rows();
+
+        if (rows > 0 && cols > 0)
         {
+            scaler_maps.try_emplace(STR_ABS_IC, std::make_shared<Scaler_Map<T_real>>(STR_ABS_IC, rows, cols, false, " "));
+            scaler_maps.try_emplace(STR_ABS_CFG, std::make_shared<Scaler_Map<T_real>>(STR_ABS_CFG, rows, cols, false, " "));
+            scaler_maps.try_emplace(STR_H_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_H_DPC_CFG, rows, cols, false, " "));
+            scaler_maps.try_emplace(STR_V_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_V_DPC_CFG, rows, cols, false, " "));
+            scaler_maps.try_emplace(STR_DIA1_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA1_DPC_CFG, rows, cols, false, " "));
+            scaler_maps.try_emplace(STR_DIA2_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA2_DPC_CFG, rows, cols, false, " "));
 
-            int cols = 0;
-            int rows = 0;
+            // CFG_2 - 5
+            data_struct::ArrayXXr<T_real>* us_ic_map = nullptr;
+            data_struct::ArrayXXr<T_real>* ds_ic_map = nullptr;
+            data_struct::ArrayXXr<T_real>* cfg_2_map = nullptr;
+            data_struct::ArrayXXr<T_real>* cfg_3_map = nullptr;
+            data_struct::ArrayXXr<T_real>* cfg_4_map = nullptr;
+            data_struct::ArrayXXr<T_real>* cfg_5_map = nullptr;
 
-            for(auto sitr : *scalers_map)
+            if (scaler_maps.contains(STR_US_IC))
             {
-                rows = sitr.second.values.rows();
-                cols = sitr.second.values.cols();
-                break;
+                us_ic_map = &(scaler_maps.at(STR_US_IC)->values);
             }
-            if (rows > 0 && cols > 0)
+            else
             {
-                // create calculated scalers
-                data_struct::Scaler_Map<T_real> abs_ic_map, abs_cfg_map, H_dpc_cfg_map, V_dpc_cfg_map, dia1_dpc_cfg_map, dia2_dpc_cfg_map;
-                abs_ic_map.name = "abs_ic";
-                abs_ic_map.unit = " ";
-                abs_ic_map.values.resize(rows, cols);
-
-                abs_cfg_map.name = "abs_cfg";
-                abs_cfg_map.unit = " ";
-                abs_cfg_map.values.resize(rows, cols);
-
-                H_dpc_cfg_map.name = "H_dpc_cfg";
-                H_dpc_cfg_map.unit = " ";
-                H_dpc_cfg_map.values.resize(rows, cols);
-
-                V_dpc_cfg_map.name = "V_dpc_cfg";
-                V_dpc_cfg_map.unit = " ";
-                V_dpc_cfg_map.values.resize(rows, cols);
-
-                dia1_dpc_cfg_map.name = "dia1_dpc_cfg";
-                dia1_dpc_cfg_map.unit = " ";
-                dia1_dpc_cfg_map.values.resize(rows, cols);
-
-                dia2_dpc_cfg_map.name = "dia2_dpc_cfg";
-                dia2_dpc_cfg_map.unit = " ";
-                dia2_dpc_cfg_map.values.resize(rows, cols);
-
-                // CFG_2 - 5
-                data_struct::ArrayXXr<T_real>* us_ic_map = nullptr;
-                data_struct::ArrayXXr<T_real>* ds_ic_map = nullptr;
-                data_struct::ArrayXXr<T_real>* cfg_2_map = nullptr;
-                data_struct::ArrayXXr<T_real>* cfg_3_map = nullptr;
-                data_struct::ArrayXXr<T_real>* cfg_4_map = nullptr;
-                data_struct::ArrayXXr<T_real>* cfg_5_map = nullptr;
-
-                // search for scalers
-                for (auto& sitr : *scalers_map)
+                std::string lower_name = STR_US_IC;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    std::string upper_scaler_name = sitr.second.name;
-                    std::transform(upper_scaler_name.begin(), upper_scaler_name.end(), upper_scaler_name.begin(), ::toupper);
-                    if (upper_scaler_name == STR_US_IC)
-                    {
-                        us_ic_map = &(sitr.second.values);
-                    }
-                    if (upper_scaler_name == STR_DS_IC)
-                    {
-                        ds_ic_map = &(sitr.second.values);
-                    }
-                    if (upper_scaler_name == STR_CFG_2)
-                    {
-                        cfg_2_map = &(sitr.second.values);
-                    }
-                    if (upper_scaler_name == STR_CFG_3)
-                    {
-                        cfg_3_map = &(sitr.second.values);
-                    }
-                    if (upper_scaler_name == STR_CFG_4)
-                    {
-                        cfg_4_map = &(sitr.second.values);
-                    }
-                    if (upper_scaler_name == STR_CFG_5)
-                    {
-                        cfg_5_map = &(sitr.second.values);
-                    }
-
-                    if (us_ic_map != nullptr && ds_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
-                    {
-                        break;
-                    }
+                    us_ic_map = &(scaler_maps.at(lower_name)->values);
                 }
-
-                if (us_ic_map != nullptr && ds_ic_map != nullptr)
-                {
-                    abs_ic_map.values = (*ds_ic_map) / (*us_ic_map);
-                }
-
-                if (us_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
-                {
-                    data_struct::ArrayXXr<T_real> t_abs_map;
-                    t_abs_map.resize(rows, cols);
-                    t_abs_map = (*cfg_2_map) + (*cfg_3_map) + (*cfg_4_map) + (*cfg_5_map);
-                    abs_cfg_map.values = t_abs_map / (*us_ic_map);
-
-                    if (t_abs_map.sum() != 0.0)
-                    {
-                        H_dpc_cfg_map.values = ((*cfg_2_map) - (*cfg_3_map) - (*cfg_4_map) + (*cfg_5_map)) / t_abs_map;
-                        V_dpc_cfg_map.values = ((*cfg_2_map) + (*cfg_3_map) - (*cfg_4_map) - (*cfg_5_map)) / t_abs_map;
-                        dia1_dpc_cfg_map.values = ((*cfg_2_map) - (*cfg_4_map)) / t_abs_map;
-                        dia2_dpc_cfg_map.values = ((*cfg_3_map) - (*cfg_5_map)) / t_abs_map;
-                    }
-
-                }
-
-                (*scalers_map)[abs_ic_map.name] = abs_ic_map;
-                (*scalers_map)[abs_cfg_map.name] = abs_cfg_map;
-                (*scalers_map)[H_dpc_cfg_map.name] = H_dpc_cfg_map;
-                (*scalers_map)[V_dpc_cfg_map.name] = V_dpc_cfg_map;
-                (*scalers_map)[dia1_dpc_cfg_map.name] = dia1_dpc_cfg_map;
-                (*scalers_map)[dia2_dpc_cfg_map.name] = dia2_dpc_cfg_map;
             }
 
-            if (scalers_map->size() > 0)
+            if (scaler_maps.contains(STR_DS_IC))
             {
-                count_3d[0] = scalers_map->size();
-                for (const auto& itr : *scalers_map)
+                ds_ic_map = &(scaler_maps.at(STR_DS_IC)->values);
+            }
+            else
+            {
+                std::string lower_name = STR_DS_IC;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    count_3d[1] = itr.second.values.rows();
-                    count_2d[0] = count_3d[1];
-                    count_3d[2] = itr.second.values.cols();
-                    count_2d[1] = count_3d[2];
-                    break;
+                    ds_ic_map = &(scaler_maps.at(lower_name)->values);
                 }
+            }
 
-                chunk_3d[0] = 1;
-                chunk_3d[1] = count_3d[1];
-                chunk_3d[2] = count_3d[2];
-
-                if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, chunk_3d, dset_values_id, dataspace_values_id))
+            if (scaler_maps.contains(STR_CFG_2))
+            {
+                cfg_2_map = &(scaler_maps.at(STR_CFG_2)->values);
+            }
+            else
+            {
+                std::string lower_name = STR_CFG_2;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    return false;
+                    cfg_2_map = &(scaler_maps.at(lower_name)->values);
                 }
+            }
 
-                count_3d[0] = 1;
-
-                dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-                H5Pset_chunk(dcpl_id, 3, count_3d);
-                H5Pset_deflate(dcpl_id, 7);
-
-                count_3d[0] = scalers_map->size();
-                count[0] = count_3d[0];
-
-                if (false == _open_h5_dataset(STR_NAMES, filetype, scalers_grp_id, 1, count, count, dset_names_id, dataspace_names_id))
+            if (scaler_maps.contains(STR_CFG_3))
+            {
+                cfg_3_map = &(scaler_maps.at(STR_CFG_3)->values);
+            }
+            else
+            {
+                std::string lower_name = STR_CFG_3;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    return false;
+                    cfg_3_map = &(scaler_maps.at(lower_name)->values);
                 }
+            }
 
-                if (false == _open_h5_dataset(STR_UNITS, filetype, scalers_grp_id, 1, count, count, dset_units_id, dataspace_units_id))
+            if (scaler_maps.contains(STR_CFG_4))
+            {
+                cfg_4_map = &(scaler_maps.at(STR_CFG_4)->values);
+            }
+            else
+            {
+                std::string lower_name = STR_CFG_4;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    return false;
+                    cfg_4_map = &(scaler_maps.at(lower_name)->values);
                 }
+            }
 
-                count_3d[0] = 1;
-                count[0] = 1;
-
-                _create_memory_space(2, count_2d, memoryspace_id);
-                int idx = 0;
-                for (auto& itr : *scalers_map)
+            if (scaler_maps.contains(STR_CFG_5))
+            {
+                cfg_5_map = &(scaler_maps.at(STR_CFG_5)->values);
+            }
+            else
+            {
+                std::string lower_name = STR_CFG_5;
+                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                if (scaler_maps.contains(lower_name))
                 {
-                    offset[0] = idx;
-                    offset_3d[0] = idx;
-                    idx++;
-                    char tmp_char[255] = { 0 };
-                    char tmp_char_units[255] = { 0 };
-                    std::string out_label, out_beamline;
-                    if (data_struct::Scaler_Lookup::inst()->search_pv(itr.second.name, out_label, itr.second.time_normalized, out_beamline))
-                    {
-                        out_label.copy(tmp_char, 254);
-                    }
-                    else
-                    {
-                        itr.second.name.copy(tmp_char, 254);
-                    }
-                    itr.second.unit.copy(tmp_char_units, 254);
-                    H5Sselect_hyperslab(dataspace_names_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                    H5Sselect_hyperslab(dataspace_units_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, dataspace_names_id, H5P_DEFAULT, (void*)tmp_char);
-                    if (status < 0)
-                    {
-                        logE << "failed to write " << STR_NAMES << "\n";
-                    }
-                    status = H5Dwrite(dset_units_id, memtype, memoryspace_str_id, dataspace_units_id, H5P_DEFAULT, (void*)tmp_char_units);
-                    if (status < 0)
-                    {
-                        logE << "failed to write " << STR_UNITS << "\n";
-                    }
-                    H5Sselect_hyperslab(dataspace_values_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
-                    itr.second.values = itr.second.values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-                    status = _write_h5d<T_real>(dset_values_id, memoryspace_id, dataspace_values_id, H5P_DEFAULT, (void*)itr.second.values.data());
-                    if (status < 0)
-                    {
-                        logE << "failed to write " << STR_VALUES << "\n";
-                    }
+                    cfg_5_map = &(scaler_maps.at(lower_name)->values);
+                }
+            }
+
+            if (us_ic_map != nullptr && ds_ic_map != nullptr)
+            {
+                scaler_maps.at(STR_ABS_IC)->values = (*ds_ic_map) / (*us_ic_map);
+            }
+
+            if (us_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
+            {
+                data_struct::ArrayXXr<T_real> t_abs_map;
+                t_abs_map.resize(rows, cols);
+                t_abs_map = (*cfg_2_map) + (*cfg_3_map) + (*cfg_4_map) + (*cfg_5_map);
+                scaler_maps.at(STR_ABS_CFG)->values = t_abs_map / (*us_ic_map);
+
+                if (t_abs_map.sum() != 0.0)
+                {
+                    scaler_maps.at(STR_H_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_3_map) - (*cfg_4_map) + (*cfg_5_map)) / t_abs_map;
+                    scaler_maps.at(STR_V_DPC_CFG)->values = ((*cfg_2_map) + (*cfg_3_map) - (*cfg_4_map) - (*cfg_5_map)) / t_abs_map;
+                    scaler_maps.at(STR_DIA1_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_4_map)) / t_abs_map;
+                    scaler_maps.at(STR_DIA2_DPC_CFG)->values = ((*cfg_3_map) - (*cfg_5_map)) / t_abs_map;
+                }
+            }
+        }
+
+        if (scaler_maps.size() > 0 && cols > 0 && rows > 0)
+        {
+            count_3d[0] = scaler_maps.size();
+
+            count_3d[1] = rows;
+            count_2d[0] = count_3d[1];
+            count_3d[2] = cols;
+            count_2d[1] = count_3d[2];
+
+
+            chunk_3d[0] = 1;
+            chunk_3d[1] = count_3d[1];
+            chunk_3d[2] = count_3d[2];
+
+            if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, chunk_3d, dset_values_id, dataspace_values_id))
+            {
+                return false;
+            }
+
+            count_3d[0] = 1;
+
+            dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+            H5Pset_chunk(dcpl_id, 3, count_3d);
+            H5Pset_deflate(dcpl_id, 7);
+
+            count_3d[0] = scaler_maps.size();
+            count[0] = count_3d[0];
+
+            if (false == _open_h5_dataset(STR_NAMES, filetype, scalers_grp_id, 1, count, count, dset_names_id, dataspace_names_id))
+            {
+                return false;
+            }
+
+            if (false == _open_h5_dataset(STR_UNITS, filetype, scalers_grp_id, 1, count, count, dset_units_id, dataspace_units_id))
+            {
+                return false;
+            }
+
+            count_3d[0] = 1;
+            count[0] = 1;
+
+            _create_memory_space(2, count_2d, memoryspace_id);
+            int idx = 0;
+            for (const auto& itr : scaler_maps)
+            {
+                offset[0] = idx;
+                offset_3d[0] = idx;
+                idx++;
+                char tmp_char[255] = { 0 };
+                char tmp_char_units[255] = { 0 };
+                std::string out_label, out_beamline;
+                if (data_struct::Scaler_Lookup::inst()->search_pv(itr.second->name, out_label, itr.second->time_normalized, out_beamline))
+                {
+                    out_label.copy(tmp_char, 254);
+                }
+                else
+                {
+                    itr.second->name.copy(tmp_char, 254);
+                }
+                itr.second->unit.copy(tmp_char_units, 254);
+                H5Sselect_hyperslab(dataspace_names_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                H5Sselect_hyperslab(dataspace_units_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, dataspace_names_id, H5P_DEFAULT, (void*)tmp_char);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_NAMES << "\n";
+                }
+                status = H5Dwrite(dset_units_id, memtype, memoryspace_str_id, dataspace_units_id, H5P_DEFAULT, (void*)tmp_char_units);
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_UNITS << "\n";
+                }
+                H5Sselect_hyperslab(dataspace_values_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                itr.second->values = itr.second->values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+                status = _write_h5d<T_real>(dset_values_id, memoryspace_id, dataspace_values_id, H5P_DEFAULT, (void*)itr.second->values.data());
+                if (status < 0)
+                {
+                    logE << "failed to write " << STR_VALUES << "\n";
                 }
             }
         }

@@ -61,7 +61,7 @@ namespace data_struct
 
 enum class Electron_Shell { K_SHELL, L_SHELL, M_SHELL, N_SHELL, O_SHELL, P_SHELL, Q_SHELL };
 
-const static std::map<Electron_Shell, std::string> Shell_To_String = { {Electron_Shell::K_SHELL, "K"},
+inline const std::map<Electron_Shell, std::string> Shell_To_String = { {Electron_Shell::K_SHELL, "K"},
                                                             {Electron_Shell::L_SHELL, "L"} ,
                                                             {Electron_Shell::M_SHELL, "M"} ,
                                                             {Electron_Shell::N_SHELL, "N"} ,
@@ -155,7 +155,7 @@ private:
 };
    
 // placeholder so H starts at 1
-const std::string Element_Symbols[] = {" ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
+inline constexpr std::string Element_Symbols[] = {" ", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
 						                        "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As",
 				                                "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
 												"Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb",
@@ -191,9 +191,9 @@ const std::unordered_map<std::string, T_real> Henke_Compound_Density_Map = {
 //Formulas
     std::pair<std::string, T_real>{"H:2,O",                            (T_real)1.0},
     std::pair<std::string, T_real>{"H:48.6,C:32.9,N:8.9,O:8.9,S:0.6",         (T_real)1.35},
-    std::pair<std::string, T_real>{"H:62.5C31.5O6.3",                 (T_real)1.0},
-    std::pair<std::string, T_real>{"H:42.1C31.9N10.3O13.9P1.6S0.3",   (T_real)1.5},
-    std::pair<std::string, T_real>{"H:35.5C30.8N11.7O18.9P3.1", (T_real)1.7},
+    std::pair<std::string, T_real>{"H:62.5,C:31.5,O:6.3",                 (T_real)1.0},
+    std::pair<std::string, T_real>{"H:42.1,C:31.9,N:10.3,O:13.9,P:1.6,S:0.3",   (T_real)1.5},
+    std::pair<std::string, T_real>{"H:35.5,C:30.8,N:11.7,O:18.9,P:3.1", (T_real)1.7},
     std::pair<std::string, T_real>{"He", (T_real)1.66E-04},
     std::pair<std::string, T_real>{"H:49.95,C:24.64,N:8.66,O:15.57,P:1.07,S:0.03", (T_real)1.527},
     std::pair<std::string, T_real>{"N:78.08,O:20.95,Ar:0.93", (T_real)1.20E-03},
@@ -202,7 +202,7 @@ const std::unordered_map<std::string, T_real> Henke_Compound_Density_Map = {
     std::pair<std::string, T_real>{"Ni", (T_real)8.876},
     std::pair<std::string, T_real>{"Be", (T_real)1.845},
     std::pair<std::string, T_real>{"Cu", (T_real)8.96},
-    std::pair<std::string, T_real>{"SiO2", (T_real)2.2},
+    std::pair<std::string, T_real>{"Si,O:2", (T_real)2.2},
     std::pair<std::string, T_real>{"Al", (T_real)2.7},
     std::pair<std::string, T_real>{"Au", (T_real)19.3},
     std::pair<std::string, T_real>{"C", (T_real)1.0},

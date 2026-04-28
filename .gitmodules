@@ -7,3 +7,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/Microsoft/vcpkg
+[submodule "src/support/MDA_Utilities"]
+	path = src/support/MDA_Utilities
+	url = https://github.com/BCDA-APS/MDA_Utilities.git

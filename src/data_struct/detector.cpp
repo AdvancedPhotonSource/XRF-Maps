@@ -77,6 +77,7 @@ Detector<T_real>::~Detector()
         delete model;
         model = nullptr;
     }
+    
     for (auto& itr : fit_routines)
     {
         fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
@@ -228,7 +229,7 @@ void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
                     if (itr.second > 1.0)
                     {
                         // index is Z - 1
-                        (* element_z_vec)[itr.first - 1].e_cal_ratio /= itr.second;;
+                        (* element_z_vec)[itr.first - 1].e_cal_ratio /= itr.second;
                     }
                 }
             }
@@ -247,7 +248,7 @@ void Detector<T_real>::avg_element_quants(Fitting_Routines routine,
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Detector<T_real>::generage_avg_quantification_scalers()
+void Detector<T_real>::generate_avg_quantification_scalers()
 {
     T_real avg_sr_current = (T_real)0.0;
     T_real avg_US_IC = (T_real)0.0;
@@ -284,12 +285,12 @@ void Detector<T_real>::generage_avg_quantification_scalers()
         }
     }
     
-    if (avg_sr_current == 0.0 && avg_US_IC == 0.0 && avg_US_FM && avg_DS_IC == 0.0)
+    if (avg_sr_current == 0.0 && avg_US_IC == 0.0 && avg_US_FM == 0.0 && avg_DS_IC == 0.0)
     {
         logE << "Could not find SR_Current, US_IC, US_FM, and DS_IC. Not going to perform quantification\n";
     }
 
-    if (crnt_cnt != us_cnt && crnt_cnt != ds_cnt)
+    if (crnt_cnt != us_cnt || crnt_cnt != ds_cnt)
     {
         logE << "Averaging encounded one of the values to be 0 so it will not be correct!\n";
     }
@@ -297,7 +298,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
 
     if (avg_sr_current == 0.0 || crnt_cnt == 0.)
     {
-        logW"SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+        logW << "SR_Current is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_sr_current = 100.0;
     }
     else
@@ -306,7 +307,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     }
     if (avg_US_IC == 0.0 || us_cnt == 0.)
     {
-        logW"US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+        logW << "US_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_US_IC = 1.0;
     }
     else
@@ -315,7 +316,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     }
     if (avg_US_FM == 0.0 || us_fm_cnt == 0.)
     {
-        logW"US_FM is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+        logW << "US_FM is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_US_FM = 1.0;
     }
     else
@@ -324,7 +325,7 @@ void Detector<T_real>::generage_avg_quantification_scalers()
     }
     if (avg_DS_IC == 0.0 || ds_cnt == 0.)
     {
-        logW"DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
+        logW << "DS_IC is 0. Probably couldn't find it in the dataset. Setting it to 1. Quantification will be incorrect.\n";
         avg_DS_IC = 1.0;
     }
     else
@@ -363,7 +364,7 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Detector<T_real>::update_from_fit_paramseters()
+void Detector<T_real>::update_from_fit_parameters()
 {
     //Parameters for calibration curve
     if (fit_params_override_dict.detector_element.length() > 0)

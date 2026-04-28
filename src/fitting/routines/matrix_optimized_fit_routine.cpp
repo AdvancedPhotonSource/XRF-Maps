@@ -386,8 +386,14 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 		//lock and integrate results
 		{
             std::lock_guard<std::mutex> lock(_int_spec_mutex);
-            _integrated_fitted_spectra.add(model_spectra);
-            _integrated_background.add(background);
+            if(false == _integrated_fitted_spectra.add(model_spectra))
+            {
+                logW<<"Could not add model spectra to _integrated_fitted_spectra\n";
+            }
+            if(false == _integrated_background.add(background))
+            {
+                logW<<"Could not add background spectra to _integrated_background\n";
+            }
 
 			//we don't know the spectra size during initlaize() will have to resize here
 			if (_max_channels_spectra.size() < spectra->size())

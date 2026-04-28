@@ -224,46 +224,27 @@ void Spectra_Volume<T_real>::set_nan_to_near_zero()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Volume<T_real>::generate_scaler_maps(std::map<std::string, Scaler_Map<T_real>> *scaler_maps)
+void Spectra_Volume<T_real>::generate_scaler_maps(Scan_Info<T_real> &scan_info)
 {
-    if (scaler_maps != nullptr)
+    
+    scan_info.initialize_scaler_map_with_dims(STR_ELT, _data_vol.size(), _data_vol[0].size(), false, "seconds");
+    scan_info.initialize_scaler_map_with_dims(STR_ERT, _data_vol.size(), _data_vol[0].size(), false, "seconds");
+    scan_info.initialize_scaler_map_with_dims(STR_ICR, _data_vol.size(), _data_vol[0].size(), false, "cts/s");
+    scan_info.initialize_scaler_map_with_dims(STR_OCR, _data_vol.size(), _data_vol[0].size(), false, "cts/s");
+    scan_info.initialize_scaler_map_with_dims(STR_DEAD_TIME, _data_vol.size(), _data_vol[0].size(), false, "%");
+
+    for (size_t i = 0; i < _data_vol.size(); i++)
     {
-        data_struct::Scaler_Map<T_real> elt_map(STR_ELT);
-        data_struct::Scaler_Map<T_real> ert_map(STR_ERT);
-        data_struct::Scaler_Map<T_real> in_cnt_map("INCNT");
-        data_struct::Scaler_Map<T_real> out_cnt_map("OUTCNT");
-        data_struct::Scaler_Map<T_real> dead_time_map(STR_DEAD_TIME);
-
-        elt_map.unit = "seconds";
-        ert_map.unit = "seconds";
-        in_cnt_map.unit = "cts/s";
-        out_cnt_map.unit = "cts/s";
-        dead_time_map.unit = "%";
-
-        elt_map.values.resize(_data_vol.size(), _data_vol[0].size());
-        ert_map.values.resize(_data_vol.size(), _data_vol[0].size());
-        in_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
-        out_cnt_map.values.resize(_data_vol.size(), _data_vol[0].size());
-        dead_time_map.values.resize(_data_vol.size(), _data_vol[0].size());
-
-        for (size_t i = 0; i < _data_vol.size(); i++)
+        for (size_t j = 0; j < _data_vol[0].size(); j++)
         {
-            for (size_t j = 0; j < _data_vol[0].size(); j++)
-            {
-                elt_map.values(i, j) = _data_vol[i][j].elapsed_livetime();
-                ert_map.values(i, j) = _data_vol[i][j].elapsed_realtime();
-                in_cnt_map.values(i, j) = _data_vol[i][j].input_counts();
-                out_cnt_map.values(i, j) = _data_vol[i][j].output_counts();
-                dead_time_map.values(i, j) = (1.0 - (out_cnt_map.values(i, j) / in_cnt_map.values(i, j))) * 100.0;
-            }
+            scan_info.scaler_maps[STR_ELT]->values(i, j) = _data_vol[i][j].elapsed_livetime();
+            scan_info.scaler_maps[STR_ERT]->values(i, j) = _data_vol[i][j].elapsed_realtime();
+            scan_info.scaler_maps[STR_ICR]->values(i, j) = _data_vol[i][j].input_counts();
+            scan_info.scaler_maps[STR_OCR]->values(i, j) = _data_vol[i][j].output_counts();
+            scan_info.scaler_maps[STR_DEAD_TIME]->values(i, j) = (1.0 - (scan_info.scaler_maps[STR_OCR]->values(i, j) / scan_info.scaler_maps[STR_ICR]->values(i, j))) * 100.0;
         }
-        
-        (*scaler_maps)[elt_map.name] = elt_map;
-        (*scaler_maps)[ert_map.name] = ert_map;
-        (*scaler_maps)[in_cnt_map.name] = in_cnt_map;
-        (*scaler_maps)[out_cnt_map.name] = out_cnt_map;
-        (*scaler_maps)[dead_time_map.name] = dead_time_map;
     }
+
 }
 
 // ----------------------------------------------------------------------------

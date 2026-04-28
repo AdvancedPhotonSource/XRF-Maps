@@ -195,6 +195,12 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         spec_cntr = line_size;
     }
 
+    if(spec_cntr < 2)
+    {
+        logW<<"Need to load at least 2 spectra\n";
+        nc_close(ncid);
+        return -1;
+    }
     
     for(size_t m0 = 0; m0 < dim2size[0]; m0++)
     {
@@ -240,11 +246,22 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         size_t inc_size = header_size + (spectra_size * MAX_NUM_SUPPORTED_DETECOTRS_PER_COL);
         for(size_t m1 = 0; m1 < cols_before_inc; m1++)
         {
-            if (col_idx >= spec_line->size())
+            if(ltype == E_load_type::LINE)
             {
-                return col_idx;
+                if (col_idx >= spec_line->size())
+                {
+                    nc_close(ncid);
+                    return col_idx;
+                }
             }
             size_t l = header_size +  (m1 * inc_size);
+            size_t max_read_in = l + header_size + (spectra_size * idx_detector);
+            if(max_read_in >= DATA_IN_MAX)
+            {
+                logW<<"Data in index max_read_in = "<<max_read_in<<" is greater than or equal to DATA_IN_MAX = "<<DATA_IN_MAX<<"\n"; 
+                nc_close(ncid);
+                return col_idx;
+            }
             if (ltype == E_load_type::LINE)
             {
                 (*spec_line)[col_idx].resize(spectra_size); // should be renames to resize
@@ -344,7 +361,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
-            input_counts = ((T_real)ii) / elapsed_livetime;
+            if(elapsed_livetime > 0.0)
+            {
+                input_counts = ((T_real)ii) / elapsed_livetime;
+            }
             if (ltype == E_load_type::LINE)
             {
                 if (input_counts == 0)
@@ -380,7 +400,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
-            output_counts = ((T_real)ii) / elapsed_realtime;
+            if(elapsed_realtime > 0.0)
+            {
+                output_counts = ((T_real)ii) / elapsed_realtime;
+            }
             if (ltype == E_load_type::LINE)
             {
                 if (output_counts == 0)
@@ -524,9 +547,9 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
     // check if we have allocated enough memory for this row
     if(scan_info->scaler_maps.size() > 0)
     {
-        if(scan_info->scaler_maps[0].values.rows() <= row)
+        if(scan_info->scaler_maps.begin()->second->values.rows() <= row)
         {
-            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scan_info->scaler_maps[0].values.rows()<<". Skipping this data\n";
+            logW<<"Trying to load row "<<row<<" but master file says max num of rows = "<<scan_info->scaler_maps.begin()->second->values.rows()<<". Skipping this data\n";
             return 0;
         }
     }
@@ -587,7 +610,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
         std::string search_name = tag+std::to_string(i);
         for(auto& sitr : scan_info->scaler_maps)
         {
-            if(sitr.second.unit == search_name)
+            if(sitr.second->unit == search_name)
             {
                 T_real multiplier = (T_real)1.0;
                 if(params_override != nullptr)
@@ -599,7 +622,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
                 }
                 for(size_t j=0; j < dim2size[0]; j++)
                 {
-                    sitr.second.values(row,j) = data_in[j] * multiplier;
+                    sitr.second->values(row,j) = data_in[j] * multiplier;
                 }
                 break;
             }

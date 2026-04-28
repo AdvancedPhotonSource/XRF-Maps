@@ -819,9 +819,46 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
 
     //workflow
+    py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
+    .def(py::init<int>())
+    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >& self)
+        {
+            self.set_function(proc_spectra_block<float>);
+        });
+
+    py::class_<workflow::xrf::Spectra_File_Source<float> >(workflow, "SpectraFileSource")
+    .def(py::init<>())
+    .def(py::init<data_struct::Analysis_Job<float>*>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
+    .def("connect_distributor", [&](workflow::xrf::Spectra_File_Source<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    {
+        self.connect_distributor(dist);
+    })
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+
+    py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")
+    .def(py::init<>())
+    .def(py::init<data_struct::Analysis_Job<float>*>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
+    //.def("connect_distributor", &workflow::Source<data_struct::Stream_Block<float>*>::connect_distributor)
+    .def("connect_distributor", [&](workflow::xrf::Detector_Sum_Spectra_Source<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    {
+        self.connect_distributor(dist);
+    })
+    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+
     py::class_<workflow::Sink<data_struct::Stream_Block<float>*> >(workflow, "StreamBlockSink")
     .def(py::init<>())
-    //.def("connect", &workflow::Sink<data_struct::Stream_Block>::connect)
+    //.def("connect_distributor", [&](workflow::Sink<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    //{
+    //    self.connect(dist);
+    //});
+    //.def("connect", &workflow::Sink<float>::connect)
+        //<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>*>
     .def("set_function", &workflow::Sink<data_struct::Stream_Block<float>*>::set_function)
     .def("start", &workflow::Sink<data_struct::Stream_Block<float>*>::start)
     .def("stop", &workflow::Sink<data_struct::Stream_Block<float>*>::stop)
@@ -834,29 +871,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_spectra)
     .def("set_verbose", &workflow::xrf::Spectra_Net_Streamer<float>::set_verbose)
-    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream);
+    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream)
+    .def("connect_distributor", [&](workflow::xrf::Spectra_Net_Streamer<float>&self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    {
+        self.connect(dist);
+    });
+   
 #endif
 
-    py::class_<workflow::xrf::Spectra_File_Source<float> >(workflow, "SpectraFileSource")
-    .def(py::init<>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
-    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
-
-    py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")
-    .def(py::init<>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
-    .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
-
-    py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
-    .def(py::init<int>())
-    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* > &self)
-        {
-            self.set_function(proc_spectra_block<float>);
-        });
 
     //process_streaming
     m.def("proc_spectra_block", &proc_spectra_block<float>);

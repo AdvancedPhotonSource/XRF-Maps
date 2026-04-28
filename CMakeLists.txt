@@ -79,17 +79,14 @@ set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE P
 # option(BUILD_WITH_OPENCL "Build with OPENCL support" OFF)
 option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
-option(BUILD_FOR_PHI "Build for Intel Phi" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
-option(STATIC_BUILD "Static build libxrf_io and libxrf_fit" OFF)
+option(BUILD_STATIC "Static build libxrf_io and libxrf_fit" OFF)
 # If compiled on some intel mahcines this causes crashes so let user set it for compile
 option(AVX512 "Compule with arch AVX512 on MSVC" OFF)
 option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
 option(AVX "Compule with arch AVX on MSVC" OFF)
 option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
 option(MSVC_DEBUG_INFO_REL "Compule with debug info in Release build for MSVC" OFF)
-
-
 
 # generate_git_hash_header.cmake
 # This script is run by add_custom_command to generate the header file.
@@ -174,13 +171,8 @@ IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
   # Enable C++11 mode on C++ / Clang
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -D__Unix__  -fPIC -g")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__Unix__  -fPIC")
-  IF(BUILD_FOR_PHI AND CMAKE_CXX_COMPILER_ID MATCHES "Intel" )
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xMIC-AVX512")
-  ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
-  ENDIF()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
   #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Waddress -Warray-bounds=1 -Wbool-compare -Wbool-operation -Wc++17-compat -Wcatch-value -Wchar-subscripts -Wcomment -Wenum-compare -Wformat -Winit-self -Wlogical-not-parentheses -Wmain -Wmaybe-uninitialized -Wmemset-elt-size -Wmemset-transposed-args -Wmisleading-indentation -Wmissing-attributes -Wmissing-braces -Wmultistatement-macros -Wnarrowing -Wnonnull -Wnonnull-compare -Wopenmp-simd -Wparentheses -Wreorder -Wrestrict -Wreturn-type -Wsequence-point -Wsign-compare -Wsizeof-pointer-div -Wsizeof-pointer-memaccess -Wstrict-aliasing -Wstrict-overflow=1 -Wswitch -Wtautological-compare -Wtrigraphs -Wuninitialized -Wunknown-pragmas -Wunused-function -Wunused-label -Wunused-value -Wvolatile-register-var")
 ELSEIF(MSVC)
@@ -238,7 +230,7 @@ ENDIF()
 
 # Visual Studio specific include and source
 IF(MSVC)
-  set(XDR_HACK src/support/mdautils-1.4.1/xdr_hack.c src/support/mdautils-1.4.1/xdr_hack.h )
+  set(XDR_HACK src/support/MDA_Utilities/src/xdr_hack.c src/support/MDA_Utilities/src/xdr_hack.h )
   include_directories(src/support/direct)
   add_compile_options(/bigobj)
 ELSE()
@@ -305,7 +297,7 @@ set(libxrf_fit_SOURCE
 #--------------- start xrf io lib -----------------
 set(XRF_IO_HEADERS
 	src/core/mem_info.h
-	src/support/mdautils-1.4.1/mda-load.h
+	src/support/MDA_Utilities/src/mda-load.h
   src/io/file/file_scan.h
 	src/io/file/mda_io.h
     src/io/file/mca_io.h
@@ -334,7 +326,7 @@ set(XRF_IO_SOURCE
     ${VISUAL_INC}
 	  src/core/mem_info.cpp
     src/io/file/file_scan.cpp
-    src/support/mdautils-1.4.1/mda_loader.c
+    src/support/MDA_Utilities/src/mda_loader.c
     src/io/file/aps/aps_fit_params_import.cpp
     src/io/file/mda_io.cpp
     src/io/file/hdf5_io.cpp
@@ -351,14 +343,14 @@ set(XRF_IO_SOURCE
     src/core/process_whole.cpp
     )
 
-IF(BUILD_FOR_PHI)
+IF(BUILD_STATIC)
   add_library(libxrf_fit STATIC
               ${libxrf_fit_HEADERS}
               ${libxrf_fit_SOURCE}
               )
   add_library(libxrf_io STATIC
-              ${XRF_IO_HEADERS}
               ${XDR_HACK}
+              ${XRF_IO_HEADERS}
               ${XRF_IO_SOURCE}
               )
 ELSE()
@@ -367,8 +359,8 @@ ELSE()
               ${libxrf_fit_SOURCE}
               )
   add_library(libxrf_io SHARED 
-             ${XRF_IO_HEADERS}
-             ${XDR_HACK}
+            ${XDR_HACK}           
+            ${XRF_IO_HEADERS}     
              ${XRF_IO_SOURCE}
              )
 ENDIF()
@@ -504,14 +496,11 @@ ELSEIF (UNIX)
       add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip -u -r ${PROJECT_SOURCE_DIR}/bin/libxrf_io.dylib)
     ENDIF()
   ELSE()
-    #if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-    IF(NOT BUILD_FOR_PHI)
-      IF(NOT STATIC_BUILD)
-        set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
-        IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-          add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
-          add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
-        ENDIF()
+    IF(NOT BUILD_STATIC)
+      set_target_properties(libxrf_fit libxrf_io PROPERTIES SUFFIX ".so")
+      IF (NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
+        add_custom_command(TARGET libxrf_fit POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_fit.so)
+        add_custom_command(TARGET libxrf_io POST_BUILD COMMAND strip ${PROJECT_SOURCE_DIR}/bin/libxrf_io.so)
       ENDIF()
     ENDIF()
   ENDIF()
@@ -556,3 +545,126 @@ install(EXPORT xrfmaps-export
         NAMESPACE XRF_Maps::
         DESTINATION lib/cmake/xrfmaps
 )
+
+# ---- Unit tests (opt-in) ----------------------------------------
+option(BUILD_TESTS "Build unit tests with Google Test" OFF)
+
+if(BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+    )
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    add_executable(test_netcdf_io test/unit/test_netcdf_io.cpp)
+
+    set_target_properties(test_netcdf_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_netcdf_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_netcdf_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_netcdf_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            netCDF::netcdf
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(test_netcdf_io)
+
+    add_executable(test_hdf5_io test/unit/test_hdf5_io.cpp)
+
+    set_target_properties(test_hdf5_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_hdf5_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_hdf5_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_hdf5_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            hdf5::hdf5-shared
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_hdf5_io)
+
+    add_executable(test_hl_file_io test/unit/test_hl_file_io.cpp)
+
+    set_target_properties(test_hl_file_io PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_hl_file_io PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_hl_file_io PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_hl_file_io
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_hl_file_io)
+
+    add_executable(test_spectra test/unit/test_spectra.cpp)
+
+    set_target_properties(test_spectra PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_spectra PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_spectra PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_spectra
+        PRIVATE
+            GTest::gtest_main
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_spectra)
+endif()
