@@ -1184,26 +1184,36 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
         {
             for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
-                std::string key =std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
-                std::string label = "";
-                bool is_time_normalized = false;
-                if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
+                if(_mda_file->scan->sub_scans[0]->detectors[k] != nullptr)
                 {
-                    key = label;
-                }
-                if(_scan_info.scaler_maps.contains(key) == false)
-                {
-                    std::string unit = "";
-                    if (_mda_file->scan->sub_scans[0]->detectors[k]->unit != nullptr)
+                    if(_mda_file->scan->sub_scans[0]->detectors[k]->number != k)
                     {
-                        unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
+                        break;
                     }
-                    _scan_info.initialize_scaler_map_with_dims(key, rows, cols, is_time_normalized, unit);
-                }
+                    if(_mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
+                    {
+                        std::string key =std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
+                        std::string label = "";
+                        bool is_time_normalized = false;
+                        if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
+                        {
+                            key = label;
+                        }
+                        if(_scan_info.scaler_maps.contains(key) == false)
+                        {
+                            std::string unit = "";
+                            if (_mda_file->scan->sub_scans[0]->detectors[k]->unit != nullptr)
+                            {
+                                unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
+                            }
+                            _scan_info.initialize_scaler_map_with_dims(key, rows, cols, is_time_normalized, unit);
+                        }
 
-                if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
-                {
-                    _scan_info.scaler_maps.at(key)->values(0, i) = _mda_file->scan->detectors_data[k][i];
+                        if (std::isfinite(_mda_file->scan->detectors_data[k][i]))
+                        {
+                            _scan_info.scaler_maps.at(key)->values(0, i) = _mda_file->scan->detectors_data[k][i];
+                        }
+                    }
                 }
             }
 
@@ -1277,29 +1287,32 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             {
                 for (int k = 0; k < _mda_file->scan->sub_scans[i]->number_detectors; k++)
                 {
-                    if (_mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
+                    if (_mda_file->scan->sub_scans[0]->detectors[k] != nullptr)
                     {
-                        std::string key = std::string(_mda_file->scan->sub_scans[i]->detectors[k]->name);
-                        std::string label = "";
-                        bool is_time_normalized = false;
-                        if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
+                        if(_mda_file->scan->sub_scans[0]->detectors[k]->number == k && _mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
                         {
-                            key = label;
-                        }
-
-                        if (i == 0 && j == 0)
-                        {
-                            std::string unit = "";
-                            if (_mda_file->scan->sub_scans[i]->detectors[k]->unit != nullptr)
+                            std::string key = std::string(_mda_file->scan->sub_scans[i]->detectors[k]->name);
+                            std::string label = "";
+                            bool is_time_normalized = false;
+                            if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
                             {
-                                unit = std::string(_mda_file->scan->sub_scans[i]->detectors[k]->unit);
+                                key = label;
                             }
-                            _scan_info.initialize_scaler_map_with_dims(key, rows, cols, is_time_normalized, unit);
-                        }
-                       
-                        if (_scan_info.scaler_maps.contains(key) && std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
-                        {
-                            _scan_info.scaler_maps.at(key)->values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+
+                            if (i == 0 && j == 0)
+                            {
+                                std::string unit = "";
+                                if (_mda_file->scan->sub_scans[i]->detectors[k]->unit != nullptr)
+                                {
+                                    unit = std::string(_mda_file->scan->sub_scans[i]->detectors[k]->unit);
+                                }
+                                _scan_info.initialize_scaler_map_with_dims(key, rows, cols, is_time_normalized, unit);
+                            }
+                        
+                            if (_scan_info.scaler_maps.contains(key) && std::isfinite(_mda_file->scan->sub_scans[i]->detectors_data[k][j]))
+                            {
+                                _scan_info.scaler_maps.at(key)->values(i, j) = _mda_file->scan->sub_scans[i]->detectors_data[k][j];
+                            }
                         }
                     }
                 }
