@@ -1155,6 +1155,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
         if (_mda_file->scan->requested_points == 0 || _mda_file->scan->last_point == 0)
         {
             rows = 1;
+            cols = 1;
         }
         else
         {
@@ -1179,20 +1180,24 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             }
         }
 
-        size_t iamt = std::min((size_t)_mda_file->scan->last_point, cols);
+        size_t iamt = cols;
+        if(_mda_file->scan->last_point > 0)
+        {
+            iamt = std::min((size_t)_mda_file->scan->last_point, cols);
+        }
         for (size_t i = 0; i < iamt; i++)
         {
-            for (int k = 0; k < _mda_file->scan->sub_scans[0]->number_detectors; k++)
+            for (int k = 0; k < _mda_file->scan->number_detectors; k++)
             {
-                if(_mda_file->scan->sub_scans[0]->detectors[k] != nullptr)
+                if(_mda_file->scan->detectors[k] != nullptr)
                 {
-                    if(_mda_file->scan->sub_scans[0]->detectors[k]->number != k)
+                    if(_mda_file->scan->detectors[k]->number != k)
                     {
                         break;
                     }
-                    if(_mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
+                    if(_mda_file->scan->detectors[k]->name != nullptr)
                     {
-                        std::string key =std::string(_mda_file->scan->sub_scans[0]->detectors[k]->name);
+                        std::string key =std::string(_mda_file->scan->detectors[k]->name);
                         std::string label = "";
                         bool is_time_normalized = false;
                         if (data_struct::Scaler_Lookup::inst()->search_pv(key, label, is_time_normalized, beamline))
@@ -1202,9 +1207,9 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                         if(_scan_info.scaler_maps.contains(key) == false)
                         {
                             std::string unit = "";
-                            if (_mda_file->scan->sub_scans[0]->detectors[k]->unit != nullptr)
+                            if (_mda_file->scan->detectors[k]->unit != nullptr)
                             {
-                                unit = std::string(_mda_file->scan->sub_scans[0]->detectors[k]->unit);
+                                unit = std::string(_mda_file->scan->detectors[k]->unit);
                             }
                             _scan_info.initialize_scaler_map_with_dims(key, rows, cols, is_time_normalized, unit);
                         }
