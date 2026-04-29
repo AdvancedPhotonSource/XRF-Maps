@@ -1182,7 +1182,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
         size_t iamt = std::min((size_t)_mda_file->scan->last_point, cols);
         for (size_t i = 0; i < iamt; i++)
         {
-            for (int k = 0; k < _mda_file->scan->number_detectors; k++)
+            for (int k = 0; k < _mda_file->scan->sub_scans[0]->number_detectors; k++)
             {
                 if(_mda_file->scan->sub_scans[0]->detectors[k] != nullptr)
                 {
