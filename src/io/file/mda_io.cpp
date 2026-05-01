@@ -1191,10 +1191,6 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
             {
                 if(_mda_file->scan->detectors[k] != nullptr)
                 {
-                    if(_mda_file->scan->detectors[k]->number != k)
-                    {
-                        break;
-                    }
                     if(_mda_file->scan->detectors[k]->name != nullptr)
                     {
                         std::string key =std::string(_mda_file->scan->detectors[k]->name);
@@ -1294,7 +1290,7 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                 {
                     if (_mda_file->scan->sub_scans[0]->detectors[k] != nullptr)
                     {
-                        if(_mda_file->scan->sub_scans[0]->detectors[k]->number == k && _mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
+                        if( _mda_file->scan->sub_scans[0]->detectors[k]->name != nullptr)
                         {
                             std::string key = std::string(_mda_file->scan->sub_scans[i]->detectors[k]->name);
                             std::string label = "";
