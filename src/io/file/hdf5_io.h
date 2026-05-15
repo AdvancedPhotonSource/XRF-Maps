@@ -9358,7 +9358,7 @@ private:
         herr_t status = -1;
         hid_t filetype, memtype = -1;
         hid_t dset_id = -1;
-        hsize_t count[1] = { 1 };
+        hsize_t count[2] = { 1, 1 };
 
         try
         {
@@ -9371,7 +9371,7 @@ private:
             count[0] = meta_info->y_axis.rows();
             count[1] = meta_info->y_axis.cols();
             _create_memory_space(2, count, memoryspace_id);
-            if (_open_h5_dataset<T_real>(STR_Y_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if (_open_h5_dataset<T_real>(STR_Y_AXIS, scan_grp_id, 2, count, count, dset_id, dataspace_id))
             {
                 status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->y_axis.data());
                 if (status < 0)
@@ -9380,10 +9380,8 @@ private:
                 }
             }
 
-            count[0] = meta_info->x_axis.rows();
-            count[1] = meta_info->x_axis.cols();
             _create_memory_space(2, count, memoryspace_id);
-            if (_open_h5_dataset<T_real>(STR_X_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
+            if (_open_h5_dataset<T_real>(STR_X_AXIS, scan_grp_id, 2, count, count, dset_id, dataspace_id))
             {
                 status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->x_axis.data());
                 if (status < 0)
