@@ -946,10 +946,10 @@ public:
         std::map<int, Spectra_Line<T_real>> spectra_rows;
         std::map<int, data_struct::ArrayTr<T_real> > interferometer_rows;
 
-        scan_info.meta_info.x_axis.resize(1);
-        scan_info.meta_info.x_axis[0] = -1;
-        scan_info.meta_info.y_axis.resize(1);
-        scan_info.meta_info.y_axis[0] = -1;
+        scan_info.meta_info.x_axis.setZero(1,1);
+        scan_info.meta_info.x_axis(0,0) = -1;
+        scan_info.meta_info.y_axis.setZero(1,1);
+        scan_info.meta_info.y_axis(0,0) = -1;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             if (false == _open_h5_object(file_id, H5O_FILE, close_map, path+filename, -1))
@@ -1384,7 +1384,7 @@ public:
                     return false;
                 }
 
-                for (hsize_t i = 0; i < rank; i++)
+                for (int i = 0; i < rank; i++)
                 {
                     pos_offset[i] = 0;
                     pos_count[i] = pos_dims_in[i];
@@ -1407,7 +1407,7 @@ public:
                 error = _read_h5d<T_real>(pos_id, memoryspace_meta_id, dataspace_id, H5P_DEFAULT, (void*)temp_read_in_y);
                 if (error < 0)
                 {
-                    logW<<"Error reading in x positions\n";
+                    logW<<"Error reading in y positions\n";
                 }
 
                 T_real start_val = temp_read_in_y[0];
@@ -1420,20 +1420,20 @@ public:
                     }
                 }
                 scan_info.meta_info.requested_rows = pos_count[0] / scan_info.meta_info.requested_cols;
-                scan_info.meta_info.x_axis.resize(scan_info.meta_info.requested_cols);
-                scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
+                scan_info.meta_info.x_axis.setZero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
+                scan_info.meta_info.y_axis.setZero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
 
                 // generate hashmap for pos to index
                 std::unordered_map<T_real, int>  pos_to_idx_hash;
 
                 for(unsigned int i=0; i < scan_info.meta_info.requested_cols; i++)
                 {
-                    scan_info.meta_info.x_axis[i] = temp_read_in_x[i];
+                    scan_info.meta_info.x_axis(0,i) = temp_read_in_x[i];
                     pos_to_idx_hash[temp_read_in_x[i]] = i;
                 }
                 for(unsigned int i=0, j=0; i < pos_count[0]; i+= scan_info.meta_info.requested_cols, j++)
                 {
-                    scan_info.meta_info.y_axis[j] = temp_read_in_x[i];
+                    scan_info.meta_info.y_axis(j,0) = temp_read_in_y[i];
                 }
 
                 scan_info.initialize_scaler_map(STR_ARRAY_COUNTER);
@@ -1738,8 +1738,8 @@ public:
             // Take 1 spectra per magnetic polarization, divide them by 2 and store in each row
             scan_info.meta_info.requested_cols = dims3[0] / 2;
             scan_info.meta_info.requested_rows = 2;  // two polarities
-            scan_info.meta_info.x_axis.resize(scan_info.meta_info.requested_cols);
-            scan_info.meta_info.y_axis.resize(scan_info.meta_info.requested_rows);
+            scan_info.meta_info.x_axis.setZero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
+            scan_info.meta_info.y_axis.setZero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols);
             scan_info.meta_info.polarity_pattern = params_override->polarity_pattern;
             spec_vol->resize_and_zero(scan_info.meta_info.requested_rows, scan_info.meta_info.requested_cols, dims3[2]);
             
@@ -2082,8 +2082,8 @@ public:
         error = H5Dread(scanDim2_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &rows);
 
 
-        scan_info_edf.meta_info.x_axis.resize(cols);
-        scan_info_edf.meta_info.y_axis.resize(rows);
+        scan_info_edf.meta_info.x_axis.setZero(rows, cols);
+        scan_info_edf.meta_info.y_axis.setZero(rows, cols);
         scan_info_edf.meta_info.name = title;
 
         spec_vol->resize_and_zero(rows, cols, 2048);
@@ -5251,8 +5251,8 @@ public:
         hid_t x_axis_id = -1;
         hid_t y_axis_id = -1;
         hid_t amp_id = -1;
-        hsize_t xdims[1] = { 0 };
-        hsize_t ydims[1] = { 0 };
+        hsize_t xdims[2] = { 0,0 };
+        hsize_t ydims[2] = { 0,0 };
         herr_t status;
         hid_t amp_space = -1;
         char tmp_char[256] = { 0 };
@@ -5291,8 +5291,8 @@ public:
             return false;
         }
 
-        scan_info.meta_info.x_axis.resize(xdims[0]);
-        scan_info.meta_info.y_axis.resize(ydims[0]);
+        scan_info.meta_info.x_axis.resize(xdims[0], xdims[1]);
+        scan_info.meta_info.y_axis.resize(ydims[0], ydims[1]);
 
         status = _read_h5d<T_real>(x_axis_id, x_space, x_space, H5P_DEFAULT, scan_info.meta_info.x_axis.data());
         if (status < 0)
@@ -8598,19 +8598,17 @@ public:
         }
 
         xy_offset[0] = 0;
-        xy_count[1] = 1;
+        xy_count[1] = det_dims_in[1];
         xy_count[2] = det_dims_in[2];
         scan_info.meta_info.requested_cols = det_dims_in[2];
         scan_info.meta_info.requested_rows = det_dims_in[1];
-        scan_info.meta_info.x_axis.resize(det_dims_in[2]);
-        scan_info.meta_info.y_axis.resize(det_dims_in[1]);
+        scan_info.meta_info.x_axis.resize(det_dims_in[1], det_dims_in[2]);
+        scan_info.meta_info.y_axis.resize(det_dims_in[1], det_dims_in[2]);
 
         status = H5Sselect_hyperslab(xypos_dataspace_id, H5S_SELECT_SET, xy_offset, NULL, xy_count, NULL);
         status = _read_h5d<T_real>(xypos_id, x_dataspace_id, xypos_dataspace_id, H5P_DEFAULT, scan_info.meta_info.x_axis.data());
 
         xy_offset[0] = 1;
-        xy_count[1] = det_dims_in[1];
-        xy_count[2] = 1;
         status = H5Sselect_hyperslab(xypos_dataspace_id, H5S_SELECT_SET, xy_offset, NULL, xy_count, NULL);
         status = _read_h5d<T_real>(xypos_id, y_dataspace_id, xypos_dataspace_id, H5P_DEFAULT, scan_info.meta_info.y_axis.data());
     
@@ -9370,8 +9368,9 @@ private:
             status = H5Tset_size(memtype, 255);
 
             //save y axis
-            count[0] = meta_info->y_axis.size();
-            _create_memory_space(1, count, memoryspace_id);
+            count[0] = meta_info->y_axis.rows();
+            count[1] = meta_info->y_axis.cols();
+            _create_memory_space(2, count, memoryspace_id);
             if (_open_h5_dataset<T_real>(STR_Y_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
                 status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->y_axis.data());
@@ -9381,8 +9380,9 @@ private:
                 }
             }
 
-            count[0] = meta_info->x_axis.size();
-            _create_memory_space(1, count, memoryspace_id);
+            count[0] = meta_info->x_axis.rows();
+            count[1] = meta_info->x_axis.cols();
+            _create_memory_space(2, count, memoryspace_id);
             if (_open_h5_dataset<T_real>(STR_X_AXIS, scan_grp_id, 1, count, count, dset_id, dataspace_id))
             {
                 status = _write_h5d<T_real>(dset_id, memoryspace_id, dataspace_id, H5P_DEFAULT, (void*)meta_info->x_axis.data());

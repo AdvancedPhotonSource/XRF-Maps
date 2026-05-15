@@ -1051,10 +1051,8 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             
             scan_info.meta_info.requested_rows = 1;
             scan_info.meta_info.requested_cols = 1;
-            scan_info.meta_info.x_axis.resize(1);
-            scan_info.meta_info.x_axis.setZero(1);
-            scan_info.meta_info.y_axis.resize(1);
-            scan_info.meta_info.y_axis.setZero(1);
+            scan_info.meta_info.x_axis.setZero(1,1);
+            scan_info.meta_info.y_axis.setZero(1,1);
             scan_info.meta_info.theta = 0.0;
             scan_info.meta_info.scan_type = STR_SCAN_TYPE_XRF_SINGLE_MCA;
 
