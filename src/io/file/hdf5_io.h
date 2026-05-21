@@ -5018,6 +5018,7 @@ public:
 
         if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
         {
+            // close map done in _open_h5_object fail
             logE << "Failed to open " << path << "\n";
             return false;
         }
@@ -5032,6 +5033,7 @@ public:
         }
         else
         {
+            // close map done in _open_h5_object fail
             logE << "Could not determine the number of standards! Returning\n";
             return false;
         }
@@ -5047,7 +5049,7 @@ public:
         {
             // name
             std::string std_name = "";
-            std::string str_std_name_loc = "/MAPS/Quantification/Standard" + std::to_string(0) + "/" + STR_STANDARD_NAME;
+            std::string str_std_name_loc = "/MAPS/Quantification/Standard" + std::to_string(i) + "/" + STR_STANDARD_NAME;
             if (_open_h5_object(name_id, H5O_DATASET, close_map, str_std_name_loc, file_id, false, false))
             {
                 hid_t d_space = H5Dget_space(name_id);
@@ -5075,7 +5077,7 @@ public:
             // read ion chambers DS_IC, US_IC, and SR_Current
             for (auto& itr : ion_chambers)
             {
-                std::string str_loc = "/MAPS/Quantification/Standard" + std::to_string(0) + "/" + STR_SCALERS + "/" + itr;
+                std::string str_loc = "/MAPS/Quantification/Standard" + std::to_string(i) + "/" + STR_SCALERS + "/" + itr;
                 if (_open_h5_object(ic_id, H5O_DATASET, close_map, str_loc, file_id, false, false))
                 {
 
@@ -5161,6 +5163,7 @@ public:
 
         if (false == _open_h5_object(maps_grp_id, H5O_GROUP, close_map, "MAPS", file_id))
         {
+            _close_h5_objects(close_map);
             return false;
         }
         
@@ -5168,6 +5171,7 @@ public:
         {
             if (false == _open_h5_object(counts_dset_id, H5O_DATASET, close_map, "scalers", maps_grp_id, false, false))
             {
+                _close_h5_objects(close_map);
                 return false;
             }
         }
@@ -5178,6 +5182,7 @@ public:
         {
             if (false == _open_h5_object(channels_dset_id, H5O_DATASET, close_map, "scaler_names", maps_grp_id))
             {
+                _close_h5_objects(close_map);
                 return false;
             }
         }
@@ -5188,14 +5193,18 @@ public:
         int rank = H5Sget_simple_extent_ndims(counts_dspace_id);
         if (rank != 3)
         {
+            _close_h5_objects(close_map);
             logE << "Error getting rank for /MAPS/Scalers/Values\n";
+            return false;
         }
         hsize_t* dims_out = new hsize_t[rank];
         H5Sget_simple_extent_dims(counts_dspace_id, &dims_out[0], nullptr);
 
         filetype = H5Tcopy(H5T_C_S1);
+        close_map.push({ filetype, H5O_DATATYPE });
         H5Tset_size(filetype, 256);
         memtype = H5Tcopy(H5T_C_S1);
+        close_map.push({ memtype, H5O_DATATYPE });
         status = H5Tset_size(memtype, 255);
 
         for (int i = 0; i < 3; i++)
@@ -5266,10 +5275,15 @@ public:
         }
 
         if (false == _open_h5_object(x_axis_id, H5O_DATASET, close_map, "/MAPS/Scan/x_axis", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
-
+        }
         if (false == _open_h5_object(y_axis_id, H5O_DATASET, close_map, "/MAPS/Scan/y_axis", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
+        }
 
         hid_t x_space = H5Dget_space(x_axis_id);
         close_map.push({ x_space, H5O_DATASPACE });
@@ -5308,7 +5322,10 @@ public:
 
         // US_AMPS_NUM
         if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp_num", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
+        }
 
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
@@ -5321,7 +5338,11 @@ public:
 
         // US_AMPS_UNIT
         if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/us_amp_unit", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
+        }
+
 
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
@@ -5341,7 +5362,10 @@ public:
 
         // DS_AMPS_NUM
         if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp_num", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
+        }
 
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
@@ -5354,12 +5378,17 @@ public:
 
         // DS_AMPS_UNIT
         if (false == _open_h5_object(amp_id, H5O_DATASET, close_map, "/MAPS/Scalers/ds_amp_unit", file_id))
+        {
+            _close_h5_objects(close_map);
             return false;
+        }
 
         amp_space = H5Dget_space(amp_id);
         close_map.push({ amp_space, H5O_DATASPACE });
 
-        type = H5Tget_native_type(H5Dget_type(amp_id), H5T_DIR_ASCEND);
+        hid_t amp_type_id = H5Dget_type(amp_id);
+        close_map.push({ amp_type_id, H5O_DATATYPE });
+        type = H5Tget_native_type(amp_type_id, H5T_DIR_ASCEND);
         close_map.push({ type, H5O_DATATYPE });
         status = H5Dread(amp_id, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, (void*)tmp_char);
         if (status < 0)
