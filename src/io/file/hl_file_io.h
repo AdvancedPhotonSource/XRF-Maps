@@ -1482,64 +1482,30 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
             std::string full_filename;
             for (size_t i = 0; i < spectra_volume->rows(); i++)
             {
-                //bnp format
                 std::unordered_map<std::string, std::shared_ptr<Scaler_Map<T_real>>> scalers_lines;
-                int idx = static_cast<int>(tmp_dataset_file.find("bnp_fly"));
-                if(idx == 0)
+                full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
+                if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
                 {
-                    full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + bnp_netcdf_base_name + std::to_string(i) + ".hdf5";   
-                    if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
+                    if(scan_info != nullptr)
                     {
-                        if(scan_info != nullptr)
+                        for(auto &sitr: scan_info->scaler_maps)
                         {
-                            for(auto &sitr: scan_info->scaler_maps)
+                            if(scalers_lines.contains(sitr.first) )
                             {
-                                if(scalers_lines.contains(sitr.first) )
+                                for(int col = 0; col < sitr.second->values.cols(); col++)
                                 {
-                                    for(int col = 0; col < sitr.second->values.cols(); col++)
-                                    {
-                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
-                                    }
+                                    sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                 }
                             }
-                        }
-                    }
-                                        else
-                    {
-                        // copy prev row
-                        if(i>0)
-                        {
-                            (*spectra_volume)[i] = (*spectra_volume)[i-1];
                         }
                     }
                 }
                 else
                 {
-                    //everyone else
-                    full_filename = dataset_directory + "flyXRF" + DIR_END_CHAR + tmp_dataset_file + file_middle + std::to_string(i) + ".hdf5";
-                    if(io::file::HDF5_IO::inst()->load_spectra_line_xspress3(full_filename, detector_num, &(*spectra_volume)[i], scalers_lines))
+                    // copy prev row
+                    if(i>0)
                     {
-                        if(scan_info != nullptr)
-                        {
-                            for(auto &sitr: scan_info->scaler_maps)
-                            {
-                                if(scalers_lines.contains(sitr.first) )
-                                {
-                                    for(int col = 0; col < sitr.second->values.cols(); col++)
-                                    {
-                                        sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // copy prev row
-                        if(i>0)
-                        {
-                            (*spectra_volume)[i] = (*spectra_volume)[i-1];
-                        }
+                        (*spectra_volume)[i] = (*spectra_volume)[i-1];
                     }
                 }
             }
