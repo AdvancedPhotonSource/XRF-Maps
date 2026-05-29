@@ -249,6 +249,38 @@ void Spectra_Volume<T_real>::generate_scaler_maps(Scan_Info<T_real> &scan_info)
 
 // ----------------------------------------------------------------------------
 
+template<typename T_real>
+void Spectra_Volume<T_real>::correct_snake_scan(Scan_Info<T_real> &scan_info)
+{
+
+    auto max_cols = scan_info.meta_info.x_axis.cols();
+    // start at second row
+    for(int r = 1; r < scan_info.meta_info.y_axis.rows(); r++)
+    {
+        float diff_left = std::abs(scan_info.meta_info.x_axis(r-1, 0) - scan_info.meta_info.x_axis(r, 0));
+        float diff_right = std::abs(scan_info.meta_info.x_axis(r-1, 0) - scan_info.meta_info.x_axis(r, max_cols - 1));
+        if(diff_left > diff_right)
+        {
+            
+            for(int c=0, n = max_cols -1; c< n; c++, n--)
+            {
+                if(c != n)
+                {
+                    Spectra tmp_spec = (*this)[r][c];
+                    (*this)[r][c] = (*this)[r][n];
+                    (*this)[r][n] = tmp_spec;
+
+                    auto tmp_val = scan_info.meta_info.x_axis(r, c);
+                    scan_info.meta_info.x_axis(r, c) = scan_info.meta_info.x_axis(r, n);
+                    scan_info.meta_info.x_axis(r, n) = tmp_val;
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<float>;
 TEMPLATE_CLASS_DLL_EXPORT Spectra_Volume<double>;
 
