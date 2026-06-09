@@ -1341,6 +1341,12 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                 }
             }
         }
+
+        // if either of these are 0 then we don't initialize scaler_maps and cause segfault when trying to save to hdf5
+        if(_mda_file->scan->last_point == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+        {
+            _scan_info.initialize_scaler_map_with_dims("None", rows, cols, false, "bad scan");
+        }
     }
     
     std::vector<std::string> pv_names;
