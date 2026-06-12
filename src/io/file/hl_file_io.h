@@ -1525,9 +1525,11 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         // add ELT, ERT, INCNT, OUTCNT to scaler map
         if (spectra_volume != nullptr && scan_info != nullptr && scan_info->scaler_maps.size() > 0)
         {
-            // check motor positions to see if it is a snake scan an correct it.
-            spectra_volume->correct_snake_scan(*scan_info);
-
+            if(STR_SCAN_TYPE_2D_MAP == scan_type)
+            { 
+                // check motor positions to see if it is a snake scan an correct it.
+                spectra_volume->correct_snake_scan(*scan_info);
+            }
             spectra_volume->generate_scaler_maps(*scan_info);
         }
 
