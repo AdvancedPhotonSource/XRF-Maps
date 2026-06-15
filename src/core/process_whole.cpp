@@ -708,6 +708,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
             logE << "Failed to optimize ROI "<< file_path<<" : "<< roi_name<<".\n";
         }
 
+        out_fitp.divide_fit_values_by(int_spectra.elapsed_livetime());
             
         double total_counts = 0.0;
         for (auto& itr : out_fitp)

@@ -1341,6 +1341,12 @@ void MDA_IO<T_real>::_load_scalers(bool load_int_spec, bool hasNetCDF, bool subt
                 }
             }
         }
+
+        // if either of these are 0 then we don't initialize scaler_maps and cause segfault when trying to save to hdf5
+        if(_mda_file->scan->last_point == 0 || _mda_file->scan->sub_scans[0]->last_point == 0)
+        {
+            _scan_info.initialize_scaler_map_with_dims("None", rows, cols, false, "bad scan");
+        }
     }
     
     std::vector<std::string> pv_names;
@@ -1593,14 +1599,13 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF, bool subtract_two_cols)
                 {
                     _scan_info.meta_info.requested_cols = 1;
                 }
-                _scan_info.meta_info.y_axis.resize(1);
-                _scan_info.meta_info.y_axis.setZero(1);
-                _scan_info.meta_info.x_axis.resize( _scan_info.meta_info.requested_cols);
-                _scan_info.meta_info.x_axis.setZero( _scan_info.meta_info.requested_cols);
+
+                _scan_info.meta_info.y_axis.setZero(1, _scan_info.meta_info.requested_cols);
+                _scan_info.meta_info.x_axis.setZero(1, _scan_info.meta_info.requested_cols);
                 size_t iamt = std::min((size_t)_mda_file->scan->last_point, (size_t)_scan_info.meta_info.requested_cols);
                 for (size_t i = 0; i < iamt; i++)
                 {
-                    _scan_info.meta_info.x_axis(i) = _mda_file->scan->positioners_data[0][i];
+                    _scan_info.meta_info.x_axis(0,i) = _mda_file->scan->positioners_data[0][i];
                 }
             }
             else
@@ -1640,28 +1645,34 @@ void MDA_IO<T_real>::_load_meta_info(bool hasNetCDF, bool subtract_two_cols)
                     }
                 }
                 // resize and zero y axis
-                _scan_info.meta_info.y_axis.resize(_scan_info.meta_info.requested_rows);
-                _scan_info.meta_info.y_axis.setZero(_scan_info.meta_info.requested_rows);
+                _scan_info.meta_info.y_axis.setZero(_scan_info.meta_info.requested_rows, _scan_info.meta_info.requested_cols);
                 // if positioner exists, then read it
                 if (_mda_file->scan->number_positioners > 0)
                 {
                     // save y axis
-                    for (int32_t i = 0; i < _mda_file->scan->last_point; i++)
+                    for (int32_t r = 0; r < _mda_file->scan->last_point; r++)
                     {
-                        _scan_info.meta_info.y_axis(i) = _mda_file->scan->positioners_data[0][i];
+                        for( int c = 0; c < _scan_info.meta_info.requested_cols; c++)
+                        {
+                            _scan_info.meta_info.y_axis(r,c) = _mda_file->scan->positioners_data[0][r];
+                        }
                     }
                 }
                 // resize and zero x axis
-                _scan_info.meta_info.x_axis.resize(_scan_info.meta_info.requested_cols);
-                _scan_info.meta_info.x_axis.setZero(_scan_info.meta_info.requested_cols);
+                _scan_info.meta_info.x_axis.setZero(_scan_info.meta_info.requested_rows, _scan_info.meta_info.requested_cols);
                 // if positioner exists, then read it
                 if (_mda_file->scan->sub_scans[0]->number_positioners > 0)
                 {
-                    size_t iamt = std::min((size_t)_mda_file->scan->sub_scans[0]->last_point, (size_t)_scan_info.meta_info.requested_cols);
                     // save x axis
-                    for (size_t i = 0; i < iamt; i++)
+                    for (int32_t r = 0; r < _mda_file->scan->last_point; r++)
                     {
-                        _scan_info.meta_info.x_axis(i) = _mda_file->scan->sub_scans[0]->positioners_data[0][i];
+                        size_t iamt = std::min((size_t)_mda_file->scan->sub_scans[r]->last_point, (size_t)_scan_info.meta_info.requested_cols);
+                        _scan_info.meta_info.y_axis(r) = _mda_file->scan->positioners_data[0][r];
+                    
+                        for (size_t c = 0; c < iamt; c++)
+                        {
+                            _scan_info.meta_info.x_axis(r,c) = _mda_file->scan->sub_scans[r]->positioners_data[0][c];
+                        }
                     }
                 }
             }

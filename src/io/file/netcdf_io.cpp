@@ -474,9 +474,9 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     if ((retval = nc_close(ncid)))
     {
         logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
-        return spec_cntr;
+        return col_idx;
     }
-    return spec_cntr;
+    return col_idx;
 }
 
 //-----------------------------------------------------------------------------

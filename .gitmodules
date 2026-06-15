@@ -9,4 +9,4 @@
 	url = https://github.com/Microsoft/vcpkg
 [submodule "src/support/MDA_Utilities"]
 	path = src/support/MDA_Utilities
-	url = git@github.com:aglowacki/MDA_Utilities.git
+	url = https://github.com/aglowacki/MDA_Utilities.git
