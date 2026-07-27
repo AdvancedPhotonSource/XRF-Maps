@@ -2048,17 +2048,119 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
     //Scan
     if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) < 0)
     {
-        if (H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        // get dataspace and check if it is 2d or 1d array. If 2d array then we need to make new one that is 1d.
+        bool is_1d_arr = false; 
+        int rank = 0;
+        hid_t arr_space = -1;
+        hid_t arr_id = H5Dopen(file_id, "/MAPS/Scan/x_axis", H5P_DEFAULT);
+        if(arr_id > -1)
         {
-            logW << " Couldn't create soft link for x_axis" << "\n";
+            _global_close_map.push({arr_id, H5O_DATASET });
+            arr_space = H5Dget_space(arr_id);
+            _global_close_map.push({arr_space, H5O_DATASPACE });
+            rank = H5Sget_simple_extent_ndims(arr_space);
+        }
+
+        if(rank == 1)
+        {
+            if (H5Lcreate_hard(file_id, "/MAPS/Scan/x_axis", H5L_SAME_LOC, "/MAPS/x_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logW << " Couldn't create soft link for x_axis" << "\n";
+            }
+        }
+        else if (rank == 2 && arr_space > -1)
+        {
+            hsize_t count2d[2] = {0,0};
+            H5Sget_simple_extent_dims(arr_space, &count2d[0], nullptr);
+            hid_t new_arr_space = H5Screate_simple(1, &count2d[1], &count2d[1]);
+            _global_close_map.push({new_arr_space, H5O_DATASPACE });
+            hid_t arr_type = H5Dget_type(arr_id);
+            _global_close_map.push({arr_id, H5O_DATATYPE });
+            hid_t new_arr_id = H5Dcreate(file_id, "/MAPS/x_axis", arr_type, new_arr_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if(new_arr_id > -1)
+            {
+                _global_close_map.push({new_arr_id, H5O_DATASET });
+                ArrayXXr<float> arr(count2d[0], count2d[1]);
+                if (H5Dread(arr_id, arr_type, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
+                {
+                    ArrayTr<float> new_arr(count2d[1]);
+                    for(int x = 0; x< arr.cols(); x++)
+                    {
+                        new_arr(x) = arr(0,x);
+                    }
+                    if(H5Dwrite(new_arr_id, arr_type, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
+                    {
+                        logW<<"Error writing /MAPS/x_axis\n";
+                    }
+                }
+                else
+                {
+                    logW<<"Error reading /MAPS/Scan/x_axis\n";
+                }
+            }
+        }
+        else
+        {
+            logW<<"/MAPS/Scan/x_axis rank is: "<<rank<<" . This software only supports ranks 1 or 2\n";
         }
     }
 
     if (H5Gget_objinfo(file_id, "/MAPS/y_axis", 0, NULL) < 0)
     {
-        if (H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+        // get dataspace and check if it is 2d or 1d array. If 2d array then we need to make new one that is 1d.
+        bool is_1d_arr = false; 
+        int rank = 0;
+        hid_t arr_space = -1;
+        hid_t arr_id = H5Dopen(file_id, "/MAPS/Scan/y_axis", H5P_DEFAULT);
+        if(arr_id > -1)
         {
-            logW << " Couldn't create soft link for y_axis" << "\n";
+            _global_close_map.push({arr_id, H5O_DATASET });
+            arr_space = H5Dget_space(arr_id);
+            _global_close_map.push({arr_space, H5O_DATASPACE });
+            rank = H5Sget_simple_extent_ndims(arr_space);
+        }
+
+        if(rank == 1)
+        {
+            if (H5Lcreate_hard(file_id, "/MAPS/Scan/y_axis", H5L_SAME_LOC, "/MAPS/y_axis", H5P_DEFAULT, H5P_DEFAULT) < 0)
+            {
+                logW << " Couldn't create soft link for y_axis" << "\n";
+            }
+        }
+        else if (rank == 2 && arr_space > -1)
+        {
+            hsize_t count2d[2] = {0,0};
+            H5Sget_simple_extent_dims(arr_space, &count2d[0], nullptr);
+            hid_t new_arr_space = H5Screate_simple(1, &count2d[0], &count2d[1]);
+            _global_close_map.push({new_arr_space, H5O_DATASPACE });
+            hid_t arr_type = H5Dget_type(arr_id);
+            _global_close_map.push({arr_id, H5O_DATATYPE });
+            hid_t new_arr_id = H5Dcreate(file_id, "/MAPS/y_axis", arr_type, new_arr_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if(new_arr_id > -1)
+            {
+                _global_close_map.push({new_arr_id, H5O_DATASET });
+                ArrayXXr<float> arr(count2d[0], count2d[1]);
+                if (H5Dread(arr_id, arr_type, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
+                {
+                    ArrayTr<float> new_arr(count2d[0]);
+                    for(int y = 0; y< arr.rows(); y++)
+                    {
+                        new_arr(y) = arr(y,0);
+                    }
+                    if(H5Dwrite(new_arr_id, arr_type, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
+                    {
+                        logW<<"Error writing /MAPS/y_axis\n";
+                    }
+                }
+                else
+                {
+                    logW<<"Error reading /MAPS/Scan/y_axis\n";
+                }
+            }
+        }
+        else
+        {
+            logW<<"/MAPS/Scan/y_axis rank is: "<<rank<<" . This software only supports ranks 1 or 2\n";
         }
     }
 

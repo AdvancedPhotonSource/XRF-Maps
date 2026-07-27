@@ -143,6 +143,8 @@ public:
 
 private:
 
+    mda_file* _check_and_fix_bad_header(std::FILE* disk_file);
+
     void _load_scalers(bool load_int_spec, bool hasNetCDF, bool subtract_two_cols);
 
     void _load_extra_pvs_vector();

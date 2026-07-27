@@ -371,6 +371,8 @@ const std::string STR_WINDOW1 = "window1";
 const std::string STR_DEADTIME_PERC = "dead_time_percent";
 const std::string STR_DEADTIME_FACT = "dead_time_factor";
 
+
+const std::string STR_SOFTWARE_VERSION =  "Software_Version";
 //}
 
 //}// namespace keys

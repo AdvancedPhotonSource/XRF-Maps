@@ -74,6 +74,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "data_struct/scaler_lookup.h"
 
 #include "csv_io.h"
+
+#include "core/git_hash.h"
+
 namespace io
 {
 namespace file
@@ -6767,10 +6770,10 @@ public:
     template<typename T_real>
     bool save_element_fits(const std::string path,
         const data_struct::Fit_Count_Dict<T_real>* const element_counts,
-        [[maybe_unused]] size_t row_idx_start=0,
-        [[maybe_unused]] int row_idx_end=-1,
-        [[maybe_unused]] size_t col_idx_start=0,
-        [[maybe_unused]] int col_idx_end=-1)
+        [[maybe_unused]] size_t row_idx_start = 0,
+        [[maybe_unused]] int row_idx_end = -1,
+        [[maybe_unused]] size_t col_idx_start = 0,
+        [[maybe_unused]] int col_idx_end = -1)
     {
         std::lock_guard<std::mutex> lock(_mutex);
 
@@ -6785,14 +6788,13 @@ public:
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
-        hid_t   dset_id, dset_ch_id, dset_un_id;
-        hid_t   memoryspace, dataspace_id, dataspace_ch_id, dataspace_un_id, dataspace_ch_off_id;
-        hid_t   filetype, memtype;
-        herr_t  status;
-        hid_t   xrf_grp_id, fit_grp_id, maps_grp_id;
+        hid_t   dset_id = -1, dset_ch_id = -1, dset_un_id = -1;
+        hid_t   memoryspace = -1, dataspace_id = -1, dataspace_ch_id = -1, dataspace_un_id = -1, dataspace_ch_off_id = -1;
+        hid_t   filetype = -1, memtype = -1;
+        herr_t  status = -1;
+        hid_t   xrf_grp_id = -1, fit_grp_id = -1, maps_grp_id = -1;
+        hid_t software_version_id = -1, software_version_space = -1;
 
-        dset_id = -1;
-        dset_ch_id = -1;
         hsize_t dims_out[3] = { 0, 0, 0 };
         hsize_t offset[1] = { 0 };
         hsize_t offset2[1] = { 0 };
@@ -6800,7 +6802,7 @@ public:
         hsize_t count[1] = { 1 };
         hsize_t count_3d[3] = { 1, 1, 1 };
         hsize_t chunk_dims[3];
-        
+
         if (element_counts != nullptr)
         {
             if (element_counts->size() > 0)
@@ -6824,12 +6826,34 @@ public:
         chunk_dims[1] = dims_out[1];
         chunk_dims[2] = dims_out[2];
 
+        filetype = H5Tcopy(H5T_C_S1);
+        _global_close_map.push({ filetype, H5O_DATATYPE });
+        H5Tset_size(filetype, 256);
+        memtype = H5Tcopy(H5T_C_S1);
+        _global_close_map.push({memtype, H5O_DATATYPE});
+        status = H5Tset_size(memtype, 255);
+
         _create_memory_space(1, count_3d, dataspace_ch_off_id);
         _create_memory_space(3, count_3d, memoryspace);
 
         if (false == _open_or_create_group(STR_MAPS, _cur_file_id, maps_grp_id))
         {
             return false;
+        }
+
+        // save version of this software
+        if (_open_h5_dataset<std::string>(STR_SOFTWARE_VERSION, maps_grp_id, 1, count_3d, count_3d, software_version_id, software_version_space))
+        {
+            std::string ver_str = "Version: ";
+            ver_str += GIT_COMMIT_TAG;
+            ver_str += " Git Hash: ";
+            ver_str += GIT_COMMIT_HASH;
+            char tmp_char[256] = { 0 };
+            ver_str.copy(tmp_char, 254);
+            if (H5Dwrite(software_version_id, memtype, software_version_space, software_version_space, H5P_DEFAULT, (void*)tmp_char) < 0)
+            {
+                logW << "Could not save software version\n";
+            }
         }
 
         if (false == _open_or_create_group(STR_XRF_ANALYZED, maps_grp_id, xrf_grp_id))
@@ -6847,11 +6871,6 @@ public:
             return false;
         }
 
-        //filetype = H5Tcopy (H5T_FORTRAN_S1);
-        filetype = H5Tcopy(H5T_C_S1);
-        H5Tset_size(filetype, 256);
-        memtype = H5Tcopy(H5T_C_S1);
-        status = H5Tset_size(memtype, 255);
 
         if (false == _open_h5_dataset(STR_CHANNEL_NAMES, filetype, fit_grp_id, 1, dims_out, dims_out, dset_ch_id, dataspace_ch_id))
         {
@@ -9174,41 +9193,78 @@ public:
         || params_override->branching_ratio_M.size() > 0
         || params_override->branching_family_L.size() > 0)
         {
-            // save branching ratio's 
+            // save branching ratio's
             if (false == _open_or_create_group(STR_BRANCHING_RATIOS, po_grp_id, br_grp_id))
             {
                 return false;
             }
+
+            // string types used to store each shell's raw branching ratio lines
+            hid_t br_filetype = H5Tcopy(H5T_FORTRAN_S1);
+            H5Tset_size(br_filetype, 256);
+            _global_close_map.push({ br_filetype, H5O_DATATYPE });
+            hid_t br_memtype = H5Tcopy(H5T_C_S1);
+            H5Tset_size(br_memtype, 256);
+            _global_close_map.push({ br_memtype, H5O_DATATYPE });
+
+            // saves a vector of branching ratio lines as a fixed length string dataset within the given group
+            auto save_branching = [&](hid_t grp_id, const std::vector<std::string>& ratios) -> void
+            {
+                hsize_t br_count[1] = { ratios.size() };
+                hid_t br_dset_id, br_space_id;
+                if (false == _open_h5_dataset(STR_BRANCHING_RATIOS, br_filetype, grp_id, 1, br_count, br_count, br_dset_id, br_space_id))
+                {
+                    logE << "Failed to open or create branching ratio dataset\n";
+                    return;
+                }
+
+                hsize_t br_offset[1] = { 0 };
+                hsize_t br_single[1] = { 1 };
+                for (size_t j = 0; j < ratios.size(); j++)
+                {
+                    br_offset[0] = j;
+                    char br_label[256] = { 0 };
+                    ratios[j].copy(&br_label[0], 255);
+
+                    herr_t st = H5Sselect_hyperslab(br_space_id, H5S_SELECT_SET, br_offset, nullptr, br_single, nullptr);
+                    st = H5Dwrite(br_dset_id, br_memtype, memoryspace_id, br_space_id, H5P_DEFAULT, (void*)&br_label);
+                    if (st < 0)
+                    {
+                        logE << "failed to write branching ratio\n";
+                    }
+                }
+            };
+
             if(params_override->branching_ratio_K.size() > 0)
             {
-                // save K ratios 
+                // save K ratios
                 if (_open_or_create_group(STR_K_SHELL, br_grp_id, k_grp_id))
                 {
-                    
+                    save_branching(k_grp_id, params_override->branching_ratio_K);
                 }
             }
             if(params_override->branching_ratio_L.size() > 0)
             {
-                // save l ratios 
+                // save l ratios
                 if (_open_or_create_group(STR_L_SHELL, br_grp_id, l_grp_id))
                 {
-                    
+                    save_branching(l_grp_id, params_override->branching_ratio_L);
                 }
             }
             if(params_override->branching_ratio_M.size() > 0)
             {
-                // save K Shells 
+                // save M ratios
                 if (_open_or_create_group(STR_M_SHELL, br_grp_id, m_grp_id))
                 {
-                    
+                    save_branching(m_grp_id, params_override->branching_ratio_M);
                 }
             }
             if(params_override->branching_family_L.size() > 0)
             {
-                // save K Shells 
+                // save L family ratios
                 if (_open_or_create_group(STR_L_FAMILY, br_grp_id, l_fam_grp_id))
                 {
-                    
+                    save_branching(l_fam_grp_id, params_override->branching_family_L);
                 }
             }
         }
@@ -9897,6 +9953,13 @@ private:
         else if (std::is_same<T_real, double>::value)
         {
             return _open_h5_dataset(name, H5T_INTEL_F64, parent_id, dims_size, dims, chunk_dims, out_id, out_dataspece);
+        }
+        else if (std::is_same<T_real, std::string>::value)
+        {
+            hid_t filetype = H5Tcopy(H5T_C_S1);
+            _global_close_map.push({ filetype, H5O_DATATYPE });
+            H5Tset_size(filetype, 256);
+            return _open_h5_dataset(name, filetype, parent_id, dims_size, dims, chunk_dims, out_id, out_dataspece);
         }
         return false;
     }

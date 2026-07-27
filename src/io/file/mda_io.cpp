@@ -74,6 +74,70 @@ MDA_IO<T_real>::~MDA_IO()
 
 }
 
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+mda_file* MDA_IO<T_real>::_check_and_fix_bad_header(std::FILE* disk_file)
+{
+    if (disk_file == NULL) 
+    {
+        perror("Error opening file");
+        return nullptr;
+    }
+
+    //  Determine file size
+    fseek(disk_file, 0, SEEK_END);
+    long file_size = ftell(disk_file);
+    fseek(disk_file, 0, SEEK_SET);
+
+    //  Allocate memory buffer
+    char *buffer = (char*)malloc(file_size);
+    if (buffer == NULL) 
+    {
+        perror("Memory allocation failed");
+        return nullptr;
+    }
+
+    //  Read the file content into the memory buffer
+    size_t bytes_read = fread(buffer, 1, file_size, disk_file);
+
+    if (bytes_read < file_size) 
+    {
+        fprintf(stderr, "Warning: Only read %zu of %ld bytes\n", bytes_read, file_size);
+    }
+
+    // Make sure we read in enough header to fix
+    if(bytes_read < 36) 
+    {
+        free(buffer);
+        return nullptr;
+    }
+
+    // if 4 bytes at offset 12 are ff ff ff ff, this is corrupt header. Reaplace with correct value
+    if(buffer[12] == (char)0xff && buffer[13] == (char)0xff && buffer[14] == (char)0xff && buffer[15] == (char)0xff)
+    {
+        logI<<"Found bad header in MDA file. Trying to fix and read again\n";
+        buffer[12] = buffer[32];
+        buffer[13] = buffer[33];
+        buffer[14] = buffer[34];
+        buffer[15] = buffer[35];
+    }
+
+    FILE *mem_file = fmemopen(buffer, file_size, "r");
+    if (mem_file == NULL) 
+    {
+        perror("fmemopen failed");
+        free(buffer);
+        return nullptr;
+    }
+
+    _mda_file = mda_load(mem_file);
+    std::fclose(mem_file);
+    free(buffer);
+    return _mda_file;
+}
+
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
@@ -92,6 +156,10 @@ bool MDA_IO<T_real>::load_scalers(std::string path)
     }
 
     _mda_file = mda_load(fptr);
+    if(_mda_file == nullptr)
+    {
+        _mda_file = _check_and_fix_bad_header(fptr);
+    }
     std::fclose(fptr);
 
     if (_mda_file == nullptr)
@@ -150,6 +218,10 @@ bool MDA_IO<T_real>::load_quantification_scalers(std::string path, data_struct::
             }
 
             _mda_file = mda_load(fptr);
+            if(_mda_file == nullptr)
+            {
+                _mda_file = _check_and_fix_bad_header(fptr);
+            }
             std::fclose(fptr);
         }
         if (_mda_file == nullptr)
@@ -275,6 +347,10 @@ Load_Status MDA_IO<T_real>::load_spectra_volume(std::string path,
 
 
     _mda_file = mda_load(fptr);
+    if(_mda_file == nullptr)
+    {
+        _mda_file = _check_and_fix_bad_header(fptr);
+    }
     std::fclose(fptr);
     if (_mda_file == nullptr || vol == nullptr)
     {
@@ -611,6 +687,10 @@ bool MDA_IO<T_real>::load_spectra_volume_with_callback(std::string path,
 
 
     _mda_file = mda_load(fptr);
+    if(_mda_file == nullptr)
+    {
+        _mda_file = _check_and_fix_bad_header(fptr);
+    }
     std::fclose(fptr);
     if (_mda_file == nullptr)
     {
@@ -880,6 +960,10 @@ Load_Status MDA_IO<T_real>::load_integrated_spectra(std::string path,
 
 
 	_mda_file = mda_load(fptr);
+    if(_mda_file == nullptr)
+    {
+        _mda_file = _check_and_fix_bad_header(fptr);
+    }
 	std::fclose(fptr);
 	if (_mda_file == nullptr || out_integrated_spectra == nullptr)
 	{

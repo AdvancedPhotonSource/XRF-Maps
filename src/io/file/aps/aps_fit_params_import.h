@@ -290,7 +290,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             //logD<<"Element : "<<element_symb<<" : "<<base_element_symb<<"\n";
 
                             Element_Info<T_real>* e_info = element_info_map->get_element(base_element_symb);
-                            if (e_info == nullptr)
+                            if (e_info == nullptr && base_element_symb.length() > 0)
                             {
                                 logW << "Can not find element " << base_element_symb << "\n";
                             }
@@ -384,7 +384,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             }
                             else
                             {
-                                logW << "Could not parse pileup string: " << orig_el_symb << ".\n";
+                                if(orig_el_symb.length() > 0)
+                                {
+                                    logW << "Could not parse pileup string: " << orig_el_symb << ".\n";
+                                }
                             }
                         }
                     }

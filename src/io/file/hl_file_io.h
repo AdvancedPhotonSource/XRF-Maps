@@ -186,7 +186,8 @@ template<typename T_real>
 DLL_EXPORT bool load_override_params(std::string dataset_directory,
     int detector_num,
     data_struct::Params_Override<T_real> &params_override,
-    bool append_file_name = true)
+    bool append_file_name = true,
+    bool log_error_loading = true)
 {
     std::string det_num = "";
     std::string filename = dataset_directory;
@@ -201,7 +202,10 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
 
     if (false == io::file::aps::load_parameters_override(filename, params_override))
     {
-        logE << "Loading fit param override file: " << filename << "\n";
+        if(log_error_loading)
+        {
+            logE << "Loading fit param override file: " << filename << "\n";
+        }
         return false;
     }
     else
