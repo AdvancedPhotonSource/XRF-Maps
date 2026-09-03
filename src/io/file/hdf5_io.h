@@ -7193,6 +7193,44 @@ public:
 
         if (detector != nullptr)
         {
+            std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> all_elements;
+            for (auto& itr1 : detector->K_element_quants)
+            {
+                auto& middle_map_dest = all_elements[itr1.first];
+                for (auto& itr2 : itr1.second)
+                {
+                    auto& middle_map_dest2 = middle_map_dest[itr2.first];
+                    for (auto& itr3 : itr2.second)
+                    {
+                        middle_map_dest2[itr3.first] = itr3.second;
+                    }
+                }
+            }
+            for (auto& itr1 : detector->L_element_quants)
+            {
+                auto& middle_map_dest = all_elements[itr1.first];
+                for (auto& itr2 : itr1.second)
+                {
+                    auto& middle_map_dest2 = middle_map_dest[itr2.first];
+                    for (auto& itr3 : itr2.second)
+                    {
+                        middle_map_dest2[itr3.first] = itr3.second;
+                    }
+                }
+            }
+            for (auto& itr1 : detector->M_element_quants)
+            {
+                auto& middle_map_dest = all_elements[itr1.first];
+                for (auto& itr2 : itr1.second)
+                {
+                    auto& middle_map_dest2 = middle_map_dest[itr2.first];
+                    for (auto& itr3 : itr2.second)
+                    {
+                        middle_map_dest2[itr3.first] = itr3.second;
+                    }
+                }
+            }
+
             if (false == _open_or_create_group(STR_QUANTIFICATION, maps_grp_id, q_grp_id))
             {
                 return false;
@@ -7615,7 +7653,7 @@ public:
                     hid_t e_name_dataspace_id = -1;
                     hid_t e_prop_dataspace_id = -1;
 
-                    e_count[0] = detector->all_element_quants[qitr.first][quant_scaler_itr.first].size();
+                    e_count[0] = all_elements[qitr.first][quant_scaler_itr.first].size();
                     e_count[1] = 10; // all properties of Element_Quant except for name
                     p_count[0] = 10; // all properties of Element_Quant except for name
 
@@ -7630,7 +7668,7 @@ public:
                     {
                         int c = 0;
                         // proc_type          quant_scaler      element    quant_prop
-                        for (auto& element_itr : detector->all_element_quants[qitr.first][quant_scaler_itr.first])
+                        for (auto& element_itr : all_elements[qitr.first][quant_scaler_itr.first])
                         {
 
                             char label[50] = { 0 };
@@ -9272,6 +9310,176 @@ public:
         return true;
     }
 
+    //-----------------------------------------------------------------------------
+
+    // Reads the fit parameters override table and branching ratio's back out of an analyzed hdf5 file.
+    // The fit parameters are stored as a table where each row is a parameter and the columns are
+    // value, min value, max value, and step size. This is used as a fallback when the
+    // maps_fit_parameters_override.txt file is missing.
+    template<typename T_real>
+    bool load_params_override(std::string path, data_struct::Params_Override<T_real>* params_override)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+
+        if (params_override == nullptr)
+        {
+            logE << " Params_override is null\n";
+            return false;
+        }
+
+        std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
+
+        hid_t file_id = -1;
+        if (false == _open_h5_object(file_id, H5O_FILE, close_map, path, -1))
+        {
+            return false;
+        }
+
+        std::string str_grp = "/" + STR_MAPS + "/" + STR_FIT_PARAMETERS_OVERRIDE + "/";
+        std::string str_names = str_grp + STR_FIT_PARAMETERS + "_Names";
+        std::string str_values = str_grp + STR_FIT_PARAMETERS + "_Values";
+
+        // string type used to read fixed length string datasets (names and branching ratio lines)
+        hid_t memtype = H5Tcopy(H5T_C_S1);
+        H5Tset_size(memtype, 256);
+        close_map.push({ memtype, H5O_DATATYPE });
+
+        // ---- read fit parameters table ----
+        hid_t fitp_names_id = -1, fitp_values_id = -1;
+        if (false == _open_h5_object(fitp_names_id, H5O_DATASET, close_map, str_names, file_id, false, false))
+        {
+            logW << "Could not find " << str_names << " in " << path << "\n";
+            _close_h5_objects(close_map);
+            return false;
+        }
+        if (false == _open_h5_object(fitp_values_id, H5O_DATASET, close_map, str_values, file_id, false, false))
+        {
+            logW << "Could not find " << str_values << " in " << path << "\n";
+            _close_h5_objects(close_map);
+            return false;
+        }
+
+        hid_t names_space = H5Dget_space(fitp_names_id);
+        close_map.push({ names_space, H5O_DATASPACE });
+        hid_t values_space = H5Dget_space(fitp_values_id);
+        close_map.push({ values_space, H5O_DATASPACE });
+
+        if (H5Sget_simple_extent_ndims(values_space) != 2)
+        {
+            logE << str_values << " rank != 2. Can not load fit parameters.\n";
+            _close_h5_objects(close_map);
+            return false;
+        }
+
+        hsize_t names_dims[1] = { 0 };
+        H5Sget_simple_extent_dims(names_space, &names_dims[0], nullptr);
+        hsize_t values_dims[2] = { 0, 0 };
+        H5Sget_simple_extent_dims(values_space, &values_dims[0], nullptr);
+
+        // number of parameters is limited by both the names and values datasets
+        hsize_t nparams = std::min(names_dims[0], values_dims[0]);
+
+        hsize_t name_count[1] = { 1 };
+        hid_t name_mem_space = H5Screate_simple(1, name_count, nullptr);
+        close_map.push({ name_mem_space, H5O_DATASPACE });
+
+        hsize_t val_count[2] = { 1, values_dims[1] };
+        hid_t val_mem_space = H5Screate_simple(2, val_count, nullptr);
+        close_map.push({ val_mem_space, H5O_DATASPACE });
+
+        hsize_t name_offset[1] = { 0 };
+        hsize_t val_offset[2] = { 0, 0 };
+        std::vector<T_real> props(values_dims[1], (T_real)0);
+
+        for (hsize_t idx = 0; idx < nparams; idx++)
+        {
+            // read the parameter name
+            char tmp_name[256] = { 0 };
+            name_offset[0] = idx;
+            H5Sselect_hyperslab(names_space, H5S_SELECT_SET, name_offset, nullptr, name_count, nullptr);
+            if (H5Dread(fitp_names_id, memtype, name_mem_space, names_space, H5P_DEFAULT, (void*)&tmp_name[0]) < 0)
+            {
+                logW << "failed to read fit parameter name at row " << idx << "\n";
+                continue;
+            }
+            auto end_ptr = std::find(tmp_name, tmp_name + 256, '\0');
+            std::string name(tmp_name, end_ptr);
+            if (name.length() == 0)
+            {
+                continue;
+            }
+
+            // read the row of value, min, max, step
+            val_offset[0] = idx;
+            val_offset[1] = 0;
+            H5Sselect_hyperslab(values_space, H5S_SELECT_SET, val_offset, nullptr, val_count, nullptr);
+            if (_read_h5d<T_real>(fitp_values_id, val_mem_space, values_space, H5P_DEFAULT, props.data()) < 0)
+            {
+                logW << "failed to read fit parameter values for " << name << "\n";
+                continue;
+            }
+
+            data_struct::Fit_Param<T_real> fp(name);
+            fp.value = props[0];
+            if (values_dims[1] > 1) { fp.min_val = props[1]; }
+            if (values_dims[1] > 2) { fp.max_val = props[2]; }
+            if (values_dims[1] > 3) { fp.step_size = props[3]; }
+            params_override->fit_params.add_parameter(fp);
+        }
+
+        // ---- read branching ratio's (optional) ----
+        std::string str_br_grp = str_grp + STR_BRANCHING_RATIOS + "/";
+
+        auto load_branching = [&](const std::string& shell_name, std::vector<std::string>& out_vec)
+        {
+            std::string ds_path = str_br_grp + shell_name + "/" + STR_BRANCHING_RATIOS;
+            hid_t br_dset_id = -1;
+            if (false == _open_h5_object(br_dset_id, H5O_DATASET, close_map, ds_path, file_id, false, false))
+            {
+                return; // branching ratio's are optional
+            }
+            hid_t br_space = H5Dget_space(br_dset_id);
+            close_map.push({ br_space, H5O_DATASPACE });
+
+            hsize_t br_dims[1] = { 0 };
+            H5Sget_simple_extent_dims(br_space, &br_dims[0], nullptr);
+
+            hsize_t br_count[1] = { 1 };
+            hid_t br_mem_space = H5Screate_simple(1, br_count, nullptr);
+            close_map.push({ br_mem_space, H5O_DATASPACE });
+
+            hsize_t br_offset[1] = { 0 };
+            for (hsize_t idx = 0; idx < br_dims[0]; idx++)
+            {
+                char tmp_line[256] = { 0 };
+                br_offset[0] = idx;
+                H5Sselect_hyperslab(br_space, H5S_SELECT_SET, br_offset, nullptr, br_count, nullptr);
+                if (H5Dread(br_dset_id, memtype, br_mem_space, br_space, H5P_DEFAULT, (void*)&tmp_line[0]) < 0)
+                {
+                    logW << "failed to read branching ratio at row " << idx << " for " << shell_name << "\n";
+                    continue;
+                }
+                auto end_ptr = std::find(tmp_line, tmp_line + 256, '\0');
+                std::string line(tmp_line, end_ptr);
+                if (line.length() > 0)
+                {
+                    out_vec.push_back(line);
+                }
+            }
+        };
+
+        load_branching(STR_K_SHELL, params_override->branching_ratio_K);
+        load_branching(STR_L_SHELL, params_override->branching_ratio_L);
+        load_branching(STR_M_SHELL, params_override->branching_ratio_M);
+        load_branching(STR_L_FAMILY, params_override->branching_family_L);
+
+        // regenerate the parsed branching ratio lookup from the raw lines
+        params_override->parse_and_gen_branching_ratios();
+
+        _close_h5_objects(close_map);
+
+        return true;
+    }
 
     //-----------------------------------------------------------------------------
 

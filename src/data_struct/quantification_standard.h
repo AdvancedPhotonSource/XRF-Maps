@@ -177,7 +177,7 @@ public:
     std::string standard_filename;
     std::unordered_map<std::string, T_real> element_standard_weights;
 
-    // element name       cts
+    // fit routine                                        element name       cts
     std::unordered_map<Fitting_Routines, std::unordered_map<std::string, T_real> > element_counts;
 
     Spectra<T_real> integrated_spectra;

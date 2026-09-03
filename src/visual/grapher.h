@@ -64,10 +64,16 @@ DLL_EXPORT void SavePlotSpectras(std::string path,
 
     QValueAxis* axisX = new QValueAxis();
     axisX->setTitleText("Energy (keV)");
-    axisX->setLabelFormat("%1.0f");
-    //axisX->setTickCount(series->count());
-    //axisX->setRange(0, 2048);
-    axisX->setTickCount(11);
+    axisX->setLabelFormat("%0.1f");
+    axisX->setTruncateLabels(false);
+    axisX->setTickAnchor(0.0);
+    axisX->setTickInterval(1.0);
+    axisX->setTickType(QValueAxis::TicksDynamic);
+    axisX->setTruncateLabels(false);
+    if(energy != nullptr)
+    {
+        axisX->setTickAnchor((*energy)[0]);
+    }
 
     QValueAxis* axisY = new QValueAxis();
     axisY->setTitleText("Counts");
@@ -250,13 +256,15 @@ template<typename T_real>
 DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                               Detector<T_real>* detector,
                                 std::string quantifier_scaler_name,
-                                std::unordered_map<std::string, Element_Quant<T_real>*>* all_elements_with_weights,
+                                std::unordered_map<std::string, Element_Quant<T_real>*>* K_elements_with_weights,
+                                std::unordered_map<std::string, Element_Quant<T_real>*>* L_elements_with_weights,
+                                std::unordered_map<std::string, Element_Quant<T_real>*>* M_elements_with_weights,
                                 std::unordered_map<Electron_Shell, std::vector<Element_Quant<T_real>> >* curve_quant_map,
                                 //std::vector<Element_Quant<T_real>>* calibration_curve,
                               int zstart,
                               int zstop)
 {
-    if (all_elements_with_weights == nullptr || detector == nullptr || curve_quant_map == nullptr)
+    if (K_elements_with_weights == nullptr || L_elements_with_weights == nullptr || M_elements_with_weights == nullptr || detector == nullptr || curve_quant_map == nullptr)
     {
         logW << "detector is null. Cannot save png " << path << ". \n";
         return;
@@ -312,7 +320,7 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
 
         for (const auto& itr : s_itr.second.element_standard_weights)
         {
-            if (all_elements_with_weights->count(itr.first) > 0)
+            if (K_elements_with_weights->count(itr.first) > 0 || L_elements_with_weights->count(itr.first) > 0 || M_elements_with_weights->count(itr.first) > 0 )
             {
                 data_struct::Element_Info<T_real>* element_info = data_struct::Element_Info_Map<T_real>::inst()->get_element(itr.first);
                 data_struct::Electron_Shell shell = quantification::models::get_shell_by_name(itr.first);
@@ -320,7 +328,22 @@ DLL_EXPORT void SavePlotCalibrationCurve(std::string path,
                 {
                     shell_list[shell] = 1;
                 }
-                T_real plot_val = all_elements_with_weights->at(itr.first)->e_cal_ratio;
+
+                T_real plot_val = 1.0;
+                
+                if (K_elements_with_weights->count(itr.first) > 0) 
+                {
+                    plot_val = K_elements_with_weights->at(itr.first)->e_cal_ratio;
+                }
+                else if (L_elements_with_weights->count(itr.first) > 0)
+                {
+                    plot_val = L_elements_with_weights->at(itr.first)->e_cal_ratio;
+                }
+                else if (M_elements_with_weights->count(itr.first) > 0)
+                {
+                    plot_val = M_elements_with_weights->at(itr.first)->e_cal_ratio;
+                }
+
                 if (element_info != nullptr)
                 {
                     if (false == std::isfinite(plot_val) || plot_val <= 0.0)
@@ -428,9 +451,21 @@ DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detec
                 int zstart = 0;
                 int zstop = CALIBRATION_CURVE_SIZE;
 
-                if (contains_shell(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first))))
+                if (contains_shell(shell_itr, &(detector->K_element_quants.at(itr1.first).at(itr2.first))))
                 {
-                    find_shell_Z_offset(shell_itr, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
+                    find_shell_Z_offset(shell_itr, &(detector->K_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
+                    minZ = std::min(minZ, zstart);
+                    maxZ = std::max(maxZ, zstop);
+                }
+                if (contains_shell(shell_itr, &(detector->L_element_quants.at(itr1.first).at(itr2.first))))
+                {
+                    find_shell_Z_offset(shell_itr, &(detector->L_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
+                    minZ = std::min(minZ, zstart);
+                    maxZ = std::max(maxZ, zstop);
+                }
+                if (contains_shell(shell_itr, &(detector->M_element_quants.at(itr1.first).at(itr2.first))))
+                {
+                    find_shell_Z_offset(shell_itr, &(detector->M_element_quants.at(itr1.first).at(itr2.first)), zstart, zstop);
                     minZ = std::min(minZ, zstart);
                     maxZ = std::max(maxZ, zstop);
                 }
@@ -444,7 +479,7 @@ DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detec
             {
                 str_path_full += ".png";
             }
-            SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->all_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map), minZ, maxZ);
+            SavePlotCalibrationCurve(str_path_full, detector, itr2.first, &(detector->K_element_quants.at(itr1.first).at(itr2.first)), &(detector->L_element_quants.at(itr1.first).at(itr2.first)), &(detector->M_element_quants.at(itr1.first).at(itr2.first)), &(itr2.second.curve_quant_map), minZ, maxZ);
              
         }
     }

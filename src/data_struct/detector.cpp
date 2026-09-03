@@ -88,15 +88,9 @@ Detector<T_real>::~Detector()
     }
     fit_routines.clear();
     quantification_standards.clear();
-    for (auto& itr : all_element_quants)
-    {
-        for (auto& itr2 : itr.second)
-        {
-            itr2.second.clear();
-        }
-        itr.second.clear();
-    }
-    all_element_quants.clear();
+    K_element_quants.clear();
+    L_element_quants.clear();
+    M_element_quants.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -117,7 +111,21 @@ void Detector<T_real>::append_element(Fitting_Routines routine, std::string quan
 
         if (fitting_quant_map.at(routine).quant_scaler_map.contains(quant_scaler))
         {
-            all_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
+            switch (shell)
+            {
+            case data_struct::Electron_Shell::K_SHELL:
+                K_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
+                break;
+            case data_struct::Electron_Shell::L_SHELL:
+                L_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
+                break;
+            case data_struct::Electron_Shell::M_SHELL:
+                M_element_quants[routine][quant_scaler][name] = &(fitting_quant_map.at(routine).quant_scaler_map.at(quant_scaler).curve_quant_map[shell][element->number - 1]);
+                break;
+            default:
+                logW << "Could not add element " << name << ". Not found in Element_Info_Map\n";
+                break;
+            }
         }
     }
     else
@@ -345,6 +353,7 @@ template<typename T_real>
 void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
                                         std::string quantifier_scaler,
                                         Quantification_Model<T_real>* quantification_model,
+                                        data_struct::Electron_Shell elect_shell,
                                         T_real val)
 {
     if (fitting_quant_map.contains(routine))
@@ -352,11 +361,8 @@ void Detector<T_real>::update_calibration_curve(Fitting_Routines routine,
         if (fitting_quant_map.at(routine).quant_scaler_map.contains(quantifier_scaler))
         {
             fitting_quant_map.at(routine).quantifier_map[quantifier_scaler] = val;
-            for (const auto& shell_itr : Shells_Quant_List)
-            {
-                std::vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(shell_itr));
-                quantification_model->model_calibrationcurve(quant_vec, val);
-            }
+            std::vector<Element_Quant<T_real>>* quant_vec = &(fitting_quant_map.at(routine).quant_scaler_map.at(quantifier_scaler).curve_quant_map.at(elect_shell));
+            quantification_model->model_calibrationcurve(quant_vec, val);
         }
     }
 }

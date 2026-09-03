@@ -55,6 +55,55 @@ namespace io
 namespace file
 {
 
+
+#ifdef _WIN32
+#include <stdio.h>
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+
+FILE* fmemopen(void* buf, size_t size, const char* mode) 
+{
+    char temp_path[MAX_PATH + 1];
+    char temp_file[MAX_PATH + 1];
+
+    if (!GetTempPathA(MAX_PATH, temp_path)) return NULL;
+    if (!GetTempFileNameA(temp_path, "fmem", 0, temp_file)) return NULL;
+
+    // Open file with flags that force Windows to keep it in the RAM cache and delete on close
+    HANDLE hFile = CreateFileA(temp_file,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
+        NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE) return NULL;
+
+    // Convert Win32 HANDLE to a standard C FILE* pointer
+    int fd = _open_osfhandle((intptr_t)hFile, _O_RDWR | _O_BINARY);
+    if (fd == -1) {
+        CloseHandle(hFile);
+        return NULL;
+    }
+
+    FILE* fp = _fdopen(fd, "w+b");
+    if (!fp) {
+        _close(fd);
+        return NULL;
+    }
+
+    // Pre-populate buffer if data is supplied
+    if (buf && size > 0) {
+        fwrite(buf, 1, size, fp);
+        rewind(fp);
+    }
+
+    return fp;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 
 template<typename T_real>

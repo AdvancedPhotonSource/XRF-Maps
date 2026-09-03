@@ -91,6 +91,7 @@ public:
     void update_calibration_curve(Fitting_Routines routine,
                                 std::string quantifier_scaler,
                                 Quantification_Model<T_real>* quantification_model,
+                                data_struct::Electron_Shell elect_shell,
                                 T_real val);
 
     void update_from_fit_parameters();
@@ -113,7 +114,9 @@ public:
     std::unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
 
     //  proc_type          quantifier            element    quant_prop
-    std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> all_element_quants;
+    std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> K_element_quants;
+    std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> L_element_quants;
+    std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> M_element_quants;
 
     // Fit Parameters Override for model
     Params_Override<T_real> fit_params_override_dict;

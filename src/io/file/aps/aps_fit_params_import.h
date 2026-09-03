@@ -297,7 +297,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             else
                             {
                                 Fit_Element_Map<T_real>* fit_map;
-                                if (params_override.elements_to_fit.contains(element_symb) == false)
+                                if (params_override.elements_to_fit.contains(element_symb) == false && element_symb.length() > 0)
                                 {
                                     fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
                                     params_override.elements_to_fit[element_symb] = fit_map;

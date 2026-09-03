@@ -187,7 +187,8 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
     int detector_num,
     data_struct::Params_Override<T_real> &params_override,
     bool append_file_name = true,
-    bool log_error_loading = true)
+    bool log_error_loading = true,
+    std::string hdf5_fallback_filename = "")
 {
     std::string det_num = "";
     std::string filename = dataset_directory;
@@ -202,13 +203,25 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
 
     if (false == io::file::aps::load_parameters_override(filename, params_override))
     {
-        if(log_error_loading)
+        // The override txt file is missing. Fall back to reading the fit parameters and
+        // branching ratio's saved inside the analyzed hdf5 file (if one was provided).
+        bool loaded_from_h5 = false;
+        if (hdf5_fallback_filename.length() > 0)
         {
-            logE << "Loading fit param override file: " << filename << "\n";
+            logI << "Override txt missing, attempting to load overrides from hdf5: " << hdf5_fallback_filename << "\n";
+            loaded_from_h5 = io::file::HDF5_IO::inst()->load_params_override(hdf5_fallback_filename, &params_override);
         }
-        return false;
+
+        if (false == loaded_from_h5)
+        {
+            if(log_error_loading)
+            {
+                logE << "Loading fit param override file: " << filename << "\n";
+            }
+            return false;
+        }
     }
-    else
+
     {
         data_struct::Element_Info<T_real>* detector_element;
         if (params_override.detector_element.length() > 0)
@@ -250,6 +263,111 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
     }
 
     return true;
+}
+
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @brief load_fit_params_for_dataset : Resolve and apply the fit parameter override for a single
+ *        dataset + detector, right before the dataset is loaded. Priority:
+ *          1) <--dir>/fit_params/<dataset>_fit_params.txt<det>  (dataset specific)
+ *          2) the general maps_fit_parameters_override.txt<det> already loaded in memory
+ *          3) load maps_fit_parameters_override.txt<det> from disk
+ *          4) fail -> caller should skip the dataset
+ *        When a new override is loaded the derived detector/model state is refreshed.
+ * @param loaded_source : in/out cache key that persists across datasets for this detector so the
+ *                        general override is only re-read from disk when it is not already in memory.
+ * @return True if an override is available for this dataset, false if the dataset should be skipped.
+ */
+template<typename T_real>
+DLL_EXPORT bool load_fit_params_for_dataset(data_struct::Analysis_Job<T_real>* analysis_job,
+    data_struct::Detector<T_real>* detector,
+    const std::string& dataset_file,
+    size_t detector_num,
+    std::string& loaded_source)
+{
+    if (analysis_job == nullptr || detector == nullptr)
+    {
+        logE << "Null analysis_job or detector\n";
+        return false;
+    }
+
+    std::string det_num = "";
+    if (detector_num != (size_t)-1)
+    {
+        det_num = std::to_string(detector_num);
+    }
+
+    // strip any folder prefix from the dataset name (e.g. esrf datasets)
+    std::string base_name = dataset_file;
+    size_t didx = base_name.find_last_of(DIR_END_CHAR);
+    if (didx != std::string::npos)
+    {
+        base_name = base_name.substr(didx + 1);
+    }
+
+    // refreshes the detector physical params and model fit params from the current override
+    auto refresh_from_override = [&]()
+    {
+        detector->update_from_fit_parameters();
+        if (detector->model != nullptr)
+        {
+            detector->model->reset_to_default_fit_params();
+            detector->model->update_fit_params_values(&(detector->fit_params_override_dict.fit_params));
+        }
+    };
+
+    // 1) dataset specific fit_params/<dataset>_fit_params.txt<det> under the --dir path
+    std::string fit_params_file = analysis_job->dataset_directory + "fit_params" + DIR_END_CHAR + base_name + "_fit_params.txt" + det_num;
+    if (loaded_source == fit_params_file)
+    {
+        return true; // already applied for this detector
+    }
+    {
+        data_struct::Params_Override<T_real> po;
+        po.dataset_directory = analysis_job->dataset_directory;
+        po.detector_num = detector_num;
+        // append_file_name = false : fit_params_file is a full path; log_error_loading = false : file is optional
+        if (io::file::load_override_params(fit_params_file, detector_num, po, false, false))
+        {
+            logI << "Using dataset specific fit parameters: " << fit_params_file << "\n";
+            detector->fit_params_override_dict = po;
+            loaded_source = fit_params_file;
+            refresh_from_override();
+            return true;
+        }
+    }
+
+    // 2) general maps_fit_parameters_override.txt<det> already loaded in memory
+    std::string general_key = "<general>" + det_num;
+    if ((loaded_source.length() == 0 || loaded_source == general_key)
+        && detector->fit_params_override_dict.elements_to_fit.size() > 0)
+    {
+        loaded_source = general_key;
+        return true; // reuse in-memory override (model already built from it)
+    }
+
+    // 3) load the general override from disk (same fallback chain as init_analysis_job_detectors)
+    {
+        data_struct::Params_Override<T_real> po;
+        po.dataset_directory = analysis_job->dataset_directory;
+        po.detector_num = detector_num;
+        if (io::file::load_override_params(analysis_job->output_dir, detector_num, po, true, false)
+            || io::file::load_override_params(analysis_job->output_dir, -1, po, true, false)
+            || io::file::load_override_params("./", detector_num, po, true, false)
+            || io::file::load_override_params("./", -1, po, true, false))
+        {
+            detector->fit_params_override_dict = po;
+            loaded_source = general_key;
+            refresh_from_override();
+            return true;
+        }
+    }
+
+    // 4) nothing found
+    logE << "Could not load fit parameters for dataset " << dataset_file << " detector " << det_num << ". Skipping dataset.\n";
+    return false;
 }
 
 
@@ -298,6 +416,10 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
             analysis_job->output_dir = analysis_job->dataset_directory;
         }
 
+        // Non-fatal: the fit flow (process_dataset_files) re-resolves and loads the override per
+        // dataset right before loading it, so a missing default override here should not abort the
+        // whole run. In the normal case this still populates fit_params_override_dict so the
+        // quantification/optimize/streaming flows and the per-dataset in-memory reuse keep working.
         if (false == io::file::load_override_params(analysis_job->output_dir, detector_num, *override_params))
         {
             if (false == io::file::load_override_params(analysis_job->output_dir, -1, *override_params))
@@ -307,7 +429,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
                 {
                     if (false == io::file::load_override_params("./", -1, *override_params))
                     {
-                        return false;
+                        logW << "No default fit parameter override loaded for detector " << detector_num << ". Will attempt per-dataset loading.\n";
                     }
                 }
             }
@@ -317,8 +439,7 @@ DLL_EXPORT bool init_analysis_job_detectors(data_struct::Analysis_Job<T_real>* a
 
         if (override_params->elements_to_fit.size() < 1)
         {
-            logE << "No elements to fit. Check  maps_fit_parameters_override.txt0 - 3 exist" << "\n";
-            return false;
+            logW << "No elements to fit yet. Check maps_fit_parameters_override.txt0 - 3 exist, or a per-dataset fit_params file will be used." << "\n";
         }
 
         for (auto proc_type : analysis_job->fitting_routines)

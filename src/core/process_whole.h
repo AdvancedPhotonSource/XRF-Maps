@@ -360,10 +360,10 @@ DLL_EXPORT void proc_spectra(data_struct::Spectra_Volume<T_real>* spectra_volume
                 if (matrix_fit->energy_range().count() < int_spec.size())
                 {
                     int_spec = int_spec.sub_spectra(matrix_fit->energy_range().min, matrix_fit->energy_range().count());
-                    #ifdef _BUILD_WITH_QT
-                    visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
-                    #endif
                 }
+                #ifdef _BUILD_WITH_QT
+                visual::SavePlotSpectrasFromConsole(str_path, &ev, &int_spec, (&matrix_fit->fitted_integrated_spectra()), (&matrix_fit->fitted_integrated_background()), true);
+                #endif
             }
 
         }
@@ -501,6 +501,10 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
 {
     ThreadPool tp(analysis_job->num_threads);
 
+    // tracks, per detector, which override is currently loaded in memory so the general
+    // maps_fit_parameters_override.txt is only re-read from disk when it isn't already loaded.
+    std::unordered_map<size_t, std::string> loaded_override_source;
+
     for (auto& dataset_file : analysis_job->dataset_files)
     {
         //if quick and dirty then sum all detectors to 1 spectra volume and process it
@@ -515,6 +519,17 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
             {
 
                 data_struct::Detector<T_real>* detector = analysis_job->get_detector(detector_num);
+
+                // load the fit parameters for this dataset + detector right before loading the dataset
+                if (false == io::file::load_fit_params_for_dataset(analysis_job, detector, dataset_file, detector_num, loaded_override_source[detector_num]))
+                {
+                    logW << "Skipping dataset " << dataset_file << " detector " << detector_num << " : no fit parameters\n";
+                    if (status_callback != nullptr)
+                    {
+                        (*status_callback)(0, 1);
+                    }
+                    continue;
+                }
 
                 //Spectra volume data
                 data_struct::Spectra_Volume<T_real>* spectra_volume = new data_struct::Spectra_Volume<T_real>();
@@ -584,11 +599,26 @@ DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, 
     data_struct::Spectra_Volume<T_real>* spectra_volume = new data_struct::Spectra_Volume<T_real>();
     data_struct::Spectra_Volume<T_real>* tmp_spectra_volume = new data_struct::Spectra_Volume<T_real>();
 
-    io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true); // force to create new file for quick and dirty
-
     std::string scan_type;
     //load the first one
     size_t detector_num = analysis_job->detector_num_arr[0];
+
+    // load the fit parameters for this dataset right before loading the dataset
+    std::string loaded_override_source;
+    if (false == io::file::load_fit_params_for_dataset(analysis_job, detector, dataset_file, detector_num, loaded_override_source))
+    {
+        logW << "Skipping dataset " << dataset_file << " : no fit parameters\n";
+        delete spectra_volume;
+        delete tmp_spectra_volume;
+        if (status_callback != nullptr)
+        {
+            (*status_callback)(0, 1);
+        }
+        return;
+    }
+
+    io::file::HDF5_IO::inst()->start_save_seq(full_save_path, true); // force to create new file for quick and dirty
+
     bool is_loaded_from_analyzed_h5 = false;
     if (false == io::file::load_spectra_volume(analysis_job->dataset_directory, dataset_file, detector_num, spectra_volume, &detector->fit_params_override_dict, &is_loaded_from_analyzed_h5, scan_type, true))
     {
