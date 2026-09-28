@@ -579,7 +579,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
         {
             if (itr.find(tmp_dataset_file) == 0)
             {
-                size_t slen = (itr.length() - 4) - tmp_dataset_file.length();
+                size_t slen = (itr.length() - 6) - tmp_dataset_file.length();
                 file_middle = itr.substr(tmp_dataset_file.length(), slen);
                 hasXspress = true;
                 break;
@@ -953,7 +953,7 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second->values.cols(); col++)
+                                    for(int col = 0; col < scalers_lines.at(sitr.first)->values.cols(); col++)
                                     {
                                         sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
@@ -964,7 +964,21 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
                         {
                             if(false == integrated_spectra.add(spectra_line[k]))
                             {
-                                logW<<"Could not add spectra to int_spectra\n";
+                                if(i == 0 && k == 0) // if first spectra
+                                {
+                                    if(spectra_line[0].size() != integrated_spectra.size())
+                                    {
+                                        integrated_spectra.resize(spectra_line[0].size());
+                                        if(false == integrated_spectra.add(spectra_line[0]))
+                                        {
+                                            logE<<"Could not resize integrated spectra from "<<integrated_spectra.size()<<" to first spectra size "<< spectra_line[0].size() <<"\n";
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    logW<<"Could not add spectra to int_spectra\n";
+                                }
                             }
                         }
                     }
@@ -1576,7 +1590,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                             {
                                 if(scalers_lines.contains(sitr.first) )
                                 {
-                                    for(int col = 0; col < sitr.second->values.cols(); col++)
+                                    for(int col = 0; col < scalers_lines.at(sitr.first)->values.cols(); col++)
                                     {
                                         sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                     }
@@ -1617,7 +1631,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
                         {
                             if(scalers_lines.contains(sitr.first) )
                             {
-                                for(int col = 0; col < sitr.second->values.cols(); col++)
+                                for(int col = 0; col < scalers_lines.at(sitr.first)->values.cols(); col++)
                                 {
                                     sitr.second->values(i, col) = scalers_lines.at(sitr.first)->values(0, col);
                                 }
