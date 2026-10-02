@@ -519,6 +519,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
                             detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::L_SHELL, val);
                         }
+                        else 
+                        {
+                          // if we don't have L shell elements to quantify, use the K shell value
+                          detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::L_SHELL, val);
+                        }
                         //
                         if (detector->M_element_quants[fit_itr.first][quant_itr.first].size() > 0)
                         {
@@ -537,6 +542,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                             }
 
                             detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::M_SHELL, val);
+                        }
+                        else 
+                        {
+                          // if we don't have M shell elements to quantify, use the K shell value
+                          detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::M_SHELL, val);
                         }
                     }
                 }
