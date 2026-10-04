@@ -91,6 +91,16 @@ public:
                           size_t row_size,
                           size_t col_size);
 
+    bool load_netcdf_line_custom_filename(std::string dirpath,
+						                              std::string filename,
+                            						  const std::vector<size_t>& detector_num_arr,
+                                          size_t row,
+                                          size_t row_size,
+                                          size_t col_size,
+                                          std::string stream_dirpath,
+                                          std::string stream_filename);
+
+
     void set_init_fitting_routines(bool val) {_init_fitting_routines = val;}
 
 protected:

@@ -837,6 +837,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     })
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
     .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
+    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename)
     .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
 
     py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")
