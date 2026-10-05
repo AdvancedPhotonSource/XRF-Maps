@@ -986,6 +986,22 @@ DLL_EXPORT bool load_and_integrate_spectra_volume(std::string dataset_directory,
             }
         }
     }
+    auto scan_info = mda_io.get_scan_info();
+    if(scan_info != nullptr)
+    {
+        if(scan_info->scaler_maps.contains(STR_US_IC))
+        {
+            params_override->US_IC = scan_info->scaler_avg_value(STR_US_IC);
+        }
+        if(scan_info->scaler_maps.contains(STR_DS_IC))
+        {
+            params_override->DS_IC = scan_info->scaler_avg_value(STR_DS_IC);
+        }
+        if(scan_info->scaler_maps.contains(STR_SR_CURRENT))
+        {
+            params_override->sr_current = scan_info->scaler_avg_value(STR_SR_CURRENT);
+        }
+    }
 
     logI << "Finished Loading dataset " << dataset_directory + "mda" + DIR_END_CHAR + dataset_file << " detector " << detector_num << "\n";
     return ret_val;
