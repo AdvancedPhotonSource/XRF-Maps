@@ -228,7 +228,7 @@ public:
     {
         if (spectra != nullptr && spectra->size() == this->size())
         {
-            *this += this->template cast<_T>() + spectra->template cast<_T>();
+            *this += spectra->template cast<_T>();
             _T val = spectra->elapsed_livetime();
             if (std::isfinite(val))
             {

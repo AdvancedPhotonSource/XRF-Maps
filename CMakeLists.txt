@@ -44,7 +44,7 @@
 #POSSIBILITY OF SUCH DAMAGE.
 
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.0)
 
 project(XRF_Maps)
 

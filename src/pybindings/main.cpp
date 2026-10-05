@@ -36,7 +36,7 @@ namespace py = pybind11;
 
 //PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
-auto fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
+auto local_fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	const fitting::models::Base_Model<float>* const model,
 	const Spectra<float>* const spectra,
 	const Fit_Element_Map_Dict<float>* const elements_to_fit)
@@ -46,7 +46,7 @@ auto fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	return out_counts;
 }
 
-auto fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
+auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	fitting::models::Base_Model<float>* const model,
 	const Spectra<float>* const spectra,
 	const Fit_Element_Map_Dict<float>* const elements_to_fit)
@@ -612,14 +612,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_spectra(&self, model, spectra, elements_to_fit);
+		return local_fit_spectra(&self, model, spectra, elements_to_fit);
 	})
 	.def("fit_counts", [](fitting::routines::ROI_Fit_Routine<float>& self,
 		fitting::models::Base_Model<float>* const model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_counts(&self, model, spectra, elements_to_fit);
+		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	})
     .def("get_name", &fitting::routines::ROI_Fit_Routine<float>::get_name)
     .def("initialize", &fitting::routines::ROI_Fit_Routine<float>::initialize);
@@ -631,14 +631,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_spectra(&self, model, spectra, elements_to_fit);
+		return local_fit_spectra(&self, model, spectra, elements_to_fit);
 	})
 		.def("fit_counts", [](fitting::routines::Param_Optimized_Fit_Routine<float>& self,
 			const fitting::models::Base_Model<float>* const model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_counts(&self, model, spectra, elements_to_fit);
+		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	})
 		.def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine<float>::fit_spectra_parameters)
 		.def("get_name", &fitting::routines::Param_Optimized_Fit_Routine<float>::get_name)
@@ -670,14 +670,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		self.model_spectrum(&fit_params, &energy_range, &spec_model);
 		return spec_model;
 		*/
-		return fit_spectra(&self, model, spectra, elements_to_fit);
+		return local_fit_spectra(&self, model, spectra, elements_to_fit);
 	})
 	.def("fit_counts", [](fitting::routines::Matrix_Optimized_Fit_Routine<float>& self,
 			const fitting::models::Base_Model<float>* const model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_counts(&self, model, spectra, elements_to_fit);
+		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	})
     .def("get_name", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::get_name)
     .def("initialize", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::initialize);
@@ -689,17 +689,18 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_spectra(&self, model, spectra, elements_to_fit);
+		return local_fit_spectra(&self, model, spectra, elements_to_fit);
 	})
 	.def("fit_counts", [](fitting::routines::NNLS_Fit_Routine<float>& self,
 		fitting::models::Base_Model<float>* const model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_counts(&self, model, spectra, elements_to_fit);
+		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	})
     .def("get_name", &fitting::routines::NNLS_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::NNLS_Fit_Routine<float>::initialize);
+    .def("initialize", &fitting::routines::NNLS_Fit_Routine<float>::initialize)
+    .def("initialize_mp", &fitting::routines::NNLS_Fit_Routine<float>::initialize_mp);
 
 	py::class_<fitting::routines::SVD_Fit_Routine<float>, fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "svd")
 		.def(py::init<>())
@@ -708,14 +709,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_spectra(&self, model, spectra, elements_to_fit);
+		return local_fit_spectra(&self, model, spectra, elements_to_fit);
 	})
 		.def("fit_counts", [](fitting::routines::SVD_Fit_Routine<float>& self,
 			fitting::models::Base_Model<float>* const model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
-		return fit_counts(&self, model, spectra, elements_to_fit);
+		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	})
 		.def("get_name", &fitting::routines::SVD_Fit_Routine<float>::get_name)
 		.def("initialize", &fitting::routines::SVD_Fit_Routine<float>::initialize);
@@ -751,7 +752,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 									bool append_file_name)
 	{
 		data_struct::Params_Override<float> po;
-		io::file::load_override_params(dataset_directory, detector_num, &po, append_file_name);
+		io::file::load_override_params<float>(dataset_directory, detector_num, po, append_file_name);
 		return po;
 		
 	});
@@ -836,6 +837,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     })
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
     .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
+    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename)
     .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
 
     py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")

@@ -519,6 +519,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
 
                             detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::L_SHELL, val);
                         }
+                        else 
+                        {
+                          // if we don't have L shell elements to quantify, use the K shell value
+                          detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::L_SHELL, val);
+                        }
                         //
                         if (detector->M_element_quants[fit_itr.first][quant_itr.first].size() > 0)
                         {
@@ -537,6 +542,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
                             }
 
                             detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::M_SHELL, val);
+                        }
+                        else 
+                        {
+                          // if we don't have M shell elements to quantify, use the K shell value
+                          detector->update_calibration_curve(fit_itr.first, quant_itr.first, &quantification_model, data_struct::Electron_Shell::M_SHELL, val);
                         }
                     }
                 }
@@ -789,7 +799,7 @@ bool find_and_optimize_roi(data_struct::Analysis_Job<double>& analysis_job,
         if (scan_info.meta_info.x_axis.rows() > 0 && scan_info.meta_info.x_axis.cols() > 0
             && scan_info.meta_info.y_axis.rows() > 0 && scan_info.meta_info.y_axis.cols() > 0)
         {
-            roi_area = roi_pixels_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.size() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.size() - 1);
+            roi_area = roi_pixels_itr.second.size() * 1000.0 * 1000.0 * (scan_info.meta_info.x_axis.maxCoeff() - scan_info.meta_info.x_axis.minCoeff()) / (scan_info.meta_info.x_axis.cols() - 1) * (scan_info.meta_info.y_axis.maxCoeff() - scan_info.meta_info.y_axis.minCoeff()) / (scan_info.meta_info.y_axis.rows() - 1);
         }
         // add in other properties that will be saved to csv
         out_fitp.add_parameter(data_struct::Fit_Param<double>("real_time", int_spectra.elapsed_realtime()));

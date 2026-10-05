@@ -2046,7 +2046,9 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
 	}
     _global_close_map.push({file_id, H5O_FILE });
     //Scan
-    if (H5Gget_objinfo(file_id, "/MAPS/x_axis", 0, NULL) < 0)
+    // Check if the link exists
+    // H5Lexists returns: > 0 (exists), 0 (does not exist), < 0 (error)
+    if (H5Lexists(file_id, "/MAPS/x_axis", H5P_DEFAULT) == 0)
     {
         // get dataspace and check if it is 2d or 1d array. If 2d array then we need to make new one that is 1d.
         bool is_1d_arr = false; 
@@ -2105,7 +2107,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         }
     }
 
-    if (H5Gget_objinfo(file_id, "/MAPS/y_axis", 0, NULL) < 0)
+    if (H5Lexists(file_id, "/MAPS/y_axis", H5P_DEFAULT) == 0)
     {
         // get dataspace and check if it is 2d or 1d array. If 2d array then we need to make new one that is 1d.
         bool is_1d_arr = false; 
@@ -2131,7 +2133,7 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
         {
             hsize_t count2d[2] = {0,0};
             H5Sget_simple_extent_dims(arr_space, &count2d[0], nullptr);
-            hid_t new_arr_space = H5Screate_simple(1, &count2d[0], &count2d[1]);
+            hid_t new_arr_space = H5Screate_simple(1, &count2d[0], &count2d[0]);
             _global_close_map.push({new_arr_space, H5O_DATASPACE });
             hid_t arr_type = H5Dget_type(arr_id);
             _global_close_map.push({arr_id, H5O_DATATYPE });
