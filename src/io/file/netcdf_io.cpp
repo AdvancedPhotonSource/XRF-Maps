@@ -286,12 +286,13 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             }
 
             
-            unsigned int i1 = static_cast<unsigned int>(_data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)]);
-            unsigned int i2 = static_cast<unsigned int>(_data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)+1]);
+            int i1 = static_cast<int>(_data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)]);
+            int i2 = static_cast<int>(_data_in[0][0][l+ELAPSED_LIVETIME_OFFSET+(idx_detector*8)+1]);
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
-            unsigned int ii = i1 | i2;
-            elapsed_livetime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            int ii = i1 | i2;
+            T_real tmp_f_val = static_cast<T_real>(ii);
+            elapsed_livetime = tmp_f_val * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
             {
                 if (elapsed_livetime == 0)
@@ -321,12 +322,13 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 callback_spectra->elapsed_livetime(elapsed_livetime);
             }
 
-            i1 = static_cast<unsigned int>(_data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)]);
-            i2 = static_cast<unsigned int>(_data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)+1]);
+            i1 = static_cast<int>(_data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)]);
+            i2 = static_cast<int>(_data_in[0][0][l+ELAPSED_REALTIME_OFFSET+(idx_detector*8)+1]);
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
-            elapsed_realtime = ((T_real)ii) * 320e-9f; // need to multiply by this value becuase of the way it is saved
+            tmp_f_val = static_cast<T_real>(ii);
+            elapsed_realtime = tmp_f_val * 320e-9f; // need to multiply by this value becuase of the way it is saved
             if (ltype == E_load_type::LINE)
             {
                 if (elapsed_realtime == 0)
@@ -356,14 +358,15 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 callback_spectra->elapsed_realtime(elapsed_realtime);
             }
 
-            i1 = static_cast<unsigned int>(_data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)]);
-            i2 = static_cast<unsigned int>(_data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)+1]);
+            i1 = static_cast<int>(_data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)]);
+            i2 = static_cast<int>(_data_in[0][0][l+INPUT_COUNTS_OFFSET+(idx_detector*8)+1]);
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
+            tmp_f_val = static_cast<T_real>(ii);
             if(elapsed_livetime > 0.0)
             {
-                input_counts = ((T_real)ii) / elapsed_livetime;
+                input_counts = tmp_f_val / elapsed_livetime;
             }
             if (ltype == E_load_type::LINE)
             {
@@ -395,14 +398,15 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             }
 
 
-            i1 = static_cast<unsigned int>(_data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)]);
-            i2 = static_cast<unsigned int>(_data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)+1]);
+            i1 = static_cast<int>(_data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)]);
+            i2 = static_cast<int>(_data_in[0][0][l+OUTPUT_COUNTS_OFFSET+(idx_detector*8)+1]);
             i1 = (0x0000ffff & i1);
             i2 = (i2 << 16) & 0xffff0000;
             ii = i1 | i2;
+            tmp_f_val = static_cast<T_real>(ii);
             if(elapsed_realtime > 0.0)
             {
-                output_counts = ((T_real)ii) / elapsed_realtime;
+                output_counts = tmp_f_val / elapsed_realtime;
             }
             if (ltype == E_load_type::LINE)
             {
