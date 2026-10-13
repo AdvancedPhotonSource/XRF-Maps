@@ -101,7 +101,7 @@ void Hybrid_Param_NNLS_Fit_Routine<T_real>::model_spectrum(const models::Base_Mo
             ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(energy_range->count(), energy_range->min, energy_range->max);
             ArrayTr<T_real> ev = fit_params->value(STR_ENERGY_OFFSET) + (energy * fit_params->value(STR_ENERGY_SLOPE)) + (pow(energy, (T_real)2.0) * fit_params->value(STR_ENERGY_QUADRATIC));
 
-            (*spectra_model) += model->escape_peak((*spectra_model), ev, fit_params->value(STR_SI_ESCAPE));
+            (*spectra_model) += model->escape_peak((*spectra_model), ev, fit_params->value(STR_SI_ESCAPE), fit_params->value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
         }
         if (status_callback != nullptr)
         {

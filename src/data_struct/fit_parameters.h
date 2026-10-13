@@ -246,6 +246,8 @@ public:
 
     inline const T_real& value(std::string key) const { return _params.at(key).value; }
 
+    inline T_real value_or(std::string key, T_real default_value) const { const auto itr = _params.find(key); return (itr != _params.end()) ? itr->second.value : default_value; }
+
     void print();
 
     void print_non_fixed();
