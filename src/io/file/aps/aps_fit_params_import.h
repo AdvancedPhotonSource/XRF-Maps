@@ -841,6 +841,22 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         
                         params_override.scaling_factors[scaler_name] = factor;
                     }
+                    else if (tag == STR_ISN_DETECTOR)
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        if(value == STR_ISN_DETECTOR_ME7)
+                        {
+                          params_override.isn_detector = data_struct::ISN_XRF_DETECTOR::ME7;   
+                        }
+                        else if (value == STR_ISN_DETECTOR_RAYSPEC)
+                        {
+                          params_override.isn_detector = data_struct::ISN_XRF_DETECTOR::RAYSPEC;
+                        }
+                    }
                     else if (tag == STR_POLARITY_PATTERN)
                     {
                         std::string value;
