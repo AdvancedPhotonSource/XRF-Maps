@@ -924,7 +924,7 @@ public:
     //-----------------------------------------------------------------------------
 
     template<typename T_real>
-    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::ArrayXXr<T_real> &interferometer_avg, [[maybe_unused]] data_struct::Scan_Info<T_real> &scan_info, [[maybe_unused]] bool logerr = true)
+    bool load_spectra_vol_apsu(std::string path, std::string filename, size_t detector_num, data_struct::Spectra_Volume<T_real>* spec_vol, data_struct::ArrayXXr<T_real> &interferometer_avg, [[maybe_unused]] data_struct::Scan_Info<T_real> &scan_info, data_struct::ISN_XRF_DETECTOR isn_det_type, [[maybe_unused]] bool logerr = true)
     {
         std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
         hid_t    file_id = -1, xspres_grp_id = -1;
@@ -939,9 +939,15 @@ public:
         std::vector<std::string> raw_xrf_files;
         std::vector<std::string> raw_interf_files; 
         std::string base_filename = filename.substr(0, filename.length() - 3); // remove .h5
-        std::string xpath = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "ME7";
+        std::string me7_path = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "ME7";
+        std::string ray_path = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "RAYSPEC";
         std::string ipath = path + "Raw"+ DIR_END_CHAR + base_filename + DIR_END_CHAR + "SOCKETSERVER";
-    
+
+        std::string xpath = me7_path;
+        if(isn_det_type == ISN_XRF_DETECTOR::RAYSPEC)
+        {
+          xpath = ray_path;
+        }
         int max_arracy_cntr = -1;
         int max_ii_cntr = -1;
         Eigen::Index interferometer_amt = 0;
@@ -967,6 +973,7 @@ public:
                     if (false == _open_h5_object(xspres_grp_id, H5O_GROUP, close_map, "/detectors/ME7", file_id, false, false))
                     {
                         // try file search 
+                        logI<<"searching for spectra files: "<<xpath<<"\n";
                         raw_xrf_files = File_Scan::inst()->find_all_dataset_files(xpath, base_filename);
                         if(raw_xrf_files.size() == 0)
                         {
@@ -1155,7 +1162,7 @@ public:
                             }
                             cnt += 1.0;
                         }
-                        logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<interferometer_avg(last_cntr_val, 3)<<" avg val "<<interferometer_avg(last_cntr_val, 3) /cnt<<"/n";
+                        //logI<<"Start "<<start_idx<<" , End "<<end_idx<<" , cnt "<<cnt<<" sum val "<<interferometer_avg(last_cntr_val, 3)<<" avg val "<<interferometer_avg(last_cntr_val, 3) /cnt<<"/n";
                         if(cnt > 1.0)
                         {
                             // avg

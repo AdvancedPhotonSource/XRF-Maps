@@ -101,7 +101,7 @@ namespace aps
                                             "SNIP_WIDTH",
                                             "SI_ESCAPE_FACTOR",
                                             "GE_ESCAPE_FACTOR",
-                                            "ESCAPE_LINEAR"
+                                            "LINEAR_ESCAPE_FACTOR"
     };
 
     const std::vector<std::string> Updatable_detector_dependand_TAGS = {
@@ -193,6 +193,7 @@ std::unordered_map<std::string, std::string> init_tags()
     
     tags["SI_ESCAPE_FACTOR"] = STR_SI_ESCAPE;
     tags["GE_ESCAPE_FACTOR"] = STR_GE_ESCAPE;
+    tags["LINEAR_ESCAPE_FACTOR"] = STR_ESCAPE_LINEAR;
     tags["MAX_ENERGY_TO_FIT"] = STR_MAX_ENERGY_TO_FIT;
     tags["MIN_ENERGY_TO_FIT"] = STR_MIN_ENERGY_TO_FIT;
 
@@ -791,15 +792,6 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         //    params_override.ge_escape_enabled = false;
                         }
                     }
-                    else if (tag == "LINEAR_ESCAPE_FACTOR")
-                    {
-                        std::string value;
-                        std::getline(strstream, value);
-                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
-                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
-                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
-                        //params_override.ge_dead_layer = std::stoi(value);
-                    }
                     else if (tag == "TAIL_FRACTION_ADJUST_SI")
                     {
                         std::string value;
@@ -848,6 +840,22 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         factor = parse_input_real<T_real>(str_value);
                         
                         params_override.scaling_factors[scaler_name] = factor;
+                    }
+                    else if (tag == STR_ISN_DETECTOR)
+                    {
+                        std::string value;
+                        std::getline(strstream, value);
+                        value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+                        value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+                        if(value == STR_ISN_DETECTOR_ME7)
+                        {
+                          params_override.isn_detector = data_struct::ISN_XRF_DETECTOR::ME7;   
+                        }
+                        else if (value == STR_ISN_DETECTOR_RAYSPEC)
+                        {
+                          params_override.isn_detector = data_struct::ISN_XRF_DETECTOR::RAYSPEC;
+                        }
                     }
                     else if (tag == STR_POLARITY_PATTERN)
                     {
@@ -931,6 +939,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
             if (params_override.fit_params.contains(STR_SI_ESCAPE))
             {
                 params_override.fit_params[STR_SI_ESCAPE].bound_type = E_Bound_Type::LIMITED_LO_HI;
+            }
+            if (params_override.fit_params.contains(STR_ESCAPE_LINEAR))
+            {
+                params_override.fit_params[STR_ESCAPE_LINEAR].bound_type = E_Bound_Type::LIMITED_LO_HI;
             }
         }
         paramFileStream.close();
@@ -1285,7 +1297,7 @@ DLL_EXPORT bool save_parameters_override(std::string path, Params_Override<T_rea
         }
         //out_stream << "GE_ESCAPE_FACTOR: " << params_override->ge_escape_factor << "\n";
         out_stream << "    this parameter adds a component to the escape peak that depends linear on energy\n";
-        out_stream << "LINEAR_ESCAPE_FACTOR: 0.0\n";
+        out_stream << "LINEAR_ESCAPE_FACTOR: " << params_override->fit_params.value_or(STR_ESCAPE_LINEAR, (T_real)0.0) << "\n";
         //out_stream << "    the parameter enables fitting of the escape peak strengths. set 1 to enable, set to 0 to disable. (in matrix fitting always disabled)\n";
         //out_stream << "SI_ESCAPE_ENABLE: " << params_override->si_escape_enabled << "\n";
         //out_stream << "GE_ESCAPE_ENABLE: " << params_override->ge_escape_enabled << "\n";

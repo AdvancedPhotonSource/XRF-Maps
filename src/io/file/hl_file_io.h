@@ -1274,7 +1274,7 @@ DLL_EXPORT bool load_spectra_volume(std::string dataset_directory,
         data_struct::Scan_Info<T_real> scan_info_edf;
         // try new APS-U format
         data_struct::ArrayXXr<T_real> interferometer_avg;
-        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, interferometer_avg, scan_info_edf))
+        if(true == io::file::HDF5_IO::inst()->load_spectra_vol_apsu(dataset_directory, dataset_file, detector_num, spectra_volume, interferometer_avg, scan_info_edf, params_override->isn_detector))
         {
             scan_type = scan_info_edf.meta_info.scan_type;
             spectra_volume->set_nan_to_near_zero();

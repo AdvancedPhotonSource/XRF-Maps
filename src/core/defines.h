@@ -372,6 +372,10 @@ const std::string STR_DEADTIME_PERC = "dead_time_percent";
 const std::string STR_DEADTIME_FACT = "dead_time_factor";
 
 
+const std::string STR_ISN_DETECTOR = "ISN_XRF_DETECTOR";
+const std::string STR_ISN_DETECTOR_ME7 = "ME7";
+const std::string STR_ISN_DETECTOR_RAYSPEC = "RAYSPEC";
+
 const std::string STR_SOFTWARE_VERSION =  "Software_Version";
 //}
 

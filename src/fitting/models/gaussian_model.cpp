@@ -133,6 +133,7 @@ Fit_Parameters<T_real> Gaussian_Model<T_real>::_generate_default_fit_parameters(
     fit_params.add_parameter(Fit_Param<T_real>(STR_KB_F_TAIL_QUADRATIC, (T_real)0.0, (T_real)0.0,  (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
 
     fit_params.add_parameter(Fit_Param<T_real>(STR_SI_ESCAPE, (T_real)0.0, (T_real)0.2, (T_real)0.0, (T_real)0.01, E_Bound_Type::FIXED));
+    fit_params.add_parameter(Fit_Param<T_real>(STR_ESCAPE_LINEAR, (T_real)-1.0, (T_real)0.0, (T_real)-0.0029, (T_real)0.001, E_Bound_Type::FIXED));
 
     return fit_params;
 
@@ -388,7 +389,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
         if (fit_params->value(STR_SI_ESCAPE) > 0.0)
         {
             Spectra<T_real> escape_spec(energy_range.count());
-            escape_spec = escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE));
+            escape_spec = escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE), fit_params->value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
             (*labeled_spectras)[STR_ESCAPE_LINES] += escape_spec;
             agr_spectra += escape_spec;
         }
@@ -399,7 +400,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
         agr_spectra += compton_peak(fit_params, ev, gain);
         if (fit_params->value(STR_SI_ESCAPE) > 0.0)
         {
-            agr_spectra += escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE));
+            agr_spectra += escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE), fit_params->value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
         }
     }
 
@@ -445,7 +446,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
     agr_spectra += compton_peak(fit_params, ev, gain);
     if (fit_params->value(STR_SI_ESCAPE) > 0.0)
     {
-        agr_spectra += escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE));
+        agr_spectra += escape_peak(agr_spectra, ev, fit_params->value(STR_SI_ESCAPE), fit_params->value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
     }
     return agr_spectra;
 }
@@ -718,17 +719,25 @@ const ArrayTr<T_real> Gaussian_Model<T_real>::compton_peak(const Fit_Parameters<
 
 // ----------------------------------------------------------------------------
 template<typename T_real>
-const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor) const
+const ArrayTr<T_real> Gaussian_Model<T_real>::escape_peak(const ArrayTr<T_real>& spectra, const ArrayTr<T_real>& ev, T_real escape_factor, T_real escape_linear) const
 {
     Spectra<T_real> escape_spec(ev.size());
     // Si = 1.73998
-    const int bins = std::round(1.73998 / (ev(1) - ev(0)));
-   
-    for (int i = 0; i < ev.size() - bins; ++i)
+    const T_real escape_E = (T_real)1.73998;
+    // first channel that lies more than the escape energy above the start of the energy range
+    int bins = 0;
+    while (bins < (int)ev.size() && ev(bins) <= escape_E + ev(0))
     {
-        escape_spec(i) = spectra(i + bins) * escape_factor;
+        ++bins;
     }
-    
+
+    for (int i = 0; i < (int)ev.size() - bins; ++i)
+    {
+        // escape strength has an offset and a component that depends linear on energy, and is never negative
+        const T_real factor = std::max((T_real)0.0, escape_factor + (escape_linear * ev(i + bins)));
+        escape_spec(i) = spectra(i + bins) * factor;
+    }
+
     return escape_spec;
 }
 

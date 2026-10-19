@@ -59,6 +59,8 @@ namespace data_struct
 {
 
 
+enum class ISN_XRF_DETECTOR {ME7, RAYSPEC};
+
 //-----------------------------------------------------------------------------
 /**
  * @brief The Params_Override struct
@@ -94,6 +96,7 @@ public:
         airpath = "0";
         theta_pv = "";
         polarity_pattern = "";
+        isn_detector = ISN_XRF_DETECTOR::ME7;
     }
 
     Params_Override(std::string dir, int detector)
@@ -118,6 +121,7 @@ public:
         detector_num = detector;
         detector_element = "Si";
         polarity_pattern = "";
+        isn_detector = ISN_XRF_DETECTOR::ME7;
     }
 
     ~Params_Override()
@@ -249,6 +253,7 @@ public:
 
     std::string polarity_pattern;
 
+   ISN_XRF_DETECTOR isn_detector; 
 };
 
 TEMPLATE_CLASS_DLL_EXPORT Params_Override<float>;
