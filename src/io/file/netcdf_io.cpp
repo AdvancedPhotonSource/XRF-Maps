@@ -49,6 +49,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "netcdf_io.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <chrono>
@@ -59,6 +60,47 @@ namespace io
 {
 namespace file
 {
+
+namespace
+{
+
+// Holds a netCDF file id so it is always closed, even if a read callback
+// throws before we reach the end of the load.
+struct NetCDF_File
+{
+    int id;
+
+    NetCDF_File() : id(-1) {}
+
+    ~NetCDF_File() { close(); }
+
+    NetCDF_File(const NetCDF_File&) = delete;
+    NetCDF_File& operator=(const NetCDF_File&) = delete;
+
+    int open(const std::string& path)
+    {
+        int tmp_id = -1;
+        int retval = nc_open(path.c_str(), NC_NOWRITE, &tmp_id);
+        if (retval == 0)
+        {
+            id = tmp_id;
+        }
+        return retval;
+    }
+
+    int close()
+    {
+        int retval = 0;
+        if (id > -1)
+        {
+            retval = nc_close(id);
+            id = -1;
+        }
+        return retval;
+    }
+};
+
+} // namespace
 
 template<typename T_real>
 std::mutex NetCDF_IO<T_real>::_mutex;
@@ -113,7 +155,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     std::lock_guard<std::mutex> lock(_mutex);
 
     size_t header_size = 256;
-    int ncid = 0, varid = 0, retval = 0;
+    NetCDF_File nc_file;
+    int varid = 0, retval = 0;
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, 1047808};
     ptrdiff_t stride[] = {1, 1, 1};
@@ -131,37 +174,34 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     T_real sum_input_counts = 0.;
     T_real sum_output_counts = 0.;
     size_t cols_before_inc = 124; // default is 124 but read in also
-    data_struct::Spectra<T_real>* callback_spectra = nullptr;
+    std::unique_ptr<data_struct::Spectra<T_real>> callback_spectra;
 
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
 
-    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
+    if( (retval = nc_file.open(path)) != 0)
     {
         logE<<path<<" :: "<< nc_strerror(retval)<<"\n";
         return 0;
     }
 
 
-    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
+    if( (retval = nc_inq_varid(nc_file.id, "array_data", &varid)) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
-        nc_close(ncid);
         return 0;
     }
 
-    if( (retval = nc_inq_var (ncid, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
+    if( (retval = nc_inq_var (nc_file.id, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
-        nc_close(ncid);
         return 0;
     }
 
     for (int i=0; i <  rh_ndims; i++)
     {
-        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
+        if( (retval = nc_inq_dimlen(nc_file.id, rh_dimids[i], &dim2size[i]) ) != 0)
         {
             logE<< path << " :: " << nc_strerror(retval)<<"\n";
-            nc_close(ncid);
             return 0;
         }
     }
@@ -171,7 +211,6 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (dim2size[1] != 2)
         {
             logE << "NetCDF dims: [" << dim2size[0] <<"]["<< dim2size[1] <<"]["<< dim2size[2] <<"] needs to be [x][2][x] for detector "<<detector<<" " << path << "\n";
-            nc_close(ncid);
             return (size_t)-1;
         }
         start[1] = 1;
@@ -198,25 +237,22 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
     if(spec_cntr < 2)
     {
         logW<<"Need to load at least 2 spectra\n";
-        nc_close(ncid);
         return -1;
     }
-    
+
     for(size_t m0 = 0; m0 < dim2size[0]; m0++)
     {
         start[0] = m0;
         //read header
-        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, &_data_in[0][0][0]) ) != 0)
+        if( (retval = _nc_get_vars_real(nc_file.id, varid, start, count, stride, &_data_in[0][0][0]) ) != 0)
         {
             logE<< nc_strerror(retval)<<"\n";
-            nc_close(ncid);
             return col_idx;
         }
 
         if (_data_in[0][0][0] != 21930 || _data_in[0][0][1] != -21931)
         {
             logE<<"NetCDF header [0][0][0]  not found! Stopping load : "<<path<<"\n";
-            nc_close(ncid);
             return col_idx;
         }
 
@@ -234,7 +270,6 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         if (dset_det != detector)
         {
             logE << "detector not found! "<< dset_det <<" != "<<detector<<" Stopping load : " << path << "\n";
-            nc_close(ncid);
             return (size_t)-1;
         }
 
@@ -250,7 +285,6 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             {
                 if (col_idx >= spec_line->size())
                 {
-                    nc_close(ncid);
                     return col_idx;
                 }
             }
@@ -258,8 +292,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             size_t max_read_in = l + header_size + (spectra_size * idx_detector);
             if(max_read_in >= DATA_IN_MAX)
             {
-                logW<<"Data in index max_read_in = "<<max_read_in<<" is greater than or equal to DATA_IN_MAX = "<<DATA_IN_MAX<<"\n"; 
-                nc_close(ncid);
+                logW<<"Data in index max_read_in = "<<max_read_in<<" is greater than or equal to DATA_IN_MAX = "<<DATA_IN_MAX<<"\n";
                 return col_idx;
             }
             if (ltype == E_load_type::LINE)
@@ -268,7 +301,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
             }
             else if (ltype == E_load_type::CALLBACKF)
             {
-                callback_spectra = new data_struct::Spectra<T_real>(spectra_size);
+                callback_spectra.reset(new data_struct::Spectra<T_real>(spectra_size));
             }
 
             if (_data_in[0][0][l] != 13260 || _data_in[0][0][l+1] != -13261)
@@ -276,12 +309,10 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 if(col_idx < spec_cntr -2)
                 {
                     logE<<"NetCDF sub header not found! Stopping load at Col: "<<col_idx<<" path :"<<path<<"\n";
-                    nc_close(ncid);
                     return col_idx;
                 }
                 //last two may not be filled with data
                 //TODO: send end of row stream_block down pipeline
-                nc_close(ncid);
                 return col_idx;
             }
 
@@ -461,7 +492,8 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
                 {
                     (*callback_spectra)[k] = _data_in[0][0][l+k];
                 }
-                (*callback_fun)(cur_row, col_idx, max_rows, line_size, detector, callback_spectra, user_data);
+                // the callback takes ownership of the spectra
+                (*callback_fun)(cur_row, col_idx, max_rows, line_size, detector, callback_spectra.release(), user_data);
             }
             col_idx ++;
         }
@@ -475,7 +507,7 @@ size_t NetCDF_IO<T_real>::_load_spectra(E_load_type ltype,
         spectra->output_counts(spectra->output_counts() + sum_output_counts);
     }
 
-    if ((retval = nc_close(ncid)))
+    if ((retval = nc_file.close()))
     {
         logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
         return col_idx;
@@ -531,11 +563,12 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
-    int ncid = 0, varid = 0, retval = 0;
+    NetCDF_File nc_file;
+    int varid = 0, retval = 0;
     size_t start[] = {0, 0, 0};
     size_t count[] = {1, 1, 1};
     ptrdiff_t stride[] = {1, 1, 1};
-    T_real *data_in = nullptr;
+    std::unique_ptr<T_real[]> data_in;
     size_t dim2size[NC_MAX_VAR_DIMS] = {0};
     nc_type rh_type;
     int rh_ndims = 0;
@@ -563,32 +596,29 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
         return 0;
     }
 
-    if( (retval = nc_open(path.c_str(), NC_NOWRITE, &ncid)) != 0)
+    if( (retval = nc_file.open(path)) != 0)
     {
         logE<<path<<" :: "<< nc_strerror(retval)<<"\n";
         return 0;
     }
 
-    if( (retval = nc_inq_varid(ncid, "array_data", &varid)) != 0)
+    if( (retval = nc_inq_varid(nc_file.id, "array_data", &varid)) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
-        nc_close(ncid);
         return 0;
     }
 
-    if( (retval = nc_inq_var (ncid, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
+    if( (retval = nc_inq_var (nc_file.id, varid, nullptr, &rh_type, &rh_ndims, rh_dimids, &rh_natts) ) != 0)
     {
         logE<< path << " :: " << nc_strerror(retval)<<"\n";
-        nc_close(ncid);
         return 0;
     }
 
     for (int i=0; i <  rh_ndims; i++)
     {
-        if( (retval = nc_inq_dimlen(ncid, rh_dimids[i], &dim2size[i]) ) != 0)
+        if( (retval = nc_inq_dimlen(nc_file.id, rh_dimids[i], &dim2size[i]) ) != 0)
         {
             logE<< path << " :: " << nc_strerror(retval)<<"\n";
-            nc_close(ncid);
             return 0;
         }
     }
@@ -596,7 +626,7 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
 
     count[0] = dim2size[0]; // num cols
     count[2] = 1;
-    data_in = new T_real[dim2size[0]];
+    data_in.reset(new T_real[dim2size[0]]);
 
     //count[2] = dim2size[2]; // num scalers
     //data_in = new T_real[dim2size[0] * dim2size[1] * dim2size[2]];
@@ -604,11 +634,9 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
     for(size_t i=0; i < dim2size[2]; i++)
     {
         start[2] = i;
-        if( (retval = _nc_get_vars_real(ncid, varid, start, count, stride, data_in) ) != 0)
+        if( (retval = _nc_get_vars_real(nc_file.id, varid, start, count, stride, data_in.get()) ) != 0)
         {
-            delete []data_in;
             logE<< path << " :: " << nc_strerror(retval)<<"\n";
-            nc_close(ncid);
             return 0;
         }
         std::string search_name = tag+std::to_string(i);
@@ -633,7 +661,10 @@ size_t NetCDF_IO<T_real>::load_scalers_line(const std::string& path, std::string
         }
     }
 
-    delete []data_in;
+    if ((retval = nc_file.close()))
+    {
+        logE<<" path :"<<path<<" : "<< nc_strerror(retval)<<"\n";
+    }
     return count[0];
 }
 
