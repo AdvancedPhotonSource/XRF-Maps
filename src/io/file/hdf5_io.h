@@ -9821,215 +9821,216 @@ private:
         }
 
         _save_amps(scalers_grp_id, us_amps_val, us_amps_unit, ds_amps_val, ds_amps_unit);
-
-        int cols = scaler_maps.begin()->second->values.cols();
-        int rows = scaler_maps.begin()->second->values.rows();
-
-        if (rows > 0 && cols > 0)
+        if(scaler_maps.size() > 0)
         {
-            scaler_maps.try_emplace(STR_ABS_IC, std::make_shared<Scaler_Map<T_real>>(STR_ABS_IC, rows, cols, false, " "));
-            scaler_maps.try_emplace(STR_ABS_CFG, std::make_shared<Scaler_Map<T_real>>(STR_ABS_CFG, rows, cols, false, " "));
-            scaler_maps.try_emplace(STR_H_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_H_DPC_CFG, rows, cols, false, " "));
-            scaler_maps.try_emplace(STR_V_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_V_DPC_CFG, rows, cols, false, " "));
-            scaler_maps.try_emplace(STR_DIA1_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA1_DPC_CFG, rows, cols, false, " "));
-            scaler_maps.try_emplace(STR_DIA2_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA2_DPC_CFG, rows, cols, false, " "));
+            int cols = scaler_maps.begin()->second->values.cols();
+            int rows = scaler_maps.begin()->second->values.rows();
 
-            // CFG_2 - 5
-            data_struct::ArrayXXr<T_real>* us_ic_map = nullptr;
-            data_struct::ArrayXXr<T_real>* ds_ic_map = nullptr;
-            data_struct::ArrayXXr<T_real>* cfg_2_map = nullptr;
-            data_struct::ArrayXXr<T_real>* cfg_3_map = nullptr;
-            data_struct::ArrayXXr<T_real>* cfg_4_map = nullptr;
-            data_struct::ArrayXXr<T_real>* cfg_5_map = nullptr;
+            if (rows > 0 && cols > 0)
+            {
+                scaler_maps.try_emplace(STR_ABS_IC, std::make_shared<Scaler_Map<T_real>>(STR_ABS_IC, rows, cols, false, " "));
+                scaler_maps.try_emplace(STR_ABS_CFG, std::make_shared<Scaler_Map<T_real>>(STR_ABS_CFG, rows, cols, false, " "));
+                scaler_maps.try_emplace(STR_H_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_H_DPC_CFG, rows, cols, false, " "));
+                scaler_maps.try_emplace(STR_V_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_V_DPC_CFG, rows, cols, false, " "));
+                scaler_maps.try_emplace(STR_DIA1_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA1_DPC_CFG, rows, cols, false, " "));
+                scaler_maps.try_emplace(STR_DIA2_DPC_CFG, std::make_shared<Scaler_Map<T_real>>(STR_DIA2_DPC_CFG, rows, cols, false, " "));
 
-            if (scaler_maps.contains(STR_US_IC))
-            {
-                us_ic_map = &(scaler_maps.at(STR_US_IC)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_US_IC;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
+                // CFG_2 - 5
+                data_struct::ArrayXXr<T_real>* us_ic_map = nullptr;
+                data_struct::ArrayXXr<T_real>* ds_ic_map = nullptr;
+                data_struct::ArrayXXr<T_real>* cfg_2_map = nullptr;
+                data_struct::ArrayXXr<T_real>* cfg_3_map = nullptr;
+                data_struct::ArrayXXr<T_real>* cfg_4_map = nullptr;
+                data_struct::ArrayXXr<T_real>* cfg_5_map = nullptr;
+
+                if (scaler_maps.contains(STR_US_IC))
                 {
-                    us_ic_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (scaler_maps.contains(STR_DS_IC))
-            {
-                ds_ic_map = &(scaler_maps.at(STR_DS_IC)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_DS_IC;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
-                {
-                    ds_ic_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (scaler_maps.contains(STR_CFG_2))
-            {
-                cfg_2_map = &(scaler_maps.at(STR_CFG_2)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_CFG_2;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
-                {
-                    cfg_2_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (scaler_maps.contains(STR_CFG_3))
-            {
-                cfg_3_map = &(scaler_maps.at(STR_CFG_3)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_CFG_3;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
-                {
-                    cfg_3_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (scaler_maps.contains(STR_CFG_4))
-            {
-                cfg_4_map = &(scaler_maps.at(STR_CFG_4)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_CFG_4;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
-                {
-                    cfg_4_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (scaler_maps.contains(STR_CFG_5))
-            {
-                cfg_5_map = &(scaler_maps.at(STR_CFG_5)->values);
-            }
-            else
-            {
-                std::string lower_name = STR_CFG_5;
-                std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
-                if (scaler_maps.contains(lower_name))
-                {
-                    cfg_5_map = &(scaler_maps.at(lower_name)->values);
-                }
-            }
-
-            if (us_ic_map != nullptr && ds_ic_map != nullptr)
-            {
-                scaler_maps.at(STR_ABS_IC)->values = (*ds_ic_map) / (*us_ic_map);
-            }
-
-            if (us_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
-            {
-                data_struct::ArrayXXr<T_real> t_abs_map;
-                t_abs_map.resize(rows, cols);
-                t_abs_map = (*cfg_2_map) + (*cfg_3_map) + (*cfg_4_map) + (*cfg_5_map);
-                scaler_maps.at(STR_ABS_CFG)->values = t_abs_map / (*us_ic_map);
-
-                if (t_abs_map.sum() != 0.0)
-                {
-                    scaler_maps.at(STR_H_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_3_map) - (*cfg_4_map) + (*cfg_5_map)) / t_abs_map;
-                    scaler_maps.at(STR_V_DPC_CFG)->values = ((*cfg_2_map) + (*cfg_3_map) - (*cfg_4_map) - (*cfg_5_map)) / t_abs_map;
-                    scaler_maps.at(STR_DIA1_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_4_map)) / t_abs_map;
-                    scaler_maps.at(STR_DIA2_DPC_CFG)->values = ((*cfg_3_map) - (*cfg_5_map)) / t_abs_map;
-                }
-            }
-        }
-
-        if (scaler_maps.size() > 0 && cols > 0 && rows > 0)
-        {
-            count_3d[0] = scaler_maps.size();
-
-            count_3d[1] = rows;
-            count_2d[0] = count_3d[1];
-            count_3d[2] = cols;
-            count_2d[1] = count_3d[2];
-
-
-            chunk_3d[0] = 1;
-            chunk_3d[1] = count_3d[1];
-            chunk_3d[2] = count_3d[2];
-
-            if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, chunk_3d, dset_values_id, dataspace_values_id))
-            {
-                return false;
-            }
-
-            count_3d[0] = 1;
-
-            dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-            H5Pset_chunk(dcpl_id, 3, count_3d);
-            H5Pset_deflate(dcpl_id, 7);
-
-            count_3d[0] = scaler_maps.size();
-            count[0] = count_3d[0];
-
-            if (false == _open_h5_dataset(STR_NAMES, filetype, scalers_grp_id, 1, count, count, dset_names_id, dataspace_names_id))
-            {
-                return false;
-            }
-
-            if (false == _open_h5_dataset(STR_UNITS, filetype, scalers_grp_id, 1, count, count, dset_units_id, dataspace_units_id))
-            {
-                return false;
-            }
-
-            count_3d[0] = 1;
-            count[0] = 1;
-
-            _create_memory_space(2, count_2d, memoryspace_id);
-            int idx = 0;
-            for (const auto& itr : scaler_maps)
-            {
-                offset[0] = idx;
-                offset_3d[0] = idx;
-                idx++;
-                char tmp_char[255] = { 0 };
-                char tmp_char_units[255] = { 0 };
-                std::string out_label, out_beamline;
-                if (data_struct::Scaler_Lookup::inst()->search_pv(itr.second->name, out_label, itr.second->time_normalized, out_beamline))
-                {
-                    out_label.copy(tmp_char, 254);
+                    us_ic_map = &(scaler_maps.at(STR_US_IC)->values);
                 }
                 else
                 {
-                    itr.second->name.copy(tmp_char, 254);
+                    std::string lower_name = STR_US_IC;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        us_ic_map = &(scaler_maps.at(lower_name)->values);
+                    }
                 }
-                itr.second->unit.copy(tmp_char_units, 254);
-                H5Sselect_hyperslab(dataspace_names_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                H5Sselect_hyperslab(dataspace_units_id, H5S_SELECT_SET, offset, NULL, count, NULL);
-                status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, dataspace_names_id, H5P_DEFAULT, (void*)tmp_char);
-                if (status < 0)
+
+                if (scaler_maps.contains(STR_DS_IC))
                 {
-                    logE << "failed to write " << STR_NAMES << "\n";
+                    ds_ic_map = &(scaler_maps.at(STR_DS_IC)->values);
                 }
-                status = H5Dwrite(dset_units_id, memtype, memoryspace_str_id, dataspace_units_id, H5P_DEFAULT, (void*)tmp_char_units);
-                if (status < 0)
+                else
                 {
-                    logE << "failed to write " << STR_UNITS << "\n";
+                    std::string lower_name = STR_DS_IC;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        ds_ic_map = &(scaler_maps.at(lower_name)->values);
+                    }
                 }
-                H5Sselect_hyperslab(dataspace_values_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
-                itr.second->values = itr.second->values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
-                status = _write_h5d<T_real>(dset_values_id, memoryspace_id, dataspace_values_id, H5P_DEFAULT, (void*)itr.second->values.data());
-                if (status < 0)
+
+                if (scaler_maps.contains(STR_CFG_2))
                 {
-                    logE << "failed to write " << STR_VALUES << "\n";
+                    cfg_2_map = &(scaler_maps.at(STR_CFG_2)->values);
+                }
+                else
+                {
+                    std::string lower_name = STR_CFG_2;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        cfg_2_map = &(scaler_maps.at(lower_name)->values);
+                    }
+                }
+
+                if (scaler_maps.contains(STR_CFG_3))
+                {
+                    cfg_3_map = &(scaler_maps.at(STR_CFG_3)->values);
+                }
+                else
+                {
+                    std::string lower_name = STR_CFG_3;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        cfg_3_map = &(scaler_maps.at(lower_name)->values);
+                    }
+                }
+
+                if (scaler_maps.contains(STR_CFG_4))
+                {
+                    cfg_4_map = &(scaler_maps.at(STR_CFG_4)->values);
+                }
+                else
+                {
+                    std::string lower_name = STR_CFG_4;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        cfg_4_map = &(scaler_maps.at(lower_name)->values);
+                    }
+                }
+
+                if (scaler_maps.contains(STR_CFG_5))
+                {
+                    cfg_5_map = &(scaler_maps.at(STR_CFG_5)->values);
+                }
+                else
+                {
+                    std::string lower_name = STR_CFG_5;
+                    std::transform(lower_name.begin(), lower_name.end(), lower_name.begin(), ::tolower);
+                    if (scaler_maps.contains(lower_name))
+                    {
+                        cfg_5_map = &(scaler_maps.at(lower_name)->values);
+                    }
+                }
+
+                if (us_ic_map != nullptr && ds_ic_map != nullptr)
+                {
+                    scaler_maps.at(STR_ABS_IC)->values = (*ds_ic_map) / (*us_ic_map);
+                }
+
+                if (us_ic_map != nullptr && cfg_2_map != nullptr && cfg_3_map != nullptr && cfg_4_map != nullptr && cfg_5_map != nullptr)
+                {
+                    data_struct::ArrayXXr<T_real> t_abs_map;
+                    t_abs_map.resize(rows, cols);
+                    t_abs_map = (*cfg_2_map) + (*cfg_3_map) + (*cfg_4_map) + (*cfg_5_map);
+                    scaler_maps.at(STR_ABS_CFG)->values = t_abs_map / (*us_ic_map);
+
+                    if (t_abs_map.sum() != 0.0)
+                    {
+                        scaler_maps.at(STR_H_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_3_map) - (*cfg_4_map) + (*cfg_5_map)) / t_abs_map;
+                        scaler_maps.at(STR_V_DPC_CFG)->values = ((*cfg_2_map) + (*cfg_3_map) - (*cfg_4_map) - (*cfg_5_map)) / t_abs_map;
+                        scaler_maps.at(STR_DIA1_DPC_CFG)->values = ((*cfg_2_map) - (*cfg_4_map)) / t_abs_map;
+                        scaler_maps.at(STR_DIA2_DPC_CFG)->values = ((*cfg_3_map) - (*cfg_5_map)) / t_abs_map;
+                    }
+                }
+            }
+        
+            if (cols > 0 && rows > 0)
+            {
+                count_3d[0] = scaler_maps.size();
+
+                count_3d[1] = rows;
+                count_2d[0] = count_3d[1];
+                count_3d[2] = cols;
+                count_2d[1] = count_3d[2];
+
+
+                chunk_3d[0] = 1;
+                chunk_3d[1] = count_3d[1];
+                chunk_3d[2] = count_3d[2];
+
+                if (false == _open_h5_dataset<T_real>(STR_VALUES, scalers_grp_id, 3, count_3d, chunk_3d, dset_values_id, dataspace_values_id))
+                {
+                    return false;
+                }
+
+                count_3d[0] = 1;
+
+                dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+                H5Pset_chunk(dcpl_id, 3, count_3d);
+                H5Pset_deflate(dcpl_id, 7);
+
+                count_3d[0] = scaler_maps.size();
+                count[0] = count_3d[0];
+
+                if (false == _open_h5_dataset(STR_NAMES, filetype, scalers_grp_id, 1, count, count, dset_names_id, dataspace_names_id))
+                {
+                    return false;
+                }
+
+                if (false == _open_h5_dataset(STR_UNITS, filetype, scalers_grp_id, 1, count, count, dset_units_id, dataspace_units_id))
+                {
+                    return false;
+                }
+
+                count_3d[0] = 1;
+                count[0] = 1;
+
+                _create_memory_space(2, count_2d, memoryspace_id);
+                int idx = 0;
+                for (const auto& itr : scaler_maps)
+                {
+                    offset[0] = idx;
+                    offset_3d[0] = idx;
+                    idx++;
+                    char tmp_char[255] = { 0 };
+                    char tmp_char_units[255] = { 0 };
+                    std::string out_label, out_beamline;
+                    if (data_struct::Scaler_Lookup::inst()->search_pv(itr.second->name, out_label, itr.second->time_normalized, out_beamline))
+                    {
+                        out_label.copy(tmp_char, 254);
+                    }
+                    else
+                    {
+                        itr.second->name.copy(tmp_char, 254);
+                    }
+                    itr.second->unit.copy(tmp_char_units, 254);
+                    H5Sselect_hyperslab(dataspace_names_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    H5Sselect_hyperslab(dataspace_units_id, H5S_SELECT_SET, offset, NULL, count, NULL);
+                    status = H5Dwrite(dset_names_id, memtype, memoryspace_str_id, dataspace_names_id, H5P_DEFAULT, (void*)tmp_char);
+                    if (status < 0)
+                    {
+                        logE << "failed to write " << STR_NAMES << "\n";
+                    }
+                    status = H5Dwrite(dset_units_id, memtype, memoryspace_str_id, dataspace_units_id, H5P_DEFAULT, (void*)tmp_char_units);
+                    if (status < 0)
+                    {
+                        logE << "failed to write " << STR_UNITS << "\n";
+                    }
+                    H5Sselect_hyperslab(dataspace_values_id, H5S_SELECT_SET, offset_3d, NULL, count_3d, NULL);
+                    itr.second->values = itr.second->values.unaryExpr([](T_real v) { return std::isfinite(v) ? v : (T_real)0.0; });
+                    status = _write_h5d<T_real>(dset_values_id, memoryspace_id, dataspace_values_id, H5P_DEFAULT, (void*)itr.second->values.data());
+                    if (status < 0)
+                    {
+                        logE << "failed to write " << STR_VALUES << "\n";
+                    }
                 }
             }
         }
-
         H5Tclose(filetype);
         H5Tclose(memtype);
 

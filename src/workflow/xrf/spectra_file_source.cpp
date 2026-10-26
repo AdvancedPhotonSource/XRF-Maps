@@ -56,8 +56,39 @@ namespace workflow
 namespace xrf
 {
 
+namespace
+{
+
+// Points the source at a dataset for the length of a load and clears it again
+// on the way out, even if the stream callback throws part way through.
+struct Scoped_Dataset_Name
+{
+	std::string*& _dirpath;
+	std::string*& _filename;
+
+	Scoped_Dataset_Name(std::string*& dirpath, std::string*& filename, const std::string& dirpath_val, const std::string& filename_val)
+		: _dirpath(dirpath), _filename(filename)
+	{
+		_dirpath = new std::string(dirpath_val);
+		_filename = new std::string(filename_val);
+	}
+
+	~Scoped_Dataset_Name()
+	{
+		delete _dirpath;
+		delete _filename;
+		_dirpath = nullptr;
+		_filename = nullptr;
+	}
+
+	Scoped_Dataset_Name(const Scoped_Dataset_Name&) = delete;
+	Scoped_Dataset_Name& operator=(const Scoped_Dataset_Name&) = delete;
+};
+
+} // namespace
+
 //-----------------------------------------------------------------------------
-    
+
 template<typename T_real>
 Spectra_File_Source<T_real>::Spectra_File_Source() : Source<data_struct::Stream_Block<T_real>*>()
 {
@@ -100,13 +131,8 @@ bool Spectra_File_Source<T_real>::load_netcdf_line(std::string dirpath,
                                            size_t row_size,
                                            size_t col_size)
 {
-	bool retVal;
-	_current_dataset_directory = new std::string(dirpath);
-	_current_dataset_name = new std::string(filename);
-	retVal = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
-	delete _current_dataset_directory;
-	delete _current_dataset_name;
-	return retVal;
+	Scoped_Dataset_Name scoped_name(_current_dataset_directory, _current_dataset_name, dirpath, filename);
+	return io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
 }
 
 // ----------------------------------------------------------------------------
@@ -121,13 +147,8 @@ bool Spectra_File_Source<T_real>::load_netcdf_line_custom_filename(std::string d
                                           std::string stream_dirpath,
                                           std::string stream_filename)
 {
-	bool retVal;
-	_current_dataset_directory = new std::string(stream_dirpath);
-	_current_dataset_name = new std::string(stream_filename);
-	retVal = io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
-	delete _current_dataset_directory;
-	delete _current_dataset_name;
-	return retVal;
+	Scoped_Dataset_Name scoped_name(_current_dataset_directory, _current_dataset_name, stream_dirpath, stream_filename);
+	return io::file::NetCDF_IO<T_real>::inst()->load_spectra_line_with_callback(dirpath+filename, detector_num_arr, row, row_size, col_size, _cb_function, nullptr);
 }
 
 // ----------------------------------------------------------------------------
