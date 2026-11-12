@@ -243,7 +243,9 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("mu_fraction", &data_struct::Element_Energy_Ratio<float>::mu_fraction)
     .def_readwrite("ptype", &data_struct::Element_Energy_Ratio<float>::ptype);
 
-	py::class_<data_struct::Fit_Element_Map<float>>(m, "Fit_Element_Map")
+	// shared_ptr holder: Fit_Element_Map_Dict stores shared_ptr, so pybind needs a
+	// matching holder to hand those elements to Python.
+	py::class_<data_struct::Fit_Element_Map<float>, std::shared_ptr<data_struct::Fit_Element_Map<float> > >(m, "Fit_Element_Map")
 	.def(py::init<std::string, Element_Info<float>*>())
 	.def("center", &data_struct::Fit_Element_Map<float>::center)
 	.def("width", &data_struct::Fit_Element_Map<float>::width)
@@ -289,7 +291,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 for (auto& itr : elist)
                 {
                     data_struct::Element_Info<float>* element_info = data_struct::Element_Info_Map<float>::inst()->get_element(itr);
-                    auto fit_element_map = new data_struct::Fit_Element_Map(itr, element_info);
+                    auto fit_element_map = std::make_shared<data_struct::Fit_Element_Map<float> >(itr, element_info);
                     fit_element_map->init_energy_ratio_for_detector_element(detector_info);
                     self.elements_to_fit[itr] = fit_element_map;
                 }                

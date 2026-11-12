@@ -87,7 +87,9 @@ public:
     Detector(Detector&&);
     Detector& operator=(Detector&&);
 
-    void append_element(Fitting_Routines routine, std::string name, std::string quant_scaler, T_real weight);
+    /// NOTE: argument order is (quant_scaler, name) -- both are std::string, so
+    /// swapping them compiles silently and then matches nothing at runtime.
+    void append_element(Fitting_Routines routine, std::string quant_scaler, std::string name, T_real weight);
 
     void update_element_quants(Fitting_Routines routine,
                                 std::string quantifier_scaler,

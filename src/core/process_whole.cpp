@@ -243,7 +243,7 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
         Quantification_Standard<double>* quantification_standard = &(detector->quantification_standards[standard_itr.standard_filename]);
 
         //Output of fits for elements specified
-        std::unordered_map<std::string, data_struct::Fit_Element_Map<double>*> elements_to_fit;
+        data_struct::Fit_Element_Map_Dict<double> elements_to_fit;
         for (auto& itr : standard_itr.element_standard_weights)
         {
             if(detector->fit_params_override_dict.elements_to_fit.count(itr.first) > 0)
@@ -255,7 +255,7 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
                 data_struct::Element_Info<double>* e_info = data_struct::Element_Info_Map<double>::inst()->get_element(itr.first);
                 if( e_info != nullptr )
                 {
-                    elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
+                    elements_to_fit[itr.first] = std::make_shared<data_struct::Fit_Element_Map<double> >(itr.first, e_info);
                     elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
                 }
                 else

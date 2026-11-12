@@ -87,7 +87,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
     {
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
-        Fit_Element_Map<T_real>* element = e_itr.second;
+        Fit_Element_Map<T_real>* element = e_itr.second.get();
         if (element != nullptr)
         {
             

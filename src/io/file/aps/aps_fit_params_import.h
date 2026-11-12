@@ -297,10 +297,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                             }
                             else
                             {
-                                Fit_Element_Map<T_real>* fit_map;
+                                std::shared_ptr<Fit_Element_Map<T_real> > fit_map;
                                 if (params_override.elements_to_fit.contains(element_symb) == false && element_symb.length() > 0)
                                 {
-                                    fit_map = new Fit_Element_Map<T_real>(element_symb, e_info);
+                                    fit_map = std::make_shared<Fit_Element_Map<T_real> >(element_symb, e_info);
                                     params_override.elements_to_fit[element_symb] = fit_map;
                                 }
                             }
@@ -375,10 +375,10 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
 
                             if (e_info1 != nullptr && e_info2 != nullptr)
                             {
-                                Fit_Element_Map<T_real>* fit_map;
+                                std::shared_ptr<Fit_Element_Map<T_real> > fit_map;
                                 if (params_override.elements_to_fit.contains(orig_el_symb) == false)
                                 {
-                                    fit_map = new Fit_Element_Map<T_real>(efull_name1, e_info1);
+                                    fit_map = std::make_shared<Fit_Element_Map<T_real> >(efull_name1, e_info1);
                                     fit_map->set_as_pileup(efull_name2, e_info2);
                                     params_override.elements_to_fit[orig_el_symb] = fit_map;
                                 }
@@ -462,7 +462,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::getline(strstream, element_symb, ',');
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
-                        Fit_Element_Map<T_real>* fit_map;
+                        std::shared_ptr<Fit_Element_Map<T_real> > fit_map;
                         if (params_override.elements_to_fit.contains(element_symb) )
                         {
                             fit_map = params_override.elements_to_fit[element_symb];
@@ -489,11 +489,11 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::getline(strstream, width_value, ',');
                         width_multi = parse_input_real<T_real>(width_value);
 
-                        Fit_Element_Map<T_real>* fit_map;
+                        std::shared_ptr<Fit_Element_Map<T_real> > fit_map;
                         if (params_override.elements_to_fit.contains(element_symb) == false)
                         {
                             
-                            fit_map = new Fit_Element_Map<T_real>(element_symb, center, width_multi);
+                            fit_map = std::make_shared<Fit_Element_Map<T_real> >(element_symb, center, width_multi);
                             params_override.elements_to_fit[element_symb] = fit_map;
                         }
                     }
@@ -528,7 +528,7 @@ DLL_EXPORT bool load_parameters_override(std::string path, Params_Override<T_rea
                         std::getline(strstream, element_symb, ',');
                         element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
-                        Fit_Element_Map<T_real>* fit_map;
+                        std::shared_ptr<Fit_Element_Map<T_real> > fit_map;
                         if (params_override.elements_to_fit.contains(element_symb) )
                         {
                             fit_map = params_override.elements_to_fit[element_symb];

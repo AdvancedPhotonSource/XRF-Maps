@@ -101,7 +101,7 @@ void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Pa
         {
             T_real e_guess = (T_real)1.0e-10;
 
-            Fit_Element_Map<T_real>* element = el_itr.second;
+            Fit_Element_Map<T_real>* element = el_itr.second.get();
             std::vector<Element_Energy_Ratio<T_real>> energies = element->energy_ratios();
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )

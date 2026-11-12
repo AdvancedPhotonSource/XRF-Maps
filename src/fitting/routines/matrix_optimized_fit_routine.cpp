@@ -123,7 +123,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
 
     for (const auto& itr : (*elements_to_fit))
     {
-        Fit_Element_Map<T_real>* element = itr.second;
+        Fit_Element_Map<T_real>* element = itr.second.get();
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if (false == fit_parameters.contains(itr.first))
         {
@@ -205,7 +205,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
 #pragma omp parallel for
     for (int i = 0; i < (int)keys.size(); i++)
     {
-        Fit_Element_Map<T_real>* element = elements_to_fit->at(keys[i]);
+        Fit_Element_Map<T_real>* element = elements_to_fit->at(keys[i]).get();
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         data_struct::Spectra<T_real> spec = model.model_spectrum_element(&fit_parameters, element, ev, nullptr);
 #pragma omp critical
@@ -214,7 +214,7 @@ std::unordered_map<std::string, Spectra<T_real>> Matrix_Optimized_Fit_Routine<T_
 #else
     for(const auto& itr : (*elements_to_fit))
     {
-        Fit_Element_Map<T_real>* element = itr.second;
+        Fit_Element_Map<T_real>* element = itr.second.get();
         // Set value to 0.0 . This is the pre_faktor in gauss_tails_model. we do 10.0 ^ pre_faktor = 1.0
         if( false == fit_parameters.contains(itr.first) )
         {

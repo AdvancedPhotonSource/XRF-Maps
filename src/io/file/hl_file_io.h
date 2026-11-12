@@ -247,11 +247,11 @@ DLL_EXPORT bool load_override_params(std::string dataset_directory,
 
         if (params_override.elements_to_fit.contains(STR_COMPTON_AMPLITUDE) == false)
         {
-            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COMPTON_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COMPTON_AMPLITUDE, nullptr)));
+            params_override.elements_to_fit.insert({ STR_COMPTON_AMPLITUDE, std::make_shared<data_struct::Fit_Element_Map<T_real> >(STR_COMPTON_AMPLITUDE, nullptr) });
         }
         if (params_override.elements_to_fit.contains(STR_COHERENT_SCT_AMPLITUDE) == false)
         {
-            params_override.elements_to_fit.insert(std::pair<std::string, data_struct::Fit_Element_Map<T_real>*>(STR_COHERENT_SCT_AMPLITUDE, new data_struct::Fit_Element_Map<T_real>(STR_COHERENT_SCT_AMPLITUDE, nullptr)));
+            params_override.elements_to_fit.insert({ STR_COHERENT_SCT_AMPLITUDE, std::make_shared<data_struct::Fit_Element_Map<T_real> >(STR_COHERENT_SCT_AMPLITUDE, nullptr) });
         }
 
         logI << "Elements to fit:  ";
