@@ -435,6 +435,7 @@ DLL_EXPORT void SavePlotQuantification(std::string path, Detector<T_real>* detec
     if (detector == nullptr)
     {
         logW << "Detector == nullptr, can't save quantification\n";
+        return;
     }
 
     //iterate through proc_type {roi, nnls, fitted}

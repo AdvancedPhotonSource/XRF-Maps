@@ -231,6 +231,11 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
     std::unordered_map<int, float> element_amt_in_all_standards;
 
     data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
+    if (detector == nullptr)
+    {
+        logE << "Detector " << detector_num << " not found, can't fit quantification datasets\n";
+        return false;
+    }
     data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
     //Range of energy in spectra to fit
@@ -459,6 +464,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
         {
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
             //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
+            if (detector == nullptr)
+            {
+                logE << "Detector " << detector_num << " not found, skipping quantification\n";
+                continue;
+            }
 
             if(load_and_fit_quantification_datasets(analysis_job, detector_num))
             {
@@ -972,9 +982,10 @@ void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
         std::string save_path = analysis_job.output_dir + "output/specfit_results" + std::to_string(detector_num) + ".csv";
         std::string quant_save_path = analysis_job.output_dir + "output/specfit_results" + std::to_string(detector_num) + "_quantified.csv";
         io::file::csv::save_v9_specfit(save_path, roi_fit_params.at(detector_num));
-        if (analysis_job.get_detector(detector_num)->quantification_standards.size() > 0)
+        data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
+        if (detector != nullptr && detector->quantification_standards.size() > 0)
         {
-            io::file::csv::save_v9_specfit_quantified(quant_save_path, analysis_job.get_detector(detector_num), analysis_job.fitting_routines, roi_fit_params.at(detector_num));
+            io::file::csv::save_v9_specfit_quantified(quant_save_path, detector, analysis_job.fitting_routines, roi_fit_params.at(detector_num));
         }
     }
 }
