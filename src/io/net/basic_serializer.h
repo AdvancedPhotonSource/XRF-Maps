@@ -100,10 +100,14 @@ protected:
 
     void _decode_spectra(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block);
 
-    char *_tmp_real;
-    char *_tmp_uint;
-    char *_tmp_size_t;
-    char *_tmp_ushort;
+    /// Fixed-size scratch buffers for _convert_var_to_bytes. These used to be
+    /// heap allocations; inline arrays need no ctor/dtor, and the implicit copy
+    /// constructor no longer hands two Basic_Serializers the same buffers to
+    /// delete[].
+    char _tmp_real[sizeof(T_real)];
+    char _tmp_uint[sizeof(unsigned int)];
+    char _tmp_size_t[sizeof(size_t)];
+    char _tmp_ushort[sizeof(unsigned short)];
 
 };
 

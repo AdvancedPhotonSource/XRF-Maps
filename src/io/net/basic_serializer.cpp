@@ -62,19 +62,12 @@ namespace net
 template<typename T_real>
 Basic_Serializer<T_real>::Basic_Serializer()
 {
-    _tmp_real = new char[sizeof(T_real)];
-    _tmp_uint = new char[sizeof(unsigned int)];
-    _tmp_size_t = new char[sizeof(size_t)];
-    _tmp_ushort = new char[sizeof(unsigned short)];
+    // _tmp_* are fixed-size member arrays; nothing to allocate.
 }
 
 template<typename T_real>
 Basic_Serializer<T_real>::~Basic_Serializer()
 {
-    delete[] _tmp_real;
-    delete[] _tmp_uint;
-    delete[] _tmp_size_t;
-    delete[] _tmp_ushort;
 }
 
 //-----------------------------------------------------------------------------

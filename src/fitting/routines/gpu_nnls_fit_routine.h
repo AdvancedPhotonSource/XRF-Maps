@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define GPU_NNLS_Fit_Routine_H
 
 #include <vector>
+#include <memory>
 
 #include "fitting/routines/nnls_fit_routine.h"
 
@@ -125,7 +126,13 @@ public:
 
     virtual ~GPU_NNLS_Fit_Routine();
 
-    virtual std::string get_name() { return STR_FIT_NNLS; } //save in /MAPS/XRF_Analyzed/NNLS 
+    /// Exclusively owns the GPU backend via unique_ptr, so it is non-copyable.
+    /// DLL_EXPORT makes MSVC emit the implicit copy operations, which then fail
+    /// to compile against the move-only member -- so delete them explicitly.
+    GPU_NNLS_Fit_Routine(const GPU_NNLS_Fit_Routine&) = delete;
+    GPU_NNLS_Fit_Routine& operator=(const GPU_NNLS_Fit_Routine&) = delete;
+
+    virtual std::string get_name() { return STR_FIT_NNLS; } //save in /MAPS/XRF_Analyzed/NNLS
 
     virtual void initialize(models::Base_Model<T_real>& model,
                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
@@ -179,7 +186,7 @@ protected:
     bool _setup_gpu();
 
 #ifdef _BUILD_WITH_GPU
-    GPU_NNLS_BACKEND_TYPE* _backend;
+    std::unique_ptr<GPU_NNLS_BACKEND_TYPE> _backend;
 #else
     // No GPU backend compiled in; the field is kept so the class layout does not depend
     // on the build option, but it stays null and is never dereferenced.

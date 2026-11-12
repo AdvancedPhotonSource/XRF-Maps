@@ -96,9 +96,7 @@ GPU_NNLS_Fit_Routine<T_real>::GPU_NNLS_Fit_Routine(size_t max_iter) : NNLS_Fit_R
 template<typename T_real>
 GPU_NNLS_Fit_Routine<T_real>::~GPU_NNLS_Fit_Routine()
 {
-#ifdef _BUILD_WITH_GPU
-    delete _backend;
-#endif
+    // Under _BUILD_WITH_GPU, _backend is a unique_ptr and frees itself.
     _backend = nullptr;
     _gpu_ready = false;
 }
@@ -165,7 +163,7 @@ bool GPU_NNLS_Fit_Routine<T_real>::_setup_gpu()
 
     if (_backend == nullptr)
     {
-        _backend = new GPU_NNLS_BACKEND_TYPE();
+        _backend = std::make_unique<GPU_NNLS_BACKEND_TYPE>();
     }
 
     if (false == _backend->initialize())

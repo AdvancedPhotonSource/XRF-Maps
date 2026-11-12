@@ -66,8 +66,8 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
     this->_callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
 
     std::string conn_str = "tcp://*:" + port;
-	_context = new zmq::context_t(1);
-	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
+	_context = std::make_unique<zmq::context_t>(1);
+	_zmq_socket = std::make_unique<zmq::socket_t>(*_context, ZMQ_PUB);
 	_zmq_socket->bind(conn_str);
 #else
     logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
@@ -83,15 +83,13 @@ Spectra_Net_Streamer<T_real>::~Spectra_Net_Streamer()
     if(_zmq_socket != nullptr)
     {
 		_zmq_socket->close();
-        delete _zmq_socket;
+        _zmq_socket.reset();
     }
 	if (_context != nullptr)
 	{
 		_context->close();
-		delete _context;
+		_context.reset();
 	}
-    _zmq_socket = nullptr;
-	_context = nullptr;
 #endif
 }
 

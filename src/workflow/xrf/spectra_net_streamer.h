@@ -58,6 +58,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef _BUILD_WITH_ZMQ
 #include <zmq.hpp>
 #endif
+#include <memory>
 namespace workflow
 {
 namespace xrf
@@ -74,6 +75,12 @@ public:
 
     virtual ~Spectra_Net_Streamer();
 
+    /// Owns its ZeroMQ context and socket via unique_ptr, so it is non-copyable.
+    /// DLL_EXPORT makes MSVC emit the implicit copy operations, which then fail
+    /// to compile against the move-only members -- so delete them explicitly.
+    Spectra_Net_Streamer(const Spectra_Net_Streamer&) = delete;
+    Spectra_Net_Streamer& operator=(const Spectra_Net_Streamer&) = delete;
+
     void stream(const data_struct::Stream_Block_Ptr<T_real>& stream_block);
 
     void set_send_counts(bool val) {_send_counts = val;}
@@ -83,9 +90,11 @@ public:
     void set_verbose(bool val) {_verbose = val;}
 protected:
 #ifdef _BUILD_WITH_ZMQ
-	zmq::context_t *_context;
+	// Declaration order matters: members are destroyed in reverse, so the
+	// socket is torn down before the context it was created from.
+	std::unique_ptr<zmq::context_t> _context;
 
-	zmq::socket_t *_zmq_socket;
+	std::unique_ptr<zmq::socket_t> _zmq_socket;
 #endif
 	io::net::Basic_Serializer<T_real> _serializer;
 

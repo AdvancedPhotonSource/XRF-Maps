@@ -63,8 +63,8 @@ Spectra_Net_Source<T_real>::Spectra_Net_Source(data_struct::Analysis_Job<T_real>
 #ifdef _BUILD_WITH_ZMQ
     _conn_str = "tcp://"+ip_addr+":"+port;
     logI<<"Connecting to "<<_conn_str<<"\n";
-	_context = new zmq::context_t(1);
-	_zmq_socket = new zmq::socket_t(*_context, ZMQ_SUB);
+	_context = std::make_unique<zmq::context_t>(1);
+	_zmq_socket = std::make_unique<zmq::socket_t>(*_context, ZMQ_SUB);
     _zmq_socket->connect(_conn_str);
     _zmq_socket->set(zmq::sockopt::subscribe, "XRF-Spectra");
     //_zmq_socket->setsockopt(ZMQ_RCVTIMEO, 1000); //set timeout to 1000ms
@@ -83,15 +83,13 @@ Spectra_Net_Source<T_real>::~Spectra_Net_Source()
 	if (_zmq_socket != nullptr)
 	{
 		_zmq_socket->close();
-		delete _zmq_socket;
+		_zmq_socket.reset();
 	}
 	if (_context != nullptr)
 	{
 		_context->close();
-		delete _context;
+		_context.reset();
 	}
-	_zmq_socket = nullptr;
-	_context = nullptr;
 #endif
 }
 
