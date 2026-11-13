@@ -32,8 +32,9 @@ class XRF_Stream_Source():
         # Use Gausian Model
         self.model = px.fitting.models.GaussModel()
 
-        # Load fit parameters 
+        # Load fit parameters
         self.po = param_override
+        self.fit_rout_ready = False
 
         self.channel = pva.Channel(CHANNEL)
         # monitor
@@ -45,9 +46,10 @@ class XRF_Stream_Source():
 
     def init_fit_routine(self, int_spec):
         # Initialize model and fit routine with fit parameters
-        self.energy_range = px.get_energy_range(int_spec.size, po.fit_params)
-        self.model.update_fit_params_values(po.fit_params)
-        self.fit_rout.initialize(model, po.elements_to_fit, energy_range)
+        self.energy_range = px.get_energy_range(int_spec.size, self.po.fit_params)
+        self.model.update_fit_params_values(self.po.fit_params)
+        self.fit_rout.initialize(self.model, self.po.elements_to_fit, self.energy_range)
+        self.fit_rout_ready = True
 
     def config_change_handler(self, msg):
         if msg['data'] == self.bnode_name:
@@ -55,13 +57,20 @@ class XRF_Stream_Source():
 
     def fit_spec(self, spec, id):
         if spec is not None:
+            if not self.fit_rout_ready:
+                self.init_fit_routine(spec)
             # create a stream block
             sb = px.StreamBlock(-1, self.row, self.col, self.height, self.width, self.dataset_directory, self.dataset_name)
-            sb.init_fitting_blocks( {px.FittingRoutines.ROI: self.fit_rout}, self.po.elements_to_fit)
-            #sb.spectra = spec
-            sb.fitting_blocks[px.FittingRoutines.ROI] = px.StreamFittingBlock()
+            # init_fitting_blocks takes the ParamsOverride itself: the block keeps a
+            # bare pointer to its element dict, and a plain dict would not outlive
+            # the call. Passing the override also pins it to the block.
+            sb.init_fitting_blocks( {px.FittingRoutines.ROI: self.fit_rout}, self.po)
+            sb.spectra = spec
             # fit the spectra
-            sb.fitting_blocks[px.FittingRoutines.ROI].fit_counts = self.fit_rout.fit_counts(self.model, spec, self.po.elements_to_fit)
+            outcome, counts = self.fit_rout.fit_counts(self.model, spec, self.po.elements_to_fit)
+            if outcome != px.fitting.routines.OPTIMIZER_OUTCOME.CONVERGED:
+                print('fit did not converge:', outcome)
+            sb.fitting_blocks[px.FittingRoutines.ROI].fit_counts = counts
             print (self.col, id, sb.fitting_blocks[px.FittingRoutines.ROI].fit_counts)
             self.sprectra_streamer.stream(sb)
             self.col += 1

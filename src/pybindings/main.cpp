@@ -1,4 +1,6 @@
 
+#include <optional>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
@@ -36,14 +38,53 @@ namespace py = pybind11;
 
 //PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
+// initialize() takes custom_background as a bare ArrayTr<float>* and the matrix
+// routines store it (Matrix_Optimized_Fit_Routine::initialize assigns it to
+// _custom_background, then dereferences it during fit_spectra). A numpy array
+// converted at the call boundary dies when initialize returns, so passing one
+// used to leave the routine pointing at freed memory and segfault on the next
+// fit. Keep a C++ copy alive on the Python routine object instead.
+//
+// The parameter is also optional - every C++ call site passes nullptr - so it
+// defaults to None rather than being required as it was before.
+template<typename T_Routine>
+static void local_initialize(py::object self_obj,
+	fitting::models::Base_Model<float>& model,
+	const Fit_Element_Map_Dict<float>* const elements_to_fit,
+	const data_struct::Range energy_range,
+	std::optional<data_struct::ArrayTr<float> > custom_background)
+{
+	T_Routine& self = self_obj.cast<T_Routine&>();
+	if (false == custom_background.has_value())
+	{
+		self.initialize(model, elements_to_fit, energy_range, nullptr);
+		return;
+	}
+	auto* owned = new data_struct::ArrayTr<float>(custom_background.value());
+	py::object owner = py::capsule(owned, [](void* p) { delete static_cast<data_struct::ArrayTr<float>*>(p); });
+	// Hang the copy off the routine through pybind's own keep-alive list rather
+	// than setattr, which needs py::dynamic_attr() on the class. Re-initialising
+	// adds another patient instead of replacing the old one, so the earlier
+	// copies live until the routine itself is collected.
+	py::detail::keep_alive_impl(self_obj, owner);
+	self.initialize(model, elements_to_fit, energy_range, owned);
+}
+
+#define XRF_INITIALIZE_ARGS \
+	py::arg("model"), py::arg("elements_to_fit"), py::arg("energy_range"), \
+	py::arg("custom_background") = py::none()
+
+// Both helpers hand back the optimizer's outcome alongside the numbers. Dropping
+// it left Python unable to tell a converged fit from one that returned CRASHED,
+// EXPLODED or FOUND_NAN - the counts look like ordinary floats either way.
 auto local_fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	const fitting::models::Base_Model<float>& model,
 	const Spectra<float>* const spectra,
 	const Fit_Element_Map_Dict<float>* const elements_to_fit)
 {
 	std::unordered_map<std::string, float> out_counts;
-	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
-	return out_counts;
+	fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	return std::tuple<fitting::optimizers::OPTIMIZER_OUTCOME, std::unordered_map<std::string, float>>(outcome, out_counts);
 }
 
 auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
@@ -54,9 +95,8 @@ auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	std::unordered_map<std::string, float> out_counts;
 	data_struct::Fit_Parameters<float> fit_params;
 	fit_params.append_and_update(model.fit_parameters());
-	data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
 
-	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
 	for (auto& itr : out_counts)
 	{
         
@@ -79,7 +119,7 @@ auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	}
 	*/
 	//return model->model_spectrum_mp(&fit_params, elements_to_fit, energy_range);
-    return std::tuple<std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(out_counts, fit_params);
+    return std::tuple<fitting::optimizers::OPTIMIZER_OUTCOME, std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(outcome, out_counts, fit_params);
 }
 
 PYBIND11_MODULE(pyxrfmaps, m) {
@@ -174,7 +214,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def("init_f_energies", &data_struct::Element_Info<float>::init_f_energies)
     .def("init_extra_energies", &data_struct::Element_Info<float>::init_extra_energies)
-    .def("get_energies_between", &data_struct::Element_Info<float>::get_energies_between)
+    // get_energies_between is not bound: it returns its four results through
+    // T_real*/size_t* out-parameters, which Python has no way to supply.
     .def("calc_beta", &data_struct::Element_Info<float>::calc_beta)
     .def_readwrite("number", &data_struct::Element_Info<float>::number)
     .def_readwrite("name", &data_struct::Element_Info<float>::name)
@@ -403,9 +444,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 {
                     self.be_window_thickness = py::cast<std::string>(d["be_window_thickness"]);
                 }
+                // ge_dead_layer, det_chip_thickness and theta_pv are std::string.
+                // Casting them to float used to compile only because
+                // std::string::operator=(char) exists, so a value of 65.0 silently
+                // became "A" - and to_dict's own output, being strings, threw.
                 if (d.contains("ge_dead_layer"))
                 {
-                    self.ge_dead_layer = py::cast<float>(d["ge_dead_layer"]);
+                    self.ge_dead_layer = py::cast<std::string>(d["ge_dead_layer"]);
+                }
+                if (d.contains("det_chip_thickness"))
+                {
+                    self.det_chip_thickness = py::cast<std::string>(d["det_chip_thickness"]);
                 }
                 if (d.contains("us_amp_sens_num"))
                 {
@@ -425,7 +474,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 }
                 if (d.contains("theta_pv"))
                 {
-                    self.theta_pv = py::cast<float>(d["theta_pv"]);
+                    self.theta_pv = py::cast<std::string>(d["theta_pv"]);
                 }
             }
         );
@@ -604,8 +653,28 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def(py::init<>())
 	.def("add_parameter", &data_struct::Fit_Parameters<float>::add_parameter)
 	.def("append_and_update", &data_struct::Fit_Parameters<float>::append_and_update)
-	.def("begin", &data_struct::Fit_Parameters<float>::begin)
-	.def("end", &data_struct::Fit_Parameters<float>::end)
+	// begin()/end() used to be bound directly, which exposed a raw unordered_map
+	// iterator - an unregistered type, so calling either just raised TypeError.
+	// These give Python the mapping protocol over the same storage instead.
+	.def("__len__", &data_struct::Fit_Parameters<float>::size)
+	.def("__contains__", &data_struct::Fit_Parameters<float>::contains)
+	.def("__getitem__", [](data_struct::Fit_Parameters<float>& self, const std::string& name) -> data_struct::Fit_Param<float>&
+		{
+			// operator[] default-constructs a missing key; Python expects KeyError.
+			if (false == self.contains(name))
+			{
+				throw py::key_error(name);
+			}
+			return self[name];
+		}, py::return_value_policy::reference_internal)
+	.def("__setitem__", [](data_struct::Fit_Parameters<float>& self, const std::string& name, const data_struct::Fit_Param<float>& param)
+		{
+			self[name] = param;
+		})
+	.def("__iter__", [](const data_struct::Fit_Parameters<float>& self)
+		{
+			return py::make_key_iterator(self.begin(), self.end());
+		}, py::keep_alive<0, 1>())
 	.def("sum_values", &data_struct::Fit_Parameters<float>::sum_values)
 	.def("divide_fit_values_by", &data_struct::Fit_Parameters<float>::divide_fit_values_by)
 	.def("contains", &data_struct::Fit_Parameters<float>::contains)
@@ -705,6 +774,22 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("minimize_quantification", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_quantification);
 
     //routines
+	// Registered before the routines so that fit_spectra/fit_counts, which now
+	// return it, get a readable signature rather than the raw C++ type name.
+	py::enum_<fitting::optimizers::OPTIMIZER_OUTCOME>(fr, "OPTIMIZER_OUTCOME")
+	.value("FOUND_ZERO", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO)
+	.value("CONVERGED", fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
+	.value("TRAPPED", fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED)
+	.value("EXHAUSTED", fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
+	.value("FAILED", fitting::optimizers::OPTIMIZER_OUTCOME::FAILED)
+	.value("CRASHED", fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED)
+	.value("EXPLODED", fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED)
+	.value("STOPPED", fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED)
+	.value("FOUND_NAN", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN)
+	.value("F_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL)
+	.value("X_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL)
+	.value("G_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL);
+
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");
 
     py::class_<fitting::routines::ROI_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "roi")
@@ -724,7 +809,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::ROI_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::ROI_Fit_Routine<float>::initialize);
+    .def("initialize", &local_initialize<fitting::routines::ROI_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
 	py::class_<fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "param_optimized")
 		.def(py::init<>())
@@ -744,7 +829,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine<float>::fit_spectra_parameters)
 		.def("get_name", &fitting::routines::Param_Optimized_Fit_Routine<float>::get_name)
-		.def("initialize", &fitting::routines::Param_Optimized_Fit_Routine<float>::initialize)
+		.def("initialize", &local_initialize<fitting::routines::Param_Optimized_Fit_Routine<float> >, XRF_INITIALIZE_ARGS)
 		// The routine keeps a bare Optimizer*; pin the optimizer to the routine.
 		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_optimizer, py::keep_alive<1, 2>())
 		.def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_update_coherent_amplitude_on_fit);
@@ -783,7 +868,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::initialize);
+    .def("initialize", &local_initialize<fitting::routines::Matrix_Optimized_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
     py::class_<fitting::routines::NNLS_Fit_Routine<float>, fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "nnls")
     .def(py::init<>())
@@ -802,7 +887,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::NNLS_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::NNLS_Fit_Routine<float>::initialize)
+    .def("initialize", &local_initialize<fitting::routines::NNLS_Fit_Routine<float> >, XRF_INITIALIZE_ARGS)
     .def("initialize_mp", &fitting::routines::NNLS_Fit_Routine<float>::initialize_mp);
 
 	py::class_<fitting::routines::SVD_Fit_Routine<float>, fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "svd")
@@ -822,22 +907,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
 	}, py::call_guard<py::gil_scoped_release>())
 		.def("get_name", &fitting::routines::SVD_Fit_Routine<float>::get_name)
-		.def("initialize", &fitting::routines::SVD_Fit_Routine<float>::initialize);
+		.def("initialize", &local_initialize<fitting::routines::SVD_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
-
-	py::enum_<fitting::optimizers::OPTIMIZER_OUTCOME>(fr, "OPTIMIZER_OUTCOME")
-	.value("FOUND_ZERO", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO)
-	.value("CONVERGED", fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
-	.value("TRAPPED", fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED)
-	.value("EXHAUSTED", fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
-	.value("FAILED", fitting::optimizers::OPTIMIZER_OUTCOME::FAILED)
-	.value("CRASHED", fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED)
-	.value("EXPLODED", fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED)
-	.value("STOPPED", fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED)
-	.value("FOUND_NAN", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN)
-	.value("F_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL)
-	.value("X_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL)
-	.value("G_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL);
 
     ////// IO //////
     //hl_file_io
@@ -885,7 +956,9 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def("unload", &io::file::MDA_IO<float>::unload)
     .def("load_spectra_volume", &io::file::MDA_IO<float>::load_spectra_volume, py::call_guard<py::gil_scoped_release>())
-    .def("load_spectra_volume_with_callback", &io::file::MDA_IO<float>::load_spectra_volume_with_callback, py::call_guard<py::gil_scoped_release>())
+    // load_spectra_volume_with_callback is not bound: it pairs a C function
+    // pointer with an opaque void* user_data, neither of which Python can
+    // supply. Binding it against a std::function would make it usable.
     //.def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
     .def("get_multiplied_dims", &io::file::mda_get_multiplied_dims)
     .def("get_rank_and_dims", &io::file::mda_get_rank_and_dims);
@@ -907,21 +980,11 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 {
                     return io::file::NetCDF_IO<float>::inst()->load_spectra_line(path, detector, spec_line);
                 }, py::call_guard<py::gil_scoped_release>());
-    //NetCDF_IO
-    io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
-                std::vector<size_t> detector_num_arr,
-                int row,
-                size_t max_rows,
-                size_t max_cols,
-                data_struct::IO_Callback_Func_Def<float> callback_fun,
-                void* user_data) { return io::file::NetCDF_IO<float>::inst()->load_spectra_line_with_callback(path,
-                                                                                  detector_num_arr,
-                                                                                  row,
-                                                                                  max_rows,
-                                                                                  max_cols,
-                                                                                  callback_fun,
-                                                                                  user_data);
-                                 }, py::call_guard<py::gil_scoped_release>());
+    // netcdf_load_spectra_line_with_callback is not bound, for the same reason as
+    // MDA_IO::load_spectra_volume_with_callback above: IO_Callback_Func_Def is a
+    // bare function pointer taking an opaque void* user_data, so there is no way
+    // to pass a Python callable. Rebinding it around a std::function, invoked
+    // under py::gil_scoped_acquire, would make it usable from Python.
 
 
 
