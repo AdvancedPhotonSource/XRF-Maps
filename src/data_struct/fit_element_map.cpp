@@ -229,6 +229,7 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
     {
         // M5 - N7	
         T_real ratio = 1.0;
+        _center = _element_info->xrf["ma1"];
         //ratio = RadRate(_element_info->number, M5N7_LINE, nullptr);
         generate_energy_ratio(_element_info->xrf["ma1"], ratio, Element_Param_Type::Ma1_Line, detector_element);
         // M5 - N6	
