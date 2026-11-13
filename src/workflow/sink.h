@@ -119,8 +119,13 @@ public:
     void stop()
     {
         _running = false;
-        _thread->join();
-        _thread.reset();
+        // stop() is reachable without a prior start() (directly, and via
+        // wait_and_stop()), so the worker may never have been created.
+        if(_thread != nullptr)
+        {
+            _thread->join();
+            _thread.reset();
+        }
     }
 
     void wait_and_stop()

@@ -97,6 +97,12 @@ public:
     /// `fit_routines` is borrowed; the Detector that owns it must outlive this block.
     void init_fitting_blocks(const std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real> > > *fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
 
+    /// Overload taking borrowed routine pointers. Callers that do not own their
+    /// routines through unique_ptr use this one - notably the Python bindings,
+    /// where the interpreter owns each routine and cannot hand over a unique_ptr
+    /// map. As above, the real owner must outlive this block.
+    void init_fitting_blocks(const std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> &fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
+
     const size_t& row() { return _row; }
 
     const size_t& col() { return _col; }
@@ -135,6 +141,9 @@ public:
     bool del_str_ptr;
 
 protected:
+
+    /// Shared body of both init_fitting_blocks overloads. `fit_routine` is borrowed.
+    void _add_fitting_block(Fitting_Routines routine, fitting::routines::Base_Fit_Routine<T_real>* fit_routine);
 
     size_t _row;
 

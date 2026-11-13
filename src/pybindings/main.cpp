@@ -192,14 +192,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("extra_f1", &data_struct::Element_Info<float>::extra_f1)
     .def_readwrite("extra_f2", &data_struct::Element_Info<float>::extra_f2);
 
+    // Every pointer handed out below is owned by the singleton and freed by its
+    // clear()/destructor, so each needs an explicit `reference` policy. Without it
+    // pybind's default (`automatic` -> take_ownership) makes Python delete the
+    // singleton's storage the moment the wrapper is collected.
     py::class_<data_struct::Element_Info_Map<float>>(m, "ElementInfoMap")
-    .def("inst", &data_struct::Element_Info_Map<float>::inst)
-    .def("clear", &data_struct::Element_Info_Map<float>::clear)
+    .def_static("inst", &data_struct::Element_Info_Map<float>::inst, py::return_value_policy::reference)
     .def("generate_default_elements", &data_struct::Element_Info_Map<float>::generate_default_elements)
     .def("add_element", &data_struct::Element_Info_Map<float>::add_element)
     .def("calc_beta", &data_struct::Element_Info_Map<float>::calc_beta)
-    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element)
-    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
     .def("contains", &data_struct::Element_Info_Map<float>::contains)
     .def_readwrite("_energies", &data_struct::Element_Info_Map<float>::_energies);
 
@@ -259,7 +262,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map<float>::energy_ratio_multipliers)
 	.def("width_multi", &data_struct::Fit_Element_Map<float>::width_multi)
 	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup)
-	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element)
+	// Borrowed from the Element_Info_Map singleton, not owned by this element.
+	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element, py::return_value_policy::reference)
 	.def("shell_type", &data_struct::Fit_Element_Map<float>::shell_type)
 	.def("check_binding_energy", &data_struct::Fit_Element_Map<float>::check_binding_energy);
 
@@ -471,7 +475,21 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def(py::init<int, size_t, size_t, size_t, size_t>())
     .def(py::init<int, size_t, size_t, size_t, size_t, std::string, std::string>())
-    .def("init_fitting_blocks", &data_struct::Stream_Block<float>::init_fitting_blocks)
+    // Takes the borrowed-pointer overload, because Python owns the routines and so
+    // cannot hand over a map of unique_ptr.
+    //
+    // The elements come from a ParamsOverride rather than a plain dict on purpose:
+    // the block stores a bare Fit_Element_Map_Dict*, and a dict converted at the
+    // call boundary would leave that pointing at a caster temporary that dies on
+    // return. ParamsOverride owns a real C++ dict, so &po.elements_to_fit stays
+    // valid and keep_alive<1,3> pins the owner for as long as the block lives.
+    // keep_alive<1,2> likewise pins the routine dict, and through it the routines.
+    .def("init_fitting_blocks", [](data_struct::Stream_Block<float>& self,
+            const std::unordered_map<data_struct::Fitting_Routines, fitting::routines::Base_Fit_Routine<float>*>& fit_routines,
+            data_struct::Params_Override<float>& po)
+        {
+            self.init_fitting_blocks(fit_routines, &po.elements_to_fit);
+        }, py::keep_alive<1, 2>(), py::keep_alive<1, 3>())
     .def("row", &data_struct::Stream_Block<float>::row)
     .def("col", &data_struct::Stream_Block<float>::col)
     .def("height", &data_struct::Stream_Block<float>::height)
@@ -481,12 +499,57 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("detector_number", &data_struct::Stream_Block<float>::detector_number)
     .def("is_end_block", &data_struct::Stream_Block<float>::is_end_block)
     .def_readwrite("fitting_blocks", &data_struct::Stream_Block<float>::fitting_blocks)
-    .def_readwrite("dataset_directory", &data_struct::Stream_Block<float>::dataset_directory)
-    .def_readwrite("dataset_name", &data_struct::Stream_Block<float>::dataset_name)
-    .def_readwrite("spectra", &data_struct::Stream_Block<float>::spectra)
-    .def_readwrite("elements_to_fit", &data_struct::Stream_Block<float>::elements_to_fit)
+    // Read-only: these are std::string* fields governed by a shared del_str_ptr flag,
+    // so a setter would either leak or store a pointer to a caster temporary. They
+    // are set by the C++ side that owns the strings.
+    .def_property_readonly("dataset_directory", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.dataset_directory != nullptr ? *s.dataset_directory : std::string();
+        })
+    .def_property_readonly("dataset_name", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.dataset_name != nullptr ? *s.dataset_name : std::string();
+        })
+    // The block owns `spectra` (its destructor deletes it), so the setter has to take
+    // a copy rather than the address of the Eigen caster's temporary. The getter
+    // hands back a numpy view onto the block's own buffer, and None when unset -
+    // pybind's Eigen pointer cast does not check for null.
+    .def_property("spectra",
+        [](py::object self) -> py::object
+        {
+            auto& s = self.cast<data_struct::Stream_Block<float>&>();
+            if (s.spectra == nullptr)
+            {
+                return py::none();
+            }
+            return py::cast(s.spectra, py::return_value_policy::reference_internal, self);
+        },
+        py::cpp_function([](data_struct::Stream_Block<float>& s, const data_struct::Spectra<float>& v)
+        {
+            delete s.spectra;
+            s.spectra = new data_struct::Spectra<float>(v);
+        }))
+    // Borrowed, and there is no persistent C++ dict behind a Python dict, so this is
+    // read-only; assign through set_elements_to_fit(ParamsOverride) instead.
+    .def_property_readonly("elements_to_fit", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.elements_to_fit != nullptr ? *s.elements_to_fit : data_struct::Fit_Element_Map_Dict<float>();
+        })
+    .def("set_elements_to_fit", [](data_struct::Stream_Block<float>& s, data_struct::Params_Override<float>& po)
+        {
+            s.elements_to_fit = &po.elements_to_fit;
+        }, py::keep_alive<1, 2>())
     .def_readwrite("optimize_fit_params_preset", &data_struct::Stream_Block<float>::optimize_fit_params_preset)
-    .def_readwrite("model", &data_struct::Stream_Block<float>::model)
+    // Borrowed. keep_alive goes on the setter only: def_property passes its extras to
+    // the getter too, and keep_alive<1,2> on a one-argument getter aborts the call
+    // with "Could not activate keep_alive!".
+    .def_property("model",
+        [](data_struct::Stream_Block<float>& s) { return s.model; },
+        py::cpp_function([](data_struct::Stream_Block<float>& s, fitting::models::Base_Model<float>* model)
+        {
+            s.model = model;
+        }, py::keep_alive<1, 2>()),
+        py::return_value_policy::reference_internal)
     .def_readwrite("theta", &data_struct::Stream_Block<float>::theta);
     
 
@@ -559,7 +622,9 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("get_first_detector", &data_struct::Analysis_Job<float>::get_first_detector, py::return_value_policy::reference_internal)
     .def("get_detector", &data_struct::Analysis_Job<float>::get_detector, py::return_value_policy::reference_internal)
     .def("set_optimizer", &data_struct::Analysis_Job<float>::set_optimizer)
-    .def("get_optimizer", &data_struct::Analysis_Job<float>::optimizer)
+    // Returns &_nlopt_optimizer, a member subobject of the job: tie its lifetime to
+    // the job rather than letting pybind delete a non-heap address.
+    .def("get_optimizer", &data_struct::Analysis_Job<float>::optimizer, py::return_value_policy::reference_internal)
     .def("init_fit_routines", &data_struct::Analysis_Job<float>::init_fit_routines)
     .def_readwrite("command_line", &data_struct::Analysis_Job<float>::command_line)
     .def_readwrite("dataset_directory", &data_struct::Analysis_Job<float>::dataset_directory)

@@ -59,12 +59,15 @@ Stream_Block<T_real>::Stream_Block()
 	_col = 0;
     _height = 0;
     _width = 0;
+    _detector = 0;
     theta = 0;
 	elements_to_fit = nullptr;
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = false;
 	spectra = nullptr;
     dataset_name = nullptr;
+    dataset_directory = nullptr;
+    model = nullptr;
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
@@ -88,6 +91,9 @@ Stream_Block<T_real>::Stream_Block(int detector,
     del_str_ptr = false;
     spectra = nullptr;
     dataset_name = nullptr;
+    dataset_directory = nullptr;
+    model = nullptr;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
 //-----------------------------------------------------------------------------
@@ -113,6 +119,8 @@ Stream_Block<T_real>::Stream_Block(int detector,
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = true;
     spectra = nullptr;
+    model = nullptr;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
 //-----------------------------------------------------------------------------
@@ -192,21 +200,49 @@ void Stream_Block<T_real>::init_fitting_blocks(const std::unordered_map<Fitting_
 {
     elements_to_fit = elements_to_fit_;
 
-    if(elements_to_fit == nullptr)
+    if(fit_routines == nullptr)
     {
-        //throw Exception;
+        return;
     }
 
     for(const auto &itr : *fit_routines)
     {
-        fitting_blocks[itr.first] = Stream_Fitting_Block<T_real>();
-        fitting_blocks[itr.first].fit_routine = itr.second.get();
+        _add_fitting_block(itr.first, itr.second.get());
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Stream_Block<T_real>::init_fitting_blocks(const std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> &fit_routines,
+                                       Fit_Element_Map_Dict<T_real> * elements_to_fit_)
+{
+    elements_to_fit = elements_to_fit_;
+
+    for(const auto &itr : fit_routines)
+    {
+        _add_fitting_block(itr.first, itr.second);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Stream_Block<T_real>::_add_fitting_block(Fitting_Routines routine,
+                                       fitting::routines::Base_Fit_Routine<T_real>* fit_routine)
+{
+    fitting_blocks[routine] = Stream_Fitting_Block<T_real>();
+    fitting_blocks[routine].fit_routine = fit_routine;
+    // elements_to_fit is optional: without it the block still carries a counts map,
+    // it just starts out holding only the iteration count.
+    if(elements_to_fit != nullptr)
+    {
         for(auto& e_itr : *elements_to_fit)
         {
-            fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (e_itr.first, (T_real)0.0));
+            fitting_blocks[routine].fit_counts.emplace(std::pair<std::string, T_real> (e_itr.first, (T_real)0.0));
         }
-        fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (STR_NUM_ITR, (T_real)0.0));
     }
+    fitting_blocks[routine].fit_counts.emplace(std::pair<std::string, T_real> (STR_NUM_ITR, (T_real)0.0));
 }
 
 //-----------------------------------------------------------------------------
