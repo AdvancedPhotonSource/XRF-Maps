@@ -465,7 +465,16 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     */
     py::class_<data_struct::Stream_Fitting_Block<float>>(m, "StreamFittingBlock")
     .def(py::init<>())
-    .def_readwrite("fit_routine", &data_struct::Stream_Fitting_Block<float>::fit_routine)
+    // Borrowed pointer: pin the routine to this block. As with Stream_Block::model,
+    // keep_alive goes on the setter alone - def_property hands its extras to the
+    // getter too, where argument 2 does not exist.
+    .def_property("fit_routine",
+        [](data_struct::Stream_Fitting_Block<float>& s) { return s.fit_routine; },
+        py::cpp_function([](data_struct::Stream_Fitting_Block<float>& s, fitting::routines::Base_Fit_Routine<float>* routine)
+        {
+            s.fit_routine = routine;
+        }, py::keep_alive<1, 2>()),
+        py::return_value_policy::reference_internal)
     .def_readwrite("fit_counts", &data_struct::Stream_Fitting_Block<float>::fit_counts);
 
     // Declared with a shared_ptr holder: the streaming pipeline passes blocks as
@@ -706,14 +715,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::ROI_Fit_Routine<float>& self,
 		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::ROI_Fit_Routine<float>::get_name)
     .def("initialize", &fitting::routines::ROI_Fit_Routine<float>::initialize);
 
@@ -725,18 +734,19 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_counts", [](fitting::routines::Param_Optimized_Fit_Routine<float>& self,
 			const fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine<float>::fit_spectra_parameters)
 		.def("get_name", &fitting::routines::Param_Optimized_Fit_Routine<float>::get_name)
 		.def("initialize", &fitting::routines::Param_Optimized_Fit_Routine<float>::initialize)
-		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_optimizer)
+		// The routine keeps a bare Optimizer*; pin the optimizer to the routine.
+		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_optimizer, py::keep_alive<1, 2>())
 		.def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_update_coherent_amplitude_on_fit);
 
 
@@ -764,14 +774,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return spec_model;
 		*/
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::Matrix_Optimized_Fit_Routine<float>& self,
 			const fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::get_name)
     .def("initialize", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::initialize);
 
@@ -783,14 +793,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::NNLS_Fit_Routine<float>& self,
 		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::NNLS_Fit_Routine<float>::get_name)
     .def("initialize", &fitting::routines::NNLS_Fit_Routine<float>::initialize)
     .def("initialize_mp", &fitting::routines::NNLS_Fit_Routine<float>::initialize_mp);
@@ -803,14 +813,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_counts", [](fitting::routines::SVD_Fit_Routine<float>& self,
 			fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("get_name", &fitting::routines::SVD_Fit_Routine<float>::get_name)
 		.def("initialize", &fitting::routines::SVD_Fit_Routine<float>::initialize);
 
@@ -834,11 +844,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     m.def("check_and_create_dirs", &io::file::check_and_create_dirs);
     //m.def("compare_file_size", &io::file::compare_file_size);
     //m.def("find_all_dataset_files", &io::file::find_all_dataset_files);
-    m.def("generate_h5_averages", &io::file::generate_h5_averages);
+    // Everything below that reads a file or runs a scan's worth of fitting releases
+    // the GIL: these are long blocking calls, and holding the lock across them stalls
+    // every other Python thread, including any callback the pipeline needs to make.
+    m.def("generate_h5_averages", &io::file::generate_h5_averages, py::call_guard<py::gil_scoped_release>());
     m.def("generate_fit_routine", &io::file::generate_fit_routine<float>);
-    m.def("init_analysis_job_detectors", &io::file::init_analysis_job_detectors<float>);
-    m.def("load_element_info", &io::file::load_element_info<float>);
-    m.def("load_and_integrate_spectra_volume", &io::file::load_and_integrate_spectra_volume<float>);
+    m.def("init_analysis_job_detectors", &io::file::init_analysis_job_detectors<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("load_element_info", &io::file::load_element_info<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("load_and_integrate_spectra_volume", &io::file::load_and_integrate_spectra_volume<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("load_override_params", &io::load_override_params);
 	m.def("load_override_params", [](std::string dataset_directory,
 									int detector_num,
@@ -847,10 +860,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		data_struct::Params_Override<float> po;
 		io::file::load_override_params<float>(dataset_directory, detector_num, po, append_file_name);
 		return po;
-		
-	});
+
+	}, py::call_guard<py::gil_scoped_release>());
   ///  m.def("load_quantification_standard", &io::load_quantification_standard);
-    m.def("load_spectra_volume", &io::file::load_spectra_volume<float>);
+    m.def("load_spectra_volume", &io::file::load_spectra_volume<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("populate_netcdf_hdf5_files", &io::file::populate_netcdf_hdf5_files);
    // m.def("save_averaged_fit_params", &io::save_averaged_fit_params);
     m.def("save_optimized_fit_params", &io::file::save_optimized_fit_params);
@@ -871,8 +884,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::class_<io::file::MDA_IO<float>>(io_file, "MDA_IO")
     .def(py::init<>())
     .def("unload", &io::file::MDA_IO<float>::unload)
-    .def("load_spectra_volume", &io::file::MDA_IO<float>::load_spectra_volume)
-    .def("load_spectra_volume_with_callback", &io::file::MDA_IO<float>::load_spectra_volume_with_callback)
+    .def("load_spectra_volume", &io::file::MDA_IO<float>::load_spectra_volume, py::call_guard<py::gil_scoped_release>())
+    .def("load_spectra_volume_with_callback", &io::file::MDA_IO<float>::load_spectra_volume_with_callback, py::call_guard<py::gil_scoped_release>())
     //.def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
     .def("get_multiplied_dims", &io::file::mda_get_multiplied_dims)
     .def("get_rank_and_dims", &io::file::mda_get_rank_and_dims);
@@ -893,7 +906,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 data_struct::Spectra_Line<float>* spec_line)
                 {
                     return io::file::NetCDF_IO<float>::inst()->load_spectra_line(path, detector, spec_line);
-                });
+                }, py::call_guard<py::gil_scoped_release>());
     //NetCDF_IO
     io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
                 std::vector<size_t> detector_num_arr,
@@ -908,7 +921,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                                                                                   max_cols,
                                                                                   callback_fun,
                                                                                   user_data);
-                                 });
+                                 }, py::call_guard<py::gil_scoped_release>());
 
 
 
@@ -920,31 +933,36 @@ PYBIND11_MODULE(pyxrfmaps, m) {
             self.set_function(proc_spectra_block<float>);
         });
 
+    // keep_alive<1,2> throughout this section: a Source stores bare pointers to the
+    // job, sink and distributor it is wired to, so each must outlive the source.
+    // gil_scoped_release on everything that blocks or joins a thread: without it the
+    // interpreter lock is held for the whole call, and a sink worker calling back
+    // into Python cannot acquire it.
     py::class_<workflow::xrf::Spectra_File_Source<float> >(workflow, "SpectraFileSource")
     .def(py::init<>())
-    .def(py::init<data_struct::Analysis_Job<float>*>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink)
+    .def(py::init<data_struct::Analysis_Job<float>*>(), py::keep_alive<1, 2>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink, py::keep_alive<1, 2>())
     .def("connect_distributor", [&](workflow::xrf::Spectra_File_Source<float>& self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect_distributor(dist);
-    })
+    }, py::keep_alive<1, 2>())
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line, py::call_guard<py::gil_scoped_release>())
+    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename, py::call_guard<py::gil_scoped_release>())
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run, py::call_guard<py::gil_scoped_release>());
 
     py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")
     .def(py::init<>())
-    .def(py::init<data_struct::Analysis_Job<float>*>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink)
+    .def(py::init<data_struct::Analysis_Job<float>*>(), py::keep_alive<1, 2>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink, py::keep_alive<1, 2>())
     //.def("connect_distributor", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_distributor)
     .def("connect_distributor", [&](workflow::xrf::Detector_Sum_Spectra_Source<float>& self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect_distributor(dist);
-    })
+    }, py::keep_alive<1, 2>())
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line, py::call_guard<py::gil_scoped_release>())
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run, py::call_guard<py::gil_scoped_release>());
 
     py::class_<workflow::Sink<data_struct::Stream_Block_Ptr<float>> >(workflow, "StreamBlockSink")
     .def(py::init<>())
@@ -955,9 +973,12 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     //.def("connect", &workflow::Sink<float>::connect)
         //<workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float>>*>
     .def("set_function", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::set_function)
-    .def("start", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::start)
-    .def("stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::stop)
-    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::wait_and_stop)
+    // start() joins any previous worker, and stop()/wait_and_stop() block until the
+    // worker exits. The worker is what calls the Python function installed by
+    // set_function, so holding the GIL across any of these deadlocks the pipeline.
+    .def("start", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::start, py::call_guard<py::gil_scoped_release>())
+    .def("stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::stop, py::call_guard<py::gil_scoped_release>())
+    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::wait_and_stop, py::call_guard<py::gil_scoped_release>())
     .def("sink_function", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::sink_function);
 #ifdef _BUILD_WITH_ZMQ
     py::class_<workflow::xrf::Spectra_Net_Streamer<float>, workflow::Sink<data_struct::Stream_Block_Ptr<float>> >(workflow, "SpectraNetStreamer")
@@ -965,28 +986,28 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_spectra)
     .def("set_verbose", &workflow::xrf::Spectra_Net_Streamer<float>::set_verbose)
-    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream)
+    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream, py::call_guard<py::gil_scoped_release>())
     .def("connect_distributor", [&](workflow::xrf::Spectra_Net_Streamer<float>&self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect(dist);
-    });
+    }, py::keep_alive<1, 2>());
    
 #endif
 
 
     //process_streaming
-    m.def("proc_spectra_block", &proc_spectra_block<float>);
+    m.def("proc_spectra_block", &proc_spectra_block<float>, py::call_guard<py::gil_scoped_release>());
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
 
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
-    m.def("fit_single_spectra", &fit_single_spectra<float>);
+    m.def("fit_single_spectra", &fit_single_spectra<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
-    m.def("generate_optimal_params", &generate_optimal_params);
+    m.def("generate_optimal_params", &generate_optimal_params, py::call_guard<py::gil_scoped_release>());
    // m.def("generate_optimal_params_mp", &generate_optimal_params_mp);
-    m.def("proc_spectra", &proc_spectra<float>);
-    m.def("process_dataset_files", &process_dataset_files<float>);
-    m.def("perform_quantification", &perform_quantification);
+    m.def("proc_spectra", &proc_spectra<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("process_dataset_files", &process_dataset_files<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("perform_quantification", &perform_quantification, py::call_guard<py::gil_scoped_release>());
     //m.def("average_quantification", &average_quantification);
 
 	m.def("get_energy_range", (data_struct::Range (*)(size_t, const Fit_Parameters<float>* const)) &data_struct::get_energy_range);
