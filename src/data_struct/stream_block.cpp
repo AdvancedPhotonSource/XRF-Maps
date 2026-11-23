@@ -158,18 +158,30 @@ Stream_Block<T_real>::~Stream_Block()
 template<typename T_real>
 Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 {
+	auto new_dataset_directory = stream_block.dataset_directory != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_directory) : nullptr;
+	auto new_dataset_name = stream_block.dataset_name != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_name) : nullptr;
+	auto new_spectra = stream_block.spectra != nullptr
+        ? std::make_unique<Spectra<T_real>>(*stream_block.spectra) : nullptr;
+	auto new_fitting_blocks = stream_block.fitting_blocks;
+
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
 	this->_height = stream_block._height;
 	this->_width = stream_block._width;
-	this->dataset_directory = stream_block.dataset_directory;
-	this->dataset_name = stream_block.dataset_name;
-	this->fitting_blocks = stream_block.fitting_blocks;
+	this->dataset_directory = new_dataset_directory.release();
+	this->dataset_name = new_dataset_name.release();
+	this->fitting_blocks = std::move(new_fitting_blocks);
 	this->_detector = stream_block._detector;
-	this->spectra = stream_block.spectra;
+	this->spectra = new_spectra.release();
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
-    this->del_str_ptr = stream_block.del_str_ptr;
+	this->theta = stream_block.theta;
+	this->optimize_fit_params_preset = stream_block.optimize_fit_params_preset;
+	// A copy owns its independent string copies even when the source merely
+	// borrowed its string pointers.
+	this->del_str_ptr = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -177,18 +189,40 @@ Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 template<typename T_real>
 Stream_Block<T_real> &Stream_Block<T_real>::operator=(const Stream_Block<T_real>& stream_block)
 {
+	if (this == &stream_block)
+	{
+		return *this;
+	}
+
+	auto new_dataset_directory = stream_block.dataset_directory != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_directory) : nullptr;
+	auto new_dataset_name = stream_block.dataset_name != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_name) : nullptr;
+	auto new_spectra = stream_block.spectra != nullptr
+        ? std::make_unique<Spectra<T_real>>(*stream_block.spectra) : nullptr;
+	auto new_fitting_blocks = stream_block.fitting_blocks;
+
+	if (this->del_str_ptr)
+	{
+		delete this->dataset_directory;
+		delete this->dataset_name;
+	}
+	delete this->spectra;
+
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
 	this->_height = stream_block._height;
 	this->_width = stream_block._width;
-	this->dataset_directory = stream_block.dataset_directory;
-	this->dataset_name = stream_block.dataset_name;
-	this->fitting_blocks = stream_block.fitting_blocks;
+	this->dataset_directory = new_dataset_directory.release();
+	this->dataset_name = new_dataset_name.release();
+	this->fitting_blocks = std::move(new_fitting_blocks);
 	this->_detector = stream_block._detector;
-	this->spectra = stream_block.spectra;
+	this->spectra = new_spectra.release();
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
-    this->del_str_ptr = stream_block.del_str_ptr;
+	this->theta = stream_block.theta;
+	this->optimize_fit_params_preset = stream_block.optimize_fit_params_preset;
+	this->del_str_ptr = true;
 	return *this;
 }
 

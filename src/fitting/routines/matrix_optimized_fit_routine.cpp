@@ -346,13 +346,12 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
         
         std::function<void(const models::Base_Model<T_real>& model, const Fit_Parameters<T_real>* const, const  Range* const, Spectra<T_real>*)> gen_func = std::bind(&Matrix_Optimized_Fit_Routine<T_real>::model_spectrum, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
-        //set num iter to 300;
-        std::unordered_map<std::string, T_real> opt_options{ {STR_OPT_MAXITER, 2000.} };
-        std::unordered_map<std::string, T_real> saved_options = this->_optimizer->get_options();
-        this->_optimizer->set_options(opt_options);
-
-
-        ret_val = this->_optimizer->minimize_func(model, &fit_params, spectra, this->_energy_range, &background, gen_func, _use_weights);
+        // Pass the matrix routine's historical iteration cap as immutable
+        // per-call data. Mutating shared options here races with other pixels.
+        ret_val = this->_optimizer->minimize_func(model, &fit_params, spectra,
+                                                   this->_energy_range, &background,
+                                                   gen_func, _use_weights,
+                                                   (T_real)2000.0);
         //Save the counts from fit parameters into fit count dict for each element
         for (auto el_itr : *elements_to_fit)
         {
@@ -413,7 +412,6 @@ OPTIMIZER_OUTCOME Matrix_Optimized_Fit_Routine<T_real>:: fit_spectra(const model
 			}
         }
 
-        this->_optimizer->set_options(saved_options);
     }
 
     return ret_val;

@@ -661,10 +661,9 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
                 auto spectra_volume = std::make_unique<data_struct::Spectra_Volume<T_real> >();
 
                 std::string fullpath;
-                size_t dlen = dataset_file.length();
-                bool is_mda = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'd' && dataset_file[dlen - 1] == 'a');
-                bool is_mca = (dataset_file[dlen - 4] == '.' && dataset_file[dlen - 3] == 'm' && dataset_file[dlen - 2] == 'c' && dataset_file[dlen - 1] == 'a');
-                bool is_mcad = (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'm' && dataset_file[dlen - 3] == 'c' && dataset_file[dlen - 2] == 'a');
+                bool is_mda = dataset_file.ends_with(".mda");
+                bool is_mca = dataset_file.ends_with(".mca");
+                bool is_mcad = dataset_file.ends_with(".mcad");
                 //bool is_h5 = (dataset_file[dlen - 3] == '.' && dataset_file[dlen - 2] == 'h' && dataset_file[dlen - 1] == '5');
                 //bool is_hdf5 = (dataset_file[dlen - 5] == '.' && dataset_file[dlen - 4] == 'h' && dataset_file[dlen - 3] == 'd' && dataset_file[dlen - 2] == 'f' && dataset_file[dlen - 1] == '5');
                 if (is_mda || is_mca || is_mcad)
@@ -716,16 +715,27 @@ DLL_EXPORT void process_dataset_files(data_struct::Analysis_Job<T_real>* analysi
 template<typename T_real>
 DLL_EXPORT void process_dataset_files_quick_and_dirty(std::string dataset_file, data_struct::Analysis_Job<T_real>* analysis_job, ThreadPool& tp, Callback_Func_Status_Def* status_callback = nullptr)
 {
+    if (analysis_job == nullptr || analysis_job->detector_num_arr.empty())
+    {
+        logE << "Quick-and-dirty processing requires at least one detector\n";
+        return;
+    }
     std::string full_save_path = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + dataset_file + ".h5";
 
-    data_struct::Detector<T_real>* detector = analysis_job->get_detector(0);
+    const size_t first_detector_num = analysis_job->detector_num_arr.front();
+    data_struct::Detector<T_real>* detector = analysis_job->get_detector(static_cast<int>(first_detector_num));
+    if (detector == nullptr)
+    {
+        logE << "Quick-and-dirty detector " << first_detector_num << " is not initialized\n";
+        return;
+    }
     //Spectra volume data
     auto spectra_volume = std::make_unique<data_struct::Spectra_Volume<T_real> >();
     auto tmp_spectra_volume = std::make_unique<data_struct::Spectra_Volume<T_real> >();
 
     std::string scan_type;
     //load the first one
-    size_t detector_num = analysis_job->detector_num_arr[0];
+    size_t detector_num = first_detector_num;
 
     // load the fit parameters for this dataset right before loading the dataset
     std::string loaded_override_source;

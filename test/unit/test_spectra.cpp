@@ -20,6 +20,8 @@
 #include <cmath>
 #include <limits>
 #include "data_struct/spectra.h"
+#include "data_struct/spectra_volume.h"
+#include "data_struct/stream_block.h"
 
 using namespace data_struct;
 
@@ -509,6 +511,33 @@ TEST(Convolve1d, OutputSizeMatchesInput)
     EXPECT_EQ(result.size(), (Eigen::Index)20);
 }
 
+TEST(Convolve1d, BoxcarWiderThanSignalStaysInBounds)
+{
+    for (Eigen::Index size = 1; size <= 3; ++size)
+    {
+        ArrayTr<float> arr(size);
+        arr.setConstant(2.0f);
+
+        ArrayTr<float> result = convolve1d(arr, (size_t)5);
+
+        ASSERT_EQ(result.size(), size);
+        for (Eigen::Index i = 0; i < result.size(); ++i)
+            EXPECT_TRUE(std::isfinite(result[i]));
+    }
+}
+
+TEST(Convolve1d, EmptyBoxcarActsAsIdentity)
+{
+    ArrayTr<double> arr(2);
+    arr << 3.0, 7.0;
+
+    ArrayTr<double> result = convolve1d(arr, (size_t)0);
+
+    ASSERT_EQ(result.size(), arr.size());
+    EXPECT_DOUBLE_EQ(result[0], 3.0);
+    EXPECT_DOUBLE_EQ(result[1], 7.0);
+}
+
 // ============================================================
 // snip_background
 // ============================================================
@@ -524,6 +553,22 @@ TEST(SnipBackground, EmptySpectraReturnsEmpty)
     Spectra<float> s(0);
     ArrayTr<float> bg = snip_background<float>(&s, 0.0f, 0.01f, 0.0f, 0.5f, 0.0f, 0.0f);
     EXPECT_EQ(bg.size(), 0);
+}
+
+TEST(SnipBackground, ShortSpectraStayInBounds)
+{
+    for (Eigen::Index size = 1; size <= 3; ++size)
+    {
+        Spectra<float> s(size);
+        s.setConstant(4.0f);
+
+        ArrayTr<float> bg = snip_background<float>(&s, 0.0f, 0.01f, 0.0f,
+                                                    0.5f, 0.0f, (float)(size - 1));
+
+        ASSERT_EQ(bg.size(), size);
+        for (Eigen::Index i = 0; i < bg.size(); ++i)
+            EXPECT_TRUE(std::isfinite(bg[i]));
+    }
 }
 
 TEST(SnipBackground, OutputSizeMatchesInput)
@@ -573,4 +618,75 @@ TEST(SnipBackground, BackgroundNonNegative)
 
     for (Eigen::Index i = 0; i < bg.size(); ++i)
         EXPECT_GE(bg[i], 0.0f) << "background is negative at channel " << i;
+}
+
+// ============================================================
+// Spectra_Volume empty dimensions
+// ============================================================
+
+TEST(SpectraVolume, ZeroColumnsAreHandledAsEmpty)
+{
+    Spectra_Volume<float> volume;
+    volume.resize_and_zero(1, 0, 8);
+
+    EXPECT_EQ(volume.rows(), (size_t)1);
+    EXPECT_EQ(volume.cols(), (size_t)0);
+    EXPECT_EQ(volume.samples_size(), (size_t)0);
+    EXPECT_EQ(volume.integrate().size(), 0);
+
+    Spectra<float> lhs;
+    Spectra<float> rhs;
+    EXPECT_FALSE(volume.integrate_polar(lhs, rhs));
+}
+
+TEST(SpectraVolume, ZeroRowsAreHandledAsEmpty)
+{
+    Spectra_Volume<double> volume;
+    volume.resize_and_zero(0, 2, 8);
+
+    EXPECT_EQ(volume.samples_size(), (size_t)0);
+    EXPECT_EQ(volume.integrate().size(), 0);
+}
+
+// ============================================================
+// Stream_Block ownership
+// ============================================================
+
+TEST(StreamBlock, CopyOwnsIndependentStringsAndSpectra)
+{
+    Stream_Block<float> source(2, 3, 4, 5, 6, "dataset/", "scan.mda");
+    source.spectra = new Spectra<float>(2);
+    (*source.spectra) << 10.0f, 20.0f;
+    source.theta = 12.5f;
+
+    Stream_Block<float> copy(source);
+
+    ASSERT_NE(copy.dataset_directory, source.dataset_directory);
+    ASSERT_NE(copy.dataset_name, source.dataset_name);
+    ASSERT_NE(copy.spectra, source.spectra);
+    EXPECT_EQ(*copy.dataset_directory, *source.dataset_directory);
+    EXPECT_EQ(*copy.dataset_name, *source.dataset_name);
+    EXPECT_FLOAT_EQ((*copy.spectra)[1], 20.0f);
+    EXPECT_FLOAT_EQ(copy.theta, 12.5f);
+
+    (*source.spectra)[1] = 99.0f;
+    EXPECT_FLOAT_EQ((*copy.spectra)[1], 20.0f);
+}
+
+TEST(StreamBlock, CopyAssignmentOwnsIndependentData)
+{
+    Stream_Block<double> source(1, 0, 0, 1, 1, "source/", "source.mda");
+    source.spectra = new Spectra<double>(1);
+    (*source.spectra)[0] = 42.0;
+
+    Stream_Block<double> destination(2, 0, 0, 1, 1, "old/", "old.mda");
+    destination.spectra = new Spectra<double>(1);
+    (*destination.spectra)[0] = -1.0;
+
+    destination = source;
+
+    ASSERT_NE(destination.dataset_name, source.dataset_name);
+    ASSERT_NE(destination.spectra, source.spectra);
+    EXPECT_EQ(*destination.dataset_name, "source.mda");
+    EXPECT_DOUBLE_EQ((*destination.spectra)[0], 42.0);
 }

@@ -170,9 +170,17 @@ void Fit_Element_Map<T_real>::init_energy_ratio_for_detector_element(const Eleme
         //logE<<"Element info was not properly loaded. Variable is null! Can't initialize energy ratios!\n";
         return;
     }
-    //T_real weight =  Element_Weight.at(element_info->number);
 
     _energy_ratios.clear();
+
+    if (detector_element == nullptr ||
+        false == Henke_Compound_Density_Map<T_real>.contains(detector_element->name))
+    {
+        logE << "Detector element is missing or unsupported; cannot generate energy ratios for "
+             << _full_name << "\n";
+        return;
+    }
+    //T_real weight =  Element_Weight.at(element_info->number);
 
     if (_shell_type == Electron_Shell::K_SHELL) // K line
     {

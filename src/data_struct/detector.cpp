@@ -364,7 +364,17 @@ void Detector<T_real>::update_from_fit_parameters()
     if (fit_params_override_dict.detector_element.length() > 0)
     {
         // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-        detector_element = (data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element));
+        data_struct::Element_Info<T_real>* configured_element =
+            data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element);
+        if (configured_element != nullptr)
+        {
+            detector_element = configured_element;
+        }
+        else
+        {
+            logE << "Unknown DETECTOR_ELEMENT '" << fit_params_override_dict.detector_element
+                 << "'; retaining the current detector material\n";
+        }
     }
     if (fit_params_override_dict.be_window_thickness.length() > 0)
     {

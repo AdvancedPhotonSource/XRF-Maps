@@ -48,7 +48,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "io/net/basic_serializer.h"
 
+#include <cstdint>
+#include <cstring>
 #include <iostream>
+#include <limits>
 #include <string>
 
 
@@ -56,6 +59,48 @@ namespace io
 {
 namespace net
 {
+
+namespace
+{
+
+bool can_read(size_t message_len, size_t idx, size_t byte_count)
+{
+    return idx <= message_len && byte_count <= (message_len - idx);
+}
+
+template<typename T>
+bool read_wire_value(const char* message, size_t message_len, size_t& idx, T& value)
+{
+    if (message == nullptr || !can_read(message_len, idx, sizeof(T)))
+    {
+        return false;
+    }
+
+    std::memcpy(&value, message + idx, sizeof(T));
+    idx += sizeof(T);
+    return true;
+}
+
+bool read_wire_string(const char* message, size_t message_len, size_t& idx, std::string& value)
+{
+    if (message == nullptr || idx >= message_len)
+    {
+        return false;
+    }
+
+    const void* terminator = std::memchr(message + idx, '\0', message_len - idx);
+    if (terminator == nullptr)
+    {
+        return false;
+    }
+
+    const char* end = static_cast<const char*>(terminator);
+    value.assign(message + idx, static_cast<size_t>(end - (message + idx)));
+    idx += value.size() + 1;
+    return true;
+}
+
+} // namespace
 
 //-----------------------------------------------------------------------------
     
@@ -73,8 +118,13 @@ Basic_Serializer<T_real>::~Basic_Serializer()
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Basic_Serializer<T_real>::_encode_meta(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg)
+bool Basic_Serializer<T_real>::_encode_meta(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg)
 {
+    if (stream_block == nullptr)
+    {
+        return false;
+    }
+
     //TODO:
     // add something to tell if 4 or 8 byte real
     _convert_var_to_bytes(&raw_msg, _tmp_uint, stream_block->detector_number(), sizeof(unsigned int));
@@ -84,12 +134,19 @@ void Basic_Serializer<T_real>::_encode_meta(const data_struct::Stream_Block_Ptr<
     _convert_var_to_bytes(&raw_msg, _tmp_size_t, stream_block->width(), sizeof(size_t));
     _convert_var_to_bytes(&raw_msg, _tmp_real, stream_block->theta, sizeof(T_real));
     // dataset name
-    raw_msg += *stream_block->dataset_name;
+    if (stream_block->dataset_name != nullptr)
+    {
+        raw_msg += *stream_block->dataset_name;
+    }
     raw_msg += '\0';
     // dataset directory
-    raw_msg += *stream_block->dataset_directory;
+    if (stream_block->dataset_directory != nullptr)
+    {
+        raw_msg += *stream_block->dataset_directory;
+    }
     raw_msg += '\0';
 
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -97,85 +154,33 @@ void Basic_Serializer<T_real>::_encode_meta(const data_struct::Stream_Block_Ptr<
 template<typename T_real>
 data_struct::Stream_Block_Ptr<T_real> Basic_Serializer<T_real>::_decode_meta(char* message, size_t message_len, size_t& idx)
 {
-    size_t idx2 = 0;
-    int detector_number = 0;
+    unsigned int detector_number = 0;
     size_t row = 0;
     size_t col = 0;
     size_t height = 0;
     size_t width = 0;
     T_real theta = 0;
-    char tmp_char_arr[4096] = {0};
+    std::string dataset_name;
+    std::string dataset_directory;
 
-	size_t first_header_size = (sizeof(size_t) * 4) + sizeof(T_real) + sizeof(unsigned int);
-	if (message_len < first_header_size)
-	{
-		return nullptr;
-	}
-
-    memcpy(&detector_number, message + idx, sizeof(unsigned int));
-    idx += sizeof(unsigned int);
-    memcpy(&row, message + idx, sizeof(size_t));
-    idx += sizeof(size_t);
-    memcpy(&col, message + idx, sizeof(size_t));
-    idx += sizeof(size_t);
-    memcpy(&height, message + idx, sizeof(size_t));
-    idx += sizeof(size_t);
-    memcpy(&width, message + idx, sizeof(size_t));
-    idx += sizeof(size_t);
-    memcpy(&theta, message + idx, sizeof(T_real));
-    idx += sizeof(T_real);
-
-    data_struct::Stream_Block_Ptr<T_real> out_stream_block = std::make_shared<data_struct::Stream_Block<T_real> >(detector_number, row, col, height, width);
-
-    //find dataset name
-    for(size_t i=idx; i < message_len; i++)
+    idx = 0;
+    if (!read_wire_value(message, message_len, idx, detector_number) ||
+        !read_wire_value(message, message_len, idx, row) ||
+        !read_wire_value(message, message_len, idx, col) ||
+        !read_wire_value(message, message_len, idx, height) ||
+        !read_wire_value(message, message_len, idx, width) ||
+        !read_wire_value(message, message_len, idx, theta) ||
+        !read_wire_string(message, message_len, idx, dataset_name) ||
+        !read_wire_string(message, message_len, idx, dataset_directory))
     {
-        if(message[i] == '\0')
-        {
-            idx2 = i;
-            break;
-        }
+        return nullptr;
     }
 
-    if( idx2 > 0 && idx2 <message_len)
-    {
-        memset(&tmp_char_arr[0], 0, 4095);
-        if (idx2 > 4095)
-        {
-            memcpy(&tmp_char_arr[0], message+idx, 4095);
-        }
-        else
-        {
-            memcpy(&tmp_char_arr[0], message+idx, idx2 - idx);
-        }
-    }
-    idx = idx2+1;
-    out_stream_block->dataset_name = new std::string(tmp_char_arr);
-    out_stream_block->del_str_ptr = true;
-    //find dataset dir
-    for(size_t i=idx; i < message_len; i++)
-    {
-        if(message[i] == '\0')
-        {
-            idx2 = i;
-            break;
-        }
-    }
-
-    if( idx2 > 0 && idx <message_len)
-    {
-        memset(&tmp_char_arr[0], 0, 4095);
-        if (idx2 > 4095)
-        {
-            memcpy(&tmp_char_arr[0], message + idx, 4095);
-        }
-        else
-        {
-            memcpy(&tmp_char_arr[0], message + idx, idx2 - idx);
-        }
-    }
-    idx = idx2+1;
-    out_stream_block->dataset_directory = new std::string(tmp_char_arr);
+    data_struct::Stream_Block_Ptr<T_real> out_stream_block =
+        std::make_shared<data_struct::Stream_Block<T_real> >(
+            static_cast<int>(detector_number), row, col, height, width,
+            dataset_directory, dataset_name);
+    out_stream_block->theta = theta;
 
     return out_stream_block;
 }
@@ -208,7 +213,10 @@ template<typename T_real>
 std::string Basic_Serializer<T_real>::encode_counts(const data_struct::Stream_Block_Ptr<T_real>& stream_block)
 {
     std::string raw_msg = "";
-    _encode_meta(stream_block, raw_msg);
+    if (!_encode_meta(stream_block, raw_msg))
+    {
+        return {};
+    }
     _encode_counts(stream_block, raw_msg);
 	return raw_msg;
 }
@@ -216,53 +224,56 @@ std::string Basic_Serializer<T_real>::encode_counts(const data_struct::Stream_Bl
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Basic_Serializer<T_real>::_decode_counts(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block)
+bool Basic_Serializer<T_real>::_decode_counts(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block)
 {
-    size_t idx2 = 0;
-    T_real val = 0.0;
-    size_t proc_type_count = 0;
-    data_struct::Fitting_Routines proc_type;
-    size_t fit_block_size = 0;
-    char name[256] = { 0 };
+    std::uint32_t proc_type_count = 0;
+    if (out_stream_block == nullptr || !read_wire_value(message, message_len, idx, proc_type_count))
+    {
+        return false;
+    }
 
-	memcpy(&proc_type_count, message + idx, 4);
-	idx += 4;
-    for (size_t proc_type_itr = 0; proc_type_itr < proc_type_count; proc_type_itr++)
-	{
-		memcpy(&proc_type, message + idx, 4);
-		idx += 4;
-		out_stream_block->fitting_blocks[proc_type] = data_struct::Stream_Fitting_Block<T_real>();
+    // Each process block needs at least a 4-byte type and a 4-byte count.
+    if (proc_type_count > (message_len - idx) / (sizeof(std::uint32_t) * 2))
+    {
+        return false;
+    }
 
-		//get fit_block[proc_type] size
-		memcpy(&fit_block_size, message + idx, 4);
-		idx += 4;
-        for (size_t i = 0; i < fit_block_size; i++)
-		{
-			idx2 = idx;
-			// find null term
-			while (idx2 < message_len && message[idx2] != '\0')
-			{
-				idx2++;
-			}
+    for (std::uint32_t proc_type_itr = 0; proc_type_itr < proc_type_count; proc_type_itr++)
+    {
+        std::uint32_t proc_type_value = 0;
+        std::uint32_t fit_block_size = 0;
+        if (!read_wire_value(message, message_len, idx, proc_type_value) ||
+            !read_wire_value(message, message_len, idx, fit_block_size))
+        {
+            return false;
+        }
 
-            if (idx2 >= message_len)
-                break;
+        // Even an empty element name needs a terminator followed by one value.
+        const size_t minimum_entry_size = 1 + sizeof(T_real);
+        if (fit_block_size > (message_len - idx) / minimum_entry_size)
+        {
+            return false;
+        }
 
-			memset(&name[0], 0, 255);
-			if (idx2 - idx > 255)
-			{
-				memcpy(&name[0], message + idx, 255);
-			}
-			else
-			{
-				memcpy(&name[0], message + idx, idx2 - idx);
-			}
-			idx = idx2 + 1;
-			memcpy(&val, message + idx, sizeof(T_real));
-			idx += sizeof(T_real);
-			out_stream_block->fitting_blocks[proc_type].fit_counts[std::string(name)] = val;
-		}
-	}
+        const auto proc_type = static_cast<data_struct::Fitting_Routines>(proc_type_value);
+        if (!data_struct::Fitting_Routine_To_Str.contains(proc_type))
+        {
+            return false;
+        }
+        auto& fit_counts = out_stream_block->fitting_blocks[proc_type].fit_counts;
+        for (std::uint32_t i = 0; i < fit_block_size; i++)
+        {
+            std::string name;
+            T_real val = 0.0;
+            if (!read_wire_string(message, message_len, idx, name) ||
+                !read_wire_value(message, message_len, idx, val))
+            {
+                return false;
+            }
+            fit_counts[std::move(name)] = val;
+        }
+    }
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -272,9 +283,9 @@ data_struct::Stream_Block_Ptr<T_real> Basic_Serializer<T_real>::decode_counts(ch
 {
     size_t idx = 0;
     data_struct::Stream_Block_Ptr<T_real> out_stream_block = _decode_meta(message, message_len, idx);
-	if (out_stream_block != nullptr && idx < message_len)
+	if (out_stream_block == nullptr || !_decode_counts(message, message_len, idx, out_stream_block) || idx != message_len)
 	{
-		_decode_counts(message, message_len, idx, out_stream_block);
+		return nullptr;
 	}
 	return out_stream_block;
 }
@@ -282,34 +293,46 @@ data_struct::Stream_Block_Ptr<T_real> Basic_Serializer<T_real>::decode_counts(ch
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Basic_Serializer<T_real>::_encode_spectra(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg)
+bool Basic_Serializer<T_real>::_encode_spectra(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg)
 {
-	if (stream_block->spectra == nullptr)
+	if (stream_block == nullptr || stream_block->spectra == nullptr)
 	{
-		return;
+		return false;
 	}
 
-    short send_cnt = 0;
+    const auto spectra_size = static_cast<size_t>(stream_block->spectra->size());
+    constexpr size_t max_spectrum_size = static_cast<size_t>(std::numeric_limits<unsigned short>::max()) + 1;
+    if (spectra_size == 0 || spectra_size > max_spectrum_size)
+    {
+        logE << "Cannot encode spectrum with " << spectra_size << " channels.\n";
+        return false;
+    }
 
     std::map<unsigned short, T_real> spec_indx_values;
+
+    // Collect first so count overflow cannot leave a partially encoded packet.
+    for (size_t i = 0; i < spectra_size; i++)
+    {
+        T_real spec_val = (*(stream_block->spectra))[static_cast<Eigen::Index>(i)];
+        if(spec_val > (T_real)0.0)
+        {
+            if (spec_indx_values.size() == std::numeric_limits<unsigned short>::max())
+            {
+                logE << "Cannot encode more than " << std::numeric_limits<unsigned short>::max()
+                     << " nonzero spectrum channels.\n";
+                return false;
+            }
+            spec_indx_values.emplace(static_cast<unsigned short>(i), spec_val);
+        }
+    }
+
+    const auto send_cnt = static_cast<unsigned short>(spec_indx_values.size());
 
     _convert_var_to_bytes(&raw_msg, _tmp_real, stream_block->spectra->elapsed_livetime(), sizeof(T_real));
     _convert_var_to_bytes(&raw_msg, _tmp_real, stream_block->spectra->elapsed_realtime(), sizeof(T_real));
     _convert_var_to_bytes(&raw_msg, _tmp_real, stream_block->spectra->input_counts(), sizeof(T_real));
     _convert_var_to_bytes(&raw_msg, _tmp_real, stream_block->spectra->output_counts(), sizeof(T_real));
     _convert_var_to_bytes(&raw_msg, _tmp_uint, stream_block->spectra->size(), 4);
-
-    //first get count of how many
-    for(unsigned short i=0; i<stream_block->spectra->size(); i++)
-    {
-
-        T_real spec_val = (*(stream_block->spectra))[i];
-        if(spec_val > (T_real)0.0)
-        {
-            send_cnt++;
-            spec_indx_values.emplace(i, spec_val);
-        }
-    }
 
     //if we have more than half the spec it doesn't help to to send index/values pairs
 //    if(send_cnt < (stream_block->spectra->size() / 2))
@@ -326,6 +349,7 @@ void Basic_Serializer<T_real>::_encode_spectra(const data_struct::Stream_Block_P
 
 //    }
 
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -334,58 +358,72 @@ template<typename T_real>
 std::string Basic_Serializer<T_real>::encode_spectra(const data_struct::Stream_Block_Ptr<T_real>& stream_block)
 {
     std::string raw_msg = "";
-    _encode_meta(stream_block, raw_msg);
-    _encode_spectra(stream_block, raw_msg);
+    if (!_encode_meta(stream_block, raw_msg) || !_encode_spectra(stream_block, raw_msg))
+    {
+        return {};
+    }
     return raw_msg;
 }
 
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Basic_Serializer<T_real>::_decode_spectra(char* message, [[maybe_unused]] size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block)
+bool Basic_Serializer<T_real>::_decode_spectra(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block)
 {
     T_real elt = 0;
     T_real ert = 0;
     T_real incnt = 0;
     T_real outcnt = 0;
-    size_t spectra_size = 0;
+    std::uint32_t spectra_size = 0;
     unsigned short recv_cnt = 0;
     unsigned short spec_index = 0;
     T_real spec_value = 0.0f;
 
-    memcpy(&elt, message + idx, sizeof(T_real));
-    idx += sizeof(T_real);
-    memcpy(&ert, message + idx, sizeof(T_real));
-    idx += sizeof(T_real);
-    memcpy(&incnt, message + idx, sizeof(T_real));
-    idx += sizeof(T_real);
-    memcpy(&outcnt, message + idx, sizeof(T_real));
-    idx += sizeof(T_real);
-
-    memcpy(&spectra_size, message + idx, 4);
-    idx += 4;
-    if(spectra_size < 1)
+    if (out_stream_block == nullptr ||
+        !read_wire_value(message, message_len, idx, elt) ||
+        !read_wire_value(message, message_len, idx, ert) ||
+        !read_wire_value(message, message_len, idx, incnt) ||
+        !read_wire_value(message, message_len, idx, outcnt) ||
+        !read_wire_value(message, message_len, idx, spectra_size) ||
+        !read_wire_value(message, message_len, idx, recv_cnt))
     {
-        logE<<"spectra_size < 1!\n";
-        return;
+        return false;
     }
-    out_stream_block->spectra = new data_struct::Spectra<T_real>(spectra_size);
-    out_stream_block->spectra->elapsed_livetime(elt);
-    out_stream_block->spectra->elapsed_realtime(ert);
-    out_stream_block->spectra->input_counts(incnt);
-    out_stream_block->spectra->output_counts(outcnt);
 
-    memcpy(&recv_cnt, message + idx, sizeof(unsigned short));
-    idx += sizeof(unsigned short);
+    // Spectrum indexes use an unsigned-short wire representation.
+    constexpr size_t max_spectrum_size = static_cast<size_t>(std::numeric_limits<unsigned short>::max()) + 1;
+    if (spectra_size < 1 || static_cast<size_t>(spectra_size) > max_spectrum_size)
+    {
+        logE<<"Invalid spectra_size " << spectra_size << "\n";
+        return false;
+    }
+
+    const size_t entry_size = sizeof(unsigned short) + sizeof(T_real);
+    if (static_cast<size_t>(recv_cnt) > (message_len - idx) / entry_size)
+    {
+        return false;
+    }
+
+    auto spectra = std::make_unique<data_struct::Spectra<T_real> >(spectra_size);
+    spectra->elapsed_livetime(elt);
+    spectra->elapsed_realtime(ert);
+    spectra->input_counts(incnt);
+    spectra->output_counts(outcnt);
 
     for (unsigned short i = 0; i < recv_cnt; i++)
     {
-        memcpy(&spec_index, message + idx, sizeof(unsigned short));
-        idx += sizeof(unsigned short);
-        memcpy(&spec_value, message + idx, sizeof(T_real));
-        idx += sizeof(T_real);
-        (*(out_stream_block->spectra))[spec_index] = spec_value;
+        if (!read_wire_value(message, message_len, idx, spec_index) ||
+            !read_wire_value(message, message_len, idx, spec_value) ||
+            static_cast<size_t>(spec_index) >= static_cast<size_t>(spectra_size))
+        {
+            return false;
+        }
+        (*spectra)[spec_index] = spec_value;
     }
+
+    delete out_stream_block->spectra;
+    out_stream_block->spectra = spectra.release();
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -395,9 +433,9 @@ data_struct::Stream_Block_Ptr<T_real> Basic_Serializer<T_real>::decode_spectra(c
 {
     size_t idx = 0;
     data_struct::Stream_Block_Ptr<T_real> out_stream_block = _decode_meta(message, message_len, idx);
-	if (out_stream_block != nullptr && idx < message_len)
+	if (out_stream_block == nullptr || !_decode_spectra(message, message_len, idx, out_stream_block) || idx != message_len)
 	{
-		_decode_spectra(message, message_len, idx, out_stream_block);
+		return nullptr;
 	}
 	return out_stream_block;
 }
@@ -408,9 +446,15 @@ template<typename T_real>
 std::string Basic_Serializer<T_real>::encode_counts_and_spectra(const data_struct::Stream_Block_Ptr<T_real>& in_stream_block)
 {
     std::string raw_msg = "";
-    _encode_meta(in_stream_block, raw_msg);
+    if (!_encode_meta(in_stream_block, raw_msg))
+    {
+        return {};
+    }
     _encode_counts(in_stream_block, raw_msg);
-    _encode_spectra(in_stream_block, raw_msg);
+    if (!_encode_spectra(in_stream_block, raw_msg))
+    {
+        return {};
+    }
     return raw_msg;
 }
 
@@ -423,13 +467,17 @@ data_struct::Stream_Block_Ptr<T_real> Basic_Serializer<T_real>::decode_counts_an
     data_struct::Stream_Block_Ptr<T_real> out_stream_block = _decode_meta(message, message_len, idx);
 	if (out_stream_block != nullptr)
 	{
-		if (idx < message_len)
+		if (idx >= message_len || !_decode_counts(message, message_len, idx, out_stream_block))
 		{
-			_decode_counts(message, message_len, idx, out_stream_block);
+			return nullptr;
 		}
-		if (idx < message_len)
+		if (idx >= message_len || !_decode_spectra(message, message_len, idx, out_stream_block))
 		{
-			_decode_spectra(message, message_len, idx, out_stream_block);
+			return nullptr;
+		}
+		if (idx != message_len)
+		{
+			return nullptr;
 		}
 	}
     return out_stream_block;

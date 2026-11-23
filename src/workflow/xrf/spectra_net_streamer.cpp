@@ -79,6 +79,10 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
 template<typename T_real>
 Spectra_Net_Streamer<T_real>::~Spectra_Net_Streamer()
 {
+    // The base worker invokes stream(), which uses the members below. Stop it
+    // while the derived object and its socket are still alive; waiting in the
+    // base destructor would be too late in C++ destruction order.
+    this->stop();
 #ifdef _BUILD_WITH_ZMQ
     if(_zmq_socket != nullptr)
     {

@@ -266,7 +266,15 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
                 else
                 {
                     logE<<"Could not find element: "<< itr.first <<"\n";
+                    // Avoid operator[] below inserting and dereferencing an
+                    // empty shared_ptr for an unknown standard element.
+                    continue;
                 }
+            }
+            if (!elements_to_fit.contains(itr.first) || elements_to_fit.at(itr.first) == nullptr)
+            {
+                logE << "Element has no fitting metadata: " << itr.first << "\n";
+                continue;
             }
             if (element_amt_in_all_standards.contains(elements_to_fit[itr.first]->Z()))
             {
@@ -869,7 +877,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     for (const auto& spec_itr : int_specs)
                     {
                         slen = spec_itr.first.length();
-                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0] && spec_itr.first[slen - 2] == '5')
+                        if (slen >= 2 && spec_itr.first[slen - 1] == str_detector_num[0] && spec_itr.first[slen - 2] == '5')
                         {
                             search_filename = spec_itr.first;
                             break;

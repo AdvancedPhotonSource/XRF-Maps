@@ -71,15 +71,9 @@ public:
         _callback_func = std::bind(&Distributor::distribute, this, std::placeholders::_1);
     }
 
-    Distributor(const Distributor &)
-    {
+    Distributor(const Distributor&) = delete;
 
-    }
-
-    Distributor& operator=(const Distributor&)
-    {
-        return *this;
-    }
+    Distributor& operator=(const Distributor&) = delete;
 
     virtual ~Distributor() = default;
 
@@ -99,7 +93,11 @@ public:
         _dist_func = dist_func;
     }
 
-    inline bool is_queue_empty() { return _job_queue.empty(); }
+    inline bool is_queue_empty()
+    {
+        std::unique_lock<std::mutex> lock(_queue_mutex);
+        return _job_queue.empty();
+    }
 
     T_OUT front_pop()
     {
@@ -125,9 +123,8 @@ protected:
 
     std::function<T_OUT (T_IN)> _dist_func;
 
-    // Owned. NOTE: the copy ctor/assignment above intentionally do not copy it,
-    // so a copied Distributor has a null pool (it previously held an
-    // uninitialized pointer that ~Distributor would delete).
+    // Owned. Distributor is non-copyable because callbacks bind `this`, futures
+    // are move-only, and a thread pool cannot be shared by an accidental copy.
     std::unique_ptr<ThreadPool> _thread_pool;
 
     std::mutex _queue_mutex;

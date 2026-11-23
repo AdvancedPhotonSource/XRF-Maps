@@ -735,4 +735,30 @@ if(BUILD_TESTS)
     )
 
     gtest_discover_tests(test_spectra)
+
+    add_executable(test_basic_serializer test/unit/test_basic_serializer.cpp)
+
+    set_target_properties(test_basic_serializer PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_basic_serializer PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_basic_serializer PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_basic_serializer
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_basic_serializer)
 endif()

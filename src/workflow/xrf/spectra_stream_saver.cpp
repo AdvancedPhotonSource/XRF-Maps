@@ -59,7 +59,7 @@ namespace xrf
 template<typename T_real>
 Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_Block_Ptr<T_real>>()
 {
-    //this->_callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
+    this->_callback_func = std::bind(&Spectra_Stream_Saver<T_real>::save_stream, this, std::placeholders::_1);
 }
 
 //-----------------------------------------------------------------------------
@@ -67,81 +67,33 @@ Spectra_Stream_Saver<T_real>::Spectra_Stream_Saver() : Sink<data_struct::Stream_
 template<typename T_real>
 Spectra_Stream_Saver<T_real>::~Spectra_Stream_Saver()
 {
-
+    // Stop callbacks before derived members are destroyed.
+    this->stop();
+    for (auto& entry : _dataset_map)
+    {
+        delete entry.second;
+    }
+    _dataset_map.clear();
 }
 
 // ----------------------------------------------------------------------------
-/*
+
 template<typename T_real>
 void Spectra_Stream_Saver<T_real>::save_stream(const data_struct::Stream_Block_Ptr<T_real>& stream_block)
 {
-
-    size_t d_hash = stream_block->dataset_hash();
-    size_t detector_num = stream_block->detector_number();
-
-
-    if (stream_block->is_end_block())
+    // The incremental HDF5 writer that this class used was removed and the
+    // remaining generate_stream_dataset() implementation is a stub. Consume
+    // blocks safely instead of throwing std::bad_function_call and leaving the
+    // pipeline stuck forever. Keep the warning explicit so callers do not
+    // mistake this fallback for persisted output.
+    if (!_warned_unavailable)
     {
-        if (_dataset_map.count(d_hash) > 0)
-        {
-            Dataset_Save* dataset = _dataset_map.at(d_hash);
-            _finalize_dataset(dataset);
-        }
+        logW << "Local stream persistence is unavailable; consume-only mode is active. "
+             << "Use --streamout to forward results.\n";
+        _warned_unavailable = true;
     }
-    else
-    {
-        // Is this a new dataset
-        if (_dataset_map.count(d_hash) < 1)
-        {
-            // Close any open datasets because we should not get any more data from them
-            for (auto itr : _dataset_map)
-            {
-                _finalize_dataset(itr.second);
-            }
-            _dataset_map.clear();
-
-            //insert new dataset
-             _new_dataset(d_hash, stream_block);
-        }
-        else
-        {
-            // Get dataset and check if we have detector for it
-            Dataset_Save* dataset = _dataset_map.at(d_hash);
-            if (dataset->detector_map.count(detector_num) < 1)
-            {
-                _new_detector(dataset, stream_block);
-            }
-            else
-            {
-                Detector_Save* detector = dataset->detector_map.at(detector_num);
-
-                if (detector->last_row > -1 && stream_block->row() > (size_t)detector->last_row)
-                {
-                    io::file::HDF5_IO::inst()->save_stream_row(d_hash, detector_num, detector->last_row, &detector->spectra_line);
-                    for (size_t i = 0; i < detector->spectra_line.size(); i++)
-                    {
-                        if (detector->spectra_line[i] != nullptr)
-                        {
-                            delete detector->spectra_line[i];
-                            detector->spectra_line[i] = nullptr;
-                        }
-                    }
-                }
-
-                detector->last_row = stream_block->row();
-                detector->integrated_spectra.add(*stream_block->spectra);
-                //TODO: add limit checks to spectra_line
-                if (detector->spectra_line[stream_block->col()] != nullptr)
-                {
-                    delete detector->spectra_line[stream_block->col()];
-                }
-                detector->spectra_line[stream_block->col()] = stream_block->spectra;
-                stream_block->spectra = nullptr;
-            }
-        }
-    }
+    (void)stream_block;
 }
-*/
 // ----------------------------------------------------------------------------
 
 template<typename T_real>

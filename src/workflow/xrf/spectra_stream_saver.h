@@ -74,9 +74,12 @@ public:
 
     virtual ~Spectra_Stream_Saver();
 
-    //void save_stream(const data_struct::Stream_Block_Ptr<T_real>& stream_block);
+    void save_stream(const data_struct::Stream_Block_Ptr<T_real>& stream_block);
 
-    virtual void set_function([[maybe_unused]] std::function<void (data_struct::Stream_Block_Ptr<T_real>)> func) { }
+    virtual void set_function(std::function<void (data_struct::Stream_Block_Ptr<T_real>)> func)
+    {
+        this->_callback_func = std::move(func);
+    }
 
 protected:
 
@@ -142,6 +145,8 @@ protected:
 
     //by detector_dir + dataset hash
     std::map<size_t, Dataset_Save*> _dataset_map;
+
+    bool _warned_unavailable = false;
 
 };
 

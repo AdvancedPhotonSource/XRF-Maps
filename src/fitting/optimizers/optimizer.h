@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Optimizer_H
 
 #include <functional>
+#include <atomic>
 #include "data_struct/fit_parameters.h"
 #include "fitting/models/base_model.h"
 #include "quantification/models/quantification_model.h"
@@ -340,7 +341,8 @@ public:
                                             const Range energy_range,
                                             const ArrayTr<T_real>* background,
                                             Gen_Func_Def<T_real> gen_func,
-                                            bool use_weights) = 0;
+                                            bool use_weights,
+                                            T_real max_iter_override = (T_real)0) = 0;
 
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
@@ -357,13 +359,13 @@ public:
 
     virtual std::string detailed_outcome(int outcome) = 0;
 
-    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome);}
+    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome.load());}
 
 protected:
 
     std::map<int, OPTIMIZER_OUTCOME> _outcome_map;
 
-    int _last_outcome;
+    std::atomic<int> _last_outcome;
 
 };
 

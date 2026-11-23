@@ -99,7 +99,7 @@ template<typename T_real>
 Spectra<T_real> Spectra_Volume<T_real>::integrate()
 {
 
-    if(_data_vol.size() > 0)
+    if(_data_vol.size() > 0 && _data_vol[0].size() > 0)
     {
         Spectra<T_real> i_spectra(_data_vol[0][0].size());
         
@@ -130,7 +130,7 @@ Spectra<T_real> Spectra_Volume<T_real>::integrate()
     }
     else
     {
-        Spectra<T_real> i_spectra(1);
+        Spectra<T_real> i_spectra(0);
         return i_spectra;
     }
 }
@@ -141,7 +141,7 @@ template<typename T_real>
 bool Spectra_Volume<T_real>::integrate_polar(Spectra<T_real> &lhs, Spectra<T_real> &rhs)
 {
 
-    if(_data_vol.size() > 0)
+    if(_data_vol.size() > 0 && _data_vol[0].size() > 0)
     {
         lhs.resize(_data_vol[0][0].size());
         rhs.resize(_data_vol[0][0].size());
@@ -226,16 +226,18 @@ void Spectra_Volume<T_real>::set_nan_to_near_zero()
 template<typename T_real>
 void Spectra_Volume<T_real>::generate_scaler_maps(Scan_Info<T_real> &scan_info)
 {
-    
-    scan_info.initialize_scaler_map_with_dims(STR_ELT, _data_vol.size(), _data_vol[0].size(), false, "seconds");
-    scan_info.initialize_scaler_map_with_dims(STR_ERT, _data_vol.size(), _data_vol[0].size(), false, "seconds");
-    scan_info.initialize_scaler_map_with_dims(STR_ICR, _data_vol.size(), _data_vol[0].size(), false, "cts/s");
-    scan_info.initialize_scaler_map_with_dims(STR_OCR, _data_vol.size(), _data_vol[0].size(), false, "cts/s");
-    scan_info.initialize_scaler_map_with_dims(STR_DEAD_TIME, _data_vol.size(), _data_vol[0].size(), false, "%");
+    const size_t rows = _data_vol.size();
+    const size_t cols = rows > 0 ? _data_vol[0].size() : 0;
+
+    scan_info.initialize_scaler_map_with_dims(STR_ELT, rows, cols, false, "seconds");
+    scan_info.initialize_scaler_map_with_dims(STR_ERT, rows, cols, false, "seconds");
+    scan_info.initialize_scaler_map_with_dims(STR_ICR, rows, cols, false, "cts/s");
+    scan_info.initialize_scaler_map_with_dims(STR_OCR, rows, cols, false, "cts/s");
+    scan_info.initialize_scaler_map_with_dims(STR_DEAD_TIME, rows, cols, false, "%");
 
     for (size_t i = 0; i < _data_vol.size(); i++)
     {
-        for (size_t j = 0; j < _data_vol[0].size(); j++)
+        for (size_t j = 0; j < cols; j++)
         {
             scan_info.scaler_maps[STR_ELT]->values(i, j) = _data_vol[i][j].elapsed_livetime();
             scan_info.scaler_maps[STR_ERT]->values(i, j) = _data_vol[i][j].elapsed_realtime();

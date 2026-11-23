@@ -311,31 +311,52 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, const ArrayTr<
 {
     ArrayTr<T_real> new_background(arr.size());
     new_background.setZero(arr.size());
-    //convolve 1d
 
-    size_t const nf = arr.size();
-    size_t const ng = boxcar.size();
-    ArrayTr<T_real> const& min_v = (nf < ng) ? arr : boxcar;
-    ArrayTr<T_real> const& max_v = (nf < ng) ? boxcar : arr;
-    size_t const n = std::max(nf, ng) - std::min(nf, ng) + 1;
-    ArrayTr<T_real> out(n);
-    out.setZero(n);
-    for (size_t i = 0; i < n; ++i)
+    if (arr.size() == 0)
     {
-        for (Eigen::Index j(min_v.size() - 1), k(i); j >= 0; --j)
+        return new_background;
+    }
+    if (boxcar.size() == 0)
+    {
+        return arr;
+    }
+
+    const T_real norm = (T_real)1.0 / (T_real)boxcar.size();
+    if (arr.size() >= boxcar.size())
+    {
+        // Preserve the legacy valid-convolution layout for normal spectra:
+        // valid samples are centred in the output and edge samples stay zero.
+        const Eigen::Index valid_size = arr.size() - boxcar.size() + 1;
+        ArrayTr<T_real> valid(valid_size);
+        valid.setZero(valid_size);
+        for (Eigen::Index i = 0; i < valid_size; ++i)
         {
-            out[i] += min_v[j] * max_v[k];
-            ++k;
+            for (Eigen::Index j = boxcar.size() - 1, k = i; j >= 0; --j, ++k)
+            {
+                valid[i] += boxcar[j] * arr[k];
+            }
         }
-    }
-    T_real norm = 1 / T_real(boxcar.size());
-    size_t j = min_v.size() / 2;
-    for (size_t i = 0; i < n; i++)
-    {
-        new_background[j] = out[i] * norm;
-        j++;
+        new_background.segment(boxcar.size() / 2, valid_size) = valid * norm;
+        return new_background;
     }
 
+    // A wider kernel has no legacy "valid" region.  Use a bounded,
+    // zero-padded convolution rather than writing boxcar.size()-arr.size()+1
+    // values into an arr.size() allocation.
+    const Eigen::Index half_width = boxcar.size() / 2;
+    for (Eigen::Index i = 0; i < arr.size(); ++i)
+    {
+        T_real value = (T_real)0.0;
+        for (Eigen::Index j = 0; j < boxcar.size(); ++j)
+        {
+            const Eigen::Index arr_idx = i + j - half_width;
+            if (arr_idx >= 0 && arr_idx < arr.size())
+            {
+                value += arr[arr_idx] * boxcar[j];
+            }
+        }
+        new_background[i] = value * norm;
+    }
     return new_background;
 }
 
@@ -354,6 +375,11 @@ DLL_EXPORT ArrayTr<T_real> convolve1d(const ArrayTr<T_real>& arr, size_t boxcar_
 template<typename T_real>
 DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra, T_real energy_offset, T_real energy_linear, T_real energy_quadratic, T_real width, T_real xmin, T_real xmax)
 {
+    if (spectra == nullptr || spectra->size() == 0)
+    {
+        return ArrayTr<T_real>();
+    }
+
     ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(spectra->size(), 0, spectra->size() - 1);
 
     ArrayTr<T_real> background;
@@ -372,22 +398,8 @@ DLL_EXPORT ArrayTr<T_real> snip_background(const Spectra<T_real> * const spectra
     boxcar.setConstant(5, 1.0);
 
 
-    if (spectra != nullptr)
-    {
-        if (spectra->size() > 0)
-        {
-            //convolve 1d
-            background = convolve1d(*spectra, boxcar);
-        }
-        else
-        {
-            return background;
-        }
-    }
-    else
-    {
-        return background;
-    }
+    //convolve 1d
+    background = convolve1d(*spectra, boxcar);
     //fwhm
     current_width = width * current_width / energy_linear;  // in channels
 

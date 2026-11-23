@@ -240,7 +240,14 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::class_<data_struct::Element_Info_Map<float>>(m, "ElementInfoMap")
     .def_static("inst", &data_struct::Element_Info_Map<float>::inst, py::return_value_policy::reference)
     .def("generate_default_elements", &data_struct::Element_Info_Map<float>::generate_default_elements)
-    .def("add_element", &data_struct::Element_Info_Map<float>::add_element)
+    // Element_Info_Map owns and deletes every pointer it stores.  Clone Python
+    // objects at this boundary so Python and the singleton never both own the
+    // same allocation.
+    .def("add_element", [](data_struct::Element_Info_Map<float>& self,
+                            const data_struct::Element_Info<float>& element)
+    {
+        self.add_element(new data_struct::Element_Info<float>(element));
+    })
     .def("calc_beta", &data_struct::Element_Info_Map<float>::calc_beta)
     .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
     .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
@@ -290,7 +297,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	// shared_ptr holder: Fit_Element_Map_Dict stores shared_ptr, so pybind needs a
 	// matching holder to hand those elements to Python.
 	py::class_<data_struct::Fit_Element_Map<float>, std::shared_ptr<data_struct::Fit_Element_Map<float> > >(m, "Fit_Element_Map")
-	.def(py::init<std::string, Element_Info<float>*>())
+	.def(py::init<std::string, Element_Info<float>*>(), py::keep_alive<1, 3>())
 	.def("center", &data_struct::Fit_Element_Map<float>::center)
 	.def("width", &data_struct::Fit_Element_Map<float>::width)
 	.def("set_custom_multiply_ratio", &data_struct::Fit_Element_Map<float>::set_custom_multiply_ratio)
@@ -302,7 +309,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def("energy_ratios", &data_struct::Fit_Element_Map<float>::energy_ratios)
 	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map<float>::energy_ratio_multipliers)
 	.def("width_multi", &data_struct::Fit_Element_Map<float>::width_multi)
-	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup)
+	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup, py::keep_alive<1, 3>())
 	// Borrowed from the Element_Info_Map singleton, not owned by this element.
 	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element, py::return_value_policy::reference)
 	.def("shell_type", &data_struct::Fit_Element_Map<float>::shell_type)

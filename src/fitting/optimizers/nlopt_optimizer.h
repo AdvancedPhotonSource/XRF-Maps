@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "fitting/optimizers/optimizer.h"
 #include <math.h>
+#include <mutex>
 #include <nlopt.hpp>
 
 namespace fitting
@@ -84,7 +85,8 @@ public:
                                             const Range energy_range,
                                             const ArrayTr<T_real>* background,
                                             Gen_Func_Def<T_real> gen_func,
-                                            bool use_weights);
+                                            bool use_weights,
+                                            T_real max_iter_override = (T_real)0);
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
                                                      std::unordered_map<std::string, Element_Quant<T_real>*> * quant_map,
@@ -106,6 +108,11 @@ private:
   std::unordered_map<std::string, T_real> _options;
 
   nlopt::algorithm _algo;
+
+  // An optimizer is shared by all per-pixel fitting jobs. Configuration is
+  // normally written before fitting begins, but protect snapshots so API users
+  // cannot race set_options()/set_algorithm() against active fits.
+  mutable std::mutex _config_mutex;
 
 };
 
