@@ -44,9 +44,21 @@
 #POSSIBILITY OF SUCH DAMAGE.
 
 
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.10)
 
-project(XRF_Maps)
+# CUDA backs the GPU_NNLS fit routine on NVIDIA hardware. The option is declared here,
+# ahead of project(), so CUDA can be listed as a project language when it is on. Enabling
+# the language as part of project() (rather than a later enable_language(CUDA) call) is
+# what avoids the "Language 'CUDA' is currently being enabled. Recursive call not allowed"
+# error that fires when a toolchain has already begun enabling CUDA by the time a nested
+# enable_language() runs.
+option(BUILD_WITH_CUDA "Build the GPU_NNLS fit routine with CUDA compute (NVIDIA)" OFF)
+
+IF (BUILD_WITH_CUDA)
+  project(XRF_Maps LANGUAGES C CXX CUDA)
+ELSE()
+  project(XRF_Maps)
+ENDIF()
 
 #include(CTest)
 #enable_testing()
@@ -75,8 +87,14 @@ find_package(jsoncpp CONFIG REQUIRED)
 find_package(NLopt CONFIG REQUIRED)
 
 set(EIGEN3_INCLUDES "${PROJECT_SOURCE_DIR}/src/support/eigen-git-mirror" CACHE PATH "Eigen include folder")
-# todo 
+# todo
 # option(BUILD_WITH_OPENCL "Build with OPENCL support" OFF)
+# Metal and CUDA each back the GPU_NNLS fit routine on their respective hardware. They
+# are mutually exclusive (the routine binds one backend at compile time); with neither,
+# the routine compiles but reports no GPU and falls back to the CPU NNLS solver.
+# BUILD_WITH_CUDA is declared ahead of project() (above) so CUDA is enabled as a project
+# language; only the Metal option lives here.
+option(BUILD_WITH_METAL "Build the GPU_NNLS fit routine with Metal compute (Apple only)" OFF)
 option(BUILD_WITH_PYBIND11 "Build python binding with PyBind11" OFF)
 option(BUILD_WITH_ZMQ "Build with ZeroMQ" OFF)
 option(BUILD_WITH_QT "Build with QT" OFF)
@@ -87,6 +105,9 @@ option(AVX2 "Compule with arch AVX2 on MSVC" OFF)
 option(AVX "Compule with arch AVX on MSVC" OFF)
 option(SSE2 "Compule with arch SSE2 on MSVC" OFF)
 option(MSVC_DEBUG_INFO_REL "Compule with debug info in Release build for MSVC" OFF)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # generate_git_hash_header.cmake
 # This script is run by add_custom_command to generate the header file.
@@ -230,6 +251,8 @@ ENDIF()
 
 # Visual Studio specific include and source
 IF(MSVC)
+  set(CMAKE_CXX_STANDARD "20")
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(XDR_HACK src/support/MDA_Utilities/src/xdr_hack.c src/support/MDA_Utilities/src/xdr_hack.h )
   include_directories(src/support/direct)
   add_compile_options(/bigobj)
@@ -262,6 +285,9 @@ set(libxrf_fit_HEADERS
     src/fitting/routines/roi_fit_routine.h
     src/fitting/routines/svd_fit_routine.h
     src/fitting/routines/nnls_fit_routine.h
+    src/fitting/routines/gpu_nnls_fit_routine.h
+    src/fitting/routines/gpu/metal_nnls_backend.h
+    src/fitting/routines/gpu/cuda_nnls_backend.h
     src/fitting/routines/hybrid_param_nnls_fit_routine.h
     src/fitting/optimizers/optimizer.h
     src/fitting/optimizers/nlopt_optimizer.h
@@ -287,12 +313,40 @@ set(libxrf_fit_SOURCE
     src/fitting/routines/roi_fit_routine.cpp
     src/fitting/routines/svd_fit_routine.cpp
     src/fitting/routines/nnls_fit_routine.cpp
+    src/fitting/routines/gpu_nnls_fit_routine.cpp
     src/fitting/routines/hybrid_param_nnls_fit_routine.cpp
     src/fitting/optimizers/optimizer.cpp
     src/fitting/optimizers/nlopt_optimizer.cpp
     src/data_struct/detector.cpp
     src/data_struct/analysis_job.cpp
 )
+
+IF (BUILD_WITH_METAL AND BUILD_WITH_CUDA)
+  message(FATAL_ERROR "BUILD_WITH_METAL and BUILD_WITH_CUDA are mutually exclusive; the GPU_NNLS routine binds one backend at compile time")
+ENDIF()
+
+IF (BUILD_WITH_METAL)
+  IF (NOT APPLE)
+    message(FATAL_ERROR "BUILD_WITH_METAL requires an Apple platform")
+  ENDIF()
+  find_library(METAL_FRAMEWORK Metal REQUIRED)
+  find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+  # The Metal backend is the only Objective-C++ in the tree. It is compiled with ARC so
+  # the device, queue and buffer objects it holds are released with the backend.
+  set_source_files_properties(src/fitting/routines/gpu/metal_nnls_backend.mm
+                              PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+  list(APPEND libxrf_fit_SOURCE src/fitting/routines/gpu/metal_nnls_backend.mm)
+  add_definitions(-D_BUILD_WITH_METAL)
+ENDIF()
+
+IF (BUILD_WITH_CUDA)
+  # The CUDA backend is the only .cu in the library. The CUDA language is already enabled
+  # via project(... LANGUAGES ... CUDA) up top; CUDAToolkit provides the CUDA::cudart
+  # import target linked below.
+  find_package(CUDAToolkit REQUIRED)
+  list(APPEND libxrf_fit_SOURCE src/fitting/routines/gpu/cuda_nnls_backend.cu)
+  add_definitions(-D_BUILD_WITH_CUDA)
+ENDIF()
 
 #--------------- start xrf io lib -----------------
 set(XRF_IO_HEADERS
@@ -393,6 +447,20 @@ add_executable(xrf_maps
     src/core/command_line_parser.h
     src/core/main.cpp
 )
+
+IF (BUILD_WITH_METAL)
+  target_link_libraries(libxrf_fit LINK_PUBLIC ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK})
+ENDIF()
+
+IF (BUILD_WITH_CUDA)
+  target_link_libraries(libxrf_fit LINK_PUBLIC CUDA::cudart)
+  # The .cu is compiled as CUDA C++17; let CMAKE_CUDA_ARCHITECTURES (user supplied, or
+  # the toolkit default) pick the target architectures.
+  set_target_properties(libxrf_fit PROPERTIES
+      CUDA_STANDARD 17
+      CUDA_STANDARD_REQUIRED YES
+  )
+ENDIF()
 
 # Don't add a 'lib' prefix to the shared library
 set_target_properties(libxrf_fit PROPERTIES PREFIX "")
@@ -667,4 +735,30 @@ if(BUILD_TESTS)
     )
 
     gtest_discover_tests(test_spectra)
+
+    add_executable(test_basic_serializer test/unit/test_basic_serializer.cpp)
+
+    set_target_properties(test_basic_serializer PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
+    foreach(CompilerFlag ${CompilerFlags})
+        set_target_properties(test_basic_serializer PROPERTIES ${CompilerFlag} ${PROJECT_SOURCE_DIR}/bin)
+    endforeach()
+
+    IF (APPLE)
+        set_target_properties(test_basic_serializer PROPERTIES MACOSX_RPATH "$ORIGIN")
+    ENDIF()
+
+    target_link_libraries(test_basic_serializer
+        PRIVATE
+            GTest::gtest_main
+            libxrf_io
+            libxrf_fit
+            ${CMAKE_THREAD_LIBS_INIT}
+    )
+
+    gtest_discover_tests(test_basic_serializer)
 endif()

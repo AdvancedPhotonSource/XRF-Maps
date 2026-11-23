@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Optimizer_H
 
 #include <functional>
+#include <atomic>
 #include "data_struct/fit_parameters.h"
 #include "fitting/models/base_model.h"
 #include "quantification/models/quantification_model.h"
@@ -82,7 +83,7 @@ using namespace fitting::models;
 
 //typedef std::function<void(const Fit_Parameters * const, const Range * const, Spectra*)> Gen_Func_Def;
 template<typename T_real>
-using Gen_Func_Def = std::function<void(const Base_Model<T_real>* const model, const Fit_Parameters<T_real>* const, const Range* const, Spectra<T_real>*)>;
+using Gen_Func_Def = std::function<void(const Base_Model<T_real>& model, const Fit_Parameters<T_real>* const, const Range* const, Spectra<T_real>*)>;
 
 enum class OPTIMIZER_OUTCOME{ FOUND_ZERO, CONVERGED, TRAPPED,  EXHAUSTED, FAILED, CRASHED, EXPLODED, STOPPED, FOUND_NAN, F_TOL_LT_TOL, X_TOL_LT_TOL, G_TOL_LT_TOL};
 
@@ -126,6 +127,7 @@ struct Gen_User_Data
 {
     Gen_User_Data()
     {
+        fit_model = nullptr;
         fit_parameters = nullptr;
     }
 
@@ -163,14 +165,14 @@ void fill_user_data(User_Data<T_real> &ud,
                     Fit_Parameters<T_real>*fit_params,
                     const Spectra<T_real>* const spectra,
                     const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
-                    const Base_Model<T_real>* const model,
+                    const Base_Model<T_real>& model,
                     const Range energy_range,
                     const ArrayTr<T_real> * const background,
                     Callback_Func_Status_Def* status_callback,
                     size_t total_itr,
                     bool use_weights = true)
 {
-    ud.fit_model = (Base_Model<T_real>*)model;
+    ud.fit_model = const_cast<Base_Model<T_real>*>(&model);
     // set spectra to fit
     ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
     ud.spec_avg = ud.spectra.sum() / energy_range.count();
@@ -241,7 +243,7 @@ void fill_user_data(User_Data<T_real> &ud,
 template<typename T_real>
 void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         Fit_Parameters<T_real>* fit_params,
-                        const Base_Model<T_real>* const model,
+                        const Base_Model<T_real>& model,
                         const Spectra<T_real>* const spectra,
                         const Range energy_range,
                         const ArrayTr<T_real>* background,
@@ -249,7 +251,7 @@ void fill_gen_user_data(Gen_User_Data<T_real>& ud,
                         bool use_weights = true)
 {
     ud.func = gen_func;
-    ud.fit_model = (Base_Model<T_real>*)model;
+    ud.fit_model = const_cast<Base_Model<T_real>*>(&model);
     // set spectra to fit
     ud.spectra = spectra->sub_spectra(energy_range.min, energy_range.count());
     ud.spec_avg = ud.spectra.sum() / energy_range.count();
@@ -327,19 +329,20 @@ public:
     virtual OPTIMIZER_OUTCOME minimize(Fit_Parameters<T_real> *fit_params,
                           const Spectra<T_real>* const spectra,
                           const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
-                          const Base_Model<T_real>* const model,
+                          const Base_Model<T_real>& model,
                           const Range energy_range,
                           const ArrayTr<T_real> * const background,
                           bool use_weights,
                           Callback_Func_Status_Def* status_callback = nullptr) = 0;
 
-    virtual OPTIMIZER_OUTCOME minimize_func(const Base_Model<T_real>* const model,
+    virtual OPTIMIZER_OUTCOME minimize_func(const Base_Model<T_real>& model,
                                             Fit_Parameters<T_real>*fit_params,
                                             const Spectra<T_real>* const spectra,
                                             const Range energy_range,
                                             const ArrayTr<T_real>* background,
                                             Gen_Func_Def<T_real> gen_func,
-                                            bool use_weights) = 0;
+                                            bool use_weights,
+                                            T_real max_iter_override = (T_real)0) = 0;
 
 
     virtual OPTIMIZER_OUTCOME minimize_quantification(Fit_Parameters<T_real>*fit_params,
@@ -356,13 +359,13 @@ public:
 
     virtual std::string detailed_outcome(int outcome) = 0;
 
-    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome);}
+    std::string get_last_detailed_outcome() {return detailed_outcome(_last_outcome.load());}
 
 protected:
 
     std::map<int, OPTIMIZER_OUTCOME> _outcome_map;
 
-    int _last_outcome;
+    std::atomic<int> _last_outcome;
 
 };
 

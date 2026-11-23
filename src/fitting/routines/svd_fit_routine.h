@@ -70,7 +70,7 @@ public:
 
     virtual ~SVD_Fit_Routine();
 
-    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>& model,
                                                       const Spectra<T_real>* const spectra,
                                                       const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                       std::unordered_map<std::string, T_real>& out_counts);
@@ -78,7 +78,7 @@ public:
 
     virtual std::string get_name() { return STR_FIT_SVD; }
 
-    virtual void initialize(models::Base_Model<T_real>* const model,
+    virtual void initialize(models::Base_Model<T_real>& model,
                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range,
                             ArrayTr<T_real>* custom_background);

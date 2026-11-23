@@ -49,10 +49,61 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/process_streaming.h"
 #include "core/process_whole.h"
 #include <cctype>
+#include <cmath>
+#include <stdexcept>
 #include "core/git_hash.h"
 
 
 #define MAX_DETECTORS 7
+
+namespace
+{
+
+int parse_integer_option(const std::string& value, const std::string& option)
+{
+    if (value.empty() || value.rfind("--", 0) == 0)
+    {
+        throw std::invalid_argument(option + " requires an integer value");
+    }
+
+    size_t consumed = 0;
+    int parsed = std::stoi(value, &consumed);
+    if (consumed != value.size())
+    {
+        throw std::invalid_argument(option + " has an invalid integer value: " + value);
+    }
+    return parsed;
+}
+
+template<typename T_real>
+T_real parse_real_option(const std::string& value, const std::string& option)
+{
+    if (value.empty() || value.rfind("--", 0) == 0)
+    {
+        throw std::invalid_argument(option + " requires a numeric value");
+    }
+
+    size_t consumed = 0;
+    long double parsed = std::stold(value, &consumed);
+    if (consumed != value.size() || !std::isfinite(parsed))
+    {
+        throw std::invalid_argument(option + " has an invalid numeric value: " + value);
+    }
+    return static_cast<T_real>(parsed);
+}
+
+size_t parse_detector_number(const std::string& value, const std::string& option)
+{
+    int detector = parse_integer_option(value, option);
+    if (detector < 0 || detector >= MAX_DETECTORS)
+    {
+        throw std::out_of_range(option + " detector must be between 0 and " +
+                                std::to_string(MAX_DETECTORS - 1));
+    }
+    return static_cast<size_t>(detector);
+}
+
+} // namespace
 
 // ----------------------------------------------------------------------------
 
@@ -121,7 +172,7 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
     {
         std::string val = clp.get_option("--optimizer-use-weights");
         std::transform(val.begin(), val.end(), val.begin(), [](unsigned char c) { return std::tolower(c); });
-        if(val == "on" || val == "talse" || val == "1")
+        if(val == "on" || val == "true" || val == "1")
         {
             analysis_job.use_weights = true;
         }
@@ -149,26 +200,19 @@ void set_optimizer(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
 
     if (clp.option_exists("--optimizer-num-iter"))
     {
-        if (std::is_same<T_real, float>::value)
+        num_iter = parse_real_option<T_real>(clp.get_option("--optimizer-num-iter"), "--optimizer-num-iter");
+        if (!std::isfinite(num_iter) || num_iter <= 0)
         {
-            num_iter = std::stof(clp.get_option("--optimizer-num-iter"));
-        }
-        else if (std::is_same<T_real, double>::value)
-        {
-            num_iter = std::stod(clp.get_option("--optimizer-num-iter"));
+            throw std::invalid_argument("--optimizer-num-iter must be a positive finite number");
         }
     }
 
     if (clp.option_exists("--optimizer-x-tols"))
     {
-        
-        if (std::is_same<T_real, float>::value)
+        x_tol = parse_real_option<T_real>(clp.get_option("--optimizer-x-tols"), "--optimizer-x-tols");
+        if (!std::isfinite(x_tol) || x_tol <= 0)
         {
-            x_tol = std::stof(clp.get_option("--optimizer-x-tols"));
-        }
-        else if (std::is_same<T_real, double>::value)
-        {
-            x_tol = std::stod(clp.get_option("--optimizer-x-tols"));
+            throw std::invalid_argument("--optimizer-x-tols must be a positive finite number");
         }
     }
     std::unordered_map<std::string, T_real> opt_map;
@@ -209,11 +253,23 @@ void set_num_threads(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>
 {
     if (clp.option_exists("--nthreads"))
     {
-        analysis_job.num_threads = std::stoi(clp.get_option("--nthreads"));
+        int requested_threads = parse_integer_option(clp.get_option("--nthreads"), "--nthreads");
+        const unsigned int hardware_threads = std::max(1u, std::thread::hardware_concurrency());
+        const unsigned int max_threads = hardware_threads * 4u;
+        if (requested_threads < 1 || static_cast<unsigned int>(requested_threads) > max_threads)
+        {
+            throw std::out_of_range("--nthreads must be between 1 and " + std::to_string(max_threads));
+        }
+        analysis_job.num_threads = static_cast<size_t>(requested_threads);
     }
     if (clp.option_exists("--verbose"))
     {
-        analysis_job.verbose = std::stoi(clp.get_option("--verbose"));
+        int verbose = parse_integer_option(clp.get_option("--verbose"), "--verbose");
+        if (verbose < 0)
+        {
+            throw std::out_of_range("--verbose must not be negative");
+        }
+        analysis_job.verbose = static_cast<unsigned int>(verbose);
     }
 }
 
@@ -234,12 +290,12 @@ void set_detectors(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
             std::string item;
             while (std::getline(ss, item, ','))
             {
-                analysis_job.detector_num_arr.push_back(std::stoi(item));
+                analysis_job.detector_num_arr.push_back(parse_detector_number(item, "--detectors"));
             }
         }
         else
         {
-            analysis_job.detector_num_arr.push_back(std::stoi(detector_range_str));
+            analysis_job.detector_num_arr.push_back(parse_detector_number(detector_range_str, "--detectors"));
         }
     }
     else if (clp.option_exists("--detector-range"))
@@ -250,14 +306,22 @@ void set_detectors(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
         std::string detector_range_str = clp.get_option("--detector-range");
         if (detector_range_str.find(':') != std::string::npos)
         {
+            if (detector_range_str.find(':') != detector_range_str.rfind(':'))
+            {
+                throw std::invalid_argument("--detector-range must contain exactly one ':'");
+            }
             // if we found a comma, split the string to get list of dataset files
             std::stringstream ss;
             ss.str(detector_range_str);
             std::string item;
             std::getline(ss, item, ':');
-            size_t detector_num_start = std::stoi(item);
+            size_t detector_num_start = parse_detector_number(item, "--detector-range");
             std::getline(ss, item, ':');
-            size_t detector_num_end = std::stoi(item);
+            size_t detector_num_end = parse_detector_number(item, "--detector-range");
+            if (detector_num_start > detector_num_end)
+            {
+                throw std::invalid_argument("--detector-range start must not exceed its end");
+            }
             for (size_t det = detector_num_start; det <= detector_num_end; det++)
             {
                 analysis_job.detector_num_arr.push_back(det);
@@ -265,7 +329,7 @@ void set_detectors(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real>& 
         }
         else
         {
-            analysis_job.detector_num_arr.push_back(std::stoi(detector_range_str));
+            analysis_job.detector_num_arr.push_back(parse_detector_number(detector_range_str, "--detector-range"));
         }
     }
     else
@@ -315,6 +379,10 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
                 {
                     analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
                 }
+                else if (item == STR_FIT_GPU_NNLS)
+                {
+                    analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GPU_NNLS);
+                }
                 else if (item == STR_FIT_GAUSS_MATRIX || item == "MATRIX")
                 {
                     analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GAUSS_MATRIX);
@@ -339,6 +407,10 @@ void set_fit_routines(Command_Line_Parser& clp, data_struct::Analysis_Job<T_real
             else if (fitting == STR_FIT_NNLS)
             {
                 analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::NNLS);
+            }
+            else if (fitting == STR_FIT_GPU_NNLS)
+            {
+                analysis_job.fitting_routines.push_back(data_struct::Fitting_Routines::GPU_NNLS);
             }
             else if (fitting == STR_FIT_GAUSS_MATRIX || fitting == "MATRIX")
             {
@@ -945,6 +1017,8 @@ int run_h5_file_updates(Command_Line_Parser& clp)
 
 int main(int argc, char* argv[])
 {
+    try
+    {
     
     logI << "Version: " << GIT_COMMIT_TAG << " Git Hash: " << GIT_COMMIT_HASH << "\n";
     std::string whole_command_line = "";
@@ -1032,6 +1106,21 @@ int main(int argc, char* argv[])
     data_struct::Element_Info_Map<float>::inst()->clear();
     data_struct::Element_Info_Map<double>::inst()->clear();
 
-    return 0;
+        return 0;
+    }
+    catch (const std::exception& e)
+    {
+        logE << "Fatal input or processing error: " << e.what() << "\n";
+        data_struct::Element_Info_Map<float>::inst()->clear();
+        data_struct::Element_Info_Map<double>::inst()->clear();
+        return -1;
+    }
+    catch (...)
+    {
+        logE << "Fatal unknown processing error\n";
+        data_struct::Element_Info_Map<float>::inst()->clear();
+        data_struct::Element_Info_Map<double>::inst()->clear();
+        return -1;
+    }
 
 }

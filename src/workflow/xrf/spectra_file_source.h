@@ -68,7 +68,7 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-class DLL_EXPORT Spectra_File_Source : public Source<data_struct::Stream_Block<T_real>*>
+class DLL_EXPORT Spectra_File_Source : public Source<data_struct::Stream_Block_Ptr<T_real>>
 {
 
 public:
@@ -111,7 +111,7 @@ protected:
 													data_struct::IO_Callback_Func_Def<T_real> callback_fun);
 
 
-	data_struct::Stream_Block<T_real>* _alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size);
+	data_struct::Stream_Block_Ptr<T_real> _alloc_stream_block(int detector, size_t row, size_t col, size_t height, size_t width, size_t spectra_size);
 
 	int _max_num_stream_blocks;
 	int _allocated_stream_blocks;

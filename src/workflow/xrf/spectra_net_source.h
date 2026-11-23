@@ -59,6 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifdef _BUILD_WITH_ZMQ
 #include <zmq.hpp>
 #endif
+#include <memory>
 namespace workflow
 {
 namespace xrf
@@ -66,7 +67,7 @@ namespace xrf
 
 //-----------------------------------------------------------------------------
 template<typename T_real>
-class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block<T_real>*>
+class DLL_EXPORT Spectra_Net_Source : public Source<data_struct::Stream_Block_Ptr<T_real>>
 {
 
 public:
@@ -74,6 +75,12 @@ public:
     Spectra_Net_Source(data_struct::Analysis_Job<T_real>* analysis_job, std::string ip_addr="127.0.0.1", std::string port = "43434");
 
     virtual ~Spectra_Net_Source();
+
+    /// Owns its ZeroMQ context and socket via unique_ptr, so it is non-copyable.
+    /// DLL_EXPORT makes MSVC emit the implicit copy operations, which then fail
+    /// to compile against the move-only members -- so delete them explicitly.
+    Spectra_Net_Source(const Spectra_Net_Source&) = delete;
+    Spectra_Net_Source& operator=(const Spectra_Net_Source&) = delete;
 
     virtual void run();
 
@@ -88,9 +95,11 @@ protected:
     data_struct::Analysis_Job<T_real>* _analysis_job;
 
 #ifdef _BUILD_WITH_ZMQ
-	zmq::context_t *_context;
+	// Declaration order matters: members are destroyed in reverse, so the
+	// socket is torn down before the context it was created from.
+	std::unique_ptr<zmq::context_t> _context;
 
-	zmq::socket_t *_zmq_socket;
+	std::unique_ptr<zmq::socket_t> _zmq_socket;
 #endif
 };
 

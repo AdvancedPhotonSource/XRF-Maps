@@ -53,6 +53,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include "threadpool.h"
 #include <functional>
+#include <memory>
 
 namespace workflow
 {
@@ -66,24 +67,15 @@ public:
 
     Distributor(size_t num_threads)
     {
-        _thread_pool = new ThreadPool(num_threads);
+        _thread_pool = std::make_unique<ThreadPool>(num_threads);
         _callback_func = std::bind(&Distributor::distribute, this, std::placeholders::_1);
     }
 
-    Distributor(const Distributor &)
-    {
+    Distributor(const Distributor&) = delete;
 
-    }
+    Distributor& operator=(const Distributor&) = delete;
 
-    Distributor& operator=(const Distributor&)
-    {
-        return *this;
-    }
-
-    virtual ~Distributor()
-    {
-        delete _thread_pool;
-    }
+    virtual ~Distributor() = default;
 
     void distribute(T_IN input)
     {
@@ -101,7 +93,11 @@ public:
         _dist_func = dist_func;
     }
 
-    inline bool is_queue_empty() { return _job_queue.empty(); }
+    inline bool is_queue_empty()
+    {
+        std::unique_lock<std::mutex> lock(_queue_mutex);
+        return _job_queue.empty();
+    }
 
     T_OUT front_pop()
     {
@@ -127,7 +123,9 @@ protected:
 
     std::function<T_OUT (T_IN)> _dist_func;
 
-    ThreadPool *_thread_pool;
+    // Owned. Distributor is non-copyable because callbacks bind `this`, futures
+    // are move-only, and a thread pool cannot be shared by an accidental copy.
+    std::unique_ptr<ThreadPool> _thread_pool;
 
     std::mutex _queue_mutex;
 

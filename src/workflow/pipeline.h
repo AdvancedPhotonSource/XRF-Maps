@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define Pipeline_H
 
 #include "core/defines.h"
+#include <memory>
 #include "workflow/source.h"
 #include "workflow/distributor.h"
 #include "workflow/sink.h"
@@ -67,16 +68,13 @@ public:
 
     Simple_Pipeline(int num_threads)
     {
-        _distributor = new Distributor<_T, _T>(num_threads);
+        _distributor = std::make_unique<Distributor<_T, _T> >(num_threads);
 
         _producer.connect(_distributor->get_callback_func());
         _distributor->connect(_sink.get_job_queue());
     }
 
-    ~Simple_Pipeline()
-    {
-        delete _distributor;
-    }
+    ~Simple_Pipeline() = default;
 
     void set_producer_func(std::function<_T (void*)> func)
     {
@@ -103,7 +101,8 @@ public:
 protected:
 
     Source<_T> _producer;
-    Distributor<_T, _T> *_distributor;
+    // Owned.
+    std::unique_ptr<Distributor<_T, _T> > _distributor;
     Sink<_T> _sink;
 
 };

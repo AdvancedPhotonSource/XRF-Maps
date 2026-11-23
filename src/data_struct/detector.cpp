@@ -57,7 +57,6 @@ namespace data_struct
 template<typename T_real>
 Detector<T_real>::Detector(unsigned int number)
 {
-    model = nullptr;
     detector_element = data_struct::Element_Info_Map<T_real>::inst()->get_element("Si");
     beryllium_window_thickness = 0.0; //24.000000
     germanium_dead_layer = 0.0; 
@@ -70,28 +69,17 @@ Detector<T_real>::Detector(unsigned int number)
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Detector<T_real>::~Detector()
-{
-    if (model != nullptr)
-    {
-        delete model;
-        model = nullptr;
-    }
-    
-    for (auto& itr : fit_routines)
-    {
-        fitting::routines::Base_Fit_Routine<T_real>* fit_routine = itr.second;
-        if (fit_routine != nullptr)
-        {
-            delete fit_routine;
-        }
-    }
-    fit_routines.clear();
-    quantification_standards.clear();
-    K_element_quants.clear();
-    L_element_quants.clear();
-    M_element_quants.clear();
-}
+Detector<T_real>::~Detector() = default;
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Detector<T_real>::Detector(Detector<T_real>&&) = default;
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+Detector<T_real>& Detector<T_real>::operator=(Detector<T_real>&&) = default;
 
 //-----------------------------------------------------------------------------
 
@@ -376,7 +364,17 @@ void Detector<T_real>::update_from_fit_parameters()
     if (fit_params_override_dict.detector_element.length() > 0)
     {
         // Get the element info class                                           // detector element as string "Si" or "Ge" usually
-        detector_element = (data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element));
+        data_struct::Element_Info<T_real>* configured_element =
+            data_struct::Element_Info_Map<T_real>::inst()->get_element(fit_params_override_dict.detector_element);
+        if (configured_element != nullptr)
+        {
+            detector_element = configured_element;
+        }
+        else
+        {
+            logE << "Unknown DETECTOR_ELEMENT '" << fit_params_override_dict.detector_element
+                 << "'; retaining the current detector material\n";
+        }
     }
     if (fit_params_override_dict.be_window_thickness.length() > 0)
     {

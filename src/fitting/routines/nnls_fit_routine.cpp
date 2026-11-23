@@ -166,7 +166,7 @@ void NNLS_Fit_Routine<T_real>::fit_spectrum_model(const Spectra<T_real>* const s
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>& model,
                                                 const Spectra<T_real>* const spectra,
                                [[maybe_unused]] const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                 std::unordered_map<std::string, T_real>& out_counts)
@@ -174,7 +174,7 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 	data_struct::ArrayTr<T_real>* result;
     int num_iter;
     T_real npg;
-    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model.fit_parameters();
     fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
     ArrayTr<T_real> background;
 
@@ -238,12 +238,12 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
         }
     }
     // add escape peak
-    if (fit_params.at(STR_SI_ESCAPE).value > 0.0 && model != nullptr)
+    if (fit_params.at(STR_SI_ESCAPE).value > 0.0)
     {
         ArrayTr<T_real> energy = ArrayTr<T_real>::LinSpaced(this->_energy_range.count(), this->_energy_range.min, this->_energy_range.max);
         ArrayTr<T_real> ev = fit_params.value(STR_ENERGY_OFFSET) + (energy * fit_params.value(STR_ENERGY_SLOPE)) + (pow(energy, (T_real)2.0) * fit_params.value(STR_ENERGY_QUADRATIC));
 
-        spectra_model += model->escape_peak(spectra_model, ev, fit_params.value(STR_SI_ESCAPE), fit_params.value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
+        spectra_model += model.escape_peak(spectra_model, ev, fit_params.value(STR_SI_ESCAPE), fit_params.value_or(STR_ESCAPE_LINEAR, (T_real)0.0));
     }
 
 
@@ -275,7 +275,7 @@ OPTIMIZER_OUTCOME NNLS_Fit_Routine<T_real>::fit_spectra(const models::Base_Model
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void NNLS_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
+void NNLS_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>& model,
                                   const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                   const struct Range energy_range,
                                   ArrayTr<T_real>* custom_background)
@@ -287,7 +287,7 @@ void NNLS_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const mode
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void NNLS_Fit_Routine<T_real>::initialize_mp(models::Base_Model<T_real>* const model,
+void NNLS_Fit_Routine<T_real>::initialize_mp(models::Base_Model<T_real>& model,
     const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
     const struct Range energy_range)
 {

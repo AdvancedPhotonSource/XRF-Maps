@@ -61,7 +61,7 @@ namespace data_struct
 	
 //-----------------------------------------------------------------------------
 
-enum class Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16 };
+enum class Fitting_Routines { ROI=1 , GAUSS_TAILS=2, GAUSS_MATRIX=4, SVD=8, NNLS=16, GPU_NNLS=32 };
 
 enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIMITED_HI=4, FIT=5};
 
@@ -69,7 +69,8 @@ enum class E_Bound_Type {NOT_INIT=0, FIXED=1, LIMITED_LO_HI=2, LIMITED_LO=3, LIM
     {Fitting_Routines::GAUSS_TAILS,STR_FIT_GAUSS_TAILS},
     {Fitting_Routines::GAUSS_MATRIX,STR_FIT_GAUSS_MATRIX},
     {Fitting_Routines::SVD,STR_FIT_SVD},
-    {Fitting_Routines::NNLS,STR_FIT_NNLS} };
+    {Fitting_Routines::NNLS,STR_FIT_NNLS},
+    {Fitting_Routines::GPU_NNLS,STR_FIT_GPU_NNLS} };
 
 //-----------------------------------------------------------------------------
 

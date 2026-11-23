@@ -139,7 +139,11 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples, ArrayTr<T_r
         _last_init_sample_size = spectra_samples;
         for(size_t detector_num : detector_num_arr)
         {
-            Detector<T_real>* detector = &detectors_meta_data[detector_num];
+            // get_detector() returns nullptr for an unknown detector. Do not use
+            // detectors_meta_data[] here: operator[] would silently insert a default
+            // Detector (_number == -1, model == nullptr) and every later
+            // get_detector() null check would then pass on that junk entry.
+            Detector<T_real>* detector = get_detector((int)detector_num);
 
             if(detector != nullptr)
             {
@@ -151,7 +155,7 @@ void Analysis_Job<T_real>::init_fit_routines(size_t spectra_samples, ArrayTr<T_r
                     {
                         Fit_Element_Map_Dict<T_real>* elements_to_fit = &(detector->fit_params_override_dict.elements_to_fit);
                         //Initialize model
-                        detector->fit_routines[proc_type]->initialize(detector->model, elements_to_fit, energy_range, custom_background);
+                        detector->fit_routines[proc_type]->initialize(*detector->model, elements_to_fit, energy_range, custom_background);
                     }
                 }
             }

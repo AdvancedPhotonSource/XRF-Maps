@@ -67,17 +67,17 @@ public:
 
     ~Basic_Serializer();
 
-    std::string encode_counts(data_struct::Stream_Block<T_real>* in_stream_block);
+    std::string encode_counts(const data_struct::Stream_Block_Ptr<T_real>& in_stream_block);
 
-    data_struct::Stream_Block<T_real>* decode_counts(char* message, size_t message_len);
+    data_struct::Stream_Block_Ptr<T_real> decode_counts(char* message, size_t message_len);
 
-    std::string encode_spectra(data_struct::Stream_Block<T_real>* in_stream_block);
+    std::string encode_spectra(const data_struct::Stream_Block_Ptr<T_real>& in_stream_block);
 
-    data_struct::Stream_Block<T_real>* decode_spectra(char* message, size_t message_len);
+    data_struct::Stream_Block_Ptr<T_real> decode_spectra(char* message, size_t message_len);
 
-    std::string encode_counts_and_spectra(data_struct::Stream_Block<T_real>* in_stream_block);
+    std::string encode_counts_and_spectra(const data_struct::Stream_Block_Ptr<T_real>& in_stream_block);
 
-    data_struct::Stream_Block<T_real>* decode_counts_and_spectra(char* message, size_t message_len);
+    data_struct::Stream_Block_Ptr<T_real> decode_counts_and_spectra(char* message, size_t message_len);
 
 protected:
 	template <typename T>
@@ -88,22 +88,26 @@ protected:
 			*str += bytes_temp[i];
 	}
 
-    void _encode_meta(data_struct::Stream_Block<T_real>* stream_block, std::string& raw_msg);
+    bool _encode_meta(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg);
 
-    void _encode_counts(data_struct::Stream_Block<T_real>* stream_block, std::string& raw_msg);
+    void _encode_counts(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg);
 
-    void _encode_spectra(data_struct::Stream_Block<T_real>* stream_block, std::string& raw_msg);
+    bool _encode_spectra(const data_struct::Stream_Block_Ptr<T_real>& stream_block, std::string& raw_msg);
 
-    data_struct::Stream_Block<T_real>* _decode_meta(char* message, size_t message_len, size_t& idx);
+    data_struct::Stream_Block_Ptr<T_real> _decode_meta(char* message, size_t message_len, size_t& idx);
 
-    void _decode_counts(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block<T_real>* out_stream_block);
+    bool _decode_counts(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block);
 
-    void _decode_spectra(char* message, size_t message_len, size_t& idx, data_struct::Stream_Block<T_real>* out_stream_block);
+    bool _decode_spectra(char* message, size_t message_len, size_t& idx, const data_struct::Stream_Block_Ptr<T_real>& out_stream_block);
 
-    char *_tmp_real;
-    char *_tmp_uint;
-    char *_tmp_size_t;
-    char *_tmp_ushort;
+    /// Fixed-size scratch buffers for _convert_var_to_bytes. These used to be
+    /// heap allocations; inline arrays need no ctor/dtor, and the implicit copy
+    /// constructor no longer hands two Basic_Serializers the same buffers to
+    /// delete[].
+    char _tmp_real[sizeof(T_real)];
+    char _tmp_uint[sizeof(unsigned int)];
+    char _tmp_size_t[sizeof(size_t)];
+    char _tmp_ushort[sizeof(unsigned short)];
 
 };
 

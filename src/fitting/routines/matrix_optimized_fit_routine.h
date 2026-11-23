@@ -73,24 +73,24 @@ public:
 
     virtual ~Matrix_Optimized_Fit_Routine();
 
-    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>* const model,
+    virtual optimizers::OPTIMIZER_OUTCOME fit_spectra(const models::Base_Model<T_real>& model,
                                           const Spectra<T_real>* const spectra,
                                           const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                           std::unordered_map<std::string, T_real>& out_counts);
 
     virtual std::string get_name() { return STR_FIT_GAUSS_MATRIX; }
 
-    virtual void initialize(models::Base_Model<T_real>* const model,
+    virtual void initialize(models::Base_Model<T_real>& model,
                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                             const struct Range energy_range,
                             ArrayTr<T_real>* custom_background);
 
-    void initialize_mp(models::Base_Model<T_real>* const model,
+    void initialize_mp(models::Base_Model<T_real>& model,
                         const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                         const struct Range energy_range);
 
 
-    virtual void model_spectrum(const Base_Model<T_real>* const model,
+    virtual void model_spectrum(const Base_Model<T_real>& model,
                                 const Fit_Parameters<T_real>* const fit_params,
                                 const struct Range * const energy_range,
                                 Spectra<T_real>* spectra_model);
@@ -107,11 +107,11 @@ public:
 
 protected:
 
-    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>* const model,
+    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models(models::Base_Model<T_real>& model,
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                             struct Range energy_range);
 
-    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models_mp(models::Base_Model<T_real>* const model,
+    std::unordered_map<std::string, Spectra<T_real>> _generate_element_models_mp(models::Base_Model<T_real>& model,
         const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
         struct Range energy_range);
 

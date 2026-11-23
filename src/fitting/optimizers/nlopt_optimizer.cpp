@@ -124,7 +124,7 @@ double gen_residuals_nlopt(const std::vector<double> &x, std::vector<double> &gr
     ud->fit_parameters->from_array_d(x);
 
     // Model spectra based on new fit parameters
-    ud->func(ud->fit_model, ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
+    ud->func(*ud->fit_model, ud->fit_parameters, &(ud->energy_range), &(ud->spectra_model));
     // Add background
     ud->spectra_model += ud->spectra_background;
     
@@ -230,6 +230,7 @@ NLOPT_Optimizer<T_real>::NLOPT_Optimizer() : Optimizer<T_real>()
 template<typename T_real>
 std::unordered_map<std::string, T_real> NLOPT_Optimizer<T_real>::get_options()
 {
+    std::lock_guard<std::mutex> lock(_config_mutex);
     return _options;
 }
 
@@ -238,6 +239,7 @@ std::unordered_map<std::string, T_real> NLOPT_Optimizer<T_real>::get_options()
 template<typename T_real>
 void NLOPT_Optimizer<T_real>::set_options(std::unordered_map<std::string, T_real> opt)
 {
+    std::lock_guard<std::mutex> lock(_config_mutex);
     for(auto itr: opt)
     {
         if (_options.contains(itr.first) )
@@ -299,6 +301,7 @@ std::vector<std::string> NLOPT_Optimizer<T_real>::get_algorithm_list()
 template<typename T_real>
 bool NLOPT_Optimizer<T_real>::set_algorithm(std::string name)
 {
+    std::lock_guard<std::mutex> lock(_config_mutex);
     if( _algorithms.contains(name) )
     {
         _algo = _algorithms.at(name);
@@ -313,7 +316,7 @@ template<typename T_real>
 OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_params,
                                             const Spectra<T_real>* const spectra,
                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
-                                            const Base_Model<T_real>* const model,
+                                            const Base_Model<T_real>& model,
                                             const Range energy_range,
                                             const ArrayTr<T_real> * const background,
                                             bool use_weights,
@@ -332,21 +335,32 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         return OPTIMIZER_OUTCOME::STOPPED;
     }
 
-    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, background, status_callback, _options.at(STR_OPT_MAXITER), use_weights);
+    nlopt::algorithm algorithm;
+    T_real x_tol;
+    T_real max_iter;
+    {
+        std::lock_guard<std::mutex> lock(_config_mutex);
+        algorithm = _algo;
+        x_tol = _options.at(STR_OPT_XTOL);
+        max_iter = _options.at(STR_OPT_MAXITER);
+    }
 
-    nlopt::opt opt(_algo, fitp_arr.size());
+    fill_user_data(ud, fit_params, spectra, elements_to_fit, model, energy_range, background, status_callback, max_iter, use_weights);
+
+    nlopt::opt opt(algorithm, fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(residuals_nlopt<T_real>, (void*)&ud);
-    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
-    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
+    opt.set_xtol_rel(x_tol);
+    opt.set_maxeval(max_iter);
 
     double minf = -1.0;
+    nlopt::result result = nlopt::result::FAILURE;
 
     try
     {
-        nlopt::result result = opt.optimize(fitp_arr, minf);
+        result = opt.optimize(fitp_arr, minf);
         logI<<detailed_outcome(result)<< " : resid = "<<minf<<"\n\n";;
         this->_last_outcome = result;
     }
@@ -384,8 +398,8 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
         fit_params->add_parameter(data_struct::Fit_Param<T_real>(STR_FREE_PARS, fitp_arr.size()));
     }
     
-    if (this->_outcome_map.contains(this->_last_outcome))
-        return this->_outcome_map[this->_last_outcome];
+    if (this->_outcome_map.contains(result))
+        return this->_outcome_map[result];
 
     return OPTIMIZER_OUTCOME::FAILED;
 }
@@ -393,13 +407,14 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize(Fit_Parameters<T_real>*fit_p
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real>* const model,
+OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real>& model,
                                                         Fit_Parameters<T_real> *fit_params,
                                                         const Spectra<T_real>* const spectra,
                                                         const Range energy_range,
                                                         const ArrayTr<T_real>* background,
                                                         Gen_Func_Def<T_real> gen_func,
-                                                        bool use_weights)
+                                                        bool use_weights,
+                                                        T_real max_iter_override)
 {
     Gen_User_Data<T_real> ud;
     fill_gen_user_data(ud, fit_params, model, spectra, energy_range, background, gen_func, use_weights);
@@ -415,13 +430,28 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_func(const Base_Model<T_real
         return OPTIMIZER_OUTCOME::STOPPED;
     }
 
-    nlopt::opt opt(_algo, (unsigned int)fitp_arr.size());
+    nlopt::algorithm algorithm;
+    T_real x_tol;
+    T_real max_iter;
+    {
+        std::lock_guard<std::mutex> lock(_config_mutex);
+        algorithm = _algo;
+        x_tol = _options.at(STR_OPT_XTOL);
+        max_iter = _options.at(STR_OPT_MAXITER);
+    }
+
+    if (std::isfinite(max_iter_override) && max_iter_override > (T_real)0)
+    {
+        max_iter = max_iter_override;
+    }
+
+    nlopt::opt opt(algorithm, (unsigned int)fitp_arr.size());
     opt.set_lower_bounds(lb_arr);
     opt.set_upper_bounds(ub_arr);
     opt.set_default_initial_step(step_arr);
     opt.set_min_objective(gen_residuals_nlopt<T_real>, (void*)&ud);
-    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
-    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
+    opt.set_xtol_rel(x_tol);
+    opt.set_maxeval(max_iter);
 
     double minf = -1.0;
     nlopt::result result = nlopt::result::FAILURE;
@@ -502,6 +532,14 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     //nlopt::opt opt(nlopt::algorithm::GN_ESCH, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::GN_ISRES, fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::LN_SBPLX, fitp_arr.size());
+    T_real x_tol;
+    T_real max_iter;
+    {
+        std::lock_guard<std::mutex> lock(_config_mutex);
+        x_tol = _options.at(STR_OPT_XTOL);
+        max_iter = _options.at(STR_OPT_MAXITER);
+    }
+
     nlopt::opt opt(nlopt::algorithm::LN_NELDERMEAD, (unsigned int)fitp_arr.size());
     //nlopt::opt opt(nlopt::algorithm::LN_COBYLA, fitp_arr.size());
     
@@ -510,8 +548,8 @@ OPTIMIZER_OUTCOME NLOPT_Optimizer<T_real>::minimize_quantification(Fit_Parameter
     opt.set_upper_bounds(ub_arr);
     //opt.set_default_initial_step(step_arr);
     opt.set_min_objective(quantification_residuals_nlopt<T_real>, (void*)&ud);
-    opt.set_xtol_rel(_options.at(STR_OPT_XTOL));
-    opt.set_maxeval(_options.at(STR_OPT_MAXITER));
+    opt.set_xtol_rel(x_tol);
+    opt.set_maxeval(max_iter);
 
 
     double minf = 0.0;

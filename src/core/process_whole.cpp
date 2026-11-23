@@ -72,16 +72,16 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
         fitting::models::Range energy_range = data_struct::get_energy_range<double>(int_spectra.size(), &(params_override->fit_params));
 
         //Fitting routines
-        fitting::routines::Param_Optimized_Fit_Routine<double>* fit_routine;
+        std::unique_ptr<fitting::routines::Param_Optimized_Fit_Routine<double> > fit_routine;
 
 
         if (analysis_job->optimize_fit_routine == OPTIMIZE_FIT_ROUTINE::HYBRID)
         {
-            fit_routine = new fitting::routines::Hybrid_Param_NNLS_Fit_Routine<double>();
+            fit_routine = std::make_unique<fitting::routines::Hybrid_Param_NNLS_Fit_Routine<double> >();
         }
         else
         {
-            fit_routine = new fitting::routines::Param_Optimized_Fit_Routine<double>();
+            fit_routine = std::make_unique<fitting::routines::Param_Optimized_Fit_Routine<double> >();
         }
 
         fit_routine->set_optimizer(analysis_job->optimizer());
@@ -97,12 +97,12 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             model.set_fit_params_preset(analysis_job->optimize_fit_params_preset);
         }
         //Initialize the fit routine
-        fit_routine->initialize(&model, &params_override->elements_to_fit, energy_range, custom_background);
+        fit_routine->initialize(model, &params_override->elements_to_fit, energy_range, custom_background);
 
         model.print_fit_params();
 
         //Fit the spectra saving the element counts in element_fit_count_dict
-        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(&model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp, status_callback);
+        fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_routine->fit_spectra_parameters(model, &int_spectra, &params_override->elements_to_fit, analysis_job->use_weights, out_fitp, status_callback);
         out_fitp.add_parameter(data_struct::Fit_Param<double>(STR_OUTCOME, double(outcome)));
         std::string result = optimizer_outcome_to_str(outcome);
         logI << "Outcome = " << result << "\n";
@@ -128,8 +128,6 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
             break;
         }
         io::file::save_optimized_fit_params(analysis_job->output_dir, save_filename, (int)detector_num, result, &out_fitp, &int_spectra, &(params_override->elements_to_fit));
-
-        delete fit_routine;
     }
     
     return ret_val;
@@ -141,8 +139,10 @@ bool optimize_integrated_fit_params(data_struct::Analysis_Job<double> * analysis
 void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 {
     std::unordered_map<int, data_struct::Fit_Parameters<double>> fit_params_avgs;
-    std::unordered_map<int, data_struct::Params_Override<double>*> params;
+    // Owns one Params_Override per detector for the life of this function.
+    std::unordered_map<int, std::unique_ptr<data_struct::Params_Override<double> > > params;
     std::unordered_map<size_t, float> detector_file_cnt;
+    // Non-owning view of the entry in `params` for the detector being processed.
     data_struct::Params_Override<double>* params_override = nullptr;
     data_struct::Spectra<double> int_spectra;
 
@@ -160,11 +160,12 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
             //reuse previous param override if it exists
             if (params.contains(detector_num))
             {
-                params_override = params[detector_num];
+                params_override = params[detector_num].get();
             }
             else
             {
-                params_override = new data_struct::Params_Override<double>();
+                auto owned_override = std::make_unique<data_struct::Params_Override<double> >();
+                params_override = owned_override.get();
                 //load override parameters
                 // if the override txt file is missing, fall back to the overrides saved in the analyzed hdf5 file
                 std::string h5_fallback = analysis_job->output_dir + DIR_END_CHAR + "img.dat" + DIR_END_CHAR + itr + ".h5" + std::to_string(detector_num);
@@ -174,15 +175,11 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
                     if (false == io::file::load_override_params(analysis_job->output_dir, -1, *params_override, true, true, h5_fallback_avg))
                     {
                         logE << "Loading maps_fit_parameters_override.txt\n";
-                        delete params_override;
                         params_override = nullptr;
                         continue;
                     }
                 }
-                if (params_override != nullptr)
-                {
-                    params[detector_num] = params_override;
-                }
+                params[detector_num] = std::move(owned_override);
 				
             }
 
@@ -219,15 +216,8 @@ void generate_optimal_params(data_struct::Analysis_Job<double>* analysis_job)
 
 		io::file::aps::create_detector_fit_params_from_avg(full_path, fit_params_avgs[detector_num], detector_num);
 
-        if (params.contains(detector_num))
-        {
-            params_override = params[detector_num];
-            if (params_override != nullptr)
-            {
-                delete params_override;
-            }
-            params.erase(detector_num);
-        }
+        params_override = nullptr;
+        params.erase(detector_num);
     }
 }
 
@@ -241,6 +231,11 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
     std::unordered_map<int, float> element_amt_in_all_standards;
 
     data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
+    if (detector == nullptr)
+    {
+        logE << "Detector " << detector_num << " not found, can't fit quantification datasets\n";
+        return false;
+    }
     data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
 
     //Range of energy in spectra to fit
@@ -253,7 +248,7 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
         Quantification_Standard<double>* quantification_standard = &(detector->quantification_standards[standard_itr.standard_filename]);
 
         //Output of fits for elements specified
-        std::unordered_map<std::string, data_struct::Fit_Element_Map<double>*> elements_to_fit;
+        data_struct::Fit_Element_Map_Dict<double> elements_to_fit;
         for (auto& itr : standard_itr.element_standard_weights)
         {
             if(detector->fit_params_override_dict.elements_to_fit.count(itr.first) > 0)
@@ -265,13 +260,21 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
                 data_struct::Element_Info<double>* e_info = data_struct::Element_Info_Map<double>::inst()->get_element(itr.first);
                 if( e_info != nullptr )
                 {
-                    elements_to_fit[itr.first] = new data_struct::Fit_Element_Map<double>(itr.first, e_info);
+                    elements_to_fit[itr.first] = std::make_shared<data_struct::Fit_Element_Map<double> >(itr.first, e_info);
                     elements_to_fit[itr.first]->init_energy_ratio_for_detector_element(detector->detector_element, standard_itr.disable_Ka_for_quantification, standard_itr.disable_La_for_quantification);
                 }
                 else
                 {
                     logE<<"Could not find element: "<< itr.first <<"\n";
+                    // Avoid operator[] below inserting and dereferencing an
+                    // empty shared_ptr for an unknown standard element.
+                    continue;
                 }
+            }
+            if (!elements_to_fit.contains(itr.first) || elements_to_fit.at(itr.first) == nullptr)
+            {
+                logE << "Element has no fitting metadata: " << itr.first << "\n";
+                continue;
             }
             if (element_amt_in_all_standards.contains(elements_to_fit[itr.first]->Z()))
             {
@@ -378,7 +381,7 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
         for (auto& fit_itr : detector->fit_routines)
         {
 
-            fitting::routines::Base_Fit_Routine<double>* fit_routine = fit_itr.second;
+            fitting::routines::Base_Fit_Routine<double>* fit_routine = fit_itr.second.get();
             for (auto& el_itr : standard_itr.element_standard_weights)
             {
                 quantification_standard->element_counts[fit_itr.first][el_itr.first] = 0;
@@ -394,9 +397,9 @@ bool load_and_fit_quantification_datasets(data_struct::Analysis_Job<double>* ana
             //Update fit parameters by override values
             model.update_fit_params_values(&(override_params->fit_params));
             //Initialize the fit routine
-            fit_routine->initialize(&model, &elements_to_fit, energy_range, nullptr);
+            fit_routine->initialize(model, &elements_to_fit, energy_range, nullptr);
             //Fit the spectra
-            fit_routine->fit_spectra(&model, &quantification_standard->integrated_spectra, &elements_to_fit, quantification_standard->element_counts[fit_itr.first]);
+            fit_routine->fit_spectra(model, &quantification_standard->integrated_spectra, &elements_to_fit, quantification_standard->element_counts[fit_itr.first]);
 
             quantification_standard->normalize_counts_by_time(fit_itr.first);
 
@@ -469,6 +472,11 @@ bool perform_quantification(data_struct::Analysis_Job<double>* analysis_job, boo
         {
             data_struct::Detector<double>* detector = analysis_job->get_detector(detector_num);
             //data_struct::Params_Override<double>* override_params = &(detector->fit_params_override_dict);
+            if (detector == nullptr)
+            {
+                logE << "Detector " << detector_num << " not found, skipping quantification\n";
+                continue;
+            }
 
             if(load_and_fit_quantification_datasets(analysis_job, detector_num))
             {
@@ -869,7 +877,7 @@ void optimize_single_roi(data_struct::Analysis_Job<double>& analysis_job,
                     for (const auto& spec_itr : int_specs)
                     {
                         slen = spec_itr.first.length();
-                        if (slen > 0 && spec_itr.first[slen - 1] == str_detector_num[0] && spec_itr.first[slen - 2] == '5')
+                        if (slen >= 2 && spec_itr.first[slen - 1] == str_detector_num[0] && spec_itr.first[slen - 2] == '5')
                         {
                             search_filename = spec_itr.first;
                             break;
@@ -982,9 +990,10 @@ void optimize_rois(data_struct::Analysis_Job<double>& analysis_job)
         std::string save_path = analysis_job.output_dir + "output/specfit_results" + std::to_string(detector_num) + ".csv";
         std::string quant_save_path = analysis_job.output_dir + "output/specfit_results" + std::to_string(detector_num) + "_quantified.csv";
         io::file::csv::save_v9_specfit(save_path, roi_fit_params.at(detector_num));
-        if (analysis_job.get_detector(detector_num)->quantification_standards.size() > 0)
+        data_struct::Detector<double>* detector = analysis_job.get_detector(detector_num);
+        if (detector != nullptr && detector->quantification_standards.size() > 0)
         {
-            io::file::csv::save_v9_specfit_quantified(quant_save_path, analysis_job.get_detector(detector_num), analysis_job.fitting_routines, roi_fit_params.at(detector_num));
+            io::file::csv::save_v9_specfit_quantified(quant_save_path, detector, analysis_job.fitting_routines, roi_fit_params.at(detector_num));
         }
     }
 }

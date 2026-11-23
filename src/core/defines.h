@@ -206,6 +206,7 @@ const std::string STR_TOTAL_FLUORESCENCE_YIELD = "Total_Fluorescence_Yield";
 const std::string STR_FIT_ROI = "ROI";
 const std::string STR_FIT_SVD = "SVD";
 const std::string STR_FIT_NNLS = "NNLS";
+const std::string STR_FIT_GPU_NNLS = "GPU_NNLS";
 const std::string STR_FIT_GAUSS_MATRIX = "Fitted";
 const std::string STR_FIT_GAUSS_TAILS = "gaussian_parameter";
 const std::string STR_FIT_GAUSS_NNLS_TAILS = "Hybrid_NNLS";

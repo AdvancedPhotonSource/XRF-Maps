@@ -57,7 +57,7 @@ namespace xrf
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data_struct::Stream_Block<T_real>*>()
+Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data_struct::Stream_Block_Ptr<T_real>>()
 {
 #ifdef _BUILD_WITH_ZMQ
     _send_counts = true;
@@ -66,8 +66,8 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
     this->_callback_func = std::bind(&Spectra_Net_Streamer<T_real>::stream, this, std::placeholders::_1);
 
     std::string conn_str = "tcp://*:" + port;
-	_context = new zmq::context_t(1);
-	_zmq_socket = new zmq::socket_t(*_context, ZMQ_PUB);
+	_context = std::make_unique<zmq::context_t>(1);
+	_zmq_socket = std::make_unique<zmq::socket_t>(*_context, ZMQ_PUB);
 	_zmq_socket->bind(conn_str);
 #else
     logE<<"Spectra_Net_Streamer needs ZeroMQ to work. Recompile with option -DBUILD_WITH_ZMQ\n";
@@ -79,26 +79,28 @@ Spectra_Net_Streamer<T_real>::Spectra_Net_Streamer(std::string port) : Sink<data
 template<typename T_real>
 Spectra_Net_Streamer<T_real>::~Spectra_Net_Streamer()
 {
+    // The base worker invokes stream(), which uses the members below. Stop it
+    // while the derived object and its socket are still alive; waiting in the
+    // base destructor would be too late in C++ destruction order.
+    this->stop();
 #ifdef _BUILD_WITH_ZMQ
     if(_zmq_socket != nullptr)
     {
 		_zmq_socket->close();
-        delete _zmq_socket;
+        _zmq_socket.reset();
     }
 	if (_context != nullptr)
 	{
 		_context->close();
-		delete _context;
+		_context.reset();
 	}
-    _zmq_socket = nullptr;
-	_context = nullptr;
 #endif
 }
 
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Spectra_Net_Streamer<T_real>::stream(data_struct::Stream_Block<T_real>* stream_block)
+void Spectra_Net_Streamer<T_real>::stream(const data_struct::Stream_Block_Ptr<T_real>& stream_block)
 {
 #ifdef _BUILD_WITH_ZMQ
 	std::string data;

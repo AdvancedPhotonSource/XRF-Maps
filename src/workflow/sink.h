@@ -53,7 +53,10 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include <functional>
 #include <future>
+#include <memory>
 #include <thread>
+#include <atomic>
+#include <mutex>
 #include "workflow/distributor.h"
 
 namespace workflow
@@ -67,34 +70,16 @@ class DLL_EXPORT Sink
 public:
 
 	
-    Sink()
-    {
-        _thread = nullptr;
-        _running = false;
-        _delete_block = true;
-    }
+    Sink() : _running(false) {}
 
-	Sink(const Sink &)
-	{
+    Sink(const Sink&) = delete;
 
-	}
-
-	Sink& operator=(const Sink&)
-	{
-		return *this;
-	}
+    Sink& operator=(const Sink&) = delete;
 
     virtual ~Sink()
     {
-        if(_thread != nullptr)
-        {
-            _thread->join();
-            delete _thread;
-        }
-        _thread = nullptr;
+        stop();
     }
-
-    void set_delete_block(bool val) { _delete_block = val; }
 
     template<typename _T>
     void connect(Distributor<_T, T_IN> *distributor)
@@ -117,21 +102,37 @@ public:
         }
         std::packaged_task<void(void)> task([this](){ this->_execute(); });
         _running = true;
-        _thread = new std::thread(std::move(task));
+        _thread = std::make_unique<std::thread>(std::move(task));
     }
 
     void stop()
     {
-        _running = false;
-        _thread->join();
-        delete _thread;
-        _thread = nullptr;
+        _running.store(false);
+        // stop() is reachable without a prior start() (directly, and via
+        // wait_and_stop()), so the worker may never have been created.
+        if(_thread != nullptr && _thread->joinable())
+        {
+            _thread->join();
+        }
+        _thread.reset();
     }
 
     void wait_and_stop()
     {
-        while( _check_func() == false || !_job_queue.empty())
+        for (;;)
         {
+            bool idle = false;
+            {
+                // Holding the local queue lock across the distributor check
+                // prevents observing the distributor as empty in the middle of
+                // a worker transfer into this queue.
+                std::lock_guard<std::mutex> lock(_queue_mutex);
+                idle = _job_queue.empty() && (!_check_func || _check_func());
+            }
+            if (idle)
+            {
+                break;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
         stop();
@@ -140,35 +141,55 @@ public:
     void sink_function(T_IN val)
     {
         _callback_func(val);
-		// if sink thread is not running we have to delete the stream_block
-		if (_delete_block && _running == false)
-		{
-			delete val;
-		}
+        // No manual cleanup: T_IN owns itself (shared_ptr), so the block is
+        // released once this frame and any downstream copies go out of scope.
     }
 
 protected:
 
     void _execute()
     {
-        while(_running)
+        while(_running.load())
         {
-            if( _check_func() == false)
+            std::future<T_IN> next;
+            bool have_job = false;
             {
-                _get_func(&_job_queue);
-                while(! _job_queue.empty())
+                std::lock_guard<std::mutex> lock(_queue_mutex);
+                if (_check_func && _get_func && !_check_func())
                 {
-                    auto ret = std::move(_job_queue.front());
+                    _get_func(&_job_queue);
+                }
+                if (!_job_queue.empty())
+                {
+                    next = std::move(_job_queue.front());
                     _job_queue.pop();
-                    T_IN input_block = ret.get();
+                    have_job = true;
+                }
+            }
 
-                    _callback_func(input_block);
-
-                    if(_delete_block && input_block != nullptr)
+            if (have_job)
+            {
+                try
+                {
+                    T_IN input_block = next.get();
+                    if (_callback_func)
                     {
-                        delete input_block;
-						input_block = nullptr;
+                        _callback_func(input_block);
                     }
+                    else
+                    {
+                        logE << "Sink callback is not configured; dropping input block\n";
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    // Do not strand later futures in the queue if one fitting
+                    // job or sink callback fails.
+                    logE << "Sink worker failed to process input: " << e.what() << "\n";
+                }
+                catch (...)
+                {
+                    logE << "Sink worker failed to process input with an unknown error\n";
                 }
             }
             else
@@ -188,11 +209,12 @@ protected:
 
     std::queue<std::future<T_IN> > _job_queue;
 
-    bool _running;
+    std::mutex _queue_mutex;
 
-    std::thread *_thread;
+    std::atomic<bool> _running;
 
-    bool _delete_block;
+    // Owned: the worker thread started by start() and joined by stop()/~Sink().
+    std::unique_ptr<std::thread> _thread;
 
 };
 

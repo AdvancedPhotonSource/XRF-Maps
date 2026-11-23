@@ -55,6 +55,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "fitting/routines/base_fit_routine.h"
 #include <vector>
 #include <string>
+#include <memory>
 #include "data_struct/quantification_standard.h"
 #include "data_struct/params_override.h"
 #include "fitting/optimizers/optimizer.h"
@@ -74,9 +75,21 @@ class DLL_EXPORT Detector
 public:
     Detector(unsigned int detector_num = -1);
 
+    /// Detector exclusively owns `model` and the values in `fit_routines`, so it is
+    /// move-only. The defaulted destructor releases both.
+    /// These are defined out-of-line in the .cpp so the explicit template
+    /// instantiation exports them; defaulting them inline here leaves them hidden
+    /// and other translation units fail to link.
     ~Detector();
 
-    void append_element(Fitting_Routines routine, std::string name, std::string quant_scaler, T_real weight);
+    Detector(const Detector&) = delete;
+    Detector& operator=(const Detector&) = delete;
+    Detector(Detector&&);
+    Detector& operator=(Detector&&);
+
+    /// NOTE: argument order is (quant_scaler, name) -- both are std::string, so
+    /// swapping them compiles silently and then matches nothing at runtime.
+    void append_element(Fitting_Routines routine, std::string quant_scaler, std::string name, T_real weight);
 
     void update_element_quants(Fitting_Routines routine,
                                 std::string quantifier_scaler,
@@ -100,19 +113,19 @@ public:
 
     unsigned int number() { return _number; }
 
-    // Fitting routines map
-    std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> fit_routines;
-    // TODO: look into changing to unique_ptr
-    //std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real>> > fit_routines;
+    // Fitting routines map (owned)
+    std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real>> > fit_routines;
 
-    // Fitting model
-    fitting::models::Base_Model<T_real>* model;
+    // Fitting model (owned)
+    std::unique_ptr<fitting::models::Base_Model<T_real> > model;
 
     // Quantification
     std::map<std::string, Quantification_Standard<T_real>> quantification_standards;
 
     std::unordered_map <Fitting_Routines, struct Fitting_Quantification_Struct<T_real>> fitting_quant_map;
 
+    // Non-owning: these point into the Element_Quant vectors held by `fitting_quant_map`
+    // above, so they must stay raw and must not outlive it.
     //  proc_type          quantifier            element    quant_prop
     std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> K_element_quants;
     std::map<Fitting_Routines, std::map<std::string, std::unordered_map<std::string, Element_Quant<T_real>*>>> L_element_quants;
@@ -126,6 +139,7 @@ public:
     T_real detector_chip_thickness;
     T_real incident_energy;
     T_real airpath;
+    // Non-owning: borrowed from the Element_Info_Map singleton, which owns it.
     data_struct::Element_Info<T_real>* detector_element;
 
     // SR_CURRENT, US_IC, DS_IC  : average if we have multiple standards

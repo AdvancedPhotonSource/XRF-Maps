@@ -59,12 +59,15 @@ Stream_Block<T_real>::Stream_Block()
 	_col = 0;
     _height = 0;
     _width = 0;
+    _detector = 0;
     theta = 0;
 	elements_to_fit = nullptr;
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = false;
 	spectra = nullptr;
     dataset_name = nullptr;
+    dataset_directory = nullptr;
+    model = nullptr;
     optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
@@ -88,6 +91,9 @@ Stream_Block<T_real>::Stream_Block(int detector,
     del_str_ptr = false;
     spectra = nullptr;
     dataset_name = nullptr;
+    dataset_directory = nullptr;
+    model = nullptr;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
 //-----------------------------------------------------------------------------
@@ -113,6 +119,8 @@ Stream_Block<T_real>::Stream_Block(int detector,
     // by default we don't want to delete the string pointers becaues they are shared by stream blocks
     del_str_ptr = true;
     spectra = nullptr;
+    model = nullptr;
+    optimize_fit_params_preset = fitting::models::Fit_Params_Preset::BATCH_FIT_NO_TAILS;
 }
 
 //-----------------------------------------------------------------------------
@@ -150,18 +158,30 @@ Stream_Block<T_real>::~Stream_Block()
 template<typename T_real>
 Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 {
+	auto new_dataset_directory = stream_block.dataset_directory != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_directory) : nullptr;
+	auto new_dataset_name = stream_block.dataset_name != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_name) : nullptr;
+	auto new_spectra = stream_block.spectra != nullptr
+        ? std::make_unique<Spectra<T_real>>(*stream_block.spectra) : nullptr;
+	auto new_fitting_blocks = stream_block.fitting_blocks;
+
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
 	this->_height = stream_block._height;
 	this->_width = stream_block._width;
-	this->dataset_directory = stream_block.dataset_directory;
-	this->dataset_name = stream_block.dataset_name;
-	this->fitting_blocks = stream_block.fitting_blocks;
+	this->dataset_directory = new_dataset_directory.release();
+	this->dataset_name = new_dataset_name.release();
+	this->fitting_blocks = std::move(new_fitting_blocks);
 	this->_detector = stream_block._detector;
-	this->spectra = stream_block.spectra;
+	this->spectra = new_spectra.release();
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
-    this->del_str_ptr = stream_block.del_str_ptr;
+	this->theta = stream_block.theta;
+	this->optimize_fit_params_preset = stream_block.optimize_fit_params_preset;
+	// A copy owns its independent string copies even when the source merely
+	// borrowed its string pointers.
+	this->del_str_ptr = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -169,44 +189,94 @@ Stream_Block<T_real>::Stream_Block(const Stream_Block& stream_block)
 template<typename T_real>
 Stream_Block<T_real> &Stream_Block<T_real>::operator=(const Stream_Block<T_real>& stream_block)
 {
+	if (this == &stream_block)
+	{
+		return *this;
+	}
+
+	auto new_dataset_directory = stream_block.dataset_directory != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_directory) : nullptr;
+	auto new_dataset_name = stream_block.dataset_name != nullptr
+        ? std::make_unique<std::string>(*stream_block.dataset_name) : nullptr;
+	auto new_spectra = stream_block.spectra != nullptr
+        ? std::make_unique<Spectra<T_real>>(*stream_block.spectra) : nullptr;
+	auto new_fitting_blocks = stream_block.fitting_blocks;
+
+	if (this->del_str_ptr)
+	{
+		delete this->dataset_directory;
+		delete this->dataset_name;
+	}
+	delete this->spectra;
+
 	this->_col = stream_block._col;
 	this->_row = stream_block._row;
 	this->_height = stream_block._height;
 	this->_width = stream_block._width;
-	this->dataset_directory = stream_block.dataset_directory;
-	this->dataset_name = stream_block.dataset_name;
-	this->fitting_blocks = stream_block.fitting_blocks;
+	this->dataset_directory = new_dataset_directory.release();
+	this->dataset_name = new_dataset_name.release();
+	this->fitting_blocks = std::move(new_fitting_blocks);
 	this->_detector = stream_block._detector;
-	this->spectra = stream_block.spectra;
+	this->spectra = new_spectra.release();
 	this->elements_to_fit = stream_block.elements_to_fit;
 	this->model = stream_block.model;
-    this->del_str_ptr = stream_block.del_str_ptr;
+	this->theta = stream_block.theta;
+	this->optimize_fit_params_preset = stream_block.optimize_fit_params_preset;
+	this->del_str_ptr = true;
 	return *this;
 }
 
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-void Stream_Block<T_real>::init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real> *> *fit_routines,
+void Stream_Block<T_real>::init_fitting_blocks(const std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real> > > *fit_routines,
                                        Fit_Element_Map_Dict<T_real> * elements_to_fit_)
 {
     elements_to_fit = elements_to_fit_;
 
-    if(elements_to_fit == nullptr)
+    if(fit_routines == nullptr)
     {
-        //throw Exception;
+        return;
     }
 
     for(const auto &itr : *fit_routines)
     {
-        fitting_blocks[itr.first] = Stream_Fitting_Block<T_real>();
-        fitting_blocks[itr.first].fit_routine = itr.second;
+        _add_fitting_block(itr.first, itr.second.get());
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Stream_Block<T_real>::init_fitting_blocks(const std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> &fit_routines,
+                                       Fit_Element_Map_Dict<T_real> * elements_to_fit_)
+{
+    elements_to_fit = elements_to_fit_;
+
+    for(const auto &itr : fit_routines)
+    {
+        _add_fitting_block(itr.first, itr.second);
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+template<typename T_real>
+void Stream_Block<T_real>::_add_fitting_block(Fitting_Routines routine,
+                                       fitting::routines::Base_Fit_Routine<T_real>* fit_routine)
+{
+    fitting_blocks[routine] = Stream_Fitting_Block<T_real>();
+    fitting_blocks[routine].fit_routine = fit_routine;
+    // elements_to_fit is optional: without it the block still carries a counts map,
+    // it just starts out holding only the iteration count.
+    if(elements_to_fit != nullptr)
+    {
         for(auto& e_itr : *elements_to_fit)
         {
-            fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (e_itr.first, (T_real)0.0));
+            fitting_blocks[routine].fit_counts.emplace(std::pair<std::string, T_real> (e_itr.first, (T_real)0.0));
         }
-        fitting_blocks[itr.first].fit_counts.emplace(std::pair<std::string, T_real> (STR_NUM_ITR, (T_real)0.0));
     }
+    fitting_blocks[routine].fit_counts.emplace(std::pair<std::string, T_real> (STR_NUM_ITR, (T_real)0.0));
 }
 
 //-----------------------------------------------------------------------------

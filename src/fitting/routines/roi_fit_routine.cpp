@@ -73,12 +73,12 @@ ROI_Fit_Routine<T_real>::~ROI_Fit_Routine()
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T_real>
-optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>& model,
                                                             const Spectra<T_real>* const spectra,
                                                             const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                             std::unordered_map<std::string, T_real>& out_counts)
  {    
-    Fit_Parameters<T_real> fitp = model->fit_parameters();
+    Fit_Parameters<T_real> fitp = model.fit_parameters();
     unsigned int n_mca_channels = spectra->size();
 
     T_real energy_offset = fitp.value(STR_ENERGY_OFFSET);
@@ -87,7 +87,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
     {
         unsigned int left_roi = 0;
         unsigned int right_roi = 0;
-        Fit_Element_Map<T_real>* element = e_itr.second;
+        Fit_Element_Map<T_real>* element = e_itr.second.get();
         if (element != nullptr)
         {
             
@@ -134,7 +134,7 @@ optimizers::OPTIMIZER_OUTCOME ROI_Fit_Routine<T_real>::fit_spectra(const models:
 // --------------------------------------------------------------------------------------------------------------------
 
 template<typename T_real>
-void ROI_Fit_Routine<T_real>::initialize([[maybe_unused]] models::Base_Model<T_real>* const model,
+void ROI_Fit_Routine<T_real>::initialize([[maybe_unused]] models::Base_Model<T_real>& model,
     [[maybe_unused]] const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
     [[maybe_unused]] const struct Range energy_range,
     [[maybe_unused]] ArrayTr<T_real>* custom_background)

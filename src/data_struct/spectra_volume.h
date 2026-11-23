@@ -88,7 +88,7 @@ public:
 
     void recalc_elapsed_livetime();
 
-	size_t samples_size() const { if (_data_vol.size() > 0) return _data_vol[0][0].size(); else return 0; }
+	size_t samples_size() const { if (_data_vol.size() > 0 && _data_vol[0].size() > 0) return _data_vol[0][0].size(); else return 0; }
 
     int rank() { return 3; }
 

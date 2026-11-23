@@ -102,7 +102,7 @@ void SVD_Fit_Routine<T_real>::_generate_fitmatrix()
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>& model,
                                                            const Spectra<T_real>* const spectra,
                                                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                            std::unordered_map<std::string, T_real>& out_counts)
@@ -110,7 +110,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
     Eigen::JacobiSVD<Eigen::Matrix<T_real, Eigen::Dynamic, Eigen::Dynamic> > svd(_fitmatrix, Eigen::ComputeThinU | Eigen::ComputeThinV );
     VectorTr<T_real> rhs = spectra->segment(this->_energy_range.min, this->_energy_range.count());
 
-    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model.fit_parameters();
     VectorTr<T_real> background;
 
     if(this->_custom_background == nullptr)
@@ -175,7 +175,7 @@ optimizers::OPTIMIZER_OUTCOME SVD_Fit_Routine<T_real>::fit_spectra(const models:
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void SVD_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>* const model,
+void SVD_Fit_Routine<T_real>::initialize(models::Base_Model<T_real>& model,
                                  const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                  const struct Range energy_range,
                                  ArrayTr<T_real>* custom_background)

@@ -1,4 +1,6 @@
 
+#include <optional>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
@@ -36,27 +38,65 @@ namespace py = pybind11;
 
 //PYBIND11_MAKE_OPAQUE(std::vector<int>);
 
+// initialize() takes custom_background as a bare ArrayTr<float>* and the matrix
+// routines store it (Matrix_Optimized_Fit_Routine::initialize assigns it to
+// _custom_background, then dereferences it during fit_spectra). A numpy array
+// converted at the call boundary dies when initialize returns, so passing one
+// used to leave the routine pointing at freed memory and segfault on the next
+// fit. Keep a C++ copy alive on the Python routine object instead.
+//
+// The parameter is also optional - every C++ call site passes nullptr - so it
+// defaults to None rather than being required as it was before.
+template<typename T_Routine>
+static void local_initialize(py::object self_obj,
+	fitting::models::Base_Model<float>& model,
+	const Fit_Element_Map_Dict<float>* const elements_to_fit,
+	const data_struct::Range energy_range,
+	std::optional<data_struct::ArrayTr<float> > custom_background)
+{
+	T_Routine& self = self_obj.cast<T_Routine&>();
+	if (false == custom_background.has_value())
+	{
+		self.initialize(model, elements_to_fit, energy_range, nullptr);
+		return;
+	}
+	auto* owned = new data_struct::ArrayTr<float>(custom_background.value());
+	py::object owner = py::capsule(owned, [](void* p) { delete static_cast<data_struct::ArrayTr<float>*>(p); });
+	// Hang the copy off the routine through pybind's own keep-alive list rather
+	// than setattr, which needs py::dynamic_attr() on the class. Re-initialising
+	// adds another patient instead of replacing the old one, so the earlier
+	// copies live until the routine itself is collected.
+	py::detail::keep_alive_impl(self_obj, owner);
+	self.initialize(model, elements_to_fit, energy_range, owned);
+}
+
+#define XRF_INITIALIZE_ARGS \
+	py::arg("model"), py::arg("elements_to_fit"), py::arg("energy_range"), \
+	py::arg("custom_background") = py::none()
+
+// Both helpers hand back the optimizer's outcome alongside the numbers. Dropping
+// it left Python unable to tell a converged fit from one that returned CRASHED,
+// EXPLODED or FOUND_NAN - the counts look like ordinary floats either way.
 auto local_fit_counts(fitting::routines::Base_Fit_Routine<float>* fit_route,
-	const fitting::models::Base_Model<float>* const model,
+	const fitting::models::Base_Model<float>& model,
 	const Spectra<float>* const spectra,
 	const Fit_Element_Map_Dict<float>* const elements_to_fit)
 {
 	std::unordered_map<std::string, float> out_counts;
-	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
-	return out_counts;
+	fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	return std::tuple<fitting::optimizers::OPTIMIZER_OUTCOME, std::unordered_map<std::string, float>>(outcome, out_counts);
 }
 
 auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
-	fitting::models::Base_Model<float>* const model,
+	fitting::models::Base_Model<float>& model,
 	const Spectra<float>* const spectra,
 	const Fit_Element_Map_Dict<float>* const elements_to_fit)
 {
 	std::unordered_map<std::string, float> out_counts;
 	data_struct::Fit_Parameters<float> fit_params;
-	fit_params.append_and_update(model->fit_parameters());
-	data_struct::Range energy_range = data_struct::get_energy_range(spectra->size(), &fit_params);
+	fit_params.append_and_update(model.fit_parameters());
 
-	fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
+	fitting::optimizers::OPTIMIZER_OUTCOME outcome = fit_route->fit_spectra(model, spectra, elements_to_fit, out_counts);
 	for (auto& itr : out_counts)
 	{
         
@@ -79,7 +119,7 @@ auto local_fit_spectra(fitting::routines::Base_Fit_Routine<float>* fit_route,
 	}
 	*/
 	//return model->model_spectrum_mp(&fit_params, elements_to_fit, energy_range);
-    return std::tuple<std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(out_counts, fit_params);
+    return std::tuple<fitting::optimizers::OPTIMIZER_OUTCOME, std::unordered_map<std::string, float>, data_struct::Fit_Parameters<float>>(outcome, out_counts, fit_params);
 }
 
 PYBIND11_MODULE(pyxrfmaps, m) {
@@ -174,7 +214,8 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def(py::init<>())
     .def("init_f_energies", &data_struct::Element_Info<float>::init_f_energies)
     .def("init_extra_energies", &data_struct::Element_Info<float>::init_extra_energies)
-    .def("get_energies_between", &data_struct::Element_Info<float>::get_energies_between)
+    // get_energies_between is not bound: it returns its four results through
+    // T_real*/size_t* out-parameters, which Python has no way to supply.
     .def("calc_beta", &data_struct::Element_Info<float>::calc_beta)
     .def_readwrite("number", &data_struct::Element_Info<float>::number)
     .def_readwrite("name", &data_struct::Element_Info<float>::name)
@@ -192,14 +233,24 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("extra_f1", &data_struct::Element_Info<float>::extra_f1)
     .def_readwrite("extra_f2", &data_struct::Element_Info<float>::extra_f2);
 
+    // Every pointer handed out below is owned by the singleton and freed by its
+    // clear()/destructor, so each needs an explicit `reference` policy. Without it
+    // pybind's default (`automatic` -> take_ownership) makes Python delete the
+    // singleton's storage the moment the wrapper is collected.
     py::class_<data_struct::Element_Info_Map<float>>(m, "ElementInfoMap")
-    .def("inst", &data_struct::Element_Info_Map<float>::inst)
-    .def("clear", &data_struct::Element_Info_Map<float>::clear)
+    .def_static("inst", &data_struct::Element_Info_Map<float>::inst, py::return_value_policy::reference)
     .def("generate_default_elements", &data_struct::Element_Info_Map<float>::generate_default_elements)
-    .def("add_element", &data_struct::Element_Info_Map<float>::add_element)
+    // Element_Info_Map owns and deletes every pointer it stores.  Clone Python
+    // objects at this boundary so Python and the singleton never both own the
+    // same allocation.
+    .def("add_element", [](data_struct::Element_Info_Map<float>& self,
+                            const data_struct::Element_Info<float>& element)
+    {
+        self.add_element(new data_struct::Element_Info<float>(element));
+    })
     .def("calc_beta", &data_struct::Element_Info_Map<float>::calc_beta)
-    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element)
-    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(int)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
+    .def("get_element", (data_struct::Element_Info<float>* (data_struct::Element_Info_Map<float>::*)(std::string)) &data_struct::Element_Info_Map<float>::get_element, py::return_value_policy::reference)
     .def("contains", &data_struct::Element_Info_Map<float>::contains)
     .def_readwrite("_energies", &data_struct::Element_Info_Map<float>::_energies);
 
@@ -243,8 +294,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("mu_fraction", &data_struct::Element_Energy_Ratio<float>::mu_fraction)
     .def_readwrite("ptype", &data_struct::Element_Energy_Ratio<float>::ptype);
 
-	py::class_<data_struct::Fit_Element_Map<float>>(m, "Fit_Element_Map")
-	.def(py::init<std::string, Element_Info<float>*>())
+	// shared_ptr holder: Fit_Element_Map_Dict stores shared_ptr, so pybind needs a
+	// matching holder to hand those elements to Python.
+	py::class_<data_struct::Fit_Element_Map<float>, std::shared_ptr<data_struct::Fit_Element_Map<float> > >(m, "Fit_Element_Map")
+	.def(py::init<std::string, Element_Info<float>*>(), py::keep_alive<1, 3>())
 	.def("center", &data_struct::Fit_Element_Map<float>::center)
 	.def("width", &data_struct::Fit_Element_Map<float>::width)
 	.def("set_custom_multiply_ratio", &data_struct::Fit_Element_Map<float>::set_custom_multiply_ratio)
@@ -256,8 +309,9 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def("energy_ratios", &data_struct::Fit_Element_Map<float>::energy_ratios)
 	.def("energy_ratio_multipliers", &data_struct::Fit_Element_Map<float>::energy_ratio_multipliers)
 	.def("width_multi", &data_struct::Fit_Element_Map<float>::width_multi)
-	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup)
-	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element)
+	.def("set_as_pileup", &data_struct::Fit_Element_Map<float>::set_as_pileup, py::keep_alive<1, 3>())
+	// Borrowed from the Element_Info_Map singleton, not owned by this element.
+	.def("pileup_element", &data_struct::Fit_Element_Map<float>::pileup_element, py::return_value_policy::reference)
 	.def("shell_type", &data_struct::Fit_Element_Map<float>::shell_type)
 	.def("check_binding_energy", &data_struct::Fit_Element_Map<float>::check_binding_energy);
 
@@ -289,7 +343,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 for (auto& itr : elist)
                 {
                     data_struct::Element_Info<float>* element_info = data_struct::Element_Info_Map<float>::inst()->get_element(itr);
-                    auto fit_element_map = new data_struct::Fit_Element_Map(itr, element_info);
+                    auto fit_element_map = std::make_shared<data_struct::Fit_Element_Map<float> >(itr, element_info);
                     fit_element_map->init_energy_ratio_for_detector_element(detector_info);
                     self.elements_to_fit[itr] = fit_element_map;
                 }                
@@ -397,9 +451,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 {
                     self.be_window_thickness = py::cast<std::string>(d["be_window_thickness"]);
                 }
+                // ge_dead_layer, det_chip_thickness and theta_pv are std::string.
+                // Casting them to float used to compile only because
+                // std::string::operator=(char) exists, so a value of 65.0 silently
+                // became "A" - and to_dict's own output, being strings, threw.
                 if (d.contains("ge_dead_layer"))
                 {
-                    self.ge_dead_layer = py::cast<float>(d["ge_dead_layer"]);
+                    self.ge_dead_layer = py::cast<std::string>(d["ge_dead_layer"]);
+                }
+                if (d.contains("det_chip_thickness"))
+                {
+                    self.det_chip_thickness = py::cast<std::string>(d["det_chip_thickness"]);
                 }
                 if (d.contains("us_amp_sens_num"))
                 {
@@ -419,7 +481,7 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 }
                 if (d.contains("theta_pv"))
                 {
-                    self.theta_pv = py::cast<float>(d["theta_pv"]);
+                    self.theta_pv = py::cast<std::string>(d["theta_pv"]);
                 }
             }
         );
@@ -459,14 +521,40 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     */
     py::class_<data_struct::Stream_Fitting_Block<float>>(m, "StreamFittingBlock")
     .def(py::init<>())
-    .def_readwrite("fit_routine", &data_struct::Stream_Fitting_Block<float>::fit_routine)
+    // Borrowed pointer: pin the routine to this block. As with Stream_Block::model,
+    // keep_alive goes on the setter alone - def_property hands its extras to the
+    // getter too, where argument 2 does not exist.
+    .def_property("fit_routine",
+        [](data_struct::Stream_Fitting_Block<float>& s) { return s.fit_routine; },
+        py::cpp_function([](data_struct::Stream_Fitting_Block<float>& s, fitting::routines::Base_Fit_Routine<float>* routine)
+        {
+            s.fit_routine = routine;
+        }, py::keep_alive<1, 2>()),
+        py::return_value_policy::reference_internal)
     .def_readwrite("fit_counts", &data_struct::Stream_Fitting_Block<float>::fit_counts);
 
-    py::class_<data_struct::Stream_Block<float> >(m, "StreamBlock")
+    // Declared with a shared_ptr holder: the streaming pipeline passes blocks as
+    // data_struct::Stream_Block_Ptr<float>, so pybind must share that ownership
+    // rather than use its default unique_ptr holder.
+    py::class_<data_struct::Stream_Block<float>, data_struct::Stream_Block_Ptr<float> >(m, "StreamBlock")
     .def(py::init<>())
     .def(py::init<int, size_t, size_t, size_t, size_t>())
     .def(py::init<int, size_t, size_t, size_t, size_t, std::string, std::string>())
-    .def("init_fitting_blocks", &data_struct::Stream_Block<float>::init_fitting_blocks)
+    // Takes the borrowed-pointer overload, because Python owns the routines and so
+    // cannot hand over a map of unique_ptr.
+    //
+    // The elements come from a ParamsOverride rather than a plain dict on purpose:
+    // the block stores a bare Fit_Element_Map_Dict*, and a dict converted at the
+    // call boundary would leave that pointing at a caster temporary that dies on
+    // return. ParamsOverride owns a real C++ dict, so &po.elements_to_fit stays
+    // valid and keep_alive<1,3> pins the owner for as long as the block lives.
+    // keep_alive<1,2> likewise pins the routine dict, and through it the routines.
+    .def("init_fitting_blocks", [](data_struct::Stream_Block<float>& self,
+            const std::unordered_map<data_struct::Fitting_Routines, fitting::routines::Base_Fit_Routine<float>*>& fit_routines,
+            data_struct::Params_Override<float>& po)
+        {
+            self.init_fitting_blocks(fit_routines, &po.elements_to_fit);
+        }, py::keep_alive<1, 2>(), py::keep_alive<1, 3>())
     .def("row", &data_struct::Stream_Block<float>::row)
     .def("col", &data_struct::Stream_Block<float>::col)
     .def("height", &data_struct::Stream_Block<float>::height)
@@ -476,19 +564,77 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("detector_number", &data_struct::Stream_Block<float>::detector_number)
     .def("is_end_block", &data_struct::Stream_Block<float>::is_end_block)
     .def_readwrite("fitting_blocks", &data_struct::Stream_Block<float>::fitting_blocks)
-    .def_readwrite("dataset_directory", &data_struct::Stream_Block<float>::dataset_directory)
-    .def_readwrite("dataset_name", &data_struct::Stream_Block<float>::dataset_name)
-    .def_readwrite("spectra", &data_struct::Stream_Block<float>::spectra)
-    .def_readwrite("elements_to_fit", &data_struct::Stream_Block<float>::elements_to_fit)
+    // Read-only: these are std::string* fields governed by a shared del_str_ptr flag,
+    // so a setter would either leak or store a pointer to a caster temporary. They
+    // are set by the C++ side that owns the strings.
+    .def_property_readonly("dataset_directory", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.dataset_directory != nullptr ? *s.dataset_directory : std::string();
+        })
+    .def_property_readonly("dataset_name", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.dataset_name != nullptr ? *s.dataset_name : std::string();
+        })
+    // The block owns `spectra` (its destructor deletes it), so the setter has to take
+    // a copy rather than the address of the Eigen caster's temporary. The getter
+    // hands back a numpy view onto the block's own buffer, and None when unset -
+    // pybind's Eigen pointer cast does not check for null.
+    .def_property("spectra",
+        [](py::object self) -> py::object
+        {
+            auto& s = self.cast<data_struct::Stream_Block<float>&>();
+            if (s.spectra == nullptr)
+            {
+                return py::none();
+            }
+            return py::cast(s.spectra, py::return_value_policy::reference_internal, self);
+        },
+        py::cpp_function([](data_struct::Stream_Block<float>& s, const data_struct::Spectra<float>& v)
+        {
+            delete s.spectra;
+            s.spectra = new data_struct::Spectra<float>(v);
+        }))
+    // Borrowed, and there is no persistent C++ dict behind a Python dict, so this is
+    // read-only; assign through set_elements_to_fit(ParamsOverride) instead.
+    .def_property_readonly("elements_to_fit", [](data_struct::Stream_Block<float>& s)
+        {
+            return s.elements_to_fit != nullptr ? *s.elements_to_fit : data_struct::Fit_Element_Map_Dict<float>();
+        })
+    .def("set_elements_to_fit", [](data_struct::Stream_Block<float>& s, data_struct::Params_Override<float>& po)
+        {
+            s.elements_to_fit = &po.elements_to_fit;
+        }, py::keep_alive<1, 2>())
     .def_readwrite("optimize_fit_params_preset", &data_struct::Stream_Block<float>::optimize_fit_params_preset)
-    .def_readwrite("model", &data_struct::Stream_Block<float>::model)
+    // Borrowed. keep_alive goes on the setter only: def_property passes its extras to
+    // the getter too, and keep_alive<1,2> on a one-argument getter aborts the call
+    // with "Could not activate keep_alive!".
+    .def_property("model",
+        [](data_struct::Stream_Block<float>& s) { return s.model; },
+        py::cpp_function([](data_struct::Stream_Block<float>& s, fitting::models::Base_Model<float>* model)
+        {
+            s.model = model;
+        }, py::keep_alive<1, 2>()),
+        py::return_value_policy::reference_internal)
     .def_readwrite("theta", &data_struct::Stream_Block<float>::theta);
     
 
     py::class_<data_struct::Detector<float>>(m, "Detector")
     .def(py::init<>())
-    .def_readwrite("fit_routines", &data_struct::Detector<float>::fit_routines)
-    .def_readwrite("model", &data_struct::Detector<float>::model)
+    // `model` and `fit_routines` are owned by the Detector (unique_ptr), so they are
+    // exposed as borrowed references rather than assignable attributes.
+    .def_property_readonly("fit_routines", [](data_struct::Detector<float>& d)
+        {
+            std::unordered_map<data_struct::Fitting_Routines, fitting::routines::Base_Fit_Routine<float>*> out;
+            for (auto& itr : d.fit_routines)
+            {
+                out[itr.first] = itr.second.get();
+            }
+            return out;
+        }, py::return_value_policy::reference_internal)
+    .def_property_readonly("model", [](data_struct::Detector<float>& d)
+        {
+            return d.model.get();
+        }, py::return_value_policy::reference_internal)
     .def_readwrite("quant_standards", &data_struct::Detector<float>::quantification_standards)
     .def_readwrite("fit_params_override_dict", &data_struct::Detector<float>::fit_params_override_dict);
 
@@ -514,8 +660,28 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 	.def(py::init<>())
 	.def("add_parameter", &data_struct::Fit_Parameters<float>::add_parameter)
 	.def("append_and_update", &data_struct::Fit_Parameters<float>::append_and_update)
-	.def("begin", &data_struct::Fit_Parameters<float>::begin)
-	.def("end", &data_struct::Fit_Parameters<float>::end)
+	// begin()/end() used to be bound directly, which exposed a raw unordered_map
+	// iterator - an unregistered type, so calling either just raised TypeError.
+	// These give Python the mapping protocol over the same storage instead.
+	.def("__len__", &data_struct::Fit_Parameters<float>::size)
+	.def("__contains__", &data_struct::Fit_Parameters<float>::contains)
+	.def("__getitem__", [](data_struct::Fit_Parameters<float>& self, const std::string& name) -> data_struct::Fit_Param<float>&
+		{
+			// operator[] default-constructs a missing key; Python expects KeyError.
+			if (false == self.contains(name))
+			{
+				throw py::key_error(name);
+			}
+			return self[name];
+		}, py::return_value_policy::reference_internal)
+	.def("__setitem__", [](data_struct::Fit_Parameters<float>& self, const std::string& name, const data_struct::Fit_Param<float>& param)
+		{
+			self[name] = param;
+		})
+	.def("__iter__", [](const data_struct::Fit_Parameters<float>& self)
+		{
+			return py::make_key_iterator(self.begin(), self.end());
+		}, py::keep_alive<0, 1>())
 	.def("sum_values", &data_struct::Fit_Parameters<float>::sum_values)
 	.def("divide_fit_values_by", &data_struct::Fit_Parameters<float>::divide_fit_values_by)
 	.def("contains", &data_struct::Fit_Parameters<float>::contains)
@@ -538,10 +704,12 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 
     py::class_<data_struct::Analysis_Job<float> >(m, "AnalysisJob")
     .def(py::init<>())
-    .def("get_first_detector", &data_struct::Analysis_Job<float>::get_first_detector)
-    .def("get_detector", &data_struct::Analysis_Job<float>::get_detector)
+    .def("get_first_detector", &data_struct::Analysis_Job<float>::get_first_detector, py::return_value_policy::reference_internal)
+    .def("get_detector", &data_struct::Analysis_Job<float>::get_detector, py::return_value_policy::reference_internal)
     .def("set_optimizer", &data_struct::Analysis_Job<float>::set_optimizer)
-    .def("get_optimizer", &data_struct::Analysis_Job<float>::optimizer)
+    // Returns &_nlopt_optimizer, a member subobject of the job: tie its lifetime to
+    // the job rather than letting pybind delete a non-heap address.
+    .def("get_optimizer", &data_struct::Analysis_Job<float>::optimizer, py::return_value_policy::reference_internal)
     .def("init_fit_routines", &data_struct::Analysis_Job<float>::init_fit_routines)
     .def_readwrite("command_line", &data_struct::Analysis_Job<float>::command_line)
     .def_readwrite("dataset_directory", &data_struct::Analysis_Job<float>::dataset_directory)
@@ -550,7 +718,17 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def_readwrite("dataset_files", &data_struct::Analysis_Job<float>::dataset_files)
     .def_readwrite("optimize_dataset_files", &data_struct::Analysis_Job<float>::optimize_dataset_files)
     .def_readwrite("fitting_routines", &data_struct::Analysis_Job<float>::fitting_routines)
-    .def_readwrite("detectors_meta_data", &data_struct::Analysis_Job<float>::detectors_meta_data)
+    // Detector is move-only (it owns its model and fit routines), so it cannot be
+    // copied out into a Python dict; hand back borrowed pointers instead.
+    .def_property_readonly("detectors_meta_data", [](data_struct::Analysis_Job<float>& aj)
+        {
+            std::map<int, data_struct::Detector<float>*> out;
+            for (auto& itr : aj.detectors_meta_data)
+            {
+                out[itr.first] = &(itr.second);
+            }
+            return out;
+        }, py::return_value_policy::reference_internal)
     .def_readwrite("optimize_fit_params_preset", &data_struct::Analysis_Job<float>::optimize_fit_params_preset)
     .def_readwrite("detector_num_arr", &data_struct::Analysis_Job<float>::detector_num_arr)
     .def_readwrite("num_threads", &data_struct::Analysis_Job<float>::num_threads)
@@ -603,54 +781,71 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     .def("minimize_quantification", &fitting::optimizers::NLOPT_Optimizer<float>::minimize_quantification);
 
     //routines
+	// Registered before the routines so that fit_spectra/fit_counts, which now
+	// return it, get a readable signature rather than the raw C++ type name.
+	py::enum_<fitting::optimizers::OPTIMIZER_OUTCOME>(fr, "OPTIMIZER_OUTCOME")
+	.value("FOUND_ZERO", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO)
+	.value("CONVERGED", fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
+	.value("TRAPPED", fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED)
+	.value("EXHAUSTED", fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
+	.value("FAILED", fitting::optimizers::OPTIMIZER_OUTCOME::FAILED)
+	.value("CRASHED", fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED)
+	.value("EXPLODED", fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED)
+	.value("STOPPED", fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED)
+	.value("FOUND_NAN", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN)
+	.value("F_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL)
+	.value("X_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL)
+	.value("G_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL);
+
 	py::class_<fitting::routines::Base_Fit_Routine<float> >(fr, "base_fit_route");
 
     py::class_<fitting::routines::ROI_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "roi")
     .def(py::init<>())
 	.def("fit_spectra", [](fitting::routines::ROI_Fit_Routine<float>& self,
-		fitting::models::Base_Model<float>* const model,
+		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::ROI_Fit_Routine<float>& self,
-		fitting::models::Base_Model<float>* const model,
+		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::ROI_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::ROI_Fit_Routine<float>::initialize);
+    .def("initialize", &local_initialize<fitting::routines::ROI_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
 	py::class_<fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "param_optimized")
 		.def(py::init<>())
 		.def("fit_spectra", [](fitting::routines::Param_Optimized_Fit_Routine<float>& self,
-			fitting::models::Base_Model<float>* const model,
+			fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_counts", [](fitting::routines::Param_Optimized_Fit_Routine<float>& self,
-			const fitting::models::Base_Model<float>* const model,
+			const fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_spectra_parameters", &fitting::routines::Param_Optimized_Fit_Routine<float>::fit_spectra_parameters)
 		.def("get_name", &fitting::routines::Param_Optimized_Fit_Routine<float>::get_name)
-		.def("initialize", &fitting::routines::Param_Optimized_Fit_Routine<float>::initialize)
-		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_optimizer)
+		.def("initialize", &local_initialize<fitting::routines::Param_Optimized_Fit_Routine<float> >, XRF_INITIALIZE_ARGS)
+		// The routine keeps a bare Optimizer*; pin the optimizer to the routine.
+		.def("set_optimizer", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_optimizer, py::keep_alive<1, 2>())
 		.def("set_update_coherent_amplitude_on_fit", &fitting::routines::Param_Optimized_Fit_Routine<float>::set_update_coherent_amplitude_on_fit);
 
 
     py::class_<fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "matrix")
     .def(py::init<>())
 	.def("fit_spectra", [](fitting::routines::Matrix_Optimized_Fit_Routine<float>& self,
-		fitting::models::Base_Model<float>* const model,
+		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
@@ -671,81 +866,70 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		return spec_model;
 		*/
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::Matrix_Optimized_Fit_Routine<float>& self,
-			const fitting::models::Base_Model<float>* const model,
+			const fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::Matrix_Optimized_Fit_Routine<float>::initialize);
+    .def("initialize", &local_initialize<fitting::routines::Matrix_Optimized_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
     py::class_<fitting::routines::NNLS_Fit_Routine<float>, fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "nnls")
     .def(py::init<>())
 	.def("fit_spectra", [](fitting::routines::NNLS_Fit_Routine<float>& self,
-		fitting::models::Base_Model<float>* const model,
+		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 	.def("fit_counts", [](fitting::routines::NNLS_Fit_Routine<float>& self,
-		fitting::models::Base_Model<float>* const model,
+		fitting::models::Base_Model<float>& model,
 		const Spectra<float>* const spectra,
 		const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
     .def("get_name", &fitting::routines::NNLS_Fit_Routine<float>::get_name)
-    .def("initialize", &fitting::routines::NNLS_Fit_Routine<float>::initialize)
+    .def("initialize", &local_initialize<fitting::routines::NNLS_Fit_Routine<float> >, XRF_INITIALIZE_ARGS)
     .def("initialize_mp", &fitting::routines::NNLS_Fit_Routine<float>::initialize_mp);
 
 	py::class_<fitting::routines::SVD_Fit_Routine<float>, fitting::routines::Matrix_Optimized_Fit_Routine<float>, fitting::routines::Param_Optimized_Fit_Routine<float>, fitting::routines::Base_Fit_Routine<float> >(fr, "svd")
 		.def(py::init<>())
 		.def("fit_spectra", [](fitting::routines::SVD_Fit_Routine<float>& self,
-			fitting::models::Base_Model<float>* const model,
+			fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_spectra(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("fit_counts", [](fitting::routines::SVD_Fit_Routine<float>& self,
-			fitting::models::Base_Model<float>* const model,
+			fitting::models::Base_Model<float>& model,
 			const Spectra<float>* const spectra,
 			const Fit_Element_Map_Dict<float>* const elements_to_fit)
 	{
 		return local_fit_counts(&self, model, spectra, elements_to_fit);
-	})
+	}, py::call_guard<py::gil_scoped_release>())
 		.def("get_name", &fitting::routines::SVD_Fit_Routine<float>::get_name)
-		.def("initialize", &fitting::routines::SVD_Fit_Routine<float>::initialize);
+		.def("initialize", &local_initialize<fitting::routines::SVD_Fit_Routine<float> >, XRF_INITIALIZE_ARGS);
 
-
-	py::enum_<fitting::optimizers::OPTIMIZER_OUTCOME>(fr, "OPTIMIZER_OUTCOME")
-	.value("FOUND_ZERO", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_ZERO)
-	.value("CONVERGED", fitting::optimizers::OPTIMIZER_OUTCOME::CONVERGED)
-	.value("TRAPPED", fitting::optimizers::OPTIMIZER_OUTCOME::TRAPPED)
-	.value("EXHAUSTED", fitting::optimizers::OPTIMIZER_OUTCOME::EXHAUSTED)
-	.value("FAILED", fitting::optimizers::OPTIMIZER_OUTCOME::FAILED)
-	.value("CRASHED", fitting::optimizers::OPTIMIZER_OUTCOME::CRASHED)
-	.value("EXPLODED", fitting::optimizers::OPTIMIZER_OUTCOME::EXPLODED)
-	.value("STOPPED", fitting::optimizers::OPTIMIZER_OUTCOME::STOPPED)
-	.value("FOUND_NAN", fitting::optimizers::OPTIMIZER_OUTCOME::FOUND_NAN)
-	.value("F_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::F_TOL_LT_TOL)
-	.value("X_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::X_TOL_LT_TOL)
-	.value("G_TOL_LT_TOL", fitting::optimizers::OPTIMIZER_OUTCOME::G_TOL_LT_TOL);
 
     ////// IO //////
     //hl_file_io
     m.def("check_and_create_dirs", &io::file::check_and_create_dirs);
     //m.def("compare_file_size", &io::file::compare_file_size);
     //m.def("find_all_dataset_files", &io::file::find_all_dataset_files);
-    m.def("generate_h5_averages", &io::file::generate_h5_averages);
+    // Everything below that reads a file or runs a scan's worth of fitting releases
+    // the GIL: these are long blocking calls, and holding the lock across them stalls
+    // every other Python thread, including any callback the pipeline needs to make.
+    m.def("generate_h5_averages", &io::file::generate_h5_averages, py::call_guard<py::gil_scoped_release>());
     m.def("generate_fit_routine", &io::file::generate_fit_routine<float>);
-    m.def("init_analysis_job_detectors", &io::file::init_analysis_job_detectors<float>);
-    m.def("load_element_info", &io::file::load_element_info<float>);
-    m.def("load_and_integrate_spectra_volume", &io::file::load_and_integrate_spectra_volume<float>);
+    m.def("init_analysis_job_detectors", &io::file::init_analysis_job_detectors<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("load_element_info", &io::file::load_element_info<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("load_and_integrate_spectra_volume", &io::file::load_and_integrate_spectra_volume<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("load_override_params", &io::load_override_params);
 	m.def("load_override_params", [](std::string dataset_directory,
 									int detector_num,
@@ -754,10 +938,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
 		data_struct::Params_Override<float> po;
 		io::file::load_override_params<float>(dataset_directory, detector_num, po, append_file_name);
 		return po;
-		
-	});
+
+	}, py::call_guard<py::gil_scoped_release>());
   ///  m.def("load_quantification_standard", &io::load_quantification_standard);
-    m.def("load_spectra_volume", &io::file::load_spectra_volume<float>);
+    m.def("load_spectra_volume", &io::file::load_spectra_volume<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("populate_netcdf_hdf5_files", &io::file::populate_netcdf_hdf5_files);
    // m.def("save_averaged_fit_params", &io::save_averaged_fit_params);
     m.def("save_optimized_fit_params", &io::file::save_optimized_fit_params);
@@ -778,8 +962,10 @@ PYBIND11_MODULE(pyxrfmaps, m) {
     py::class_<io::file::MDA_IO<float>>(io_file, "MDA_IO")
     .def(py::init<>())
     .def("unload", &io::file::MDA_IO<float>::unload)
-    .def("load_spectra_volume", &io::file::MDA_IO<float>::load_spectra_volume)
-    .def("load_spectra_volume_with_callback", &io::file::MDA_IO<float>::load_spectra_volume_with_callback)
+    .def("load_spectra_volume", &io::file::MDA_IO<float>::load_spectra_volume, py::call_guard<py::gil_scoped_release>())
+    // load_spectra_volume_with_callback is not bound: it pairs a C function
+    // pointer with an opaque void* user_data, neither of which Python can
+    // supply. Binding it against a std::function would make it usable.
     //.def("find_scaler_index", &io::file::MDA_IO::find_scaler_index)
     .def("get_multiplied_dims", &io::file::mda_get_multiplied_dims)
     .def("get_rank_and_dims", &io::file::mda_get_rank_and_dims);
@@ -800,101 +986,98 @@ PYBIND11_MODULE(pyxrfmaps, m) {
                 data_struct::Spectra_Line<float>* spec_line)
                 {
                     return io::file::NetCDF_IO<float>::inst()->load_spectra_line(path, detector, spec_line);
-                });
-    //NetCDF_IO
-    io_file.def("netcdf_load_spectra_line_with_callback", [](std::string path,
-                std::vector<size_t> detector_num_arr,
-                int row,
-                size_t max_rows,
-                size_t max_cols,
-                data_struct::IO_Callback_Func_Def<float> callback_fun,
-                void* user_data) { return io::file::NetCDF_IO<float>::inst()->load_spectra_line_with_callback(path,
-                                                                                  detector_num_arr,
-                                                                                  row,
-                                                                                  max_rows,
-                                                                                  max_cols,
-                                                                                  callback_fun,
-                                                                                  user_data);
-                                 });
+                }, py::call_guard<py::gil_scoped_release>());
+    // netcdf_load_spectra_line_with_callback is not bound, for the same reason as
+    // MDA_IO::load_spectra_volume_with_callback above: IO_Callback_Func_Def is a
+    // bare function pointer taking an opaque void* user_data, so there is no way
+    // to pass a Python callable. Rebinding it around a std::function, invoked
+    // under py::gil_scoped_acquire, would make it usable from Python.
 
 
 
     //workflow
-    py::class_<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>>(workflow, "StreamBlockFittingDistributor")
+    py::class_<workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float>>>(workflow, "StreamBlockFittingDistributor")
     .def(py::init<int>())
-    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >& self)
+    .def("setup", [&](workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >& self)
         {
             self.set_function(proc_spectra_block<float>);
         });
 
+    // keep_alive<1,2> throughout this section: a Source stores bare pointers to the
+    // job, sink and distributor it is wired to, so each must outlive the source.
+    // gil_scoped_release on everything that blocks or joins a thread: without it the
+    // interpreter lock is held for the whole call, and a sink worker calling back
+    // into Python cannot acquire it.
     py::class_<workflow::xrf::Spectra_File_Source<float> >(workflow, "SpectraFileSource")
     .def(py::init<>())
-    .def(py::init<data_struct::Analysis_Job<float>*>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
-    .def("connect_distributor", [&](workflow::xrf::Spectra_File_Source<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    .def(py::init<data_struct::Analysis_Job<float>*>(), py::keep_alive<1, 2>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink, py::keep_alive<1, 2>())
+    .def("connect_distributor", [&](workflow::xrf::Spectra_File_Source<float>& self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect_distributor(dist);
-    })
+    }, py::keep_alive<1, 2>())
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line, py::call_guard<py::gil_scoped_release>())
+    .def("load_netcdf_line_custom_filename", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line_custom_filename, py::call_guard<py::gil_scoped_release>())
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run, py::call_guard<py::gil_scoped_release>());
 
     py::class_<workflow::xrf::Detector_Sum_Spectra_Source<float>, workflow::xrf::Spectra_File_Source<float>>(workflow, "DetectorSumSpectraFileSource")
     .def(py::init<>())
-    .def(py::init<data_struct::Analysis_Job<float>*>())
-    .def("connect_sink", &workflow::Source<data_struct::Stream_Block<float>*>::connect_sink)
-    //.def("connect_distributor", &workflow::Source<data_struct::Stream_Block<float>*>::connect_distributor)
-    .def("connect_distributor", [&](workflow::xrf::Detector_Sum_Spectra_Source<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    .def(py::init<data_struct::Analysis_Job<float>*>(), py::keep_alive<1, 2>())
+    .def("connect_sink", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_sink, py::keep_alive<1, 2>())
+    //.def("connect_distributor", &workflow::Source<data_struct::Stream_Block_Ptr<float>>::connect_distributor)
+    .def("connect_distributor", [&](workflow::xrf::Detector_Sum_Spectra_Source<float>& self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect_distributor(dist);
-    })
+    }, py::keep_alive<1, 2>())
     .def("set_init_fitting_routines", &workflow::xrf::Spectra_File_Source<float>::set_init_fitting_routines)
-    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line)
-    .def("run", &workflow::xrf::Spectra_File_Source<float>::run);
+    .def("load_netcdf_line", &workflow::xrf::Spectra_File_Source<float>::load_netcdf_line, py::call_guard<py::gil_scoped_release>())
+    .def("run", &workflow::xrf::Spectra_File_Source<float>::run, py::call_guard<py::gil_scoped_release>());
 
-    py::class_<workflow::Sink<data_struct::Stream_Block<float>*> >(workflow, "StreamBlockSink")
+    py::class_<workflow::Sink<data_struct::Stream_Block_Ptr<float>> >(workflow, "StreamBlockSink")
     .def(py::init<>())
-    //.def("connect_distributor", [&](workflow::Sink<float>& self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    //.def("connect_distributor", [&](workflow::Sink<float>& self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     //{
     //    self.connect(dist);
     //});
     //.def("connect", &workflow::Sink<float>::connect)
-        //<workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>*>*>
-    .def("set_function", &workflow::Sink<data_struct::Stream_Block<float>*>::set_function)
-    .def("start", &workflow::Sink<data_struct::Stream_Block<float>*>::start)
-    .def("stop", &workflow::Sink<data_struct::Stream_Block<float>*>::stop)
-    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block<float>*>::wait_and_stop)
-    .def("set_delete_block", &workflow::Sink<data_struct::Stream_Block<float>*>::set_delete_block)
-    .def("sink_function", &workflow::Sink<data_struct::Stream_Block<float>*>::sink_function);
+        //<workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float>>*>
+    .def("set_function", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::set_function)
+    // start() joins any previous worker, and stop()/wait_and_stop() block until the
+    // worker exits. The worker is what calls the Python function installed by
+    // set_function, so holding the GIL across any of these deadlocks the pipeline.
+    .def("start", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::start, py::call_guard<py::gil_scoped_release>())
+    .def("stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::stop, py::call_guard<py::gil_scoped_release>())
+    .def("wait_and_stop", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::wait_and_stop, py::call_guard<py::gil_scoped_release>())
+    .def("sink_function", &workflow::Sink<data_struct::Stream_Block_Ptr<float>>::sink_function);
 #ifdef _BUILD_WITH_ZMQ
-    py::class_<workflow::xrf::Spectra_Net_Streamer<float>, workflow::Sink<data_struct::Stream_Block<float>*> >(workflow, "SpectraNetStreamer")
+    py::class_<workflow::xrf::Spectra_Net_Streamer<float>, workflow::Sink<data_struct::Stream_Block_Ptr<float>> >(workflow, "SpectraNetStreamer")
     .def(py::init<std::string>())
     .def("set_send_counts", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_counts)
     .def("set_send_spectra", &workflow::xrf::Spectra_Net_Streamer<float>::set_send_spectra)
     .def("set_verbose", &workflow::xrf::Spectra_Net_Streamer<float>::set_verbose)
-    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream)
-    .def("connect_distributor", [&](workflow::xrf::Spectra_Net_Streamer<float>&self, workflow::Distributor<data_struct::Stream_Block<float>*, data_struct::Stream_Block<float>* >* dist)
+    .def("stream", &workflow::xrf::Spectra_Net_Streamer<float>::stream, py::call_guard<py::gil_scoped_release>())
+    .def("connect_distributor", [&](workflow::xrf::Spectra_Net_Streamer<float>&self, workflow::Distributor<data_struct::Stream_Block_Ptr<float>, data_struct::Stream_Block_Ptr<float> >* dist)
     {
         self.connect(dist);
-    });
+    }, py::keep_alive<1, 2>());
    
 #endif
 
 
     //process_streaming
-    m.def("proc_spectra_block", &proc_spectra_block<float>);
+    m.def("proc_spectra_block", &proc_spectra_block<float>, py::call_guard<py::gil_scoped_release>());
 //    m.def("run_stream_pipeline", &run_stream_pipeline);
 
     //process_whole
     //m.def("generate_fit_count_dict", &generate_fit_count_dict<real_t>);
-    m.def("fit_single_spectra", &fit_single_spectra<float>);
+    m.def("fit_single_spectra", &fit_single_spectra<float>, py::call_guard<py::gil_scoped_release>());
    // m.def("optimize_integrated_fit_params", &optimize_integrated_fit_params);
-    m.def("generate_optimal_params", &generate_optimal_params);
+    m.def("generate_optimal_params", &generate_optimal_params, py::call_guard<py::gil_scoped_release>());
    // m.def("generate_optimal_params_mp", &generate_optimal_params_mp);
-    m.def("proc_spectra", &proc_spectra<float>);
-    m.def("process_dataset_files", &process_dataset_files<float>);
-    m.def("perform_quantification", &perform_quantification);
+    m.def("proc_spectra", &proc_spectra<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("process_dataset_files", &process_dataset_files<float>, py::call_guard<py::gil_scoped_release>());
+    m.def("perform_quantification", &perform_quantification, py::call_guard<py::gil_scoped_release>());
     //m.def("average_quantification", &average_quantification);
 
 	m.def("get_energy_range", (data_struct::Range (*)(size_t, const Fit_Parameters<float>* const)) &data_struct::get_energy_range);

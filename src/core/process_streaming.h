@@ -61,13 +61,13 @@ POSSIBILITY OF SUCH DAMAGE.
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::Stream_Block<T_real>* stream_block )
+DLL_EXPORT data_struct::Stream_Block_Ptr<T_real> proc_spectra_block( data_struct::Stream_Block_Ptr<T_real> stream_block )
 {
 
     for (auto& itr : stream_block->fitting_blocks)
     {
         std::unordered_map<std::string, T_real> counts_dict;
-        stream_block->fitting_blocks[itr.first].fit_routine->fit_spectra(stream_block->model, stream_block->spectra, stream_block->elements_to_fit, counts_dict);
+        stream_block->fitting_blocks[itr.first].fit_routine->fit_spectra(*stream_block->model, stream_block->spectra, stream_block->elements_to_fit, counts_dict);
         //make count / sec
         for (auto& el_itr : *(stream_block->elements_to_fit))
         {
@@ -91,39 +91,39 @@ DLL_EXPORT data_struct::Stream_Block<T_real>* proc_spectra_block( data_struct::S
 template<typename T_real>
 DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
 {
-    workflow::Source<data_struct::Stream_Block<T_real>*>* source;
-    workflow::Distributor<data_struct::Stream_Block<T_real>*, data_struct::Stream_Block<T_real>*> distributor(job->num_threads);
-    workflow::Sink<data_struct::Stream_Block<T_real>*>* sink;
+    std::unique_ptr<workflow::Source<data_struct::Stream_Block_Ptr<T_real> > > source;
+    workflow::Distributor<data_struct::Stream_Block_Ptr<T_real>, data_struct::Stream_Block_Ptr<T_real> > distributor(job->num_threads);
+    std::unique_ptr<workflow::Sink<data_struct::Stream_Block_Ptr<T_real> > > sink;
 
     //setup input
     if (job->quick_and_dirty)
     {
-        source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
+        source = std::make_unique<workflow::xrf::Detector_Sum_Spectra_Source<T_real> >(job);
     }
     else if (job->is_network_source)
     {
         if (job->network_source_ip.length() > 0)
         {
-            source = new workflow::xrf::Spectra_Net_Source<T_real>(job, job->network_source_ip, job->network_source_port);
+            source = std::make_unique<workflow::xrf::Spectra_Net_Source<T_real> >(job, job->network_source_ip, job->network_source_port);
         }
         else
         {
-            source = new workflow::xrf::Spectra_Net_Source<T_real>(job);
+            source = std::make_unique<workflow::xrf::Spectra_Net_Source<T_real> >(job);
         }
     }
     else
     {
-        source = new workflow::xrf::Spectra_File_Source<T_real>(job);
+        source = std::make_unique<workflow::xrf::Spectra_File_Source<T_real> >(job);
     }
 
     //setup output
     if (job->stream_over_network)
     {
-        sink = new workflow::xrf::Spectra_Net_Streamer<T_real>(job->network_stream_port);
+        sink = std::make_unique<workflow::xrf::Spectra_Net_Streamer<T_real> >(job->network_stream_port);
     }
     else
     {
-        sink = new workflow::xrf::Spectra_Stream_Saver<T_real>();
+        sink = std::make_unique<workflow::xrf::Spectra_Stream_Saver<T_real> >();
     }
 
     distributor.set_function(proc_spectra_block<T_real>);
@@ -134,9 +134,6 @@ DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
     sink->start();
     source->run();
     sink->wait_and_stop();
-
-    delete source;
-    delete sink;
 }
 
 // ----------------------------------------------------------------------------
@@ -144,7 +141,7 @@ DLL_EXPORT void run_stream_pipeline(data_struct::Analysis_Job<T_real>* job)
 template<typename T_real>
 DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job)
 {
-    workflow::Source<data_struct::Stream_Block<T_real>*>* source;
+    std::unique_ptr<workflow::Source<data_struct::Stream_Block_Ptr<T_real> > > source;
     workflow::xrf::Spectra_Net_Streamer<T_real> sink(job->network_stream_port);
     sink.set_send_counts(false);
     sink.set_send_spectra(true);
@@ -152,17 +149,15 @@ DLL_EXPORT void stream_spectra(data_struct::Analysis_Job<T_real>* job)
     //setup input
     if (job->quick_and_dirty)
     {
-        source = new workflow::xrf::Detector_Sum_Spectra_Source<T_real>(job);
+        source = std::make_unique<workflow::xrf::Detector_Sum_Spectra_Source<T_real> >(job);
     }
     else
     {
-        source = new workflow::xrf::Spectra_File_Source<T_real>(job);
+        source = std::make_unique<workflow::xrf::Spectra_File_Source<T_real> >(job);
     }
 
     source->connect(&sink);
     source->run();
-
-    delete source;
 }
 
 // ----------------------------------------------------------------------------

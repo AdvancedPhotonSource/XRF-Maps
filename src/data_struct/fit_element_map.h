@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "core/defines.h"
 #include "data_struct/fit_parameters.h"
 #include "data_struct/element_info.h"
+#include <memory>
 
 namespace data_struct
 {
@@ -222,10 +223,10 @@ protected:
 //-----------------------------------------------------------------------------
 
 template<typename T_real>
-DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
+DLL_EXPORT std::shared_ptr<Fit_Element_Map<T_real> > gen_element_map(std::string element_symb)
 {
     data_struct::Element_Info_Map<T_real>* element_info_map = data_struct::Element_Info_Map<T_real>::inst();
-    data_struct::Fit_Element_Map<T_real>* fit_map = nullptr;
+    std::shared_ptr<data_struct::Fit_Element_Map<T_real> > fit_map = nullptr;
 
     element_symb.erase(std::remove_if(element_symb.begin(), element_symb.end(), ::isspace), element_symb.end());
 
@@ -241,14 +242,19 @@ DLL_EXPORT Fit_Element_Map<T_real>* gen_element_map(std::string element_symb)
     }
     else
     {
-        fit_map = new data_struct::Fit_Element_Map<T_real>(element_symb, e_info);
+        fit_map = std::make_shared<data_struct::Fit_Element_Map<T_real> >(element_symb, e_info);
     }
 
     return fit_map;
 }
 
+/// Shared ownership: a Params_Override (and therefore a Detector's
+/// fit_params_override_dict) is copied around freely -- during optimization and
+/// per-dataset override reloads -- and every copy refers to the same
+/// Fit_Element_Map objects. shared_ptr lets those copies share the elements
+/// without the previous owner leaking them or double-freeing them.
 template<typename T_real>
-using Fit_Element_Map_Dict = std::unordered_map<std::string, Fit_Element_Map<T_real>*>;
+using Fit_Element_Map_Dict = std::unordered_map<std::string, std::shared_ptr<Fit_Element_Map<T_real> > >;
 
 } //namespace data_struct
 

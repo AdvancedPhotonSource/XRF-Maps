@@ -50,6 +50,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef Stream_Block_H
 #define Stream_Block_H
 
+#include <memory>
+
 #include "core/defines.h"
 #include "data_struct/element_info.h"
 #include "fitting/routines/base_fit_routine.h"
@@ -92,7 +94,14 @@ public:
 
     ~Stream_Block();
 
-    void init_fitting_blocks(std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> *fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
+    /// `fit_routines` is borrowed; the Detector that owns it must outlive this block.
+    void init_fitting_blocks(const std::unordered_map<Fitting_Routines, std::unique_ptr<fitting::routines::Base_Fit_Routine<T_real> > > *fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
+
+    /// Overload taking borrowed routine pointers. Callers that do not own their
+    /// routines through unique_ptr use this one - notably the Python bindings,
+    /// where the interpreter owns each routine and cannot hand over a unique_ptr
+    /// map. As above, the real owner must outlive this block.
+    void init_fitting_blocks(const std::unordered_map<Fitting_Routines, fitting::routines::Base_Fit_Routine<T_real>*> &fit_routines, Fit_Element_Map_Dict<T_real>* elements_to_fit_);
 
     const size_t& row() { return _row; }
 
@@ -133,6 +142,9 @@ public:
 
 protected:
 
+    /// Shared body of both init_fitting_blocks overloads. `fit_routine` is borrowed.
+    void _add_fitting_block(Fitting_Routines routine, fitting::routines::Base_Fit_Routine<T_real>* fit_routine);
+
     size_t _row;
 
     size_t _col;
@@ -143,6 +155,22 @@ protected:
 
     int _detector;
 };
+
+//-----------------------------------------------------------------------------
+
+/**
+ * @brief Shared-ownership handle for a block travelling through the streaming
+ *  pipeline (Source -> Distributor -> Sink).
+ *
+ *  Shared rather than unique: Distributor hands each block to
+ *  ThreadPool::enqueue, which captures its arguments with std::bind. std::bind
+ *  stores the arguments and passes them to the callable as lvalues, so a
+ *  move-only handle cannot be forwarded through the task queue. A block is also
+ *  genuinely co-owned for a time - Integrated_Spectra_Source accumulates into a
+ *  block held in a map until the scan completes, then emits it downstream.
+ */
+template<typename T_real>
+using Stream_Block_Ptr = std::shared_ptr<Stream_Block<T_real> >;
 
 } //namespace data_struct
 

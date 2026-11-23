@@ -80,6 +80,19 @@ public:
 
     ~Analysis_Job();
 
+    /// Analysis_Job owns its detectors in `detectors_meta_data`, and Detector is
+    /// move-only (it owns its model and fit routines), so an Analysis_Job cannot be
+    /// copied. These must be *explicitly* deleted rather than left implicit:
+    /// std::map declares its copy constructor unconditionally, so the compiler still
+    /// believes Analysis_Job is copyable and only fails deep inside std::map when the
+    /// copy is actually instantiated. On Windows, __declspec(dllexport) on the
+    /// explicit instantiation below emits every non-deleted member, including that
+    /// implicit copy constructor, which triggers exactly that failure
+    /// (MSVC: "error C2672: 'std::construct_at': no matching overloaded function").
+    /// Deleting them here keeps the member out of the export set entirely.
+    Analysis_Job(const Analysis_Job&) = delete;
+    Analysis_Job& operator=(const Analysis_Job&) = delete;
+
     Detector<T_real> *get_first_detector();
 
     Detector<T_real>* get_detector(int detector_num);

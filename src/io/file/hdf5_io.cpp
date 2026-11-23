@@ -302,71 +302,75 @@ bool HDF5_IO::_open_h5_dataset(const std::string& name, hid_t data_type, hid_t p
 
 //-----------------------------------------------------------------------------
 
+bool h5_close_tracked(hid_t id, H5_OBJECTS obj)
+{
+    // HDF5 recycles hid_t values. An entry that outlived the operation which
+    // queued it can therefore name a live, unrelated object by the time it is
+    // popped, and releasing it would corrupt whoever actually owns it now.
+    // Verify the id is still live and still the kind it was recorded as
+    // before closing it; a correctly tracked handle always passes both.
+    if (H5Iis_valid(id) <= 0)
+    {
+        logW << "Skipping stale h5 id " << id << ", recorded kind " << (int)obj << "\n";
+        return false;
+    }
+
+    H5I_type_t expected;
+    switch (obj)
+    {
+    case H5O_FILE:      expected = H5I_FILE;        break;
+    case H5O_GROUP:     expected = H5I_GROUP;       break;
+    case H5O_DATASPACE: expected = H5I_DATASPACE;   break;
+    case H5O_DATASET:   expected = H5I_DATASET;     break;
+    case H5O_ATTRIBUTE: expected = H5I_ATTR;        break;
+    case H5O_DATATYPE:  expected = H5I_DATATYPE;    break;
+    case H5O_PROPERTY:  expected = H5I_GENPROP_LST; break;
+    default:
+        logW << "Unknown H5_OBJECTS kind " << (int)obj << " for id " << id << "\n";
+        return false;
+    }
+
+    H5I_type_t actual = H5Iget_type(id);
+    if (actual != expected)
+    {
+        // This is the fc68201 failure mode: the handle and the tag naming its
+        // closer are stored separately, so a mismatch runs the wrong
+        // H5*close() against a live object.
+        logW << "Skipping h5 id " << id << ": recorded kind " << (int)obj
+             << " but HDF5 reports type " << (int)actual << "\n";
+        return false;
+    }
+
+    herr_t err = 0;
+    const char* what = "";
+    switch (obj)
+    {
+    case H5O_FILE:      err = H5Fclose(id); what = "file";      break;
+    case H5O_GROUP:     err = H5Gclose(id); what = "group";     break;
+    case H5O_DATASPACE: err = H5Sclose(id); what = "dataspace"; break;
+    case H5O_DATASET:   err = H5Dclose(id); what = "dataset";   break;
+    case H5O_ATTRIBUTE: err = H5Aclose(id); what = "attribute"; break;
+    case H5O_DATATYPE:  err = H5Tclose(id); what = "type";      break;
+    case H5O_PROPERTY:  err = H5Pclose(id); what = "property";  break;
+    }
+
+    if (err != 0)
+    {
+        logW << "Could not close h5 " << what << " id " << id << "\n";
+        return false;
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 void HDF5_IO::_close_h5_objects(std::stack<std::pair<hid_t, H5_OBJECTS> >  &close_map)
 {
-
-    herr_t err;
     while (false == close_map.empty())
     {
-        auto& obj = close_map.top();
+        auto obj = close_map.top();
         close_map.pop();
-
-        if (obj.second == H5O_FILE)
-        {
-            err = H5Fclose(obj.first);
-            if (err != 0)
-            {
-                logW<<"Could not close h5 file id "<<obj.first<<"\n";
-            }
-        }
-        else if (obj.second == H5O_GROUP)
-        {
-            err = H5Gclose(obj.first);
-            if (err != 0)
-            {
-                logW<<"Could not close h5 group id "<<obj.first<<"\n";
-            }
-        }
-        else if (obj.second == H5O_DATASPACE)
-        {
-            err = H5Sclose(obj.first);
-            if (err != 0)
-            {
-                logW<<"Could not close h5 dataspace id "<<obj.first<<"\n";
-            }
-        }
-        else if (obj.second == H5O_DATASET)
-        {
-            err = H5Dclose(obj.first);
-            if (err != 0)
-            {
-                logW<<"Could not close h5 dataset id "<<obj.first<<"\n";
-            }
-        }
-        else if(obj.second == H5O_ATTRIBUTE)
-        {
-            err = H5Aclose(obj.first);
-            if (err != 0)
-            {
-                logW<<"Could not close h5 attribute id "<<obj.first<<"\n";
-            }
-        }
-        else if (obj.second == H5O_DATATYPE)
-        {
-            err = H5Tclose(obj.first);
-            if (err != 0)
-            {
-                logW << "Could not close h5 type id " << obj.first << "\n";
-            }
-        }
-        else if (obj.second == H5O_PROPERTY)
-        {
-            err = H5Pclose(obj.first);
-            if (err != 0)
-            {
-                logW << "Could not close h5 property id " << obj.first << "\n";
-            }
-        }
+        h5_close_tracked(obj.first, obj.second);
     }
 }
 
@@ -425,6 +429,10 @@ bool HDF5_IO::start_save_seq(const std::string filename, bool force_new_file, bo
 
 bool HDF5_IO::end_save_seq(bool loginfo)
 {
+    // Deliberately does not drain _global_close_map: generate_avg() reuses
+    // this function as a plain "close this file id" helper, reassigning
+    // _cur_file_id for each averaged input while an outer save sequence is
+    // suspended. Draining here would close that outer operation's handles.
 
     if(_cur_file_id > 0)
     {
@@ -1427,6 +1435,10 @@ void HDF5_IO::update_amps(std::string dataset_file, std::string us_amp_str, std:
 void HDF5_IO::update_quant_amps(std::string dataset_file, std::string us_amp_str, std::string ds_amp_str)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
+	// This function drains its own local close_map below, but _open_h5_dataset
+	// pushes onto _global_close_map instead, so those handles used to escape
+	// and be closed later by an unrelated operation's wholesale drain.
+	Global_Close_Scope close_scope(_global_close_map);
 	hid_t file_id, us_amp_id, ds_amp_id, num_stand_id;
 	std::stack<std::pair<hid_t, H5_OBJECTS> > close_map;
 
@@ -2077,20 +2089,20 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
             hid_t new_arr_space = H5Screate_simple(1, &count2d[1], &count2d[1]);
             _global_close_map.push({new_arr_space, H5O_DATASPACE });
             hid_t arr_type = H5Dget_type(arr_id);
-            _global_close_map.push({arr_id, H5O_DATATYPE });
+            _global_close_map.push({arr_type, H5O_DATATYPE });
             hid_t new_arr_id = H5Dcreate(file_id, "/MAPS/x_axis", arr_type, new_arr_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             if(new_arr_id > -1)
             {
                 _global_close_map.push({new_arr_id, H5O_DATASET });
                 ArrayXXr<float> arr(count2d[0], count2d[1]);
-                if (H5Dread(arr_id, arr_type, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
+                if (H5Dread(arr_id, H5T_NATIVE_FLOAT, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
                 {
                     ArrayTr<float> new_arr(count2d[1]);
                     for(int x = 0; x< arr.cols(); x++)
                     {
                         new_arr(x) = arr(0,x);
                     }
-                    if(H5Dwrite(new_arr_id, arr_type, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
+                    if(H5Dwrite(new_arr_id, H5T_NATIVE_FLOAT, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
                     {
                         logW<<"Error writing /MAPS/x_axis\n";
                     }
@@ -2136,20 +2148,20 @@ void HDF5_IO::add_v9_layout(std::string dataset_file)
             hid_t new_arr_space = H5Screate_simple(1, &count2d[0], &count2d[0]);
             _global_close_map.push({new_arr_space, H5O_DATASPACE });
             hid_t arr_type = H5Dget_type(arr_id);
-            _global_close_map.push({arr_id, H5O_DATATYPE });
+            _global_close_map.push({arr_type, H5O_DATATYPE });
             hid_t new_arr_id = H5Dcreate(file_id, "/MAPS/y_axis", arr_type, new_arr_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             if(new_arr_id > -1)
             {
                 _global_close_map.push({new_arr_id, H5O_DATASET });
                 ArrayXXr<float> arr(count2d[0], count2d[1]);
-                if (H5Dread(arr_id, arr_type, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
+                if (H5Dread(arr_id, H5T_NATIVE_FLOAT, arr_space, arr_space, H5P_DEFAULT, arr.data()) > -1)
                 {
                     ArrayTr<float> new_arr(count2d[0]);
                     for(int y = 0; y< arr.rows(); y++)
                     {
                         new_arr(y) = arr(y,0);
                     }
-                    if(H5Dwrite(new_arr_id, arr_type, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
+                    if(H5Dwrite(new_arr_id, H5T_NATIVE_FLOAT, new_arr_space, new_arr_space, H5P_DEFAULT, new_arr.data()) < 0)
                     {
                         logW<<"Error writing /MAPS/y_axis\n";
                     }

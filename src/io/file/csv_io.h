@@ -681,6 +681,7 @@ namespace csv
         if (detector == nullptr)
         {
             logW << "Detector == nullptr, can't save quantification\n";
+            return;
         }
 
         //iterate through proc_type {roi, nnls, fitted}

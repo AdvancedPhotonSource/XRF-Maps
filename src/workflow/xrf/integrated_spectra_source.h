@@ -74,7 +74,7 @@ public:
 
 protected:
 
-    std::map<int, data_struct::Stream_Block<T_real>*> _stream_block_list;
+    std::map<int, data_struct::Stream_Block_Ptr<T_real>> _stream_block_list;
 
 };
 

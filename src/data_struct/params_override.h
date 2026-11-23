@@ -126,11 +126,9 @@ public:
 
     ~Params_Override()
     {
-        // TODO: fix this: this memeory is used when optimising and is copyed to another data struct
-//		for (auto& itr : elements_to_fit)
-//		{
-//			delete itr.second;
-//		}
+        // elements_to_fit holds shared_ptr, so clearing releases this struct's
+        // reference. The Fit_Element_Map objects stay alive for any copy of this
+        // Params_Override that is still using them (optimization copies these).
 		elements_to_fit.clear();
     }
 

@@ -345,7 +345,7 @@ void Gaussian_Model<T_real>::set_fit_params_preset(Fit_Params_Preset preset)
 
 template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameters<T_real> * const fit_params,
-                                             const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
+                                             const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                                              std::unordered_map<std::string, ArrayTr<T_real>>* labeled_spectras,
                                              const struct Range energy_range)
 {
@@ -373,7 +373,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
         }
         else
         {
-            agr_spectra += model_spectrum_element(fit_params, itr.second, ev, labeled_spectras);
+            agr_spectra += model_spectrum_element(fit_params, itr.second.get(), ev, labeled_spectras);
         }
     }
     const T_real gain = fit_params->value(STR_ENERGY_SLOPE);
@@ -411,7 +411,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum(const Fit_Parameter
 
 template<typename T_real>
 const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parameters<T_real> * const fit_params,
-                                                const std::unordered_map<std::string, Fit_Element_Map<T_real>*> * const elements_to_fit,
+                                                const Fit_Element_Map_Dict<T_real> * const elements_to_fit,
                                                 const struct Range energy_range)
 {
 
@@ -434,7 +434,7 @@ const Spectra<T_real> Gaussian_Model<T_real>::model_spectrum_mp(const Fit_Parame
 #pragma omp parallel for
     for (int i=0; i < (int)keys.size(); i++)
     {
-        Spectra<T_real> tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]), ev, nullptr);
+        Spectra<T_real> tmp = model_spectrum_element(fit_params, elements_to_fit->at(keys[i]).get(), ev, nullptr);
 #pragma omp critical
         {
             agr_spectra += tmp;

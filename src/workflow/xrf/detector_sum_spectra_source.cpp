@@ -114,7 +114,7 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
 
     if(detector_num == _detector_num_arr[_detector_num_arr.size()-1] && this->_output_callback_func != nullptr)
     {
-        data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(-1, row, col, height, width);
+        data_struct::Stream_Block_Ptr<T_real> stream_block = std::make_shared<data_struct::Stream_Block<T_real> >(-1, row, col, height, width);
 
         if(this->_analysis_job != nullptr)
         {
@@ -131,7 +131,7 @@ void Detector_Sum_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_
             if(cp!=nullptr)
             {
                 stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-                stream_block->model = cp->model;
+                stream_block->model = cp->model.get();
             }
 
             stream_block->theta = this->_analysis_job->theta;

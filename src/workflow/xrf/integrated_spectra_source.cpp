@@ -84,7 +84,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
     //init
     if(_stream_block_list.count(detector_num) == 0)
     {
-        data_struct::Stream_Block<T_real>* stream_block = new data_struct::Stream_Block<T_real>(detector_num, row, col, height, width);
+        data_struct::Stream_Block_Ptr<T_real> stream_block = std::make_shared<data_struct::Stream_Block<T_real> >(detector_num, row, col, height, width);
 
         if(this->_analysis_job != nullptr)
         {
@@ -102,7 +102,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
             if(cp != nullptr)
             {
                 stream_block->init_fitting_blocks(&(cp->fit_routines), &(cp->fit_params_override_dict.elements_to_fit));
-                stream_block->model = cp->model;
+                stream_block->model = cp->model.get();
             }
             stream_block->theta = this->_analysis_job->theta;
             stream_block->optimize_fit_params_preset = this->_analysis_job->optimize_fit_params_preset;
@@ -117,7 +117,7 @@ void Integrated_Spectra_Source<T_real>::cb_load_spectra_data(size_t row, size_t 
     }
     else
     {
-        data_struct::Stream_Block<T_real>* stream_block = _stream_block_list.at(detector_num);
+        data_struct::Stream_Block_Ptr<T_real> stream_block = _stream_block_list.at(detector_num);
 
         stream_block->spectra->add(*spectra);
         delete spectra;

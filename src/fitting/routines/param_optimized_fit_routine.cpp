@@ -101,7 +101,7 @@ void Param_Optimized_Fit_Routine<T_real>::_add_elements_to_fit_parameters(Fit_Pa
         {
             T_real e_guess = (T_real)1.0e-10;
 
-            Fit_Element_Map<T_real>* element = el_itr.second;
+            Fit_Element_Map<T_real>* element = el_itr.second.get();
             std::vector<Element_Energy_Ratio<T_real>> energies = element->energy_ratios();
             //if element counts is not in fit params structure, add it
             if( false == fit_params->contains(el_itr.first) )
@@ -174,7 +174,7 @@ void Param_Optimized_Fit_Routine<T_real>::_calc_and_update_coherent_amplitude(Fi
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>* const model,
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models::Base_Model<T_real>& model,
                                                            const Spectra<T_real>* const spectra,
                                                            const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                            std::unordered_map<std::string, T_real>& out_counts)
@@ -185,7 +185,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
     // fitp.g.xmax = MAX_ENERGY_TO_FIT
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
-    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model.fit_parameters();
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR));
     _add_elements_to_fit_parameters(&fit_params, spectra, elements_to_fit);
@@ -220,7 +220,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
             out_counts[el_itr.first] = value;
         }
 
-        //model->update_fit_params_values(fit_params);
+        //model.update_fit_params_values(fit_params);
 
         //check if we are saving the number of iterations and save if so
         if(fit_params.contains(STR_NUM_ITR))
@@ -239,7 +239,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra(const models:
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(const models::Base_Model<T_real>* const model,
+OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(const models::Base_Model<T_real>& model,
                                                                     const Spectra<T_real>* const spectra,
                                                                     const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                                     bool use_weights,
@@ -251,7 +251,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
 
     OPTIMIZER_OUTCOME ret_val = OPTIMIZER_OUTCOME::FAILED;
 
-    Fit_Parameters<T_real> fit_params = model->fit_parameters();
+    Fit_Parameters<T_real> fit_params = model.fit_parameters();
     //Add fit param for number of iterations
     fit_params.add_parameter(Fit_Param<T_real>(STR_NUM_ITR, 0.0));
     fit_params.add_parameter(Fit_Param<T_real>(STR_RESIDUAL, 0.0));
@@ -286,7 +286,7 @@ OPTIMIZER_OUTCOME Param_Optimized_Fit_Routine<T_real>::fit_spectra_parameters(co
 // ----------------------------------------------------------------------------
 
 template<typename T_real>
-void Param_Optimized_Fit_Routine<T_real>::initialize([[maybe_unused]]  models::Base_Model<T_real>* const model,
+void Param_Optimized_Fit_Routine<T_real>::initialize([[maybe_unused]]  models::Base_Model<T_real>& model,
                                                     [[maybe_unused]]  const Fit_Element_Map_Dict<T_real>* const elements_to_fit,
                                                     const struct Range energy_range,
                                                     ArrayTr<T_real>* custom_background)
